@@ -14,6 +14,7 @@ import {
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
     MarkerTechniqueParams,
+    Placements,
     PointTechniqueParams,
     SegmentsTechniqueParams,
     ShaderTechniqueParams,
@@ -1001,6 +1002,7 @@ export interface TextStyleDefinition {
     wrappingMode?: "None" | "Character" | "Word";
     hAlignment?: "Left" | "Center" | "Right";
     vAlignment?: "Above" | "Center" | "Below";
+    placement?: Placements;
 }
 
 /**

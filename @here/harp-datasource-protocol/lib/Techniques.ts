@@ -199,6 +199,7 @@ const lineMarkerTechniquePropTypes = mergeTechniqueDescriptor<LineMarkerTechniqu
             wrappingMode: AttrScope.TechniqueGeometry,
             hAlignment: AttrScope.TechniqueGeometry,
             vAlignment: AttrScope.TechniqueGeometry,
+            placement: AttrScope.TechniqueGeometry,
             backgroundColor: AttrScope.TechniqueRendering,
             backgroundSize: AttrScope.TechniqueRendering,
             backgroundOpacity: AttrScope.TechniqueRendering,

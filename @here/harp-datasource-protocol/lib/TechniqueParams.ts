@@ -432,6 +432,37 @@ export enum PoiStackMode {
 }
 
 /**
+ * Defines options of available placements.
+ *
+ * Possible values are defined as vertical placement letter, horizontal letter, where
+ * one of the letters may be ignored (meaning center), going clock-wise, we have:
+ * `TL` (top-left), `T` (top-center), `TR` (top-right), `R` (center-right), `BR` (bottom-right),
+ * `B` (bottom-center), `BL` (bottom-left), `L` (left), `C` (center-center).
+ * Additionally instead of `T`, `B`, `L`, `R` geographic directions may be used accordingly:
+ * `N` (north), `S` (south), `E` (east), `W` (west).
+ */
+export enum Placement {
+    TopLeft = "TL",
+    TopCenter = "T",
+    TopRight = "TR",
+    CenterRight = "R",
+    BottomRight = "BR",
+    BottomCenter = "B",
+    BottomLeft = "BL",
+    CenterLeft = "L",
+    CenterCenter = "C",
+    North = "N",
+    South = "S",
+    East = "E",
+    West = "W"
+}
+
+/**
+ * Array of available text placements.
+ */
+export type Placements = Placement[];
+
+/**
  * Technique that describes icons with labels. Used in [[PoiTechnique]] and [[LineMarkerTechnique]]
  * (for road shields).
  */
@@ -691,12 +722,28 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     wrappingMode?: DynamicProperty<"None" | "Character" | "Word">;
     /**
      * Text position regarding the baseline.
+     *
+     * @note The [[placement]] attribute may override the alignment settings.
      */
     hAlignment?: DynamicProperty<"Left" | "Center" | "Right">;
     /**
      * Text position inside a line.
+     *
+     * @note The [[placement]] attribute may supersede it.
      */
     vAlignment?: DynamicProperty<"Above" | "Center" | "Below">;
+    /**
+     * Text label position regarding to the point of placement (anchor point).
+     *
+     * This attribute defines an array of possible placements relating to the anchor.
+     * Keep in mind that horizontal placement works in opposite way to alignment, so the text
+     * located on the **right side** of the placement (anchor) point will be always `Left`
+     * aligned by deduction. In the same way the label  **left side** placed is `Right` aligned
+     * relative to the label icon or origin point.
+     *
+     * @note This attribute supersedes [[hAlignment]] and [[vAlignment]] if defined.
+     */
+    placement?: Placements;
 }
 
 export interface LineTechniqueParams extends BaseTechniqueParams {

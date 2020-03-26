@@ -19,13 +19,19 @@ import {
     FontStyle,
     FontUnit,
     FontVariant,
+    hAlignFromPlacement,
     HorizontalAlignment,
+    HorizontalPlacement,
     TextCanvas,
     TextLayoutParameters,
     TextLayoutStyle,
+    TextPlacement,
+    TextPlacementOptions,
     TextRenderParameters,
     TextRenderStyle,
+    vAlignFromPlacement,
     VerticalAlignment,
+    VerticalPlacement,
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
@@ -49,9 +55,13 @@ const defaultTextRenderStyle = new TextRenderStyle({
     backgroundOpacity: 0.5
 });
 
+// By default text layout provides no options for placement, but single alignment.
 const defaultTextLayoutStyle = new TextLayoutStyle({
+    // TODO: Please verify why default TextStyleCache layout style has different
+    // alignment settings then defaults in TextStyle.
     verticalAlignment: VerticalAlignment.Center,
-    horizontalAlignment: HorizontalAlignment.Center
+    horizontalAlignment: HorizontalAlignment.Center,
+    placementOptions: []
 });
 
 const DEFAULT_STYLE_NAME = "default";
@@ -317,7 +327,7 @@ export class TextStyleCache {
     }
 
     /**
-     * Create the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
+     * Create the appropriate [[TextLayoutStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
      * @param tile The [[Tile]] to process.
@@ -334,25 +344,27 @@ export class TextStyleCache {
 
         const defaultLayoutParams = this.m_defaultStyle.layoutParams;
 
-        const hAlignment = getPropertyValue(technique.hAlignment, discreteZoomEnv) as
-            | string
-            | undefined;
-        const vAlignment = getPropertyValue(technique.vAlignment, discreteZoomEnv) as
-            | string
-            | undefined;
-        const wrapping = getPropertyValue(technique.wrappingMode, discreteZoomEnv) as
-            | string
-            | undefined;
+        // Available only for PoiTechnique and LineMarkerTechnique, not for TextTechnique
+        const placements = getPropertyValue((technique as any).placement, discreteZoomEnv) as
+            | string[]
+            | null;
 
-        const horizontalAlignment: HorizontalAlignment | undefined =
-            hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
-                ? HorizontalAlignment[hAlignment]
-                : defaultLayoutParams.horizontalAlignment;
+        const hAlignment = getPropertyValue(technique.hAlignment, discreteZoomEnv) as string | null;
 
-        const verticalAlignment: VerticalAlignment | undefined =
-            vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
-                ? VerticalAlignment[vAlignment]
-                : defaultLayoutParams.verticalAlignment;
+        const vAlignment = getPropertyValue(technique.vAlignment, discreteZoomEnv) as string | null;
+
+        const {
+            horizontalAlignment,
+            verticalAlignment,
+            placementOptions
+        } = this.parsePlacementAndAlignment(hAlignment, vAlignment, placements);
+
+        const wrapping = getPropertyValue(technique.wrappingMode, discreteZoomEnv) as string | null;
+
+        const wrappingMode =
+            wrapping === "None" || wrapping === "Character" || wrapping === "Word"
+                ? WrappingMode[wrapping]
+                : defaultLayoutParams.wrappingMode;
 
         const layoutParams = {
             tracking:
@@ -372,12 +384,10 @@ export class TextStyleCache {
             lineRotation:
                 getPropertyValue(technique.lineRotation, discreteZoomEnv) ??
                 defaultLayoutParams.lineRotation,
-            wrappingMode:
-                wrapping === "None" || wrapping === "Character" || wrapping === "Word"
-                    ? WrappingMode[wrapping]
-                    : defaultLayoutParams.wrappingMode,
+            wrappingMode,
             horizontalAlignment,
-            verticalAlignment
+            verticalAlignment,
+            placementOptions
         };
 
         const themeLayoutParams = this.getTextElementStyle(technique.style);
@@ -393,6 +403,11 @@ export class TextStyleCache {
         style: TextStyleDefinition,
         styleName: string
     ): TextElementStyle {
+        const {
+            horizontalAlignment,
+            verticalAlignment,
+            placementOptions
+        } = this.parsePlacementAndAlignment(style.hAlignment, style.vAlignment, style.placement);
         return {
             name: styleName,
             fontCatalog: getOptionValue(style.fontCatalogName, this.m_defaultStyle.fontCatalog),
@@ -441,19 +456,95 @@ export class TextStyleCache {
                     style.wrappingMode === "Word"
                         ? WrappingMode[style.wrappingMode]
                         : WrappingMode.Word,
-                verticalAlignment:
-                    style.vAlignment === "Above" ||
-                    style.vAlignment === "Center" ||
-                    style.vAlignment === "Below"
-                        ? VerticalAlignment[style.vAlignment]
-                        : VerticalAlignment.Center,
-                horizontalAlignment:
-                    style.hAlignment === "Left" ||
-                    style.hAlignment === "Center" ||
-                    style.hAlignment === "Right"
-                        ? HorizontalAlignment[style.hAlignment]
-                        : HorizontalAlignment.Center
+                verticalAlignment,
+                horizontalAlignment,
+                placementOptions
             }
         };
     }
+
+    private parsePlacementAndAlignment(
+        hAlignment: string | null | undefined,
+        vAlignment: string | null | undefined,
+        placements: string[] | null | undefined
+    ): {
+        horizontalAlignment: HorizontalAlignment;
+        verticalAlignment: VerticalAlignment;
+        placementOptions: TextPlacementOptions;
+    } {
+        // Parse placement properties if available.
+        const placementOptions: TextPlacementOptions = [];
+        placements?.forEach(p => {
+            const val = parseTechniquePlacementValue(p);
+            if (val !== undefined) {
+                placementOptions.push(val);
+            }
+        });
+
+        // Override alignment attributes with placement (if defined) or provide default
+        // values if none of them is defined.
+        // NOTE: Alignment override may be removed if we decide to support both attributes.
+        const horizontalAlignment =
+            placementOptions.length > 0
+                ? hAlignFromPlacement(placementOptions[0].h)
+                : parseTechniqueHAlignValue(hAlignment);
+
+        const verticalAlignment =
+            placementOptions.length > 0
+                ? vAlignFromPlacement(placementOptions[0].v)
+                : parseTechniqueVAlignValue(vAlignment);
+
+        return { horizontalAlignment, verticalAlignment, placementOptions };
+    }
+}
+
+function parseTechniqueHAlignValue(hAlignment: string | null | undefined): HorizontalAlignment {
+    return hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
+        ? HorizontalAlignment[hAlignment]
+        : defaultTextLayoutStyle.horizontalAlignment;
+}
+
+function parseTechniqueVAlignValue(vAlignment: string | null | undefined): VerticalAlignment {
+    return vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
+        ? VerticalAlignment[vAlignment]
+        : defaultTextLayoutStyle.verticalAlignment;
+}
+
+function parseTechniquePlacementValue(p: string): TextPlacement | undefined {
+    // May be only literal of single or two characters.
+    if (p.length < 1 || p.length > 2) {
+        return undefined;
+    }
+    // If no value is specified for vertical/horizontal placement it is by default center.
+    const textPlacement: TextPlacement = {
+        h: HorizontalPlacement.Center,
+        v: VerticalPlacement.Center
+    };
+    let modifier = p.charAt(0);
+    switch (modifier) {
+        // Top / north
+        case "T":
+        case "N":
+            textPlacement.v = VerticalPlacement.Top;
+            break;
+        // Bottom / south
+        case "B":
+        case "S":
+            textPlacement.v = VerticalPlacement.Bottom;
+            break;
+    }
+    modifier = p.length === 1 ? p.charAt(0) : p.charAt(1);
+    switch (modifier) {
+        // Right / east
+        case "R":
+        case "E":
+            textPlacement.h = HorizontalPlacement.Right;
+            break;
+        // Left / west
+        case "L":
+        case "W":
+            textPlacement.h = HorizontalPlacement.Left;
+            break;
+    }
+    return textPlacement;
 }
