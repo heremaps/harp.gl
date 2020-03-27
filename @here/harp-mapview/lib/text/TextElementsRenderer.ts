@@ -46,7 +46,7 @@ import {
     placeIcon,
     PlacementResult,
     placePathLabel,
-    placePointLabel,
+    placePointLabelChoosingAnchor,
     PrePlacementResult
 } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
@@ -1606,7 +1606,7 @@ export class TextElementsRenderer {
         // Render the label's text...
         // textRenderState is always defined at this point.
         if (renderText) {
-            const placeResult = placePointLabel(
+            const placeResult = placePointLabelChoosingAnchor(
                 labelState,
                 tempScreenPosition,
                 distanceScaleFactor,
