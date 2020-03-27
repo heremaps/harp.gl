@@ -308,6 +308,71 @@ export function placeIcon(
 }
 
 /**
+ * Place a point label text using single or multiple optional placements.
+ *
+ * The current implementation does not provide placements options via style, so function
+ * tries to limit multiple placements test to scenarios where it is needed.
+ *
+ * @note This to be changed after HARP-6487 will be impemented and styles adapted.
+ *
+ * @param labelState State of the point label to place.
+ * @param screenPosition Position of the label in screen coordinates.
+ * @param scale Scale factor to be applied to label dimensions.
+ * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
+ * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
+ * for newly placed (upcoming) label or `PlacementResult.Rejected` if the label was persistent.
+ * @param textCanvas The text canvas where the label will be placed.
+ * @param screenCollisions Used to check collisions with other labels.
+ * @param outScreenPosition The final label screen position after applying any offsets.
+ * @returns `PlacementResult.Ok` if point __label can be placed__ at the base or any optional
+ * anchor point. `PlacementResult.Rejected` if there's a collision for all placements or it's
+ * __persistent label with icon rejected and text visible__. Finally `PlacementResult.Invisible`
+ * if it's text is not visible at any placement position or it's __new label with text or icon__
+ * __rejected__.
+ */
+export function placePointLabel(
+    labelState: TextElementState,
+    screenPosition: THREE.Vector2,
+    scale: number,
+    textCanvas: TextCanvas,
+    screenCollisions: ScreenCollisions,
+    isRejected: boolean,
+    outScreenPosition: THREE.Vector3
+): PlacementResult {
+    const layoutStyle = labelState.element.layoutStyle!;
+
+    // For centered point labels do only current anchor testing.
+    // TODO: Should be removed after placements are provided via style - see HARP-6487.
+    if (
+        layoutStyle.verticalAlignment === VerticalAlignment.Center &&
+        layoutStyle.horizontalAlignment === HorizontalAlignment.Center
+    ) {
+        return placePointLabelAtCurrentAnchor(
+            labelState,
+            screenPosition,
+            scale,
+            textCanvas,
+            screenCollisions,
+            isRejected,
+            false,
+            outScreenPosition
+        );
+    }
+    // Otherwise test also optional text placements.
+    else {
+        return placePointLabelChoosingAnchor(
+            labelState,
+            screenPosition,
+            scale,
+            textCanvas,
+            screenCollisions,
+            isRejected,
+            outScreenPosition
+        );
+    }
+}
+
+/**
  * Try to place a point label text using multiple optional placements.
  *
  * @param labelState State of the point label to place.
@@ -323,7 +388,7 @@ export function placeIcon(
  * `PlacementResult.Rejected` if there's a collision for all placements, `PlacementResult.Invisible`
  * if it's not visible any any placement position.
  */
-export function placePointLabelChoosingAnchor(
+function placePointLabelChoosingAnchor(
     labelState: TextElementState,
     screenPosition: THREE.Vector2,
     scale: number,
@@ -346,12 +411,14 @@ export function placePointLabelChoosingAnchor(
     };
     // Placements options will be read from label.layoutStyle.placements in final solution.
     const placements = possibleAnchorPlacementsCW;
-    // Find first anchor placement.
+    // Find current anchor placement on the optional placements list.
     const idx = placements.findIndex(val => {
         return val.h === basePlacement.h && val.v === basePlacement.v;
     });
-    // If not listed in placement options list (idx === -1) will start from current alignment setup.
+    // If not listed in placements list (idx === -1) will start from current anchor setup.
     const placementsNum = placements.length;
+    // Store label state - persistent or new label.
+    const persistent = labelState.visible;
     // Will be true if all text placements are invisible.
     let allInvisible: boolean = true;
     let i = 0;
@@ -362,23 +429,26 @@ export function placePointLabelChoosingAnchor(
         textCanvas.textLayoutStyle.horizontalAlignment = anchorPlacement.h;
         textCanvas.textLayoutStyle.verticalAlignment = anchorPlacement.v;
 
+        // Bounds will be already calculated for persistent label, when using base alignment.
+        const boundsReady = persistent && i === 0;
         // Compute label bounds, visibility or collision according to new layout settings.
-        const placementResult = placePointLabel(
+        const placementResult = placePointLabelAtCurrentAnchor(
             labelState,
             screenPosition,
             scale,
             textCanvas,
             screenCollisions,
             isRejected,
-            true,
+            !boundsReady,
             outScreenPosition
         );
 
-        // Check the text visibility.
+        // Check the text allocation
         if (placementResult === PlacementResult.Invisible) {
+            // Persistent label out of screen or the new label that is colliding - next iteration.
             continue;
-            // This placement if visible, check for collisions.
         } else {
+            // This placement is visible, but surely colliding.
             allInvisible = false;
         }
 
@@ -411,16 +481,15 @@ export function placePointLabelChoosingAnchor(
     return allInvisible
         ? // All text's placements out of the screen.
           PlacementResult.Invisible
-        : // Some text on screen:
-        labelState.visible
-        ? // both text and icon colliding have colliders.
+        : persistent
+        ? // All placements are either colliding or out of screen for persistent label.
           PlacementResult.Rejected
-        : // label's icon is already invisible.
+        : // No placement found for the new label.
           PlacementResult.Invisible;
 }
 
 /**
- * Places a point label on a specified text canvas.
+ * Places a point label on a specified text canvas using the alignment (anchor) currently set.
  *
  * @param labelState State of the point label to place.
  * @param screenPosition Position of the label in screen coordinates.
@@ -436,7 +505,7 @@ export function placePointLabelChoosingAnchor(
  * @returns `PlacementResult.Ok` if path label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
  */
-export function placePointLabel(
+function placePointLabelAtCurrentAnchor(
     labelState: TextElementState,
     screenPosition: THREE.Vector2,
     scale: number,
@@ -481,18 +550,22 @@ export function placePointLabel(
         tmpBox.max.y - tmpBox.min.y
     );
 
-    // Check the text visibility.
+    // Check the text visibility if invisible finish immediately
+    // regardless of the persistence state - no fading required.
     if (!screenCollisions.isVisible(tmp2DBox)) {
         return PlacementResult.Invisible;
     }
 
+    const persistent = labelState.visible;
     // Check if icon's label was already rejected.
     if (isRejected) {
-        return labelState.visible ? PlacementResult.Rejected : PlacementResult.Invisible;
+        // Allows to fade out persistent label and simply ignore new one.
+        return persistent ? PlacementResult.Rejected : PlacementResult.Invisible;
     }
     // Check label's text collision.
     if (!label.textMayOverlap && screenCollisions.isAllocated(tmp2DBox)) {
-        return labelState.visible ? PlacementResult.Rejected : PlacementResult.Invisible;
+        // Allows to fade persistent and ignore new label.
+        return persistent ? PlacementResult.Rejected : PlacementResult.Invisible;
     }
 
     // Don't allocate space for rejected text. When zooming, this allows placement of a
