@@ -3079,7 +3079,7 @@ function-bind@^1.1.1:
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
   integrity sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==
 
-geckodriver@^1.16.2:
+geckodriver@^1.19.1:
   version "1.19.1"
   resolved "https://registry.yarnpkg.com/geckodriver/-/geckodriver-1.19.1.tgz#556f95fd6451b553cec89f81f81abbefce10d6e5"
   integrity sha512-xWL/+eEhQ6+t98rc1c+xVM3hshDJibXtZf9WJA3sshxq4k5L1PBwfmswyBmmlKUfBr4xuC256gLVC2RxFhiCsQ==
@@ -4993,10 +4993,10 @@ mkpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/mkpath/-/mkpath-1.0.0.tgz#ebb3a977e7af1c683ae6fda12b545a6ba6c5853d"
   integrity sha1-67Opd+evHGg65v2hK1Raa6bFhT0=
 
-mocha-webdriver-runner@^0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/mocha-webdriver-runner/-/mocha-webdriver-runner-0.5.3.tgz#ccf496b949631d0b6b5f439e06250f932bf61ad6"
-  integrity sha512-3oXAFCYzlZ+LEK6mI3qKYohIuISmAv5PAg5Fz+C9Tj36CobQglt9M07aip5xh+ImxEz52WZ0nN6fnnMdzveFgw==
+mocha-webdriver-runner@^0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/mocha-webdriver-runner/-/mocha-webdriver-runner-0.6.1.tgz#bb95238b28cc6fe6c6c1310db57990544272a096"
+  integrity sha512-udUOpDclAaWgsOIWXVSldN/P9lB3e4v6eEvC+DdCmm7uW02MrrvQT5P4S4byJ1PuHHc6E1/MZ0Y+US6w8ADPkA==
   dependencies:
     "@zbigg/treesync" "^0.3.0"
     commander "^2.20.0"
