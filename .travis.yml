@@ -27,7 +27,7 @@ jobs:
         - yarn pre-test
         - yarn cov-test --forbid-only
         - yarn build-tests
-        - yarn test-browser --headless-firefox
+        #- yarn test-browser --headless-firefox
         - yarn test-browser --headless-chrome
         - ./scripts/test-npm-packages.sh
 
