@@ -68,7 +68,7 @@ export namespace PerformanceUtils {
     ];
 
     const DEFAULT_THEME = {
-        resource: "resources/berlin_tilezen_base.json"
+        resource: "resources/normal.day.json"
     };
 
     function getVendorFomContext(context: WebGLRenderingContext): GlInfo {
