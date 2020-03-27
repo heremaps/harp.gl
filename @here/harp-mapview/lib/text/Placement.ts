@@ -122,6 +122,27 @@ export enum PrePlacementResult {
 }
 
 /**
+ * Defines possible text placement relative to anchor.
+ */
+interface AnchorPlacement {
+    h: HorizontalAlignment;
+    v: VerticalAlignment;
+}
+
+/**
+ * @hidden
+ * Possible placement scenarios in clock-wise order.
+ *
+ * TODO: This array should be parsed from the style/theme definition of the technique.
+ */
+const possibleAnchorPlacementsCW: AnchorPlacement[] = [
+    { h: HorizontalAlignment.Left, v: VerticalAlignment.Above },
+    { h: HorizontalAlignment.Right, v: VerticalAlignment.Above },
+    { h: HorizontalAlignment.Right, v: VerticalAlignment.Below },
+    { h: HorizontalAlignment.Left, v: VerticalAlignment.Below }
+];
+
+/**
  * Applies early rejection tests for a given text element meant to avoid trying to place labels
  * that are not visible, not ready, duplicates etc...
  * @param textElement The Text element to check.
@@ -287,7 +308,8 @@ export function placeIcon(
 }
 
 /**
- * Places a point label on a specified text canvas.
+ * Try to place a point label text using multiple optional placements.
+ *
  * @param labelState State of the point label to place.
  * @param screenPosition Position of the label in screen coordinates.
  * @param scale Scale factor to be applied to label dimensions.
@@ -296,6 +318,120 @@ export function placeIcon(
  * `PlacementResult.Rejected`.
  * @param textCanvas The text canvas where the label will be placed.
  * @param screenCollisions Used to check collisions with other labels.
+ * @param outScreenPosition The final label screen position after applying any offsets.
+ * @returns `PlacementResult.Ok` if path label can be placed at the base or optional anchor point,
+ * `PlacementResult.Rejected` if there's a collision for all placements, `PlacementResult.Invisible`
+ * if it's not visible any any placement position.
+ */
+export function placePointLabelChoosingAnchor(
+    labelState: TextElementState,
+    screenPosition: THREE.Vector2,
+    scale: number,
+    textCanvas: TextCanvas,
+    screenCollisions: ScreenCollisions,
+    isRejected: boolean,
+    outScreenPosition: THREE.Vector3
+): PlacementResult {
+    const label = labelState.element;
+
+    // NOTE:
+    // We may save some CPU time by firstly checking visibility of all possible text placements,
+    // their bounding boxes merged altogether, this may save time for further calculations.
+    // Would be enough to include TL and BR placements.
+
+    // Start with currently set alignment settings.
+    const basePlacement = {
+        h: label.layoutStyle!.horizontalAlignment,
+        v: label.layoutStyle!.verticalAlignment
+    };
+    // Placements options will be read from label.layoutStyle.placements in final solution.
+    const placements = possibleAnchorPlacementsCW;
+    // Find first anchor placement.
+    const idx = placements.findIndex(val => {
+        return val.h === basePlacement.h && val.v === basePlacement.v;
+    });
+    // If not listed in placement options list (idx === -1) will start from current alignment setup.
+    const placementsNum = placements.length;
+    // Will be true if all text placements are invisible.
+    let allInvisible: boolean = true;
+    let i = 0;
+    for (i = 0; i < placementsNum; ++i) {
+        const anchorPlacement = idx + i < 0 ? basePlacement : placements[(idx + i) % placementsNum];
+        // Override label text alignment for measurements and leave it so if passed collisions test.
+        // NOTE: This actually writes to label.layoutStyle.verticalAlignment/horizontalAlignment.
+        textCanvas.textLayoutStyle.horizontalAlignment = anchorPlacement.h;
+        textCanvas.textLayoutStyle.verticalAlignment = anchorPlacement.v;
+
+        // Compute label bounds, visibility or collision according to new layout settings.
+        const placementResult = placePointLabel(
+            labelState,
+            screenPosition,
+            scale,
+            textCanvas,
+            screenCollisions,
+            isRejected,
+            true,
+            outScreenPosition
+        );
+
+        // Check the text visibility.
+        if (placementResult === PlacementResult.Invisible) {
+            continue;
+            // This placement if visible, check for collisions.
+        } else {
+            allInvisible = false;
+        }
+
+        // If icon rejected proceed to test further if all elements are invisible.
+        // TODO:
+        // If icon's is isRejected, should we test visibility of all placements, maybe better to
+        // interrupt tests now and save some CPU time?
+        if (placementResult === PlacementResult.Rejected && isRejected) {
+            continue;
+        }
+        // Check label's text collision.
+        // TODO: Same comment as above, maybe better to interrupt the tests here after checking
+        // first placement and save CPU time.
+        if (placementResult === PlacementResult.Rejected) {
+            continue;
+        }
+
+        // Glyphs arrangement have been changed remove text buffer object.
+        if (i !== 0) {
+            delete label.textBufferObject;
+            label.textBufferObject = undefined;
+        }
+        // Proper placement found.
+        return PlacementResult.Ok;
+    }
+    // No placement found - revert back the original alignment.
+    label.layoutStyle!.horizontalAlignment = basePlacement.h;
+    label.layoutStyle!.verticalAlignment = basePlacement.v;
+
+    return allInvisible
+        ? // All text's placements out of the screen.
+          PlacementResult.Invisible
+        : // Some text on screen:
+        labelState.visible
+        ? // both text and icon colliding have colliders.
+          PlacementResult.Rejected
+        : // label's icon is already invisible.
+          PlacementResult.Invisible;
+}
+
+/**
+ * Places a point label on a specified text canvas.
+ *
+ * @param labelState State of the point label to place.
+ * @param screenPosition Position of the label in screen coordinates.
+ * @param scale Scale factor to be applied to label dimensions.
+ * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
+ * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
+ * `PlacementResult.Rejected`.
+ * @param textCanvas The text canvas where the label will be placed.
+ * @param screenCollisions Used to check collisions with other labels.
+ * @param forceMeasurement Set to true if you need label bounds invalidation (recalculation), this
+ * may be required due to text layout or render style changes.
  * @param outScreenPosition The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if path label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
@@ -307,27 +443,37 @@ export function placePointLabel(
     textCanvas: TextCanvas,
     screenCollisions: ScreenCollisions,
     isRejected: boolean,
+    forceMeasurement: boolean,
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
     const label = labelState.element;
 
+    const measureText = label.bounds === undefined || forceMeasurement;
     if (label.bounds === undefined) {
         label.bounds = new THREE.Box2();
+    }
+
+    if (measureText) {
+        // Setup measurements parameters for textCanvas.measureText().
         tmpMeasurementParams.outputCharacterBounds = undefined;
         tmpMeasurementParams.path = undefined;
         tmpMeasurementParams.pathOverflow = false;
         tmpMeasurementParams.letterCaseArray = label.glyphCaseArray!;
+        // Compute label bounds according to layout settings.
         textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
     }
 
-    screenPosition.add(computePointTextOffset(label, scale, tmpTextOffset));
-    outScreenPosition.set(screenPosition.x, screenPosition.y, labelState.renderDistance);
-
-    // TODO: Make the margin configurable
-    tmpBox.copy(label.bounds!).expandByVector(pointLabelMargin);
+    // Compute text offset from the anchor point
+    const textOffset = computePointTextOffset(label, scale, tmpTextOffset);
+    textOffset.add(screenPosition);
+    tmpBox.copy(label.bounds!);
     tmpBox.min.multiplyScalar(scale);
     tmpBox.max.multiplyScalar(scale);
-    tmpBox.translate(screenPosition);
+    // Add margin after scaling, this ensures the margin is consistent across all
+    // labels - regardless of distance scaling (or any other) factor.
+    // TODO: Make the margin configurable
+    tmpBox.expandByVector(pointLabelMargin);
+    tmpBox.translate(textOffset);
     tmp2DBox.set(
         tmpBox.min.x,
         tmpBox.min.y,
@@ -340,7 +486,12 @@ export function placePointLabel(
         return PlacementResult.Invisible;
     }
 
-    if (isRejected || (!label.textMayOverlap && screenCollisions.isAllocated(tmp2DBox))) {
+    // Check if icon's label was already rejected.
+    if (isRejected) {
+        return labelState.visible ? PlacementResult.Rejected : PlacementResult.Invisible;
+    }
+    // Check label's text collision.
+    if (!label.textMayOverlap && screenCollisions.isAllocated(tmp2DBox)) {
         return labelState.visible ? PlacementResult.Rejected : PlacementResult.Invisible;
     }
 
@@ -352,6 +503,9 @@ export function placePointLabel(
     if (label.textReservesSpace) {
         screenCollisions.allocate(tmp2DBox);
     }
+
+    // Proper placement found, update output screen position.
+    outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
     return PlacementResult.Ok;
 }
 
