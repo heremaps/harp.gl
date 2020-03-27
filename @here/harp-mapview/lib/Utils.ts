@@ -292,7 +292,7 @@ export namespace MapViewUtils {
      */
     export function getTargetAndDistance(
         projection: Projection,
-        camera: THREE.PerspectiveCamera,
+        camera: THREE.Camera,
         elevationProvider?: ElevationProvider
     ): { target: THREE.Vector3; distance: number } {
         const cameraPitch = extractAttitude({ projection }, camera).pitch;
