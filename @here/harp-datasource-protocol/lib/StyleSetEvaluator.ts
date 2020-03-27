@@ -321,9 +321,12 @@ export class StyleSetEvaluator {
     private readonly m_definitionExprCache = new Map<string, Expr>();
     private readonly m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
     private readonly m_emptyEnv = new Env();
+    private m_featureDependencies: string[] = [];
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
     private m_zoomLevel: number | undefined;
+    private m_previousResult: IndexedTechnique[] | undefined;
+    private m_previousEnv: Env | undefined;
 
     constructor(styleSet: StyleSet, definitions?: Definitions) {
         this.m_definitions = definitions;
@@ -347,6 +350,14 @@ export class StyleSetEvaluator {
         layer?: string | undefined,
         geometryType?: string | undefined
     ): IndexedTechnique[] {
+        if (
+            this.m_previousResult &&
+            this.m_previousEnv &&
+            this.m_featureDependencies.every(p => this.m_previousEnv?.lookup(p) === env.lookup(p))
+        ) {
+            return this.m_previousResult;
+        }
+
         const result: IndexedTechnique[] = [];
         this.m_cachedResults.clear();
 
@@ -365,6 +376,9 @@ export class StyleSetEvaluator {
                 break;
             }
         }
+
+        this.m_previousResult = result;
+        this.m_previousEnv = env;
 
         return result;
     }
@@ -412,6 +426,8 @@ export class StyleSetEvaluator {
             techinque._index = undefined!;
         }
         this.m_techniques.length = 0;
+        this.m_previousResult = undefined;
+        this.m_previousEnv = undefined;
     }
 
     /**
@@ -465,6 +481,8 @@ export class StyleSetEvaluator {
      * Compile the `when` conditions found when traversting the styling rules.
      */
     private compileStyleSet() {
+        this.m_featureDependencies = ["$layer", "$geometryType", "$zoom"];
+
         this.styleSet.forEach(style => this.compileStyle(style));
 
         // Create optimized styleSets for each `layer` & `geometryType` tuple.
@@ -481,6 +499,8 @@ export class StyleSetEvaluator {
      * @param style The current style.
      */
     private compileStyle(style: InternalStyle) {
+        this.checkStyleDynamicAttributes(style);
+
         if (style.when !== undefined) {
             try {
                 style._whenExpr = Array.isArray(style.when)
@@ -496,6 +516,14 @@ export class StyleSetEvaluator {
                 if (style._whenExpr !== undefined) {
                     style._whenExpr = style._whenExpr.intern(this.m_exprPool);
                 }
+
+                const deps = style._whenExpr.dependencies();
+
+                deps?.properties.forEach(prop => {
+                    if (!this.m_featureDependencies.includes(prop)) {
+                        this.m_featureDependencies.push(prop);
+                    }
+                });
 
                 if (isJsonExpr(style.minZoomLevel)) {
                     style._minZoomLevelExpr = Expr.fromJSON(style.minZoomLevel).intern(
@@ -643,8 +671,6 @@ export class StyleSetEvaluator {
     }
 
     private getTechniqueForStyleMatch(env: Env, style: InternalStyle) {
-        this.checkStyleDynamicAttributes(style);
-
         let technique: IndexedTechnique | undefined;
         if (style._dynamicTechniques !== undefined) {
             const dynamicAttributes = this.evaluateTechniqueProperties(style, env);
@@ -752,6 +778,12 @@ export class StyleSetEvaluator {
                 }
 
                 const deps = attrValue.dependencies();
+
+                deps.properties.forEach(prop => {
+                    if (!this.m_featureDependencies.includes(prop)) {
+                        this.m_featureDependencies.push(prop);
+                    }
+                });
 
                 switch (attrScope) {
                     case AttrScope.FeatureGeometry:
