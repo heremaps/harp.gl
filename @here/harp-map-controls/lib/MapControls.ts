@@ -579,7 +579,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private get currentTilt(): number {
-        return this.mapView.tilt;
+        return THREE.MathUtils.degToRad(this.mapView.tilt);
     }
 
     private get targetedTilt(): number {
