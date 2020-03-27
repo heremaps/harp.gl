@@ -336,6 +336,27 @@ describe("MapView Styling Test", function() {
                         backgroundSize: 6,
                         backgroundColor: "#0008",
                         size: 16
+                    },
+                    "point-text-rgba-bg": {
+                        color: "#3e7864",
+                        backgroundSize: 1,
+                        backgroundColor: "#d7f2cd96",
+                        size: 12
+                    },
+                    "point-text-rgba-bg-offset": {
+                        color: "#3e7864",
+                        backgroundSize: 1,
+                        backgroundColor: "#d7f2cd96",
+                        size: 12,
+                        xOffset: 0.5
+                    },
+                    "point-text-rgba-bg-wrapped": {
+                        color: "#3e7864",
+                        backgroundSize: 1,
+                        backgroundColor: "#d7f2cd96",
+                        size: 12,
+                        wrappingMode: "Character",
+                        lineWidth: 5
                     }
                 },
                 {

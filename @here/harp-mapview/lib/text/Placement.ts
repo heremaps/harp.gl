@@ -321,6 +321,7 @@ export function placePointLabel(
     }
 
     screenPosition.add(computePointTextOffset(label, scale, tmpTextOffset));
+    //screenPosition.round();
     outScreenPosition.set(screenPosition.x, screenPosition.y, labelState.renderDistance);
 
     // TODO: Make the margin configurable

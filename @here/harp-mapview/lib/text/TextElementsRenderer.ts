@@ -197,6 +197,7 @@ function addTextBufferToCanvas(
     const textElement = textElementState.element;
     const textRenderState = textElementState.textRenderState;
     const opacity = textRenderState!.opacity * fadeFactor * textElement.renderStyle!.opacity;
+    const backgroundOpacity = opacity * textElement.renderStyle!.backgroundOpacity;
 
     if (opacity === 0) {
         return false;
@@ -219,7 +220,7 @@ function addTextBufferToCanvas(
     tmpBufferAdditionParams.scale = scaleFactor;
     tmpBufferAdditionParams.opacity = opacity;
     tmpBufferAdditionParams.backgroundOpacity = backgroundIsVisible
-        ? tmpBufferAdditionParams.opacity * textElement.renderStyle!.backgroundOpacity
+        ? backgroundOpacity
         : 0.0;
     tmpBufferAdditionParams.pickingData = textElement.userData ? textElement : undefined;
     canvas.addTextBufferObject(textElement.textBufferObject!, tmpBufferAdditionParams);
@@ -1906,9 +1907,11 @@ export class TextElementsRenderer {
         labelState.textRenderState!.startFadeIn(renderParams.time);
 
         let opacity = pathLabel.renderStyle!.opacity;
+        let backgroundOpacity = opacity * pathLabel.renderStyle!.backgroundOpacity;
 
         if (labelState.textRenderState!.isFading()) {
             opacity *= labelState.textRenderState!.opacity;
+            backgroundOpacity *= labelState.textRenderState!.opacity;
             renderParams.fadeAnimationRunning = true;
         }
 
@@ -1925,8 +1928,7 @@ export class TextElementsRenderer {
             this.m_viewState.maxVisibilityDist
         );
         textCanvas.textRenderStyle.opacity = opacity * distanceFadeFactor;
-        textCanvas.textRenderStyle.backgroundOpacity =
-            textCanvas.textRenderStyle.opacity * pathLabel.renderStyle!.backgroundOpacity;
+        textCanvas.textRenderStyle.backgroundOpacity = backgroundOpacity * distanceFadeFactor;
 
         tempPosition.z = labelState.renderDistance;
 
