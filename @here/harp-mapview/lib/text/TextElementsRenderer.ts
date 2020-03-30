@@ -1606,6 +1606,8 @@ export class TextElementsRenderer {
         // Render the label's text...
         // textRenderState is always defined at this point.
         if (renderText) {
+            // Multi point (icons) features (line markers) will use single placement anchor, but
+            // single point labels (POIs, etc.) may use multi-placement algorithm.
             const placeResult = placePointLabel(
                 labelState,
                 tempScreenPosition,
@@ -1613,7 +1615,8 @@ export class TextElementsRenderer {
                 textCanvas,
                 this.m_screenCollisions,
                 iconRejected,
-                tempPosition
+                tempPosition,
+                iconIndex === undefined
             );
             if (placeResult === PlacementResult.Invisible) {
                 if (placementStats) {

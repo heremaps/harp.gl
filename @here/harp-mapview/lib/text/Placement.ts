@@ -324,6 +324,8 @@ export function placeIcon(
  * @param textCanvas The text canvas where the label will be placed.
  * @param screenCollisions Used to check collisions with other labels.
  * @param outScreenPosition The final label screen position after applying any offsets.
+ * @param multiAnchor The parameter decides if multi-anchor placement algorithm should be
+ * used, be default [[false]] meaning try to place label using current alignment settings only.
  * @returns `PlacementResult.Ok` if point __label can be placed__ at the base or any optional
  * anchor point. `PlacementResult.Rejected` if there's a collision for all placements or it's
  * __persistent label with icon rejected and text visible__. Finally `PlacementResult.Invisible`
@@ -337,7 +339,8 @@ export function placePointLabel(
     textCanvas: TextCanvas,
     screenCollisions: ScreenCollisions,
     isRejected: boolean,
-    outScreenPosition: THREE.Vector3
+    outScreenPosition: THREE.Vector3,
+    multiAnchor: boolean = false
 ): PlacementResult {
     const layoutStyle = labelState.element.layoutStyle!;
 
@@ -350,6 +353,7 @@ export function placePointLabel(
     // For centered point labels and labels with icon rejected, do only current anchor testing.
     // TODO: Should be removed after placements are provided via style - see HARP-6487.
     if (
+        !multiAnchor ||
         isRejected ||
         (layoutStyle.verticalAlignment === VerticalAlignment.Center &&
             layoutStyle.horizontalAlignment === HorizontalAlignment.Center)
