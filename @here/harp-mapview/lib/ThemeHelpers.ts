@@ -108,7 +108,7 @@ export function toTextureFilter(filter: MagFilter | MinFilter): THREE.TextureFil
 }
 
 /**
- * Create a specific light for lightening the map.
+ * Create a specific light for lighting the map.
  */
 export function createLight(lightDescription: Light): THREE.Light {
     switch (lightDescription.type) {

@@ -19,6 +19,7 @@ import {
     Theme,
     Value
 } from "@here/harp-datasource-protocol";
+import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     EarthConstants,
     GeoCoordinates,
@@ -39,8 +40,6 @@ import {
     UriResolver
 } from "@here/harp-utils";
 import * as THREE from "three";
-
-import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
@@ -1053,6 +1052,13 @@ export class MapView extends THREE.EventDispatcher {
         this.m_textElementsRenderer = this.createTextRenderer();
 
         this.drawFrame();
+    }
+
+    /**
+     * Returns the lights configured by the theme.
+     */
+    get lights(): THREE.Light[] {
+        return this.m_createdLights ?? [];
     }
 
     /**
