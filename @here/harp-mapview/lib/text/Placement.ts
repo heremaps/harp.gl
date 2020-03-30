@@ -422,23 +422,46 @@ function placePointLabelChoosingAnchor(
     };
     // Placements options will be read from label.layoutStyle.placements in final solution.
     const placements = possibleAnchorPlacementsCW;
-    // Find current anchor placement on the optional placements list.
-    const idx = placements.findIndex(val => {
-        return val.h === basePlacement.h && val.v === basePlacement.v;
-    });
-    // If not listed in placements list (idx === -1) will start from current anchor setup.
     const placementsNum = placements.length;
+    // Find current anchor placement on the optional placements list or best matching position.
+    // Index of exact match.
+    let matchIdx = -1;
+    // Index of closest placement to the base one.
+    let closeIdxOff = 0;
+    let closeDiff = Infinity;
+    for (let i = 0; i < placementsNum; ++i) {
+        const placement = placements[i];
+        const hDiff = placement.h - basePlacement.h;
+        const vDiff = placement.v - basePlacement.v;
+        const manhattanDist = Math.abs(hDiff) + Math.abs(vDiff);
+        if (manhattanDist === 0) {
+            matchIdx = i;
+            closeIdxOff = 0;
+            break;
+        } else if (manhattanDist < closeDiff) {
+            closeDiff = manhattanDist;
+            closeIdxOff = i;
+        }
+    }
+
     // Store label state - persistent or new label.
     const persistent = labelState.visible;
     // Will be true if all text placements are invisible.
     let allInvisible: boolean = true;
-    let i = 0;
-    for (i = 0; i < placementsNum; ++i) {
-        const anchorPlacement = idx + i < 0 ? basePlacement : placements[(idx + i) % placementsNum];
+    // If current anchor found on the list we start from it.
+    // If not listed in placements list (matchIdx === -1) we start from current anchor setup, but
+    // then immediately jump to the best matching option and iterate the over rest of placements.
+    // The number of iterations varies from `placementsNum` if perfect match found to
+    // `placementsNum + 1` otherwise (current placement + all optional).
+    for (let i = matchIdx; i < placementsNum; ++i) {
+        const anchorPlacement =
+            i < 0 ? basePlacement : placements[(i + closeIdxOff) % placementsNum];
         // Override label text alignment for measurements and leave it so if passed collisions test.
-        // NOTE: This actually writes to label.layoutStyle.verticalAlignment/horizontalAlignment.
-        textCanvas.textLayoutStyle.horizontalAlignment = anchorPlacement.h;
-        textCanvas.textLayoutStyle.verticalAlignment = anchorPlacement.v;
+        // NOTE: This actually writes also to:
+        // textCanvas.textLayoutStyle.verticalAlignment/horizontalAlignment.
+        // which is needed for text measurements being done on canvas.
+        label.layoutStyle!.horizontalAlignment = anchorPlacement.h;
+        label.layoutStyle!.verticalAlignment = anchorPlacement.v;
 
         // Bounds will be already calculated for persistent label, when using base alignment.
         const boundsReady = persistent && i === 0;
@@ -495,7 +518,6 @@ function placePointLabelChoosingAnchor(
 
         // Glyphs arrangement have been changed remove text buffer object.
         if (i !== 0) {
-            delete label.textBufferObject;
             label.textBufferObject = undefined;
         }
         // Proper placement found.
@@ -504,7 +526,6 @@ function placePointLabelChoosingAnchor(
     // No placement found - revert back the original alignment.
     label.layoutStyle!.horizontalAlignment = basePlacement.h;
     label.layoutStyle!.verticalAlignment = basePlacement.v;
-    delete label.bounds;
     label.bounds = undefined;
 
     return allInvisible
@@ -545,6 +566,7 @@ function placePointLabelAtCurrentAnchor(
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
     const label = labelState.element;
+    assert(label.glyphs !== undefined);
 
     const measureText = label.bounds === undefined || forceMeasurement;
     if (label.bounds === undefined) {
