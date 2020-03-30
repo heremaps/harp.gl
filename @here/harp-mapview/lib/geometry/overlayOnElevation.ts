@@ -119,7 +119,8 @@ export function overlayTextElement(
 }
 
 /**
- * Overlays the geometry in the given tile on top of elevation data if available.
+ * Overlays the geometry in the given tile on top of elevation data if available. The tile's
+ * elevation may be updated with a more precise range.
  *
  * @param tile The tile whose geometry will be overlaid.
  */

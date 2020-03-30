@@ -378,7 +378,7 @@ export class Tile implements CachedResource {
     private readonly m_worldCenter = new THREE.Vector3();
     private m_visibleArea: number = 0;
     // Tile elevation range in meters
-    private m_elevationRange: ElevationRange = { minElevation: 0, maxElevation: 0 };
+    private readonly m_elevationRange: ElevationRange = { minElevation: 0, maxElevation: 0 };
     // Maximum height of geometry on this tile above ground level.
     private m_maxGeometryHeight?: number;
 
@@ -703,7 +703,9 @@ export class Tile implements CachedResource {
             return;
         }
 
-        this.m_elevationRange = elevationRange;
+        this.m_elevationRange.minElevation = elevationRange.minElevation;
+        this.m_elevationRange.maxElevation = elevationRange.maxElevation;
+        this.m_elevationRange.calculationStatus = elevationRange.calculationStatus;
 
         // Only elevate bounding box if tile has already been decoded and a maximum geometry height
         // is provided by the data source.

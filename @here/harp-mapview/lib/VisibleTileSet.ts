@@ -555,10 +555,7 @@ export class VisibleTileSet {
                 // Update the visible area of the tile. This is used for those tiles that are
                 // currently loaded and are waiting to be decoded to sort the jobs by area.
                 tile.visibleArea = tileEntry.area;
-                tile.elevationRange = {
-                    minElevation: tileEntry.minElevation,
-                    maxElevation: tileEntry.maxElevation
-                };
+                tile.elevationRange = tileEntry;
 
                 actuallyVisibleTiles.push(tile);
             }

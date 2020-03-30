@@ -4,10 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { hasDisplacementFeature } from "@here/harp-materials";
+import { DisplacementFeature, hasDisplacementFeature } from "@here/harp-materials";
+import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { DisplacedBufferAttribute } from "./DisplacedBufferAttribute";
 import { DisplacedBufferGeometry, DisplacementRange } from "./DisplacedBufferGeometry";
+
+function isBufferGeometry(
+    geometry: THREE.Geometry | THREE.BufferGeometry
+): geometry is THREE.BufferGeometry {
+    const isBufferGeom = geometry instanceof THREE.BufferGeometry;
+    assert(isBufferGeom, "Unsupported geometry type.");
+    return isBufferGeom;
+}
+
+function isDisplacementMaterial(material: any): material is DisplacementFeature {
+    const isDisplacementFeature = hasDisplacementFeature(material);
+    assert(isDisplacementFeature, "Material does not support displacement maps.");
+    return isDisplacementFeature;
+}
+
+function isDataTextureMap(map: THREE.Texture | null): map is THREE.DataTexture {
+    const isDataTexture = map !== null && map instanceof THREE.DataTexture;
+    assert(isDataTexture, "Material does not support displacement maps.");
+    return isDataTexture;
+}
 
 /**
  * Mesh with geometry modified by a displacement map. Overrides raycasting behaviour to apply
@@ -56,20 +77,23 @@ export class DisplacedMesh extends THREE.Mesh {
         material?: THREE.Material | THREE.Material[]
     ) {
         super(geometry, material);
+        assert(!this.geometry || isBufferGeometry(this.geometry));
+        assert(!this.material || isDisplacementMaterial(this.firstMaterial));
     }
 
-    /** @override */
     raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
+        if (!this.geometry || !this.material) {
+            return;
+        }
+
         // All materials in the object are expected to have the same displacement map.
-        const material: THREE.Material = Array.isArray(this.material)
-            ? this.material[0]
-            : this.material;
+        const material = this.firstMaterial;
 
         // Use default raycasting implementation if some type is unexpected.
         if (
-            !(this.geometry instanceof THREE.BufferGeometry) ||
-            !hasDisplacementFeature(material) ||
-            !(material.displacementMap instanceof THREE.DataTexture)
+            !isBufferGeometry(this.geometry) ||
+            !isDisplacementMaterial(material) ||
+            !isDataTextureMap(material.displacementMap)
         ) {
             super.raycast(raycaster, intersects);
             return;
@@ -92,5 +116,9 @@ export class DisplacedMesh extends THREE.Mesh {
         this.geometry = this.m_displacedGeometry;
         super.raycast(raycaster, intersects);
         this.geometry = this.m_displacedGeometry.originalGeometry;
+    }
+
+    private get firstMaterial(): THREE.Material {
+        return Array.isArray(this.material) ? this.material[0] : this.material;
     }
 }

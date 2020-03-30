@@ -307,6 +307,7 @@ export type ObjectConstructor = new (
  * Gets the default `three.js` object constructor associated with the given technique.
  *
  * @param technique The technique.
+ * @param tile The tile where the object is located.
  * @param elevationEnabled True if elevation is enabled, false otherwise.
  */
 export function getObjectConstructor(
