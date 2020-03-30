@@ -103,7 +103,8 @@ class PoiRenderBufferBatch {
      * Setup texture and material for the batch.
      */
     private setup() {
-        const bilinear = true;
+        // Enable trilinear filtering to reduce flickering due to distance scaling
+        const trilinear = true;
 
         // Texture images should be generated with premultiplied alpha
         const premultipliedAlpha = true;
@@ -114,13 +115,16 @@ class PoiRenderBufferBatch {
             THREE.UVMapping,
             undefined,
             undefined,
-            bilinear ? THREE.LinearFilter : THREE.NearestFilter,
-            bilinear ? THREE.LinearFilter : THREE.NearestFilter,
+            trilinear ? THREE.LinearFilter : THREE.NearestFilter,
+            trilinear ? THREE.LinearMipMapLinearFilter : THREE.NearestFilter,
             THREE.RGBAFormat
         );
         texture.needsUpdate = true;
         texture.premultiplyAlpha = premultipliedAlpha;
-        texture.generateMipmaps = false; // not needed, always rendered in full size
+        // Generate mipmaps for distance scaling of icon
+        // TODO: Implement custom mip map generation if support for texture atlas
+        // with icons that are not power of two or have different sizes is necessary.
+        texture.generateMipmaps = true;
 
         this.m_material = new IconMaterial({
             map: texture
