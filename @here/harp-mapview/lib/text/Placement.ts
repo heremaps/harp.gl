@@ -341,11 +341,18 @@ export function placePointLabel(
 ): PlacementResult {
     const layoutStyle = labelState.element.layoutStyle!;
 
-    // For centered point labels do only current anchor testing.
+    // For the new labels with rejected icons we don't need to go further.
+    // Make them invisible.
+    const newLabel = !labelState.visible;
+    if (isRejected && newLabel) {
+        return PlacementResult.Invisible;
+    }
+    // For centered point labels and labels with icon rejected, do only current anchor testing.
     // TODO: Should be removed after placements are provided via style - see HARP-6487.
     if (
-        layoutStyle.verticalAlignment === VerticalAlignment.Center &&
-        layoutStyle.horizontalAlignment === HorizontalAlignment.Center
+        isRejected ||
+        (layoutStyle.verticalAlignment === VerticalAlignment.Center &&
+            layoutStyle.horizontalAlignment === HorizontalAlignment.Center)
     ) {
         return placePointLabelAtCurrentAnchor(
             labelState,
@@ -443,6 +450,31 @@ function placePointLabelChoosingAnchor(
             outScreenPosition
         );
 
+        // Will be processed only once if the icon is rejected.
+        if (isRejected) {
+            // For the new labels with rejected icons we don't need to test anything else,
+            // the result will be always: Invisible.
+            if (!persistent) {
+                assert(placementResult === PlacementResult.Invisible);
+                return placementResult;
+            }
+            // For persistent labels with rejected icons we may fade them out based on current
+            // placement or do not render at all if out of screen, no need to search for better
+            // placement. The result will be: Rejected or Invisible
+            // NOTE:
+            // It might be changed if we would like to render text without icon (at border, etc.).
+            // If persistent icon's is isRejected, we could test visibility and collision of other
+            // placements, but it's better to interrupt tests now and save some CPU time, it makes
+            // no sense to save a sinking ship.
+            else {
+                assert(
+                    placementResult === PlacementResult.Invisible ||
+                        placementResult === PlacementResult.Rejected
+                );
+                return placementResult;
+            }
+        }
+
         // Check the text allocation
         if (placementResult === PlacementResult.Invisible) {
             // Persistent label out of screen or the new label that is colliding - next iteration.
@@ -452,16 +484,7 @@ function placePointLabelChoosingAnchor(
             allInvisible = false;
         }
 
-        // If icon rejected proceed to test further if all elements are invisible.
-        // TODO:
-        // If icon's is isRejected, should we test visibility of all placements, maybe better to
-        // interrupt tests now and save some CPU time?
-        if (placementResult === PlacementResult.Rejected && isRejected) {
-            continue;
-        }
-        // Check label's text collision.
-        // TODO: Same comment as above, maybe better to interrupt the tests here after checking
-        // first placement and save CPU time.
+        // If text rejected (label collides), proceed to test further placements.
         if (placementResult === PlacementResult.Rejected) {
             continue;
         }
@@ -477,6 +500,8 @@ function placePointLabelChoosingAnchor(
     // No placement found - revert back the original alignment.
     label.layoutStyle!.horizontalAlignment = basePlacement.h;
     label.layoutStyle!.verticalAlignment = basePlacement.v;
+    delete label.bounds;
+    label.bounds = undefined;
 
     return allInvisible
         ? // All text's placements out of the screen.
@@ -560,6 +585,8 @@ function placePointLabelAtCurrentAnchor(
     // Check if icon's label was already rejected.
     if (isRejected) {
         // Allows to fade out persistent label and simply ignore new one.
+        // NOTE:
+        // It might be changed if we would like to render text without icon (at border, etc.).
         return persistent ? PlacementResult.Rejected : PlacementResult.Invisible;
     }
     // Check label's text collision.
