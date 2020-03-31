@@ -631,7 +631,10 @@ describe("TextElementsRenderer", function() {
         // Array with all text elements and their corresponding expected frame states.
         const elementFrameStates = new Array<[TextElement, FadeState[]]>();
 
-        let enableElevation = false;
+        const enableElevation =
+            test.tiles.find(tile => tile.terrainFrames !== undefined) !== undefined;
+        await fixture.setElevationProvider(enableElevation);
+
         const allTileIndices: number[] = [];
         // For each tile, build all its text elements and add them together with their expected
         // frame states to an array.
@@ -641,7 +644,6 @@ describe("TextElementsRenderer", function() {
             }
             if (tile.terrainFrames !== undefined) {
                 expect(tile.terrainFrames.length).equal(test.frameTimes.length);
-                enableElevation = true;
             }
             const labels = buildLabels(tile.labels, elementFrameStates, test.frameTimes.length);
             allTileIndices.push(tileIndex);
@@ -654,7 +656,7 @@ describe("TextElementsRenderer", function() {
         // Extra frame including all tiles to set the glyph loading state of all text elements
         // to initialized.
         await fixture.renderFrame(INITIAL_TIME, allTileIndices, []);
-        fixture.setElevationProvider(enableElevation);
+
         return { elementFrameStates, prevOpacities };
     }
 

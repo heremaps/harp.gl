@@ -6,13 +6,18 @@
 
 import { MapEnv, Theme } from "@here/harp-datasource-protocol";
 import { identityProjection, TileKey } from "@here/harp-geoutils";
-import { TextCanvas } from "@here/harp-text-canvas";
+import { FontCatalog, TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+import { ElevationProvider } from "../lib/ElevationProvider";
+import { PoiManager } from "../lib/poi/PoiManager";
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
+import { PoiRendererFactory } from "../lib/poi/PoiRendererFactory";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { ScreenProjector } from "../lib/ScreenProjector";
+import { FontCatalogLoader } from "../lib/text/FontCatalogLoader";
+import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
 import { TextElement } from "../lib/text/TextElement";
 import { TextElementsRenderer } from "../lib/text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "../lib/text/TextElementsRendererOptions";
@@ -47,17 +52,16 @@ function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox
     return {
         worldCenter,
         cameraIsMoving: false,
-        maxVisibilityDist: 10000,
+        viewRanges: { minimum: 0, maximum: 10000, near: 0, far: 10000 },
         // This level affects the distance tolerance applied to find label replacement by location.
         zoomLevel: 20,
-        env: new MapEnv({ $zoom: 20 }),
         frameNumber: 0,
         targetDistance: 0,
         isDynamic: false,
-        hiddenGeometryKinds: undefined,
         renderedTilesChanged: false,
-        projection: identityProjection,
-        elevationProvider: undefined
+        yaw: 0,
+        pitch: 0,
+        roll: 0
     };
 }
 
@@ -96,6 +100,25 @@ function createScreenProjector(): ScreenProjector {
  * Test fixture used to test TextElementsRenderer.
  */
 export class TestFixture {
+    private get textRenderer(): TextElementsRenderer {
+        assert(this.m_textRenderer !== undefined);
+        return this.m_textRenderer!;
+    }
+
+    private get visibleTiles(): Tile[] {
+        return this.tileLists[0].visibleTiles;
+    }
+
+    private set visibleTiles(tiles: Tile[]) {
+        this.tileLists[0].visibleTiles = tiles;
+        this.tileLists[0].renderedTiles.clear();
+        for (const tile of tiles) {
+            this.tileLists[0].renderedTiles.set(
+                TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, 0),
+                tile
+            );
+        }
+    }
     private readonly m_screenCollisions: ScreenCollisions;
     private readonly tileLists: DataSourceTileList[] = [];
     private readonly m_poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>;
@@ -108,9 +131,17 @@ export class TestFixture {
     private readonly m_camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
     private readonly m_theme: Theme = {};
     private m_viewState: ViewState;
+    private m_elevationProvider?: ElevationProvider;
+    private m_env: MapEnv;
     private m_options: TextElementsRendererOptions = {};
     private m_screenCollisionTestStub: sinon.SinonStub | undefined;
-    private m_textCanvasStub: TextCanvas | undefined;
+    private m_fontCatalogStub: FontCatalog;
+    private m_textCanvasStub: TextCanvas;
+    private m_stubTextCanvasFactory: TextCanvasFactory;
+    private m_stubPoiManager: PoiManager;
+    private m_stubPoiRendererFactory: PoiRendererFactory;
+    private m_stubFontCatalogLoader: FontCatalogLoader;
+
     private m_textRenderer: TextElementsRenderer | undefined;
     private m_defaultTile: Tile | undefined;
     private m_allTiles: Tile[] = [];
@@ -120,12 +151,30 @@ export class TestFixture {
         this.m_screenCollisions = new ScreenCollisions();
         this.m_screenCollisions.update(SCREEN_WIDTH, SCREEN_HEIGHT);
         this.m_viewState = createViewState(new THREE.Vector3(), sandbox);
+        this.m_env = new MapEnv({ $zoom: 20 });
         this.m_renderPoiSpy = sandbox.spy();
         this.m_addTextSpy = sandbox.spy();
         this.m_addTextBufferObjSpy = sandbox.spy();
         this.m_poiRendererStub = stubPoiRenderer(this.sandbox, this.m_renderPoiSpy);
         this.m_elevationProviderStub = stubElevationProvider(this.sandbox);
         this.m_screenProjector = createScreenProjector();
+
+        this.m_fontCatalogStub = stubFontCatalog(this.sandbox);
+        this.m_textCanvasStub = stubTextCanvas(
+            this.sandbox,
+            this.m_addTextSpy,
+            this.m_addTextBufferObjSpy,
+            this.m_fontCatalogStub,
+            DEF_TEXT_WIDTH_HEIGHT
+        );
+
+        this.m_stubTextCanvasFactory = stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub!);
+        this.m_stubPoiManager = stubPoiManager(this.sandbox);
+        this.m_stubPoiRendererFactory = stubPoiRendererFactory(
+            this.sandbox,
+            this.m_poiRendererStub
+        );
+        this.m_stubFontCatalogLoader = stubFontCatalogLoader(this.sandbox, this.m_fontCatalogStub!);
     }
 
     /**
@@ -150,33 +199,8 @@ export class TestFixture {
             labelDistanceScaleMin: 1,
             labelDistanceScaleMax: 1
         };
-        const fontCatalog = stubFontCatalog(this.sandbox);
-        this.m_textCanvasStub = stubTextCanvas(
-            this.sandbox,
-            this.m_addTextSpy,
-            this.m_addTextBufferObjSpy,
-            fontCatalog,
-            DEF_TEXT_WIDTH_HEIGHT
-        );
-        const dummyUpdateCall = () => {};
-        this.m_textRenderer = new TextElementsRenderer(
-            this.m_viewState,
-            this.m_camera,
-            dummyUpdateCall,
-            this.m_screenCollisions,
-            this.m_screenProjector,
-            stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub),
-            stubPoiManager(this.sandbox),
-            stubPoiRendererFactory(this.sandbox, this.m_poiRendererStub),
-            stubFontCatalogLoader(this.sandbox, fontCatalog),
-            this.m_theme,
-            this.m_options
-        );
-        // Force renderer initialization by calling render with changed text elements.
-        const time = 0;
-        this.m_textRenderer.placeText(this.tileLists, time);
-        this.clearVisibleTiles();
-        return this.m_textRenderer.waitInitialized();
+
+        return Promise.resolve(true); // this.createTextRenderer();
     }
 
     /**
@@ -288,7 +312,7 @@ export class TestFixture {
             this.m_viewState.renderedTilesChanged = this.setVisibleTiles(tileIndices);
         }
 
-        if (this.m_viewState.elevationProvider) {
+        if (this.m_elevationProvider) {
             this.setTerrainTiles(terrainTileIndices);
         }
 
@@ -296,19 +320,50 @@ export class TestFixture {
         this.textRenderer.placeText(this.tileLists, time);
     }
 
-    private get textRenderer(): TextElementsRenderer {
-        assert(this.m_textRenderer !== undefined);
-        return this.m_textRenderer!;
+    setElevationProvider(enabled: boolean): Promise<boolean> {
+        if (
+            (this.m_elevationProvider === undefined && enabled === false) ||
+            (this.m_elevationProvider !== undefined && enabled === true)
+        ) {
+            return Promise.resolve(true);
+        }
+        this.m_elevationProvider = enabled ? this.m_elevationProviderStub : undefined;
+        return this.createTextRenderer();
     }
 
-    setElevationProvider(enabled: boolean) {
-        this.m_viewState.elevationProvider = enabled ? this.m_elevationProviderStub : undefined;
+    private createTextRenderer(): Promise<boolean> {
+        const dummyUpdateCall = () => {};
+
+        this.m_textRenderer = new TextElementsRenderer(
+            // tslint:disable-next-line: deprecation
+            this.m_viewState,
+            this.m_camera,
+            identityProjection,
+            this.m_elevationProvider,
+            undefined,
+            dummyUpdateCall,
+            this.m_screenCollisions,
+            this.m_screenProjector,
+            this.m_stubTextCanvasFactory,
+            this.m_stubPoiManager,
+            this.m_stubPoiRendererFactory,
+            this.m_stubFontCatalogLoader,
+            this.m_theme,
+            this.m_env,
+            this.m_options
+        );
+
+        // Force renderer initialization by calling render with changed text elements.
+        const time = 0;
+        this.m_textRenderer.placeText(this.tileLists, time);
+        this.clearVisibleTiles();
+        return this.m_textRenderer.waitInitialized();
     }
     private checkTextElementRendered(
         textElement: TextElement,
         opacityMatcher: OpacityMatcher | undefined
     ): number {
-        if (this.m_viewState.elevationProvider) {
+        if (this.m_elevationProvider) {
             assert(textElement.elevated, this.getErrorHeading(textElement) + " was NOT elevated.");
         }
         switch (textElement.type) {
@@ -363,7 +418,7 @@ export class TestFixture {
     }
 
     private setTerrainTiles(indices: number[]) {
-        expect(this.m_viewState.elevationProvider).not.undefined;
+        expect(this.m_elevationProvider).not.undefined;
         this.m_elevationProviderStub.getDisplacementMap.resetBehavior();
         this.m_elevationProviderStub.getDisplacementMap.returns(undefined);
 
@@ -383,21 +438,6 @@ export class TestFixture {
     private clearVisibleTiles() {
         this.tileLists[0].visibleTiles.length = 0;
         this.tileLists[0].renderedTiles.clear();
-    }
-
-    private get visibleTiles(): Tile[] {
-        return this.tileLists[0].visibleTiles;
-    }
-
-    private set visibleTiles(tiles: Tile[]) {
-        this.tileLists[0].visibleTiles = tiles;
-        this.tileLists[0].renderedTiles.clear();
-        for (const tile of tiles) {
-            this.tileLists[0].renderedTiles.set(
-                TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, 0),
-                tile
-            );
-        }
     }
 
     private checkPointTextRendered(

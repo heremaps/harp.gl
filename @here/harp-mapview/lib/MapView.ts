@@ -2534,6 +2534,8 @@ export class MapView extends THREE.EventDispatcher {
             overlayOnElevation(tile);
         });
         this.clearTileCache();
+
+        this.resetTextRenderer();
     }
 
     /**
@@ -2908,21 +2910,15 @@ export class MapView extends THREE.EventDispatcher {
                 lightDirection.sub(directionalLight.position);
                 lightDirection.normalize();
 
-                const normal = cache.vector3[1];
-                if (this.projection.type === ProjectionType.Planar) {
-                    // -Z points to the camera, we can't use Projection.surfaceNormal, because
-                    // webmercator and mercator give different results.
-                    normal.set(0, 0, -1);
-                } else {
-                    // Enable shadows for globe...
-                    //this.projection.surfaceNormal(target, normal);
-                }
+                const normal = this.projection
+                    .surfaceNormal(this.worldCenter, cache.vector3[1])
+                    .multiplyScalar(-1);
 
                 // The camera of the shadow has the same height as the map camera, and the target is
                 // also the same. The position is then calculated based on the light direction and
                 // the height
                 // using basic trigonometry.
-                const cameraHeight = this.targetDistance * Math.cos(this.m_viewState.pitch);
+                const cameraHeight = this.projection.groundDistance(this.worldCenter);
                 const lightPosHyp = cameraHeight / normal.dot(lightDirection);
 
                 directionalLight.target.position.copy(this.worldTarget).sub(this.camera.position);
