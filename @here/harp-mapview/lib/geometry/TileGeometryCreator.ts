@@ -701,10 +701,6 @@ export class TileGeometryCreator {
 
                 object.renderOrder = technique.renderOrder!;
 
-                if (group.renderOrderOffset !== undefined) {
-                    object.renderOrder += group.renderOrderOffset;
-                }
-
                 if (srcGeometry.uuid !== undefined) {
                     object.userData.geometryId = srcGeometry.uuid;
                 }
@@ -1125,10 +1121,6 @@ export class TileGeometryCreator {
                         outlineTechnique.secondaryRenderOrder !== undefined
                             ? outlineTechnique.secondaryRenderOrder
                             : technique.renderOrder - 0.0000001;
-
-                    if (group.renderOrderOffset !== undefined) {
-                        outlineObj.renderOrder += group.renderOrderOffset;
-                    }
 
                     const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
                     FadingFeature.addRenderHelper(

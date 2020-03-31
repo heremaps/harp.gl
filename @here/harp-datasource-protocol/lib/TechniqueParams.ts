@@ -188,11 +188,6 @@ export interface BaseTechniqueParams {
     category?: string;
 
     /**
-     *
-     */
-    renderOrderOffset?: number;
-
-    /**
      * Optional. If `true`, no IDs will be saved for the geometry this technique creates.
      */
     transient?: boolean;

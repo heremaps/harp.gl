@@ -78,7 +78,6 @@ export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniquePar
     attrTransparencyColor: "color",
     attrScopes: {
         renderOrder: AttrScope.TechniqueGeometry,
-        renderOrderOffset: AttrScope.TechniqueGeometry,
         enabled: AttrScope.FeatureGeometry,
         kind: AttrScope.TechniqueGeometry,
         transient: AttrScope.TechniqueGeometry,
