@@ -125,6 +125,7 @@ class PoiRenderBufferBatch {
         // TODO: Implement custom mip map generation if support for texture atlas
         // with icons that are not power of two or have different sizes is necessary.
         texture.generateMipmaps = true;
+        texture.flipY = false;
 
         this.m_material = new IconMaterial({
             map: texture
