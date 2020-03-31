@@ -75,8 +75,7 @@ class CustomDecoder extends ThemedTileDecoder
                 {
                     start: 0,
                     count: indices.length,
-                    technique: techniqueIndex,
-                    renderOrderOffset: 0
+                    technique: techniqueIndex
                 }
             ],
             vertexAttributes: []

@@ -32,7 +32,6 @@ const logger = LoggerManager.instance.create("OmvDataSource");
 export interface LinesGeometry {
     type: GeometryType;
     lines: LineGroup;
-    renderOrderOffset?: number;
     technique: number;
 
     /**

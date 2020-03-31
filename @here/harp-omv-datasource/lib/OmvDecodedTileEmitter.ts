@@ -1130,26 +1130,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         uvs?: number[][],
         offsets?: number[][]
     ): void {
-        const renderOrderOffset = evaluateTechniqueAttr<number>(
-            context,
-            technique.renderOrderOffset,
-            0
-        );
-
         let lineGroup: LineGroup;
-        const lineGroupGeometries = linesGeometry.find(aLine => {
-            return (
-                aLine.technique === techniqueIndex && aLine.renderOrderOffset === renderOrderOffset
-            );
-        });
+        const lineGroupGeometries = linesGeometry.find(aLine => aLine.technique === techniqueIndex);
         const hasNormalsAndUvs = uvs !== undefined;
         if (lineGroupGeometries === undefined) {
             lineGroup = new LineGroup(hasNormalsAndUvs, undefined, lineType === LineType.Simple);
             const aLine: LinesGeometry = {
                 type: lineType === LineType.Complex ? GeometryType.SolidLine : GeometryType.Line,
                 technique: techniqueIndex,
-                renderOrderOffset:
-                    renderOrderOffset !== undefined ? Number(renderOrderOffset) : undefined,
                 lines: lineGroup
             };
 
@@ -1788,7 +1776,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private processLines(linesArray: LinesGeometry[]) {
         linesArray.forEach(linesGeometry => {
             const { vertices, indices } = linesGeometry.lines;
-            const renderOrderOffset = linesGeometry.renderOrderOffset;
             const technique = linesGeometry.technique;
             const buffer = new Float32Array(vertices).buffer as ArrayBuffer;
             const index = new Uint32Array(indices).buffer as ArrayBuffer;
@@ -1807,7 +1794,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     name: "index"
                 },
                 interleavedVertexAttributes: [attr],
-                groups: [{ start: 0, count: indices.length, technique, renderOrderOffset }],
+                groups: [{ start: 0, count: indices.length, technique }],
                 vertexAttributes: [],
                 featureStarts: linesGeometry.featureStarts,
                 objInfos: linesGeometry.objInfos
@@ -1820,7 +1807,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private processSimpleLines(linesArray: LinesGeometry[]) {
         linesArray.forEach(linesGeometry => {
             const { vertices, indices } = linesGeometry.lines;
-            const renderOrderOffset = linesGeometry.renderOrderOffset;
             const technique = linesGeometry.technique;
             const buffer = new Float32Array(vertices).buffer as ArrayBuffer;
             const index = new Uint32Array(indices).buffer as ArrayBuffer;
@@ -1839,7 +1825,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     name: "index"
                 },
                 vertexAttributes: [attr],
-                groups: [{ start: 0, count: indices.length, technique, renderOrderOffset }],
+                groups: [{ start: 0, count: indices.length, technique }],
                 featureStarts: linesGeometry.featureStarts,
                 objInfos: linesGeometry.objInfos
             };
