@@ -24,8 +24,11 @@ function isDisplacementMaterial(material: any): material is DisplacementFeature 
     return isDisplacementFeature;
 }
 
-function isDataTextureMap(map: THREE.Texture | null): map is THREE.DataTexture {
-    const isDataTexture = map !== null && map instanceof THREE.DataTexture;
+function isDataTextureMap(map?: THREE.Texture | null): map is THREE.DataTexture {
+    if (!map) {
+        return false;
+    }
+    const isDataTexture = map instanceof THREE.DataTexture;
     assert(isDataTexture, "Material does not support displacement maps.");
     return isDataTexture;
 }
