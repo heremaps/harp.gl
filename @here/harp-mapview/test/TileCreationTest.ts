@@ -8,8 +8,10 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 import { MapEnv, ShaderTechnique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
+import { MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert } from "chai";
 import * as THREE from "three";
+import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
 import { createMaterial, getObjectConstructor } from "./../lib/DecodedTileHelpers";
 import { Tile } from "./../lib/Tile";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
@@ -52,14 +54,15 @@ describe("Tile Creation", function() {
         const Ctor = getObjectConstructor(technique, tile, false);
         assert.isFunction(Ctor, "Expected a constructor");
         if (Ctor !== undefined) {
-            const object = new Ctor();
+            const object = new Ctor(new THREE.Geometry(), new THREE.Material());
             assert.isTrue(object instanceof THREE.Line, "expected a THREE.Line object");
         }
     });
 
-    it("ObjectConstructor", function() {
+    it("getObjectConstructor returns proper ctor. on elevation disabled", function() {
         const tile = new Tile(new FakeOmvDataSource(), new TileKey(0, 0, 0));
-
+        const geometry = new THREE.Geometry();
+        const material = new THREE.Material();
         const ExtrudedLineCtor = getObjectConstructor(
             {
                 name: "extruded-line",
@@ -72,7 +75,7 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(ExtrudedLineCtor);
         if (ExtrudedLineCtor !== undefined) {
-            assert.isTrue(new ExtrudedLineCtor() instanceof THREE.Mesh);
+            assert.isTrue(new ExtrudedLineCtor(geometry, material) instanceof THREE.Mesh);
         }
 
         const StandardCtor = getObjectConstructor(
@@ -82,7 +85,7 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(StandardCtor);
         if (StandardCtor !== undefined) {
-            assert.isTrue(new StandardCtor() instanceof THREE.Mesh);
+            assert.isTrue(new StandardCtor(geometry, material) instanceof THREE.Mesh);
         }
 
         const ExtrudedPolygonCtor = getObjectConstructor(
@@ -96,19 +99,19 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(ExtrudedPolygonCtor);
         if (ExtrudedPolygonCtor !== undefined) {
-            assert.isTrue(new ExtrudedPolygonCtor() instanceof THREE.Mesh);
+            assert.isTrue(new ExtrudedPolygonCtor(geometry, material) instanceof THREE.Mesh);
         }
 
         const FillCtor = getObjectConstructor({ name: "fill", renderOrder: 0 }, tile, false);
         assert.isFunction(FillCtor);
         if (FillCtor !== undefined) {
-            assert.isTrue(new FillCtor() instanceof THREE.Mesh);
+            assert.isTrue(new FillCtor(geometry, material) instanceof THREE.Mesh);
         }
 
         const PointCtor = getObjectConstructor({ name: "squares", renderOrder: 0 }, tile, false);
         assert.isFunction(PointCtor);
         if (PointCtor !== undefined) {
-            assert.isTrue(new PointCtor() instanceof THREE.Points);
+            assert.isTrue(new PointCtor(geometry, material) instanceof THREE.Points);
         }
 
         const LineCtor = getObjectConstructor(
@@ -123,7 +126,7 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(LineCtor);
         if (LineCtor !== undefined) {
-            assert.isTrue(new LineCtor() instanceof THREE.Line);
+            assert.isTrue(new LineCtor(geometry, material) instanceof THREE.Line);
         }
 
         const SegmentsCtor = getObjectConstructor(
@@ -138,7 +141,7 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(SegmentsCtor);
         if (SegmentsCtor !== undefined) {
-            assert.isTrue(new SegmentsCtor() instanceof THREE.LineSegments);
+            assert.isTrue(new SegmentsCtor(geometry, material) instanceof THREE.LineSegments);
         }
 
         const ShaderPointCtor = getObjectConstructor(
@@ -153,7 +156,7 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(ShaderPointCtor);
         if (ShaderPointCtor !== undefined) {
-            assert.isTrue(new ShaderPointCtor() instanceof THREE.Points);
+            assert.isTrue(new ShaderPointCtor(geometry, material) instanceof THREE.Points);
         }
 
         const ShaderLineCtor = getObjectConstructor(
@@ -168,7 +171,7 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(ShaderLineCtor);
         if (ShaderLineCtor !== undefined) {
-            assert.isTrue(new ShaderLineCtor() instanceof THREE.Line);
+            assert.isTrue(new ShaderLineCtor(geometry, material) instanceof THREE.Line);
         }
 
         const ShaderLineSegmentsCtor = getObjectConstructor(
@@ -183,7 +186,9 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(ShaderLineSegmentsCtor);
         if (ShaderLineSegmentsCtor !== undefined) {
-            assert.isTrue(new ShaderLineSegmentsCtor() instanceof THREE.LineSegments);
+            assert.isTrue(
+                new ShaderLineSegmentsCtor(geometry, material) instanceof THREE.LineSegments
+            );
         }
 
         const ShaderMeshCtor = getObjectConstructor(
@@ -198,10 +203,57 @@ describe("Tile Creation", function() {
         );
         assert.isFunction(ShaderMeshCtor);
         if (ShaderMeshCtor !== undefined) {
-            assert.isTrue(new ShaderMeshCtor() instanceof THREE.Mesh);
+            assert.isTrue(new ShaderMeshCtor(geometry, material) instanceof THREE.Mesh);
         }
 
         const TextCtor = getObjectConstructor({ name: "text", renderOrder: 0 }, tile, false);
         assert.isUndefined(TextCtor); // text techniques don't create scene objects
+    });
+
+    it("getObjectConstructor returns DisplacedMesh ctor. on elevation enabled", function() {
+        const tile = new Tile(new FakeOmvDataSource(), new TileKey(0, 0, 0));
+        const geometry = new THREE.BufferGeometry();
+        const material = new MapMeshStandardMaterial();
+
+        const ExtrPolygonCtor = getObjectConstructor(
+            {
+                name: "extruded-polygon",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            tile,
+            true
+        );
+        assert.isFunction(ExtrPolygonCtor);
+        if (ExtrPolygonCtor !== undefined) {
+            assert.isTrue(new ExtrPolygonCtor(geometry, material) instanceof DisplacedMesh);
+        }
+
+        const StandardCtor = getObjectConstructor({ name: "standard", renderOrder: 0 }, tile, true);
+        assert.isFunction(StandardCtor);
+        if (StandardCtor !== undefined) {
+            assert.isTrue(new StandardCtor(geometry, material) instanceof DisplacedMesh);
+        }
+
+        const ExtrLineCtor = getObjectConstructor(
+            {
+                name: "extruded-line",
+                color: "#f00",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            tile,
+            true
+        );
+        assert.isFunction(ExtrLineCtor);
+        if (ExtrLineCtor !== undefined) {
+            assert.isTrue(new ExtrLineCtor(geometry, material) instanceof DisplacedMesh);
+        }
+
+        const FillCtor = getObjectConstructor({ name: "fill", renderOrder: 0 }, tile, true);
+        assert.isFunction(FillCtor);
+        if (FillCtor !== undefined) {
+            assert.isTrue(new FillCtor(geometry, material) instanceof DisplacedMesh);
+        }
     });
 });
