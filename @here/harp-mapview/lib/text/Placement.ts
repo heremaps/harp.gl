@@ -429,6 +429,11 @@ function placePointLabelChoosingAnchor(
     // Store label state - persistent or new label.
     const persistent = labelState.visible;
 
+    // Text elements with multi-anchor placement require their own layout style.
+    // Provide private copy of label layout and attach it to current label and text canvas.
+    label.layoutStyle = label.layoutStyle!.clone();
+    textCanvas.textLayoutStyle = label.layoutStyle!;
+
     // The current implementation does not provide placements options via theme style yet,
     // so function tries the anchor placements from pre-defined placements arrays.
     // TODO: HARP-6487 Placements options should be loaded from the theme.
