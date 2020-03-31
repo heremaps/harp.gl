@@ -696,7 +696,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
 
                 const count = indices.length - start;
-                groups.push({ start, count, technique: techniqueIndex, featureId });
+                groups.push({ start, count, technique: techniqueIndex });
             } else {
                 logger.warn(
                     `OmvDecodedTileEmitter#processLineFeature: Invalid line technique
@@ -1594,8 +1594,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 groups.push({
                     start: startIndexCount,
                     count,
-                    technique: techniqueIndex,
-                    featureId
+                    technique: techniqueIndex
                 });
             }
         }

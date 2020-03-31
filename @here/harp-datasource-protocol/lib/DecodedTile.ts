@@ -220,7 +220,6 @@ export interface Group {
     start: number;
     count: number;
     technique: number;
-    featureId?: number;
 
     /**
      * Contains tile offsets if its [[Geometry]] has been created.
