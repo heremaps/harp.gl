@@ -10,7 +10,7 @@ import {
     ThemeLoader,
     WorkerBasedDecoder
 } from "@here/harp-mapview";
-import { LoggerManager } from "@here/harp-utils";
+import { getAppBaseUrl, LoggerManager } from "@here/harp-utils";
 import { GUI, GUIController } from "dat.gui";
 
 import { PerformanceTestData } from "../lib/PerformanceConfig";
@@ -726,10 +726,23 @@ export namespace PerformanceBenchmark {
             .add(guiOptions, "Theme", guiOptions.Theme)
             .onChange((themeUrl: string) => {
                 theme = themeUrl;
-                ThemeLoader.load(themeUrl).then((newTheme: Theme) => {
-                    mapViewApp.mapView.clearTileCache();
-                    mapViewApp.mapView.theme = newTheme;
-                });
+                const fontUriResolver = {
+                    resolveUri: (uri: string) => {
+                        // FIXME: Style file should contain proper URI with schema like font://...
+                        if (uri === "fonts/Default_FontCatalog.json") {
+                            return getAppBaseUrl() + "resources/fonts/Default_FontCatalog.json";
+                        } else {
+                            return uri;
+                        }
+                    }
+                };
+
+                ThemeLoader.load(themeUrl, { uriResolver: fontUriResolver }).then(
+                    (newTheme: Theme) => {
+                        mapViewApp.mapView.clearTileCache();
+                        mapViewApp.mapView.theme = newTheme;
+                    }
+                );
             })
             .setValue(THEMES.default);
 
