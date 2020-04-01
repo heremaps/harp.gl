@@ -37,7 +37,7 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
-import { LoggerManager } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { DisplacedMesh } from "./geometry/DisplacedMesh";
 import { Circles, Squares } from "./MapViewPoints";
@@ -297,81 +297,88 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
 }
 
 /**
- * The default `three.js` object used with a specific technique.
+ * Determines if a technique uses THREE.Object3D instances.
+ * @param technique The technique to check.
+ * @returns true if technique uses THREE.Object3D, false otherwise.
  */
-export type ObjectConstructor = new (
-    geometry: THREE.Geometry | THREE.BufferGeometry,
-    material: THREE.Material | THREE.Material[]
-) => THREE.Object3D;
+export function usesObject3D(technique: Technique): boolean {
+    const name = technique.name;
+    return (
+        name !== undefined &&
+        name !== "text" &&
+        name !== "labeled-icon" &&
+        name !== "line-marker" &&
+        name !== "label-rejection-line"
+    );
+}
+
 /**
- * Gets the default `three.js` object constructor associated with the given technique.
+ * Builds the object associated with the given technique.
  *
  * @param technique The technique.
+ * @param geometry The object's geometry.
+ * @param material The object's material.
  * @param tile The tile where the object is located.
  * @param elevationEnabled True if elevation is enabled, false otherwise.
  */
-export function getObjectConstructor(
+export function buildObject(
     technique: Technique,
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material | THREE.Material[],
     tile: Tile,
     elevationEnabled: boolean
-): ObjectConstructor | undefined {
-    if (technique.name === undefined) {
-        return undefined;
-    }
+): THREE.Object3D {
+    assert(technique.name !== undefined);
+
     switch (technique.name) {
         case "extruded-line":
         case "standard":
         case "extruded-polygon":
         case "fill":
             return elevationEnabled
-                ? DisplacedMesh.bind(undefined, () => {
-                      return {
+                ? new DisplacedMesh(
+                      () => ({
                           min: tile.elevationRange.minElevation,
                           max: tile.elevationRange.maxElevation
-                      };
-                  })
-                : THREE.Mesh;
+                      }),
+                      geometry,
+                      material
+                  )
+                : new THREE.Mesh(geometry, material);
         case "terrain":
         case "dashed-line":
         case "solid-line":
-            return THREE.Mesh;
+            return new THREE.Mesh(geometry, material);
 
         case "circles":
-            return Circles;
+            return new Circles(geometry, material);
 
         case "squares":
-            return Squares;
+            return new Squares(geometry, material);
 
         case "line":
-            return THREE.LineSegments;
+            return new THREE.LineSegments(geometry, material);
 
         case "segments":
-            return THREE.LineSegments;
+            return new THREE.LineSegments(geometry, material);
 
         case "shader": {
-            if (!isShaderTechnique(technique)) {
-                throw new Error("Invalid technique");
-            }
+            assert(isShaderTechnique(technique), "Invalid technique");
+
             switch (technique.primitive) {
                 case "line":
-                    return THREE.Line;
+                    return new THREE.Line(geometry, material);
                 case "segments":
-                    return THREE.LineSegments;
+                    return new THREE.LineSegments(geometry, material);
                 case "point":
-                    return THREE.Points;
+                    return new THREE.Points(geometry, material);
                 case "mesh":
-                    return THREE.Mesh;
-                default:
-                    return undefined;
+                    return new THREE.Mesh(geometry, material);
             }
         }
-
-        case "text":
-        case "labeled-icon":
-        case "line-marker":
-        case "label-rejection-line":
-            return undefined;
     }
+    assert(false, "Invalid technique");
+    return new THREE.Object3D();
 }
 
 /**

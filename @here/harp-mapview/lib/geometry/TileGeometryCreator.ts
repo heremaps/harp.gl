@@ -66,10 +66,11 @@ import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import {
     applyBaseColorToMaterial,
     applySecondaryColorToMaterial,
+    buildObject,
     compileTechniques,
     createMaterial,
     getBufferAttribute,
-    getObjectConstructor
+    usesObject3D
 } from "../DecodedTileHelpers";
 import {
     createDepthPrePassMesh,
@@ -576,9 +577,7 @@ export class TileGeometryCreator {
                     groups[groupIndex].createdOffsets!.push(tile.offset);
                 }
 
-                const ObjectCtor = getObjectConstructor(technique, tile, elevationEnabled);
-
-                if (ObjectCtor === undefined) {
+                if (!usesObject3D(technique)) {
                     continue;
                 }
 
@@ -676,9 +675,12 @@ export class TileGeometryCreator {
                     srcGeometry.featureStarts &&
                     srcGeometry.featureStarts.length > 0;
 
-                const object = new ObjectCtor(
+                const object = buildObject(
+                    technique,
                     bufferGeometry,
-                    hasFeatureGroups ? [material] : material
+                    hasFeatureGroups ? [material] : material,
+                    tile,
+                    elevationEnabled
                 );
 
                 object.renderOrder = technique.renderOrder!;
@@ -1097,7 +1099,13 @@ export class TileGeometryCreator {
                     if (outlineTechnique.secondaryCaps !== undefined) {
                         outlineMaterial.caps = outlineTechnique.secondaryCaps;
                     }
-                    const outlineObj = new ObjectCtor(bufferGeometry, outlineMaterial);
+                    const outlineObj = buildObject(
+                        technique,
+                        bufferGeometry,
+                        outlineMaterial,
+                        tile,
+                        elevationEnabled
+                    );
 
                     outlineObj.renderOrder =
                         outlineTechnique.secondaryRenderOrder !== undefined
