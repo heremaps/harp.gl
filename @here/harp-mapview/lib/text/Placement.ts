@@ -400,7 +400,8 @@ export function placePointLabel(
 /**
  * Try to place a point label text using multiple optional placements.
  *
- * @note Function should be called only for labels with icons not rejected.
+ * @note Function should be called only for labels with icons not rejected and for text alignments
+ * different then [[HorizontalAlignment.Center]] and [[VerticalAlignment.Center]].
  *
  * @param labelState State of the point label to place.
  * @param screenPosition Position of the label in screen coordinates.
@@ -449,38 +450,15 @@ function placePointLabelChoosingAnchor(
     // Placements options will be read from label.layoutStyle.placements in final solution.
     const placements = placementCentered ? anchorPlacementsCentered : anchorPlacementsCornered;
     const placementsNum = placements.length;
-    // Find current anchor placement on the optional placements list or best matching position.
+    // Find current anchor placement on the optional placements list.
     // Index of exact match.
-    let matchIdx = -1;
-    // Index of closest placement to the base one.
-    let closeIdxOff = 0;
-    let closeDiff = Infinity;
-    for (let i = 0; i < placementsNum; ++i) {
-        const placement = placements[i];
-        const hDiff = placement.h - basePlacement.h;
-        const vDiff = placement.v - basePlacement.v;
-        const manhattanDist = Math.abs(hDiff) + Math.abs(vDiff);
-        if (manhattanDist === 0) {
-            matchIdx = i;
-            closeIdxOff = 0;
-            break;
-        } else if (manhattanDist < closeDiff) {
-            closeDiff = manhattanDist;
-            closeIdxOff = i;
-        }
-    }
-
+    const matchIdx = placements.findIndex(p => p.h === basePlacement.h && p.v === basePlacement.v);
+    assert(matchIdx >= 0);
     // Will be true if all text placements are invisible.
     let allInvisible: boolean = true;
-    // If current anchor found on the list we start from it.
-    // If not listed in placements list (matchIdx === -1) we start from current anchor setup, but
-    // then immediately jump to the best matching option and iterate the over rest of placements.
-    // The number of iterations varies from `placementsNum` if perfect match found to
-    // `placementsNum + 1` otherwise (current placement + all optional).
-    const triesNum = matchIdx < 0 ? placementsNum + 1 : placementsNum;
-    for (let i = matchIdx, tryIdx = 0; tryIdx < triesNum; ++i, ++tryIdx) {
-        const anchorPlacement =
-            i < 0 ? basePlacement : placements[(i + closeIdxOff) % placementsNum];
+    // Iterate all placements starting from current one.
+    for (let i = matchIdx, tryIdx = 0; tryIdx < placementsNum; ++i, ++tryIdx) {
+        const anchorPlacement = placements[i % placementsNum];
         // Override label text alignment for measurements and leave it so if passed collisions test.
         // NOTE: This actually writes also to:
         // textCanvas.textLayoutStyle.verticalAlignment/horizontalAlignment.
