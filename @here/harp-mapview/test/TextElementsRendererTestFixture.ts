@@ -321,12 +321,6 @@ export class TestFixture {
     }
 
     setElevationProvider(enabled: boolean): Promise<boolean> {
-        if (
-            (this.m_elevationProvider === undefined && enabled === false) ||
-            (this.m_elevationProvider !== undefined && enabled === true)
-        ) {
-            return Promise.resolve(true);
-        }
         this.m_elevationProvider = enabled ? this.m_elevationProviderStub : undefined;
         return this.createTextRenderer();
     }
