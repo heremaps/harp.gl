@@ -12,6 +12,7 @@ import * as THREE from "three";
 
 import { ColorCache } from "../ColorCache";
 import { ImageItem } from "../image/Image";
+import { MipMapGenerator } from "../image/MipMapGenerator";
 import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
 import { PoiInfo, TextElement } from "../text/TextElement";
@@ -21,8 +22,8 @@ import { IconTexture } from "./Poi";
 const logger = LoggerManager.instance.create("PoiRenderer");
 
 const INVALID_RENDER_BATCH = -1;
-
 const tempPos = new THREE.Vector3(0);
+const mipMapGenerator = new MipMapGenerator();
 
 /**
  * The `PoiRenderBufferBatch` contains the geometry and the material for all POIs that share the
@@ -119,13 +120,12 @@ class PoiRenderBufferBatch {
             trilinear ? THREE.LinearMipMapLinearFilter : THREE.NearestFilter,
             THREE.RGBAFormat
         );
-        texture.needsUpdate = true;
-        texture.premultiplyAlpha = premultipliedAlpha;
         // Generate mipmaps for distance scaling of icon
-        // TODO: Implement custom mip map generation if support for texture atlas
-        // with icons that are not power of two or have different sizes is necessary.
-        texture.generateMipmaps = true;
+        texture.mipmaps = mipMapGenerator.generateTextureAtlasMipMap(iconTexture.image);
+        texture.image = texture.mipmaps[0];
         texture.flipY = false;
+        texture.premultiplyAlpha = premultipliedAlpha;
+        texture.needsUpdate = true;
 
         this.m_material = new IconMaterial({
             map: texture
@@ -583,6 +583,10 @@ export class PoiRenderer {
 
         const imageWidth = imageItem.imageData.width;
         const imageHeight = imageItem.imageData.height;
+        const {
+            width: paddedImageWidth,
+            height: paddedImageHeight
+        } = MipMapGenerator.getPaddedSize(imageWidth, imageHeight);
 
         const iconWidth = imageTexture.width !== undefined ? imageTexture.width : imageWidth;
         const iconHeight = imageTexture.height !== undefined ? imageTexture.height : imageHeight;
@@ -600,16 +604,16 @@ export class PoiRenderer {
         const xOffset = imageTexture.xOffset !== undefined ? imageTexture.xOffset : 0;
         const yOffset = imageTexture.yOffset !== undefined ? imageTexture.yOffset : 0;
 
-        minS = xOffset / imageWidth;
-        maxS = (xOffset + width) / imageWidth;
+        minS = xOffset / paddedImageWidth;
+        maxS = (xOffset + width) / paddedImageWidth;
 
         const flipY = true;
         if (flipY) {
-            minT = (imageHeight - yOffset) / imageHeight;
-            maxT = (imageHeight - yOffset - height) / imageHeight;
+            minT = (imageHeight - yOffset) / paddedImageHeight;
+            maxT = (imageHeight - yOffset - height) / paddedImageHeight;
         } else {
-            minT = yOffset / imageHeight;
-            maxT = (yOffset + height) / imageHeight;
+            minT = yOffset / paddedImageHeight;
+            maxT = (yOffset + height) / paddedImageHeight;
         }
 
         // minS += 0.5 / imageWidth;
