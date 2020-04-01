@@ -537,6 +537,7 @@ export class TileGeometryCreator {
         const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
         const objects = tile.objects;
         const viewRanges = mapView.viewRanges;
+        const elevationEnabled = mapView.elevationProvider !== undefined;
 
         for (const srcGeometry of decodedTile.geometries) {
             const groups = srcGeometry.groups;
@@ -575,7 +576,7 @@ export class TileGeometryCreator {
                     groups[groupIndex].createdOffsets!.push(tile.offset);
                 }
 
-                const ObjectCtor = getObjectConstructor(technique);
+                const ObjectCtor = getObjectConstructor(technique, tile, elevationEnabled);
 
                 if (ObjectCtor === undefined) {
                     continue;

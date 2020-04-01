@@ -119,7 +119,8 @@ export function overlayTextElement(
 }
 
 /**
- * Overlays the geometry in the given tile on top of elevation data if available.
+ * Overlays the geometry in the given tile on top of elevation data if available. The tile's
+ * elevation may be updated with a more precise range.
  *
  * @param tile The tile whose geometry will be overlaid.
  */
@@ -144,6 +145,14 @@ export function overlayOnElevation(tile: Tile): void {
     if (displacementMap === undefined) {
         return;
     }
+
+    // Refine tile elevation range, which is initially set to the broader range given by
+    // [[ElevationRangeSource]].
+    const geoBox = displacementMap.geoBox;
+    tile.elevationRange = {
+        minElevation: geoBox.minAltitude ?? 0,
+        maxElevation: geoBox.maxAltitude ?? 0
+    };
 
     // TODO: HARP-8808 Apply displacement maps once per material.
     for (const object of tile.objects) {
