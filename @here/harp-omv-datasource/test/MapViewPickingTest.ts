@@ -271,7 +271,7 @@ describe.skip("MapView Picking", async function() {
         const screenPointLocation = mapView.getScreenPosition(point) as THREE.Vector2;
         assert.isDefined(screenPointLocation);
 
-        mapView.worldRootObject.updateWorldMatrix(false, true);
+        mapView.scene.updateWorldMatrix(false, true);
 
         const usableIntersections = mapView
             .intersectMapObjects(screenPointLocation.x, screenPointLocation.y)
