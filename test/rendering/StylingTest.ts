@@ -25,8 +25,14 @@ import {
     Theme
 } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
-import { GeoBox, GeoCoordinates, MathUtils, ProjectionType } from "@here/harp-geoutils";
-import { MapView, MapViewEventNames } from "@here/harp-mapview";
+import {
+    GeoBox,
+    GeoCoordinates,
+    MathUtils,
+    OrientedBox3,
+    ProjectionType
+} from "@here/harp-geoutils";
+import { MapAnchor, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";
@@ -121,6 +127,11 @@ interface GeoJsonMapViewRenderingTestOptions extends RenderingTestOptions {
     geoJson: FeatureCollection | GeometryCollection | Feature;
     margin?: number;
     lookAt?: Partial<LookAtParams>;
+
+    /**
+     * Add small grid 4x4 to center of map with each cell of this size in world units.
+     */
+    grid?: number;
 }
 
 function mapViewFeaturesRenderingTest(
@@ -163,6 +174,20 @@ function mapViewFeaturesRenderingTest(
                 lookAt.tilt,
                 lookAt.azimuth
             );
+            if (options.grid !== undefined) {
+                const gridDivisions = 4;
+                const gridSize = options.grid * gridDivisions;
+
+                const position = geoBox.center;
+                const box = new OrientedBox3();
+                mapView.projection.localTangentSpace(position, box);
+
+                const grid = new THREE.GridHelper(gridSize, gridDivisions, 0xff0000, 0x00ff00);
+                grid.geometry.rotateX(Math.PI / 2);
+                (grid as MapAnchor).geoPosition = position;
+                grid.setRotationFromMatrix(box.getRotationMatrix());
+                mapView.mapAnchors.add(grid);
+            }
 
             mapView.update();
             if (testFun !== undefined) {
@@ -385,6 +410,7 @@ describe("MapView Styling Test", function() {
                             ]
                         }
                     }
+                    // grid: 100
                 });
             }
         }
@@ -392,6 +418,24 @@ describe("MapView Styling Test", function() {
             describe("basic", function() {
                 makeLineTestCases({
                     "basic-100m": { lineWidth: 100, color: "#0b97c4" },
+                    "basic-dash-100m": {
+                        lineWidth: 100,
+                        color: "#0b97c4",
+                        dashSize: 100,
+                        gapSize: 100
+                    },
+                    "basic-dash-10px-world-ppi-scale": {
+                        lineWidth: ["world-ppi-scale", 10],
+                        color: "#0b97c4",
+                        dashSize: ["world-ppi-scale", 10],
+                        gapSize: ["world-ppi-scale", 10]
+                    },
+                    "basic-dash-10px-string": {
+                        lineWidth: "10px",
+                        color: "#0b97c4",
+                        dashSize: "10px",
+                        gapSize: "10px"
+                    },
                     "basic-100m-rgba": { lineWidth: 100, color: "#0b97c470" },
                     "basic-100m-rgba-square": {
                         lineWidth: 100,

@@ -786,16 +786,12 @@ export class TileGeometryCreator {
 
                             if (technique.dashSize !== undefined) {
                                 lineMaterial.dashSize =
-                                    getPropertyValue(technique.dashSize, mapView.env) *
-                                    unitFactor *
-                                    0.5;
+                                    getPropertyValue(technique.dashSize, mapView.env) * unitFactor;
                             }
 
                             if (technique.gapSize !== undefined) {
                                 lineMaterial.gapSize =
-                                    getPropertyValue(technique.gapSize, mapView.env) *
-                                    unitFactor *
-                                    0.5;
+                                    getPropertyValue(technique.gapSize, mapView.env) * unitFactor;
                             }
                         }
                     );
