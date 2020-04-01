@@ -137,6 +137,22 @@ const MAX_CORNER_ANGLE = Math.PI / 8;
  */
 const INVALID_ARRAY_INDEX = -1;
 
+function createIndexBufferAttribute(
+    elements: ArrayLike<number>,
+    maxValue: number,
+    name: string = "index"
+): BufferAttribute {
+    const type = maxValue > 65535 ? "uint32" : "uint16";
+    const storage = type === "uint32" ? new Uint32Array(elements) : new Uint16Array(elements);
+    const buffer = storage.buffer;
+    return {
+        itemCount: 1,
+        name,
+        buffer,
+        type
+    };
+}
+
 // for tilezen by default extrude all buildings even those without height data
 class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
@@ -1408,7 +1424,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         geom.setAttribute("edge", edgeAttr);
                         const wallAttr = new THREE.BufferAttribute(new Float32Array(wallArray), 1);
                         geom.setAttribute("wall", edgeAttr);
-                        const indexAttr = new THREE.BufferAttribute(new Uint32Array(triangles), 1);
+                        const index = createIndexBufferAttribute(triangles, posAttr.count - 1);
+                        const indexAttr =
+                            index.type === "uint32"
+                                ? new THREE.Uint32BufferAttribute(index.buffer, 1)
+                                : new THREE.Uint16BufferAttribute(index.buffer, 1);
                         geom.setIndex(indexAttr);
 
                         // Increase tesselation of polygons for certain zoom levels
@@ -1710,8 +1730,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
 
+            const positionCount = meshBuffers.positions.length / 3;
+
             if (meshBuffers.textureCoordinates.length > 0) {
-                const positionCount = meshBuffers.positions.length / 3;
                 const texCoordCount = meshBuffers.textureCoordinates.length / 2;
                 assert(
                     texCoordCount === positionCount,
@@ -1745,24 +1766,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             if (meshBuffers.indices.length > 0) {
-                // TODO: use uint16 for buffers when possible
-                geometry.index = {
-                    name: "index",
-                    buffer: new Uint32Array(meshBuffers.indices).buffer as ArrayBuffer,
-                    itemCount: 1,
-                    type: "uint32"
-                };
+                geometry.index = createIndexBufferAttribute(meshBuffers.indices, positionCount - 1);
             }
 
             if (meshBuffers.edgeIndices.length > 0) {
-                // TODO: use uint16 for buffers when possible. Issue HARP-3987
-                geometry.edgeIndex = {
-                    name: "edgeIndex",
-                    buffer: new Uint32Array(meshBuffers.edgeIndices as number[])
-                        .buffer as ArrayBuffer,
-                    itemCount: 1,
-                    type: "uint32"
-                };
+                geometry.edgeIndex = createIndexBufferAttribute(
+                    meshBuffers.edgeIndices,
+                    positionCount - 1,
+                    "edgeIndex"
+                );
             }
 
             geometry.featureStarts = meshBuffers.featureStarts;
@@ -1777,7 +1789,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const { vertices, indices } = linesGeometry.lines;
             const technique = linesGeometry.technique;
             const buffer = new Float32Array(vertices).buffer as ArrayBuffer;
-            const index = new Uint32Array(indices).buffer as ArrayBuffer;
+            const index = createIndexBufferAttribute(
+                indices,
+                vertices.length / linesGeometry.lines.stride - 1
+            );
             const attr: InterleavedBufferAttribute = {
                 type: "float",
                 stride: linesGeometry.lines.stride,
@@ -1786,12 +1801,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             };
             const geometry: Geometry = {
                 type: GeometryType.SolidLine,
-                index: {
-                    buffer: index,
-                    itemCount: 1,
-                    type: "uint32",
-                    name: "index"
-                },
+                index,
                 interleavedVertexAttributes: [attr],
                 groups: [{ start: 0, count: indices.length, technique }],
                 vertexAttributes: [],
@@ -1808,7 +1818,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const { vertices, indices } = linesGeometry.lines;
             const technique = linesGeometry.technique;
             const buffer = new Float32Array(vertices).buffer as ArrayBuffer;
-            const index = new Uint32Array(indices).buffer as ArrayBuffer;
             const attr: BufferAttribute = {
                 buffer,
                 itemCount: 3,
@@ -1817,12 +1826,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             };
             const geometry: Geometry = {
                 type: GeometryType.Line,
-                index: {
-                    buffer: index,
-                    itemCount: 1,
-                    type: "uint32",
-                    name: "index"
-                },
+                index: createIndexBufferAttribute(indices, vertices.length / attr.itemCount - 1),
                 vertexAttributes: [attr],
                 groups: [{ start: 0, count: indices.length, technique }],
                 featureStarts: linesGeometry.featureStarts,
