@@ -12,6 +12,8 @@ export interface ImageItem {
     url: string;
     /** Pixel data. */
     imageData?: ImageData | ImageBitmap;
+    /** Mip maps for image data */
+    mipMaps?: ImageData[];
     /** Turns to `true` when the data has finished loading. */
     loaded: boolean;
     /** `loadingPromise` is only used during loading/generating the image. */

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ImageItem } from "../image/Image";
-
 import * as THREE from "three";
 
 export type ExtendedMesh = THREE.Mesh & {
@@ -66,19 +64,6 @@ export interface ImageOptions {
      * Missing Typedoc
      */
     opacity?: number;
-}
-
-/**
- * Defines a part (or all) of an image as a texture.
- */
-export class IconTexture {
-    /**
-     * The constructor of an `IconTexture`.
-     *
-     * @param image An [[ImageItem]] instance.
-     * @param options The rendering parameters.
-     */
-    constructor(public image: ImageItem) {}
 }
 
 // export enum TextAlign {
