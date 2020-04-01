@@ -522,7 +522,8 @@ const tests: TestCase[] = [
                         )
                     ]
                 ],
-                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+                // Load terrain 1 frame before the fade in starts to allow for glyph loading.
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length - 1))
             }
         ],
         frameTimes: FADE_2_CYCLES
@@ -539,7 +540,8 @@ const tests: TestCase[] = [
                         )
                     ]
                 ],
-                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+                // Load terrain 1 frame before the fade in starts to allow for glyph loading.
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length - 1))
             }
         ],
         frameTimes: FADE_2_CYCLES
@@ -556,7 +558,8 @@ const tests: TestCase[] = [
                         )
                     ]
                 ],
-                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+                // Load terrain 1 frame before the fade in starts to allow for glyph loading.
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length - 1))
             }
         ],
         frameTimes: FADE_2_CYCLES
@@ -573,7 +576,8 @@ const tests: TestCase[] = [
                         )
                     ]
                 ],
-                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+                // Load terrain 1 frame before the fade in starts to allow for glyph loading.
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length - 1))
             }
         ],
         frameTimes: FADE_2_CYCLES
