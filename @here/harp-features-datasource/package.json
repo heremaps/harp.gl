@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-features-datasource",
-    "version": "0.13.1",
+    "version": "0.13.2",
     "description": "Provides support for custom features",
     "main": "index.js",
     "typings": "index",
@@ -20,10 +20,10 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@here/harp-datasource-protocol": "^0.13.0",
-        "@here/harp-geojson-datasource": "^0.13.1",
+        "@here/harp-geojson-datasource": "^0.13.2",
         "@here/harp-geoutils": "^0.13.0",
-        "@here/harp-mapview": "^0.13.1",
-        "@here/harp-omv-datasource": "^0.13.1",
+        "@here/harp-mapview": "^0.13.2",
+        "@here/harp-omv-datasource": "^0.13.2",
         "@here/harp-utils": "^0.13.0"
     },
     "devDependencies": {
