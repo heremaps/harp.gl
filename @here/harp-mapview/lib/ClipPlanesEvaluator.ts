@@ -58,8 +58,8 @@ export interface ClipPlanesEvaluator {
  * slightly different in each case. General algorithm sets near plane between camera and
  * ground level, while far plane is just calculated using scale and bias approach with far offset
  * and multiplier.
- * @deprecated Class contains the legacy (first and original) clip planes evaluation method, which
- * is widelly used in examples thus is still kept for backward compatibility and comparisons.
+ * @depreciated Class contains the legacy (first and original) clip planes evaluation method, which
+ * is widely used in examples thus is still kept for backward compatibility and comparisons.
  */
 export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
     readonly farMin: number;
@@ -127,7 +127,7 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
             // Store camera position tmpVectors[0] and reference it with p.
             const p = this.m_tmpVectors[0].copy(camera.position);
             p.addScaledVector(fwdRot, Math.sqrt(d * d - r * r));
-            farPlane = p.sub(camera.position).dot(fwd);
+            farPlane = p.sub(camera.position).dot(fwd) + this.farOffset;
             nearPlane = Math.max(
                 this.nearMin,
                 projection.groundDistance(camera.position) * this.nearMultiplier

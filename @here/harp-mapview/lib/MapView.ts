@@ -104,6 +104,18 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
      * The position of this [[MapObject]] in [[GeoCoordinates]].
      */
     geoPosition?: GeoCoordinates;
+    /**
+     * The position of this [[MapObject]] in world coordinates (and units).
+     *
+     * Word coordinates anchors may be used for objects that has not exact relation to the
+     * place on the Earth globe or map. This may include light sources, special cameras, effects.
+     *
+     * @note Geo-coordinates anchoring has higher priority and should be used whenever
+     * object has position related to the globe, then world coords may be left undefined.
+     * In other cases (object position not related to globe) leave geo-coords undefined and
+     * provide the world coordinates as the base for object positioning.
+     */
+    worldPosition?: THREE.Vector3;
 };
 
 export enum MapViewEventNames {
@@ -3122,11 +3134,16 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
-            if (childObject.geoPosition === undefined) {
+            if (childObject.geoPosition !== undefined) {
+                this.projection.projectPoint(childObject.geoPosition, childObject.position);
+                childObject.position.sub(this.camera.position);
+            } else if (childObject.worldPosition !== undefined) {
+                const wp = childObject.worldPosition;
+                childObject.position.set(wp.x, wp.y, wp.z);
+                childObject.position.sub(this.camera.position);
+            } else {
                 return;
             }
-            this.projection.projectPoint(childObject.geoPosition, childObject.position);
-            childObject.position.sub(this.camera.position);
         });
 
         this.m_animatedExtrusionHandler.zoom = this.m_zoomLevel;
