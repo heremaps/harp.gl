@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { EarthConstants, GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import {
     AtmosphereLightMode,
@@ -78,7 +78,7 @@ export namespace GlobeAtmosphereExample {
         atmosphere.lightMode = AtmosphereLightMode.LightDynamic;
 
         const coords = new GeoCoordinates(10.0, -10.0);
-        map.lookAt(coords, 6378137 * 2.1);
+        map.lookAt({ target: coords, distance: EarthConstants.EQUATORIAL_RADIUS * 2.1 });
     }
 
     main();

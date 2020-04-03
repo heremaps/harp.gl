@@ -8,7 +8,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 
 import { GroundAtmosphereMaterial, SkyAtmosphereMaterial } from "@here/harp-materials";
-import { MapAnchor, MapView } from "./MapView";
+import { MapView, WorldAnchor } from "./MapView";
 
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
@@ -228,10 +228,10 @@ export class MapViewAtmosphere {
     private addToMapView(mapView: MapView) {
         assert(!MapViewAtmosphere.isPresent(mapView.scene), "Atmosphere already added");
         if (this.m_skyMesh !== undefined) {
-            mapView.mapAnchors.add(createMapAnchor(this.m_skyMesh, Number.MIN_SAFE_INTEGER));
+            mapView.worldAnchors.add(createWorldAnchor(this.m_skyMesh, Number.MIN_SAFE_INTEGER));
         }
         if (this.m_groundMesh !== undefined) {
-            mapView.mapAnchors.add(createMapAnchor(this.m_groundMesh, Number.MAX_SAFE_INTEGER));
+            mapView.worldAnchors.add(createWorldAnchor(this.m_groundMesh, Number.MAX_SAFE_INTEGER));
         }
 
         // Request an update once the anchor is added to [[MapView]].
@@ -247,11 +247,11 @@ export class MapViewAtmosphere {
         }
         let update = false;
         if (this.m_skyMesh !== undefined) {
-            mapView.mapAnchors.remove(this.m_skyMesh);
+            mapView.worldAnchors.remove(this.m_skyMesh);
             update = true;
         }
         if (this.m_groundMesh !== undefined) {
-            mapView.mapAnchors.remove(this.m_groundMesh);
+            mapView.worldAnchors.remove(this.m_groundMesh);
             update = true;
         }
         if (update) {
@@ -458,9 +458,10 @@ export class MapViewAtmosphere {
     }
 }
 
-function createMapAnchor(mesh: THREE.Mesh, renderOrder: number): MapAnchor<THREE.Mesh> {
-    const anchor = mesh as MapAnchor<THREE.Mesh>;
+function createWorldAnchor(mesh: THREE.Mesh, renderOrder: number): WorldAnchor<THREE.Mesh> {
+    const anchor = mesh as WorldAnchor<THREE.Mesh>;
     anchor.renderOrder = renderOrder;
+    anchor.pickable = false;
     anchor.worldPosition = new THREE.Vector3(0, 0, 0);
     return anchor;
 }
