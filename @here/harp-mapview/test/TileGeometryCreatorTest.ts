@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DecodedTile, GeometryType, IndexedTechnique } from "@here/harp-datasource-protocol";
+import {
+    Attachment,
+    DecodedTile,
+    GeometryType,
+    IndexedTechnique,
+    MapEnv,
+    StyleSet
+} from "@here/harp-datasource-protocol";
+import { StyleSetEvaluator, ThreeBufferUtils } from "@here/harp-datasource-protocol/index-decoder";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     mercatorProjection,
@@ -12,6 +20,7 @@ import {
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+import { MapMeshBasicMaterial } from "@here/harp-materials";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -183,5 +192,129 @@ describe("TileGeometryCreator", () => {
         assert.strictEqual(newTile.objects[2].renderOrder, 10);
 
         newTile.mapView.theme = savedTheme;
+    });
+
+    it("attachments", () => {
+        // create a simple style set defining rules and techniques
+        // to style polygons.
+        const rules: StyleSet = [
+            {
+                when: ["get", "red-polygon"],
+                technique: "fill",
+                renderOrder: 100,
+                attr: {
+                    color: "#ff0000"
+                }
+            },
+            {
+                when: ["get", "yellow-polygon"],
+                technique: "fill",
+                renderOrder: 200,
+                attr: {
+                    color: "#00ff00"
+                }
+            }
+        ];
+
+        newTile.mapView.theme = {
+            styles: { rules }
+        };
+
+        // create `StyleSetEvaluator` to instantiate techniques
+        // for the test polygons.
+        const styleSetEvaluator = new StyleSetEvaluator(rules);
+
+        // get the instantiated `TechniqueIndex` associated with red-polygon.
+        const redPolygonTechnique = styleSetEvaluator.getMatchingTechniques(
+            new MapEnv({ "red-polygon": true })
+        )[0];
+
+        // get the instantiated `TechniqueIndex` associated with yellow-polygon.
+        const yellowPolygonTechnique = styleSetEvaluator.getMatchingTechniques(
+            new MapEnv({ "yellow-polygon": true })
+        )[0];
+
+        // create a three.js box geometry
+        const boxGeometry = new THREE.BoxBufferGeometry(100, 100, 1);
+
+        // encode the three.js geometry so it can be trasferred using
+        // DecodedTile.
+        const geometry = ThreeBufferUtils.fromThreeBufferGeometry(
+            boxGeometry,
+            redPolygonTechnique._index
+        );
+
+        geometry.uuid = "main";
+
+        // get the draw range of the main geometry.
+        const { start, count } = geometry.groups[0];
+
+        // create an attachment that renders the geometry using the
+        // yellow-polygon technique
+        const attachment: Attachment = {
+            uuid: "attachment-1",
+            groups: [{ start, count, technique: yellowPolygonTechnique._index }]
+        };
+
+        const decodedTile: DecodedTile = {
+            geometries: [{ ...geometry, attachments: [attachment] }],
+            techniques: styleSetEvaluator.decodedTechniques
+        };
+
+        tgc.initDecodedTile(decodedTile);
+        tgc.createObjects(newTile, decodedTile);
+
+        // get the main object
+        const mainObject = newTile.objects.find(o => o.uuid === geometry.uuid) as THREE.Mesh;
+
+        // get the attachment object
+        const attachmentObject = newTile.objects.find(
+            o => o.uuid === attachment.uuid
+        ) as THREE.Mesh;
+
+        const mainObjectGeometry = mainObject.geometry as THREE.BufferGeometry;
+        assert.isTrue(mainObjectGeometry.isBufferGeometry);
+
+        const attachmentObjectGeometry = mainObject.geometry as THREE.BufferGeometry;
+        assert.isTrue(attachmentObjectGeometry.isBufferGeometry);
+
+        assert.isObject(mainObjectGeometry.getAttribute("position"));
+        assert.isObject(mainObjectGeometry.getAttribute("normal"));
+        assert.isObject(mainObjectGeometry.getAttribute("uv"));
+
+        assert.isObject(attachmentObjectGeometry.getAttribute("position"));
+        assert.isObject(attachmentObjectGeometry.getAttribute("normal"));
+        assert.isObject(attachmentObjectGeometry.getAttribute("uv"));
+
+        // test that the buffers of the main geometry are shared
+        // with the buffer of the attachment.
+
+        assert.strictEqual(
+            mainObjectGeometry.getAttribute("position"),
+            attachmentObjectGeometry.getAttribute("position")
+        );
+
+        assert.strictEqual(
+            mainObjectGeometry.getAttribute("normal"),
+            attachmentObjectGeometry.getAttribute("normal")
+        );
+
+        assert.strictEqual(
+            mainObjectGeometry.getAttribute("uv"),
+            attachmentObjectGeometry.getAttribute("uv")
+        );
+
+        assert.strictEqual(mainObjectGeometry.getIndex(), attachmentObjectGeometry.getIndex());
+
+        const mainObjectMaterial = mainObject.material as MapMeshBasicMaterial;
+        const attachmentObjectMaterial = attachmentObject.material as MapMeshBasicMaterial;
+
+        // test that the technique used to create the main geometry is red-polygon
+        assert.strictEqual(mainObjectMaterial.color.getHexString(), "ff0000");
+        assert.strictEqual(mainObject.renderOrder, redPolygonTechnique.renderOrder);
+
+        // test that the technique used to create the attachment is yellow-polygon
+        assert.strictEqual(attachmentObjectMaterial.color.getHexString(), "00ff00");
+        assert.strictEqual(attachmentObject.renderOrder, yellowPolygonTechnique.renderOrder);
     });
 });

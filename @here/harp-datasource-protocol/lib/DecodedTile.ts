@@ -158,6 +158,43 @@ export interface Geometry {
      * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
      */
     objInfos?: AttributeMap[];
+
+    /**
+     * Optional [[Array]] of [[Attachment]]s.
+     */
+    attachments?: Attachment[];
+}
+
+/**
+ * Attachments together with [[Geometry]] define the meshes and the objects
+ * of a [[Scene]].
+ */
+export interface Attachment {
+    /**
+     * The unique uuid of this [[Attachment]].
+     */
+    uuid?: string;
+
+    /**
+     * The name of this [[Attachment]].
+     */
+    name?: string;
+
+    /**
+     * The index [[BufferAttribute]]. If not provided the index
+     * buffer of the [[Geometry]] will be used.
+     */
+    index?: BufferAttribute;
+
+    /**
+     * Optional additional buffer index used to create an edge object.
+     */
+    edgeIndex?: BufferAttribute;
+
+    /**
+     * The draw [[Group]]]s of this [[Attachment]].
+     */
+    groups: Group[];
 }
 
 /**

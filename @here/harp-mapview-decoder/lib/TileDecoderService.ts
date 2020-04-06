@@ -119,6 +119,13 @@ export class TileDecoderService extends WorkerService {
                 const obj = geom.objInfos[0] as any;
                 transferBufferAttribute(obj.displacementMap);
             }
+
+            if (Array.isArray(geom.attachments)) {
+                geom.attachments.forEach(attachment => {
+                    transferBufferAttribute(attachment.index);
+                    transferBufferAttribute(attachment.edgeIndex);
+                });
+            }
         });
 
         decodedTile.techniques.forEach(technique => {
