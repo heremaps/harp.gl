@@ -967,6 +967,7 @@ export class MapView extends THREE.EventDispatcher {
                     : this.m_options.powerPreference
         });
         this.m_renderer.autoClear = false;
+        this.m_renderer.debug.checkShaderErrors = !isProduction;
 
         // This is detailed at https://threejs.org/docs/#api/renderers/WebGLRenderer.info
         // When using several WebGLRenderer#render calls per frame, it is the only way to get
