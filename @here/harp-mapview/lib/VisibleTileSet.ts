@@ -936,7 +936,7 @@ export class VisibleTileSet {
                     tile.offset
                 );
                 tile.levelOffset = 0;
-                if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
+                if (tile.hasGeometry) {
                     renderedTiles.set(tileCode, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
