@@ -35,6 +35,9 @@ const mipMapGenerator = new MipMapGenerator();
  * in the atlas as well as the texture coordinates are specified in the `PoiRenderBufferBatch`.
  */
 class PoiRenderBufferBatch {
+    // Enable trilinear filtering to reduce flickering due to distance scaling
+    static trilinear: boolean = false;
+
     color: THREE.Color = ColorCache.instance.getColor("#000000");
 
     boxBuffer: BoxBuffer | undefined;
@@ -104,9 +107,6 @@ class PoiRenderBufferBatch {
      * Setup texture and material for the batch.
      */
     private setup() {
-        // Enable trilinear filtering to reduce flickering due to distance scaling
-        const trilinear = true;
-
         // Texture images should be generated with premultiplied alpha
         const premultipliedAlpha = true;
 
@@ -116,13 +116,15 @@ class PoiRenderBufferBatch {
             THREE.UVMapping,
             undefined,
             undefined,
-            trilinear ? THREE.LinearFilter : THREE.NearestFilter,
-            trilinear ? THREE.LinearMipMapLinearFilter : THREE.NearestFilter,
+            PoiRenderBufferBatch.trilinear ? THREE.LinearFilter : THREE.LinearFilter,
+            PoiRenderBufferBatch.trilinear ? THREE.LinearMipMapLinearFilter : THREE.LinearFilter,
             THREE.RGBAFormat
         );
-        // Generate mipmaps for distance scaling of icon
-        texture.mipmaps = mipMapGenerator.generateTextureAtlasMipMap(iconTexture.image);
-        texture.image = texture.mipmaps[0];
+        if (PoiRenderBufferBatch.trilinear) {
+            // Generate mipmaps for distance scaling of icon
+            texture.mipmaps = mipMapGenerator.generateTextureAtlasMipMap(iconTexture.image);
+            texture.image = texture.mipmaps[0];
+        }
         texture.flipY = false;
         texture.premultiplyAlpha = premultipliedAlpha;
         texture.needsUpdate = true;
@@ -583,10 +585,9 @@ export class PoiRenderer {
 
         const imageWidth = imageItem.imageData.width;
         const imageHeight = imageItem.imageData.height;
-        const {
-            width: paddedImageWidth,
-            height: paddedImageHeight
-        } = MipMapGenerator.getPaddedSize(imageWidth, imageHeight);
+        const paddedSize = MipMapGenerator.getPaddedSize(imageWidth, imageHeight);
+        const paddedImageWidth = PoiRenderBufferBatch.trilinear ? paddedSize.width : imageWidth;
+        const paddedImageHeight = PoiRenderBufferBatch.trilinear ? paddedSize.height : imageHeight;
 
         const iconWidth = imageTexture.width !== undefined ? imageTexture.width : imageWidth;
         const iconHeight = imageTexture.height !== undefined ? imageTexture.height : imageHeight;
