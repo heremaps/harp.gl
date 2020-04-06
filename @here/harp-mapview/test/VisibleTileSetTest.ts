@@ -61,6 +61,8 @@ interface FixtureOptions {
     tileWrappingEnabled?: boolean;
     enableMixedLod?: boolean;
     projection?: Projection;
+    quadTreeSearchDistanceUp?: number;
+    quadTreeSearchDistanceDown?: number;
 }
 
 class Fixture {
@@ -97,8 +99,8 @@ class Fixture {
             extendedFrustumCulling: true,
             tileCacheSize: 200,
             resourceComputationType: ResourceComputationType.EstimationInMb,
-            quadTreeSearchDistanceUp: 3,
-            quadTreeSearchDistanceDown: 2
+            quadTreeSearchDistanceUp: params.quadTreeSearchDistanceUp ?? 3,
+            quadTreeSearchDistanceDown: params.quadTreeSearchDistanceDown ?? 2
         };
         this.vts = new VisibleTileSet(
             this.frustumIntersection,
@@ -233,6 +235,25 @@ describe("VisibleTileSet", function() {
     });
 
     it("#updateRenderList properly culls Berlin center example view", function() {
+        setupBerlinCenterCameraFromSamples();
+        const zoomLevel = 15;
+        const storageLevel = 14;
+
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+
+        assert.equal(dataSourceTileList.length, 1);
+        assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
+
+        const visibleTiles = dataSourceTileList[0].visibleTiles;
+        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506850);
+        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506851);
+
+        const renderedTiles = dataSourceTileList[0].renderedTiles;
+        assert.equal(renderedTiles.size, 0);
+    });
+
+    it("#no fallback doesn't put loading tiles in renderedTiles", function() {
+        fixture = new Fixture({ quadTreeSearchDistanceDown: 0, quadTreeSearchDistanceUp: 0 });
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
