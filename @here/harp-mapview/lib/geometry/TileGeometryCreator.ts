@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+    Attachment,
     BaseTechniqueParams,
     BufferAttribute,
     DecodedTile,
@@ -18,6 +19,7 @@ import {
     getFeatureId,
     getPropertyValue,
     IndexedTechnique,
+    InterleavedBufferAttribute,
     isCirclesTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
@@ -88,6 +90,58 @@ import { LodMesh } from "./LodMesh";
 
 const tmpVector3 = new THREE.Vector3();
 const tmpVector2 = new THREE.Vector2();
+
+class AttachmentCache {
+    readonly bufferAttributes = new Map<BufferAttribute, THREE.BufferAttribute>();
+
+    readonly interleavedAttributes = new Map<
+        InterleavedBufferAttribute,
+        Array<{ name: string; attribute: THREE.InterleavedBufferAttribute }>
+    >();
+}
+
+class AttachmentInfo {
+    constructor(
+        readonly geometry: Geometry,
+        readonly info: Attachment,
+        readonly cache: AttachmentCache
+    ) {}
+
+    getBufferAttribute(description: BufferAttribute): THREE.BufferAttribute {
+        if (this.cache.bufferAttributes.has(description)) {
+            return this.cache.bufferAttributes.get(description)!;
+        }
+        const attribute = getBufferAttribute(description);
+        this.cache.bufferAttributes.set(description, attribute);
+        return attribute;
+    }
+
+    getInterleavedBufferAttributes(description: InterleavedBufferAttribute) {
+        const interleavedAttributes = this.cache.interleavedAttributes.get(description);
+
+        if (interleavedAttributes) {
+            return interleavedAttributes;
+        }
+
+        const ArrayCtor = getArrayConstructor(description.type);
+        const buffer = new ArrayCtor(description.buffer);
+        const interleavedBuffer = new THREE.InterleavedBuffer(buffer, description.stride);
+
+        const attrs = description.attributes.map(interleavedAttr => {
+            const attribute = new THREE.InterleavedBufferAttribute(
+                interleavedBuffer,
+                interleavedAttr.itemSize,
+                interleavedAttr.offset,
+                false
+            );
+            const name = interleavedAttr.name;
+            return { name, attribute };
+        });
+
+        this.cache.interleavedAttributes.set(description, attrs);
+        return attrs;
+    }
+}
 
 /**
  * Parameters that control fading.
@@ -540,8 +594,9 @@ export class TileGeometryCreator {
         const viewRanges = mapView.viewRanges;
         const elevationEnabled = mapView.elevationProvider !== undefined;
 
-        for (const srcGeometry of decodedTile.geometries) {
-            const groups = srcGeometry.groups;
+        for (const attachment of this.getAttachments(decodedTile)) {
+            const srcGeometry = attachment.geometry;
+            const groups = attachment.info.groups;
             const groupCount = groups.length;
 
             for (let groupIndex = 0; groupIndex < groupCount; ) {
@@ -549,6 +604,10 @@ export class TileGeometryCreator {
                 const start = group.start;
                 const techniqueIndex = group.technique;
                 const technique = decodedTile.techniques[techniqueIndex];
+
+                if (group.createdOffsets === undefined) {
+                    group.createdOffsets = [];
+                }
 
                 if (
                     group.createdOffsets!.indexOf(tile.offset) !== -1 ||
@@ -614,30 +673,22 @@ export class TileGeometryCreator {
 
                 const bufferGeometry = new THREE.BufferGeometry();
 
-                srcGeometry.vertexAttributes?.forEach((vertexAttribute: BufferAttribute) => {
-                    const buffer = getBufferAttribute(vertexAttribute);
+                srcGeometry.vertexAttributes?.forEach(vertexAttribute => {
+                    const buffer = attachment.getBufferAttribute(vertexAttribute);
                     bufferGeometry.setAttribute(vertexAttribute.name, buffer);
                 });
 
                 srcGeometry.interleavedVertexAttributes?.forEach(attr => {
-                    const ArrayCtor = getArrayConstructor(attr.type);
-                    const buffer = new THREE.InterleavedBuffer(
-                        new ArrayCtor(attr.buffer),
-                        attr.stride
-                    );
-                    attr.attributes.forEach(interleavedAttr => {
-                        const attribute = new THREE.InterleavedBufferAttribute(
-                            buffer,
-                            interleavedAttr.itemSize,
-                            interleavedAttr.offset,
-                            false
+                    attachment
+                        .getInterleavedBufferAttributes(attr)
+                        .forEach(({ name, attribute }) =>
+                            bufferGeometry.setAttribute(name, attribute)
                         );
-                        bufferGeometry.setAttribute(interleavedAttr.name, attribute);
-                    });
                 });
 
-                if (srcGeometry.index) {
-                    bufferGeometry.setIndex(getBufferAttribute(srcGeometry.index));
+                const index = attachment.info.index ?? srcGeometry.index;
+                if (index) {
+                    bufferGeometry.setIndex(attachment.getBufferAttribute(index));
                 }
 
                 if (!bufferGeometry.getAttribute("normal") && needsVertexNormals(technique)) {
@@ -685,8 +736,9 @@ export class TileGeometryCreator {
 
                 object.renderOrder = technique.renderOrder!;
 
-                if (srcGeometry.uuid !== undefined) {
-                    object.userData.geometryId = srcGeometry.uuid;
+                if (attachment.info.uuid !== undefined) {
+                    object.uuid = attachment.info.uuid;
+                    object.userData.geometryId = attachment.info.uuid;
                 }
 
                 if (
@@ -930,7 +982,7 @@ export class TileGeometryCreator {
                 objects.push(object);
 
                 // Add the extruded building edges as a separate geometry.
-                if (isExtrudedPolygonTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
+                if (isExtrudedPolygonTechnique(technique) && attachment.info.edgeIndex) {
                     const edgeGeometry = new THREE.BufferGeometry();
                     edgeGeometry.setAttribute("position", bufferGeometry.getAttribute("position"));
 
@@ -955,7 +1007,7 @@ export class TileGeometryCreator {
                     }
 
                     edgeGeometry.setIndex(
-                        getBufferAttribute(srcGeometry.edgeIndex! as BufferAttribute)
+                        attachment.getBufferAttribute(attachment.info.edgeIndex!)
                     );
 
                     // Read the uniforms from the technique values (and apply the default values).
@@ -1036,13 +1088,15 @@ export class TileGeometryCreator {
 
                 // Add the fill area edges as a separate geometry.
 
-                if (isFillTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
+                if (isFillTechnique(technique) && attachment.info.edgeIndex) {
                     const outlineGeometry = new THREE.BufferGeometry();
                     outlineGeometry.setAttribute(
                         "position",
                         bufferGeometry.getAttribute("position")
                     );
-                    outlineGeometry.setIndex(getBufferAttribute(srcGeometry.edgeIndex!));
+                    outlineGeometry.setIndex(
+                        attachment.getBufferAttribute(attachment.info.edgeIndex!)
+                    );
 
                     const fillTechnique = technique as FillTechnique;
 
@@ -1313,6 +1367,35 @@ export class TileGeometryCreator {
         mesh.renderOrder = renderOrder;
         this.registerTileObject(tile, mesh, GeometryKind.Background);
         tile.objects.push(mesh);
+    }
+
+    /**
+     * Gets the attachments of the given [[DecodedTile]].
+     *
+     * @param decodedTile The [[DecodedTile]].
+     */
+    private *getAttachments(decodedTile: DecodedTile): Generator<AttachmentInfo> {
+        const cache = new AttachmentCache();
+
+        for (const geometry of decodedTile.geometries) {
+            // the main attachment
+
+            const mainAttachment: Attachment = {
+                index: geometry.index,
+                edgeIndex: geometry.edgeIndex,
+                uuid: geometry.uuid,
+                groups: geometry.groups
+            };
+
+            yield new AttachmentInfo(geometry, mainAttachment, cache);
+
+            if (geometry.attachments) {
+                // the additional attachments
+                for (const info of geometry.attachments) {
+                    yield new AttachmentInfo(geometry, info, cache);
+                }
+            }
+        }
     }
 
     /**
