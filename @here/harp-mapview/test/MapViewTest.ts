@@ -20,7 +20,12 @@ import * as THREE from "three";
 import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
-import { GeoCoordinates, sphereProjection, webMercatorTilingScheme } from "@here/harp-geoutils";
+import {
+    GeoCoordinates,
+    mercatorProjection,
+    sphereProjection,
+    webMercatorTilingScheme
+} from "@here/harp-geoutils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
@@ -122,6 +127,129 @@ describe("MapView", function() {
         expect(mapView.geoCenter.longitude).to.be.closeTo(coords.longitude, 0.000000000001);
     });
 
+    for (const { projection, projectionName, epsilon } of [
+        {
+            projection: sphereProjection,
+            projectionName: "sphere",
+            // On sphere, we do lots of math and unfortunately loose lots of precision
+            epsilon: 1e-10
+        },
+        {
+            projection: mercatorProjection,
+            projectionName: "mercator",
+            // ... comparing to flat projection.
+            epsilon: 1e-13
+        }
+    ]) {
+        describe(`camera positioning - ${projectionName} projection`, function() {
+            for (const { testName, lookAtParams } of [
+                {
+                    testName: "berlin/18 topView",
+                    lookAtParams: {
+                        target: new GeoCoordinates(52.5145, 13.3501),
+                        zoomLevel: 18
+                    }
+                },
+                {
+                    testName: "berlin/18 tilted/rotated",
+                    lookAtParams: {
+                        target: new GeoCoordinates(52.5145, 13.3501),
+                        zoomLevel: 18,
+                        tilt: 10,
+                        heading: 20
+                    }
+                },
+                {
+                    testName: "france/6 topView",
+                    lookAtParams: {
+                        target: new GeoCoordinates(47.232873, 1.2194824999999998),
+                        zoom: 6.7
+                    }
+                },
+                {
+                    testName: "france/6 tilted/rotated",
+                    lookAtParams: {
+                        target: new GeoCoordinates(47.232873, 1.2194824999999998),
+                        zoom: 6.7,
+                        tilt: 25,
+                        heading: 15
+                    }
+                },
+                {
+                    testName: "usa/5 topView",
+                    lookAtParams: {
+                        target: new GeoCoordinates(40.60472, -103.0152),
+                        zoom: 5
+                    }
+                },
+                {
+                    testName: "usa/5 tilted/rotated",
+                    lookAtParams: {
+                        target: new GeoCoordinates(40.60472, -103.0152),
+                        zoom: 5,
+                        tilt: 30,
+                        heading: -160
+                    }
+                }
+            ]) {
+                it(`obeys constructor params - ${testName}`, function() {
+                    mapView = new MapView({
+                        canvas,
+                        projection,
+                        ...lookAtParams
+                    });
+
+                    if (lookAtParams.zoomLevel !== undefined) {
+                        expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, epsilon);
+                    }
+                    if (lookAtParams.target !== undefined) {
+                        expect(mapView.target.latitude).to.be.closeTo(
+                            lookAtParams.target.latitude,
+                            epsilon
+                        );
+                        expect(mapView.target.longitude).to.be.closeTo(
+                            lookAtParams.target.longitude,
+                            epsilon
+                        );
+                    }
+                    if (lookAtParams.tilt !== undefined) {
+                        expect(mapView.tilt).to.be.closeTo(lookAtParams.tilt, epsilon);
+                    }
+                    if (lookAtParams.heading !== undefined) {
+                        expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
+                    }
+                });
+                it(`obeys #lookAt params - ${testName}`, function() {
+                    mapView = new MapView({
+                        canvas,
+                        projection
+                    });
+
+                    mapView.lookAt(lookAtParams);
+
+                    if (lookAtParams.zoomLevel !== undefined) {
+                        expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, epsilon);
+                    }
+                    if (lookAtParams.target !== undefined) {
+                        expect(mapView.target.latitude).to.be.closeTo(
+                            lookAtParams.target.latitude,
+                            epsilon
+                        );
+                        expect(mapView.target.longitude).to.be.closeTo(
+                            lookAtParams.target.longitude,
+                            epsilon
+                        );
+                    }
+                    if (lookAtParams.tilt !== undefined) {
+                        expect(mapView.tilt).to.be.closeTo(lookAtParams.tilt, epsilon);
+                    }
+                    if (lookAtParams.heading !== undefined) {
+                        expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
+                    }
+                });
+            }
+        });
+    }
     it("Correctly sets target and zoom from options in constructor", function() {
         mapView = new MapView({
             canvas,
