@@ -1069,7 +1069,8 @@ export class TextElementsRenderer {
         this.m_textElementStateCache.clearTextCache();
         this.m_cacheInvalidated = false;
 
-        this.checkIfOverloaded(dataSourceTileList);
+        // TODO: HARP-9874. Remove overload mode and implement a label placement time limit.
+        //this.checkIfOverloaded(dataSourceTileList);
 
         // Used with tile offset to compute the x coordinate offset for tiles.
         const updateStartTime =
