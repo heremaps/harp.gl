@@ -1,0 +1,22 @@
+{
+    "name": "@here/harp-prettier-plugin",
+    "version": "0.14.0",
+    "description": "Prettier plugin for harp themes",
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/heremaps/harp.gl.git",
+        "directory": "@here/harp-prettier-plugin"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "prettier": "^1.19.1"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

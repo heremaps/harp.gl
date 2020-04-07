@@ -1,0 +1,8 @@
+.vscode
+dist
+node_modules
+package
+*.d.ts
+*.js
+*.js.map
+*.tgz

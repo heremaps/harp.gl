@@ -1,0 +1,13 @@
+{
+    "plugins": ["@here/harp-prettier-plugin"],
+    "printWidth": 100,
+    "tabWidth": 4,
+    "overrides": [
+        {
+            "files": ["berlin_*.json", "effects_*.json"],
+            "options": {
+                "parser": "jss"
+            }
+        }
+    ]
+}
