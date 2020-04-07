@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -22,8 +22,11 @@ import {
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     EarthConstants,
+    GeoBox,
+    GeoBoxExtentLike,
     GeoCoordinates,
     GeoCoordLike,
+    isGeoBoxExtentLike,
     isGeoCoordinatesLike,
     mercatorProjection,
     Projection,
@@ -684,19 +687,44 @@ const MapViewDefaults = {
 };
 
 /**
- * Parameters for MapView.lookAt
+ * Parameters for [[MapView.lookAt]].
  */
 export interface LookAtParams {
     /**
      * Target/look at point of the MapView.
+     *
      * @note If the given point is not on the ground (altitude != 0) [[MapView]] will do a
      * raycasting internally to find a target on the ground.
+     *
      * As a consequence [[MapView.target]] and [[MapView.zoomLevel]] will not match the values
      * that were passed into the [[MapView.lookAt]] method.
      * @default `new GeoCoordinates(25, 0)` in [[MapView.constructor]] context.
      * @default [[MapView.target]] in [[MapView.lookAt]] context.
      */
     target: GeoCoordLike;
+
+    /**
+     * Fit MapView to these boundaries.
+     *
+     * If specified, `zoomLevel` and `distance` parameters are ignored and `lookAt` calculates best
+     * `zoomLevel` to fit given bounds.
+     *
+     * * if `bounds` is [[GeoBox]], then `lookAt` use [[LookAtParams.target]] or `bounds.target` and
+     *   ensure whole box is visible
+     *
+     * * if `bounds` is [[GeoBoxExtentLike]], then `lookAt` will use [[LookAtParams.target]] or
+     *   current [[MapView.target]] and ensure whole extents are visible
+     *
+     * * if `bounds` is [[GeoCoordLike]][], then `lookAt` will use [[LookAtParams.target]] or
+     *   calculated `target` as center of world box covering given points and ensure all points are
+     *   visible
+     *
+     * Note in sphere projection some points are not visible if you specify bounds that span more
+     * than 180 degreess in any direction.
+     *
+     * @see [[MapView.lookAt]] for defails how `bounds` interact with `target` parameter
+     */
+    bounds: GeoBox | GeoBoxExtentLike | GeoCoordLike[];
 
     /**
      * Camera distance to the target point in world units.
@@ -2059,6 +2087,55 @@ export class MapView extends THREE.EventDispatcher {
         this.m_textElementsRenderer.clearOverlayText();
     }
 
+    // tslint:disable: max-line-length
+    /**
+     * Adjusts the camera to look at a given geo coordinate with tilt and heading angles.
+     *
+     * #### Note on `target` and `bounds`
+     *
+     * If `bounds` are specified, `zoomLevel` and `distance` parameters are ignored and `lookAt`
+     * calculates best zoomLevel (and possibly target) to fit given bounds.
+     *
+     * Following table shows how relation between `bounds` and target.
+     *
+     * | `bounds`             | `target`    | actual `target`
+     * | ------               | ------      | --------
+     * | [[GeoBox]]           | _defined_   | `params.target` is used
+     * | [[GeoBox]]           | `undefined` | `bounds.center` is used as new `target`
+     * | [[GeoBoxExtentLike]] | `undefined` | current `MapView.target` is used
+     * | [[GeoBoxExtentLike]] | _defined_   | `params.target` is used
+     * | [[GeoCoordLike]][]   | `undefined` | new `target` is calculated as center of world box covering given points
+     * | [[GeoCoordLike]][]   | _defined_   | `params.target` is used and zoomLevel is adjusted to view all given geo points
+     *
+     * In each case, `lookAt` finds minimum `zoomLevel` that covers given extents or geo points.
+     *
+     * With flat projection, if `bounds` represents points on both sides of antimeridian, and
+     * [[MapViewOptions.tileWrappingEnabled]] is used, `lookAt` will use this knowledge and find
+     * minimal view that may cover "next" or "previous" world.
+     *
+     * With sphere projection if `bounds` represents points on both sides of globe, best effort
+     * method is used to find best `target``.
+     *
+     * #### Examples
+     *
+     * ```
+     * mapView.lookAt({heading: 90})
+     *     // look east retaining current `target`, `zoomLevel` and `tilt`
+     *
+     * mapView.lookAt({lat: 40.707, lng: -74.01})
+     *    // look at Manhattan, New York retaining other view params
+     *
+     * mapView.lookAt(bounds: { latitudeSpan: 10, longitudeSpan: 10})
+     *    // look at current `target`, but extending zoomLevel so we see 10 degrees of lat/long span
+     * ```
+     *
+     * @see More examples in [[LookAtExample]].
+     *
+     * @param params [[LookAtParams]]
+     */
+    lookAt(params: Partial<LookAtParams>): void;
+    // tslint:enable: max-line-length
+
     /**
      * The method that sets the camera to the desired angle (`tiltDeg`) and `distance` (in meters)
      * to the `target` location, from a certain heading (`headingAngle`).
@@ -2073,12 +2150,6 @@ export class MapView extends THREE.EventDispatcher {
      * @deprecated Use lookAt version with [[LookAtParams]] object parameter.
      */
     lookAt(target: GeoCoordLike, distance: number, tiltDeg?: number, headingDeg?: number): void;
-
-    /**
-     * Adjusts the camera to look at a given geo coordinate with tilt and heading angles.
-     * @param params LookAtParams
-     */
-    lookAt(params: Partial<LookAtParams>): void;
 
     lookAt(
         targetOrParams: GeoCoordLike | Partial<LookAtParams>,
@@ -2686,7 +2757,7 @@ export class MapView extends THREE.EventDispatcher {
         const tangentSpaceMatrix = cache.matrix4[1];
         // 1. Build the matrix of the tangent space of the camera.
         cameraPos.setFromMatrixPosition(camera.matrixWorld); // Ensure using world position.
-        projection.localTangentSpace(projection.unprojectPoint(cameraPos), transform);
+        projection.localTangentSpace(this.m_targetGeoPos, transform);
         tangentSpaceMatrix.makeBasis(transform.xAxis, transform.yAxis, transform.zAxis);
 
         // 2. Change the basis of matrixWorld to the tangent space to get the new base axes.
@@ -2730,8 +2801,63 @@ export class MapView extends THREE.EventDispatcher {
 
     private lookAtImpl(params: Partial<LookAtParams>): void {
         const tilt = Math.min(getOptionValue(params.tilt, this.tilt), MapViewUtils.MAX_TILT_DEG);
-        const target = GeoCoordinates.fromObject(getOptionValue(params.target, this.target));
         const heading = getOptionValue(params.heading, this.heading);
+
+        let target: GeoCoordinates | undefined;
+        if (params.bounds !== undefined) {
+            let geoPoints: GeoCoordLike[];
+
+            if (params.bounds instanceof GeoBox) {
+                target = params.target
+                    ? GeoCoordinates.fromObject(params.target)
+                    : params.bounds.center;
+                geoPoints = MapViewUtils.geoBoxToGeoPoints(params.bounds);
+            } else if (isGeoBoxExtentLike(params.bounds)) {
+                target = params.target ? GeoCoordinates.fromObject(params.target) : this.target;
+                const box = GeoBox.fromCenterAndExtents(target, params.bounds);
+                geoPoints = MapViewUtils.geoBoxToGeoPoints(box);
+            } else if (Array.isArray(params.bounds)) {
+                geoPoints = params.bounds;
+                if (params.target !== undefined) {
+                    target = GeoCoordinates.fromObject(params.target);
+                }
+            } else {
+                throw Error("#lookAt: Invalid 'bounds' value");
+            }
+            if (this.m_tileWrappingEnabled && this.projection.type === ProjectionType.Planar) {
+                // In flat projection, with wrap around enabled, we should detect clusters of
+                // points around  antimeridian and possible move some points to sibling worlds.
+                //
+                // Here, we fit points into minimal geo box taking world wrapping into account.
+                geoPoints = MapViewUtils.wrapGeoPointsToScreen(geoPoints, target!);
+            }
+            const worldPoints = geoPoints.map(point =>
+                this.projection.projectPoint(GeoCoordinates.fromObject(point), new THREE.Vector3())
+            );
+            const worldTarget = new THREE.Vector3();
+            if (target! === undefined) {
+                const box = new THREE.Box3().setFromPoints(worldPoints);
+                box.getCenter(worldTarget);
+                this.projection.scalePointToSurface(worldTarget);
+                target = this.projection.unprojectPoint(worldTarget);
+            } else {
+                this.projection.projectPoint(target, worldTarget);
+            }
+            return this.lookAtImpl(
+                MapViewUtils.getFitBoundsLookAtParams(target, worldTarget, worldPoints, {
+                    tilt,
+                    heading,
+                    minDistance: MapViewUtils.calculateDistanceFromZoomLevel(
+                        this,
+                        this.maxZoomLevel
+                    ),
+                    projection: this.projection,
+                    camera: this.camera
+                })
+            );
+        }
+        target =
+            params.target !== undefined ? GeoCoordinates.fromObject(params.target) : this.target;
 
         const distance =
             params.zoomLevel !== undefined
@@ -2858,11 +2984,6 @@ export class MapView extends THREE.EventDispatcher {
      * Derive the look at settings (i.e. target, zoom, ...) from the current camera.
      */
     private updateLookAtSettings() {
-        const { yaw, pitch, roll } = this.extractAttitude();
-        this.m_yaw = yaw;
-        this.m_pitch = pitch;
-        this.m_roll = roll;
-
         // tslint:disable-next-line: deprecation
         const { target, distance } = MapViewUtils.getTargetAndDistance(
             this.projection,
@@ -2874,6 +2995,11 @@ export class MapView extends THREE.EventDispatcher {
         this.m_targetGeoPos = this.projection.unprojectPoint(this.m_targetWorldPos);
         this.m_targetDistance = distance;
         this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, this.m_targetDistance);
+
+        const { yaw, pitch, roll } = this.extractAttitude();
+        this.m_yaw = yaw;
+        this.m_pitch = pitch;
+        this.m_roll = roll;
     }
 
     /**

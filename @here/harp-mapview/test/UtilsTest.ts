@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { GeoCoordinates, mercatorProjection, TileKey } from "@here/harp-geoutils";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import * as THREE from "three";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
@@ -107,6 +107,60 @@ describe("map-view#Utils", function() {
                 // Expect accuracy till 10-th fractional digit (10-th place after comma).
                 expect(zoomLevel).to.be.closeTo(calculatedZoomLevel, 1e-10);
             }
+        });
+    });
+
+    describe("wrapGeoPointsToScreen", function() {
+        const epsilon = 1e-10;
+        it("works across antimeridian #1 - west based box", function() {
+            const fitted = MapViewUtils.wrapGeoPointsToScreen([
+                new GeoCoordinates(10, -170),
+                new GeoCoordinates(10, 170),
+                new GeoCoordinates(-10, -170)
+            ]);
+            assert.closeTo(fitted[0].longitude, -170, epsilon);
+            assert.closeTo(fitted[1].longitude, -190, epsilon);
+            assert.closeTo(fitted[2].longitude, -170, epsilon);
+        });
+        it("works across antimeridian #2 - east based box", function() {
+            const fitted = MapViewUtils.wrapGeoPointsToScreen([
+                new GeoCoordinates(10, 170),
+                new GeoCoordinates(10, -170),
+                new GeoCoordinates(-10, 170)
+            ]);
+            assert.closeTo(fitted[0].longitude, 170, epsilon);
+            assert.closeTo(fitted[1].longitude, 190, epsilon);
+            assert.closeTo(fitted[2].longitude, 170, epsilon);
+        });
+        it("works across antimeridian #3 - east based box v2", function() {
+            const fitted = MapViewUtils.wrapGeoPointsToScreen([
+                new GeoCoordinates(10, 170),
+                new GeoCoordinates(10, -170),
+                new GeoCoordinates(-10, 170),
+                new GeoCoordinates(0, -179)
+            ]);
+            assert.closeTo(fitted[0].longitude, 170, epsilon);
+            assert.closeTo(fitted[1].longitude, 190, epsilon);
+            assert.closeTo(fitted[2].longitude, 170, epsilon);
+            assert.closeTo(fitted[3].longitude, 181, epsilon);
+        });
+        it("works across antimeridian #4 - bering sea", function() {
+            // sample shape - polygons enclosing bering sea
+            // naive GeoBox would have center lon~=0, we need to center around _real_ center
+            // which is in bering sea center which has lon ~=180 (or -180)
+            const fitted = MapViewUtils.wrapGeoPointsToScreen([
+                new GeoCoordinates(50.95019, -179.1428493376325),
+                new GeoCoordinates(52.91106, 159.02544759162745),
+                new GeoCoordinates(69.90354, 179.15147738391926),
+                new GeoCoordinates(70.25714, -161.597647174786),
+                new GeoCoordinates(55.76049, -157.31410465785078)
+            ]);
+            // 2nd and 3rd point should be offsetted
+            assert.closeTo(fitted[0].longitude, -179.1428493376325, 0.0001);
+            assert.closeTo(fitted[1].longitude, 159.02544759162745 - 360, 0.0001);
+            assert.closeTo(fitted[2].longitude, 179.15147738391926 - 360, 0.0001);
+            assert.closeTo(fitted[3].longitude, -161.597647174786, 0.0001);
+            assert.closeTo(fitted[4].longitude, -157.31410465785078, 0.0001);
         });
     });
 

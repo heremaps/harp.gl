@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GeoBoxExtentLike } from "./GeoBoxExtentLike";
 import { GeoCoordinates } from "./GeoCoordinates";
 
 import * as THREE from "three";
@@ -11,7 +12,7 @@ import * as THREE from "three";
 /**
  * `GeoBox` is used to represent a bounding box in geo coordinates.
  */
-export class GeoBox {
+export class GeoBox implements GeoBoxExtentLike {
     /**
      * Returns a `GeoBox` with the given geo coordinates.
      *
@@ -20,6 +21,25 @@ export class GeoBox {
      */
     static fromCoordinates(southWest: GeoCoordinates, northEast: GeoCoordinates): GeoBox {
         return new GeoBox(southWest, northEast);
+    }
+
+    /**
+     * Returns a `GeoBox` with the given center and dimensions.
+     *
+     * @param center The center position of geo box.
+     * @param extent Box latitude and logitude span
+     */
+    static fromCenterAndExtents(center: GeoCoordinates, extent: GeoBoxExtentLike): GeoBox {
+        return new GeoBox(
+            new GeoCoordinates(
+                center.latitude - extent.latitudeSpan / 2,
+                center.longitude - extent.longitudeSpan / 2
+            ),
+            new GeoCoordinates(
+                center.latitude + extent.latitudeSpan / 2,
+                center.longitude + extent.longitudeSpan / 2
+            )
+        );
     }
 
     /**

@@ -107,6 +107,20 @@ export namespace MathUtils {
     }
 
     /**
+     * Normalize latitude angle in degrees to range `[-180, 180]`.
+     *
+     * @param a Latitude angle in degrees.
+     * @returns Latitude angle in degrees in range `[-180, 180]`.
+     */
+    export function normalizeLongitudeDeg(a: number): number {
+        a = normalizeAngleDeg(a);
+        if (a > 180) {
+            a = a - 360;
+        }
+        return a;
+    }
+
+    /**
      * Return the minimal delta between angles `a` and `b` given in degrees.
      *
      * Equivalent to `a - b` in coordinate space with exception vector direction can be reversed

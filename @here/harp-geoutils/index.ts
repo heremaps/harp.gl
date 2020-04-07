@@ -5,6 +5,7 @@
  */
 
 export * from "./lib/coordinates/GeoBox";
+export * from "./lib/coordinates/GeoBoxExtentLike";
 export * from "./lib/coordinates/GeoCoordinatesLike";
 export * from "./lib/coordinates/GeoCoordinates";
 export * from "./lib/coordinates/GeoPointLike";

@@ -1,12 +1,20 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import * as THREE from "three";
 
-import { GeoCoordinates, Projection, ProjectionType, TileKey } from "@here/harp-geoutils";
+import {
+    GeoBox,
+    GeoCoordinates,
+    GeoCoordLike,
+    MathUtils,
+    Projection,
+    ProjectionType,
+    TileKey
+} from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
@@ -52,7 +60,7 @@ const tangentSpace = {
 };
 const cache = {
     quaternions: [new THREE.Quaternion(), new THREE.Quaternion()],
-    vector3: [new THREE.Vector3(), new THREE.Vector3()],
+    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
     transforms: [
         {
@@ -408,6 +416,263 @@ export namespace MapViewUtils {
         }
 
         return result;
+    }
+
+    /**
+     * @hidden
+     * @internal
+     *
+     * Add offset to geo points for minimal view box in flat projection with tile wrapping.
+     *
+     * In flat projection, with wrap around enabled, we should detect clusters of points around that
+     * wrap antimeridian.
+     *
+     * Here, we fit points into minimal geo box taking world wrapping into account.
+     */
+    export function wrapGeoPointsToScreen(
+        points: GeoCoordLike[],
+        startPosition?: GeoCoordinates
+    ): GeoCoordinates[] {
+        let startIndex = 0;
+        if (startPosition === undefined) {
+            startPosition = GeoCoordinates.fromObject(points[0]);
+            startIndex = 1;
+        }
+        let north = startPosition.latitude;
+        let south = startPosition.latitude;
+        let lonCenter = MathUtils.normalizeLongitudeDeg(startPosition.longitude);
+        let lonSpan = 0;
+        let east = startPosition.longitude;
+        let west = startPosition.longitude;
+
+        const result: GeoCoordinates[] = [];
+        result.push(new GeoCoordinates(north, lonCenter));
+        for (let i = startIndex; i < points.length; i++) {
+            const p = GeoCoordinates.fromObject(points[i]);
+            if (p.latitude > north) {
+                north = p.latitude;
+            } else if (p.latitude < south) {
+                south = p.latitude;
+            }
+
+            let longitude = MathUtils.normalizeLongitudeDeg(p.longitude);
+
+            const relToCenter = MathUtils.angleDistanceDeg(lonCenter, longitude);
+            longitude = lonCenter - relToCenter;
+            if (relToCenter < 0 && -relToCenter > lonSpan / 2) {
+                east = Math.max(east, lonCenter - relToCenter);
+                lonSpan = east - west;
+                lonCenter = (east + west) / 2;
+            } else if (relToCenter > 0 && relToCenter > lonSpan / 2) {
+                west = Math.min(west, longitude);
+                lonSpan = east - west;
+                lonCenter = (east + west) / 2;
+            }
+            result.push(new GeoCoordinates(p.latitude, longitude));
+        }
+        return result;
+    }
+
+    /**
+     * @hidden
+     * @internal
+     *
+     * Given `cameraPos`, force all points that lie on non-visible sphere half to be "near" max
+     * possible viewable circle from given camera position.
+     *
+     * Assumes that shpere projection with world center is in `(0, 0, 0)`.
+     */
+    export function wrapWorldPointsToView(points: THREE.Vector3[], cameraPos: THREE.Vector3) {
+        const cameraPosNormalized = cameraPos.clone().normalize();
+        for (const point of points) {
+            if (point.angleTo(cameraPos) > Math.PI / 2) {
+                // Point is on other side of sphere, we "clamp it to" max possible viewable circle
+                // from given camera position
+
+                const pointLen = point.length();
+
+                point.projectOnPlane(cameraPosNormalized).setLength(pointLen);
+            }
+        }
+    }
+
+    /**
+     * @hidden
+     * @internal
+     *
+     * Return [[GeoPoints]] bounding [[GeoBox]] applicable for [[getFitBoundsDistance]].
+     *
+     * @returns [[GeoCoordinates]] set that covers `box`
+     */
+    export function geoBoxToGeoPoints(box: GeoBox): GeoCoordinates[] {
+        const center = box.center;
+        return [
+            new GeoCoordinates(box.north, box.west),
+            new GeoCoordinates(box.north, box.east),
+            new GeoCoordinates(center.latitude, box.west),
+            new GeoCoordinates(center.latitude, box.east),
+            new GeoCoordinates(box.south, box.west),
+            new GeoCoordinates(box.south, box.east),
+            new GeoCoordinates(box.north, center.longitude),
+            new GeoCoordinates(box.south, center.longitude)
+        ];
+    }
+
+    /**
+     * @hidden
+     * @internal
+     *
+     * Get minimal distance required for `camera` looking at `worldTarget` to cover `points`.
+     *
+     * All dimensions belong to world space.
+     *
+     * @param points points which shall are to be covered by view
+     *
+     * @param worldTarget readonly, world target of [[MapView]]
+     * @param camera readonly, camera with proper `position` and rotation set
+     * @returns new distance to camera to be used with [[MapView.lookAt]]
+     */
+    export function getFitBoundsDistance(
+        points: THREE.Vector3[],
+        worldTarget: THREE.Vector3,
+        camera: THREE.PerspectiveCamera
+    ): number {
+        const cameraRotationMatrix = new THREE.Matrix4();
+        cameraRotationMatrix.extractRotation(camera.matrixWorld);
+        const screenUpVector = new THREE.Vector3(0, 1, 0).applyMatrix4(cameraRotationMatrix);
+        const screenSideVector = new THREE.Vector3(1, 0, 0).applyMatrix4(cameraRotationMatrix);
+        const screenVertMidPlane = new THREE.Plane().setFromCoplanarPoints(
+            camera.position,
+            worldTarget,
+            worldTarget.clone().add(screenUpVector)
+        );
+        const screenHorzMidPlane = new THREE.Plane().setFromCoplanarPoints(
+            camera.position,
+            worldTarget,
+            worldTarget.clone().add(screenSideVector)
+        );
+
+        const cameraPos = cache.vector3[0];
+        cameraPos.copy(camera.position);
+
+        const halfVertFov = THREE.MathUtils.degToRad(camera.fov / 2);
+        const halfHorzFov = THREE.MathUtils.degToRad((camera.fov / 2) * camera.aspect);
+
+        // tan(fov/2)
+        const halfVertFovTan = 1 / Math.tan(halfVertFov);
+        const halfHorzFovTan = 1 / Math.tan(halfHorzFov);
+
+        const cameraToTarget = cache.vector3[1];
+        cameraToTarget
+            .copy(cameraPos)
+            .sub(worldTarget)
+            .negate();
+
+        const cameraToTargetNormalized = new THREE.Vector3().copy(cameraToTarget).normalize();
+
+        const offsetVector = new THREE.Vector3();
+
+        const cameraToPointOnRefPlane = new THREE.Vector3();
+        const pointOnRefPlane = new THREE.Vector3();
+
+        function checkAngle(
+            point: THREE.Vector3,
+            referencePlane: THREE.Plane,
+            maxAngle: number,
+            fovFactor: number
+        ) {
+            referencePlane.projectPoint(point, pointOnRefPlane);
+            cameraToPointOnRefPlane
+                .copy(cameraPos)
+                .sub(pointOnRefPlane)
+                .negate();
+
+            const viewAngle = cameraToTarget.angleTo(cameraToPointOnRefPlane);
+
+            if (viewAngle <= maxAngle) {
+                return;
+            }
+
+            const cameraToPointLen = cameraToPointOnRefPlane.length();
+            const cameraToTargetLen = cameraToTarget.length();
+
+            const newCameraDistance =
+                cameraToPointLen * (Math.sin(viewAngle) * fovFactor - Math.cos(viewAngle)) +
+                cameraToTargetLen;
+
+            offsetVector
+                .copy(cameraToTargetNormalized)
+                .multiplyScalar(cameraToTargetLen - newCameraDistance);
+
+            cameraPos.add(offsetVector);
+            cameraToTarget.sub(offsetVector);
+        }
+
+        for (const point of points) {
+            checkAngle(point, screenVertMidPlane, halfVertFov, halfVertFovTan);
+            checkAngle(point, screenHorzMidPlane, halfHorzFov, halfHorzFovTan);
+        }
+
+        return cameraToTarget.length();
+    }
+
+    /**
+     * @hidden
+     * @internal
+     *
+     * Paremeters for [[getFitBoundsLookAtParams]] function.
+     */
+    export interface FitPointParams {
+        tilt: number;
+        heading: number;
+        projection: Projection;
+        minDistance: number;
+        camera: THREE.PerspectiveCamera;
+    }
+
+    /**
+     * @hidden
+     * @internal
+     *
+     * Get [[LookAtParams]] that fit all `worldPoints` giving that [[MapView]] will target at
+     * `geoTarget`.
+     *
+     * @param geoTarget desired target (see [[MapView.target]]) as geo point
+     * @param worldTarget same as `geoTarget` but in world space
+     * @param worldPoints points we want to see
+     * @param params - other params derived from [[MapView]].
+     */
+    export function getFitBoundsLookAtParams(
+        geoTarget: GeoCoordinates,
+        worldTarget: THREE.Vector3,
+        worldPoints: THREE.Vector3[],
+        params: FitPointParams
+    ) {
+        const { tilt, heading, projection } = params;
+        const startDistance = params.minDistance;
+        const tmpCamera = params.camera.clone();
+
+        getCameraRotationAtTarget(projection, geoTarget, -heading, tilt, tmpCamera.quaternion);
+        getCameraPositionFromTargetCoordinates(
+            geoTarget,
+            startDistance,
+            -heading,
+            tilt,
+            projection,
+            tmpCamera.position
+        );
+        tmpCamera.updateMatrixWorld(true);
+
+        if (projection.type === ProjectionType.Spherical) {
+            wrapWorldPointsToView(worldPoints, tmpCamera.position);
+        }
+        const distance = getFitBoundsDistance(worldPoints, worldTarget, tmpCamera);
+        return {
+            target: geoTarget,
+            distance,
+            heading,
+            tilt
+        };
     }
 
     /**
