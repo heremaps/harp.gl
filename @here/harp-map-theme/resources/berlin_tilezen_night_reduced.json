@@ -76,13 +76,6 @@
             "atlas": "maki_icons.json"
         }
     },
-    "poiTables": [
-        {
-            "name": "tzPoiTableMaki",
-            "url": "poi_table_maki.json",
-            "useAltNamesForKey": true
-        }
-    ],
     "styles": {
         "tilezen": [
             {
@@ -2107,34 +2100,6 @@
                     "backgroundColor": "#000000",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
-            },
-            {
-                "description": "POIs in tilezen format use maki icons",
-                "when": ["all", ["==", ["get", "$layer"], "pois"], ["has", "kind"]],
-                "technique": "labeled-icon",
-                "attr": {
-                    "poiTable": "tzPoiTableMaki",
-                    "poiNameField": "kind",
-                    "imageTexturePostfix": "-15",
-                    "iconScale": 1,
-                    "size": 16,
-                    "yOffset": 8,
-                    "vAlignment": "Above",
-                    "hAlignment": "Center",
-                    "textIsOptional": true,
-                    "iconIsOptional": false,
-                    "renderTextDuringMovements": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
