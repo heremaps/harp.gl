@@ -136,8 +136,7 @@ export function framesEnabled(input: InputTextElement): boolean[] | undefined {
 
 export interface InputTile {
     // Labels in the tile, including their builder and expected fade state per frame.
-    labels?: InputTextElement[];
-    userLabels?: InputTextElement[];
+    labels: InputTextElement[];
     // Frames where tile will be visited (default: all)
     frames?: boolean[];
     // Frames where corresponding terrain tile will be available (default: terrain disabled)

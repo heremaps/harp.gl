@@ -14,7 +14,7 @@ import {
     Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
-import { Technique } from "./Techniques";
+import { IndexedTechnique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
 
 /**
@@ -23,14 +23,13 @@ import { TileInfo } from "./TileInfo";
  * metadata describing these buffers.
  */
 export interface DecodedTile {
-    techniques: Technique[];
+    techniques: IndexedTechnique[];
     geometries: Geometry[];
     pathGeometries?: PathGeometry[];
     textPathGeometries?: TextPathGeometry[];
     textGeometries?: TextGeometry[]; // ### deprecate
     poiGeometries?: PoiGeometry[];
     tileInfo?: TileInfo;
-    maxGeometryHeight?: number;
     decodeTime?: number; // time used to decode (in ms)
 
     /**
@@ -39,6 +38,12 @@ export interface DecodedTile {
      * more accurate bounding box once the data is decoded.
      */
     boundingBox?: OrientedBox3;
+
+    /**
+     * Data sources not defining a bounding box may define alternatively a maximum geometry height
+     * in meters. The bounding box of the resulting tile will be extended to encompass this height.
+     */
+    maxGeometryHeight?: number;
 
     /**
      * Tile data Copyright holder identifiers.
@@ -137,7 +142,7 @@ export enum GeometryType {
  */
 export interface Geometry {
     type: GeometryType;
-    vertexAttributes: BufferAttribute[];
+    vertexAttributes?: BufferAttribute[];
     interleavedVertexAttributes?: InterleavedBufferAttribute[];
     index?: BufferAttribute;
     edgeIndex?: BufferAttribute;
@@ -153,6 +158,43 @@ export interface Geometry {
      * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
      */
     objInfos?: AttributeMap[];
+
+    /**
+     * Optional [[Array]] of [[Attachment]]s.
+     */
+    attachments?: Attachment[];
+}
+
+/**
+ * Attachments together with [[Geometry]] define the meshes and the objects
+ * of a [[Scene]].
+ */
+export interface Attachment {
+    /**
+     * The unique uuid of this [[Attachment]].
+     */
+    uuid?: string;
+
+    /**
+     * The name of this [[Attachment]].
+     */
+    name?: string;
+
+    /**
+     * The index [[BufferAttribute]]. If not provided the index
+     * buffer of the [[Geometry]] will be used.
+     */
+    index?: BufferAttribute;
+
+    /**
+     * Optional additional buffer index used to create an edge object.
+     */
+    edgeIndex?: BufferAttribute;
+
+    /**
+     * The draw [[Group]]]s of this [[Attachment]].
+     */
+    groups: Group[];
 }
 
 /**
@@ -215,13 +257,6 @@ export interface Group {
     start: number;
     count: number;
     technique: number;
-
-    /**
-     * Offset added to [[Technique]]'s [[renderOrder]] when calculating final `renderOrder` of
-     * geometry object from given group.
-     */
-    renderOrderOffset?: number;
-    featureId?: number;
 
     /**
      * Contains tile offsets if its [[Geometry]] has been created.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,6 +7,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     GeoCoordinates,
     Projection,
+    ProjectionType,
     TileKey,
     TileKeyUtils,
     TilingScheme
@@ -14,13 +15,14 @@ import {
 import { LRUCache } from "@here/harp-lrucache";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+import { BackgroundDataSource } from "./BackgroundDataSource";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { Tile } from "./Tile";
-import { MapViewUtils, TileOffsetUtils } from "./Utils";
+import { TileOffsetUtils } from "./Utils";
 
 /**
  * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
@@ -207,7 +209,7 @@ class DataSourceCache {
     /**
      * Get tile cached or __undefined__ if tile is not yet in cache.
      *
-     * @param mortonCode En unique tile morton code.
+     * @param mortonCode An unique tile morton code.
      * @param offset Tile offset.
      * @param dataSource A [[DataSource]] the tile comes from.
      */
@@ -369,9 +371,12 @@ export class VisibleTileSet {
     allVisibleTilesLoaded: boolean = false;
     options: VisibleTileSetOptions;
 
-    private readonly m_projectionMatrixOverride = new THREE.Matrix4();
+    private readonly m_cameraOverride = new THREE.PerspectiveCamera();
     private m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
+    // Maps morton codes to a given Tile, used to find overlapping Tiles. We only need to have this
+    // for a single TilingScheme, i.e. that of the BackgroundDataSource.
+    private m_coveringMap = new Map<number, Tile>();
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -463,8 +468,11 @@ export class VisibleTileSet {
         if (minElevation !== undefined) {
             this.options.clipPlanesEvaluator.minElevation = minElevation;
         }
+        const { camera, projection, elevationProvider } = this.m_frustumIntersection.mapView;
         this.m_viewRange = this.options.clipPlanesEvaluator.evaluateClipPlanes(
-            this.m_frustumIntersection.mapView
+            camera,
+            projection,
+            elevationProvider
         );
         return this.m_viewRange;
     }
@@ -491,6 +499,7 @@ export class VisibleTileSet {
             elevationRangeSource
         );
         this.dataSourceTileList = [];
+        this.m_coveringMap.clear();
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
             // Sort by distance to camera, now the tiles that are further away are at the end
             // of the list.
@@ -513,7 +522,7 @@ export class VisibleTileSet {
             let allDataSourceTilesLoaded = true;
             let numTilesLoading = 0;
             // Create actual tiles only for the allowed number of visible tiles
-            const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
+            const dataZoomLevel = dataSource.getDataZoomLevel(zoomLevel);
             for (
                 let i = 0;
                 i < visibleTileKeys.length &&
@@ -534,6 +543,9 @@ export class VisibleTileSet {
                     numTilesLoading++;
                 } else {
                     tile.numFramesVisible++;
+                    // If this tile's data source is "covering" then other tiles beneath it have
+                    // their rendering skipped, see [[Tile.willRender]].
+                    this.skipOverlappedTiles(dataSource, tile);
 
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
@@ -543,8 +555,7 @@ export class VisibleTileSet {
                 // Update the visible area of the tile. This is used for those tiles that are
                 // currently loaded and are waiting to be decoded to sort the jobs by area.
                 tile.visibleArea = tileEntry.area;
-                tile.minElevation = tileEntry.minElevation;
-                tile.maxElevation = tileEntry.maxElevation;
+                tile.elevationRange = tileEntry;
 
                 actuallyVisibleTiles.push(tile);
             }
@@ -554,7 +565,7 @@ export class VisibleTileSet {
             this.dataSourceTileList.push({
                 dataSource,
                 storageLevel,
-                zoomLevel: displayZoomLevel,
+                zoomLevel: dataZoomLevel,
                 allVisibleTileLoaded: allDataSourceTilesLoaded,
                 numTilesLoading,
                 visibleTiles: actuallyVisibleTiles,
@@ -588,11 +599,9 @@ export class VisibleTileSet {
             // values with zero levels for both elevations.
             const tiles = renderListEntry.renderedTiles;
             tiles.forEach(tile => {
-                minElevation = MathUtils.min2(minElevation, tile.minElevation);
-                maxElevation = MathUtils.max2(
-                    maxElevation,
-                    tile.maxElevation + tile.maxGeometryHeight
-                );
+                tile.update(renderListEntry.zoomLevel);
+                minElevation = MathUtils.min2(minElevation, tile.geoBox.minAltitude);
+                maxElevation = MathUtils.max2(maxElevation, tile.geoBox.maxAltitude);
             });
         });
 
@@ -837,17 +846,47 @@ export class VisibleTileSet {
         tile.dispose();
     }
 
+    /**
+     * Skips rendering of tiles that are overlapped. The overlapping [[Tile]] comes from a
+     * [[DataSource]] which is fully covering, i.e. there it is fully opaque.
+     **/
+    private skipOverlappedTiles(dataSource: DataSource, tile: Tile) {
+        if (this.options.projection.type === ProjectionType.Spherical) {
+            // HARP-7899, currently the globe has no background planes in the tiles (it relies on
+            // the BackgroundDataSource), because the LOD mismatches, hence disabling for globe.
+            return;
+        }
+        if (dataSource.isFullyCovering()) {
+            const key = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            const entry = this.m_coveringMap.get(key);
+            if (entry === undefined) {
+                // We need to reset the flag so that if the covering datasource is disabled, that
+                // the tiles beneath then start to render.
+                tile.skipRendering = false;
+                this.m_coveringMap.set(key, tile);
+            } else {
+                // Skip the [[Tile]] if either the stored entry or the tile to consider is from the
+                // [[BackgroundDataSource]]
+                if (entry.dataSource instanceof BackgroundDataSource) {
+                    entry.skipRendering = true;
+                } else if (dataSource instanceof BackgroundDataSource) {
+                    tile.skipRendering = true;
+                }
+            }
+        }
+    }
+
     private getCacheSearchLevels(
         dataSource: DataSource,
         visibleLevel: number
     ): { searchLevelsUp: number; searchLevelsDown: number } {
         const searchLevelsUp = Math.min(
             this.options.quadTreeSearchDistanceUp,
-            Math.max(0, visibleLevel - dataSource.minZoomLevel)
+            Math.max(0, visibleLevel - dataSource.minDataLevel)
         );
         const searchLevelsDown = Math.min(
             this.options.quadTreeSearchDistanceDown,
-            Math.max(0, dataSource.maxZoomLevel - visibleLevel)
+            Math.max(0, dataSource.maxDataLevel - visibleLevel)
         );
 
         return { searchLevelsUp, searchLevelsDown };
@@ -863,7 +902,7 @@ export class VisibleTileSet {
     private fillMissingTilesFromCache() {
         this.dataSourceTileList.forEach(renderListEntry => {
             const dataSource = renderListEntry.dataSource;
-            const displayZoomLevel = renderListEntry.zoomLevel;
+            const dataZoomLevel = renderListEntry.zoomLevel;
             const renderedTiles = renderListEntry.renderedTiles;
 
             // Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
@@ -877,7 +916,7 @@ export class VisibleTileSet {
 
             const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
                 dataSource,
-                displayZoomLevel
+                dataZoomLevel
             );
 
             defaultSearchDirection =
@@ -897,7 +936,7 @@ export class VisibleTileSet {
                     tile.offset
                 );
                 tile.levelOffset = 0;
-                if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
+                if (tile.hasGeometry) {
                     renderedTiles.set(tileCode, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
@@ -926,7 +965,7 @@ export class VisibleTileSet {
                     if (
                         this.findUp(
                             tileKeyCode,
-                            displayZoomLevel,
+                            dataZoomLevel,
                             renderedTiles,
                             checkedTiles,
                             dataSource
@@ -941,7 +980,7 @@ export class VisibleTileSet {
                     searchDirection === SearchDirection.BOTH ||
                     searchDirection === SearchDirection.DOWN
                 ) {
-                    this.findDown(tileKeyCode, displayZoomLevel, renderedTiles, dataSource);
+                    this.findDown(tileKeyCode, dataZoomLevel, renderedTiles, dataSource);
                 }
             }
         });
@@ -949,7 +988,7 @@ export class VisibleTileSet {
 
     private findDown(
         tileKeyCode: number,
-        displayZoomLevel: number,
+        dataZoomLevel: number,
         renderedTiles: Map<number, Tile>,
         dataSource: DataSource
     ) {
@@ -967,7 +1006,7 @@ export class VisibleTileSet {
                 dataSource
             );
 
-            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
+            const nextLevelDiff = Math.abs(childTileKey.level - dataZoomLevel);
             if (childTile !== undefined && childTile.hasGeometry) {
                 // childTile has geometry, so can be reused as fallback
                 renderedTiles.set(childTileCode, childTile);
@@ -977,7 +1016,7 @@ export class VisibleTileSet {
 
             // Recurse down until the max distance is reached.
             if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
-                this.findDown(childTileCode, displayZoomLevel, renderedTiles, dataSource);
+                this.findDown(childTileCode, dataZoomLevel, renderedTiles, dataSource);
             }
         }
     }
@@ -985,7 +1024,7 @@ export class VisibleTileSet {
     /**
      * Returns true if a tile was found in the cache which is a parent
      * @param tileKeyCode Morton code of the current tile that should be searched for.
-     * @param displayZoomLevel The current zoom level of tiles that are to be displayed.
+     * @param dataZoomLevel The current data zoom level of tiles that are to be displayed.
      * @param renderedTiles The list of tiles that are shown to the user.
      * @param checkedTiles Used to map a given code to a boolean which tells us if an ancestor is
      * displayed or not.
@@ -994,7 +1033,7 @@ export class VisibleTileSet {
      */
     private findUp(
         tileKeyCode: number,
-        displayZoomLevel: number,
+        dataZoomLevel: number,
         renderedTiles: Map<number, Tile>,
         checkedTiles: Map<number, boolean>,
         dataSource: DataSource
@@ -1012,7 +1051,7 @@ export class VisibleTileSet {
         const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
         const parentTile = this.m_dataSourceCache.get(mortonCode, offset, dataSource);
         const parentTileKey = parentTile ? parentTile.tileKey : TileKey.fromMortonCode(mortonCode);
-        const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
+        const nextLevelDiff = Math.abs(dataZoomLevel - parentTileKey.level);
         if (parentTile !== undefined && parentTile.hasGeometry) {
             checkedTiles.set(parentCode, true);
             // parentTile has geometry, so can be reused as fallback
@@ -1030,7 +1069,7 @@ export class VisibleTileSet {
         if (nextLevelDiff < this.options.quadTreeSearchDistanceUp && parentTileKey.level !== 0) {
             const foundUp = this.findUp(
                 parentCode,
-                displayZoomLevel,
+                dataZoomLevel,
                 renderedTiles,
                 checkedTiles,
                 dataSource
@@ -1150,22 +1189,21 @@ export class VisibleTileSet {
             }
         });
 
-        // If elevation is to be taken into account create extended frustum:
+        // If elevation is to be taken into account extend view frustum:
         // (near ~0, far: maxVisibilityRange) that allows to consider tiles that
         // are far below ground plane and high enough to intersect the frustum.
         if (elevationRangeSource !== undefined) {
-            const fp = MapViewUtils.getCameraFrustumPlanes(this.m_frustumIntersection.camera);
-            fp.near = this.m_viewRange.minimum;
-            fp.far = this.m_viewRange.maximum;
-            this.m_projectionMatrixOverride.makePerspective(
-                fp.left,
-                fp.right,
-                fp.bottom,
-                fp.top,
-                fp.near,
-                fp.far
+            this.m_cameraOverride.copy(this.m_frustumIntersection.camera);
+            this.m_cameraOverride.near = Math.min(
+                this.m_cameraOverride.near,
+                this.m_viewRange.minimum
             );
-            this.m_frustumIntersection.updateFrustum(this.m_projectionMatrixOverride);
+            this.m_cameraOverride.far = Math.max(
+                this.m_cameraOverride.far,
+                this.m_viewRange.maximum
+            );
+            this.m_cameraOverride.updateProjectionMatrix();
+            this.m_frustumIntersection.updateFrustum(this.m_cameraOverride.projectionMatrix);
         } else {
             this.m_frustumIntersection.updateFrustum();
         }
@@ -1173,7 +1211,7 @@ export class VisibleTileSet {
         // For each bucket of data sources with same tiling scheme, calculate frustum intersection
         // once using the maximum display level.
         for (const [tilingScheme, bucket] of dataSourceBuckets) {
-            const zoomLevels = bucket.map(dataSource => dataSource.getDisplayZoomLevel(zoomLevel));
+            const zoomLevels = bucket.map(dataSource => dataSource.getDataZoomLevel(zoomLevel));
             const result = this.m_frustumIntersection.compute(
                 tilingScheme,
                 elevationRangeSource,
@@ -1187,9 +1225,9 @@ export class VisibleTileSet {
                 // For each data source check what tiles from the intersection should be rendered
                 // at this zoom level.
                 const visibleTileKeys: TileKeyEntry[] = [];
-                const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
-                for (const tileKeyEntry of result.tileKeyEntries.get(displayZoomLevel)!.values()) {
-                    if (dataSource.canGetTile(displayZoomLevel, tileKeyEntry.tileKey)) {
+                const dataZoomLevel = dataSource.getDataZoomLevel(zoomLevel);
+                for (const tileKeyEntry of result.tileKeyEntries.get(dataZoomLevel)!.values()) {
+                    if (dataSource.canGetTile(dataZoomLevel, tileKeyEntry.tileKey)) {
                         visibleTileKeys.push(tileKeyEntry);
                     }
                 }

@@ -5,23 +5,30 @@
  */
 import {
     Env,
+    Expr,
     GeometryKind,
+    getFeatureId,
+    getPropertyValue,
     GradientSky,
     ImageTexture,
+    IndexedTechnique,
     Light,
     MapEnv,
     PostEffects,
     Sky,
-    Theme
+    Theme,
+    Value
 } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
     GeoCoordinates,
     GeoCoordLike,
+    isGeoCoordinatesLike,
     mercatorProjection,
     Projection,
     ProjectionType,
-    TilingScheme
+    TilingScheme,
+    Vector3Like
 } from "@here/harp-geoutils";
 import {
     assert,
@@ -46,8 +53,7 @@ import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection } from "./FrustumIntersection";
 import { overlayOnElevation } from "./geometry/overlayOnElevation";
-import { PhasedTileGeometryManager } from "./geometry/PhasedTileGeometryManager";
-import { SimpleTileGeometryManager, TileGeometryManager } from "./geometry/TileGeometryManager";
+import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -68,7 +74,7 @@ import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRen
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
 import { createLight } from "./ThemeHelpers";
 import { ThemeLoader } from "./ThemeLoader";
-import { Tile } from "./Tile";
+import { Tile, TileFeatureData, TileObject } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
 
@@ -170,11 +176,6 @@ const FRAME_RATE_RING_SIZE = 12;
 const FALLBACK_FRAME_RATE = 30;
 
 /**
- * Zoom level to request terrain tiles for getting the height of the camera above terrain.
- */
-const TERRAIN_ZOOM_LEVEL = 4;
-
-/**
  * Style set used by [[PolarTileDataSource]] by default.
  */
 const DEFAULT_POLAR_STYLE_SET_NAME = "polar";
@@ -215,7 +216,29 @@ const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.Copyright
 
 const cache = {
     vector2: [new THREE.Vector2()],
-    vector3: [new THREE.Vector3()]
+    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+    rayCaster: new THREE.Raycaster(),
+    groundPlane: new THREE.Plane(),
+    groundSphere: new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS),
+    frustumPoints: [
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3()
+    ],
+    matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
+    transform: [
+        {
+            position: new THREE.Vector3(),
+            xAxis: new THREE.Vector3(),
+            yAxis: new THREE.Vector3(),
+            zAxis: new THREE.Vector3()
+        }
+    ]
 };
 
 /**
@@ -269,7 +292,7 @@ export enum MapViewPowerPreference {
 /**
  * User configuration for the [[MapView]].
  */
-export interface MapViewOptions extends TextElementsRendererOptions {
+export interface MapViewOptions extends TextElementsRendererOptions, Partial<LookAtParams> {
     /**
      * The canvas element used to render the scene.
      */
@@ -527,19 +550,6 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     maxFps?: number;
 
     /**
-     * Enable phased loading.
-     *
-     * Enabling this feature allows to minimize performance overhead by distributing geometry
-     * creation over multiple frames, thus decreasing CPU load at single frame for smoother
-     * application feedback and animations.
-     * If `false` or undefined, the geometry on a [[Tile]] is always being created in a single
-     * step, instead of (potentially) over multiple frames.
-     *
-     * @default `false`
-     */
-    enablePhasedLoading?: boolean;
-
-    /**
      * Enable map repeat for planar projections.
      * If `true`, map will be repeated in longitudinal direction continuously.
      * If `false`, map will end on lon -180 & 180 deg.
@@ -595,35 +605,6 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     synchronousRendering?: boolean;
 
     /**
-     * Set initial camera target in geo coordinates.
-     *
-     * Longitude values outside of -180 and +180 are acceptable.
-     * @default new GeoCoordinates(25, 0)
-     */
-    target?: GeoCoordLike;
-
-    /**
-     * Set initial zoom level.
-     *
-     * @default 12
-     */
-    zoomLevel?: number;
-
-    /**
-     * Set initial camera heading in degrees.
-     *
-     * @default 0
-     */
-    heading?: number;
-
-    /**
-     * Set initial camera tilt in degrees.
-     *
-     * @default 0
-     */
-    tilt?: number;
-
-    /**
      * Set true to enable rendering mixed levels of detail (increases rendering performance).
      * If not set will enable mixed levels of detail for spherical projection
      * and disable for other projections.
@@ -631,12 +612,20 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      * @default undefined
      */
     enableMixedLod?: boolean;
+
+    /**
+     * Enable shadows in the map. Shadows will only be casted on features that use the "standard"
+     * or "extruded-polygon" technique in the map theme.
+     * @default false
+     */
+    enableShadows?: boolean;
 }
 
 /**
  * Default settings used by [[MapView]] collected in one place.
+ * @internal
  */
-export const MapViewDefaults = {
+const MapViewDefaults = {
     projection: mercatorProjection,
 
     maxVisibleDataSourceTiles: 100,
@@ -651,13 +640,57 @@ export const MapViewDefaults = {
         typeof window !== "undefined" && window.devicePixelRatio !== undefined
             ? window.devicePixelRatio
             : 1.0,
-    geoCenter: new GeoCoordinates(25, 0, 30000000),
     target: new GeoCoordinates(25, 0),
     zoomLevel: 5,
     tilt: 0,
     heading: 0,
     theme: {}
 };
+
+/**
+ * Parameters for MapView.lookAt
+ */
+export interface LookAtParams {
+    /**
+     * Target/look at point of the MapView.
+     * @note If the given point is not on the ground (altitude != 0) [[MapView]] will do a
+     * raycasting internally to find a target on the ground.
+     * As a consequence [[MapView.target]] and [[MapView.zoomLevel]] will not match the values
+     * that were passed into the [[MapView.lookAt]] method.
+     * @default `new GeoCoordinates(25, 0)` in [[MapView.constructor]] context.
+     * @default [[MapView.target]] in [[MapView.lookAt]] context.
+     */
+    target: GeoCoordLike;
+
+    /**
+     * Camera distance to the target point in world units.
+     * @default zoomLevel defaults will be used if not set.
+     */
+    distance: number;
+
+    /**
+     * Zoomlevel of the MapView.
+     * @note Takes precedence over distance.
+     * @default 5 in [[MapView.constructor]] context.
+     * @default [[MapView.zoomLevel]] in [[MapView.lookAt]] context.
+     */
+    zoomLevel: number;
+
+    /**
+     * Tilt angle in degrees. 0 is top down view.
+     * @default 0 in [[MapView.constructor]] context.
+     * @default [[MapView.tilt]] in [[MapView.lookAt]] context.
+     * @note Maximum supported tilt is 89°
+     */
+    tilt: number;
+
+    /**
+     * Heading angle in degrees and clockwise. 0 is north-up.
+     * @default 0 in [[MapView.constructor]] context.
+     * @default [[MapView.heading]] in [[MapView.lookAt]] context.
+     */
+    heading: number;
+}
 
 /**
  * The core class of the library to call in order to create a map visualization. It needs to be
@@ -688,6 +721,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_visibleTiles: VisibleTileSet;
 
+    private m_elevationSource?: DataSource;
     private m_elevationRangeSource?: ElevationRangeSource;
     private m_elevationProvider?: ElevationProvider;
     private m_visibleTileSetLock: boolean = false;
@@ -712,9 +746,12 @@ export class MapView extends THREE.EventDispatcher {
      */
     private readonly m_rteCamera = new THREE.PerspectiveCamera();
 
-    private m_focalLength: number;
-    private m_targetDistance: number;
-    private m_targetGeoPos = MapViewDefaults.target.clone();
+    private m_yaw = 0;
+    private m_pitch = 0;
+    private m_roll = 0;
+    private m_focalLength = 0;
+    private m_targetDistance = 0;
+    private m_targetGeoPos = GeoCoordinates.fromObject(MapViewDefaults.target!);
     // Focus point world coords may be calculated after setting projection, use dummy value here.
     private m_targetWorldPos = new THREE.Vector3();
     private readonly m_viewRanges: ViewRanges = {
@@ -802,7 +839,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_env: MapEnv = new MapEnv({});
 
     private m_enableMixedLod: boolean | undefined;
-
     /**
      * Constructs a new `MapView` with the given options or canvas element.
      *
@@ -931,6 +967,7 @@ export class MapView extends THREE.EventDispatcher {
                     : this.m_options.powerPreference
         });
         this.m_renderer.autoClear = false;
+        this.m_renderer.debug.checkShaderErrors = !isProduction;
 
         // This is detailed at https://threejs.org/docs/#api/renderers/WebGLRenderer.info
         // When using several WebGLRenderer#render calls per frame, it is the only way to get
@@ -943,7 +980,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_options.fovCalculation === undefined
                 ? DEFAULT_FOV_CALCULATION
                 : this.m_options.fovCalculation;
-        this.m_options.fovCalculation.fov = THREE.Math.clamp(
+        this.m_options.fovCalculation.fov = THREE.MathUtils.clamp(
             this.m_options.fovCalculation!.fov,
             MIN_FIELD_OF_VIEW,
             MAX_FIELD_OF_VIEW
@@ -959,13 +996,11 @@ export class MapView extends THREE.EventDispatcher {
         );
         this.m_camera.up.set(0, 0, 1);
         this.projection.projectPoint(this.m_targetGeoPos, this.m_targetWorldPos);
-        this.m_focalLength = 0;
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
-
         // setup camera with initial position
-        this.setupCamera(options);
-        this.m_targetDistance = this.m_camera.position.distanceTo(this.m_targetWorldPos);
+
+        this.setupCamera();
 
         this.m_raycaster = new PickingRaycaster(width, height);
 
@@ -983,10 +1018,7 @@ export class MapView extends THREE.EventDispatcher {
             mapPassAntialiasSettings
         );
 
-        this.m_tileGeometryManager =
-            this.m_options.enablePhasedLoading === true
-                ? new PhasedTileGeometryManager(this)
-                : new SimpleTileGeometryManager(this);
+        this.m_tileGeometryManager = new TileGeometryManager(this);
 
         if (options.enableMixedLod !== undefined) {
             this.m_enableMixedLod = options.enableMixedLod;
@@ -1269,7 +1301,6 @@ export class MapView extends THREE.EventDispatcher {
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
         this.renderer.setClearColor(new THREE.Color(theme.clearColor));
-
         // Images.
         this.m_theme.images = theme.images;
         this.m_theme.imageTextures = theme.imageTextures;
@@ -1465,6 +1496,15 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The THREE.js camera used by this `MapView` to render the main scene.
+     * @note When modifying the camera all derived properties like:
+     * - [[MapView.target]]
+     * - [[MapView.zoomLevel]]
+     * - [[MapView.tilt]]
+     * - [[MapView.heading]]
+     * could change.
+     * These properties are cached internaly and will only be updated in the next animation frame.
+     * FIXME: Unfortunatley THREE.js is not dispatching any events when camera properties change
+     * so we should have an API for enforcing update of cached values.
      */
     get camera(): THREE.PerspectiveCamera {
         return this.m_camera;
@@ -1505,20 +1545,9 @@ export class MapView extends THREE.EventDispatcher {
      * @param projection The [[Projection]] instance to use.
      */
     set projection(projection: Projection) {
-        // The geo center must be reset when changing the projection, because the
-        // camera's position is based on the projected geo center.
-        let target = MapViewUtils.getWorldTargetFromCamera(this.camera, this.projection);
-        if (target === null) {
-            logger.warn(
-                "MapView does not support a view pointing in the void, using last focus point."
-            );
-            target = this.worldTarget;
-        }
-        const targetCoordinates = this.projection.unprojectPoint(target);
-        const targetDistance = this.camera.position.distanceTo(target);
-        const attitude = MapViewUtils.extractAttitude(this, this.camera);
-        const pitchDeg = THREE.Math.radToDeg(attitude.pitch);
-        const headingDeg = -THREE.Math.radToDeg(attitude.yaw);
+        // Remember tilt and heading before setting the projection.
+        const tilt = this.tilt;
+        const heading = this.heading;
 
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
@@ -1526,7 +1555,7 @@ export class MapView extends THREE.EventDispatcher {
         this.textElementsRenderer.clearRenderStates();
         this.m_visibleTiles = this.createVisibleTileSet();
 
-        this.lookAt(targetCoordinates, targetDistance, pitchDeg, headingDeg);
+        this.lookAtImpl({ tilt, heading });
     }
 
     /**
@@ -1550,10 +1579,12 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_focalLength;
     }
 
-    /** @internal
+    /**
      * Get geo coordinates of camera focus (target) point.
-     *
-     * @see worldTarget
+     * This point is not necessarily on the ground, i.e.:
+     *  - if the tilt is high and projection is [[sphereProjection]]
+     *  - if the camera was modified directly and is not pointing to the ground.
+     * In any case the projection of the target point will be in the center of the screen.
      *
      * @returns geo coordinates of the camera focus point.
      */
@@ -1596,6 +1627,7 @@ export class MapView extends THREE.EventDispatcher {
      * the maximum possible distance of camera far clipping plane regardless of tilt, but may change
      * whenever zoom level changes. Distance is measured in world units which may be approximately
      * equal to meters, but this depends on the distortion related to projection type used.
+     * @internal
      */
     get viewRanges(): ViewRanges {
         return this.m_viewRanges;
@@ -1603,6 +1635,7 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The position in geo coordinates of the center of the scene.
+     * @internal
      */
     get geoCenter(): GeoCoordinates {
         return this.projection.unprojectPoint(this.m_camera.position).normalized();
@@ -1643,13 +1676,6 @@ export class MapView extends THREE.EventDispatcher {
      */
     get worldCenter(): THREE.Vector3 {
         return this.m_camera.position;
-    }
-
-    /**
-     * The root object of the scene. Contains all `rootObjects` of the [[Tile]]s.
-     */
-    get worldRootObject(): THREE.Object3D {
-        return this.m_mapTilesRoot;
     }
 
     /**
@@ -1725,10 +1751,39 @@ export class MapView extends THREE.EventDispatcher {
     get zoomLevel(): number {
         return this.m_zoomLevel;
     }
+
     set zoomLevel(zoomLevel: number) {
-        this.m_zoomLevel = THREE.Math.clamp(zoomLevel, this.m_minZoomLevel, this.m_maxZoomLevel);
-        MapViewUtils.zoomOnTargetPosition(this, 0, 0, this.m_zoomLevel);
-        this.update();
+        this.lookAtImpl({ zoomLevel });
+    }
+
+    /**
+     * Returns tilt angle in degrees.
+     */
+    get tilt(): number {
+        return THREE.MathUtils.radToDeg(this.m_pitch);
+    }
+
+    /**
+     * Set the tilt angle of the map.
+     * @param tilt: New tilt angle in degrees.
+     */
+    set tilt(tilt: number) {
+        this.lookAtImpl({ tilt });
+    }
+
+    /**
+     * Returns heading angle in degrees.
+     */
+    get heading(): number {
+        return -THREE.MathUtils.radToDeg(this.m_yaw);
+    }
+
+    /**
+     * Set the heading angle of the map.
+     * @param heading: New heading angle in degrees.
+     */
+    set heading(heading: number) {
+        this.lookAtImpl({ heading });
     }
 
     /**
@@ -1743,7 +1798,7 @@ export class MapView extends THREE.EventDispatcher {
      * Actual storage level of the rendered data also depends on [[DataSource.storageLevelOffset]].
      */
     get storageLevel(): number {
-        return THREE.Math.clamp(
+        return THREE.MathUtils.clamp(
             Math.floor(this.m_zoomLevel),
             this.m_minZoomLevel,
             this.m_maxZoomLevel
@@ -1766,15 +1821,6 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_options.enableNativeWebglAntialias === undefined
             ? this.pixelRatio < 2.0
             : this.m_options.enableNativeWebglAntialias;
-    }
-
-    /**
-     * Returns 'true' if the phased loading is currently enabled.
-     *
-     * @default `false`.
-     */
-    get phasedLoadingEnabled(): boolean {
-        return this.m_options.enablePhasedLoading === true;
     }
 
     /**
@@ -1817,7 +1863,8 @@ export class MapView extends THREE.EventDispatcher {
         return (
             dataSource.enabled &&
             dataSource.ready() &&
-            this.m_connectedDataSources.has(dataSource.name)
+            this.m_connectedDataSources.has(dataSource.name) &&
+            dataSource.isVisible(this.zoomLevel)
         );
     }
 
@@ -1950,40 +1997,43 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param target The location to look at.
      * @param distance The distance of the camera to the target in meters.
-     * @param tiltDeg The camera tilt angle in degrees (0 is vertical), curbed below 89deg.
-     * @param headingDeg The camera heading angle in degrees and clockwise (as opposed to yaw),
+     * @param tiltDeg The camera tilt angle in degrees (0 is vertical), curbed below 89deg
+     *                @default 0
+     * @param headingDeg The camera heading angle in degrees and clockwise (as opposed to yaw)
+     *                   @default 0
      * starting north.
+     * @deprecated Use lookAt version with [[LookAtParams]] object parameter.
      */
+    lookAt(target: GeoCoordLike, distance: number, tiltDeg?: number, headingDeg?: number): void;
+
+    /**
+     * Adjusts the camera to look at a given geo coordinate with tilt and heading angles.
+     * @param params LookAtParams
+     */
+    lookAt(params: Partial<LookAtParams>): void;
+
     lookAt(
-        target: GeoCoordinates,
-        distance: number,
-        tiltDeg: number = 0,
-        headingDeg: number = 0
+        targetOrParams: GeoCoordLike | Partial<LookAtParams>,
+        distance?: number,
+        tiltDeg?: number,
+        headingDeg?: number
     ): void {
-        const limitedTilt = Math.min(MapViewUtils.MAX_TILT_DEG, tiltDeg);
-        // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
-        // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put
-        // the camera on the target, so the tilt can be passed to getRotation as a pitch.
-        MapViewUtils.getCameraRotationAtTarget(
-            this.projection,
-            target,
-            -headingDeg,
-            limitedTilt,
-            this.camera.quaternion
-        );
-        MapViewUtils.getCameraPositionFromTargetCoordinates(
-            target,
-            distance,
-            -headingDeg,
-            limitedTilt,
-            this.projection,
-            this.camera.position
-        );
-        this.camera.updateMatrixWorld(true);
-        // TODO: Consider forcing entire cameras update, see: [[updateCameras]]
-        this.m_targetGeoPos.copy(target);
-        this.m_targetWorldPos.copy(this.projection.projectPoint(target));
-        this.m_targetDistance = distance;
+        if (isGeoCoordinatesLike(targetOrParams)) {
+            const zoomLevel =
+                distance !== undefined
+                    ? MapViewUtils.calculateZoomLevelFromDistance(this, distance)
+                    : undefined;
+
+            const params: Partial<LookAtParams> = {
+                target: targetOrParams,
+                zoomLevel,
+                tilt: tiltDeg,
+                heading: headingDeg
+            };
+            this.lookAtImpl(params);
+        } else if (typeof targetOrParams === "object") {
+            this.lookAtImpl(targetOrParams as Partial<LookAtParams>);
+        }
     }
 
     /**
@@ -1997,6 +2047,7 @@ export class MapView extends THREE.EventDispatcher {
      * @param yawDeg Camera yaw in degrees, counter-clockwise (as opposed to heading), starting
      * north.
      * @param pitchDeg Camera pitch in degrees.
+     * @deprecated Use [[MapView.lookAt]] instead.
      */
     setCameraGeolocationAndZoom(
         geoPos: GeoCoordinates,
@@ -2005,18 +2056,56 @@ export class MapView extends THREE.EventDispatcher {
         pitchDeg: number = 0
     ): void {
         this.geoCenter = geoPos;
-        let limitedPitch = Math.min(89, pitchDeg); // 90 leads to imprecision issues.
+        let limitedPitch = Math.min(MapViewUtils.MAX_TILT_DEG, pitchDeg);
         if (this.projection.type === ProjectionType.Spherical) {
             const maxPitchRadWithCurvature = Math.asin(
                 EarthConstants.EQUATORIAL_RADIUS /
                     (MapViewUtils.calculateDistanceToGroundFromZoomLevel(this, zoomLevel) +
                         EarthConstants.EQUATORIAL_RADIUS)
             );
-            const maxPitchDegWithCurvature = THREE.Math.radToDeg(maxPitchRadWithCurvature);
+            const maxPitchDegWithCurvature = THREE.MathUtils.radToDeg(maxPitchRadWithCurvature);
             limitedPitch = Math.min(limitedPitch, maxPitchDegWithCurvature);
         }
         MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoomLevel);
         MapViewUtils.setRotation(this, yawDeg, limitedPitch);
+        this.update();
+    }
+
+    /**
+     * Updates the value of a dynamic property.
+     *
+     * Property names starting with a `$`-sign are reserved and any attempt to change their value
+     * will result in an error.
+     *
+     * Themes can access dynamic properties using the `Expr` operator `["dynamic-properties"]`,
+     * for example:
+     *
+     *   `["get", "property name", ["dynamic-properties"]]`
+     *
+     * @param name The name of the property.
+     * @param value The value of the property.
+     */
+    setDynamicProperty(name: string, value: Value) {
+        if (name.startsWith("$")) {
+            throw new Error(`failed to update the value of the dynamic property '${name}'`);
+        }
+        this.m_env.entries[name] = value;
+        this.update();
+    }
+
+    /**
+     * Removes the given dynamic property from this [[MapView]].
+     *
+     * Property names starting with a `$`-sign are reserved and any attempt to change their value
+     * will result in an error.
+     *
+     * @param name The name of the property to remove.
+     */
+    removeDynamicProperty(name: string) {
+        if (name.startsWith("$")) {
+            throw new Error(`failed to remove the dynamic property '${name}'`);
+        }
+        delete this.m_env.entries[name];
         this.update();
     }
 
@@ -2349,6 +2438,11 @@ export class MapView extends THREE.EventDispatcher {
      * @param dataSourceName The name of the [[DataSource]].
      */
     clearTileCache(dataSourceName?: string) {
+        if (this.m_visibleTiles === undefined) {
+            // This method is called in the shadowsEnabled function, which is initialized in the
+            // setupRenderer function,
+            return;
+        }
         if (dataSourceName !== undefined) {
             const dataSource = this.getDataSourceByName(dataSourceName);
             if (dataSource) {
@@ -2409,16 +2503,26 @@ export class MapView extends THREE.EventDispatcher {
      * @param elevationProvider Allows access to the elevation at a given location or a ray
      *      from the camera.
      */
-    setElevationSource(
+    async setElevationSource(
         elevationSource: DataSource,
         elevationRangeSource: ElevationRangeSource,
         elevationProvider: ElevationProvider
     ) {
-        // Try to remove incase this method was already called, will do nothing if it doesn't exist.
-        this.removeDataSource(elevationSource);
-        this.addDataSource(elevationSource);
+        // Remove previous elevation source if present
+        if (this.m_elevationSource && this.m_elevationSource !== elevationSource) {
+            this.removeDataSource(this.m_elevationSource);
+        }
+
+        // Add as datasource if it was not added before
+        const isPresent = this.m_tileDataSources.indexOf(elevationSource) !== -1;
+        if (!isPresent) {
+            await this.addDataSource(elevationSource);
+        }
+        this.m_elevationSource = elevationSource;
         this.m_elevationRangeSource = elevationRangeSource;
-        this.m_elevationRangeSource.connect();
+        if (!this.m_elevationRangeSource.ready()) {
+            await this.m_elevationRangeSource.connect();
+        }
         this.m_elevationProvider = elevationProvider;
         this.dataSources.forEach(dataSource => {
             dataSource.setEnableElevationOverlay(true);
@@ -2435,6 +2539,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     clearElevationSource(elevationSource: DataSource) {
         this.removeDataSource(elevationSource);
+        this.m_elevationSource = undefined;
         this.m_elevationRangeSource = undefined;
         this.m_elevationProvider = undefined;
         this.dataSources.forEach(dataSource => {
@@ -2482,6 +2587,123 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_elevationProvider;
     }
 
+    get shadowsEnabled(): boolean {
+        return this.m_options.enableShadows === true;
+    }
+
+    set shadowsEnabled(enabled: boolean) {
+        // shadowMap is undefined if we are testing (three.js always set it to be defined).
+        if (
+            this.m_renderer.shadowMap === undefined ||
+            enabled === this.m_renderer.shadowMap.enabled
+        ) {
+            return;
+        }
+        this.m_options.enableShadows = enabled;
+        // There is a bug in three.js where this doesn't currently work once enabled.
+        this.m_renderer.shadowMap.enabled = enabled;
+        // TODO: Make this configurable. Note, there is currently issues when using the
+        // VSMShadowMap type, this should be investigated if this type is requested.
+        this.m_renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.clearTileCache();
+    }
+
+    private extractAttitude() {
+        const camera = this.m_camera;
+        const projection = this.projection;
+
+        const cameraPos = cache.vector3[1];
+        const transform = cache.transform[0];
+        const tangentSpaceMatrix = cache.matrix4[1];
+        // 1. Build the matrix of the tangent space of the camera.
+        cameraPos.setFromMatrixPosition(camera.matrixWorld); // Ensure using world position.
+        projection.localTangentSpace(projection.unprojectPoint(cameraPos), transform);
+        tangentSpaceMatrix.makeBasis(transform.xAxis, transform.yAxis, transform.zAxis);
+
+        // 2. Change the basis of matrixWorld to the tangent space to get the new base axes.
+        cache.matrix4[0].getInverse(tangentSpaceMatrix).multiply(camera.matrixWorld);
+        transform.xAxis.setFromMatrixColumn(cache.matrix4[0], 0);
+        transform.yAxis.setFromMatrixColumn(cache.matrix4[0], 1);
+        transform.zAxis.setFromMatrixColumn(cache.matrix4[0], 2);
+
+        // 3. Deduce orientation from the base axes.
+        let yaw = 0;
+        let pitch = 0;
+        let roll = 0;
+
+        // Decompose rotation matrix into Z0 X Z1 Euler angles.
+        const epsilon = 1e-10;
+        const d = transform.zAxis.dot(cameraPos.set(0, 0, 1));
+        if (d < 1.0 - epsilon) {
+            if (d > -1.0 + epsilon) {
+                yaw = Math.atan2(transform.zAxis.x, -transform.zAxis.y);
+                pitch = Math.acos(transform.zAxis.z);
+                roll = Math.atan2(transform.xAxis.x, transform.yAxis.z);
+            } else {
+                // Looking bottom-up with space.z.z == -1.0
+                yaw = -Math.atan2(-transform.yAxis.x, transform.xAxis.x);
+                pitch = 180;
+                roll = 0;
+            }
+        } else {
+            // Looking top-down with space.z.z == 1.0
+            yaw = Math.atan2(-transform.yAxis.x, transform.xAxis.x);
+            pitch = 0.0;
+            roll = 0.0;
+        }
+
+        return {
+            yaw,
+            pitch,
+            roll
+        };
+    }
+
+    private lookAtImpl(params: Partial<LookAtParams>): void {
+        const tilt = Math.min(getOptionValue(params.tilt, this.tilt), MapViewUtils.MAX_TILT_DEG);
+        const target = GeoCoordinates.fromObject(getOptionValue(params.target, this.target));
+        const heading = getOptionValue(params.heading, this.heading);
+
+        const distance =
+            params.zoomLevel !== undefined
+                ? MapViewUtils.calculateDistanceFromZoomLevel(
+                      this,
+                      THREE.MathUtils.clamp(
+                          params.zoomLevel,
+                          this.m_minZoomLevel,
+                          this.m_maxZoomLevel
+                      )
+                  )
+                : params.distance !== undefined
+                ? params.distance
+                : this.m_targetDistance;
+
+        // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
+        // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put
+        // the camera on the target, so the tilt can be passed to getRotation as a pitch.
+        MapViewUtils.getCameraRotationAtTarget(
+            this.projection,
+            target,
+            -heading,
+            tilt,
+            this.camera.quaternion
+        );
+        MapViewUtils.getCameraPositionFromTargetCoordinates(
+            target,
+            distance,
+            -heading,
+            tilt,
+            this.projection,
+            this.camera.position
+        );
+        this.camera.updateMatrixWorld(true);
+
+        // Make sure to update all properties that are accessable via API (e.g. zoomlevel) b/c
+        // otherwise they would be updated as recently as in the next animation frame.
+        this.updateLookAtSettings();
+        this.update();
+    }
+
     /**
      * Plug-in PolarTileDataSource for spherical projection and plug-out otherwise
      */
@@ -2510,6 +2732,11 @@ export class MapView extends THREE.EventDispatcher {
      * calculated from [[ClipPlaneEvaluator]] used in [[VisibleTileSet]].
      */
     private updateCameras(viewRanges?: ViewRanges) {
+        // Update look at settings first, so that other components (e.g. ClipPlanesEvaluator) get
+        // the up to date tilt, targetDistance, ...
+        this.m_camera.updateMatrixWorld(false);
+        this.updateLookAtSettings();
+
         const { width, height } = this.m_renderer.getSize(cache.vector2[0]);
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
@@ -2537,7 +2764,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_camera.far = this.m_viewRanges.far;
 
         this.m_camera.updateProjectionMatrix();
-        this.m_camera.updateMatrixWorld(false);
 
         // Update the "relative to eye" camera. Copy the public camera parameters
         // and place the "relative to eye" at the world's origin.
@@ -2556,19 +2782,29 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
-
-        const cameraPitch = MapViewUtils.extractAttitude(this, this.m_camera).pitch;
-        const cameraPosZ = this.getCameraHeightAboveTerrain(TERRAIN_ZOOM_LEVEL);
-        const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
-        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, zoomLevelDistance);
         this.m_fog.update(this, this.m_viewRanges.maximum);
+    }
 
-        const target = MapViewUtils.getWorldTargetFromCamera(this.m_camera, this.projection);
-        if (target !== null) {
-            this.m_targetWorldPos.copy(target);
-            this.m_targetGeoPos = this.projection.unprojectPoint(target);
-            this.m_targetDistance = this.camera.position.distanceTo(target);
-        }
+    /**
+     * Derive the look at settings (i.e. target, zoom, ...) from the current camera.
+     */
+    private updateLookAtSettings() {
+        const { yaw, pitch, roll } = this.extractAttitude();
+        this.m_yaw = yaw;
+        this.m_pitch = pitch;
+        this.m_roll = roll;
+
+        // tslint:disable-next-line: deprecation
+        const { target, distance } = MapViewUtils.getTargetAndDistance(
+            this.projection,
+            this.camera,
+            this.elevationProvider
+        );
+
+        this.m_targetWorldPos.copy(target);
+        this.m_targetGeoPos = this.projection.unprojectPoint(this.m_targetWorldPos);
+        this.m_targetDistance = distance;
+        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, this.m_targetDistance);
     }
 
     /**
@@ -2585,24 +2821,105 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns the height of the camera above the earths surface.
-     *
-     * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
-     * how high the camera is above the surface.
-     *
-     * @param level Which level to request the surface height from.
-     * @return Height in world units.
+     * Transfer the NDC point to view space.
+     * @param vector Vector to transform.
+     * @param result Result to place calculation.
      */
-    private getCameraHeightAboveTerrain(level?: number): number {
-        if (this.elevationProvider !== undefined) {
-            const heightAboveTerrain = this.elevationProvider.getHeight(this.geoCenter, level);
-            if (heightAboveTerrain !== undefined) {
-                const height =
-                    this.projection.unprojectAltitude(this.m_camera.position) - heightAboveTerrain;
-                return Math.max(height, 1);
-            }
+    private ndcToView(vector: Vector3Like, result: THREE.Vector3): THREE.Vector3 {
+        result
+            .set(vector.x, vector.y, vector.z)
+            .applyMatrix4(this.camera.projectionMatrixInverse)
+            // Make sure to apply rotation, hence use the rte camera
+            .applyMatrix4(this.m_rteCamera.matrixWorld);
+        return result;
+    }
+
+    /**
+     * Transfer from view space to camera space.
+     * @param viewPos position in view space, result is stored here.
+     */
+    private viewToLightSpace(viewPos: THREE.Vector3, camera: THREE.Camera): THREE.Vector3 {
+        return viewPos.applyMatrix4(camera.matrixWorldInverse);
+    }
+
+    /**
+     * Update the directional light camera. Note, this requires the cameras to first be updated.
+     */
+    private updateLights() {
+        // TODO: HARP-9479 Globe doesn't support shadows.
+        if (
+            !this.shadowsEnabled ||
+            this.projection.type === ProjectionType.Spherical ||
+            this.m_createdLights === undefined ||
+            this.m_createdLights.length === 0
+        ) {
+            return;
         }
-        return Math.abs(this.projection.groundDistance(this.m_camera.position));
+
+        const points: Vector3Like[] = [
+            // near plane points
+            { x: -1, y: -1, z: -1 },
+            { x: 1, y: -1, z: -1 },
+            { x: -1, y: 1, z: -1 },
+            { x: 1, y: 1, z: -1 },
+
+            // far planes points
+            { x: -1, y: -1, z: 1 },
+            { x: 1, y: -1, z: 1 },
+            { x: -1, y: 1, z: 1 },
+            { x: 1, y: 1, z: 1 }
+        ];
+        const transformedPoints = points.map((p, i) => this.ndcToView(p, cache.frustumPoints[i]));
+
+        this.m_createdLights.forEach(element => {
+            const directionalLight = element as THREE.DirectionalLight;
+            if (directionalLight.isDirectionalLight === true) {
+                const pointsInLightSpace = transformedPoints.map(p =>
+                    this.viewToLightSpace(p, directionalLight.shadow.camera)
+                );
+
+                const box = new THREE.Box3();
+                pointsInLightSpace.forEach(point => {
+                    box.expandByPoint(point);
+                });
+                const camera = directionalLight.shadow.camera;
+                camera.left = box.min.x;
+                camera.right = box.max.x;
+                camera.top = box.max.y;
+                camera.bottom = box.min.y;
+                camera.near = -box.max.z;
+                camera.far = -box.min.z;
+                camera.updateProjectionMatrix();
+
+                const lightDirection = cache.vector3[0];
+                lightDirection.copy(directionalLight.target.position);
+                lightDirection.sub(directionalLight.position);
+                lightDirection.normalize();
+
+                const normal = cache.vector3[1];
+                if (this.projection.type === ProjectionType.Planar) {
+                    // -Z points to the camera, we can't use Projection.surfaceNormal, because
+                    // webmercator and mercator give different results.
+                    normal.set(0, 0, -1);
+                } else {
+                    // Enable shadows for globe...
+                    //this.projection.surfaceNormal(target, normal);
+                }
+
+                // The camera of the shadow has the same height as the map camera, and the target is
+                // also the same. The position is then calculated based on the light direction and
+                // the height
+                // using basic trigonometry.
+                const tilt = this.m_pitch;
+                const cameraHeight = this.targetDistance * Math.cos(tilt);
+                const lightPosHyp = cameraHeight / normal.dot(lightDirection);
+
+                directionalLight.target.position.copy(this.worldTarget).sub(this.camera.position);
+                directionalLight.position.copy(this.worldTarget);
+                directionalLight.position.addScaledVector(lightDirection, -lightPosHyp);
+                directionalLight.position.sub(this.camera.position);
+            }
+        });
     }
 
     private detectCurrentFps(now: number) {
@@ -2705,34 +3022,36 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Renders the current frame.
      */
-    private render(time: number): void {
+    private render(frameStartTime: number): void {
         if (this.m_drawing) {
             return;
         }
-        ++this.m_frameNumber;
 
-        const stats = PerformanceStatistics.instance;
-        const gatherStatistics: boolean = stats.enabled;
-
-        const frameStartTime = time;
-
-        RENDER_EVENT.time = time;
+        RENDER_EVENT.time = frameStartTime;
         this.dispatchEvent(RENDER_EVENT);
 
-        let currentFrameEvent: FrameStats | undefined;
+        ++this.m_frameNumber;
 
+        let currentFrameEvent: FrameStats | undefined;
+        const stats = PerformanceStatistics.instance;
+        const gatherStatistics: boolean = stats.enabled;
         if (gatherStatistics) {
             currentFrameEvent = stats.currentFrame;
-            currentFrameEvent.setValue("renderCount.frameNumber", this.m_frameNumber);
 
             if (this.m_previousFrameTimeStamp !== undefined) {
+                // In contrast to fullFrameTime we also measure the application code
+                // for the FPS. This means FPS != 1000 / fullFrameTime.
                 const timeSincePreviousFrame = frameStartTime - this.m_previousFrameTimeStamp;
-                if (gatherStatistics) {
-                    currentFrameEvent.setValue("render.fullFrameTime", timeSincePreviousFrame);
-                    // For convenience and easy readability
-                    currentFrameEvent.setValue("render.fps", 1000 / timeSincePreviousFrame);
-                }
+                currentFrameEvent.setValue("render.fps", 1000 / timeSincePreviousFrame);
             }
+
+            // We store the last frame statistics at the beginning of the next frame b/c additional
+            // work (i.e. geometry creation) is done outside of the animation frame but still needs
+            // to be added to the `fullFrameTime` (see [[TileGeometryLoader]]).
+            stats.storeAndClearFrameInfo();
+
+            currentFrameEvent = currentFrameEvent as FrameStats;
+            currentFrameEvent.setValue("renderCount.frameNumber", this.m_frameNumber);
         }
 
         this.m_previousFrameTimeStamp = frameStartTime;
@@ -2757,13 +3076,12 @@ export class MapView extends THREE.EventDispatcher {
 
         this.updateCameras();
         this.updateEnv();
+        this.updateLights();
 
         this.m_renderer.clear();
 
         // clear the scene
-        while (this.m_mapTilesRoot.children.length > 0) {
-            this.m_mapTilesRoot.remove(this.m_mapTilesRoot.children[0]);
-        }
+        this.m_mapTilesRoot.children.length = 0;
 
         if (gatherStatistics) {
             setupTime = PerformanceTimer.now();
@@ -2845,17 +3163,20 @@ export class MapView extends THREE.EventDispatcher {
             });
         }
 
-        if (this.m_movementDetector.checkCameraMoved(this, time)) {
-            const { yaw, pitch, roll } = MapViewUtils.extractAttitude(this, this.camera);
+        if (this.m_movementDetector.checkCameraMoved(this, frameStartTime)) {
+            //FIXME: Shouldn't we use target here?
             const { latitude, longitude, altitude } = this.geoCenter;
             this.dispatchEvent({
                 type: MapViewEventNames.CameraPositionChanged,
                 latitude,
                 longitude,
                 altitude,
-                yaw,
-                pitch,
-                roll,
+                // FIXME: Can we remove yaw, pitch and roll
+                yaw: this.m_yaw,
+                pitch: this.m_pitch,
+                roll: this.m_roll,
+                tilt: this.tilt,
+                heading: this.heading,
                 zoom: this.zoomLevel
             });
         }
@@ -2864,7 +3185,7 @@ export class MapView extends THREE.EventDispatcher {
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
 
         if (this.renderLabels) {
-            this.prepareRenderTextElements(time);
+            this.prepareRenderTextElements(frameStartTime);
         }
 
         if (gatherStatistics) {
@@ -2897,10 +3218,10 @@ export class MapView extends THREE.EventDispatcher {
             this.m_firstFrameRendered = true;
 
             if (gatherStatistics) {
-                stats.appResults.set("firstFrame", time);
+                stats.appResults.set("firstFrame", frameStartTime);
             }
 
-            FIRST_FRAME_EVENT.time = time;
+            FIRST_FRAME_EVENT.time = frameStartTime;
             this.dispatchEvent(FIRST_FRAME_EVENT);
         }
 
@@ -2917,18 +3238,33 @@ export class MapView extends THREE.EventDispatcher {
         if (currentFrameEvent !== undefined) {
             endTime = PerformanceTimer.now();
 
+            const frameRenderTime = endTime - frameStartTime;
+
             currentFrameEvent.setValue("render.setupTime", setupTime! - frameStartTime);
             currentFrameEvent.setValue("render.cullTime", cullTime! - setupTime!);
             currentFrameEvent.setValue("render.textPlacementTime", textPlacementTime! - cullTime!);
             currentFrameEvent.setValue("render.drawTime", drawTime! - textPlacementTime!);
             currentFrameEvent.setValue("render.textDrawTime", textDrawTime! - drawTime!);
             currentFrameEvent.setValue("render.cleanupTime", endTime - textDrawTime!);
-            currentFrameEvent.setValue("render.frameRenderTime", endTime - frameStartTime);
+            currentFrameEvent.setValue("render.frameRenderTime", frameRenderTime);
 
-            PerformanceStatistics.instance.storeFrameInfo(this.m_renderer.info);
+            // Initialize the fullFrameTime with the frameRenderTime If we also create geometry in
+            // this frame, this number will be increased in the TileGeometryLoader.
+            currentFrameEvent.setValue("render.fullFrameTime", frameRenderTime);
+            currentFrameEvent.setValue("render.geometryCreationTime", 0);
+
+            // Add THREE.js statistics
+            stats.addWebGLInfo(this.m_renderer.info);
+
+            // Add memory statistics
+            // FIXME:
+            // This will only measure the memory of the rendering and not of the geometry creation.
+            // Assuming the garbage collector is not kicking in immediately we will at least see
+            // the geometry creation memory consumption acounted in the next frame.
+            stats.addMemoryInfo();
         }
 
-        DID_RENDER_EVENT.time = time;
+        DID_RENDER_EVENT.time = frameStartTime;
         this.dispatchEvent(DID_RENDER_EVENT);
 
         // After completely rendering this frame, it is checked if this frame was the first complete
@@ -2944,10 +3280,10 @@ export class MapView extends THREE.EventDispatcher {
             this.m_firstFrameComplete = true;
 
             if (gatherStatistics) {
-                stats.appResults.set("firstFrameComplete", time);
+                stats.appResults.set("firstFrameComplete", frameStartTime);
             }
 
-            FRAME_COMPLETE_EVENT.time = time;
+            FRAME_COMPLETE_EVENT.time = frameStartTime;
             this.dispatchEvent(FRAME_COMPLETE_EVENT);
         }
     }
@@ -2956,6 +3292,9 @@ export class MapView extends THREE.EventDispatcher {
         const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(zoomLevel)) {
             for (const object of tile.objects) {
+                if (!this.processTileObjectFeatures(tile, object)) {
+                    continue;
+                }
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
                     object.position.add(object.displacement);
@@ -2994,8 +3333,100 @@ export class MapView extends THREE.EventDispatcher {
 
                 this.m_mapTilesRoot.add(object);
             }
+            tile.didRender();
         }
-        tile.didRender();
+    }
+
+    /**
+     * Process the features owned by the given [[TileObject]].
+     *
+     * @param tile The [[Tile]] owning the [[TileObject]]'s features.
+     * @param object The [[TileObject]] to process.
+     * @returns `false` if the given [[TileObject]] should not be added to the scene.
+     */
+    private processTileObjectFeatures(tile: Tile, object: TileObject): boolean {
+        const technique: IndexedTechnique = object.userData.technique;
+
+        if (!technique || technique.enabled === undefined) {
+            // Nothing to do, there's no technique.
+            return true;
+        }
+
+        const feature: TileFeatureData = object.userData.feature;
+
+        if (!feature || !Expr.isExpr(technique.enabled)) {
+            return Boolean(getPropertyValue(technique.enabled, this.m_env));
+        }
+
+        const { starts, objInfos } = feature;
+
+        if (!Array.isArray(objInfos) || !Array.isArray(starts)) {
+            // Nothing to do, the object is missing feature ids and their position
+            // in the index buffer.
+            return true;
+        }
+
+        const geometry: THREE.BufferGeometry | undefined = (object as any).geometry;
+
+        if (!geometry || !geometry.isBufferGeometry) {
+            // Nothing to do, the geometry is not a [[THREE.BufferGeometry]]
+            // and we can't generate groups.
+            return true;
+        }
+
+        const index = geometry.getIndex()!;
+
+        // clear the groups.
+        geometry.clearGroups();
+
+        // The offset in the index buffer of the end of the last
+        // pushed group.
+        let endOfLastGroup: number | undefined;
+
+        objInfos.forEach((properties, featureIndex) => {
+            // the id of the current feature.
+            const featureId = getFeatureId(properties);
+
+            let enabled = true;
+
+            if (Expr.isExpr(technique.enabled)) {
+                // the state of current feature.
+                const featureState = tile.dataSource.getFeatureState(featureId);
+
+                // create a new [[Env]] that can be used
+                // to evaluate expressions that access the feature state.
+                const $state = featureState ? new MapEnv(featureState) : null;
+
+                const parentEnv =
+                    typeof properties === "object"
+                        ? new MapEnv(properties, this.m_env)
+                        : this.m_env;
+
+                const env = new MapEnv({ $state }, parentEnv);
+
+                enabled = Boolean(getPropertyValue(technique.enabled, env));
+            }
+
+            if (!enabled) {
+                // skip this feature, it was disabled.
+                return;
+            }
+
+            const start = starts[featureIndex];
+            const end = starts[featureIndex + 1] ?? index.count;
+            const count = end - start;
+
+            if (start === endOfLastGroup) {
+                // extend the last group
+                geometry.groups[geometry.groups.length - 1].count += count;
+            } else {
+                geometry.addGroup(start, count);
+            }
+
+            endOfLastGroup = start + count;
+        });
+
+        return geometry.groups.length > 0;
     }
 
     private prepareRenderTextElements(time: number) {
@@ -3041,41 +3472,33 @@ export class MapView extends THREE.EventDispatcher {
             });
     }
 
-    private setupCamera(options: MapViewOptions) {
+    private setupCamera() {
         const { width, height } = this.getCanvasClientSize();
-
-        const defaultGeoCenter = MapViewDefaults.geoCenter;
-
-        this.projection.projectPoint(defaultGeoCenter, this.m_camera.position);
-
-        if (this.projection.type === ProjectionType.Spherical) {
-            this.m_camera.lookAt(this.scene.position);
-        }
-
-        this.m_targetDistance = defaultGeoCenter.altitude!;
 
         this.calculateFocalLength(height);
         this.m_visibleTiles = this.createVisibleTileSet();
-        this.setInitialCameraPosition(options);
+
+        this.m_options.target = GeoCoordinates.fromObject(
+            getOptionValue(this.m_options.target, MapViewDefaults.target)
+        );
+        // ensure that look at target has height of 0
+        (this.m_options.target as GeoCoordinates).altitude = 0;
+        this.m_options.tilt = getOptionValue(this.m_options.tilt, MapViewDefaults.tilt);
+
+        this.m_options.heading = getOptionValue(this.m_options.heading, MapViewDefaults.heading);
+
+        this.m_options.zoomLevel = getOptionValue(
+            this.m_options.zoomLevel,
+            MapViewDefaults.zoomLevel
+        );
+
+        this.lookAtImpl(this.m_options);
 
         // ### move & customize
         this.resize(width, height);
 
         this.m_screenCamera.position.z = 1;
         this.m_screenCamera.near = 0;
-    }
-
-    private setInitialCameraPosition(options: MapViewOptions) {
-        const target = GeoCoordinates.fromObject(
-            getOptionValue(options.target, MapViewDefaults.target)
-        );
-        target.altitude = 0; // ensure that look at target has height of 0
-        const zoomLevel = getOptionValue(options.zoomLevel, MapViewDefaults.zoomLevel);
-        const tilt = getOptionValue(options.tilt, MapViewDefaults.tilt);
-        const heading = getOptionValue(options.heading, MapViewDefaults.heading);
-
-        this.lookAt(target, 300000, tilt, heading);
-        this.zoomLevel = zoomLevel;
     }
 
     private createVisibleTileSet(): VisibleTileSet {
@@ -3167,6 +3590,12 @@ export class MapView extends THREE.EventDispatcher {
                     return;
                 }
                 this.m_scene.add(light);
+                if ((light as any).isDirectionalLight) {
+                    const directionalLight = light as THREE.DirectionalLight;
+                    // This is needed so that the target is updated automatically, see:
+                    // https://threejs.org/docs/#api/en/lights/DirectionalLight.target
+                    this.m_scene.add(directionalLight.target);
+                }
                 this.m_createdLights!.push(light);
             });
         }
@@ -3326,6 +3755,8 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_scene.add(this.m_mapTilesRoot);
         this.m_scene.add(this.m_mapAnchors);
+
+        this.shadowsEnabled = this.m_options.enableShadows ?? false;
     }
 
     private createTextRenderer(): TextElementsRenderer {
@@ -3385,16 +3816,19 @@ export class MapView extends THREE.EventDispatcher {
     };
 
     private limitFov(fov: number, aspect: number): number {
-        fov = THREE.Math.clamp(fov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
+        fov = THREE.MathUtils.clamp(fov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
 
-        let hFov = THREE.Math.radToDeg(
-            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.Math.degToRad(fov), aspect)
+        let hFov = THREE.MathUtils.radToDeg(
+            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.MathUtils.degToRad(fov), aspect)
         );
 
         if (hFov > MAX_FIELD_OF_VIEW || hFov < MIN_FIELD_OF_VIEW) {
-            hFov = THREE.Math.clamp(hFov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
-            fov = THREE.Math.radToDeg(
-                MapViewUtils.calculateVerticalFovByHorizontalFov(THREE.Math.degToRad(hFov), aspect)
+            hFov = THREE.MathUtils.clamp(hFov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
+            fov = THREE.MathUtils.radToDeg(
+                MapViewUtils.calculateVerticalFovByHorizontalFov(
+                    THREE.MathUtils.degToRad(hFov),
+                    aspect
+                )
             );
         }
         return fov as number;
@@ -3428,7 +3862,7 @@ export class MapView extends THREE.EventDispatcher {
     private calculateFocalLength(height: number) {
         assert(this.m_options.fovCalculation !== undefined);
         this.m_focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
-            THREE.Math.degToRad(this.m_options.fovCalculation!.fov),
+            THREE.MathUtils.degToRad(this.m_options.fovCalculation!.fov),
             height
         );
     }

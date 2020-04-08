@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Theme } from "@here/harp-datasource-protocol";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, PickResult } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken, copyrightInfo } from "../config";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey, copyrightInfo } from "../config";
 
 /**
  * This example showcases how picking works.
@@ -74,7 +75,7 @@ export namespace PickingExample {
 
     // snippet:datasource_object_picking_2.ts
     const element = document.getElementById("mouse-picked-result") as HTMLPreElement;
-    let currentUserData: PickResult | undefined;
+    let current: PickResult | undefined;
 
     function handlePick(mapViewUsed: MapView, x: number, y: number) {
         // get an array of intersection results from MapView
@@ -83,9 +84,7 @@ export namespace PickingExample {
             .intersectMapObjects(x, y)
             .filter(item => item.userData !== undefined);
         if (usableIntersections.length > 1) {
-            usableIntersections = usableIntersections.filter(
-                item => item.userData !== currentUserData
-            );
+            usableIntersections = usableIntersections.filter(item => item !== current);
         }
 
         if (usableIntersections.length === 0) {
@@ -95,13 +94,17 @@ export namespace PickingExample {
         }
 
         // Get userData from the first result;
-        currentUserData = usableIntersections[0].userData;
+        current = usableIntersections[0];
+
+        if (current.userData?.name !== undefined) {
+            mapViewUsed.setDynamicProperty("selection", [current.userData.name]);
+        }
 
         // Show helper box
         element.style.visibility = "visible";
 
         // Display userData inside of helper box
-        element.innerText = JSON.stringify(currentUserData, undefined, 2);
+        element.innerText = JSON.stringify(current.userData, undefined, 2);
     }
     // end:datasource_object_picking_2.ts
 
@@ -110,10 +113,50 @@ export namespace PickingExample {
      */
     async function initializeMapView(id: string) {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
+
+        const selectionTheme: Theme = {
+            styles: {
+                tilezen: [
+                    {
+                        layer: "roads",
+                        when: ["==", ["geometry-type"], "LineString"],
+                        technique: "solid-line",
+                        renderOrder: Number.MAX_SAFE_INTEGER,
+                        attr: {
+                            enabled: [
+                                "in",
+                                ["get", "name"],
+                                ["get", "selection", ["dynamic-properties"]]
+                            ],
+                            lineWidth: "2px"
+                        }
+                    },
+                    {
+                        layer: "landuse",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "solid-line",
+                        renderOrder: Number.MAX_SAFE_INTEGER,
+                        attr: {
+                            enabled: [
+                                "in",
+                                ["get", "name"],
+                                ["get", "selection", ["dynamic-properties"]]
+                            ],
+                            lineWidth: "2px"
+                        }
+                    }
+                ]
+            }
+        };
+
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json",
-            enableRoadPicking: true
+            theme: {
+                extends: [selectionTheme, "resources/berlin_tilezen_base.json"]
+            },
+            enableRoadPicking: true,
+            target: [-74.01, 40.707],
+            zoomLevel: 18
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
@@ -135,15 +178,20 @@ export namespace PickingExample {
         // end:datasource_object_picking_1.ts
 
         const omvDataSource = new OmvDataSource({
-            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
-            maxZoomLevel: 17,
-            authenticationCode: accessToken,
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
             gatherFeatureAttributes: true,
             createTileInfo: true,
             copyrightInfo
         });
+
+        mapView.setDynamicProperty("selection", []);
 
         await mapView.addDataSource(omvDataSource);
 

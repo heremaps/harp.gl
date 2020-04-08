@@ -8,7 +8,6 @@ import {
     BooleanLiteralExpr,
     CallExpr,
     CaseExpr,
-    ContainsExpr,
     Env,
     Expr,
     ExprScope,
@@ -175,18 +174,6 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
         return context.env.lookup(expr.name) !== undefined;
     }
 
-    visitContainsExpr(expr: ContainsExpr, context: ExprEvaluatorContext): Value {
-        const value = expr.value.accept(this, context);
-
-        const result = expr.elements.includes(value as any);
-
-        if (context.cache !== undefined) {
-            context.cache.set(expr, result);
-        }
-
-        return result;
-    }
-
     visitMatchExpr(match: MatchExpr, context: ExprEvaluatorContext): Value {
         const r = context.evaluate(match.value);
         for (const [label, body] of match.branches) {
@@ -230,7 +217,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             return result;
         }
 
-        throw new Error(`undefined operator '${expr.op}`);
+        throw new Error(`undefined operator '${expr.op}'`);
     }
 }
 

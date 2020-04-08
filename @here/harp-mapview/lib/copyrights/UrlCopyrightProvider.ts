@@ -11,6 +11,10 @@ import {
     CopyrightCoverageResponse
 } from "./CopyrightCoverageProvider";
 
+interface RequestHeaders {
+    [field: string]: string;
+}
+
 /**
  * Copyright provider which retrieves copyright coverage information from provided URL.
  */
@@ -22,9 +26,22 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
      *
      * @param m_fetchURL URL to fetch copyrights data from.
      * @param m_baseScheme Scheme to get copyrights from.
+     * @param m_requestHeaders Optional request headers for requests(e.g. Authorization)
      */
-    constructor(private m_fetchURL: string, private m_baseScheme: string) {
+    constructor(
+        private m_fetchURL: string,
+        private m_baseScheme: string,
+        private m_requestHeaders?: RequestHeaders
+    ) {
         super();
+    }
+
+    /**
+     * Sets request headers.
+     * @param headers
+     */
+    setRequestHeaders(headers: RequestHeaders | undefined) {
+        this.m_requestHeaders = headers;
     }
 
     /**
@@ -37,7 +54,9 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
         }
 
         this.m_cachedCopyrightResponse = new TransferManager()
-            .downloadJson<CopyrightCoverageResponse>(this.m_fetchURL)
+            .downloadJson<CopyrightCoverageResponse>(this.m_fetchURL, {
+                headers: this.m_requestHeaders
+            })
             .then(json => json[this.m_baseScheme])
             .catch(error => {
                 this.logger.error(error);

@@ -235,7 +235,7 @@ export namespace CustomDatasourceExample {
         mapControls.maxTiltAngle = 50;
 
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 3500, 50, -20);
+        map.lookAt({ target: NY, zoomLevel: 16, tilt: 50, heading: -20 });
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);
         map.resize(window.innerWidth, window.innerHeight);

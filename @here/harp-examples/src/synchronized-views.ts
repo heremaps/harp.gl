@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView, MapViewUtils } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { CopyrightElementHandler, MapView, MapViewUtils } from "@here/harp-mapview";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey, copyrightInfo } from "../config";
 
 /**
  * An example showing triple map view build with 3 [[MapView]]s each with a different theme and/or
@@ -92,7 +92,7 @@ export namespace TripleViewExample {
         }
 
         const frankfurt = new GeoCoordinates(50.1125867, 8.6720831);
-        mapView.lookAt(frankfurt, 1000, 45, 200);
+        mapView.lookAt({ target: frankfurt, zoomLevel: 18, tilt: 45, heading: 200 });
         mapView.zoomLevel = 16.2;
 
         setupSyncViewsGrid(mapView, gridPositionX, gridPositionY);
@@ -132,21 +132,16 @@ export namespace TripleViewExample {
     // end:harp_gl_multiview_tripleView_1.ts
 
     // snippet:harp_gl_multiview_tripleView_2.ts
-    const hereCopyrightInfo: CopyrightInfo = {
-        id: "here.com",
-        year: new Date().getFullYear(),
-        label: "HERE",
-        link: "https://legal.here.com/terms"
-    };
-    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
     const xyzDataSourceParams = {
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        maxZoomLevel: 17,
-        authenticationCode: accessToken,
-        copyrightInfo: copyrights
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        },
+        copyrightInfo
     };
     const dataSources = {
         omvDataSource1: new OmvDataSource(xyzDataSourceParams),

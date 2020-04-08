@@ -203,6 +203,11 @@ export enum LoadingState {
  */
 export class TextElement {
     /**
+     * Text elements with this priority are placed on screen before any others.
+     */
+    static readonly HIGHEST_PRIORITY = Number.MAX_SAFE_INTEGER;
+
+    /**
      * Determines visibility. If set to `false`, it will not be rendered.
      */
     visible: boolean = true;

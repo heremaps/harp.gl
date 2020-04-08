@@ -221,7 +221,7 @@ const operators = {
             if (typeof v !== "number" || typeof min !== "number" || typeof max !== "number") {
                 throw new Error(`invalid operands '${v}', ${min}, ${max} for operator 'clamp'`);
             }
-            return THREE.Math.clamp(v, min, max);
+            return THREE.MathUtils.clamp(v, min, max);
         }
     },
 

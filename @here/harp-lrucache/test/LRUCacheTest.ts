@@ -58,6 +58,7 @@ class TestLRUCache<Key, Value> extends LRUCache<Key, Value> {
         );
 
         let currentSize = 0;
+        // tslint:disable-next-line: deprecation
         this.map.forEach(val => (currentSize += val.size));
         assert.strictEqual(this["m_size"], currentSize);
     }

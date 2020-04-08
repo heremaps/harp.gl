@@ -12,10 +12,10 @@
         "test": "test"
     },
     "scripts": {
-        "build": "tsc $EXTRA_TSC_ARGS",
+        "build": "tsc --build $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/OmvTest.js",
         "gen-decoder": "pbjs -t static-module -w commonjs --no-encode --no-verify --no-create lib/proto/vector_tile.proto -o lib/proto/vector_tile.js && pbts lib/proto/vector_tile.js -o lib/proto/vector_tile.d.ts",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",
@@ -59,10 +59,10 @@
         "mocha": "^6.1.4",
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.7.2"
+        "typescript": "^3.8.2"
     },
     "peerDependencies": {
-        "three": "^0.112.1"
+        "three": "^0.114.0"
     },
     "publishConfig": {
         "access": "public"

@@ -109,14 +109,14 @@ export class GeoBox {
      * Returns the latitude span in radians.
      */
     get latitudeSpanInRadians(): number {
-        return THREE.Math.degToRad(this.latitudeSpan);
+        return THREE.MathUtils.degToRad(this.latitudeSpan);
     }
 
     /**
      * Returns the longitude span in radians.
      */
     get longitudeSpanInRadians(): number {
-        return THREE.Math.degToRad(this.longitudeSpan);
+        return THREE.MathUtils.degToRad(this.longitudeSpan);
     }
 
     /**

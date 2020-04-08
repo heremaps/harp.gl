@@ -481,9 +481,10 @@ export class OmvDecoder implements IGeometryProcessor {
     ): IndexedTechnique[] {
         if (this.m_dataFilter !== undefined && this.m_dataFilter.hasKindFilter) {
             techniques = techniques.filter(technique => {
-                return technique.kind === undefined
-                    ? this.m_dataFilter!.wantsKind(defaultKind)
-                    : this.m_dataFilter!.wantsKind(technique.kind as GeometryKind);
+                const kind =
+                    // tslint:disable-next-line: deprecation
+                    technique.kind === undefined ? defaultKind : (technique.kind as GeometryKind);
+                return this.m_dataFilter!.wantsKind(kind);
             });
         }
         return techniques;
@@ -516,14 +517,6 @@ export namespace OmvDecoder {
          */
         readonly center = new THREE.Vector3();
 
-        /**
-         * The tile bounds in the world space of the
-         * target projection [[DecodeInfo.targetProjection]].
-         *
-         * @deprecated
-         */
-        readonly projectedTileBounds = new THREE.Box3();
-
         worldTileProjectionCookie?: WorldTileProjectionCookie;
 
         /**
@@ -541,8 +534,6 @@ export namespace OmvDecoder {
             readonly tileSizeOnScreen: number
         ) {
             this.geoBox = this.tilingScheme.getGeoBox(tileKey);
-
-            this.targetProjection.projectBox(this.geoBox, this.projectedTileBounds);
 
             this.targetProjection.projectBox(this.geoBox, this.projectedBoundingBox);
             this.projectedBoundingBox.getCenter(this.center);

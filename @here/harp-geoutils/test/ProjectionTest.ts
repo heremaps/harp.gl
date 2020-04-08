@@ -23,6 +23,8 @@ import { polarTilingScheme } from "../lib/tiling/PolarTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 
+import * as THREE from "three";
+
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
@@ -326,7 +328,7 @@ describe("TransverseMercator", function() {
 });
 
 describe("Reprojection", function() {
-    const ml = MathUtils.radToDeg(Math.atan(Math.sinh(Math.PI)));
+    const ml = THREE.MathUtils.radToDeg(Math.atan(Math.sinh(Math.PI)));
 
     const geoPoints: GeoCoordinates[] = [
         new GeoCoordinates(52.504951, 13.371806, 12),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,9 +13,9 @@ import {
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken, copyrightInfo } from "../config";
+import { apikey, copyrightInfo } from "../config";
 import { COUNTRIES } from "../resources/countries";
 
 /**
@@ -252,7 +252,7 @@ export namespace PolygonsFeaturesExample {
                 technique: "extruded-polygon",
                 when: [
                     "all",
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     [">", ["to-number", ["get", propertyName]], min],
                     ["<=", ["to-number", ["get", propertyName]], max]
                 ],
@@ -334,11 +334,14 @@ export namespace PolygonsFeaturesExample {
 
         const baseMap = new OmvDataSource({
             name: "basemap",
-            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
-            maxZoomLevel: 17,
-            authenticationCode: accessToken,
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
             copyrightInfo
         });
         mapView.addDataSource(baseMap);
@@ -353,7 +356,7 @@ export namespace PolygonsFeaturesExample {
         const statesGroup = [
             ["france", "belgium", "netherlands", "italy", "luxembourg"],
             ["algeria"],
-            ["ireland", "uk", "denmark"],
+            ["ireland", "denmark"],
             ["greenland"],
             ["greece"],
             ["spain", "portugal"],
@@ -373,16 +376,18 @@ export namespace PolygonsFeaturesExample {
                 "malta"
             ],
             ["romania", "bulgaria"],
-            ["croatia"]
+            ["croatia"],
+            ["uk"]
         ];
         const UE = {
             "1957": {
                 joining: [0, 1, 6],
-                leaving: [2, 3, 4, 5, 7, 8, 9, 10, 11] // Remove other country groups when looping.
+                // Remove other country groups when looping.
+                leaving: [2, 3, 4, 5, 7, 8, 9, 10, 11, 12]
             },
             "1962": { leaving: [1], joining: [] },
             "1973": {
-                joining: [2, 3],
+                joining: [2, 3, 12],
                 leaving: []
             },
             "1981": {
@@ -398,7 +403,8 @@ export namespace PolygonsFeaturesExample {
                 leaving: []
             },
             "2007": { joining: [10], leaving: [] },
-            "2013": { joining: [11], leaving: [] }
+            "2013": { joining: [11], leaving: [] },
+            "2020": { joining: [], leaving: [12] }
         };
         return { steps: UE, statesGroup };
     }

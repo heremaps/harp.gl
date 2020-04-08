@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,10 +10,15 @@ import { assert } from "chai";
 
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-import { accessToken } from "@here/harp-examples/config";
+import { apikey } from "@here/harp-examples/config";
 import { sphereProjection, TileKey, webMercatorProjection } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
-import { APIFormat, OmvRestClient, OmvRestClientParameters } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    OmvRestClient,
+    OmvRestClientParameters
+} from "@here/harp-omv-datasource";
 import {
     IGeometryProcessor,
     ILineGeometry,
@@ -21,7 +26,7 @@ import {
 } from "@here/harp-omv-datasource/lib/IGeometryProcessor";
 import { OmvProtobufDataAdapter } from "@here/harp-omv-datasource/lib/OmvData";
 import { OmvDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
-import { getTestResourceUrl } from "@here/harp-test-utils/index.web";
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
 
 export interface OMVDecoderPerformanceTestOptions {
@@ -183,9 +188,13 @@ createOMVDecoderPerformanceTest("theme=berlin tiles=4 region=berlin data=herebas
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: BERLIN_CENTER_TILES,
     omvRestClientOptions: {
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         apiFormat: APIFormat.XYZOMV,
-        authenticationCode: accessToken
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        }
     }
 });
 
@@ -193,9 +202,13 @@ createOMVDecoderPerformanceTest("theme=berlin tiles=4 region=berlin data=osmbase
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: BERLIN_CENTER_TILES,
     omvRestClientOptions: {
-        baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.XYZMVT,
-        authenticationCode: accessToken
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+        apiFormat: APIFormat.XYZOMV,
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        }
     }
 });
 
@@ -217,9 +230,13 @@ createOMVDecoderPerformanceTest("theme=berlin tiles=10 region=ny data=herebase",
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: NEW_YORK_TILES,
     omvRestClientOptions: {
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         apiFormat: APIFormat.XYZOMV,
-        authenticationCode: accessToken
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        }
     }
 });
 
@@ -227,8 +244,12 @@ createOMVDecoderPerformanceTest("theme=berlin tiles=10 region=ny data=osmbase", 
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: NEW_YORK_TILES,
     omvRestClientOptions: {
-        baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.XYZMVT,
-        authenticationCode: accessToken
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+        apiFormat: APIFormat.XYZOMV,
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        }
     }
 });

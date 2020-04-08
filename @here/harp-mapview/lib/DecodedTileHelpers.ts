@@ -37,10 +37,12 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
-import { LoggerManager } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+import { DisplacedMesh } from "./geometry/DisplacedMesh";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
+import { Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
 
@@ -295,66 +297,88 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
 }
 
 /**
- * The default `three.js` object used with a specific technique.
+ * Determines if a technique uses THREE.Object3D instances.
+ * @param technique The technique to check.
+ * @returns true if technique uses THREE.Object3D, false otherwise.
  */
-export type ObjectConstructor = new (
-    geometry?: THREE.Geometry | THREE.BufferGeometry,
-    material?: THREE.Material
-) => THREE.Object3D;
+export function usesObject3D(technique: Technique): boolean {
+    const name = technique.name;
+    return (
+        name !== undefined &&
+        name !== "text" &&
+        name !== "labeled-icon" &&
+        name !== "line-marker" &&
+        name !== "label-rejection-line"
+    );
+}
+
 /**
- * Gets the default `three.js` object constructor associated with the given technique.
+ * Builds the object associated with the given technique.
  *
  * @param technique The technique.
+ * @param geometry The object's geometry.
+ * @param material The object's material.
+ * @param tile The tile where the object is located.
+ * @param elevationEnabled True if elevation is enabled, false otherwise.
  */
-export function getObjectConstructor(technique: Technique): ObjectConstructor | undefined {
-    if (technique.name === undefined) {
-        return undefined;
-    }
+export function buildObject(
+    technique: Technique,
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material | THREE.Material[],
+    tile: Tile,
+    elevationEnabled: boolean
+): THREE.Object3D {
+    assert(technique.name !== undefined);
+
     switch (technique.name) {
         case "extruded-line":
         case "standard":
-        case "terrain":
         case "extruded-polygon":
         case "fill":
+            return elevationEnabled
+                ? new DisplacedMesh(
+                      () => ({
+                          min: tile.elevationRange.minElevation,
+                          max: tile.elevationRange.maxElevation
+                      }),
+                      geometry,
+                      material
+                  )
+                : new THREE.Mesh(geometry, material);
+        case "terrain":
         case "dashed-line":
         case "solid-line":
-            return THREE.Mesh as ObjectConstructor;
+            return new THREE.Mesh(geometry, material);
 
         case "circles":
-            return Circles as ObjectConstructor;
+            return new Circles(geometry, material);
+
         case "squares":
-            return Squares as ObjectConstructor;
+            return new Squares(geometry, material);
 
         case "line":
-            return THREE.LineSegments as ObjectConstructor;
+            return new THREE.LineSegments(geometry, material);
 
         case "segments":
-            return THREE.LineSegments as ObjectConstructor;
+            return new THREE.LineSegments(geometry, material);
 
         case "shader": {
-            if (!isShaderTechnique(technique)) {
-                throw new Error("Invalid technique");
-            }
+            assert(isShaderTechnique(technique), "Invalid technique");
+
             switch (technique.primitive) {
                 case "line":
-                    return THREE.Line as ObjectConstructor;
+                    return new THREE.Line(geometry, material);
                 case "segments":
-                    return THREE.LineSegments as ObjectConstructor;
+                    return new THREE.LineSegments(geometry, material);
                 case "point":
-                    return THREE.Points as ObjectConstructor;
+                    return new THREE.Points(geometry, material);
                 case "mesh":
-                    return THREE.Mesh as ObjectConstructor;
-                default:
-                    return undefined;
+                    return new THREE.Mesh(geometry, material);
             }
         }
-
-        case "text":
-        case "labeled-icon":
-        case "line-marker":
-        case "label-rejection-line":
-            return undefined;
     }
+    assert(false, "Invalid technique");
+    return new THREE.Object3D();
 }
 
 /**
@@ -422,16 +446,15 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
 /**
  * Allows to easy parse/encode technique's base color property value as number coded color.
  *
- * Function takes care about property parsing, interpolation and encoding if neccessary. If
- * you wish to get default value without interpolation simply ignore @param zoom when calling.
+ * Function takes care about property parsing, interpolation and encoding if neccessary.
  *
  * @see ColorUtils
  * @param technique the technique where we search for base (transparency) color value
- * @param zoomLevel zoom level used for value interpolation.
- * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or [[undefined]] if
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or `undefined` if
  * base color property is not defined in the technique passed.
  */
-export function evaluateBaseColorProperty(technique: Technique, env?: Env): number | undefined {
+export function evaluateBaseColorProperty(technique: Technique, env: Env): number | undefined {
     const baseColorProp = getBaseColorProp(technique);
     if (baseColorProp !== undefined) {
         return evaluateColorProperty(baseColorProp, env);
@@ -494,7 +517,7 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
  *
  * @param technique technique from where params are copied
  * @param material target material
- * @param zoomLevel tile zoom level for zoom-level dependent props
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  * @param skipExtraProps optional, skipped props.
  */
 function applyTechniqueToMaterial(
@@ -560,7 +583,7 @@ function applyTechniqueToMaterial(
  * @param material target material
  * @param propertyName material and technique parameter name (or index) that is to be transferred
  * @param techniqueAttrValue technique property value which will be applied to material attribute
- * @param zoomLevel optional tile zoom level.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function applyTechniquePropertyToMaterial(
     material: THREE.Material,
@@ -576,7 +599,10 @@ function applyTechniquePropertyToMaterial(
             env
         );
     } else {
-        m[propertyName] = evaluateProperty(techniqueAttrValue, env);
+        const value = evaluateProperty(techniqueAttrValue, env);
+        if (value !== null) {
+            m[propertyName] = value;
+        }
     }
 }
 
@@ -591,7 +617,7 @@ function applyTechniquePropertyToMaterial(
  * @param material the material to which color is applied
  * @param prop technique property (color) name
  * @param value color value
- * @param zoomLevel optional tile zoom level for zoom-level dependent properties are evaluated.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function applySecondaryColorToMaterial(
     materialColor: THREE.Color,
@@ -599,7 +625,9 @@ export function applySecondaryColorToMaterial(
     env?: Env
 ) {
     let value = evaluateColorProperty(techniqueColor, env);
-
+    if (value === undefined) {
+        return;
+    }
     if (ColorUtils.hasAlphaInHex(value)) {
         logger.warn("Used RGBA value for technique color without transparency support!");
         // Just for clarity remove transparency component, even if that would be ignored
@@ -625,7 +653,7 @@ export function applySecondaryColorToMaterial(
  * @param material the material to which color is applied
  * @param prop technique property (color) name
  * @param value color value in custom number format
- * @param zoomLevel optional, tile zoom level for zoom-level dependent properties are evaluated.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function applyBaseColorToMaterial(
     material: THREE.Material,
@@ -635,6 +663,9 @@ export function applyBaseColorToMaterial(
     env?: Env
 ) {
     const colorValue = evaluateColorProperty(techniqueColor, env);
+    if (colorValue === undefined) {
+        return;
+    }
 
     const { r, g, b, a } = ColorUtils.getRgbaFromHex(colorValue);
     // Override material opacity and blending by mixing technique defined opacity
@@ -645,7 +676,7 @@ export function applyBaseColorToMaterial(
         opacity *= evaluateProperty(tech.opacity, env);
     }
 
-    opacity = THREE.Math.clamp(opacity, 0, 1);
+    opacity = THREE.MathUtils.clamp(opacity, 0, 1);
     material.opacity = opacity;
     materialColor.setRGB(r, g, b);
 
@@ -660,12 +691,12 @@ export function applyBaseColorToMaterial(
 /**
  * Calculates the value of the technique defined property.
  *
- * Function takes care about property interpolation (when @param zoom is set) as also parsing
+ * Function takes care about property interpolation (when @param `env` is set) as also parsing
  * string encoded numbers.
  *
  * @note Use with care, because function does not recognize property type.
  * @param value the value of color property defined in technique
- * @param zoomLevel zoom level used for interpolation.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function evaluateProperty(value: any, env?: Env): any {
     if (env !== undefined && (isInterpolatedProperty(value) || Expr.isExpr(value))) {
@@ -677,15 +708,19 @@ function evaluateProperty(value: any, env?: Env): any {
 /**
  * Calculates the numerical value of the technique defined color property.
  *
- * Function takes care about color interpolation (when @param zoom is set) as also parsing
+ * Function takes care about color interpolation (when @param `env is set) as also parsing
  * string encoded colors.
  *
  * @note Use with care, because function does not recognize property type.
  * @param value the value of color property defined in technique
- * @param zoomLevel zoom level used for interpolation.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
-export function evaluateColorProperty(value: Value, env?: Env): number {
+export function evaluateColorProperty(value: Value, env?: Env): number | undefined {
     value = evaluateProperty(value, env);
+
+    if (value === undefined || value === null) {
+        return undefined;
+    }
 
     if (typeof value === "number") {
         return value;
@@ -698,7 +733,8 @@ export function evaluateColorProperty(value: Value, env?: Env): number {
         }
     }
 
-    throw new Error(`Unsupported color format: '${value}'`);
+    logger.error(`Unsupported color format: '${value}'`);
+    return undefined;
 }
 
 /**

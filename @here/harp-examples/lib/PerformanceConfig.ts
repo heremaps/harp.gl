@@ -203,7 +203,31 @@ export namespace PerformanceTestData {
         tilts: [0, 0, 0, 0, 0, 0],
         numberOfDrawPoints: 250
     };
-
+    export const BERLIN_ZOOM_IN = {
+        controlPoints: [
+            52.5,
+            13.4,
+            52.5,
+            13.4,
+            52.5,
+            13.4,
+            52.5,
+            13.4,
+            52.5,
+            13.4,
+            52.5,
+            13.4,
+            52.5,
+            13.4,
+            52.5,
+            13.4,
+            52.5,
+            13.4
+        ],
+        zoomLevels: [12, 13, 14, 15, 16, 17, 18, 19, 20],
+        tilts: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        numberOfDrawPoints: 250
+    };
     export const PARIS_ZOOM_IN_AND_OUT_2 = {
         controlPoints: [
             48.8566,

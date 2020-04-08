@@ -14,6 +14,8 @@ import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
 
+import * as THREE from "three";
+
 /**
  *
  * https://en.wikipedia.org/wiki/Transverse_Mercator_projection
@@ -85,7 +87,7 @@ class TransverseMercatorProjection extends Projection {
         result?: WorldBoundingBox
     ): WorldBoundingBox {
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         result.min.x = 0;
         result.min.y = 0;
@@ -109,8 +111,8 @@ class TransverseMercatorProjection extends Projection {
         const clamped = TransverseMercatorProjection.clampGeoPoint(geoPoint, this.unitScale);
         const normalLon = clamped.longitude / 360 + 0.5;
         const offset = normalLon === 1 ? 0 : Math.floor(normalLon);
-        const phi = MathUtils.degToRad(clamped.latitude);
-        const lambda = MathUtils.degToRad(clamped.longitude - offset * 360) - this.m_lambda0;
+        const phi = THREE.MathUtils.degToRad(clamped.latitude);
+        const lambda = THREE.MathUtils.degToRad(clamped.longitude - offset * 360) - this.m_lambda0;
 
         const B = Math.cos(phi) * Math.sin(lambda);
         // result.x = 1/2 * Math.log((1 + B) / (1 - B));
@@ -118,8 +120,9 @@ class TransverseMercatorProjection extends Projection {
         result.y = Math.atan2(Math.tan(phi), Math.cos(lambda)) - this.m_phi0;
 
         const outScale = 0.5 / Math.PI;
-        result.x = this.unitScale * (MathUtils.clamp(result.x * outScale + 0.5, 0, 1) + offset);
-        result.y = this.unitScale * MathUtils.clamp(result.y * outScale + 0.5, 0, 1);
+        result.x =
+            this.unitScale * (THREE.MathUtils.clamp(result.x * outScale + 0.5, 0, 1) + offset);
+        result.y = this.unitScale * THREE.MathUtils.clamp(result.y * outScale + 0.5, 0, 1);
 
         result.z = geoPoint.altitude || 0;
         return result;
@@ -201,7 +204,7 @@ class TransverseMercatorProjection extends Projection {
         const maxZ = Math.max(...vz);
 
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         if (isBox3Like(result)) {
             result.min.x = minX;
@@ -347,7 +350,7 @@ class TransverseMercatorProjection extends Projection {
 
 export class TransverseMercatorUtils {
     static POLE_EDGE: number = 1.4844222297453323;
-    static POLE_EDGE_DEG: number = MathUtils.radToDeg(TransverseMercatorUtils.POLE_EDGE);
+    static POLE_EDGE_DEG: number = THREE.MathUtils.radToDeg(TransverseMercatorUtils.POLE_EDGE);
     static POLE_RADIUS: number = 90 - TransverseMercatorUtils.POLE_EDGE_DEG;
     static POLE_RADIUS_SQ: number = Math.pow(TransverseMercatorUtils.POLE_RADIUS, 2);
 

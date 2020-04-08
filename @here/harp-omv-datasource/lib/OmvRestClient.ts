@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,6 +16,9 @@ const logger = LoggerManager.instance.create("OmvRestClient");
 export enum APIFormat {
     /**
      * Use the REST API format of HERE Vector Tiles Server component version 1.
+     *
+     * Documentation:
+     *  https://developer.here.com/documentation/vector-tiles-api/dev_guide/index.html
      *
      * Usage:
      *
@@ -343,7 +346,9 @@ export class OmvRestClient implements DataProvider {
             return this.params.authenticationCode;
         } else if (this.params.authenticationCode !== undefined) {
             return this.params.authenticationCode();
+            // tslint:disable-next-line: deprecation
         } else if (this.params.getBearerToken !== undefined) {
+            // tslint:disable-next-line: deprecation
             return this.params.getBearerToken();
         } else {
             return undefined;
@@ -354,6 +359,7 @@ export class OmvRestClient implements DataProvider {
      * Get default authnentication method basing on apiFormat and other params.
      */
     private getDefaultAuthMethod() {
+        // tslint:disable-next-line: deprecation
         if (this.params.getBearerToken !== undefined) {
             return AuthenticationTypeBearer;
         }

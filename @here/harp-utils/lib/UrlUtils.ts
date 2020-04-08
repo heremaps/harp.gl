@@ -14,6 +14,8 @@
  *
  * See [[baseUri]] for reference how base URL of `parentUri` is determined.
  *
+ * Supports `http:`, `https:`, `file:`, `data:` schemes.
+ *
  * Examples:
  *
  *     // normal case, child is sibling
@@ -47,7 +49,7 @@ export function resolveReferenceUri(parentUri: string | undefined, childUri: str
     }
 }
 
-const absoluteUrlWithOriginRe = new RegExp("^(?:[a-z]+:)?//", "i");
+const absoluteUrlWithOriginRe = new RegExp("^(((?:[a-z]+:)?//)|(file:/)|(data:))", "i");
 
 /**
  * Returns base URL of given resource URL.

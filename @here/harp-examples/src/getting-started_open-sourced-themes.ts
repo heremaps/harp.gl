@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,9 +7,9 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, ThemeLoader } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { accessToken, copyrightInfo } from "../config";
+import { apikey, copyrightInfo } from "../config";
 
 /**
  * This example copies the base example and adds a GUI allowing to switch between all the open-
@@ -29,7 +29,7 @@ export namespace ThemesExample {
         mapControls.maxTiltAngle = 50;
 
         const moscow = new GeoCoordinates(55.7525631, 37.6234006);
-        map.lookAt(moscow, 3500, 50, 300);
+        map.lookAt({ target: moscow, zoomLevel: 16.1, tilt: 50, heading: 300 });
         map.zoomLevel = 16.1;
 
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input", projectionSwitch: true });
@@ -47,11 +47,14 @@ export namespace ThemesExample {
     const mapView = initializeMapView();
 
     const omvDataSource = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        maxZoomLevel: 17,
-        authenticationCode: accessToken,
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        },
         copyrightInfo
     });
 

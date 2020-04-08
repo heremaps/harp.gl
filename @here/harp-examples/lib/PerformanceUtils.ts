@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,7 +8,6 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import {
     computeArrayStats,
-    CopyrightInfo,
     DataSource,
     MapView,
     MapViewEventNames,
@@ -19,11 +18,10 @@ import {
     SimpleFrameStatistics
 } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
-
-import { accessToken } from "../config";
+import { apikey, copyrightInfo } from "../config";
 import { PerformanceTestData } from "./PerformanceConfig";
 
 const logger = LoggerManager.instance.create("PerformanceUtils");
@@ -70,7 +68,7 @@ export namespace PerformanceUtils {
     ];
 
     const DEFAULT_THEME = {
-        resource: "resources/berlin_tilezen_base.json"
+        resource: "resources/normal.day.json"
     };
 
     function getVendorFomContext(context: WebGLRenderingContext): GlInfo {
@@ -93,7 +91,6 @@ export namespace PerformanceUtils {
     export function initializeMapViewApp(
         id: string,
         decoderCount?: number,
-        phasedLoading?: boolean,
         powerPreference?: MapViewPowerPreference,
         theme: ThemeDef = DEFAULT_THEME
     ): MapViewApp {
@@ -106,12 +103,15 @@ export namespace PerformanceUtils {
             decoderCount,
             theme: theme.resource,
             enableStatistics: true,
-            enablePhasedLoading: phasedLoading === true,
             collisionDebugCanvas: canvasOverlay,
             powerPreference
         });
 
-        mapView.lookAt(new GeoCoordinates(52.518611, 13.376111), 8000, 0, 0);
+        const zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, 8000);
+        mapView.lookAt({
+            target: new GeoCoordinates(52.518611, 13.376111),
+            zoomLevel
+        });
 
         const mapControls = MapControls.create(mapView);
 
@@ -139,18 +139,11 @@ export namespace PerformanceUtils {
         id: string,
         dataSourceType: string[],
         decoderCount?: number,
-        phasedLoading?: boolean,
         powerPreference?: MapViewPowerPreference,
         storageLevelOffsetModifier: number = 0,
         theme: ThemeDef = DEFAULT_THEME
     ): Promise<MapViewApp> {
-        const mapViewApp = initializeMapViewApp(
-            id,
-            decoderCount,
-            phasedLoading,
-            powerPreference,
-            theme
-        );
+        const mapViewApp = initializeMapViewApp(id, decoderCount, powerPreference, theme);
 
         // Store time MapView has been initialized
         const appInitTime = PerformanceTimer.now();
@@ -182,25 +175,20 @@ export namespace PerformanceUtils {
         dataSourceTypes: string[],
         storageLevelOffsetModifier: number
     ): Promise<DataSource[]> {
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         const createDataSource = (dataSourceType: string): OmvDataSource => {
             let dataSource: OmvDataSource | undefined;
             switch (dataSourceType) {
                 case "OMV":
                     dataSource = new OmvDataSource({
-                        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+                        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
                         apiFormat: APIFormat.XYZOMV,
                         styleSetName: "tilezen",
-                        maxZoomLevel: 17,
-                        authenticationCode: accessToken,
-                        copyrightInfo: copyrights
+                        authenticationCode: apikey,
+                        authenticationMethod: {
+                            method: AuthenticationMethod.QueryString,
+                            name: "apikey"
+                        },
+                        copyrightInfo
                     });
                     break;
                 default:
@@ -240,10 +228,14 @@ export namespace PerformanceUtils {
         force?: boolean
     ): Promise<void> {
         const mapView = mapViewApp.mapView;
-        if (cameraHeight === undefined) {
-            cameraHeight = mapView.camera.position.z;
+        let zoomLevel;
+        if (cameraHeight !== undefined) {
+            zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, cameraHeight);
         }
-        mapView.lookAt(new GeoCoordinates(lat, long), cameraHeight);
+        mapView.lookAt({
+            target: new GeoCoordinates(lat, long),
+            zoomLevel
+        });
 
         if (force === true) {
             await delay(0);
@@ -449,18 +441,10 @@ export namespace PerformanceUtils {
         force?: boolean
     ) {
         const mapView = mapViewApp.mapView;
-        const targetCoordinates = new GeoCoordinates(lat, long);
-        let cameraCoordinates: GeoCoordinates = targetCoordinates;
-        if (pitch > 0) {
-            cameraCoordinates = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
-                targetCoordinates,
-                zoomLevel,
-                yaw,
-                pitch,
-                mapView
-            );
-        }
-        mapView.setCameraGeolocationAndZoom(cameraCoordinates, zoomLevel, yaw, pitch);
+        const target = new GeoCoordinates(lat, long);
+        const tilt = THREE.MathUtils.radToDeg(pitch);
+        const heading = -THREE.MathUtils.radToDeg(yaw);
+        mapView.lookAt({ target, zoomLevel, tilt, heading });
 
         if (force === true) {
             await delay(0);

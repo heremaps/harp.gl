@@ -10,7 +10,6 @@ import { Definitions, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
-    MathUtils,
     MercatorConstants,
     polarTilingScheme,
     TileKey,
@@ -18,36 +17,11 @@ import {
     TransverseMercatorUtils
 } from "@here/harp-geoutils";
 
-import { DataSource } from "./DataSource";
+import { DataSource, DataSourceOptions } from "./DataSource";
 import { createMaterial } from "./DecodedTileHelpers";
 import { Tile } from "./Tile";
 
-export interface PolarTileDataSourceOptions {
-    /**
-     * Name of [[TileDataSource]], must be unique.
-     */
-    name?: string;
-
-    /**
-     * The name of the [[StyleSet]] to evaluate for the decoding.
-     */
-    styleSetName?: string;
-
-    /**
-     * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
-     */
-    minZoomLevel?: number;
-
-    /**
-     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 20.
-     */
-    maxZoomLevel?: number;
-
-    /**
-     * Optional storage level offset for [[Tile]]s. Default is -1.
-     */
-    storageLevelOffset?: number;
-
+export interface PolarTileDataSourceOptions extends DataSourceOptions {
     /**
      * Optional level offset of regular tiles from reference datasource to align tiles to.
      * Default is -1.
@@ -66,7 +40,7 @@ export interface PolarTileDataSourceOptions {
  */
 export class PolarTileDataSource extends DataSource {
     private m_tilingScheme: TilingScheme = polarTilingScheme;
-    private m_maxLatitude = MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
+    private m_maxLatitude = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
     private m_geometryLevelOffset: number;
     private m_debugTiles: boolean;
 
@@ -77,13 +51,23 @@ export class PolarTileDataSource extends DataSource {
     constructor({
         name = "polar",
         styleSetName,
-        minZoomLevel,
-        maxZoomLevel,
+        minDataLevel,
+        maxDataLevel,
+        minDisplayLevel,
+        maxDisplayLevel,
         storageLevelOffset = -2,
-        geometryLevelOffset = -1,
+        geometryLevelOffset = 1,
         debugTiles = false
     }: PolarTileDataSourceOptions) {
-        super(name, styleSetName, minZoomLevel, maxZoomLevel, storageLevelOffset);
+        super({
+            name,
+            styleSetName,
+            minDataLevel,
+            maxDataLevel,
+            minDisplayLevel,
+            maxDisplayLevel,
+            storageLevelOffset
+        });
 
         this.m_geometryLevelOffset = geometryLevelOffset;
         this.m_debugTiles = debugTiles;

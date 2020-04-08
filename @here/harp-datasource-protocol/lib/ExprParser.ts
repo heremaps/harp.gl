@@ -6,10 +6,10 @@
 
 import {
     CallExpr,
-    ContainsExpr,
     EqualityOp,
     Expr,
     HasAttributeExpr,
+    LiteralExpr,
     NumberLiteralExpr,
     RelationalOp,
     StringLiteralExpr,
@@ -474,10 +474,10 @@ export class ExprParser {
                     elements.push(this.parseLiteral());
                 }
                 this.yyexpect(Token.RBracket);
-                expr = new ContainsExpr(
+                expr = new CallExpr("in", [
                     expr,
-                    elements.map(literal => literal.value)
-                );
+                    LiteralExpr.fromValue(elements.map(({ value }) => value))
+                ]);
             } else {
                 const op = getRelationalOp(this.lex.token());
                 if (op === undefined) {
@@ -494,10 +494,16 @@ export class ExprParser {
     private parseEquality(): Expr | never {
         let expr = this.parseRelational();
         while (true) {
-            const op = getEqualityOp(this.lex.token());
+            let op: string | undefined = getEqualityOp(this.lex.token());
+
             if (op === undefined) {
                 break;
             }
+
+            if (op === "~=") {
+                op = "in";
+            }
+
             this.lex.next();
             const right = this.parseRelational();
             expr = new CallExpr(op, [expr, right]);

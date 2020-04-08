@@ -18,8 +18,9 @@ export class BackgroundDataSource extends DataSource {
     private m_tilingScheme: TilingScheme = BackgroundDataSource.DEFAULT_TILING_SCHEME;
 
     constructor() {
-        super("background");
+        super({ name: "background" });
         this.cacheable = true;
+        this.addGroundPlane = true;
     }
 
     updateStorageLevelOffset() {

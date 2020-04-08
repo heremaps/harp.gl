@@ -93,13 +93,18 @@ describe("MapControls", function() {
     });
 
     it("correctly updates mapView on mouse move", function() {
+        const addEventListenerStub = sandbox.stub();
         const updateStub = sandbox.stub();
+        const domElement = {
+            addEventListener: addEventListenerStub
+        } as any;
         //@ts-ignore
         const mapControls = new MapControls({
-            renderer: { domElement: { addEventListener: sandbox.stub() } as any } as any,
+            renderer: { domElement } as any,
             update: updateStub
         });
         sandbox.stub(mapControls, "dispatchEvent");
+        sandbox.stub(mapControls, "getPointerPosition").returns({ x: 0, y: 0 });
 
         expect(updateStub.callCount).to.be.equal(0);
         mapControls.mouseMove({ preventDefault: sandbox.stub(), stopPropagation: sandbox.stub() });
@@ -116,6 +121,7 @@ describe("MapControls", function() {
         mapControls.m_touchState.touches = { length: 5 };
         sandbox.stub(mapControls, "updateTouches");
         sandbox.stub(mapControls, "dispatchEvent");
+        sandbox.stub(mapControls, "getPointerPosition").returns({ x: 0, y: 0 });
 
         expect(updateStub.callCount).to.be.equal(0);
         mapControls.touchMove({

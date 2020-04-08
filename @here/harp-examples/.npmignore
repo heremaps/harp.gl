@@ -4,3 +4,5 @@ tsconfig.json
 .gitreview
 example-definitions.js.in
 *.tgz
+*.map
+*.tsbuildinfo

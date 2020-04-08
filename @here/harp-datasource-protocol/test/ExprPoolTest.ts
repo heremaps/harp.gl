@@ -18,8 +18,8 @@ describe("ExprPool", function() {
         ["get", "attribute"],
         ["has", "attribute"],
         ["!", ["!", 1]],
-        ["in", 1, [1]],
-        ["in", "x", ["x", "y"]],
+        ["in", 1, ["literal", [1]]],
+        ["in", "x", ["literal", ["x", "y"]]],
         ["all", ["==", ["get", "a"], 1], ["==", ["get", "b"], 2]],
         [
             "all",
@@ -54,19 +54,32 @@ describe("ExprPool", function() {
     it("intern 'in' expressions", function() {
         const pool = new ExprPool();
 
-        assert.equal(
-            Expr.fromJSON(["in", 1, [1, 2]]).intern(pool),
-            Expr.fromJSON(["in", 1, [2, 1]]).intern(pool)
+        const elements1 = [1, 2];
+        const elements2 = [1, 2, 3];
+
+        assert.strictEqual(
+            Expr.fromJSON(["in", 1, ["literal", elements1]]).intern(pool),
+            Expr.fromJSON(["in", 1, ["literal", elements1]]).intern(pool)
         );
 
-        assert.notEqual(
-            Expr.fromJSON(["in", 1, [1, 2]]).intern(pool),
-            Expr.fromJSON(["in", 1, [1, 2, 3]]).intern(pool)
+        assert.strictEqual(
+            Expr.fromJSON(["in", 1, ["literal", [1, 2]]]).intern(pool),
+            Expr.fromJSON(["in", 1, ["literal", elements1]]).intern(pool)
         );
 
-        assert.notEqual(
-            Expr.fromJSON(["in", 1, [3, 2, 1]]).intern(pool),
-            Expr.fromJSON(["in", 1, [1, 2]]).intern(pool)
+        assert.strictEqual(
+            Expr.fromJSON(["in", "a", ["literal", ["a", "b"]]]).intern(pool),
+            Expr.fromJSON(["in", "a", ["literal", ["a", "b"]]]).intern(pool)
+        );
+
+        assert.notStrictEqual(
+            Expr.fromJSON(["in", 1, ["literal", elements1]]).intern(pool),
+            Expr.fromJSON(["in", 1, ["literal", elements2]]).intern(pool)
+        );
+
+        assert.strictEqual(
+            Expr.fromJSON(["in", "a", "aa"]).intern(pool),
+            Expr.fromJSON(["in", "a", "aa"]).intern(pool)
         );
     });
 });

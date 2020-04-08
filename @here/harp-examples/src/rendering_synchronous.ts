@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import THREE = require("three");
-import { accessToken } from "../config";
+import { apikey, copyrightInfo } from "../config";
 
 /**
  * The example shows how to render map synchronously within your own render loop.
@@ -64,11 +64,15 @@ export namespace SynchronousRendering {
         });
 
         const omvDataSource = new OmvDataSource({
-            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
-            maxZoomLevel: 17,
-            authenticationCode: accessToken
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
+            copyrightInfo
         });
         map.addDataSource(omvDataSource);
 
@@ -146,29 +150,29 @@ export namespace SynchronousRendering {
     const popup = new Popup("One World Trade Center", new GeoCoordinates(40.713, -74.013, 541.3));
 
     const state = {
-        geoPos: new GeoCoordinates(40.707, -74.01, 0),
+        target: new GeoCoordinates(40.707, -74.01, 0),
         zoomLevel: 16,
-        yawDeg: 0,
-        pitchDeg: 35
+        tilt: 35,
+        heading: 0
     };
 
     const mapView = initializeMapView("mapCanvas");
 
     // snippet:harp_gl_rendering_synchronous_2.ts
-    mapView.addEventListener(MapViewEventNames.Update, update);
+    mapView.addEventListener(MapViewEventNames.Update, requestDraw);
     // end:harp_gl_rendering_synchronous_2.ts
 
     // snippet:harp_gl_rendering_synchronous_3.ts
-    let updatePending = false;
+    let requestDrawPending = false;
     let drawing = false;
 
     // Requests a redraw of the scene.
-    function update() {
+    function requestDraw() {
         // Cancel request for redrawing if already pending
-        if (updatePending) {
+        if (requestDrawPending) {
             return;
         }
-        updatePending = true;
+        requestDrawPending = true;
 
         requestAnimationFrame(draw);
     }
@@ -178,24 +182,20 @@ export namespace SynchronousRendering {
         if (drawing) {
             return;
         }
-        updatePending = false;
+        requestDrawPending = false;
         drawing = true;
 
         // Draw popup's connection line
         popup.drawConnectionLine();
 
-        // Set geolocation and camera rotation
-        mapView.setCameraGeolocationAndZoom(
-            state.geoPos,
-            state.zoomLevel,
-            (state.yawDeg += 0.1),
-            state.pitchDeg
-        );
+        state.heading += 0.1;
+        // Set target and camera rotation
+        mapView.lookAt(state);
 
         // Draw map scene
         mapView.renderSync();
-
         drawing = false;
+        mapView.update();
     }
     // end:harp_gl_rendering_synchronous_3.ts
 }

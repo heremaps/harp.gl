@@ -15,7 +15,9 @@ Each tile is encoded using [Protobuf](https://github.com/google/protobuf).
 
 ### HERE Vector Tiles
 
-REST service implemented with `APIFormat.HereV1` in `OmvRestClient.ts`.
+REST service implemented with `APIFormat.HereV1` in `OmvRestClient.ts` if you want to use `AuthenticationTypeBearer` by default, if you want to use `APIKey` you can use `APIFormat.XYZOMV`.
+
+You can find more about the different access methods [here](https://developer.here.com/documentation/authentication/dev_guide/index.html).
 
 The HERE Vector Tile Service allows you to request tiles containing vector data
 using content from the [HERE Open Location Platform](https://openlocation.here.com/).

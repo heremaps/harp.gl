@@ -20,7 +20,7 @@ import * as THREE from "three";
 import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
-import { GeoCoordinates, MathUtils, sphereProjection } from "@here/harp-geoutils";
+import { GeoCoordinates, sphereProjection, webMercatorTilingScheme } from "@here/harp-geoutils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
@@ -30,6 +30,9 @@ import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
+import { DataSource } from "../lib/DataSource";
+import { ElevationProvider } from "../lib/ElevationProvider";
+import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSource";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
@@ -108,6 +111,7 @@ describe("MapView", function() {
         const zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
         mapView = new MapView({ canvas });
+        // tslint:disable-next-line: deprecation
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
 
         expect(zoomSpy.calledOnce).to.be.true;
@@ -118,7 +122,7 @@ describe("MapView", function() {
         expect(mapView.geoCenter.longitude).to.be.closeTo(coords.longitude, 0.000000000001);
     });
 
-    it("Correctly sets geolocation and zoom from options in constructor", function() {
+    it("Correctly sets target and zoom from options in constructor", function() {
         mapView = new MapView({
             canvas,
             target: new GeoCoordinates(52.5145, 13.3501),
@@ -128,12 +132,10 @@ describe("MapView", function() {
         });
 
         expect(mapView.zoomLevel).to.equal(18);
-        expect(mapView.geoCenter.latitude).to.equal(52.514280462360155);
-        expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
-        const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
-        // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
+        expect(mapView.tilt).to.be.closeTo(10, 1e-13);
+        expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
     // tslint:disable-next-line: max-line-length
@@ -148,13 +150,75 @@ describe("MapView", function() {
         });
 
         expect(mapView.zoomLevel).to.be.closeTo(18, 1e-10);
-        expect(mapView.geoCenter.latitude).to.equal(52.5141552325192);
-        expect(mapView.geoCenter.longitude).to.equal(13.349893801892375);
-        const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
         // TODO: For sphere projection the result is off by quite a bit.
         // Are these only floating-point issues?
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-3);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(9.55275, 1e-3);
+        expect(mapView.tilt).to.be.closeTo(10, 1e-3);
+        expect(mapView.heading).to.be.closeTo(20, 1e-3);
+    });
+
+    it("Correctly set and get zoom", function() {
+        mapView = new MapView({
+            canvas,
+            tilt: 45,
+            heading: 90
+        });
+
+        for (let i = 1; i <= 20; i += 0.1) {
+            mapView.zoomLevel = i;
+            expect(mapView.zoomLevel).to.be.closeTo(i, 1e-10);
+        }
+    });
+
+    it("Correctly clamp zoom", function() {
+        mapView = new MapView({
+            canvas
+        });
+
+        mapView.zoomLevel = 0;
+        expect(mapView.zoomLevel).to.be.equal(1);
+
+        mapView.zoomLevel = 21;
+        expect(mapView.zoomLevel).to.be.equal(20);
+    });
+
+    it("Distance bigger than lowest zoomLevel", function() {
+        mapView = new MapView({
+            canvas
+        });
+
+        mapView.zoomLevel = 1;
+        const distance = mapView.targetDistance * 2;
+        mapView.lookAt({ distance });
+        expect(mapView.targetDistance).to.be.equal(distance);
+        expect(mapView.zoomLevel).to.be.equal(1);
+    });
+
+    it("Distance lower than highest zoomLevel", function() {
+        mapView = new MapView({
+            canvas
+        });
+
+        mapView.zoomLevel = 20;
+        const distance = mapView.targetDistance / 2;
+        mapView.lookAt({ distance });
+        expect(mapView.targetDistance).to.be.equal(distance);
+        expect(mapView.zoomLevel).to.be.equal(20);
+    });
+
+    it("Correctly set and get tilt", function() {
+        const zoomLevel = 10;
+        mapView = new MapView({
+            canvas,
+            zoomLevel
+        });
+
+        for (let tilt = 0; tilt < 89; tilt += 1.0) {
+            mapView.tilt = tilt;
+            expect(mapView.zoomLevel).to.be.closeTo(zoomLevel, 1e-10);
+            expect(mapView.tilt).to.be.closeTo(tilt, 1e-10);
+        }
     });
 
     it("Correctly sets geolocation with GeoPointLike as parameter in constructor", function() {
@@ -167,12 +231,10 @@ describe("MapView", function() {
         });
 
         expect(mapView.zoomLevel).to.equal(18);
-        expect(mapView.geoCenter.latitude).to.equal(52.514280462360155);
-        expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
-        const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
-        // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
+        expect(mapView.tilt).to.be.closeTo(10, 1e-13);
+        expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
     // tslint:disable-next-line: max-line-length
@@ -189,12 +251,10 @@ describe("MapView", function() {
         });
 
         expect(mapView.zoomLevel).to.equal(18);
-        expect(mapView.geoCenter.latitude).to.equal(52.514280462360155);
-        expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
-        const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
-        // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
+        expect(mapView.tilt).to.be.closeTo(10, 1e-13);
+        expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
     it("Correctly sets geolocation with LatLngLike as parameter in constructor", function() {
@@ -210,12 +270,66 @@ describe("MapView", function() {
         });
 
         expect(mapView.zoomLevel).to.equal(18);
-        expect(mapView.geoCenter.latitude).to.equal(52.514280462360155);
-        expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
-        const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
-        // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
+        expect(mapView.tilt).to.be.closeTo(10, 1e-13);
+        expect(mapView.heading).to.be.closeTo(20, 1e-13);
+    });
+
+    it("Correctly sets geolocation with GeoPointLike", function() {
+        mapView = new MapView({
+            canvas
+        });
+
+        mapView.lookAt({
+            target: [13.3501, 52.5145]
+        });
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
+    });
+
+    // tslint:disable-next-line: max-line-length
+    it("Correctly sets target with GeoCoordinatesLike", function() {
+        mapView = new MapView({
+            canvas
+        });
+
+        mapView.lookAt({
+            target: {
+                latitude: 52.5145,
+                longitude: 13.3501
+            }
+        });
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
+    });
+
+    it("Correctly sets target with LatLngLike", function() {
+        mapView = new MapView({
+            canvas
+        });
+
+        mapView.lookAt({
+            target: {
+                lat: 52.5145,
+                lng: 13.3501
+            }
+        });
+        expect(mapView.target.latitude).to.be.closeTo(52.5145, 1e-13);
+        expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
+    });
+
+    it("Correctly set and get distance", function() {
+        mapView = new MapView({
+            canvas,
+            tilt: 45,
+            heading: 90
+        });
+
+        for (let distance = 100; distance <= 20000000; distance *= 2) {
+            mapView.lookAt({ distance });
+            expect(mapView.targetDistance).to.be.closeTo(distance, 1e-8);
+        }
     });
 
     it("Correctly sets event listeners and handlers webgl context restored", function() {
@@ -450,6 +564,138 @@ describe("MapView", function() {
         await waitForEvent(mapView, MapViewEventNames.AfterRender);
 
         expect(updateStorageOffsetSpy.called);
+    });
+
+    describe("elevation source", function() {
+        let fakeElevationSource: DataSource;
+        let fakeElevationRangeSource: ElevationRangeSource;
+        let fakeElevationProvider: ElevationProvider;
+        beforeEach(function() {
+            fakeElevationSource = {
+                name: "terrain",
+                // tslint:disable-next-line: no-shadowed-variable
+                attach(mapView: MapView) {
+                    this.mapView = mapView;
+                },
+                clearCache() {},
+                detach() {
+                    this.mapView = undefined;
+                },
+                dispose() {},
+                connect() {
+                    return Promise.resolve();
+                },
+                setEnableElevationOverlay() {},
+                setTheme() {},
+                addEventListener() {},
+                getTilingScheme() {
+                    return webMercatorTilingScheme;
+                },
+                mapView: undefined
+            } as any;
+            fakeElevationRangeSource = {
+                connect: () => Promise.resolve(),
+                ready: () => true,
+                getTilingScheme: () => webMercatorTilingScheme,
+                getElevationRange: () => ({
+                    minElevation: 0,
+                    maxElevation: 100,
+                    calculationStatus: CalculationStatus.FinalPrecise
+                })
+            } as any;
+            fakeElevationProvider = {
+                clearCache() {},
+                getHeight: () => 0
+            } as any;
+        });
+
+        describe("setElevationSource", function() {
+            it("can add an elevation source", async function() {
+                mapView = new MapView({ canvas });
+                await mapView.setElevationSource(
+                    fakeElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+                expect(mapView)
+                    .to.have.property("m_elevationSource")
+                    .that.equals(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(2)
+                    .and.includes(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_elevationRangeSource")
+                    .that.equals(fakeElevationRangeSource);
+                expect(mapView)
+                    .to.have.property("m_elevationProvider")
+                    .that.equals(fakeElevationProvider);
+                expect(fakeElevationSource.mapView).to.equal(mapView);
+            });
+            it("can replace an elevation source", async function() {
+                const secondElevationSource: DataSource = {
+                    ...fakeElevationSource
+                } as any;
+
+                mapView = new MapView({ canvas });
+                await mapView.setElevationSource(
+                    fakeElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+                expect(mapView)
+                    .to.have.property("m_elevationSource")
+                    .that.equals(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(2)
+                    .and.includes(fakeElevationSource);
+
+                await mapView.setElevationSource(
+                    secondElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+
+                expect(mapView)
+                    .to.have.property("m_elevationSource")
+                    .that.equals(secondElevationSource);
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(2)
+                    .and.includes(secondElevationSource)
+                    .and.does.not.include(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_elevationRangeSource")
+                    .that.equals(fakeElevationRangeSource);
+                expect(mapView)
+                    .to.have.property("m_elevationProvider")
+                    .that.equals(fakeElevationProvider);
+                expect(fakeElevationSource.mapView).to.be.undefined;
+                expect(secondElevationSource.mapView).to.equal(mapView);
+            });
+        });
+
+        describe("clearElevationSource", function() {
+            it("removes an elevation source", async function() {
+                mapView = new MapView({ canvas });
+                await mapView.setElevationSource(
+                    fakeElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+                mapView.clearElevationSource(fakeElevationSource);
+
+                expect(mapView).to.have.property("m_elevationSource").that.is.undefined;
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(1)
+                    .and.does.not.include(fakeElevationSource);
+                expect(mapView).to.have.property("m_elevationRangeSource").that.is.undefined;
+                expect(mapView).to.have.property("m_elevationProvider").that.is.undefined;
+                expect(fakeElevationSource.mapView).to.be.undefined;
+            });
+        });
     });
 
     describe("theme", function() {

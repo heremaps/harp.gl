@@ -4,12 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+const webpack = require("webpack");
 const merge = require("webpack-merge");
 const path = require("path");
 const glob = require("glob");
+const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
+const exampleFilter = process.env["FILTER_EXAMPLE"];
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
 
 const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
@@ -17,6 +20,15 @@ const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatal
 
 const isProduction = process.env.NODE_ENV === "production";
 const harpBundleSuffix = isProduction ? ".min" : "";
+
+themeList = {
+    default: "resources/berlin_tilezen_base.json",
+    berlinDay: "resources/berlin_tilezen_base.json",
+    berlinReducedDay: "resources/berlin_tilezen_day_reduced.json",
+    berlinReducedNight: "resources/berlin_tilezen_night_reduced.json",
+    berlinStreets: "resources/berlin_tilezen_effects_streets.json",
+    berlinOutlines: "resources/berlin_tilezen_effects_outlines.json"
+};
 
 function resolveOptional(path, message) {
     try {
@@ -58,6 +70,7 @@ const commonConfig = {
                     configFile: path.join(process.cwd(), "tsconfig.json"),
                     onlyCompileBundledFiles: true,
                     transpileOnly: prepareOnly,
+                    projectReferences: true,
                     compilerOptions: {
                         sourceMap: !prepareOnly,
                         declaration: false
@@ -81,7 +94,13 @@ const commonConfig = {
         entrypoints: true,
         warnings: true
     },
-    mode: process.env.NODE_ENV || "development"
+    mode: process.env.NODE_ENV || "development",
+    plugins: [
+        new HardSourceWebpackPlugin(),
+        new webpack.DefinePlugin({
+            THEMES: JSON.stringify(themeList)
+        })
+    ]
 };
 
 const decoderConfig = merge(commonConfig, {
@@ -119,9 +138,12 @@ function filterExamples(pattern) {
     filterEntries(htmlEntries);
 }
 
-// Uncomment and adapt to filter built examples and speed up the build significantly
+// Usage example:
+//    FILTER_EXAMPLE=shadows yarn start
 //
-//filterExamples("hello");
+if (exampleFilter) {
+    filterExamples(exampleFilter);
+}
 
 const browserConfig = merge(commonConfig, {
     entry: webpackEntries,
@@ -149,13 +171,15 @@ const codeBrowserConfig = merge(commonConfig, {
     }
 });
 
-browserConfig.plugins = Object.keys(browserConfig.entry).map(
-    chunk =>
-        new HtmlWebpackPlugin({
-            template: "template/example.html",
-            chunks: ["common", chunk],
-            filename: `${chunk}.html`
-        })
+browserConfig.plugins.push(
+    ...Object.keys(browserConfig.entry).map(
+        chunk =>
+            new HtmlWebpackPlugin({
+                template: "template/example.html",
+                chunks: ["common", chunk],
+                filename: `${chunk}.html`
+            })
+    )
 );
 
 const allEntries = Object.assign({}, webpackEntries, htmlEntries);
@@ -199,7 +223,10 @@ const assets = [
     },
     require.resolve("three/build/three.min.js"),
     {
-        from: resolveOptional(`@here/harp.gl/dist/harp${harpBundleSuffix}.js`, "bundle examples require `yarn build-bundle`"),
+        from: resolveOptional(
+            `@here/harp.gl/dist/harp${harpBundleSuffix}.js`,
+            "bundle examples require `yarn build-bundle`"
+        ),
         to: "harp.js"
     },
     {

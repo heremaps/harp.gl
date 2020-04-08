@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,9 +7,9 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken, copyrightInfo } from "../config";
+import { apikey, copyrightInfo } from "../config";
 
 /**
  * This example shows how we can pick the scene and add a [three.js](https://threejs.org/) object.
@@ -59,7 +59,7 @@ export namespace ThreejsRaycast {
 
         // Center the camera on Manhattan, New York City.
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 2000, 50);
+        map.lookAt({ target: NY, zoomLevel: 17, tilt: 50 });
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);
@@ -140,11 +140,14 @@ export namespace ThreejsRaycast {
     const mapView = initializeMapView("mapCanvas");
 
     const omvDataSource = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        maxZoomLevel: 17,
-        authenticationCode: accessToken,
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        },
         copyrightInfo
     });
 

@@ -52,7 +52,7 @@ export namespace ThreejsAddAnimatedObject {
     const mapView = HelloWorldExample.mapView;
 
     const figureGeoPosition = new GeoCoordinates(40.70497091, -74.0135);
-    mapView.lookAt(figureGeoPosition, 190, 40, 40);
+    mapView.lookAt({ target: figureGeoPosition, zoomLevel: 20, tilt: 40, heading: 40 });
 
     const clock = new THREE.Clock();
 

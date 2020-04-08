@@ -1,6 +1,5 @@
 {
     "extends": "berlin_tilezen_base.json",
-
     "definitions": {
         "parkColor": "#f00",
         "extrudedBuildings": {

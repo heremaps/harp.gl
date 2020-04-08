@@ -10,7 +10,6 @@ import {
     BooleanLiteralExpr,
     CallExpr,
     CaseExpr,
-    ContainsExpr,
     Env,
     Expr,
     ExprScope,
@@ -27,8 +26,11 @@ import {
     VarExpr
 } from "./Expr";
 import { ExprPool } from "./ExprPool";
-import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
-import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
+import {} from "./InterpolatedProperty";
+import {
+    interpolatedPropertyDefinitionToJsonExpr,
+    isInterpolatedPropertyDefinition
+} from "./InterpolatedPropertyDefs";
 import { AttrScope, mergeTechniqueDescriptor } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
 import {
@@ -100,6 +102,12 @@ interface StyleInternalParams {
      * @hidden
      */
     _geometryType?: string;
+
+    /**
+     * `true` if any of the properties of this technique
+     * requires access to the feature's state.
+     */
+    _usesFeatureState?: boolean;
 }
 
 type InternalStyle = Style & StyleSelector & StyleInternalParams;
@@ -146,10 +154,6 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
     }
 
     visitHasAttributeExpr(expr: HasAttributeExpr, enclosingExpr: Expr | undefined): Expr {
-        return expr;
-    }
-
-    visitContainsExpr(expr: ContainsExpr, enclosingExpr: Expr | undefined): Expr {
         return expr;
     }
 
@@ -317,9 +321,12 @@ export class StyleSetEvaluator {
     private readonly m_definitionExprCache = new Map<string, Expr>();
     private readonly m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
     private readonly m_emptyEnv = new Env();
+    private m_featureDependencies: string[] = [];
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
     private m_zoomLevel: number | undefined;
+    private m_previousResult: IndexedTechnique[] | undefined;
+    private m_previousEnv: Env | undefined;
 
     constructor(styleSet: StyleSet, definitions?: Definitions) {
         this.m_definitions = definitions;
@@ -343,6 +350,14 @@ export class StyleSetEvaluator {
         layer?: string | undefined,
         geometryType?: string | undefined
     ): IndexedTechnique[] {
+        if (
+            this.m_previousResult &&
+            this.m_previousEnv &&
+            this.m_featureDependencies.every(p => this.m_previousEnv?.lookup(p) === env.lookup(p))
+        ) {
+            return this.m_previousResult;
+        }
+
         const result: IndexedTechnique[] = [];
         this.m_cachedResults.clear();
 
@@ -361,6 +376,9 @@ export class StyleSetEvaluator {
                 break;
             }
         }
+
+        this.m_previousResult = result;
+        this.m_previousEnv = env;
 
         return result;
     }
@@ -408,6 +426,8 @@ export class StyleSetEvaluator {
             techinque._index = undefined!;
         }
         this.m_techniques.length = 0;
+        this.m_previousResult = undefined;
+        this.m_previousEnv = undefined;
     }
 
     /**
@@ -461,6 +481,8 @@ export class StyleSetEvaluator {
      * Compile the `when` conditions found when traversting the styling rules.
      */
     private compileStyleSet() {
+        this.m_featureDependencies = ["$layer", "$geometryType", "$zoom"];
+
         this.styleSet.forEach(style => this.compileStyle(style));
 
         // Create optimized styleSets for each `layer` & `geometryType` tuple.
@@ -477,11 +499,14 @@ export class StyleSetEvaluator {
      * @param style The current style.
      */
     private compileStyle(style: InternalStyle) {
+        this.checkStyleDynamicAttributes(style);
+
         if (style.when !== undefined) {
             try {
                 style._whenExpr = Array.isArray(style.when)
                     ? Expr.fromJSON(style.when, this.m_definitions, this.m_definitionExprCache)
-                    : Expr.parse(style.when);
+                    : // tslint:disable-next-line: deprecation
+                      Expr.parse(style.when);
 
                 // search for usages of '$layer' and any other
                 // special symbol that can be used to speed up the evaluation
@@ -491,6 +516,14 @@ export class StyleSetEvaluator {
                 if (style._whenExpr !== undefined) {
                     style._whenExpr = style._whenExpr.intern(this.m_exprPool);
                 }
+
+                const deps = style._whenExpr.dependencies();
+
+                deps?.properties.forEach(prop => {
+                    if (!this.m_featureDependencies.includes(prop)) {
+                        this.m_featureDependencies.push(prop);
+                    }
+                });
 
                 if (isJsonExpr(style.minZoomLevel)) {
                     style._minZoomLevelExpr = Expr.fromJSON(style.minZoomLevel).intern(
@@ -638,8 +671,6 @@ export class StyleSetEvaluator {
     }
 
     private getTechniqueForStyleMatch(env: Env, style: InternalStyle) {
-        this.checkStyleDynamicAttributes(style);
-
         let technique: IndexedTechnique | undefined;
         if (style._dynamicTechniques !== undefined) {
             const dynamicAttributes = this.evaluateTechniqueProperties(style, env);
@@ -722,7 +753,15 @@ export class StyleSetEvaluator {
             if (Expr.isExpr(attrValue)) {
                 const deps = attrValue.dependencies();
 
-                if (!deps.zoom && deps.properties.size === 0) {
+                if (deps.featureState) {
+                    if (attrName !== "enabled") {
+                        logger.log("feature-state is not supported in this context");
+                    } else {
+                        style._usesFeatureState = true;
+                    }
+                }
+
+                if (deps.properties.size === 0 && !attrValue.isDynamic()) {
                     // no data-dependencies detected.
                     attrValue = attrValue.evaluate(this.m_emptyEnv);
                 }
@@ -739,6 +778,12 @@ export class StyleSetEvaluator {
                 }
 
                 const deps = attrValue.dependencies();
+
+                deps.properties.forEach(prop => {
+                    if (!this.m_featureDependencies.includes(prop)) {
+                        this.m_featureDependencies.push(prop);
+                    }
+                });
 
                 switch (attrScope) {
                     case AttrScope.FeatureGeometry:
@@ -852,9 +897,11 @@ export class StyleSetEvaluator {
 
         technique._index = this.m_techniques.length;
         technique._styleSetIndex = style._styleSetIndex!;
-        technique._key = key;
         if (style.styleSet !== undefined) {
             technique._styleSet = style.styleSet;
+        }
+        if (style._usesFeatureState !== undefined) {
+            technique._usesFeatureState = style._usesFeatureState;
         }
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
@@ -903,7 +950,7 @@ function resolveStyleReferences(
 /**
  * Create transferable representation of dynamic technique.
  *
- * As for now, we remove all `Expr` as they are not supported on other side.
+ * Converts  non-transferable [[Expr]]instances back to JSON form.
  */
 export function makeDecodedTechnique(technique: IndexedTechnique): IndexedTechnique {
     const result: Partial<IndexedTechnique> = {};

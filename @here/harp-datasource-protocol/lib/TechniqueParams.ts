@@ -20,27 +20,9 @@ export type LineCaps = "Square" | "Round" | "None" | "TriangleOut" | "TriangleIn
 export type LineDashes = "Square" | "Round" | "Diamond";
 
 /**
- * The kind of geometry is used to
- *
- * a) Group objects together, allowing the group to be hidden or displayed.
- *
- * b) Assigning the objects a loading phase. If a [[PhasedTileGeometryManager]] is used, techniques
- *      without a `GeometryKind` may not be processed (at the desired phase).
- *
- * Any string can be used to specify the kind of the technique in a style in the theme file. Is is
- * suggested to specify multiple kinds for specific types of data. For a highway, the following list
- * of kinds is suggested:
- *
- *    ["line", "road", "road:highway"]
- *
- * If it is a tunnel for a highway:
- *
- *    ["line", "road", "road:highway", "tunnel", "road:tunnel", "road:highway:tunnel"]
- *
- * If specified in this way, specific types of data (here: highway roads) can be enabled and/or
- * disabled.
+ * Standard kinds of geometry.
  */
-export enum GeometryKind {
+export enum StandardGeometryKind {
     /**
      * Used in the enabledKinds/disabledKinds filter to match any kind.
      */
@@ -96,6 +78,28 @@ export enum GeometryKind {
      */
     Detail = "detail"
 }
+
+/**
+ * Geometry kind used for use by [[BaseTechniqueParams.kind]].
+ *
+ * The kind of geometry is used to group objects together,
+ * allowing the group to be hidden or displayed.
+ *
+ * Any string can be used to specify the kind of the technique in a style in the theme file. Is is
+ * suggested to specify multiple kinds for specific types of data. For a highway, the following list
+ * of kinds is suggested:
+ *
+ *    ["line", "road", "road:highway"]
+ *
+ * If it is a tunnel for a highway:
+ *
+ *    ["line", "road", "road:highway", "tunnel", "road:tunnel", "road:highway:tunnel"]
+ *
+ * If specified in this way, specific types of data (here: highway roads) can be enabled and/or
+ * disabled.
+ */
+export type GeometryKind = string | StandardGeometryKind;
+export const GeometryKind = StandardGeometryKind;
 
 /**
  * Decorate property type with possible dynamic variants.
@@ -192,11 +196,6 @@ export interface BaseTechniqueParams {
     category?: string;
 
     /**
-     *
-     */
-    renderOrderOffset?: number;
-
-    /**
      * Optional. If `true`, no IDs will be saved for the geometry this technique creates.
      */
     transient?: boolean;
@@ -216,14 +215,19 @@ export interface BaseTechniqueParams {
     /**
      * Specified kind of geometry. One kind is set as default in the technique, and can be
      * overridden in the style.
+     *
+     * @deprecated Use [[enabled]] with expressions based on `['dynamic-properties']` operator.
      */
     kind?: GeometryKind | GeometryKindSet;
 
     /**
-     * Set to `true` if this `Technique`s kind is in the set of enabled [[GeometryKind]]s, set to
-     * `false` if is in the disabled [[GeometryKind]]s. Disabling overrules enabling.
+     * Runtime filtering of techniques.
+     *
+     * Use with `['dynamic-properties']` operator for dynamic feature highlight, highlighig etc.
+     *
+     * @see Picking example - [[PickingExample]]
      */
-    enabled?: boolean;
+    enabled?: DynamicProperty<boolean>;
 }
 
 export enum TextureCoordinateType {

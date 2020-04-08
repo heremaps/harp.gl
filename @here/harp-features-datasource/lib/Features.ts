@@ -28,7 +28,7 @@ export abstract class MapViewFeature {
     /**
      * A string identifying this feature.
      */
-    uuid: string = THREE.Math.generateUUID();
+    uuid: string = THREE.MathUtils.generateUUID();
 
     /**
      * Builds a new `MapViewFeature`.

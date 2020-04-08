@@ -9,7 +9,6 @@
 
 import * as THREE from "three";
 
-import { MathUtils } from "@here/harp-geoutils";
 import { RenderingTestHelper } from "@here/harp-test-utils";
 import {
     FontCatalog,
@@ -33,7 +32,7 @@ describe("TextCanvas", function() {
 
     async function basicRenderTest(
         params: {
-            test: Mocha.ITestCallbackContext;
+            test: Mocha.Context;
             testName: string;
         },
         testFun: () => Promise<void>
@@ -194,21 +193,21 @@ describe("TextCanvas", function() {
                 await fontCatalog.loadCharset("Hello World!", renderingStyle);
                 textCanvas.textRenderStyle = new TextRenderStyle({
                     ...renderingStyle,
-                    rotation: MathUtils.degToRad(-20)
+                    rotation: THREE.MathUtils.degToRad(-20)
                 });
                 textCanvas.textLayoutStyle = new TextLayoutStyle({
                     horizontalAlignment: HorizontalAlignment.Left,
-                    canvasRotation: MathUtils.degToRad(-20)
+                    canvasRotation: THREE.MathUtils.degToRad(-20)
                 });
                 textCanvas.addText("Hello World!", new THREE.Vector3(-50, 20, 0));
 
                 textCanvas.textRenderStyle = new TextRenderStyle({
                     ...renderingStyle,
-                    rotation: MathUtils.degToRad(20)
+                    rotation: THREE.MathUtils.degToRad(20)
                 });
                 textCanvas.textLayoutStyle = new TextLayoutStyle({
                     horizontalAlignment: HorizontalAlignment.Left,
-                    canvasRotation: MathUtils.degToRad(20)
+                    canvasRotation: THREE.MathUtils.degToRad(20)
                 });
                 textCanvas.addText("Hello World!", new THREE.Vector3(-50, -30, 0));
 

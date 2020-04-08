@@ -436,14 +436,14 @@ describe("mapview-statistics", function() {
             a: 100
         });
 
-        stats.storeFrameInfo();
+        stats.storeAndClearFrameInfo();
 
         addFrameValues({
             a: 150,
             b: 200
         });
 
-        stats.storeFrameInfo();
+        stats.storeAndClearFrameInfo();
 
         const frameEvents = stats.frameEvents;
         assert.equal(frameEvents.length, 2);

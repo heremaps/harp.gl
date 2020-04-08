@@ -3,14 +3,61 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Definitions, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { Definitions, StyleSet, Theme, ValueMap } from "@here/harp-datasource-protocol";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
-import { assert } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
+const logger = LoggerManager.instance.create("DataSource");
 const UPDATE_EVENT = { type: "update" };
+
+/**
+ * Options for a [[DataSource]].
+ */
+export interface DataSourceOptions {
+    /**
+     * The unique name of a [[DataSource]] instance.
+     */
+    name?: string;
+    /**
+     * The name of the [[StyleSet]] to evaluate for the decoding.
+     */
+    styleSetName?: string;
+    /**
+     * The minimum zoom level at which data is available or displayed at
+     * (depending on [[DataSource]] subclass).
+     * @deprecated Use [[minDataLevel]] and [[minDisplayLevel]] instead.
+     */
+    minZoomLevel?: number;
+    /**
+     * The maximum zoom level at which data is available or displayed at
+     * (depending on [[DataSource]] subclass).
+     * @deprecated Use [[maxDataLevel]] and [[maxDisplayLevel]] instead.
+     */
+    maxZoomLevel?: number;
+    /**
+     * The minimum zoom level at which data is available.
+     */
+    minDataLevel?: number;
+    /**
+     * The maximum zoom level at which data is available.
+     */
+    maxDataLevel?: number;
+    /**
+     * The minimum zoom level at which [[DataSource]] is displayed.
+     */
+    minDisplayLevel?: number;
+    /**
+     * The maximum zoom level at which [[DataSource]] is displayed.
+     */
+    maxDisplayLevel?: number;
+    /**
+     * Storage level offset applied to this `DataSource`.
+     */
+    storageLevelOffset?: number;
+}
 
 /**
  * Derive a class from `DataSource` to contribute data and geometries to the [[MapView]].
@@ -51,6 +98,26 @@ export abstract class DataSource extends THREE.EventDispatcher {
     addGroundPlane: boolean = false;
 
     /**
+     * The minimum zoom level at which data is available.
+     */
+    minDataLevel: number = 1;
+
+    /**
+     * The maximum zoom level at which data is available.
+     */
+    maxDataLevel: number = 20;
+
+    /**
+     * The minimum zoom level at which [[DataSource]] is displayed.
+     */
+    minDisplayLevel: number = 1;
+
+    /**
+     * The maximum zoom level at which [[DataSource]] is displayed.
+     */
+    maxDisplayLevel: number = 20;
+
+    /**
      * The [[MapView]] instance holding a reference to this `DataSource`.
      */
     private m_mapView?: MapView;
@@ -59,16 +126,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * The name of the [[StyleSet]] to evaluate for the decoding.
      */
     private m_styleSetName?: string;
-
-    /**
-     * Minimum zoom level this `DataSource` can be displayed in.
-     */
-    private m_minZoomLevel: number = 1;
-
-    /**
-     * Maximum zoom level this `DataSource` can be displayed in.
-     */
-    private m_maxZoomLevel: number = 20;
 
     /**
      * Current value of [[maxGeometryHeight]] property.
@@ -80,40 +137,97 @@ export abstract class DataSource extends THREE.EventDispatcher {
      */
     private m_storageLevelOffset: number = 0;
 
+    private readonly m_featureStateMap = new Map<number, ValueMap>();
+
     /**
      * Constructs a new `DataSource`.
      *
-     * @param uniqueName A unique name that represents this `DataSource`.
-     * @param styleSetName The name of the [[StyleSet]] to refer to in a [[Theme]], to decode vector
-     * tiles.
-     * @param minZoomLevel Minimum zoom level this `DataSource` can be displayed in.
-     * @param maxZoomLevel Maximum zoom level this `DataSource` can be displayed in.
-     * @param storageLevelOffset Storage level offset applied to this `DataSource`.
+     * @param options The options to create the data source.
      */
-    constructor(
-        uniqueName?: string,
-        styleSetName?: string,
-        minZoomLevel?: number,
-        maxZoomLevel?: number,
-        storageLevelOffset?: number
-    ) {
+    constructor(options: DataSourceOptions = {}) {
         super();
-        if (uniqueName === undefined || uniqueName.length === 0) {
-            uniqueName = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
+        let { name } = options;
+        const {
+            styleSetName,
+            // tslint:disable-next-line: deprecation
+            minZoomLevel,
+            // tslint:disable-next-line: deprecation
+            maxZoomLevel,
+            minDataLevel,
+            maxDataLevel,
+            minDisplayLevel,
+            maxDisplayLevel,
+            storageLevelOffset
+        } = options;
+        if (name === undefined || name.length === 0) {
+            name = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
         }
-        this.name = uniqueName;
+        this.name = name;
 
         this.styleSetName = styleSetName;
 
+        if (minDataLevel !== undefined) {
+            this.minDataLevel = minDataLevel;
+        }
+        if (maxDataLevel !== undefined) {
+            this.maxDataLevel = maxDataLevel;
+        }
         if (minZoomLevel !== undefined) {
-            this.m_minZoomLevel = minZoomLevel;
+            // tslint:disable-next-line: deprecation
+            this.minZoomLevel = minZoomLevel;
         }
         if (maxZoomLevel !== undefined) {
-            this.m_maxZoomLevel = maxZoomLevel;
+            // tslint:disable-next-line: deprecation
+            this.maxZoomLevel = maxZoomLevel;
+        }
+        if (minDisplayLevel !== undefined) {
+            this.minDisplayLevel = minDisplayLevel;
+        }
+        if (maxDisplayLevel !== undefined) {
+            this.maxDisplayLevel = maxDisplayLevel;
         }
         if (storageLevelOffset !== undefined) {
             this.m_storageLevelOffset = storageLevelOffset;
         }
+    }
+
+    /**
+     * Gets the state of the given feature id.
+     *
+     * @param featureId The id of the feature.
+     */
+    getFeatureState(featureId: number): ValueMap | undefined {
+        return this.m_featureStateMap.get(featureId);
+    }
+
+    /**
+     * Clears the state of all the features of this [[DataSource]].
+     */
+    clearFeatureState() {
+        this.m_featureStateMap.clear();
+    }
+
+    /**
+     * Sets the state of the given feature id.
+     *
+     * ```typescript
+     * dataSource.setFeatureState(featureId, { enabled: true });
+     * ```
+     *
+     * @param featureId The id of the feature.
+     * @param state The new state of the feature.
+     */
+    setFeatureState(featureId: number, state: ValueMap) {
+        this.m_featureStateMap.set(featureId, state);
+    }
+
+    /**
+     * Removes the state associated to the given feature.
+     *
+     * @param featureId The id of the feature.
+     */
+    removeFeatureState(featureId: number) {
+        this.m_featureStateMap.delete(featureId);
     }
 
     /**
@@ -147,6 +261,15 @@ export abstract class DataSource extends THREE.EventDispatcher {
      */
     clearCache() {
         // to be overloaded by subclasses
+    }
+
+    /**
+     * Boolean which says whether a [[DataSource]] produces tiles that fully cover the tile, i.e.
+     * tiles underneath are completely hidden. Must be overriden for [[DataSource]]'s that don't
+     * have a ground plane, but which still fully cover the tile, e.g. web tiles.
+     */
+    isFullyCovering(): boolean {
+        return this.addGroundPlane;
     }
 
     /**
@@ -283,27 +406,41 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * The minimum zoom level to use for display.
-     *
-     * @returns The minimum zoom level to use for display.
+     * The minimum zoom level at which data is available or displayed at
+     * (depending on [[DataSource]] subclass).
+     * @deprecated Use [[minDataLevel]] and [[minDisplayLevel]] instead.
      */
     get minZoomLevel(): number {
-        return this.m_minZoomLevel;
+        logger.warn(
+            "DataSource.minZoomLevel is deprecated. Use minDataLevel and maxDataLevel instead."
+        );
+        return this.minDataLevel;
     }
 
     set minZoomLevel(level: number) {
-        this.m_minZoomLevel = level;
+        logger.warn(
+            "DataSource.minZoomLevel is deprecated. Use minDataLevel and minDisplayLevel instead."
+        );
+        this.minDataLevel = level;
     }
 
     /**
-     * The maximum zoom level to use for display.
+     * The maximum zoom level at which data is available or displayed at
+     * (depending on [[DataSource]] subclass).
+     * @deprecated Use [[maxDataLevel]] and [[maxDisplayLevel]] instead.
      */
     get maxZoomLevel(): number {
-        return this.m_maxZoomLevel;
+        logger.warn(
+            "DataSource.maxZoomLevel is deprecated. Use maxDataLevel and maxDisplayLevel instead."
+        );
+        return this.maxDataLevel;
     }
 
     set maxZoomLevel(level: number) {
-        this.m_maxZoomLevel = level;
+        logger.warn(
+            "DataSource.maxZoomLevel is deprecated. Use maxDataLevel and maxDisplayLevel instead."
+        );
+        this.maxDataLevel = level;
     }
 
     /**
@@ -352,17 +489,25 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * Computes the zoom level to use for display.
+     * Computes the data zoom level to use.
      *
      * @param zoomLevel The zoom level of the [[MapView]].
-     * @returns The zoom level to use for display.
+     * @returns The data zoom level to use.
      */
-    getDisplayZoomLevel(zoomLevel: number): number {
-        return THREE.Math.clamp(
+    getDataZoomLevel(zoomLevel: number): number {
+        return THREE.MathUtils.clamp(
             zoomLevel + this.m_storageLevelOffset,
-            this.m_minZoomLevel,
-            this.m_maxZoomLevel
+            this.minDataLevel,
+            this.maxDataLevel
         );
+    }
+
+    /**
+     * Returns `true` if [[DataSource]] should be displayed for the zoom level.
+     * @param zoomLevel The zoom level of the [[MapView]].
+     */
+    isVisible(zoomLevel: number): boolean {
+        return zoomLevel >= this.minDisplayLevel && zoomLevel <= this.maxDisplayLevel;
     }
 
     /**

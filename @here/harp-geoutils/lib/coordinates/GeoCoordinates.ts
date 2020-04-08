@@ -39,8 +39,8 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      */
     static fromRadians(latitude: number, longitude: number, altitude?: number): GeoCoordinates {
         return new GeoCoordinates(
-            THREE.Math.radToDeg(latitude),
-            THREE.Math.radToDeg(longitude),
+            THREE.MathUtils.radToDeg(latitude),
+            THREE.MathUtils.radToDeg(longitude),
             altitude
         );
     }
@@ -120,14 +120,14 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      * Returns the latitude in radians.
      */
     get latitudeInRadians(): number {
-        return THREE.Math.degToRad(this.latitude);
+        return THREE.MathUtils.degToRad(this.latitude);
     }
 
     /**
      * Returns the longitude in radians.
      */
     get longitudeInRadians(): number {
-        return THREE.Math.degToRad(this.longitude);
+        return THREE.MathUtils.degToRad(this.longitude);
     }
 
     /**
@@ -236,7 +236,6 @@ export class GeoCoordinates implements GeoCoordinatesLike {
 
     /**
      * Clones this `GeoCoordinates`.
-     * @deprecated
      */
     clone(): GeoCoordinates {
         return new GeoCoordinates(this.latitude, this.longitude, this.altitude);

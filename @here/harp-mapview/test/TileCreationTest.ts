@@ -6,13 +6,19 @@
 
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-import { MapEnv, ShaderTechnique } from "@here/harp-datasource-protocol";
-import { assert } from "chai";
+import { MapEnv, ShaderTechnique, Technique } from "@here/harp-datasource-protocol";
+import { TileKey } from "@here/harp-geoutils";
+import { MapMeshStandardMaterial } from "@here/harp-materials";
+import { assert, expect } from "chai";
 import * as THREE from "three";
-import { createMaterial, getObjectConstructor } from "./../lib/DecodedTileHelpers";
+import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
+import { buildObject, createMaterial, usesObject3D } from "./../lib/DecodedTileHelpers";
+import { Tile } from "./../lib/Tile";
+import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 describe("Tile Creation", function() {
     it("ShaderTechnique", function() {
+        const tile = new Tile(new FakeOmvDataSource(), new TileKey(0, 0, 0));
         const technique: ShaderTechnique = {
             name: "shader",
             primitive: "line",
@@ -45,121 +51,143 @@ describe("Tile Creation", function() {
             assert.isString(shaderMaterial.fragmentShader);
             assert.isTrue(shaderMaterial.clipping);
         }
-        const Ctor = getObjectConstructor(technique);
-        assert.isFunction(Ctor, "Expected a constructor");
-        if (Ctor !== undefined) {
-            const object = new Ctor();
-            assert.isTrue(object instanceof THREE.Line, "expected a THREE.Line object");
-        }
+        assert.isTrue(usesObject3D(technique));
+        const object = buildObject(
+            technique,
+            new THREE.BufferGeometry(),
+            new THREE.Material(),
+            tile,
+            false
+        );
+        assert.isTrue(object instanceof THREE.Line, "expected a THREE.Line object");
     });
 
-    it("ObjectConstructor", function() {
-        const ExtrudedLineCtor = getObjectConstructor({
-            name: "extruded-line",
-            color: "#f00",
-            lineWidth: 1,
-            renderOrder: 0
+    const tests: Array<{ technique: Technique; object: any; elevation: boolean }> = [
+        {
+            technique: {
+                name: "extruded-line",
+                color: "#f00",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            elevation: false,
+            object: THREE.Mesh
+        },
+        { technique: { name: "standard", renderOrder: 0 }, elevation: false, object: THREE.Mesh },
+        {
+            technique: {
+                name: "extruded-polygon",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            elevation: false,
+            object: THREE.Mesh
+        },
+        { technique: { name: "fill", renderOrder: 0 }, elevation: false, object: THREE.Mesh },
+        { technique: { name: "squares", renderOrder: 0 }, elevation: false, object: THREE.Points },
+        {
+            technique: {
+                name: "line",
+                color: "#f00",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            elevation: false,
+            object: THREE.Line
+        },
+        {
+            technique: {
+                name: "segments",
+                color: "#f00",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            elevation: false,
+            object: THREE.LineSegments
+        },
+        {
+            technique: {
+                name: "shader",
+                primitive: "point",
+                params: {},
+                renderOrder: 0
+            },
+            elevation: false,
+            object: THREE.Points
+        },
+        {
+            technique: {
+                name: "shader",
+                primitive: "line",
+                params: {},
+                renderOrder: 0
+            },
+            elevation: false,
+            object: THREE.Line
+        },
+        {
+            technique: {
+                name: "shader",
+                primitive: "mesh",
+                params: {},
+                renderOrder: 0
+            },
+            elevation: false,
+            object: THREE.Mesh
+        },
+        { technique: { name: "text", renderOrder: 0 }, object: undefined, elevation: false },
+        {
+            technique: {
+                name: "extruded-polygon",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            elevation: true,
+            object: DisplacedMesh
+        },
+        {
+            technique: { name: "standard", renderOrder: 0 },
+            elevation: true,
+            object: DisplacedMesh
+        },
+        {
+            technique: {
+                name: "extruded-line",
+                color: "#f00",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            elevation: true,
+            object: DisplacedMesh
+        },
+        {
+            technique: { name: "fill", renderOrder: 0 },
+            elevation: true,
+            object: DisplacedMesh
+        }
+    ];
+
+    for (const test of tests) {
+        const name =
+            "primitive" in test.technique
+                ? `${test.technique.name}(${test.technique.primitive})`
+                : test.technique.name;
+        const elevation = test.elevation ? "elevation" : "no elevation";
+        const testName = `buildObject builds proper obj for ${name} technique with ${elevation}`;
+        it(testName, function() {
+            const tile = new Tile(new FakeOmvDataSource(), new TileKey(0, 0, 0));
+            const geometry = new THREE.BufferGeometry();
+            const material = new MapMeshStandardMaterial();
+
+            const technique = test.technique;
+            const objClass = test.object;
+            if (objClass === undefined) {
+                assert.isFalse(usesObject3D(technique));
+            } else {
+                assert.isTrue(usesObject3D(technique));
+                const obj = buildObject(technique, geometry, material, tile, test.elevation);
+                expect(obj).to.be.instanceOf(objClass);
+            }
         });
-        assert.isFunction(ExtrudedLineCtor);
-        if (ExtrudedLineCtor !== undefined) {
-            assert.isTrue(new ExtrudedLineCtor() instanceof THREE.Mesh);
-        }
-
-        const StandardCtor = getObjectConstructor({ name: "standard", renderOrder: 0 });
-        assert.isFunction(StandardCtor);
-        if (StandardCtor !== undefined) {
-            assert.isTrue(new StandardCtor() instanceof THREE.Mesh);
-        }
-
-        const ExtrudedPolygonCtor = getObjectConstructor({
-            name: "extruded-polygon",
-            lineWidth: 1,
-            renderOrder: 0
-        });
-        assert.isFunction(ExtrudedPolygonCtor);
-        if (ExtrudedPolygonCtor !== undefined) {
-            assert.isTrue(new ExtrudedPolygonCtor() instanceof THREE.Mesh);
-        }
-
-        const FillCtor = getObjectConstructor({ name: "fill", renderOrder: 0 });
-        assert.isFunction(FillCtor);
-        if (FillCtor !== undefined) {
-            assert.isTrue(new FillCtor() instanceof THREE.Mesh);
-        }
-
-        const PointCtor = getObjectConstructor({ name: "squares", renderOrder: 0 });
-        assert.isFunction(PointCtor);
-        if (PointCtor !== undefined) {
-            assert.isTrue(new PointCtor() instanceof THREE.Points);
-        }
-
-        const LineCtor = getObjectConstructor({
-            name: "line",
-            color: "#f00",
-            lineWidth: 1,
-            renderOrder: 0
-        });
-        assert.isFunction(LineCtor);
-        if (LineCtor !== undefined) {
-            assert.isTrue(new LineCtor() instanceof THREE.Line);
-        }
-
-        const SegmentsCtor = getObjectConstructor({
-            name: "segments",
-            color: "#f00",
-            lineWidth: 1,
-            renderOrder: 0
-        });
-        assert.isFunction(SegmentsCtor);
-        if (SegmentsCtor !== undefined) {
-            assert.isTrue(new SegmentsCtor() instanceof THREE.LineSegments);
-        }
-
-        const ShaderPointCtor = getObjectConstructor({
-            name: "shader",
-            primitive: "point",
-            params: {},
-            renderOrder: 0
-        });
-        assert.isFunction(ShaderPointCtor);
-        if (ShaderPointCtor !== undefined) {
-            assert.isTrue(new ShaderPointCtor() instanceof THREE.Points);
-        }
-
-        const ShaderLineCtor = getObjectConstructor({
-            name: "shader",
-            primitive: "line",
-            params: {},
-            renderOrder: 0
-        });
-        assert.isFunction(ShaderLineCtor);
-        if (ShaderLineCtor !== undefined) {
-            assert.isTrue(new ShaderLineCtor() instanceof THREE.Line);
-        }
-
-        const ShaderLineSegmentsCtor = getObjectConstructor({
-            name: "shader",
-            primitive: "segments",
-            params: {},
-            renderOrder: 0
-        });
-        assert.isFunction(ShaderLineSegmentsCtor);
-        if (ShaderLineSegmentsCtor !== undefined) {
-            assert.isTrue(new ShaderLineSegmentsCtor() instanceof THREE.LineSegments);
-        }
-
-        const ShaderMeshCtor = getObjectConstructor({
-            name: "shader",
-            primitive: "mesh",
-            params: {},
-            renderOrder: 0
-        });
-        assert.isFunction(ShaderMeshCtor);
-        if (ShaderMeshCtor !== undefined) {
-            assert.isTrue(new ShaderMeshCtor() instanceof THREE.Mesh);
-        }
-
-        const TextCtor = getObjectConstructor({ name: "text", renderOrder: 0 });
-        assert.isUndefined(TextCtor); // text techniques don't create scene objects
-    });
+    }
 });

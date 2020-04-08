@@ -126,17 +126,12 @@ const tests: TestCase[] = [
         ],
         frameTimes: FADE_2_CYCLES
     },
-    // USER LABELS
+    // TRANSITORY LABEL GROUPS (ADDED/REMOVED AFTER FIRST FRAME).
     {
-        name: "Newly visited, visible user poi fades in",
-        tiles: [{ userLabels: [[poiBuilder(), FADE_IN]] }],
-        frameTimes: FADE_CYCLE
-    },
-    {
-        name: "User poi added after first frames fades in",
+        name: "Poi added after first frames fades in",
         tiles: [
             {
-                userLabels: [
+                labels: [
                     [
                         poiBuilder(),
                         fadedOut(FADE_IN.length).concat(
@@ -150,10 +145,10 @@ const tests: TestCase[] = [
         frameTimes: FADE_2_CYCLES
     },
     {
-        name: "Two user poi added in different frames to same tile fade in",
+        name: "Two pois added in different frames to same tile fade in",
         tiles: [
             {
-                userLabels: [
+                labels: [
                     [
                         poiBuilder("Marker 1")
                             .withMayOverlap(true)
@@ -176,10 +171,10 @@ const tests: TestCase[] = [
         frameTimes: FADE_2_CYCLES
     },
     {
-        name: "Removed user poi fades out",
+        name: "Removed poi fades out",
         tiles: [
             {
-                userLabels: [
+                labels: [
                     [
                         poiBuilder(),
                         FADE_IN.concat(fadedOut(FADE_2_CYCLES.length - FADE_IN.length)),
@@ -191,10 +186,10 @@ const tests: TestCase[] = [
         frameTimes: FADE_2_CYCLES
     },
     {
-        name: "From two user pois in same tile, removed poi fades out, remaining poi is faded in",
+        name: "From two pois in same tile, removed poi fades out, remaining poi is faded in",
         tiles: [
             {
-                userLabels: [
+                labels: [
                     [
                         poiBuilder("Marker 1")
                             .withMayOverlap(true)
@@ -649,13 +644,8 @@ describe("TextElementsRenderer", function() {
                 enableElevation = true;
             }
             const labels = buildLabels(tile.labels, elementFrameStates, test.frameTimes.length);
-            const userLabels = buildLabels(
-                tile.userLabels,
-                elementFrameStates,
-                test.frameTimes.length
-            );
             allTileIndices.push(tileIndex);
-            fixture.addTile(labels, userLabels);
+            fixture.addTile(labels);
         });
 
         // Keeps track of the opacity that text elements had in the previous frame.
@@ -688,16 +678,13 @@ describe("TextElementsRenderer", function() {
         return { tileIdcs, terrainTileIdcs };
     }
 
-    function prepareUserLabels(frameIdx: number, tiles: InputTile[], tileIndices: number[]) {
+    function prepareTextElements(frameIdx: number, tiles: InputTile[], tileIndices: number[]) {
         for (const tileIndex of tileIndices) {
             const tile = tiles[tileIndex];
-            if (!tile.userLabels) {
-                continue;
-            }
-            const elementsEnabled = tile.userLabels.map(
+            const elementsEnabled = tile.labels.map(
                 label => framesEnabled(label)?.[frameIdx] ?? true
             );
-            fixture.setTileUserTextElements(tileIndex, elementsEnabled);
+            fixture.setTileTextElements(tileIndex, elementsEnabled);
         }
     }
 
@@ -710,7 +697,7 @@ describe("TextElementsRenderer", function() {
                 const frameTime = test.frameTimes[frameIdx];
                 const collisionEnabled =
                     test.collisionFrames === undefined ? true : test.collisionFrames[frameIdx];
-                prepareUserLabels(frameIdx, test.tiles, tileIdcs);
+                prepareTextElements(frameIdx, test.tiles, tileIdcs);
                 await fixture.renderFrame(frameTime, tileIdcs, terrainTileIdcs, collisionEnabled);
 
                 let elementIdx = 0;

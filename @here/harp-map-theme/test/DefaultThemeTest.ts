@@ -116,6 +116,7 @@ describe("Berlin Theme", function() {
                         const location = `${styleSetName}[${i}]`;
                         if (typeof style.when === "string") {
                             assert.doesNotThrow(() =>
+                                // tslint:disable-next-line: deprecation
                                 Expr.parse((style as Style & StyleSelector).when as string)
                             );
                         } else {

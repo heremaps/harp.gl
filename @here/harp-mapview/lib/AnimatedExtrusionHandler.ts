@@ -165,7 +165,6 @@ export class AnimatedExtrusionHandler {
  */
 export class AnimatedExtrusionTileHandler {
     private m_extrudedObjects: THREE.Object3D[] = [];
-    private m_animatedExtrusionRatio: number = ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     private m_animatedExtrusionState: AnimatedExtrusionState = AnimatedExtrusionState.None;
     private m_animatedExtrusionStartTime: number | undefined = undefined;
     private m_mapView: MapView;
@@ -192,12 +191,19 @@ export class AnimatedExtrusionTileHandler {
      * for extrusion animation effect.
      */
     set extrusionRatio(value: number) {
-        this.m_animatedExtrusionRatio = value;
-
         this.m_extrudedObjects.forEach(object => {
-            const material = (object as THREE.Mesh | THREE.LineSegments)
-                .material as ExtrusionFeature;
-            material.extrusionRatio = this.m_animatedExtrusionRatio;
+            if (object instanceof THREE.Mesh || object instanceof THREE.LineSegments) {
+                if (Array.isArray(object.material)) {
+                    object.material.forEach((material: ExtrusionFeature) => {
+                        material.extrusionRatio = value;
+                    });
+                } else if (object.material) {
+                    (object.material as ExtrusionFeature).extrusionRatio = value;
+                    if (object.customDepthMaterial !== undefined) {
+                        (object.customDepthMaterial as ExtrusionFeature).extrusionRatio = value;
+                    }
+                }
+            }
         });
     }
 

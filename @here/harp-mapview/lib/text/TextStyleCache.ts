@@ -7,11 +7,9 @@
 import {
     ColorUtils,
     getPropertyValue,
-    IndexedTechniqueParams,
     LineMarkerTechnique,
     MapEnv,
     PoiTechnique,
-    Technique,
     TextStyleDefinition,
     TextTechnique,
     Theme
@@ -39,121 +37,22 @@ import { TextCanvasRenderer } from "./TextCanvasRenderer";
 
 const logger = LoggerManager.instance.create("TextStyleCache");
 
-/**
- * [[TextStyle]] id for the default value inside a [[TextRenderStyleCache]] or a
- * [[TextLayoutStyleCache]].
- */
-export const DEFAULT_TEXT_STYLE_CACHE_ID = "Default";
+const defaultTextRenderStyle = new TextRenderStyle({
+    fontSize: {
+        unit: FontUnit.Pixel,
+        size: 32,
+        backgroundSize: 8
+    },
+    color: ColorCache.instance.getColor("#6d7477"),
+    opacity: 1.0,
+    backgroundColor: ColorCache.instance.getColor("#f7fbfd"),
+    backgroundOpacity: 0.5
+});
 
-/**
- * Calculates the [[TextStyle]] id that identifies either a [[TextRenderStyle]] or a
- * [[TextLayoutStyle]] inside a [[TextRenderStyleCache]] or a [[TextLayoutStyleCache]],
- * respectively.
- *
- * @param technique Technique defining the [[TextStyle]].
- * @param zoomLevel Zoom level for which to interpret the technique.
- *
- * @returns [[TextStyle]] id.
- */
-export function computeStyleCacheId(
-    datasourceName: string,
-    technique: Technique & Partial<IndexedTechniqueParams>,
-    zoomLevel: number
-): string {
-    return `${datasourceName}_${technique._key}_${zoomLevel}`;
-}
-
-/**
- * Cache storing [[MapView]]'s [[TextRenderStyle]]s.
- */
-export class TextRenderStyleCache {
-    private m_map: Map<string, TextRenderStyle> = new Map();
-    constructor() {
-        this.m_map.set(
-            DEFAULT_TEXT_STYLE_CACHE_ID,
-            new TextRenderStyle({
-                fontSize: {
-                    unit: FontUnit.Pixel,
-                    size: 32,
-                    backgroundSize: 8
-                },
-                color: ColorCache.instance.getColor("#6d7477"),
-                opacity: 1.0,
-                backgroundColor: ColorCache.instance.getColor("#f7fbfd"),
-                backgroundOpacity: 0.5
-            })
-        );
-    }
-
-    get size(): number {
-        return this.m_map.size;
-    }
-
-    get(id: string): TextRenderStyle | undefined {
-        return this.m_map.get(id);
-    }
-
-    set(id: string, value: TextRenderStyle): void {
-        this.m_map.set(id, value);
-    }
-
-    clear(): void {
-        this.m_map.clear();
-        this.m_map.set(
-            DEFAULT_TEXT_STYLE_CACHE_ID,
-            new TextRenderStyle({
-                fontSize: {
-                    unit: FontUnit.Pixel,
-                    size: 32,
-                    backgroundSize: 8
-                },
-                color: ColorCache.instance.getColor("#6d7477"),
-                opacity: 1.0,
-                backgroundColor: ColorCache.instance.getColor("#f7fbfd"),
-                backgroundOpacity: 0.5
-            })
-        );
-    }
-}
-
-/**
- * Cache storing [[MapView]]'s [[TextLayoutStyle]]s.
- */
-export class TextLayoutStyleCache {
-    private m_map: Map<string, TextLayoutStyle> = new Map();
-    constructor() {
-        this.m_map.set(
-            DEFAULT_TEXT_STYLE_CACHE_ID,
-            new TextLayoutStyle({
-                verticalAlignment: VerticalAlignment.Center,
-                horizontalAlignment: HorizontalAlignment.Center
-            })
-        );
-    }
-
-    get size(): number {
-        return this.m_map.size;
-    }
-
-    get(id: string): TextLayoutStyle | undefined {
-        return this.m_map.get(id);
-    }
-
-    set(id: string, value: TextLayoutStyle): void {
-        this.m_map.set(id, value);
-    }
-
-    clear(): void {
-        this.m_map.clear();
-        this.m_map.set(
-            DEFAULT_TEXT_STYLE_CACHE_ID,
-            new TextLayoutStyle({
-                verticalAlignment: VerticalAlignment.Center,
-                horizontalAlignment: HorizontalAlignment.Center
-            })
-        );
-    }
-}
+const defaultTextLayoutStyle = new TextLayoutStyle({
+    verticalAlignment: VerticalAlignment.Center,
+    horizontalAlignment: HorizontalAlignment.Center
+});
 
 const DEFAULT_STYLE_NAME = "default";
 
@@ -170,14 +69,12 @@ export interface TextElementStyle {
 }
 
 export class TextStyleCache {
-    private m_textRenderStyleCache = new TextRenderStyleCache();
-    private m_textLayoutStyleCache = new TextLayoutStyleCache();
     private m_textStyles: Map<string, TextElementStyle> = new Map();
     private m_defaultStyle: TextElementStyle = {
         name: DEFAULT_STYLE_NAME,
         fontCatalog: "",
-        renderParams: this.m_textRenderStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params,
-        layoutParams: this.m_textLayoutStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params
+        renderParams: defaultTextRenderStyle.params,
+        layoutParams: defaultTextLayoutStyle.params
     };
 
     constructor(private m_theme: Theme) {}
@@ -293,39 +190,33 @@ export class TextStyleCache {
     /**
      * Gets the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
-     *
-     * @param technique Label's technique.
-     * @param techniqueIdx Label's technique index.
      */
-    getRenderStyle(
+    createRenderStyle(
         tile: Tile,
         technique: TextTechnique | PoiTechnique | LineMarkerTechnique
     ): TextRenderStyle {
         const mapView = tile.mapView;
-        const dataSource = tile.dataSource;
         const zoomLevel = mapView.zoomLevel;
         const discreteZoomLevel = Math.floor(zoomLevel);
 
-        const cacheId = computeStyleCacheId(dataSource.name, technique, discreteZoomLevel);
-        let renderStyle = this.m_textRenderStyleCache.get(cacheId);
-        if (renderStyle === undefined) {
-            // Environment with $zoom forced to integer to achieve stable interpolated values.
-            const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
+        // Environment with $zoom forced to integer to achieve stable interpolated values.
+        const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
 
-            const defaultRenderParams = this.m_defaultStyle.renderParams;
+        const defaultRenderParams = this.m_defaultStyle.renderParams;
 
-            // Sets opacity to 1.0 if default and technique attribute are undefined.
-            const defaultOpacity = getOptionValue(defaultRenderParams.opacity, 1.0);
-            // Interpolate opacity but only on discreet zoom levels (step interpolation).
-            let opacity = getPropertyValue(
-                getOptionValue(technique.opacity, defaultOpacity),
-                discreteZoomEnv
-            );
+        // Sets opacity to 1.0 if default and technique attribute are undefined.
+        const defaultOpacity = getOptionValue(defaultRenderParams.opacity, 1.0);
+        // Interpolate opacity but only on discreet zoom levels (step interpolation).
+        let opacity = getPropertyValue(
+            getOptionValue(technique.opacity, defaultOpacity),
+            discreteZoomEnv
+        );
 
-            let color: THREE.Color | undefined;
-            // Store color (RGB) in cache and multiply opacity value with the color alpha channel.
-            if (technique.color !== undefined) {
-                let hexColor = evaluateColorProperty(technique.color, discreteZoomEnv);
+        let color: THREE.Color | undefined;
+        // Store color (RGB) in cache and multiply opacity value with the color alpha channel.
+        if (technique.color !== undefined) {
+            let hexColor = evaluateColorProperty(technique.color, discreteZoomEnv);
+            if (hexColor !== undefined) {
                 if (ColorUtils.hasAlphaInHex(hexColor)) {
                     const alpha = ColorUtils.getAlphaFromHex(hexColor);
                     opacity = opacity * alpha;
@@ -333,42 +224,41 @@ export class TextStyleCache {
                 }
                 color = ColorCache.instance.getColor(hexColor);
             }
+        }
 
-            // Sets background size to 0.0 if default and technique attribute is undefined.
-            const defaultBackgroundSize = getOptionValue(
-                defaultRenderParams.fontSize!.backgroundSize,
-                0
-            );
-            const backgroundSize = getPropertyValue(
-                getOptionValue(technique.backgroundSize, defaultBackgroundSize),
-                discreteZoomEnv
-            );
+        // Sets background size to 0.0 if default and technique attribute is undefined.
+        const defaultBackgroundSize = getOptionValue(
+            defaultRenderParams.fontSize!.backgroundSize,
+            0
+        );
+        const backgroundSize = getPropertyValue(
+            getOptionValue(technique.backgroundSize, defaultBackgroundSize),
+            discreteZoomEnv
+        );
 
-            const hasBackgroundDefined =
-                technique.backgroundColor !== undefined &&
-                technique.backgroundSize !== undefined &&
-                backgroundSize > 0;
+        const hasBackgroundDefined =
+            technique.backgroundColor !== undefined &&
+            technique.backgroundSize !== undefined &&
+            backgroundSize > 0;
 
-            // Sets background opacity to 1.0 if default and technique value is undefined while
-            // background size and color is specified, otherwise set value in default render
-            // params or 0.0 if neither set. Makes label opaque when backgroundColor and
-            // backgroundSize are set.
-            const defaultBackgroundOpacity = getOptionValue(
-                defaultRenderParams.backgroundOpacity,
-                0.0
-            );
-            let backgroundOpacity = getPropertyValue(
-                getOptionValue(
-                    technique.backgroundOpacity,
-                    hasBackgroundDefined ? 1.0 : defaultBackgroundOpacity
-                ),
-                discreteZoomEnv
-            );
+        // Sets background opacity to 1.0 if default and technique value is undefined while
+        // background size and color is specified, otherwise set value in default render
+        // params or 0.0 if neither set. Makes label opaque when backgroundColor and
+        // backgroundSize are set.
+        const defaultBackgroundOpacity = getOptionValue(defaultRenderParams.backgroundOpacity, 0.0);
+        let backgroundOpacity = getPropertyValue(
+            getOptionValue(
+                technique.backgroundOpacity,
+                hasBackgroundDefined ? 1.0 : defaultBackgroundOpacity
+            ),
+            discreteZoomEnv
+        );
 
-            let backgroundColor: THREE.Color | undefined;
-            // Store background color (RGB) in cache and multiply backgroundOpacity by its alpha.
-            if (technique.backgroundColor !== undefined) {
-                let hexBgColor = evaluateColorProperty(technique.backgroundColor, discreteZoomEnv);
+        let backgroundColor: THREE.Color | undefined;
+        // Store background color (RGB) in cache and multiply backgroundOpacity by its alpha.
+        if (technique.backgroundColor !== undefined) {
+            let hexBgColor = evaluateColorProperty(technique.backgroundColor, discreteZoomEnv);
+            if (hexBgColor !== undefined) {
                 if (ColorUtils.hasAlphaInHex(hexBgColor)) {
                     const alpha = ColorUtils.getAlphaFromHex(hexBgColor);
                     backgroundOpacity = backgroundOpacity * alpha;
@@ -376,133 +266,125 @@ export class TextStyleCache {
                 }
                 backgroundColor = ColorCache.instance.getColor(hexBgColor);
             }
-
-            const renderParams = {
-                fontName: getOptionValue(technique.fontName, defaultRenderParams.fontName),
-                fontSize: {
-                    unit: FontUnit.Pixel,
-                    size: getPropertyValue(
-                        getOptionValue(technique.size, defaultRenderParams.fontSize!.size),
-                        discreteZoomEnv
-                    ),
-                    backgroundSize
-                },
-                fontStyle:
-                    technique.fontStyle === "Regular" ||
-                    technique.fontStyle === "Bold" ||
-                    technique.fontStyle === "Italic" ||
-                    technique.fontStyle === "BoldItalic"
-                        ? FontStyle[technique.fontStyle]
-                        : defaultRenderParams.fontStyle,
-                fontVariant:
-                    technique.fontVariant === "Regular" ||
-                    technique.fontVariant === "AllCaps" ||
-                    technique.fontVariant === "SmallCaps"
-                        ? FontVariant[technique.fontVariant]
-                        : defaultRenderParams.fontVariant,
-                rotation: getOptionValue(technique.rotation, defaultRenderParams.rotation),
-                color: getOptionValue(
-                    color,
-                    getOptionValue(defaultRenderParams.color, DefaultTextStyle.DEFAULT_COLOR)
-                ),
-                backgroundColor: getOptionValue(
-                    backgroundColor,
-                    getOptionValue(
-                        defaultRenderParams.backgroundColor,
-                        DefaultTextStyle.DEFAULT_BACKGROUND_COLOR
-                    )
-                ),
-                opacity,
-                backgroundOpacity
-            };
-
-            const themeRenderParams = this.getTextElementStyle(technique.style).renderParams;
-            renderStyle = new TextRenderStyle({
-                ...themeRenderParams,
-                ...renderParams
-            });
-            this.m_textRenderStyleCache.set(cacheId, renderStyle);
         }
+
+        const renderParams = {
+            fontName: getOptionValue(technique.fontName, defaultRenderParams.fontName),
+            fontSize: {
+                unit: FontUnit.Pixel,
+                size: getPropertyValue(
+                    getOptionValue(technique.size, defaultRenderParams.fontSize!.size),
+                    discreteZoomEnv
+                ),
+                backgroundSize
+            },
+            fontStyle:
+                technique.fontStyle === "Regular" ||
+                technique.fontStyle === "Bold" ||
+                technique.fontStyle === "Italic" ||
+                technique.fontStyle === "BoldItalic"
+                    ? FontStyle[technique.fontStyle]
+                    : defaultRenderParams.fontStyle,
+            fontVariant:
+                technique.fontVariant === "Regular" ||
+                technique.fontVariant === "AllCaps" ||
+                technique.fontVariant === "SmallCaps"
+                    ? FontVariant[technique.fontVariant]
+                    : defaultRenderParams.fontVariant,
+            rotation: getOptionValue(technique.rotation, defaultRenderParams.rotation),
+            color: getOptionValue(
+                color,
+                getOptionValue(defaultRenderParams.color, DefaultTextStyle.DEFAULT_COLOR)
+            ),
+            backgroundColor: getOptionValue(
+                backgroundColor,
+                getOptionValue(
+                    defaultRenderParams.backgroundColor,
+                    DefaultTextStyle.DEFAULT_BACKGROUND_COLOR
+                )
+            ),
+            opacity,
+            backgroundOpacity
+        };
+
+        const themeRenderParams = this.getTextElementStyle(technique.style).renderParams;
+        const renderStyle = new TextRenderStyle({
+            ...themeRenderParams,
+            ...renderParams
+        });
 
         return renderStyle;
     }
 
     /**
-     * Gets the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
+     * Create the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
      * @param tile The [[Tile]] to process.
      * @param technique Label's technique.
      */
-    getLayoutStyle(
+    createLayoutStyle(
         tile: Tile,
         technique: TextTechnique | PoiTechnique | LineMarkerTechnique
     ): TextLayoutStyle {
         const mapView = tile.mapView;
         const floorZoomLevel = Math.floor(tile.mapView.zoomLevel);
-        const cacheId = computeStyleCacheId(tile.dataSource.name, technique, floorZoomLevel);
-        let layoutStyle = this.m_textLayoutStyleCache.get(cacheId);
 
-        if (layoutStyle === undefined) {
-            // Environment with $zoom forced to integer to achieve stable interpolated values.
-            const discreteZoomEnv = new MapEnv({ $zoom: floorZoomLevel }, mapView.env);
+        const discreteZoomEnv = new MapEnv({ $zoom: floorZoomLevel }, mapView.env);
 
-            const defaultLayoutParams = this.m_defaultStyle.layoutParams;
+        const defaultLayoutParams = this.m_defaultStyle.layoutParams;
 
-            const hAlignment = getPropertyValue(technique.hAlignment, discreteZoomEnv) as
-                | string
-                | undefined;
-            const vAlignment = getPropertyValue(technique.vAlignment, discreteZoomEnv) as
-                | string
-                | undefined;
-            const wrapping = getPropertyValue(technique.wrappingMode, discreteZoomEnv) as
-                | string
-                | undefined;
+        const hAlignment = getPropertyValue(technique.hAlignment, discreteZoomEnv) as
+            | string
+            | undefined;
+        const vAlignment = getPropertyValue(technique.vAlignment, discreteZoomEnv) as
+            | string
+            | undefined;
+        const wrapping = getPropertyValue(technique.wrappingMode, discreteZoomEnv) as
+            | string
+            | undefined;
 
-            const horizontalAlignment: HorizontalAlignment | undefined =
-                hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
-                    ? HorizontalAlignment[hAlignment]
-                    : defaultLayoutParams.horizontalAlignment;
+        const horizontalAlignment: HorizontalAlignment | undefined =
+            hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
+                ? HorizontalAlignment[hAlignment]
+                : defaultLayoutParams.horizontalAlignment;
 
-            const verticalAlignment: VerticalAlignment | undefined =
-                vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
-                    ? VerticalAlignment[vAlignment]
-                    : defaultLayoutParams.verticalAlignment;
+        const verticalAlignment: VerticalAlignment | undefined =
+            vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
+                ? VerticalAlignment[vAlignment]
+                : defaultLayoutParams.verticalAlignment;
 
-            const layoutParams = {
-                tracking:
-                    getPropertyValue(technique.tracking, discreteZoomEnv) ??
-                    defaultLayoutParams.tracking,
-                leading:
-                    getPropertyValue(technique.leading, discreteZoomEnv) ??
-                    defaultLayoutParams.leading,
-                maxLines:
-                    getPropertyValue(technique.maxLines, discreteZoomEnv) ??
-                    defaultLayoutParams.maxLines,
-                lineWidth:
-                    getPropertyValue(technique.lineWidth, discreteZoomEnv) ??
-                    defaultLayoutParams.lineWidth,
-                canvasRotation:
-                    getPropertyValue(technique.canvasRotation, discreteZoomEnv) ??
-                    defaultLayoutParams.canvasRotation,
-                lineRotation:
-                    getPropertyValue(technique.lineRotation, discreteZoomEnv) ??
-                    defaultLayoutParams.lineRotation,
-                wrappingMode:
-                    wrapping === "None" || wrapping === "Character" || wrapping === "Word"
-                        ? WrappingMode[wrapping]
-                        : defaultLayoutParams.wrappingMode,
-                horizontalAlignment,
-                verticalAlignment
-            };
+        const layoutParams = {
+            tracking:
+                getPropertyValue(technique.tracking, discreteZoomEnv) ??
+                defaultLayoutParams.tracking,
+            leading:
+                getPropertyValue(technique.leading, discreteZoomEnv) ?? defaultLayoutParams.leading,
+            maxLines:
+                getPropertyValue(technique.maxLines, discreteZoomEnv) ??
+                defaultLayoutParams.maxLines,
+            lineWidth:
+                getPropertyValue(technique.lineWidth, discreteZoomEnv) ??
+                defaultLayoutParams.lineWidth,
+            canvasRotation:
+                getPropertyValue(technique.canvasRotation, discreteZoomEnv) ??
+                defaultLayoutParams.canvasRotation,
+            lineRotation:
+                getPropertyValue(technique.lineRotation, discreteZoomEnv) ??
+                defaultLayoutParams.lineRotation,
+            wrappingMode:
+                wrapping === "None" || wrapping === "Character" || wrapping === "Word"
+                    ? WrappingMode[wrapping]
+                    : defaultLayoutParams.wrappingMode,
+            horizontalAlignment,
+            verticalAlignment
+        };
 
-            const themeLayoutParams = this.getTextElementStyle(technique.style);
-            layoutStyle = new TextLayoutStyle({
-                ...themeLayoutParams,
-                ...layoutParams
-            });
-            this.m_textLayoutStyleCache.set(cacheId, layoutStyle);
-        }
+        const themeLayoutParams = this.getTextElementStyle(technique.style);
+        const layoutStyle = new TextLayoutStyle({
+            ...themeLayoutParams,
+            ...layoutParams
+        });
 
         return layoutStyle;
     }

@@ -9,8 +9,8 @@
 
 import { assert } from "chai";
 import { MapEnv } from "../lib/Env";
-import { evaluateInterpolatedProperty } from "../lib/InterpolatedProperty";
-import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
+import { evaluateInterpolatedProperty, InterpolatedProperty } from "../lib/InterpolatedProperty";
+import { InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 import { StringEncodedNumeralType } from "../lib/StringEncodedNumeral";
 
 const levels = new Float32Array([0, 5, 10]);

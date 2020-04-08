@@ -16,7 +16,7 @@ import { Tile } from "../lib/Tile";
 
 export class FakeOmvDataSource extends DataSource {
     constructor() {
-        super("omv");
+        super({ name: "omv" });
         this.cacheable = true;
     }
 

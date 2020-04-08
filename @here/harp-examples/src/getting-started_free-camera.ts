@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,9 +14,9 @@ import {
     MapViewOptions,
     MapViewUtils
 } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken, copyrightInfo } from "../config";
+import { apikey, copyrightInfo } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
 // The controls are not in common.js they explicitly require a
@@ -71,7 +71,7 @@ export namespace FreeCameraAppDebuggingToolExample {
             this.mapView.fog.enabled = false;
             // Set the view over Geneva.
             const startLocation = new GeoCoordinates(46.207, 6.147);
-            this.mapView.lookAt(startLocation, 2000);
+            this.mapView.lookAt({ target: startLocation, zoomLevel: 16.5 });
 
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.maxTiltAngle = 90;
@@ -101,11 +101,14 @@ export namespace FreeCameraAppDebuggingToolExample {
          */
         start() {
             const omvDataSource = new OmvDataSource({
-                baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+                baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
                 apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",
-                maxZoomLevel: 17,
-                authenticationCode: accessToken,
+                authenticationCode: apikey,
+                authenticationMethod: {
+                    method: AuthenticationMethod.QueryString,
+                    name: "apikey"
+                },
                 copyrightInfo
             });
 
@@ -150,14 +153,14 @@ export namespace FreeCameraAppDebuggingToolExample {
                 // Make sure that the pitch limit constraint is preserved
                 const ypr = MapViewUtils.extractAttitude(this.mapView, cameraRelativeToEye);
                 ypr.pitch = Math.max(
-                    Math.min(ypr.pitch, THREE.Math.degToRad(this.mapControls.maxTiltAngle)),
+                    Math.min(ypr.pitch, THREE.MathUtils.degToRad(this.mapControls.maxTiltAngle)),
                     0
                 );
                 // Finally apply rotation from transformation gizmo.
                 MapViewUtils.setRotation(
                     this.mapView,
-                    THREE.Math.radToDeg(ypr.yaw),
-                    THREE.Math.radToDeg(ypr.pitch)
+                    THREE.MathUtils.radToDeg(ypr.yaw),
+                    THREE.MathUtils.radToDeg(ypr.pitch)
                 );
                 // Reset RTE camera orientation according to constraints applied.
                 cameraRelativeToEye.copy(this.mapView.camera);

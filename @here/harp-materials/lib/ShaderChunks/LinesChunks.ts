@@ -20,7 +20,7 @@ export default {
 vec3 extrudeLine(
         in vec3 vertexPosition,
         in float linePosition,
-        in float lineWidth,
+        in float extrusionWidth,
         in vec4 bitangent,
         in vec3 tangent,
         inout vec2 uv
@@ -31,15 +31,15 @@ vec3 extrudeLine(
     float angle = bitangent.w;
     // Extrude according to the angle between segments to properly render narrow joints...
     if (angle != 0.0) {
-        result += uv.y * lineWidth * bitangent.xyz / cos(angle / 2.0);
-        uv.x = linePosition + uv.x * lineWidth * uv.y * tan(angle / 2.0);
+        result += uv.y * extrusionWidth * bitangent.xyz / cos(angle / 2.0);
+        uv.x = linePosition + uv.x * extrusionWidth * uv.y * tan(angle / 2.0);
     }
     // ... or extrude in a simple manner for segments that keep the same direction.
     else {
-        result += uv.y * lineWidth * bitangent.xyz + uv.x * lineWidth * tangent;
-        uv.x = linePosition + uv.x * lineWidth;
+        result += uv.y * extrusionWidth * bitangent.xyz + uv.x * extrusionWidth * tangent;
+        uv.x = linePosition + uv.x * extrusionWidth;
     }
-    uv.y *= lineWidth;
+    uv.y *= extrusionWidth;
     return result;
 }
 `,

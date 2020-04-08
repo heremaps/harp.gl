@@ -35,7 +35,7 @@ class EquirectangularProjection extends Projection {
         result?: WorldBoundingBox
     ): WorldBoundingBox {
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         result.min.x = 0.0;
         result.min.y = 0.0;
@@ -66,11 +66,11 @@ class EquirectangularProjection extends Projection {
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
         result.x =
-            (THREE.Math.degToRad(geoPoint.longitude) + Math.PI) *
+            (THREE.MathUtils.degToRad(geoPoint.longitude) + Math.PI) *
             EquirectangularProjection.geoToWorldScale *
             this.unitScale;
         result.y =
-            (THREE.Math.degToRad(geoPoint.latitude) + Math.PI * 0.5) *
+            (THREE.MathUtils.degToRad(geoPoint.latitude) + Math.PI * 0.5) *
             EquirectangularProjection.geoToWorldScale *
             this.unitScale;
         result.z = geoPoint.altitude || 0;
@@ -105,7 +105,7 @@ class EquirectangularProjection extends Projection {
         const sizeX = longitudeSpanInRadians * EquirectangularProjection.geoToWorldScale;
         const sizeY = latitudeSpanInRadians * EquirectangularProjection.geoToWorldScale;
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         if (isBox3Like(result)) {
             result.min.x = worldCenter.x - sizeX * 0.5 * this.unitScale;

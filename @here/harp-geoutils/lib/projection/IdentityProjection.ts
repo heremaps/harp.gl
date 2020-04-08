@@ -31,7 +31,7 @@ class IdentityProjection extends Projection {
         result?: WorldBoundingBox
     ): WorldBoundingBox {
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         result.min.x = -Math.PI;
         result.min.y = -Math.PI * 0.5;
@@ -51,8 +51,8 @@ class IdentityProjection extends Projection {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
-        result.x = THREE.Math.degToRad(geoPoint.longitude);
-        result.y = THREE.Math.degToRad(geoPoint.latitude);
+        result.x = THREE.MathUtils.degToRad(geoPoint.longitude);
+        result.y = THREE.MathUtils.degToRad(geoPoint.latitude);
         result.z = geoPoint.altitude || 0;
         return result;
     }
@@ -74,7 +74,7 @@ class IdentityProjection extends Projection {
         result?: WorldBoundingBox
     ): WorldBoundingBox {
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         const min = this.projectPoint(
             new GeoCoordinates(geoBox.south, geoBox.west, geoBox.minAltitude)

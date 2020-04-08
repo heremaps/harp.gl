@@ -27,6 +27,22 @@ Returns `true` if no sub expression evaluates to `true`.
 ["none", expr...]
 ```
 
+## id
+
+Returns the id of the current feature.
+
+```javascript
+["id"]
+```
+
+## feature-state
+
+Returns the value of the given property from the current feature's state.
+
+```javascript
+["feature-state", property]
+```
+
 ## geometry-type
 
 Returns a `string` representing the geometry type of the current feature.
@@ -67,13 +83,31 @@ Returns a `boolean` indicating if the current `feature` or the given
 ["!has", name, object]
 ```
 
-## in
+## dynamic-properties
 
-Returns a `boolean` indicating if the `value` is contained in the list of `elements`.
+Gets the properties that are evaluated at rendering time.
 
 ```javascript
-["in", value, [element...]]
-["!in", value, [element...]]
+// returns an object containing the dynamic properties.
+["dynamic-properties"]
+
+// gets the value of the dynamic property `animating`
+["get", "animating", ["dynamic-properties"]]
+
+// `true` if `animating` is a dynamic property.
+["has", "animating", ["dynamic-properties"]]
+```
+
+## in
+
+Returns a `boolean` indicating if the `value` is included in the given array or string.
+
+```javascript
+["in", value, array]
+["in", value, string]
+
+["!in", value, array]
+["!in", value, string]
 ```
 
 ## match

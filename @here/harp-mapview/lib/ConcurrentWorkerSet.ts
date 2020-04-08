@@ -185,7 +185,7 @@ export class ConcurrentWorkerSet {
             this.m_options.workerCount,
             typeof navigator !== "undefined" && navigator.hardwareConcurrency !== undefined
                 ? // We need to have at least one worker
-                  THREE.Math.clamp(navigator.hardwareConcurrency - 1, 1, 2)
+                  THREE.MathUtils.clamp(navigator.hardwareConcurrency - 1, 1, 2)
                 : undefined,
             DEFAULT_WORKER_COUNT
         );

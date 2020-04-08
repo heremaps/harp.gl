@@ -8,12 +8,12 @@
         "harp-sprites-generator": "lib/cli-sprites-generator.js"
     },
     "scripts": {
-        "build": "tsc $EXTRA_TSC_ARGS",
-        "watch": "tsc -w",
+        "build": "tsc --build $EXTRA_TSC_ARGS",
+        "watch": "tsc --build -w",
         "generateAtlas": "ts-node src/cli-atlas-generator.ts",
         "generateSprites": "ts-node src/cli-sprites-generator.ts",
         "test": "yarn build && yarn generateAtlas",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",
@@ -48,7 +48,7 @@
     },
     "devDependencies": {
         "ts-node": "^8.3.0",
-        "typescript": "^3.7.2"
+        "typescript": "^3.8.2"
     },
     "publishConfig": {
         "access": "public"

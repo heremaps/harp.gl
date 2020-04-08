@@ -74,7 +74,7 @@ export class IconMaterial extends THREE.RawShaderMaterial {
             depthWrite: true,
             transparent: true,
 
-            vertexColors: THREE.VertexColors,
+            vertexColors: true,
             premultipliedAlpha: true,
             blending: THREE.NormalBlending
         };

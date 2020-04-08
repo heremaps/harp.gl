@@ -6,7 +6,7 @@
 
 // tslint:disable:only-arrow-functions
 
-import { MathUtils, mercatorProjection } from "@here/harp-geoutils";
+import { mercatorProjection } from "@here/harp-geoutils";
 import { createLineGeometry } from "@here/harp-lines";
 import { measureThroughputSync } from "@here/harp-test-utils/lib/ProfileHelper";
 import * as THREE from "three";
@@ -32,8 +32,8 @@ describe(`lines`, function() {
             for (let i = 0; i < segments; i++) {
                 const angle = (i * 360) / segments;
                 test.points.push(
-                    Math.cos(MathUtils.degToRad(angle) * radius),
-                    Math.cos(MathUtils.degToRad(angle) * radius),
+                    Math.cos(THREE.MathUtils.degToRad(angle) * radius),
+                    Math.cos(THREE.MathUtils.degToRad(angle) * radius),
                     0
                 );
             }

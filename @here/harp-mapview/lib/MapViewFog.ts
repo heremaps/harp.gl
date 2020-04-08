@@ -9,7 +9,6 @@ import { HighPrecisionLineMaterial } from "@here/harp-materials";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
-import { MapViewUtils } from "./Utils";
 
 /**
  * Manages the fog display in [[MapView]].
@@ -108,9 +107,7 @@ export class MapViewFog {
             // The fraction of maximum viewing range at which fog fully covers geometry.
             const endRatio = 1.0;
             assert(startRatio <= endRatio);
-            const t = Math.abs(
-                Math.cos(MapViewUtils.extractCameraTilt(mapView.camera, mapView.projection))
-            );
+            const t = Math.abs(Math.cos(mapView.tilt));
             const density = MathUtils.smoothStep(horizontalDensity, verticalDensity, t);
             this.m_fog.near = MathUtils.lerp(viewRange * startRatio, viewRange, 1.0 - density);
             this.m_fog.far = MathUtils.lerp(viewRange * endRatio, viewRange, density);

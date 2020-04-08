@@ -68,9 +68,9 @@ export namespace MathUtils {
      *
      * @param degrees Value in degrees.
      * @returns Value in radians.
-     * @deprecated
+     * @deprecated use THREE.MathUtils.degToRad instead
      */
-    export const degToRad = THREE.Math.degToRad;
+    export const degToRad = THREE.MathUtils.degToRad;
 
     /**
      * Converts an angle measured in radians to an equivalent value in degrees.
@@ -79,7 +79,7 @@ export namespace MathUtils {
      * @returns Value in degrees.
      * @deprecated
      */
-    export const radToDeg = THREE.Math.radToDeg;
+    export const radToDeg = THREE.MathUtils.radToDeg;
 
     /**
      * Ensures that input value fits in a given range.
@@ -90,7 +90,7 @@ export namespace MathUtils {
      * @returns Clamped value.
      * @deprecated
      */
-    export const clamp = THREE.Math.clamp;
+    export const clamp = THREE.MathUtils.clamp;
 
     /**
      * Normalize angle in degrees to range `[0, 360)`.

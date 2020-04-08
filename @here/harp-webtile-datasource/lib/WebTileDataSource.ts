@@ -1,27 +1,25 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import * as THREE from "three";
 
-// tslint:disable-next-line: max-line-length
-import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
+import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
 import {
-    GeoCoordinates,
-    ProjectionType,
-    TileKey,
-    TilingScheme,
-    webMercatorTilingScheme
-} from "@here/harp-geoutils";
-import { CopyrightInfo, DataSource, Tile, UrlCopyrightProvider } from "@here/harp-mapview";
+    CopyrightInfo,
+    DataSource,
+    RequestHeaders,
+    TextureLoader,
+    Tile,
+    UrlCopyrightProvider
+} from "@here/harp-mapview";
+import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("MapView");
-
-const textureLoader = new THREE.TextureLoader();
-textureLoader.crossOrigin = ""; // empty assignment required to support CORS
+const textureLoader = new TextureLoader();
 
 /**
  * An interface for the rendering options that can be passed to the [[WebTileDataSource]].
@@ -35,19 +33,55 @@ export interface WebTileRenderingOptions {
 }
 
 /**
- * An interface for the type of parameters that can be passed to the [[WebTileDataSource]].
+ * Authentification token/code provider.
  */
-export interface WebTileDataSourceParameters {
+export type AuthenticationProvider = () => Promise<string>;
+
+/**
+ * Options for authentication with [[apikey]].
+ */
+interface ApiKeyAuthentication {
+    /**
+     * The `apikey` for the access of the Web Tile Data.
+     * @note Will not be used if [[authenticationCode]] is defined as well.
+     */
+    apikey: string;
+}
+
+/**
+ * Options for authentication with [[appId]] and [[appCode]].
+ */
+interface AppIdAuthentication {
     /**
      * The `appId` for the access of the Web Tile Data.
+     * @note Will not be used if [[apiKey]] or [[authenticationCode]] is defined as well.
      */
     appId: string;
 
     /**
      * The `appCode` for the access of the Web Tile Data.
+     * @note Will not be used if [[apiKey]] or [[authenticationCode]] is defined as well.
      */
     appCode: string;
+}
 
+/**
+ * Options for authentication with [[authenticationCode]].
+ */
+interface TokenAuthentication {
+    /**
+     * Authentication code used for the different APIs.
+     *
+     * When [[AuthenticationProvider]] is is used as value, the provider is called before each
+     * to get currently valid authentication code/token.
+     */
+    authenticationCode: string | AuthenticationProvider;
+}
+
+/**
+ * Options for [[WebTileDataSource]].
+ */
+interface WebTileDataSourceOptions {
     // tslint:disable:max-line-length
     /**
      * This parameter specifies static part of the final Web Tile URL:
@@ -65,13 +99,12 @@ export interface WebTileDataSourceParameters {
      * (https://developer.here.com/documentation/map-tile/topics/examples-base.html):
      *
      *     https://
-     *       2.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/11/525/761/256/png8
-     *       ?app_id={YOUR_APP_ID}
-     *       &app_code={YOUR_APP_CODE}
+     *       2.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day/11/525/761/256/png8
+     *       ?apikey={YOUR_API_KEY}
      *
      * `tileBaseAddress` should be:
      *
-     *      base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day
+     *      base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day
      *
      * Rest of parameters are added by [[WebTileDataSource]].
      *
@@ -118,6 +151,12 @@ export interface WebTileDataSourceParameters {
      */
     renderingOptions?: WebTileRenderingOptions;
 }
+
+/**
+ * An interface for the type of options that can be passed to the [[WebTileDataSource]].
+ */
+export type WebTileDataSourceParameters = WebTileDataSourceOptions &
+    (ApiKeyAuthentication | AppIdAuthentication | TokenAuthentication);
 
 /**
  * Mapping from ISO-639-1 language codes to codes used by HERE Map Tile API (MARC)
@@ -203,8 +242,7 @@ interface MapTileParams {
  *
  * ```typescript
  * const webTileDataSource = new WebTileDataSource({
- *     appId: <appId>,
- *     appCode: <appCode>
+ *     authenticationCode: <authenticationCode>
  * });
  * ```
  * @see [[DataSource]], [[OmvDataSource]].
@@ -215,27 +253,27 @@ export class WebTileDataSource extends DataSource {
      * @see https://developer.here.com/documentation/map-tile/topics/example-normal-day-view.html
      */
     static readonly TILE_BASE_NORMAL =
-        "base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day";
+        "base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day";
     /**
      * Base address for Aerial Map rendered using `hybrid.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-hybrid-map.html
      */
     static readonly TILE_AERIAL_HYBRID =
-        "aerial.maps.api.here.com/maptile/2.1/maptile/newest/hybrid.day";
+        "aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/hybrid.day";
 
     /**
      * Base address for Aerial Map rendered using `satellite.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-satellite-map.html
      */
     static readonly TILE_AERIAL_SATELLITE =
-        "aerial.maps.api.here.com/maptile/2.1/maptile/newest/satellite.day";
+        "aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/satellite.day";
 
     /**
      * Base address for Traffic Map rendered using `normal.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-traffic.html
      */
     static readonly TILE_TRAFFIC_NORMAL =
-        "traffic.maps.api.here.com/maptile/2.1/traffictile/newest/normal.day";
+        "traffic.maps.ls.hereapi.com/maptile/2.1/traffictile/newest/normal.day";
 
     private m_resolution: WebTileDataSource.resolutionValue;
     private m_ppi: WebTileDataSource.ppiValue;
@@ -259,7 +297,7 @@ export class WebTileDataSource extends DataSource {
      * @param m_options Represents the [[WebTileDataSourceParameters]].
      */
     constructor(private readonly m_options: WebTileDataSourceParameters) {
-        super("webtile", undefined, 1, 20);
+        super({ name: "webtile", minDataLevel: 1, maxDataLevel: 20 });
         this.cacheable = true;
         this.storageLevelOffset = -1;
         this.m_resolution = getOptionValue(
@@ -267,7 +305,7 @@ export class WebTileDataSource extends DataSource {
             WebTileDataSource.resolutionValue.resolution512
         );
         if (this.m_resolution === WebTileDataSource.resolutionValue.resolution512) {
-            this.maxZoomLevel = 19; // 512x512 tiles do not have z19
+            this.maxDataLevel = 19; // 512x512 tiles do not have z19
         }
         this.m_ppi = getOptionValue(m_options.ppi, WebTileDataSource.ppiValue.ppi72);
         this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;
@@ -283,10 +321,10 @@ export class WebTileDataSource extends DataSource {
         const mapId = getOptionValue(mapTileParams.mapVersion, "newest");
         const scheme = mapTileParams.scheme || "normal.day";
         const baseScheme = scheme.split(".")[0] || "normal";
-        const { appId, appCode } = this.m_options;
+
         const url =
             `https://1.${baseHostName}/maptile/2.1/copyright/${mapId}` +
-            `?output=json&app_id=${appId}&app_code=${appCode}`;
+            `${this.getCopyrightRequestParams()}`;
         this.m_copyrightProvider = new UrlCopyrightProvider(url, baseScheme);
     }
 
@@ -315,28 +353,21 @@ export class WebTileDataSource extends DataSource {
         const column = tileKey.column;
         const row = tileKey.row;
         const level = tileKey.level;
-        const { appId, appCode } = this.m_options;
         const quadKey = tileKey.toQuadKey();
         const server = parseInt(quadKey[quadKey.length - 1], 10) + 1;
-        let url =
+
+        const url =
             `https://${server}.${this.m_tileBaseAddress}/` +
             `${level}/${column}/${row}/${this.m_resolution}/png8` +
-            `?app_id=${appId}&app_code=${appCode}` +
-            getOptionValue(this.m_options.additionalRequestParameters, "");
+            `${this.getImageRequestParams()}`;
 
-        if (this.m_ppi !== WebTileDataSource.ppiValue.ppi72) {
-            // because ppi=72 is default, we do not include it in the request
-            url += `&ppi=${this.m_ppi}`;
-        }
-        if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
-            url += `&lg=${this.m_languages[0]}`;
-        }
-
-        if (this.m_languages !== undefined && this.m_languages[1] !== undefined) {
-            url += `&lg2=${this.m_languages[1]}`;
-        }
-
-        Promise.all([this.loadTexture(url), this.getTileCopyright(tile)])
+        this.getRequestHeaders()
+            .then(headers => {
+                return Promise.all([
+                    textureLoader.load(url, headers),
+                    this.getTileCopyright(tile, headers)
+                ]);
+            })
             .then(([texture, copyrightInfo]) => {
                 tile.copyrightInfo = copyrightInfo;
 
@@ -344,58 +375,6 @@ export class WebTileDataSource extends DataSource {
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
                 tile.addOwnedTexture(texture);
-
-                const shouldSubdivide = this.projection.type === ProjectionType.Spherical;
-
-                const sourceProjection = this.getTilingScheme().projection;
-
-                const tmpV = new THREE.Vector3();
-
-                const { east, west, north, south } = tile.geoBox;
-
-                const g = new THREE.BufferGeometry();
-                const posAttr = new THREE.BufferAttribute(
-                    new Float32Array([
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(south, west), tmpV)
-                            .toArray(),
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(south, east), tmpV)
-                            .toArray(),
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(north, west), tmpV)
-                            .toArray(),
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(north, east), tmpV)
-                            .toArray()
-                    ]),
-                    3
-                );
-                g.setAttribute("position", posAttr);
-                const uvAttr = new THREE.BufferAttribute(
-                    new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
-                    2
-                );
-                g.setAttribute("uv", uvAttr);
-                g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
-
-                if (shouldSubdivide) {
-                    const modifier = new SphericalGeometrySubdivisionModifier(
-                        THREE.Math.degToRad(10),
-                        sourceProjection
-                    );
-                    modifier.modify(g);
-                }
-
-                for (let i = 0; i < posAttr.array.length; i += 3) {
-                    tmpV.set(posAttr.array[i], posAttr.array[i + 1], posAttr.array[i + 2]);
-                    this.projection.reprojectPoint(sourceProjection, tmpV, tmpV);
-                    tmpV.sub(tile.center);
-                    (posAttr.array as Float32Array)[i] = tmpV.x;
-                    (posAttr.array as Float32Array)[i + 1] = tmpV.y;
-                    (posAttr.array as Float32Array)[i + 2] = tmpV.z;
-                }
-                posAttr.needsUpdate = true;
 
                 const opacity =
                     this.m_options.renderingOptions !== undefined
@@ -408,8 +387,7 @@ export class WebTileDataSource extends DataSource {
                     opacity,
                     transparent: opacity !== undefined && opacity < 1.0 ? true : false
                 });
-
-                const mesh = new THREE.Mesh(g, material);
+                const mesh = TileGeometryCreator.instance.createGroundPlane(tile, material, true);
                 tile.objects.push(mesh);
                 tile.invalidateResourceInfo();
                 this.requestUpdate();
@@ -418,6 +396,11 @@ export class WebTileDataSource extends DataSource {
                 logger.error(`failed to load webtile ${tileKey.mortonCode()}: ${error}`);
             });
         return tile;
+    }
+
+    /** @override */
+    isFullyCovering(): boolean {
+        return true;
     }
 
     private parseBaseUrl(url: string): MapTileParams {
@@ -437,27 +420,85 @@ export class WebTileDataSource extends DataSource {
         };
     }
 
-    private loadTexture(url: string): Promise<THREE.Texture> {
-        return new Promise((resolve, reject) => {
-            textureLoader.load(
-                url,
-                texture => {
-                    resolve(texture);
-                },
-                undefined, // onProgress
-                () => {
-                    // ErrorEvent received here doesn't have any meaningful code/ message to be
-                    // shown
-                    reject(new Error("failed to load texture"));
-                }
-            );
-        });
+    private getAuthParams(): string[] {
+        const { apikey } = this.m_options as ApiKeyAuthentication;
+        const { appId, appCode } = this.m_options as AppIdAuthentication;
+        const { authenticationCode } = this.m_options as TokenAuthentication;
+
+        const useAuthenticationCode = authenticationCode !== undefined;
+        const useApiKey = apikey !== undefined;
+        const useAppId = appId !== undefined && appCode !== undefined;
+
+        if (useAuthenticationCode) {
+            return [];
+        } else if (useApiKey) {
+            return [`apikey=${apikey}`];
+        } else if (useAppId) {
+            return [`app_id=${appId}`, `app_code=${appCode}`];
+        }
+
+        throw new Error("Neither apiKey, appId/appCode nor authenticationCode are defined.");
     }
 
-    private async getTileCopyright(tile: Tile): Promise<CopyrightInfo[]> {
+    private getCopyrightRequestParams(): string {
+        const requestParams = ["output=json", ...this.getAuthParams()];
+
+        return `?${requestParams.join("&")}`;
+    }
+
+    private getImageRequestParams(): string {
+        const requestParams = this.getAuthParams();
+
+        if (this.m_options.additionalRequestParameters !== undefined) {
+            requestParams.push(this.m_options.additionalRequestParameters);
+        }
+        if (this.m_ppi !== WebTileDataSource.ppiValue.ppi72) {
+            // because ppi=72 is default, we do not include it in the request
+            requestParams.push(`ppi=${this.m_ppi}`);
+        }
+        if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
+            requestParams.push(`lg=${this.m_languages[0]}`);
+        }
+
+        if (this.m_languages !== undefined && this.m_languages[1] !== undefined) {
+            requestParams.push(`lg2=${this.m_languages[1]}`);
+        }
+
+        if (requestParams.length > 0) {
+            return `?${requestParams.join("&")}`;
+        }
+
+        return "";
+    }
+
+    private async getRequestHeaders(): Promise<RequestHeaders | undefined> {
+        const { authenticationCode } = this.m_options as TokenAuthentication;
+
+        let token: string | undefined;
+        if (typeof authenticationCode === "string") {
+            token = authenticationCode;
+        } else if (authenticationCode !== undefined) {
+            token = await authenticationCode();
+        }
+
+        if (token !== undefined) {
+            return {
+                Authorization: `Bearer ${token}`
+            };
+        }
+
+        return undefined;
+    }
+
+    private async getTileCopyright(
+        tile: Tile,
+        requestHeaders: RequestHeaders | undefined
+    ): Promise<CopyrightInfo[]> {
         if (this.m_options.gatherCopyrightInfo === false) {
             return [this.HERE_COPYRIGHT_INFO];
         }
+
+        this.m_copyrightProvider.setRequestHeaders(requestHeaders);
         return this.m_copyrightProvider.getCopyrights(tile.geoBox, tile.tileKey.level);
     }
 
@@ -475,13 +516,13 @@ export class WebTileDataSource extends DataSource {
  * Definitions of variable values to be used with `WebTileDataSource`
  */
 export namespace WebTileDataSource {
-    export const enum ppiValue {
+    export enum ppiValue {
         ppi72 = 72,
         ppi250 = 250,
         ppi320 = 320,
         ppi500 = 500
     }
-    export const enum resolutionValue {
+    export enum resolutionValue {
         resolution256 = 256,
         resolution512 = 512
     }

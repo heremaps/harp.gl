@@ -16,6 +16,7 @@ import {
     JsonExpr,
     JsonValue,
     MapEnv,
+    Value,
     ValueMap
 } from "../lib/Expr";
 import { getPropertyValue } from "../lib/InterpolatedProperty";
@@ -32,23 +33,38 @@ describe("ExprEvaluator", function() {
         emptyText: "",
         zero: 0,
         one: 1,
-        two: 2
+        two: 2,
+        numbers: [1, 2, 3],
+        strings: ["aa", "bb", "cc"]
     };
 
     function evaluate(
         expr: JsonValue,
-        values: ValueMap = defaultEnv,
+        envOrValues?: Env | ValueMap,
         scope: ExprScope = ExprScope.Value
     ) {
-        const env = new MapEnv(values);
+        let env: Env;
+        if (envOrValues === undefined) {
+            env = new MapEnv(defaultEnv);
+        } else if (Env.isEnv(envOrValues)) {
+            env = envOrValues;
+        } else {
+            env = new MapEnv(envOrValues);
+        }
         return Expr.fromJSON(expr).evaluate(env, scope);
     }
 
     function dependencies(json: JsonValue) {
-        const deps = Expr.fromJSON(json).dependencies();
+        const expr = Expr.fromJSON(json);
+        const dynamic = expr.isDynamic();
+        const deps = expr.dependencies();
+        const properties = Array.from(deps.properties).sort();
+        const featureState = deps.featureState;
+        const featureInfo = featureState !== undefined ? { featureState } : {};
         return {
-            properties: Array.from(deps.properties).sort(),
-            zoom: deps.zoom || false
+            properties,
+            dynamic,
+            ...featureInfo
         };
     }
 
@@ -177,6 +193,42 @@ describe("ExprEvaluator", function() {
         });
     });
 
+    describe("Operator 'dynamic-properties'", function() {
+        it("evaluation scope", function() {
+            // the ["dynamic-properties"] in a dynamic scope should return the current environment.
+            assert.isTrue(
+                Env.isEnv(evaluate(["dynamic-properties"], undefined, ExprScope.Dynamic))
+            );
+
+            // the ["dynamic-properties"] in a static scope should return itself.
+            assert.isTrue(
+                Expr.isExpr(evaluate(["dynamic-properties"], undefined, ExprScope.Value))
+            );
+
+            // the ["dynamic-properties"] in a condition scope should return itself.
+            assert.isTrue(
+                Expr.isExpr(evaluate(["dynamic-properties"], undefined, ExprScope.Condition))
+            );
+        });
+
+        it("get", function() {
+            const values: ValueMap = { x: 123 };
+
+            assert.strictEqual(
+                evaluate(["get", "x", ["dynamic-properties"]], values, ExprScope.Dynamic),
+                123
+            );
+
+            assert.isTrue(
+                evaluate(["has", "x", ["dynamic-properties"]], values, ExprScope.Dynamic)
+            );
+
+            assert.isFalse(
+                evaluate(["has", "y", ["dynamic-properties"]], values, ExprScope.Dynamic)
+            );
+        });
+    });
+
     describe("Operator 'length'", function() {
         it("evaluate", function() {
             assert.strictEqual(evaluate(["length", "ciao"]), 4);
@@ -203,11 +255,29 @@ describe("ExprEvaluator", function() {
 
     describe("Operator 'in'", function() {
         it("evaluate", function() {
-            assert.isTrue(evaluate(["in", "x", ["x"]]));
-            assert.isFalse(evaluate(["in", "x", ["y"]]));
+            assert.isTrue(evaluate(["in", "x", ["literal", ["x"]]]));
+            assert.isFalse(evaluate(["in", "x", ["literal", ["y"]]]));
+            assert.isTrue(evaluate(["in", "hello", "hello world"]));
+            assert.isTrue(evaluate(["in", "world", "hello world"]));
+            assert.isFalse(evaluate(["in", "ciao", "hello world"]));
 
-            assert.isTrue(evaluate(["in", ["get", "someText"], [defaultEnv.someText]]));
-            assert.isTrue(evaluate(["in", ["get", "emptyText"], [defaultEnv.emptyText]]));
+            assert.isTrue(evaluate(["in", 1, ["get", "numbers"]]));
+            assert.isFalse(evaluate(["in", 100, ["get", "numbers"]]));
+
+            assert.isTrue(evaluate(["in", "bb", ["get", "strings"]]));
+            assert.isFalse(evaluate(["in", "zz", ["get", "strings"]]));
+
+            assert.isTrue(evaluate(["in", "some", ["get", "someText"]]));
+            assert.isTrue(evaluate(["in", "text", ["get", "someText"]]));
+            assert.isFalse(evaluate(["in", "zz", ["get", "someText"]]));
+
+            assert.isTrue(
+                evaluate(["in", ["get", "someText"], ["literal", [defaultEnv.someText]]])
+            );
+
+            assert.isTrue(
+                evaluate(["in", ["get", "emptyText"], ["literal", [defaultEnv.emptyText]]])
+            );
 
             assert.throw(() => evaluate(["in", ["get", "someText"]]));
         });
@@ -215,13 +285,21 @@ describe("ExprEvaluator", function() {
 
     describe("Operator '!in'", function() {
         it("evaluate", function() {
-            assert.isFalse(evaluate(["!in", "x", ["x"]]));
-            assert.isTrue(evaluate(["!in", "x", ["y"]]));
+            assert.isFalse(evaluate(["!in", "x", ["literal", ["x"]]]));
+            assert.isTrue(evaluate(["!in", "x", ["literal", ["y"]]]));
+            assert.isFalse(evaluate(["!in", "hello", "hello world"]));
+            assert.isFalse(evaluate(["!in", "world", "hello world"]));
+            assert.isTrue(evaluate(["!in", "ciao", "hello world"]));
 
-            assert.isFalse(evaluate(["!in", ["get", "someText"], [defaultEnv.someText]]));
-            assert.isFalse(evaluate(["!in", ["get", "emptyText"], [defaultEnv.emptyText]]));
+            assert.isFalse(
+                evaluate(["!in", ["get", "someText"], ["literal", [defaultEnv.someText]]])
+            );
 
-            assert.throw(() => evaluate(["!in", ["get", "someText"]]));
+            assert.isFalse(
+                evaluate(["!in", ["get", "emptyText"], ["literal", [defaultEnv.emptyText]]])
+            );
+
+            assert.throw(() => evaluate(["!in", ["literal", ["get", "someText"]]]));
         });
     });
 
@@ -233,7 +311,9 @@ describe("ExprEvaluator", function() {
 
             assert.isTrue(evaluate(["!", ["has", "xx"]]));
 
-            assert.isFalse(evaluate(["!", ["in", ["get", "emptyText"], [defaultEnv.emptyText]]]));
+            assert.isFalse(
+                evaluate(["!", ["in", ["get", "emptyText"], ["literal", [defaultEnv.emptyText]]]])
+            );
 
             assert.strictEqual(evaluate(null), null);
             assert.isTrue(evaluate(["!", null]));
@@ -695,6 +775,39 @@ describe("ExprEvaluator", function() {
             }
         });
 
+        it("Operator 'id'", function() {
+            assert.strictEqual(evaluate(["id"], { $id: 123 }), 123);
+            assert.strictEqual(evaluate(["id"], { $id: "473843" }), "473843");
+            assert.strictEqual(evaluate(["id"]), null);
+
+            assert.deepStrictEqual(dependencies(["id"]), {
+                properties: ["$id"],
+                dynamic: false
+            });
+        });
+
+        it("Operator 'geometry-type'", function() {
+            // Returns a string representing the feature type using the GoeJSON conversion,
+            // Point, LineString, or Polygon.
+
+            assert.strictEqual(evaluate(["geometry-type"], { $geometryType: "point" }), "Point");
+
+            assert.strictEqual(
+                evaluate(["geometry-type"], { $geometryType: "line" }),
+                "LineString"
+            );
+
+            assert.strictEqual(
+                evaluate(["geometry-type"], { $geometryType: "polygon" }),
+                "Polygon"
+            );
+
+            assert.deepStrictEqual(dependencies(["geometry-type"]), {
+                properties: ["$geometryType"],
+                dynamic: false
+            });
+        });
+
         it("dynamic interpolation (without step 0)", function() {
             const interpolation = evaluate(["step", ["zoom"], "#ff0000", 13, "#000000"]);
             for (let zoom = 0; zoom < 13; ++zoom) {
@@ -799,23 +912,23 @@ describe("ExprEvaluator", function() {
     });
 
     it("Dependencies", function() {
-        assert.deepEqual(dependencies(true), { properties: [], zoom: false });
-        assert.deepEqual(dependencies(["get", "x"]), { properties: ["x"], zoom: false });
-        assert.deepEqual(dependencies(["has", "x"]), { properties: ["x"], zoom: false });
+        assert.deepEqual(dependencies(true), { properties: [], dynamic: false });
+        assert.deepEqual(dependencies(["get", "x"]), { properties: ["x"], dynamic: false });
+        assert.deepEqual(dependencies(["has", "x"]), { properties: ["x"], dynamic: false });
 
         assert.deepEqual(
             dependencies(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, ["get", "max"]]),
-            { properties: ["max"], zoom: true }
+            { properties: ["max"], dynamic: true }
         );
 
         assert.deepEqual(dependencies(["step", ["zoom"], "default", 5, "a", 10, "b"]), {
             properties: [],
-            zoom: true
+            dynamic: true
         });
 
         assert.deepEqual(dependencies(["match", ["get", "two"], [0, 1], false, 2, true, false]), {
             properties: ["two"],
-            zoom: false
+            dynamic: false
         });
 
         assert.deepEqual(
@@ -829,7 +942,7 @@ describe("ExprEvaluator", function() {
             ]),
             {
                 properties: ["fallback-value", "x"],
-                zoom: true
+                dynamic: true
             }
         );
     });
@@ -1179,9 +1292,21 @@ describe("ExprEvaluator", function() {
                 ["step", ["zoom"], 0, 2, 123]
             );
 
-            assert.deepStrictEqual(instantiate(["in", ["get", "two"], ["aa", "bb"]]), false);
+            // assert.deepStrictEqual(
+            //     instantiate(["in", ["get", "two"], ["literal", ["aa", "bb"]]]),
+            //     false
+            // );
 
-            assert.deepStrictEqual(instantiate(["in", ["get", "y"], [123, 321]]), true);
+            // assert.deepStrictEqual(
+            //     instantiate(["in", ["get", "y"], ["literal", [123, 321]]]),
+            //     true
+            // );
+
+            assert.deepStrictEqual(instantiate(["get", "x", ["dynamic-properties"]]), [
+                "get",
+                "x",
+                ["dynamic-properties"]
+            ]);
         });
     });
 
@@ -1233,7 +1358,174 @@ describe("ExprEvaluator", function() {
 
             assert.isFalse(isDynamic(["in", ["get", "two"], ["aa", "bb"]]));
 
-            assert.isTrue(isDynamic(["in", ["zoom"], [1, 2]]));
+            assert.isTrue(isDynamic(["in", ["zoom"], ["literal", [1, 2]]]));
+        });
+    });
+
+    describe("Operator 'feature-state'", () => {
+        it("Syntax", () => {
+            assert.throws(
+                () => evaluate(["feature-state", "enabled"], undefined, ExprScope.Value),
+                "feature-state cannot be used in this context"
+            );
+
+            assert.throws(
+                () => evaluate(["feature-state", "enabled"], undefined, ExprScope.Condition),
+                "feature-state cannot be used in this context"
+            );
+
+            assert.throws(
+                () => evaluate(["feature-state"], undefined, ExprScope.Dynamic),
+                "Failed to evaluate expression"
+            );
+        });
+
+        it("Dependencies", () => {
+            assert.deepStrictEqual(dependencies(["feature-state", "enabled"]), {
+                properties: ["$state"],
+                dynamic: true,
+                featureState: true
+            });
+        });
+
+        it("feature state (without state)", () => {
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], defaultEnv, ExprScope.Dynamic),
+                null
+            );
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], defaultEnv, ExprScope.Dynamic),
+                null
+            );
+        });
+
+        it("feature state encoded as Map", () => {
+            const $state = new Map<string, Value>([
+                ["enabled", true],
+                ["color", "#f00"]
+            ]);
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], { $state }, ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], { $state }, ExprScope.Dynamic),
+                "#f00"
+            );
+        });
+
+        it("feature state encoded as Env", () => {
+            const $state = new (class extends Env {
+                /** @override */
+                lookup(name: string): Value | undefined {
+                    switch (name) {
+                        case "enabled":
+                            return true;
+                        case "color":
+                            return "#f00";
+                        default:
+                            return undefined;
+                    }
+                }
+            })();
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], { $state }, ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], { $state }, ExprScope.Dynamic),
+                "#f00"
+            );
+        });
+
+        it("feature env", () => {
+            const features = [
+                new MapEnv({ enabled: true, color: "#f00" }),
+                new MapEnv({ enabled: true, color: "#00f" })
+            ];
+
+            const FeatureEnv = class extends Env {
+                constructor(readonly id: number, readonly parent?: Env) {
+                    super();
+                }
+
+                /** @override */
+                lookup(name: string): Value | undefined {
+                    if (name === "$state") {
+                        return features[this.id] ?? null;
+                    }
+                    return this.parent?.lookup(name);
+                }
+            };
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(0), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], new FeatureEnv(0), ExprScope.Dynamic),
+                "#f00"
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(1), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], new FeatureEnv(1), ExprScope.Dynamic),
+                "#00f"
+            );
+        });
+
+        it("feature env with inherited properties", () => {
+            const mapEnv = new MapEnv({
+                time: 241276
+            });
+
+            const features = [
+                new MapEnv({ enabled: true, color: "#f00" }, mapEnv),
+                new MapEnv({ enabled: true, color: "#00f" }, mapEnv)
+            ];
+
+            const FeatureEnv = class extends Env {
+                constructor(readonly id: number, readonly parent?: Env) {
+                    super();
+                }
+
+                /** @override */
+                lookup(name: string): Value | undefined {
+                    if (name === "$state") {
+                        return features[this.id] ?? null;
+                    }
+                    return this.parent?.lookup(name);
+                }
+            };
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(0), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(1), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "time"], new FeatureEnv(0), ExprScope.Dynamic),
+                241276
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "time"], new FeatureEnv(1), ExprScope.Dynamic),
+                241276
+            );
         });
     });
 });

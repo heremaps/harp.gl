@@ -6,7 +6,9 @@
 
 import {
     addBuffersToTransferList,
+    BufferAttribute,
     getProjection,
+    InterleavedBufferAttribute,
     ITileDecoder,
     WorkerDecoderProtocol
 } from "@here/harp-datasource-protocol";
@@ -80,44 +82,60 @@ export class TileDecoderService extends WorkerService {
         }
     }
 
-    private handleDecodeTileRequest(
+    private async handleDecodeTileRequest(
         request: WorkerDecoderProtocol.DecodeTileRequest
     ): Promise<WorkerServiceResponse> {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
 
-        return this.m_decoder.decodeTile(request.data, tileKey, projection).then(decodedTile => {
-            const transferList: ArrayBuffer[] = [];
-            decodedTile.geometries.forEach(geom => {
-                geom.vertexAttributes.forEach(attr => {
-                    if (attr.buffer instanceof ArrayBuffer) {
-                        transferList.push(attr.buffer);
-                    }
+        const decodedTile = await this.m_decoder.decodeTile(request.data, tileKey, projection);
+
+        const transferList: ArrayBufferLike[] = [];
+
+        const transferBufferAttribute = (
+            attribute?: BufferAttribute | InterleavedBufferAttribute
+        ) => {
+            if (
+                attribute !== undefined &&
+                attribute.buffer.byteLength > 0 &&
+                !transferList.includes(attribute.buffer)
+            ) {
+                transferList.push(attribute.buffer);
+            }
+        };
+
+        decodedTile.geometries.forEach(geom => {
+            geom.vertexAttributes?.forEach(attr => transferBufferAttribute(attr));
+            geom.interleavedVertexAttributes?.forEach(attr => transferBufferAttribute(attr));
+            transferBufferAttribute(geom.index);
+            transferBufferAttribute(geom.edgeIndex);
+
+            if (
+                Array.isArray(geom.objInfos) &&
+                geom.objInfos.length === 1 &&
+                typeof geom.objInfos[0] === "object" &&
+                geom.objInfos[0]?.hasOwnProperty("displacementMap")
+            ) {
+                const obj = geom.objInfos[0] as any;
+                transferBufferAttribute(obj.displacementMap);
+            }
+
+            if (Array.isArray(geom.attachments)) {
+                geom.attachments.forEach(attachment => {
+                    transferBufferAttribute(attachment.index);
+                    transferBufferAttribute(attachment.edgeIndex);
                 });
-
-                if (geom.index && geom.index.buffer instanceof ArrayBuffer) {
-                    transferList.push(geom.index.buffer);
-                }
-
-                if (
-                    geom.objInfos !== undefined &&
-                    geom.objInfos.length === 1 &&
-                    typeof geom.objInfos[0] === "object" &&
-                    "displacementMap" in (geom.objInfos[0] as any)
-                ) {
-                    transferList.push((geom.objInfos[0] as any).displacementMap.buffer);
-                }
-            });
-
-            decodedTile.techniques.forEach(technique => {
-                addBuffersToTransferList(technique, transferList);
-            });
-
-            return {
-                response: decodedTile,
-                transferList
-            };
+            }
         });
+
+        decodedTile.techniques.forEach(technique => {
+            addBuffersToTransferList(technique, transferList);
+        });
+
+        return {
+            response: decodedTile,
+            transferList
+        };
     }
 
     private handleTileInfoRequest(

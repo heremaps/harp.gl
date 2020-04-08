@@ -129,6 +129,11 @@ export function createLight(lightDescription: Light): THREE.Light {
             if (lightDescription.castShadow !== undefined) {
                 light.castShadow = lightDescription.castShadow;
             }
+            if (light.castShadow) {
+                light.shadow.bias = 0.00001;
+                light.shadow.mapSize.width = 1024;
+                light.shadow.mapSize.height = 1024;
+            }
             light.position.set(
                 lightDescription.direction.x,
                 lightDescription.direction.y,

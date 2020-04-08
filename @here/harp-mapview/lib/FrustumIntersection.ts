@@ -122,7 +122,7 @@ export class FrustumIntersection {
             this.m_camera.matrixWorldInverse
         );
 
-        this.m_frustum.setFromMatrix(this.m_viewProjectionMatrix);
+        this.m_frustum.setFromProjectionMatrix(this.m_viewProjectionMatrix);
 
         if (this.m_extendedFrustumCulling) {
             this.m_mapTileCuller.setup();
@@ -153,7 +153,11 @@ export class FrustumIntersection {
         // the zoom level chosen by [MapViewUtils.calculateZoomLevelFromDistance].
         assert(this.mapView.viewportHeight !== 0);
         const targetTileArea = Math.pow(256 / this.mapView.viewportHeight, 2);
-        const obbIntersections = this.mapView.projection.type === ProjectionType.Spherical;
+        const useElevationRangeSource: boolean =
+            elevationRangeSource !== undefined &&
+            elevationRangeSource.getTilingScheme() === tilingScheme;
+        const obbIntersections =
+            this.mapView.projection.type === ProjectionType.Spherical || useElevationRangeSource;
         const tileBounds = obbIntersections ? new OrientedBox3() : new THREE.Box3();
         const uniqueZoomLevels = new Set(zoomLevels);
 
@@ -161,7 +165,6 @@ export class FrustumIntersection {
         for (const zoomLevel of uniqueZoomLevels) {
             this.m_tileKeyEntries.set(zoomLevel, new Map());
         }
-
         for (const item of this.m_rootTileKeys) {
             const tileKeyEntry = new TileKeyEntry(
                 item.tileKey,
@@ -170,7 +173,6 @@ export class FrustumIntersection {
                 item.minElevation,
                 item.maxElevation
             );
-
             for (const zoomLevel of uniqueZoomLevels) {
                 const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
                 tileKeyEntries.set(
@@ -180,11 +182,7 @@ export class FrustumIntersection {
             }
         }
 
-        const useElevationRangeSource: boolean =
-            elevationRangeSource !== undefined &&
-            elevationRangeSource.getTilingScheme() === tilingScheme;
         const workList = [...this.m_rootTileKeys.values()];
-
         while (workList.length > 0) {
             const tileEntry = workList.pop();
 
@@ -377,7 +375,7 @@ export class FrustumIntersection {
         // Ensure that the aspect is >= 1.
         const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
         // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.
-        const totalAngleRad = THREE.Math.degToRad((camera.fov * aspect) / 2) + cameraPitch;
+        const totalAngleRad = THREE.MathUtils.degToRad((camera.fov * aspect) / 2) + cameraPitch;
         // Length a->d2
         const worldLengthHorizontalFull = Math.tan(totalAngleRad) * camera.position.z;
         // Length a->e
@@ -392,7 +390,7 @@ export class FrustumIntersection {
         const worldLeftGeoPoint = this.mapView.projection.unprojectPoint(worldLeftPoint);
         // We multiply by SQRT2 because we need to account for a rotated view (in which case there
         // are more tiles that can be seen).
-        const offsetRange = THREE.Math.clamp(
+        const offsetRange = THREE.MathUtils.clamp(
             Math.ceil(
                 Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360) * Math.SQRT2
             ),

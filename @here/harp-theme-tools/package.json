@@ -6,10 +6,10 @@
         "harp-theme-optimizer": "lib/cli-build-theme.js"
     },
     "scripts": {
-        "build": "tsc",
-        "watch": "tsc -w",
+        "build": "tsc --build",
+        "watch": "tsc --build -w",
         "buildTheme": "ts-node src/cli-build-theme.ts",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",
@@ -34,7 +34,7 @@
     },
     "devDependencies": {
         "ts-node": "^8.3.0",
-        "typescript": "^3.7.2"
+        "typescript": "^3.8.2"
     },
     "publishConfig": {
         "access": "public"

@@ -82,7 +82,7 @@ Then you can start coding!
 
 If your tests fail, because you've changed something you can ACK reference images with
 ```
-yarn approve-reference
+yarn approve-reference-rendering-tests
 ```
 Next text runs, should use these files as reference.
 
@@ -109,7 +109,7 @@ Open `http://localhost:8081/rendering.html`, in favorite browser. Tests will run
  by running command (as described in "Local reference images" section):
 
 ```bash
-yarn save-reference
+yarn save-reference-rendering-tests
 ```
 
 After that you can refresh the page: http://localhost:8080/rendering.html and start coding.

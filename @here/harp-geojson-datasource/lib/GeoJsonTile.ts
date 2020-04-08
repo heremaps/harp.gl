@@ -8,6 +8,8 @@ import {
     DecodedTile,
     Env,
     getPropertyValue,
+    IndexedTechnique,
+    IndexedTechniqueParams,
     isPoiTechnique,
     isTextTechnique,
     PoiGeometry,
@@ -110,7 +112,7 @@ export class GeoJsonTile extends Tile {
         if (this.m_currentZoomLevel !== zoomLevel) {
             this.m_currentZoomLevel = zoomLevel;
         }
-        return true;
+        return super.willRender(zoomLevel);
     }
 
     /**
@@ -134,7 +136,7 @@ export class GeoJsonTile extends Tile {
         if (decodedTile.poiGeometries !== undefined) {
             for (const geometry of decodedTile.poiGeometries) {
                 const techniqueIndex = geometry.technique!;
-                const technique = decodedTile.techniques[techniqueIndex];
+                const technique = decodedTile.techniques[techniqueIndex] as IndexedTechnique;
                 if (isPoiTechnique(technique)) {
                     this.addPois(geometry, technique, env, worldOffsetX);
                 }
@@ -143,7 +145,7 @@ export class GeoJsonTile extends Tile {
         if (decodedTile.textGeometries !== undefined) {
             for (const geometry of decodedTile.textGeometries) {
                 const techniqueIndex = geometry.technique!;
-                const technique = decodedTile.techniques[techniqueIndex];
+                const technique = decodedTile.techniques[techniqueIndex] as IndexedTechnique;
                 if (isTextTechnique(technique)) {
                     this.addTexts(geometry, technique, worldOffsetX);
                 }
@@ -157,7 +159,7 @@ export class GeoJsonTile extends Tile {
             );
             for (const textPath of this.preparedTextPaths) {
                 const techniqueIndex = textPath.technique!;
-                const technique = decodedTile.techniques[techniqueIndex];
+                const technique = decodedTile.techniques[techniqueIndex] as IndexedTechnique;
                 if (isTextTechnique(technique)) {
                     this.addTextPaths(textPath, technique, worldOffsetX);
                 }
@@ -180,7 +182,7 @@ export class GeoJsonTile extends Tile {
      */
     private addTextPaths(
         geometry: TextPathGeometry,
-        technique: TextTechnique,
+        technique: TextTechnique & IndexedTechniqueParams,
         worldOffsetX: number
     ) {
         const path: THREE.Vector3[] = [];
@@ -209,7 +211,7 @@ export class GeoJsonTile extends Tile {
     private addTextPath(
         path: THREE.Vector3[],
         text: string,
-        technique: TextTechnique,
+        technique: TextTechnique & IndexedTechniqueParams,
         geojsonProperties?: {}
     ) {
         const priority =
@@ -221,13 +223,11 @@ export class GeoJsonTile extends Tile {
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
-        const styleCache = this.mapView.textElementsRenderer.styleCache;
-
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             path,
-            styleCache.getRenderStyle(this, technique),
-            styleCache.getLayoutStyle(this, technique),
+            this.textStyleCache.getRenderStyle(technique),
+            this.textStyleCache.getLayoutStyle(technique),
             getPropertyValue(priority, this.mapView.env),
             xOffset,
             yOffset,
@@ -253,8 +253,9 @@ export class GeoJsonTile extends Tile {
         textElement.mayOverlap = mayOverlap;
         textElement.reserveSpace = reserveSpace;
         textElement.distanceScale = distanceScale;
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
 
-        this.addUserTextElement(textElement);
+        this.addTextElement(textElement);
     }
 
     /**
@@ -263,7 +264,11 @@ export class GeoJsonTile extends Tile {
      * @param geometry The Text geometry.
      * @param technique Text technique.
      */
-    private addTexts(geometry: TextGeometry, technique: TextTechnique, worldOffsetX: number) {
+    private addTexts(
+        geometry: TextGeometry,
+        technique: TextTechnique & IndexedTechniqueParams,
+        worldOffsetX: number
+    ) {
         const attribute = getBufferAttribute(geometry.positions);
 
         for (let index = 0; index < attribute.count; index++) {
@@ -291,7 +296,7 @@ export class GeoJsonTile extends Tile {
     private addText(
         position: THREE.Vector3,
         text: string,
-        technique: TextTechnique,
+        technique: TextTechnique & IndexedTechniqueParams,
         geojsonProperties?: {}
     ) {
         const priority =
@@ -303,12 +308,11 @@ export class GeoJsonTile extends Tile {
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
-        const styleCache = this.mapView.textElementsRenderer.styleCache;
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             position,
-            styleCache.getRenderStyle(this, technique),
-            styleCache.getLayoutStyle(this, technique),
+            this.textStyleCache.getRenderStyle(technique),
+            this.textStyleCache.getLayoutStyle(technique),
             getPropertyValue(priority, this.mapView.env),
             xOffset,
             yOffset,
@@ -330,8 +334,9 @@ export class GeoJsonTile extends Tile {
         textElement.mayOverlap = mayOverlap;
         textElement.reserveSpace = false;
         textElement.distanceScale = distanceScale;
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
 
-        this.addUserTextElement(textElement);
+        this.addTextElement(textElement);
     }
 
     /**
@@ -342,7 +347,7 @@ export class GeoJsonTile extends Tile {
      */
     private addPois(
         geometry: PoiGeometry,
-        technique: PoiTechnique,
+        technique: PoiTechnique & IndexedTechniqueParams,
         env: Env,
         worldOffsetX: number
     ) {
@@ -371,7 +376,7 @@ export class GeoJsonTile extends Tile {
      */
     private addPoi(
         position: THREE.Vector3,
-        technique: PoiTechnique,
+        technique: PoiTechnique & IndexedTechniqueParams,
         env: Env,
         geojsonProperties?: {}
     ) {
@@ -383,12 +388,11 @@ export class GeoJsonTile extends Tile {
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
-        const styleCache = this.mapView.textElementsRenderer.styleCache;
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(label),
             position,
-            styleCache.getRenderStyle(this, technique),
-            styleCache.getLayoutStyle(this, technique),
+            this.textStyleCache.getRenderStyle(technique),
+            this.textStyleCache.getLayoutStyle(technique),
             getPropertyValue(priority, env),
             xOffset === undefined ? DEFAULT_LABELED_ICON.xOffset : xOffset,
             yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : yOffset,
@@ -448,7 +452,8 @@ export class GeoJsonTile extends Tile {
             reserveSpace,
             featureId
         };
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
 
-        this.addUserTextElement(textElement);
+        this.addTextElement(textElement);
     }
 }

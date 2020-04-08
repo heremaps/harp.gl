@@ -25,7 +25,7 @@ import {
 } from "./TechniqueParams";
 
 import { Expr, JsonExpr } from "./Expr";
-import { InterpolatedProperty, InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
+import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 import {
     AttrScope,
     mergeTechniqueDescriptor,
@@ -66,7 +66,7 @@ export type RemoveJsonExpr<T> = T | JsonExpr extends T ? Exclude<T, JsonExpr> : 
  */
 export type MakeTechniqueAttrs<T> = {
     [P in keyof T]: T[P] | JsonExpr extends T[P]
-        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty
+        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr
         : T[P];
 };
 
@@ -78,8 +78,7 @@ export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniquePar
     attrTransparencyColor: "color",
     attrScopes: {
         renderOrder: AttrScope.TechniqueGeometry,
-        renderOrderOffset: AttrScope.TechniqueGeometry,
-        enabled: AttrScope.TechniqueGeometry,
+        enabled: AttrScope.FeatureGeometry,
         kind: AttrScope.TechniqueGeometry,
         transient: AttrScope.TechniqueGeometry,
         fadeFar: AttrScope.TechniqueRendering,
@@ -522,13 +521,6 @@ export interface IndexedTechniqueParams {
     _index: number;
 
     /**
-     * Unique technique key derived from all dynamic expressions that were input to this particular
-     * technique instance.
-     * @hidden
-     */
-    _key: string;
-
-    /**
      * Optimization: Unique [[Technique]] index of [[Style]] from which technique was derived.
      * @hidden
      */
@@ -552,6 +544,19 @@ export interface IndexedTechniqueParams {
      * @hidden
      */
     _secondaryCategory?: string;
+
+    /**
+     * `true` if any of the properties of this technique needs to access
+     * the feature's state.
+     *
+     * @hidden
+     */
+    _usesFeatureState?: boolean;
+
+    /**
+     * Last computed state derived from [[Technique.kind]].
+     */
+    _kindState?: boolean;
 }
 
 /**

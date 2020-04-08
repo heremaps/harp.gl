@@ -40,6 +40,7 @@ export * from "./lib/Statistics";
 export * from "./lib/text/TextElement";
 export * from "./lib/text/TextElementsRenderer";
 export * from "./lib/text/TextStyleCache";
+export * from "./lib/TextureLoader";
 export * from "./lib/ThemeLoader";
 export * from "./lib/Tile";
 export * from "./lib/geometry/TileDataAccessor";

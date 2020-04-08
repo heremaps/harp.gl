@@ -9,8 +9,10 @@ import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprE
 import { ExprInstantiator, InstantiationContext } from "./ExprInstantiator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
-import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
-import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
+import {
+    interpolatedPropertyDefinitionToJsonExpr,
+    isInterpolatedPropertyDefinition
+} from "./InterpolatedPropertyDefs";
 import { Definitions, isBoxedDefinition, isLiteralDefinition } from "./Theme";
 
 export * from "./Env";
@@ -27,7 +29,6 @@ export interface ExprVisitor<Result, Context> {
     visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: Context): Result;
     visitVarExpr(expr: VarExpr, context: Context): Result;
     visitHasAttributeExpr(expr: HasAttributeExpr, context: Context): Result;
-    visitContainsExpr(expr: ContainsExpr, context: Context): Result;
     visitCallExpr(expr: CallExpr, context: Context): Result;
     visitMatchExpr(expr: MatchExpr, context: Context): Result;
     visitCaseExpr(expr: CaseExpr, context: Context): Result;
@@ -43,9 +44,9 @@ export class ExprDependencies {
     readonly properties = new Set<string>();
 
     /**
-     * `true` if the [[Expr]] depends on zoom level. Default is `false`.
+     * `true` if the expression depends on the feature state.
      */
-    zoom?: boolean;
+    featureState?: boolean;
 }
 
 class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
@@ -92,15 +93,22 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
         context.properties.add(expr.name);
     }
 
-    visitContainsExpr(expr: ContainsExpr, context: ExprDependencies): void {
-        expr.value.accept(this, context);
-    }
-
     visitCallExpr(expr: CallExpr, context: ExprDependencies): void {
-        if (expr.op === "zoom" && expr.args.length === 0) {
-            context.zoom = true;
-        } else {
-            expr.args.forEach(childExpr => childExpr.accept(this, context));
+        expr.args.forEach(childExpr => childExpr.accept(this, context));
+
+        switch (expr.op) {
+            case "feature-state":
+                context.featureState = true;
+                context.properties.add("$state");
+                break;
+            case "id":
+                context.properties.add("$id");
+                break;
+            case "geometry-type":
+                context.properties.add("$geometryType");
+                break;
+            default:
+                break;
         }
     }
 
@@ -483,40 +491,6 @@ export class HasAttributeExpr extends Expr {
 }
 
 /**
- * A contains expression.
- * @hidden
- */
-export class ContainsExpr extends Expr {
-    static isValidElementsArray(elements: JsonValue): elements is Array<number | string> {
-        if (!Array.isArray(elements) || elements.length === 0) {
-            return false;
-        }
-
-        const elementTy = typeof elements[0];
-
-        if (elementTy === "number" || elementTy === "string") {
-            return elements.every(element => typeof element === elementTy);
-        }
-
-        return false;
-    }
-
-    constructor(readonly value: Expr, readonly elements: Array<number | string>) {
-        super();
-    }
-
-    /** @override */
-    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
-        return visitor.visitContainsExpr(this, context);
-    }
-
-    /** @override */
-    protected exprIsDynamic() {
-        return this.value.isDynamic();
-    }
-}
-
-/**
  * @hidden
  */
 export class CallExpr extends Expr {
@@ -665,10 +639,6 @@ class ExprSerializer implements ExprVisitor<JsonValue, void> {
         return ["has", expr.name];
     }
 
-    visitContainsExpr(expr: ContainsExpr, context: void): JsonValue {
-        return ["in", this.serialize(expr.value), expr.elements];
-    }
-
     visitCallExpr(expr: CallExpr, context: void): JsonValue {
         return [expr.op, ...expr.args.map(childExpr => this.serialize(childExpr))];
     }
@@ -729,9 +699,6 @@ function parseCall(node: JsonArray, referenceResolverState?: ReferenceResolverSt
         case "has":
             return parseHasExpr(node, referenceResolverState);
 
-        case "in":
-            return parseInExpr(node, referenceResolverState);
-
         case "literal":
             return parseLiteralExpr(node);
 
@@ -766,15 +733,6 @@ function parseHasExpr(node: JsonArray, referenceResolverState: ReferenceResolver
         throw new Error(`expected the name of an attribute`);
     }
     return new HasAttributeExpr(name);
-}
-
-function parseInExpr(node: JsonArray, referenceResolverState: ReferenceResolverState | undefined) {
-    const elements = node[2];
-    if (!ContainsExpr.isValidElementsArray(elements)) {
-        // tslint:disable-next-line: max-line-length
-        throw new Error(`'in' expects an array of number or string literals`);
-    }
-    return new ContainsExpr(parseNode(node[1], referenceResolverState), elements);
 }
 
 function parseLiteralExpr(node: JsonArray) {

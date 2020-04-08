@@ -10,8 +10,8 @@
     },
     "scripts": {
         "test": "cross-env mocha  --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
-        "build": "tsc $EXTRA_TSC_ARGS",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "build": "tsc --build $EXTRA_TSC_ARGS",
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",
@@ -38,7 +38,7 @@
         "mocha": "^6.1.4",
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.7.2"
+        "typescript": "^3.8.2"
     },
     "publishConfig": {
         "access": "public"

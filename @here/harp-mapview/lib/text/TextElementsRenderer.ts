@@ -1113,11 +1113,6 @@ export class TextElementsRenderer {
             return a.tileKey.mortonCode() - b.tileKey.mortonCode();
         });
 
-        // Prepare user text elements.
-        for (const tile of sortedTiles) {
-            this.prepareTextElementGroup(tile.userTextElements, tile.tileKey);
-        }
-
         const sortedGroups: TextElementLists[] = [];
         this.createSortedGroupsForSorting(tileDataSource, storageLevel, sortedTiles, sortedGroups);
 
@@ -1507,7 +1502,7 @@ export class TextElementsRenderer {
             if (fadeFar > fadeNear) {
                 distanceFadeValue =
                     1.0 -
-                    THREE.Math.clamp(
+                    THREE.MathUtils.clamp(
                         (textDistance / maxVisibilityDist - fadeNear) / (fadeFar - fadeNear),
                         0.0,
                         1.0
@@ -1956,7 +1951,6 @@ export class TextElementsRenderer {
         dataSourceTileList.forEach(renderListEntry => {
             for (const tile of renderListEntry.renderedTiles.values()) {
                 numTextElementsInScene += tile.textElementGroups.count();
-                numTextElementsInScene += tile.userTextElements.elements.length;
             }
         });
         const newOverloaded = numTextElementsInScene > OVERLOAD_LABEL_LIMIT;

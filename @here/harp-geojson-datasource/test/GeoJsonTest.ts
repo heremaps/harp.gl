@@ -182,7 +182,7 @@ describe("@here-geojson-datasource", () => {
 
         // Point feature support.
         const pointBuffer = decodedTile.geometries.find(o => o.type === GeometryType.Point)!
-            .vertexAttributes[0].buffer;
+            .vertexAttributes![0].buffer;
         const pointCoords = new Float32Array(pointBuffer);
         const pointCoordsArray: number[] = [];
         pointCoords.forEach((value, index) => {
@@ -192,7 +192,7 @@ describe("@here-geojson-datasource", () => {
 
         // Line feature support.
         const lineBuffer = decodedTile.geometries.find(o => o.type === GeometryType.SolidLine)!
-            .vertexAttributes[0].buffer;
+            .vertexAttributes![0].buffer;
         const lineCoords = new Float32Array(lineBuffer);
         const lineCoordsArray: number[] = [];
         lineCoords.forEach((value, index) => {
@@ -202,7 +202,7 @@ describe("@here-geojson-datasource", () => {
 
         // Polygon feature support.
         const polygonGeometry = decodedTile.geometries.find(o => o.type === GeometryType.Polygon)!;
-        const polygonVertexBuffer = polygonGeometry.vertexAttributes[0].buffer;
+        const polygonVertexBuffer = polygonGeometry.vertexAttributes![0].buffer;
         const polygonCoords = new Float32Array(polygonVertexBuffer);
         const polygonCoordsArray: number[] = [];
         polygonCoords.forEach((value, index) => {
@@ -322,6 +322,7 @@ describe("@here-geojson-datasource", () => {
 
         const tile = new FakeGeoJsonTile(datasource, new TileKey(1, 1, 5));
         tile.createTextElements(decodedTile, mapView.env);
+        // tslint:disable-next-line: deprecation
         const userTextElements = tile.userTextElements;
 
         // Text element for points.
