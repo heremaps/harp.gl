@@ -831,11 +831,14 @@ export class TextElementsRenderer {
                         }
                     }
                     textElementState.textRenderState!.reset();
+                    textElementState.textLayoutState!.reset();
                     continue;
                 }
             }
 
             const forceNewPassOnLoaded = true;
+            // This ensures that textElement.renderStyle and textElement.layoutStyle are
+            // already instantiated and initialized with theme style values.
             if (!this.initializeGlyphs(textElement, textElementStyle, forceNewPassOnLoaded)) {
                 continue;
             }
@@ -854,6 +857,10 @@ export class TextElementsRenderer {
             }
 
             // Set the current style for the canvas.
+            // This means text canvas has always references (not a copy) to text element styles.
+            // The only exception is multi-anchor placement where layoutStyle need to be
+            // modified and thus textCanvas will using its own copy of textElement.layoutStyle.
+            // See: placePointLabel()
             textCanvas.textRenderStyle = textElement.renderStyle!;
             textCanvas.textLayoutStyle = textElement.layoutStyle!;
 

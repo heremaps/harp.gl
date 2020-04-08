@@ -5,6 +5,7 @@
  */
 
 import { assert } from "@here/harp-utils";
+import { LayoutState } from "./LayoutState";
 import { RenderState } from "./RenderState";
 import { TextElement } from "./TextElement";
 import { TextElementType } from "./TextElementType";
@@ -33,6 +34,11 @@ export class TextElementState {
      * Used during rendering.
      */
     private m_textRenderState?: RenderState;
+    /**
+     * @hidden
+     * Used to store recently used text layout.
+     */
+    private m_textLayoutState?: LayoutState;
 
     constructor(readonly element: TextElement) {}
 
@@ -73,6 +79,9 @@ export class TextElementState {
         if (this.m_textRenderState !== undefined) {
             this.m_textRenderState.reset();
         }
+        if (this.m_textLayoutState !== undefined) {
+            this.m_textLayoutState.reset();
+        }
 
         if (this.iconRenderState) {
             (this.m_iconRenderStates as RenderState).reset();
@@ -91,8 +100,10 @@ export class TextElementState {
      */
     replace(predecessor: TextElementState) {
         this.m_textRenderState = predecessor.m_textRenderState;
+        this.m_textLayoutState = predecessor.m_textLayoutState;
         this.m_iconRenderStates = predecessor.m_iconRenderStates;
         predecessor.m_textRenderState = undefined;
+        predecessor.m_textLayoutState = undefined;
         predecessor.m_iconRenderStates = undefined;
 
         if (this.element.glyphs === undefined) {
@@ -159,6 +170,13 @@ export class TextElementState {
     }
 
     /**
+     * @returns The text layout state.
+     */
+    get textLayoutState(): LayoutState | undefined {
+        return this.m_textLayoutState;
+    }
+
+    /**
      * Returns the icon render state for the case where the text element has only one icon.
      * @returns The icon render state if the text element has a single icon, otherwise undefined.
      */
@@ -210,6 +228,7 @@ export class TextElementState {
      */
     private initialize(viewDistance: number) {
         assert(this.m_textRenderState === undefined);
+        assert(this.m_textLayoutState === undefined);
         assert(this.m_iconRenderStates === undefined);
 
         this.setViewDistance(viewDistance);
@@ -225,6 +244,10 @@ export class TextElementState {
         }
 
         this.m_textRenderState = new RenderState();
+        this.m_textLayoutState = new LayoutState();
+        if (this.element.layoutStyle !== undefined) {
+            this.m_textLayoutState.setFromBase(this.element.layoutStyle);
+        }
 
         if (this.element.type === TextElementType.PoiLabel) {
             this.m_iconRenderStates = new RenderState();
