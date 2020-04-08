@@ -4,10 +4,79 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallExpr } from "../Expr";
+import { CallExpr, Expr, JsonArray, NumberLiteralExpr, StringLiteralExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
+const VALID_ELEMENT_TYPES = ["boolean", "number", "string"];
+
+function checkElementTypes(arg: Expr, array: JsonArray) {
+    if (!(arg instanceof StringLiteralExpr) || !VALID_ELEMENT_TYPES.includes(arg.value)) {
+        throw new Error(
+            `expected "boolean", "number" or "string" instead of '${JSON.stringify(arg)}'`
+        );
+    }
+
+    const ty = arg.value;
+
+    array.forEach((element, index) => {
+        if (typeof element !== ty) {
+            throw new Error(`expected array element at index ${index} to have type '${ty}'`);
+        }
+    });
+}
+
+function checkArrayLength(arg: Expr, array: JsonArray) {
+    if (!(arg instanceof NumberLiteralExpr)) {
+        throw new Error(`missing expected number of elements`);
+    }
+
+    const length = arg.value;
+
+    if (array.length !== length) {
+        throw new Error(`the array must have ${length} element(s)`);
+    }
+}
+
+function checkArray(context: ExprEvaluatorContext, arg: Expr) {
+    const value = context.evaluate(arg);
+    if (!Array.isArray(value)) {
+        throw new Error(`'${value}' is not an array`);
+    }
+    return value;
+}
+
 const operators = {
+    array: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            switch (call.args.length) {
+                case 0:
+                    throw new Error("not enough arguments");
+                case 1:
+                    return checkArray(context, call.args[0]);
+                case 2: {
+                    const array = checkArray(context, call.args[1]);
+                    checkElementTypes(call.args[0], array);
+                    return array;
+                }
+                case 3: {
+                    const array = checkArray(context, call.args[2]);
+                    checkArrayLength(call.args[1], array);
+                    checkElementTypes(call.args[0], array);
+                    return array;
+                }
+                default:
+                    throw new Error("too many arguments");
+            }
+        }
+    },
+    "make-array": {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            if (call.args.length === 0) {
+                throw new Error("not enough arguments");
+            }
+            return [...call.args.map(arg => context.evaluate(arg))];
+        }
+    },
     at: {
         call: (context: ExprEvaluatorContext, call: CallExpr) => {
             const args = call.args;

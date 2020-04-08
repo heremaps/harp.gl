@@ -300,6 +300,51 @@ fallback that is a `string`.
 ["string", value, fallback...]
 ```
 
+## array
+
+Validates the type of the given array value. The `type`
+must be `"boolean"`, `"number"` or `"string"`; length must be an integer.
+An error is generated if `value` is not an `array` with the given type
+and length.
+
+```javascript
+["array", value]
+["array", type, value]
+["array", type, length, value]
+```
+
+for example:
+
+```javascript
+// asserts that 'speeds' is an 'array'
+["array", ["get", "speeds"]]
+
+// asserts that 'speeds' is an 'array' of numbers
+["array", "number", ["get", "speeds"]]
+
+// asserts that 'speeds' is an 'array' of 3 numbers
+["array", "number", 3, ["get", "speeds"]]
+```
+
+## make-array
+
+Creates an array from the given elements.
+
+```javascript
+["make-array", elements...];
+```
+
+for example:
+
+```javascript
+// create the array [1,2,3]
+["make-array", 1, 2, 3]
+
+// create an array with the values of the feature properties
+// 'kind' and 'kind_details'
+["make-array", ["get", "kind"], ["get", "kind_details"]]
+```
+
 ## coalesce
 
 Returns the first `value` that does not evaluates to `null`.
