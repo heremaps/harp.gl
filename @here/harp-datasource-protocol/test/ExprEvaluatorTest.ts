@@ -405,6 +405,113 @@ describe("ExprEvaluator", function() {
         });
     });
 
+    describe("Operator 'array'", function() {
+        it("array of numbers", function() {
+            assert.deepStrictEqual(evaluate(["array", ["literal", [1, 2, 3]]]), [1, 2, 3]);
+            assert.deepStrictEqual(evaluate(["array", "number", ["literal", [1, 2, 3]]]), [
+                1,
+                2,
+                3
+            ]);
+            assert.deepStrictEqual(evaluate(["array", "number", 3, ["literal", [1, 2, 3]]]), [
+                1,
+                2,
+                3
+            ]);
+        });
+
+        it("array of strings", function() {
+            assert.deepStrictEqual(evaluate(["array", ["literal", ["x", "y", "z"]]]), [
+                "x",
+                "y",
+                "z"
+            ]);
+            assert.deepStrictEqual(evaluate(["array", "string", ["literal", ["x", "y", "z"]]]), [
+                "x",
+                "y",
+                "z"
+            ]);
+            assert.deepStrictEqual(evaluate(["array", "string", 3, ["literal", ["x", "y", "z"]]]), [
+                "x",
+                "y",
+                "z"
+            ]);
+        });
+
+        it("array of booleans", function() {
+            assert.deepStrictEqual(evaluate(["array", ["literal", [true, false]]]), [true, false]);
+            assert.deepStrictEqual(evaluate(["array", "boolean", ["literal", [true, false]]]), [
+                true,
+                false
+            ]);
+            assert.deepStrictEqual(evaluate(["array", "boolean", 2, ["literal", [true, false]]]), [
+                true,
+                false
+            ]);
+        });
+
+        it("feature data", function() {
+            const speeds = [100, 120, 140];
+            assert.deepStrictEqual(evaluate(["array", ["get", "speeds"]], { speeds }), speeds);
+        });
+
+        it("array expected type", function() {
+            assert.throws(
+                () => evaluate(["array", "number", ["literal", [1, false]]]),
+                "expected array element at index 1 to have type 'number'"
+            );
+
+            assert.throws(
+                () => evaluate(["array", "string", ["literal", ["x", "y", 123]]]),
+                "expected array element at index 2 to have type 'string'"
+            );
+        });
+
+        it("array expected length", function() {
+            assert.throws(
+                () => evaluate(["array", "number", 2, ["literal", [1, 2, 3]]]),
+                "the array must have 2 element(s)"
+            );
+        });
+
+        it("syntax", function() {
+            assert.throws(() => evaluate(["array"]), "not enough arguments");
+
+            assert.throws(() => evaluate(["array", "object"]), "'object' is not an array");
+
+            assert.throws(
+                () => evaluate(["array", "object", ["literal", ["element"]]]),
+                `expected "boolean", "number" or "string" instead of '"object"'`
+            );
+
+            assert.throws(() => evaluate(["array", "number", 123]), "'123' is not an array");
+
+            assert.throws(
+                () => evaluate(["array", "number", 1, ["literal", [1]], "extra"]),
+                "too many arguments"
+            );
+        });
+    });
+
+    describe("Operator 'make-array'", function() {
+        it("create", function() {
+            assert.deepEqual(evaluate(["make-array", 1, 2, 3]), [1, 2, 3]);
+            assert.deepEqual(evaluate(["make-array", "x", 2, true]), ["x", 2, true]);
+
+            assert.deepEqual(evaluate(["make-array", "x", 2, ["get", "two"]]), ["x", 2, 2]);
+
+            assert.deepEqual(evaluate(["make-array", "x", 2, ["get", "numbers"]]), [
+                "x",
+                2,
+                [1, 2, 3]
+            ]);
+        });
+
+        it("syntax", function() {
+            assert.throws(() => evaluate(["make-array"]), "not enough arguments");
+        });
+    });
+
     describe("Operator 'typeof'", function() {
         it("evaluate", function() {
             assert.strictEqual(evaluate(["typeof", "x"]), "string");
