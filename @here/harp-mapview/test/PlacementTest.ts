@@ -110,7 +110,9 @@ async function createTextCanvas(): Promise<TextCanvas> {
 }
 
 function createTextElementsStates(textElements: TextElement[]): TextElementState[] {
-    return textElements.map(element => new TextElementState(element));
+    const states = textElements.map(element => new TextElementState(element));
+    states.forEach(e => e.update(1));
+    return states;
 }
 
 describe("Placement", function() {
@@ -539,6 +541,8 @@ describe("Placement", function() {
                     }
                 );
                 const state = new TextElementState(textElement);
+                // At least one update required to initialize the state.
+                state.update(1);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(-10, -10).add(screenTopLeft);
@@ -559,7 +563,7 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = textElement.layoutStyle!;
+                let layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Invisible);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
@@ -576,7 +580,7 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = textElement.layoutStyle!;
+                layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
@@ -595,6 +599,8 @@ describe("Placement", function() {
                     }
                 );
                 const state = new TextElementState(textElement);
+                // At least one update required to initialize the state.
+                state.update(1);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(10, -10).add(screenTopRight);
@@ -615,7 +621,7 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = textElement.layoutStyle!;
+                let layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Invisible);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
@@ -632,7 +638,7 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = textElement.layoutStyle!;
+                layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
@@ -651,6 +657,8 @@ describe("Placement", function() {
                     }
                 );
                 const state = new TextElementState(textElement);
+                // At least one update required to initialize the state.
+                state.update(1);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(10, 10).add(screenBottomRight);
@@ -671,7 +679,7 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = textElement.layoutStyle!;
+                let layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Invisible);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
@@ -688,7 +696,7 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = textElement.layoutStyle!;
+                layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
@@ -707,6 +715,8 @@ describe("Placement", function() {
                     }
                 );
                 const state = new TextElementState(textElement);
+                // At least one update required to initialize the state.
+                state.update(1);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(-10, 10).add(screenBottomLeft);
@@ -727,7 +737,7 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = textElement.layoutStyle!;
+                let layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Invisible);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
@@ -744,7 +754,7 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = textElement.layoutStyle!;
+                layout = state.textLayoutState!;
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
@@ -817,8 +827,8 @@ describe("Placement", function() {
                     outPositions[1].x !== inPositions[1].x || outPositions[1].y !== inPositions[1].y
                 ).to.be.true;
                 // As also with different anchor.
-                const layout0 = elements[0].layoutStyle!;
-                const layout1 = elements[1].layoutStyle!;
+                const layout0 = states[0].textLayoutState!;
+                const layout1 = states[1].textLayoutState!;
                 expect(
                     layout0.horizontalAlignment !== layout1.horizontalAlignment ||
                         layout0.horizontalAlignment !== layout1.horizontalAlignment
@@ -864,10 +874,10 @@ describe("Placement", function() {
                     // alternative placement algorithm - they are excluded.
                     // TODO: HARP-6487 This may be due to change when placements will be
                     // parsed from theme.
-                    expect(elements[i].layoutStyle!.horizontalAlignment).to.equal(
+                    expect(states[i].textLayoutState!.horizontalAlignment).to.equal(
                         HorizontalAlignment.Center
                     );
-                    expect(elements[i].layoutStyle!.verticalAlignment).to.equal(
+                    expect(states[i].textLayoutState!.verticalAlignment).to.equal(
                         VerticalAlignment.Center
                     );
                 }
@@ -957,8 +967,8 @@ describe("Placement", function() {
                     outPositions[1].x === inPositions[1].x && outPositions[1].y === inPositions[1].y
                 ).to.be.false;
                 // As also with different anchor.
-                const layout0 = elements[0].layoutStyle!;
-                const layout1 = elements[1].layoutStyle!;
+                const layout0 = states[0].textLayoutState!;
+                const layout1 = states[1].textLayoutState!;
                 expect(
                     layout0.horizontalAlignment === layout1.horizontalAlignment ||
                         layout0.horizontalAlignment === layout1.horizontalAlignment
