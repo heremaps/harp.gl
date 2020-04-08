@@ -327,6 +327,12 @@ export class TextElement {
 
     pathLengthSqr?: number;
 
+    /**
+     * Time to fade in text in milliseconds.
+     * @default [[DEFAULT_FADE_TIME]] 800
+     */
+    textFadeTime?: number;
+
     type: TextElementType;
 
     private m_poiInfo?: PoiInfo;

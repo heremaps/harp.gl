@@ -117,11 +117,11 @@ export class TextElementState {
      * be out of view.
      */
     update(viewDistance: number | undefined) {
-        if (this.initialized) {
-            this.setViewDistance(viewDistance);
-        } else if (viewDistance !== undefined) {
-            this.initialize(viewDistance);
+        if (!this.initialized && viewDistance !== undefined) {
+            this.initializeRenderStates();
         }
+
+        this.setViewDistance(viewDistance);
     }
 
     /**
@@ -130,9 +130,6 @@ export class TextElementState {
      * be out of view.
      */
     setViewDistance(viewDistance: number | undefined) {
-        if (viewDistance === this.m_viewDistance) {
-            return;
-        }
         this.m_viewDistance = viewDistance;
     }
 
@@ -206,28 +203,28 @@ export class TextElementState {
     }
 
     /**
-     * @param viewDistance Current distance of the element to the view center.
+     * Initialize text and icon render states
      */
-    private initialize(viewDistance: number) {
+    private initializeRenderStates() {
         assert(this.m_textRenderState === undefined);
         assert(this.m_iconRenderStates === undefined);
 
-        this.setViewDistance(viewDistance);
-
+        const { textFadeTime } = this.element;
+        const iconFadeTime = this.element.poiInfo?.technique.iconFadeTime;
         if (this.element.type === TextElementType.LineMarker) {
             this.m_iconRenderStates = new Array<RenderState>();
             for (const _point of this.element.points as THREE.Vector3[]) {
                 const iconRenderStates = this.m_iconRenderStates as RenderState[];
-                const renderState = new RenderState();
+                const renderState = new RenderState(iconFadeTime);
                 iconRenderStates.push(renderState);
             }
             return;
         }
 
-        this.m_textRenderState = new RenderState();
+        this.m_textRenderState = new RenderState(textFadeTime);
 
         if (this.element.type === TextElementType.PoiLabel) {
-            this.m_iconRenderStates = new RenderState();
+            this.m_iconRenderStates = new RenderState(iconFadeTime);
         }
     }
 }

@@ -1355,7 +1355,7 @@ export class TextElementsRenderer {
             placementStats.log();
         }
 
-        if (!this.m_options.disableFading && renderParams.fadeAnimationRunning) {
+        if (renderParams.fadeAnimationRunning) {
             this.m_viewUpdateCallback();
         }
     }
