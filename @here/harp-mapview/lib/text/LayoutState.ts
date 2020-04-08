@@ -40,25 +40,41 @@ export class LayoutState {
     private m_vAlign = DefaultTextStyle.DEFAULT_VERTICAL_ALIGNMENT;
 
     /**
-     * Set layout based on theme style defined.
+     * Set layout based on theme style defined and optional text placement.
      *
-     * @param layoutStyle The original theme label style.
+     * @param layoutStyle The basic theme label style.
+     * @param placement The optional new anchor placement.
      */
-    setFromBase(layoutStyle: TextLayoutStyle) {
-        this.m_hAlign = layoutStyle.horizontalAlignment;
-        this.m_vAlign = layoutStyle.verticalAlignment;
-        this.m_state = LayoutUsed.ThemeBased;
+    setPlacement(layoutStyle: TextLayoutStyle, placement?: AnchorPlacement) {
+        if (placement !== undefined) {
+            this.m_hAlign = placement.h;
+            this.m_vAlign = placement.v;
+            this.m_state =
+                placement.h === layoutStyle.horizontalAlignment &&
+                placement.v === layoutStyle.verticalAlignment
+                    ? LayoutUsed.ThemeBased
+                    : LayoutUsed.Alternative;
+        } else {
+            this.m_hAlign = layoutStyle.horizontalAlignment;
+            this.m_vAlign = layoutStyle.verticalAlignment;
+            this.m_state = LayoutUsed.ThemeBased;
+        }
     }
 
     /**
-     * Override label style using alternative anchor placement.
+     * Acquire current placement setup.
      *
-     * @param placement The new anchor placement.
+     * Function returns alternative or base placement depending on layout state.
+     *
+     * @param layoutStyle The label layout style.
+     * @returns The current anchor placement.
      */
-    setFromPlacement(placement: AnchorPlacement) {
-        this.m_hAlign = placement.h;
-        this.m_vAlign = placement.v;
-        this.m_state = LayoutUsed.Alternative;
+    getPlacement(layoutStyle: TextLayoutStyle): AnchorPlacement {
+        if (this.isAlternative()) {
+            return { h: this.m_hAlign, v: this.m_vAlign };
+        } else {
+            return { h: layoutStyle.horizontalAlignment, v: layoutStyle.verticalAlignment };
+        }
     }
 
     /**

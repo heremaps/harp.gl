@@ -243,7 +243,7 @@ export class TextElementState {
         this.m_textRenderState = new RenderState(textFadeTime);
         this.m_textLayoutState = new LayoutState();
         if (this.element.layoutStyle !== undefined) {
-            this.m_textLayoutState.setFromBase(this.element.layoutStyle);
+            this.m_textLayoutState.setPlacement(this.element.layoutStyle);
         }
 
         if (this.element.type === TextElementType.PoiLabel) {
