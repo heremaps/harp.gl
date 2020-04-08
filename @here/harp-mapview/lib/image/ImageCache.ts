@@ -270,8 +270,7 @@ export class ImageCache {
             // well
             if (typeof createImageBitmap === "function") {
                 const options: ImageBitmapOptions = {
-                    premultiplyAlpha: "default",
-                    imageOrientation: "flipY"
+                    premultiplyAlpha: "default"
                 };
 
                 logger.debug(`Creating bitmap image: ${imageItem.url}`);

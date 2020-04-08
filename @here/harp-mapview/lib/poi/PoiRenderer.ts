@@ -603,7 +603,7 @@ export class PoiRenderer {
         minS = xOffset / imageWidth;
         maxS = (xOffset + width) / imageWidth;
 
-        const flipY = true;
+        const flipY = false;
         if (flipY) {
             minT = (imageHeight - yOffset) / imageHeight;
             maxT = (imageHeight - yOffset - height) / imageHeight;
