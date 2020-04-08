@@ -44,6 +44,8 @@ const screenWidth: number = 1024;
 const screenHeight: number = 1024;
 const screenTopLeft = new THREE.Vector2(-screenWidth / 2, -screenHeight / 2);
 const screenTopRight = new THREE.Vector2(screenWidth / 2, -screenHeight / 2);
+const screenCenterLeft = new THREE.Vector2(-screenWidth / 2, 0);
+const screenCenterRight = new THREE.Vector2(screenWidth / 2, 0);
 const screenBottomLeft = new THREE.Vector2(-screenWidth / 2, screenHeight / 2);
 const screenBottomRight = new THREE.Vector2(screenWidth / 2, screenHeight / 2);
 
@@ -109,10 +111,15 @@ async function createTextCanvas(): Promise<TextCanvas> {
     } as any);
 }
 
+function createTextElementState(textElement: TextElement): TextElementState {
+    const state = new TextElementState(textElement);
+    // At least one update required to initialize the state.
+    state.update(1);
+    return state;
+}
+
 function createTextElementsStates(textElements: TextElement[]): TextElementState[] {
-    const states = textElements.map(element => new TextElementState(element));
-    states.forEach(e => e.update(1));
-    return states;
+    return textElements.map(element => createTextElementState(element));
 }
 
 describe("Placement", function() {
@@ -540,9 +547,7 @@ describe("Placement", function() {
                         wrappingMode: WrappingMode.None
                     }
                 );
-                const state = new TextElementState(textElement);
-                // At least one update required to initialize the state.
-                state.update(1);
+                const state = createTextElementState(textElement);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(-10, -10).add(screenTopLeft);
@@ -550,7 +555,7 @@ describe("Placement", function() {
                 // Set the current style for the canvas.
                 textCanvas.textRenderStyle = textElement.renderStyle!;
                 textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                // Run placement without multi-placement support
+                // Run placement without multi-placement support.
                 let result = placePointLabel(
                     state,
                     inPosition,
@@ -568,7 +573,7 @@ describe("Placement", function() {
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
 
-                // Place again with multi-placement support
+                // Place again with multi-placement support.
                 result = placePointLabel(
                     state,
                     inPosition,
@@ -598,9 +603,7 @@ describe("Placement", function() {
                         wrappingMode: WrappingMode.None
                     }
                 );
-                const state = new TextElementState(textElement);
-                // At least one update required to initialize the state.
-                state.update(1);
+                const state = createTextElementState(textElement);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(10, -10).add(screenTopRight);
@@ -608,7 +611,7 @@ describe("Placement", function() {
                 // Set the current style for the canvas.
                 textCanvas.textRenderStyle = textElement.renderStyle!;
                 textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                // Run placement without multi-placement support
+                // Run placement without multi-placement support.
                 let result = placePointLabel(
                     state,
                     inPosition,
@@ -626,7 +629,7 @@ describe("Placement", function() {
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
 
-                // Place again with multi-placement support
+                // Place again with multi-placement support.
                 result = placePointLabel(
                     state,
                     inPosition,
@@ -656,9 +659,7 @@ describe("Placement", function() {
                         wrappingMode: WrappingMode.None
                     }
                 );
-                const state = new TextElementState(textElement);
-                // At least one update required to initialize the state.
-                state.update(1);
+                const state = createTextElementState(textElement);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(10, 10).add(screenBottomRight);
@@ -666,7 +667,7 @@ describe("Placement", function() {
                 // Set the current style for the canvas.
                 textCanvas.textRenderStyle = textElement.renderStyle!;
                 textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                // Run placement without multi-placement support
+                // Run placement without multi-placement support.
                 let result = placePointLabel(
                     state,
                     inPosition,
@@ -684,7 +685,7 @@ describe("Placement", function() {
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
 
-                // Place again with multi-placement support
+                // Place again with multi-placement support.
                 result = placePointLabel(
                     state,
                     inPosition,
@@ -714,9 +715,7 @@ describe("Placement", function() {
                         wrappingMode: WrappingMode.None
                     }
                 );
-                const state = new TextElementState(textElement);
-                // At least one update required to initialize the state.
-                state.update(1);
+                const state = createTextElementState(textElement);
 
                 const outPosition = new THREE.Vector3();
                 const inPosition = new THREE.Vector2(-10, 10).add(screenBottomLeft);
@@ -724,7 +723,7 @@ describe("Placement", function() {
                 // Set the current style for the canvas.
                 textCanvas.textRenderStyle = textElement.renderStyle!;
                 textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                // Run placement without multi-placement support
+                // Run placement without multi-placement support.
                 let result = placePointLabel(
                     state,
                     inPosition,
@@ -742,7 +741,7 @@ describe("Placement", function() {
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
 
-                // Place again with multi-placement support
+                // Place again with multi-placement support.
                 result = placePointLabel(
                     state,
                     inPosition,
@@ -758,6 +757,312 @@ describe("Placement", function() {
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
                 expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+            });
+
+            it("places text moving to the center-left screen side", async function() {
+                const textElement = await createTextElement(
+                    textCanvas,
+                    "Test Horizontal Alternative",
+                    new THREE.Vector3(),
+                    {},
+                    {
+                        horizontalAlignment: HorizontalAlignment.Right,
+                        verticalAlignment: VerticalAlignment.Center,
+                        wrappingMode: WrappingMode.None
+                    }
+                );
+                const state = createTextElementState(textElement);
+
+                const outPosition = new THREE.Vector3();
+                const inPosition = new THREE.Vector2(-10, 0).add(screenCenterLeft);
+
+                // Set the current style for the canvas.
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                // Run placement without multi-anchor support.
+                let result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    false
+                );
+                // Label out of screen and layout unchanged.
+                let layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Invisible);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                state.update(1);
+
+                // Place again with multi-anchor placement support.
+                result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed, layout changed horizontally and vertically to move text
+                // further from screen edge.
+                layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                state.update(1);
+
+                // Cleanup screen for next frame
+                screenCollisions.reset();
+
+                // Move label deeper to left side (half of its width).
+                const textExtent = state.element.bounds!.max.x - state.element.bounds!.min.x;
+                inPosition.x -= textExtent / 2;
+
+                // Place again with multi-anchor placement support.
+                result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed and layout changed horizontally to opposite side.
+                layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+            });
+
+            it("places text moving to the left screen edge with fading", async function() {
+                const textElement = await createTextElement(
+                    textCanvas,
+                    "Test Horizontal Alternative",
+                    new THREE.Vector3(),
+                    {},
+                    {
+                        horizontalAlignment: HorizontalAlignment.Right,
+                        verticalAlignment: VerticalAlignment.Center,
+                        wrappingMode: WrappingMode.None
+                    }
+                );
+                const state = createTextElementState(textElement);
+
+                const outPosition = new THREE.Vector3();
+                const inPosition = new THREE.Vector2(-10, 0).add(screenCenterLeft);
+
+                // Set the current style for the canvas.
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+                // Place labels with multi-anchor placement support.
+                let result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed, layout changed horizontally and vertically to move text
+                // further from screen edge.
+                let layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                // Update its state.
+                state.update(1);
+                expect(state.textRenderState).to.be.not.undefined;
+                // Update its fading.
+                state.textRenderState?.startFadeIn(1);
+                // Labels gets persistent state - requires fading to start.
+                expect(state.visible).to.be.true;
+
+                // Cleanup screen for next frame
+                screenCollisions.reset();
+
+                // Move label deeper to left side (half of its width).
+                const textExtent = state.element.bounds!.max.x - state.element.bounds!.min.x;
+                inPosition.x -= textExtent / 2;
+
+                // Place again with multi-anchor placement support.
+                result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed and layout changed horizontally to opposite side.
+                layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+            });
+
+            it("places text moving to the center-right screen side", async function() {
+                const textElement = await createTextElement(
+                    textCanvas,
+                    "Test Horizontal Alternative",
+                    new THREE.Vector3(),
+                    {},
+                    {
+                        horizontalAlignment: HorizontalAlignment.Left,
+                        verticalAlignment: VerticalAlignment.Center,
+                        wrappingMode: WrappingMode.None
+                    }
+                );
+                const state = createTextElementState(textElement);
+
+                const outPosition = new THREE.Vector3();
+                const inPosition = new THREE.Vector2(10, 0).add(screenCenterRight);
+
+                // Set the current style for the canvas.
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                // Run placement without multi-anchor support.
+                let result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    false
+                );
+                // Label out of screen and layout unchanged.
+                let layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Invisible);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                state.update(1);
+
+                // Place again with multi-anchor placement support.
+                result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed, layout changed horizontally and vertically (clock-wise) to move
+                // text even further from screen edge.
+                layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                state.update(1);
+
+                // Cleanup screen for next frame
+                screenCollisions.reset();
+
+                // Move label deeper to the right side - out of the screen (by half of its width).
+                const textExtent = state.element.bounds!.max.x - state.element.bounds!.min.x;
+                inPosition.x += textExtent / 2;
+
+                // Place again with multi-anchor placement support.
+                result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed and layout changed horizontally to opposite side of base placement.
+                layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+            });
+
+            it("places text moving to the right screen edge with fading", async function() {
+                const textElement = await createTextElement(
+                    textCanvas,
+                    "Test Horizontal Alternative",
+                    new THREE.Vector3(),
+                    {},
+                    {
+                        horizontalAlignment: HorizontalAlignment.Left,
+                        verticalAlignment: VerticalAlignment.Center,
+                        wrappingMode: WrappingMode.None
+                    }
+                );
+                const state = createTextElementState(textElement);
+
+                const outPosition = new THREE.Vector3();
+                const inPosition = new THREE.Vector2(10, 0).add(screenCenterRight);
+
+                // Set the current style for the canvas.
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+                // Place labels with multi-anchor placement support.
+                let result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed, layout changed horizontally and vertically (clock-wise) to move
+                // text even further from screen edge.
+                let layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                // Update its state.
+                state.update(1);
+                expect(state.textRenderState).to.be.not.undefined;
+                // Update its fading.
+                state.textRenderState?.startFadeIn(1);
+                // Labels gets persistent state - requires fading to start.
+                expect(state.visible).to.be.true;
+
+                // Cleanup screen for next frame
+                screenCollisions.reset();
+
+                // Move label deeper to right side - out of the screen (by half of its width).
+                const textExtent = state.element.bounds!.max.x - state.element.bounds!.min.x;
+                inPosition.x += textExtent / 2;
+
+                // Place again with multi-anchor placement support.
+                result = placePointLabel(
+                    state,
+                    inPosition,
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    outPosition,
+                    true
+                );
+                // Label placed and layout changed horizontally to opposite side of base placement.
+                layout = state.textLayoutState!;
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
+                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
             });
         });
 
