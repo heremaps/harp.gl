@@ -35,7 +35,6 @@ export * from "./lib/PickHandler";
 export * from "./lib/poi/Poi";
 export * from "./lib/poi/PoiManager";
 export * from "./lib/poi/PoiTableManager";
-export * from "./lib/RoadPicker";
 export * from "./lib/Statistics";
 export * from "./lib/text/TextElement";
 export * from "./lib/text/TextElementsRenderer";

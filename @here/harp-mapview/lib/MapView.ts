@@ -477,8 +477,7 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     preserveDrawingBuffer?: boolean;
 
     /**
-     * Set to `true` to allow picking of roads. If set to `true`, additional memory is used to
-     * store road data.
+     * @deprecated Not needed anymore, roads can be picked by default.
      */
     enableRoadPicking?: boolean;
 
@@ -940,7 +939,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_pickHandler = new PickHandler(
             this,
             this.m_rteCamera,
-            this.m_options.enableRoadPicking === true,
             this.m_options.enablePickTechnique === true
         );
 

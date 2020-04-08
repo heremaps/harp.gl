@@ -10,8 +10,7 @@ import * as THREE from "three";
 import { OrientedBox3 } from "@here/harp-geoutils";
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
-import { RoadPicker } from "./RoadPicker";
-import { RoadIntersectionData, Tile, TileFeatureData } from "./Tile";
+import { TileFeatureData } from "./Tile";
 
 /**
  * Describes the general type of a picked object.
@@ -104,28 +103,11 @@ const tmpOBB = new OrientedBox3();
  * Handles the picking of scene geometry and roads.
  */
 export class PickHandler {
-    private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
-    private readonly m_roadPicker?: RoadPicker;
-
     constructor(
         readonly mapView: MapView,
         readonly camera: THREE.Camera,
-        public enableRoadPicking = true,
         public enablePickTechnique = false
-    ) {
-        if (enableRoadPicking) {
-            this.m_roadPicker = new RoadPicker(mapView);
-        }
-    }
-
-    /**
-     * The `RoadPicker` class manages picking of roads, which may not be pickable in THREE.js,
-     * since their geometry is generated in the vertex shader. The `RoadPicker` requires that
-     * all [[Tile]]s are registered before they can be picked successfully.
-     */
-    registerTile(tile: Tile): RoadIntersectionData | undefined {
-        return this.m_roadPicker !== undefined ? this.m_roadPicker.registerTile(tile) : undefined;
-    }
+    ) {}
 
     /**
      * Does a raycast on all objects in the scene; useful for picking. This function is Limited to
@@ -219,23 +201,6 @@ export class PickHandler {
 
             pickResult.type = pickObjectType;
             pickResults.push(pickResult);
-        }
-
-        if (this.enableRoadPicking) {
-            const planeIntersectPosition = new THREE.Vector3();
-            const cameraPos = this.mapView.camera.position.clone();
-
-            rayCaster.setFromCamera(worldPos, this.mapView.camera);
-            rayCaster.ray.intersectPlane(this.m_plane, planeIntersectPosition);
-
-            this.mapView.forEachVisibleTile(tile => {
-                this.m_roadPicker!.intersectRoads(
-                    tile,
-                    cameraPos,
-                    planeIntersectPosition,
-                    pickResults
-                );
-            });
         }
 
         pickResults.sort((a: PickResult, b: PickResult) => {
