@@ -59,6 +59,12 @@ export interface InterpolatedProperty {
 
     /**
      * @hidden
+     * true if the result should be stored as vector.
+     */
+    _vectorInterpolation?: boolean;
+
+    /**
+     * @hidden
      * [[StringEncodedNumeral]] type needed to interpret interpolated values back to numbers.
      */
     _stringEncodedNumeralType?: StringEncodedNumeralType;
@@ -147,7 +153,7 @@ function getInterpolatedMetric(
     property: InterpolatedProperty,
     level: number,
     pixelToMeters: number
-): number {
+): number | number[] | THREE.Vector2 | THREE.Vector3 | THREE.Vector4 {
     const nChannels = property.values.length / property.zoomLevels.length;
     const interpolant = new interpolants[property.interpolationMode](
         property.zoomLevels,
@@ -163,7 +169,17 @@ function getInterpolatedMetric(
     interpolant.evaluate(level);
 
     if (property._stringEncodedNumeralDynamicMask === undefined) {
-        return interpolant.resultBuffer[0];
+        if (property._vectorInterpolation) {
+            if (nChannels === 2) {
+                return new THREE.Vector2().fromArray(interpolant.resultBuffer);
+            } else if (nChannels === 3) {
+                return new THREE.Vector3().fromArray(interpolant.resultBuffer);
+            } else if (nChannels === 4) {
+                return new THREE.Vector4().fromArray(interpolant.resultBuffer);
+            }
+            throw new Error("invalid number of components");
+        }
+        return nChannels === 1 ? interpolant.resultBuffer[0] : [...interpolant.resultBuffer];
     } else {
         const maskInterpolant = new interpolants[property.interpolationMode](
             property.zoomLevels,
@@ -234,6 +250,31 @@ export function createInterpolatedProperty(
             : InterpolationMode.Discrete;
 
     const zoomLevels = new Float32Array(prop.zoomLevels);
+
+    let vectorComponents: number | undefined;
+    if (prop.values.every(v => v instanceof THREE.Vector2)) {
+        vectorComponents = 2;
+    } else if (prop.values.every(v => v instanceof THREE.Vector3)) {
+        vectorComponents = 3;
+    } else if (prop.values.every(v => v instanceof THREE.Vector4)) {
+        vectorComponents = 4;
+    }
+
+    if (vectorComponents !== undefined) {
+        const values = new Float32Array(prop.values.length * vectorComponents);
+
+        (prop.values as Array<THREE.Vector2 | THREE.Vector3 | THREE.Vector4>).forEach((v, i) =>
+            v.toArray(values, i * vectorComponents!)
+        );
+
+        return {
+            interpolationMode,
+            zoomLevels,
+            values,
+            _vectorInterpolation: true,
+            exponent: prop.exponent
+        };
+    }
 
     const firstValue = prop.values[0];
     switch (typeof firstValue) {
