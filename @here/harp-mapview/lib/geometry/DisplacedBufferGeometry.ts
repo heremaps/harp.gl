@@ -22,13 +22,13 @@ export interface DisplacementRange {
 
 /**
  * @internal
- * Expands a box so that any point within the original box, displaced by any amount in a given
- * range, is contained by the resulting box.
- * @param box The original box to expand.
- * @param displacementRange The range of possible displacement values for any point within the box.
+ * Displace a box in a given direction by a specified range. The original box min and max vertices
+ * are translated as a result by displacementRange.min and displacementRange.max respectively.
+ * @param box The original box to displace.
+ * @param displacementRange The minimum and maximum displacement values.
  * @param displacementDir Direction in which the displacement will be applied.
  */
-export function expandBoxByDisplacementRange(
+export function displaceBox(
     box: THREE.Box3,
     displacementRange: DisplacementRange,
     displacementDir: THREE.Vector3
@@ -119,7 +119,7 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
         } else {
             this.boundingBox.copy(origBBox);
         }
-        expandBoxByDisplacementRange(
+        displaceBox(
             this.boundingBox,
             this.displacementRange,
             tmpV1.fromBufferAttribute(this.attributes.normal as THREE.BufferAttribute, 0)

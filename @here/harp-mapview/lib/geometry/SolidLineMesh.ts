@@ -8,17 +8,14 @@ import { OrientedBox3 } from "@here/harp-geoutils";
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
-import {
-    DisplacedBufferGeometry,
-    DisplacementRange,
-    expandBoxByDisplacementRange
-} from "./DisplacedBufferGeometry";
+import { displaceBox, DisplacedBufferGeometry, DisplacementRange } from "./DisplacedBufferGeometry";
 
 const tmpSphere = new THREE.Sphere();
 const tmpInverseMatrix = new THREE.Matrix4();
 const tmpRay = new THREE.Ray();
 const tmpLine1 = new THREE.Line3();
 const tmpBox = new THREE.Box3();
+const tmpOBB = new OrientedBox3();
 const tmpPlane = new THREE.Plane();
 const tmpV1 = new THREE.Vector3();
 const tmpV2 = new THREE.Vector3();
@@ -70,16 +67,22 @@ function computeFeatureBoundingSphere(
         bbox.expandByPoint(vertex.fromBufferAttribute(pos, indices[i + VERTEX_STRIDE]));
     }
 
-    const normal = tmpV2;
     if (displacementRange) {
         // If geometry is displaced, expand the bounding box to cover the whole displacement range,
         // and return the sphere bounding the box. This is a coarse estimation, but avoids having
         // to displace all vertices.
-        return expandBoxByDisplacementRange(
-            bbox,
-            displacementRange,
-            normal.fromBufferAttribute(geometry.attributes.normal as THREE.BufferAttribute, 0)
-        ).getBoundingSphere(sphere);
+        // All normals in the geometry are assumed to be the same or close enough so that any of
+        // them can be used as displacement direction. For sphere projection, the surface normals
+        // within a tile are approximately the same from level 4 onwards. Here are some examples of
+        // the maximum dot product between normals in different tiles:
+        // TILE: (6,9,4): 0.9806892129880023
+        // TILE: (12,17,5): 0.9946739445457075
+        // TILE: (25,34,6): 0.9986326302953471
+        // TILE: (50,68,7): 0.9996583822992287
+        // TILE: (1620,2199,12): 0.9999996706085572
+        const normal = tmpV2;
+        normal.fromBufferAttribute(geometry.attributes.normal as THREE.BufferAttribute, 0);
+        return displaceBox(bbox, displacementRange, normal).getBoundingSphere(sphere);
     }
 
     // If geometry is not displaced, the bounding sphere is placed in the center of the computed
@@ -99,7 +102,7 @@ function computeFeatureBoundingSphere(
 
 /**
  * Finds the intersection of a ray with a extruded line.
- * @param ray Intersection ray in object local space.
+ * @param ray Intersection ray in object's local space.
  * @param line The centerline.
  * @param vExtrusion Line extrusion vector.
  * @param normal Extrusion plane normal.
@@ -113,16 +116,13 @@ function intersectExtrudedLine(
     normal: THREE.Vector3,
     hWidth: number
 ): number {
-    const matrix = new THREE.Matrix4().makeBasis(
-        line.delta(new THREE.Vector3()).normalize(),
-        vExtrusion,
-        normal
-    );
-    const obb = new OrientedBox3(
-        line.getCenter(tmpV4),
-        matrix,
-        new THREE.Vector3(line.distance() / 2, hWidth, hWidth)
-    );
+    const obb = tmpOBB;
+    line.getCenter(obb.position);
+    line.delta(obb.xAxis).normalize();
+    obb.yAxis.copy(vExtrusion);
+    obb.zAxis.copy(normal);
+    obb.extents.set(line.distance() / 2, hWidth, hWidth);
+
     if (obb.contains(ray.origin)) {
         return 0;
     }
@@ -131,7 +131,7 @@ function intersectExtrudedLine(
 
 /**
  * Finds the intersection of a ray with the closest end cap of a extruded line.
- * @param ray Intersection ray in object local space.
+ * @param ray Intersection ray in object's local space.
  * @param line The centerline.
  * @param hWidth Extrusion half width.
  * @returns Distance of the end cap intersection to the ray origin.
@@ -154,14 +154,14 @@ function intersectClosestEndCap(ray: THREE.Ray, line: THREE.Line3, hWidth: numbe
 
 /**
  * Intersects line
- * @param ray Intersection ray in object local space.
+ * @param ray Intersection ray in object's local space.
  * @param line The line to intersect.
  * @param vExtrusion Line extrusion vector.
  * @param hWidth The line's extrusion half width.
  * @param hWidthSq The line's extrusion half width squared.
  * @param plane The extrusion plane.
  * @param interPlane The intersection of the ray with the extrusion plane.
- * @param interLine The ray intersetion with the extruded line.
+ * @param outInterLine The ray intersetion with the extruded line.
  * @returns true if ray intersects the extruded line, false otherwise.
  */
 function intersectLine(
@@ -172,9 +172,9 @@ function intersectLine(
     hWidthSq: number,
     plane: THREE.Plane,
     interPlane: THREE.Vector3,
-    interLine: THREE.Vector3
+    outInterLine: THREE.Vector3
 ): boolean {
-    if (interPlane.equals(tmpRay.origin) && tmpRay.direction.dot(plane.normal) === 0) {
+    if (interPlane.equals(ray.origin) && ray.direction.dot(plane.normal) === 0) {
         // Corner case: ray is coplanar to extruded line, find distance to extruded line sides
         // and end caps.
         const extrLineT = intersectExtrudedLine(ray, line, vExtrusion, plane.normal, hWidth);
@@ -184,7 +184,7 @@ function intersectLine(
         if (minT === Infinity) {
             return false;
         }
-        ray.at(minT, interLine);
+        ray.at(minT, outInterLine);
         return true;
     }
 
@@ -195,7 +195,7 @@ function intersectLine(
     if (distSq > hWidthSq) {
         return false;
     }
-    interLine.copy(interPlane);
+    outInterLine.copy(interPlane);
     return true;
 }
 
@@ -203,27 +203,26 @@ function intersectLine(
  * Finds the intersections of a ray with a partition of a solid line mesh representing a feature.
  * @param mesh The mesh whose intersections will be found.
  * @param raycaster Contains the intersection ray.
- * @param localRay Same ray as raycaster.ray but in object local space.
- * @param intersects Array that will contain all intersections found between ray and feature.
+ * @param localRay Same ray as raycaster.ray but in object's local space.
  * @param halfWidth The line's extrusion half width.
  * @param lHalfWidth The line's extrusion half width in mesh local space.
  * @param lHalfWidthSq The line's extrusion half width squared in mesh local space.
  * @param beginIdx The index where the feature starts in the mesh geometry's indices attribute.
  * @param endIdx The index where the feature end in the mesh geometry's indices attribute.
  * @param bSphere The feature bounding sphere.
- * @returns feature
+ * @param intersections Array where all intersections found between ray and feature will be pushed.
  */
 function intersectFeature(
     mesh: THREE.Mesh,
     raycaster: THREE.Raycaster,
     localRay: THREE.Ray,
-    intersects: THREE.Intersection[],
     halfWidth: number,
     lHalfWidth: number,
     lHalfWidthSq: number,
     beginIdx: number,
     endIdx: number,
-    bSphere: THREE.Sphere
+    bSphere: THREE.Sphere,
+    intersections: THREE.Intersection[]
 ): void {
     const vExt = tmpV1;
     const plane = tmpPlane;
@@ -285,7 +284,7 @@ function intersectFeature(
             continue;
         }
 
-        intersects.push({
+        intersections.push({
             distance,
             point: interLineWorld.clone(),
             index: i,
@@ -295,16 +294,17 @@ function intersectFeature(
 }
 
 const singleFeatureStart = [0];
+const MAX_SCALE_RATIO_DIFF = 1e-2;
 
 /**
  * Finds the intersections of a ray with a group within a solid line mesh.
  * @param mesh The mesh whose intersections will be found.
  * @param material The material used by the group inside the mesh.
  * @param raycaster  Contains the intersection ray.
- * @param localRay Same ray as raycaster.ray but in object local space.
- * @param intersects  Array that will contain all intersections found between ray and feature.
+ * @param localRay Same ray as raycaster.ray but in object's local space.
  * @param firstFeatureIdx Index of the first feature in the group.
  * @param groupEndIdx Index of the last vertex in the group.
+ * @param intersections  Array where all intersections found between ray and group will be pushed.
  * @returns The next feature index after the group.
  */
 function intersectGroup(
@@ -312,16 +312,21 @@ function intersectGroup(
     material: THREE.Material,
     raycaster: THREE.Raycaster,
     localRay: THREE.Ray,
-    intersects: THREE.Intersection[],
     firstFeatureIdx: number,
-    groupEndIdx: number
+    groupEndIdx: number,
+    intersections: THREE.Intersection[]
 ): number {
     const bVolumes = mesh.userData.feature.boundingVolumes;
+    assert(mesh.geometry instanceof THREE.BufferGeometry, "Unsupported geometry type.");
     const geometry = mesh.geometry as THREE.BufferGeometry;
     assert(isSolidLineMaterial(material), "Unsupported material type");
     const solidLineMaterial = material as SolidLineMaterial;
 
     const halfWidth = (solidLineMaterial.lineWidth + solidLineMaterial.outlineWidth) / 2;
+    // Assumption: scaling is uniform or close enough to use a local width independent of direction.
+    assert(Math.abs(1 - mesh.scale.x / mesh.scale.y) < MAX_SCALE_RATIO_DIFF);
+    assert(Math.abs(1 - mesh.scale.x / mesh.scale.z) < MAX_SCALE_RATIO_DIFF);
+    assert(Math.abs(1 - mesh.scale.y / mesh.scale.z) < MAX_SCALE_RATIO_DIFF);
     const localHalfWidth = halfWidth / ((mesh.scale.x + mesh.scale.y + mesh.scale.z) / 3);
     const localHalfWidthSq = localHalfWidth * localHalfWidth;
     const featureStarts = mesh.userData.feature.starts ?? singleFeatureStart;
@@ -340,13 +345,13 @@ function intersectGroup(
             mesh,
             raycaster,
             localRay,
-            intersects,
             halfWidth,
             localHalfWidth,
             localHalfWidthSq,
             beginIdx,
             endIdx,
-            bVolumes[bVolumeIdx]
+            bVolumes[bVolumeIdx],
+            intersections
         );
         beginIdx = endIdx;
     }
@@ -364,12 +369,12 @@ export class SolidLineMesh extends THREE.Mesh {
      * the shaders (see [[SolidLineMaterial]]).
      * @param mesh The mesh whose intersections will be found.
      * @param raycaster Contains the intersection ray.
-     * @param intersects Array that will contain all intersections found between ray and mesh.
+     * @param intersections Array where all intersections found between ray and mesh will be pushed.
      */
     static raycast(
         mesh: THREE.Mesh,
         raycaster: THREE.Raycaster,
-        intersects: THREE.Intersection[]
+        intersections: THREE.Intersection[]
     ): void {
         assert(mesh.geometry instanceof THREE.BufferGeometry, "Unsupported geometry type");
         const geometry = mesh.geometry as THREE.BufferGeometry;
@@ -398,39 +403,22 @@ export class SolidLineMesh extends THREE.Mesh {
                     material,
                     raycaster,
                     localRay,
-                    intersects,
                     nextFeatureIdx,
-                    groupEndIdx
+                    groupEndIdx,
+                    intersections
                 );
             }
         } else {
-            intersectGroup(mesh, mesh.material, raycaster, localRay, intersects, 0, indices.length);
+            intersectGroup(
+                mesh,
+                mesh.material,
+                raycaster,
+                localRay,
+                0,
+                indices.length,
+                intersections
+            );
         }
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
-    get geometry(): THREE.BufferGeometry {
-        return super.geometry as THREE.BufferGeometry;
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
-    set geometry(geometry: THREE.BufferGeometry) {
-        super.geometry = geometry;
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
-    get material(): THREE.Material | THREE.Material[] {
-        return super.material;
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
-    set material(material: THREE.Material | THREE.Material[]) {
-        super.material = material;
-        assert(isSolidLineMaterial(material), "Unsupported material type");
     }
 
     /**

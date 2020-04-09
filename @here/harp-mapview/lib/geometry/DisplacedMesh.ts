@@ -57,8 +57,7 @@ export class DisplacedMesh extends THREE.Mesh {
         return DisplacedMesh.displacedPositions;
     }
 
-    m_displacedGeometry?: DisplacedBufferGeometry;
-    private m_displacementMaterial?: DisplacementFeature;
+    displacedGeometry?: DisplacedBufferGeometry;
 
     /**
      * Creates an instance of displaced mesh.
@@ -83,65 +82,43 @@ export class DisplacedMesh extends THREE.Mesh {
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
     // tslint:disable-next-line: explicit-override
-    get geometry(): THREE.BufferGeometry {
-        return super.geometry as THREE.BufferGeometry;
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
-    set geometry(geometry: THREE.BufferGeometry) {
-        super.geometry = geometry;
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
-    get material(): THREE.Material | THREE.Material[] {
-        return super.material;
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
-    set material(material: THREE.Material | THREE.Material[]) {
-        super.material = material;
-        const firstMaterial = this.firstMaterial;
-        if (isDisplacementMaterial(firstMaterial)) {
-            this.m_displacementMaterial = firstMaterial;
-        }
-    }
-
-    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
     raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
         // All materials in the object are expected to have the same displacement map.
-        const displacementMap = this.m_displacementMaterial!.displacementMap;
+        const firstMaterial = this.firstMaterial;
 
-        // Use default raycasting implementation if there's no displacement map or its type is not
-        // supported.
-        if (!isDataTextureMap(displacementMap)) {
+        // Use default raycasting implementation if there's no displacement material or if there's
+        // no displacement map or its type is not supported.
+        if (
+            !isDisplacementMaterial(firstMaterial) ||
+            !isDataTextureMap(firstMaterial.displacementMap)
+        ) {
             super.raycast(raycaster, intersects);
             return;
         }
+        const displacementMap = firstMaterial.displacementMap;
         const displacementRange = this.m_getDisplacementRange();
 
-        if (this.m_displacedGeometry) {
-            this.m_displacedGeometry.reset(this.geometry, displacementMap, displacementRange);
+        assert(this.geometry instanceof THREE.BufferGeometry, "Unsupported geometry type.");
+        const geometry = this.geometry as THREE.BufferGeometry;
+        if (this.displacedGeometry) {
+            this.displacedGeometry.reset(geometry, displacementMap, displacementRange);
         } else {
-            this.m_displacedGeometry = new DisplacedBufferGeometry(
-                this.geometry,
+            this.displacedGeometry = new DisplacedBufferGeometry(
+                geometry,
                 displacementMap,
                 displacementRange,
-                DisplacedMesh.getDisplacedPositionAttribute(this.geometry, displacementMap)
+                DisplacedMesh.getDisplacedPositionAttribute(geometry, displacementMap)
             );
         }
 
         // Replace the original geometry by the displaced one only during the intersection test.
-        this.geometry = this.m_displacedGeometry;
+        this.geometry = this.displacedGeometry;
         if (this.m_raycastStrategy) {
             this.m_raycastStrategy(this, raycaster, intersects);
         } else {
             super.raycast(raycaster, intersects);
         }
-        super.geometry = this.m_displacedGeometry.originalGeometry;
+        super.geometry = this.displacedGeometry.originalGeometry;
     }
 
     private get firstMaterial(): THREE.Material {

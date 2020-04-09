@@ -150,7 +150,9 @@ export interface Geometry {
     uuid?: string;
 
     /**
-     * Optional list of feature start indices. The indices point into the index attribute.
+     * Optional sorted list of feature start indices. The indices point into the index attribute.
+     * Feature i starts at featureStarts[i] and ends at featureStarts[i+1]-1, except for the last
+     * feature, which ends at index[index.length-1].
      */
     featureStarts?: number[];
 

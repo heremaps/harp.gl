@@ -424,9 +424,9 @@ describe("SolidLineMesh", function() {
 
     it("raycast returns intersection on hit with transformed mesh", function() {
         // prettier-ignore
-        const worldToLocal = new THREE.Matrix4().set(1, 0, 0, 4,
+        const worldToLocal = new THREE.Matrix4().set(2, 0, 0, 4,
                                                      0, 2, 0, 5,
-                                                     0, 0, 3, 6,
+                                                     0, 0, 2, 6,
                                                      0, 0, 0, 1);
         const vertex1 = new THREE.Vector3(0, 0, 0).applyMatrix4(worldToLocal);
         const vertex2 = new THREE.Vector3(1, 0, 0).applyMatrix4(worldToLocal);
@@ -499,7 +499,7 @@ describe("SolidLineMesh", function() {
         meshBuilder.geometryBuilder.withUv([0, 0, 0, 0]).withNormal([0, 0, 1, 0, 0, 1]);
         const mesh = meshBuilder.build();
         mesh.geometry = new DisplacedBufferGeometry(
-            mesh.geometry,
+            mesh.geometry as THREE.BufferGeometry,
             new THREE.DataTexture(new Float32Array([0]), 1, 1),
             { min: 10, max: 12 }
         );
