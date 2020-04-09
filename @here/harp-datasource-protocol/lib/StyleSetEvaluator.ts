@@ -17,6 +17,7 @@ import {
     HasAttributeExpr,
     isJsonExpr,
     JsonExpr,
+    LiteralExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -26,7 +27,6 @@ import {
     VarExpr
 } from "./Expr";
 import { ExprPool } from "./ExprPool";
-import {} from "./InterpolatedProperty";
 import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
@@ -958,10 +958,20 @@ export function makeDecodedTechnique(technique: IndexedTechnique): IndexedTechni
         if (!technique.hasOwnProperty(attrName)) {
             continue;
         }
+
         let attrValue: any = (technique as any)[attrName];
+
+        if (
+            typeof attrValue === "object" &&
+            (attrValue.isVector2 || attrValue.isVector3 || attrValue.isVector4)
+        ) {
+            attrValue = LiteralExpr.fromValue(attrValue);
+        }
+
         if (Expr.isExpr(attrValue)) {
             attrValue = attrValue.toJSON();
         }
+
         (result as any)[attrName] = attrValue;
     }
     return (result as any) as IndexedTechnique;

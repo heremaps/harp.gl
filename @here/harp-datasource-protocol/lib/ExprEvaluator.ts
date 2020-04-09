@@ -36,6 +36,7 @@ import { MiscOperators } from "./operators/MiscOperators";
 import { ObjectOperators } from "./operators/ObjectOperators";
 import { StringOperators } from "./operators/StringOperators";
 import { TypeOperators } from "./operators/TypeOperators";
+import { VectorOperators } from "./operators/VectorOperators";
 
 export interface OperatorDescriptor {
     /**
@@ -234,3 +235,4 @@ ExprEvaluator.defineOperators(InterpolationOperators);
 ExprEvaluator.defineOperators(ObjectOperators);
 ExprEvaluator.defineOperators(FeatureOperators);
 ExprEvaluator.defineOperators(MapOperators);
+ExprEvaluator.defineOperators(VectorOperators);

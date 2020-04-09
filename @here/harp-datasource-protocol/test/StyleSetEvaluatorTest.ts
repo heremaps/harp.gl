@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { MapEnv, ValueMap } from "../lib/Expr";
+import { Env, MapEnv, ValueMap } from "../lib/Expr";
 import {
     InterpolatedPropertyDefinition,
     interpolatedPropertyDefinitionToJsonExpr
@@ -16,6 +16,8 @@ import {
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
 import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { Definitions, StyleDeclaration, StyleSet } from "../lib/Theme";
+
+import * as THREE from "three";
 
 describe("StyleSetEvaluator", function() {
     const basicStyleSetAutoOrder: StyleSet = [
@@ -594,5 +596,41 @@ describe("StyleSetEvaluator", function() {
                 }
             ])
         );
+    });
+
+    it("serialization of vector properties", () => {
+        const sse = new StyleSetEvaluator([
+            {
+                when: ["boolean", true],
+                technique: "shader",
+                attr: {
+                    offset1: ["make-vector", 10, 20],
+                    offset2: ["make-vector", 10, 20, 30],
+                    offset3: ["make-vector", 10, 20, 30, 40]
+                }
+            } as any
+        ]);
+
+        const matchingTechnique = sse.getMatchingTechniques(new Env())[0] as any;
+
+        assert.isTrue(
+            (matchingTechnique.offset1 as THREE.Vector2).equals(new THREE.Vector2(10, 20))
+        );
+
+        assert.isTrue(
+            (matchingTechnique.offset1 as THREE.Vector3).equals(new THREE.Vector3(10, 20, 30))
+        );
+
+        assert.isTrue(
+            (matchingTechnique.offset1 as THREE.Vector4).equals(new THREE.Vector4(10, 20, 30, 40))
+        );
+
+        const decodedTechniques = sse.decodedTechniques;
+
+        const decodedTechnique = decodedTechniques[0] as any;
+
+        assert.deepStrictEqual(decodedTechnique.offset1, ["make-vector", 10, 20]);
+        assert.deepStrictEqual(decodedTechnique.offset2, ["make-vector", 10, 20, 30]);
+        assert.deepStrictEqual(decodedTechnique.offset3, ["make-vector", 10, 20, 30, 40]);
     });
 });

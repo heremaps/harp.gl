@@ -165,6 +165,33 @@ returns the value of the first `fallback` that is a number.
 ["to-number", value, fallback...]
 ```
 
+## to-vector2
+
+Converts the value to "vector2", if the value cannot be converted to a vector2
+returns the value of the first `fallback` that is a vector2.
+
+```javascript
+["to-vector2", value, fallback...]
+```
+
+## to-vector3
+
+Converts the value to "vector3", if the value cannot be converted to a vector3
+returns the value of the first `fallback` that is a vector3.
+
+```javascript
+["to-vector3", value, fallback...]
+```
+
+## to-vector4
+
+Converts the value to "vector4", if the value cannot be converted to a vector4
+returns the value of the first `fallback` that is a vector4.
+
+```javascript
+["to-vector4", value, fallback...]
+```
+
 ## literal
 
 Returns the given object or array.
@@ -300,6 +327,33 @@ fallback that is a `string`.
 ["string", value, fallback...]
 ```
 
+## vector2
+
+Returns `value` if it is `vector2`; otherwise, returns the first
+fallback that is a `vector2`.
+
+```javascript
+["vector2", value, fallback...]
+```
+
+## vector3
+
+Returns `value` if it is `vector3`; otherwise, returns the first
+fallback that is a `vector3`.
+
+```javascript
+["vector3", value, fallback...]
+```
+
+## vector4
+
+Returns `value` if it is `vector4`; otherwise, returns the first
+fallback that is a `vector4`.
+
+```javascript
+["vector4", value, fallback...]
+```
+
 ## array
 
 Validates the type of the given array value. The `type`
@@ -343,6 +397,23 @@ for example:
 // create an array with the values of the feature properties
 // 'kind' and 'kind_details'
 ["make-array", ["get", "kind"], ["get", "kind_details"]]
+```
+
+## make-vector
+
+Creates a vector 2/3/4 from the given components.
+
+```javascript
+["make-vector", x, y];
+["make-vector", x, y, z];
+["make-vector", x, y, z, w];
+```
+
+for example:
+
+```javascript
+// create a vector2 containing 10 and the value of the feature "y".
+["make-vector", 10, ["get", "y"]]
 ```
 
 ## coalesce
