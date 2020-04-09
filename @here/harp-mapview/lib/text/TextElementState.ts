@@ -5,7 +5,7 @@
  */
 
 import { assert } from "@here/harp-utils";
-import { LayoutState } from "./LayoutState";
+import { AnchorPlacement, LayoutState } from "./LayoutState";
 import { RenderState } from "./RenderState";
 import { TextElement } from "./TextElement";
 import { TextElementType } from "./TextElementType";
@@ -73,6 +73,66 @@ export class TextElementState {
     }
 
     /**
+     * Return the last text placement used.
+     *
+     * If the text wasn't yet rendered or have no alternative placements it will fallback to
+     * style/theme based placement.
+     *
+     * @returns [[AnchorPlacement]] object containing vertical/horizontal align.
+     */
+    get textPlacement(): AnchorPlacement {
+        const themeLayout = this.element.layoutStyle!;
+        const stateLayout = this.m_textLayoutState;
+        // Would be good to test for persistence when getting state layout, but with this
+        // most of the isolated placement unit tests will fail.
+        const lastPlacement =
+            stateLayout !== undefined
+                ? stateLayout.textPlacement
+                : { h: themeLayout.horizontalAlignment, v: themeLayout.verticalAlignment };
+        return lastPlacement;
+    }
+
+    /**
+     * Set text placement to be used.
+     *
+     * This may be base text anchor placement as defined by style or alternative placement.
+     *
+     * @param placement The text placemenet to be used.
+     */
+    set textPlacement(placement: AnchorPlacement) {
+        if (this.m_textLayoutState === undefined && this.isBaseTextPlacement(placement) === true) {
+            // Do nothing, layout state is not required cause we leave the base placement.
+            return;
+        }
+        if (this.m_textLayoutState === undefined) {
+            // State is not yet defined, but we have placement to store, either alternative or
+            // not yet specified in the context of layoutStyle.
+            this.m_textLayoutState = new LayoutState(placement);
+        } else {
+            this.m_textLayoutState.textPlacement = placement;
+        }
+    }
+
+    /**
+     * Returns information if the text placement provided is the base one defined in style (theme).
+     *
+     * @param placement The text placement to check.
+     * @returns [[true]] if the placement provided is exactly the same as in theme base layout,
+     * [[false]] if it differs from the basic layout provided in style or
+     * [[undefined]] if the layout style is not yet defined so it is hard to say.
+     */
+    isBaseTextPlacement(placement: AnchorPlacement): boolean | undefined {
+        const themeLayout = this.element.layoutStyle;
+        if (themeLayout !== undefined) {
+            return (
+                placement.h === themeLayout.horizontalAlignment &&
+                placement.v === themeLayout.verticalAlignment
+            );
+        }
+        return undefined;
+    }
+
+    /**
      * Resets the element to an initialized state.
      */
     reset() {
@@ -80,7 +140,11 @@ export class TextElementState {
             this.m_textRenderState.reset();
         }
         if (this.m_textLayoutState !== undefined) {
-            this.m_textLayoutState.reset();
+            if (this.element.layoutStyle !== undefined) {
+                this.m_textLayoutState.reset(this.element.layoutStyle);
+            } else {
+                this.m_textLayoutState = undefined;
+            }
         }
 
         if (this.iconRenderState) {
@@ -167,13 +231,6 @@ export class TextElementState {
     }
 
     /**
-     * @returns The text layout state.
-     */
-    get textLayoutState(): LayoutState | undefined {
-        return this.m_textLayoutState;
-    }
-
-    /**
      * Returns the icon render state for the case where the text element has only one icon.
      * @returns The icon render state if the text element has a single icon, otherwise undefined.
      */
@@ -241,10 +298,6 @@ export class TextElementState {
         }
 
         this.m_textRenderState = new RenderState(textFadeTime);
-        this.m_textLayoutState = new LayoutState();
-        if (this.element.layoutStyle !== undefined) {
-            this.m_textLayoutState.setPlacement(this.element.layoutStyle);
-        }
 
         if (this.element.type === TextElementType.PoiLabel) {
             this.m_iconRenderStates = new RenderState(iconFadeTime);

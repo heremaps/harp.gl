@@ -568,10 +568,10 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Invisible);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Right);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Below);
 
                 // Place again with multi-placement support.
                 result = placePointLabel(
@@ -585,10 +585,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Left);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Above);
             });
 
             it("places text in top-right screen corner", async function() {
@@ -624,10 +624,10 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Invisible);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Left);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Below);
 
                 // Place again with multi-placement support.
                 result = placePointLabel(
@@ -641,10 +641,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Right);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Above);
             });
 
             it("places text in bottom-right screen corner", async function() {
@@ -680,10 +680,10 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Invisible);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Left);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Above);
 
                 // Place again with multi-placement support.
                 result = placePointLabel(
@@ -697,10 +697,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Right);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Below);
             });
 
             it("places text in bottom-left screen corner", async function() {
@@ -736,10 +736,10 @@ describe("Placement", function() {
                 );
 
                 // Label out of screen and layout unchanged.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Invisible);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Right);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Above);
 
                 // Place again with multi-placement support.
                 result = placePointLabel(
@@ -753,10 +753,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed diagonally.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Left);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Below);
             });
 
             it("places text moving to the center-left screen side", async function() {
@@ -791,10 +791,10 @@ describe("Placement", function() {
                     false
                 );
                 // Label out of screen and layout unchanged.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Invisible);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Right);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Center);
                 state.update(1);
 
                 // Place again with multi-anchor placement support.
@@ -810,10 +810,10 @@ describe("Placement", function() {
                 );
                 // Label placed, layout changed horizontally and vertically to move text
                 // further from screen edge.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Center);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Above);
                 state.update(1);
 
                 // Cleanup screen for next frame
@@ -835,10 +835,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed horizontally to opposite side.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Left);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Center);
             });
 
             it("places text moving to the left screen edge with fading", async function() {
@@ -875,10 +875,10 @@ describe("Placement", function() {
                 );
                 // Label placed, layout changed horizontally and vertically to move text
                 // further from screen edge.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Above);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Center);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Above);
                 // Update its state.
                 state.update(1);
                 expect(state.textRenderState).to.be.not.undefined;
@@ -906,10 +906,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed horizontally to opposite side.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Left);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Center);
             });
 
             it("places text moving to the center-right screen side", async function() {
@@ -944,10 +944,10 @@ describe("Placement", function() {
                     false
                 );
                 // Label out of screen and layout unchanged.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Invisible);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Left);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Left);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Center);
                 state.update(1);
 
                 // Place again with multi-anchor placement support.
@@ -963,10 +963,10 @@ describe("Placement", function() {
                 );
                 // Label placed, layout changed horizontally and vertically (clock-wise) to move
                 // text even further from screen edge.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Center);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Below);
                 state.update(1);
 
                 // Cleanup screen for next frame
@@ -988,10 +988,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed horizontally to opposite side of base placement.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Right);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Center);
             });
 
             it("places text moving to the right screen edge with fading", async function() {
@@ -1028,10 +1028,10 @@ describe("Placement", function() {
                 );
                 // Label placed, layout changed horizontally and vertically (clock-wise) to move
                 // text even further from screen edge.
-                let layout = state.textLayoutState!;
+                let textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Center);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Below);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Center);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Below);
                 // Update its state.
                 state.update(1);
                 expect(state.textRenderState).to.be.not.undefined;
@@ -1059,10 +1059,10 @@ describe("Placement", function() {
                     true
                 );
                 // Label placed and layout changed horizontally to opposite side of base placement.
-                layout = state.textLayoutState!;
+                textPlacement = state.textPlacement;
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(layout.horizontalAlignment).to.be.equal(HorizontalAlignment.Right);
-                expect(layout.verticalAlignment).to.be.equal(VerticalAlignment.Center);
+                expect(textPlacement.h).to.be.equal(HorizontalAlignment.Right);
+                expect(textPlacement.v).to.be.equal(VerticalAlignment.Center);
             });
         });
 
@@ -1132,12 +1132,9 @@ describe("Placement", function() {
                     outPositions[1].x !== inPositions[1].x || outPositions[1].y !== inPositions[1].y
                 ).to.be.true;
                 // As also with different anchor.
-                const layout0 = states[0].textLayoutState!;
-                const layout1 = states[1].textLayoutState!;
-                expect(
-                    layout0.horizontalAlignment !== layout1.horizontalAlignment ||
-                        layout0.horizontalAlignment !== layout1.horizontalAlignment
-                ).to.be.true;
+                const placement0 = states[0].textPlacement;
+                const placement1 = states[1].textPlacement;
+                expect(placement0.h !== placement1.h || placement0.v !== placement1.v).to.be.true;
                 // Both elements allocated.
                 expect(results[0]).to.equal(PlacementResult.Ok);
                 expect(results[1]).to.equal(PlacementResult.Ok);
@@ -1179,12 +1176,8 @@ describe("Placement", function() {
                     // alternative placement algorithm - they are excluded.
                     // TODO: HARP-6487 This may be due to change when placements will be
                     // parsed from theme.
-                    expect(states[i].textLayoutState!.horizontalAlignment).to.equal(
-                        HorizontalAlignment.Center
-                    );
-                    expect(states[i].textLayoutState!.verticalAlignment).to.equal(
-                        VerticalAlignment.Center
-                    );
+                    expect(states[i].textPlacement.h).to.equal(HorizontalAlignment.Center);
+                    expect(states[i].textPlacement.v).to.equal(VerticalAlignment.Center);
                 }
                 // First element allocated, second collides, without alternative placement,
                 // centered labels are not handled with multi-anchor placement.
@@ -1272,12 +1265,9 @@ describe("Placement", function() {
                     outPositions[1].x === inPositions[1].x && outPositions[1].y === inPositions[1].y
                 ).to.be.false;
                 // As also with different anchor.
-                const layout0 = states[0].textLayoutState!;
-                const layout1 = states[1].textLayoutState!;
-                expect(
-                    layout0.horizontalAlignment === layout1.horizontalAlignment ||
-                        layout0.horizontalAlignment === layout1.horizontalAlignment
-                ).to.be.false;
+                const placement0 = states[0].textPlacement;
+                const placement1 = states[1].textPlacement;
+                expect(placement0.h === placement1.h && placement0.v === placement1.v).to.be.false;
                 // Both elements allocated.
                 expect(results[0]).to.equal(PlacementResult.Ok);
                 expect(results[1]).to.equal(PlacementResult.Ok);

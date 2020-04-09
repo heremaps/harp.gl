@@ -419,6 +419,7 @@ function placePointLabelChoosingAnchor(
     assert(labelState.element.layoutStyle !== undefined);
 
     const label = labelState.element;
+
     // Store label state - persistent or new label.
     const persistent = labelState.visible;
 
@@ -426,38 +427,28 @@ function placePointLabelChoosingAnchor(
     // so function tries the anchor placements from pre-defined placements arrays.
     // TODO: HARP-6487 Placements options should be loaded from the theme.
 
-    // Start with recently set alignment settings if layout state is stored or
+    // Start with last alignment settings if layout state was stored or
     // simply begin from layout defined in theme.
-    const labelThemeLayout = label.layoutStyle!;
-    const labelStateLayout = labelState.textLayoutState;
-    const recentPlacement =
-        persistent && labelStateLayout !== undefined
-            ? labelStateLayout.getPlacement(labelThemeLayout)
-            : { h: labelThemeLayout.horizontalAlignment, v: labelThemeLayout.verticalAlignment };
+    const lastPlacement = labelState.textPlacement;
     const placementCentered =
-        recentPlacement.h === HorizontalAlignment.Center ||
-        recentPlacement.v === VerticalAlignment.Center;
+        lastPlacement.h === HorizontalAlignment.Center ||
+        lastPlacement.v === VerticalAlignment.Center;
     // TODO: HARP-6487: Read placements options from label.layoutStyle.placements.
     const placements = placementCentered ? anchorPlacementsCentered : anchorPlacementsCornered;
     const placementsNum = placements.length;
     // Find current anchor placement on the optional placements list.
     // Index of exact match.
-    const matchIdx = placements.findIndex(
-        p => p.h === recentPlacement.h && p.v === recentPlacement.v
-    );
+    const matchIdx = placements.findIndex(p => p.h === lastPlacement.h && p.v === lastPlacement.v);
     assert(matchIdx >= 0);
     // Will be true if all text placements are invisible.
     let allInvisible: boolean = true;
     // Iterate all placements starting from current one.
-    for (let i = matchIdx, tryIdx = 0; tryIdx < placementsNum; ++i, ++tryIdx) {
+    for (let i = matchIdx; i < placementsNum + matchIdx; ++i) {
         const anchorPlacement = placements[i % placementsNum];
 
         // Bounds may be already calculated for persistent label, force re-calculation only
         // for alternative (new) placements.
-        const recentPlacementTest = tryIdx === 0 && persistent;
-        const basePlacementTest =
-            anchorPlacement.h === labelThemeLayout.horizontalAlignment &&
-            anchorPlacement.v === labelThemeLayout.verticalAlignment;
+        const isLastPlacement = i === matchIdx && persistent;
         // Compute label bounds, visibility or collision according to new layout settings.
         const placementResult = placePointLabelAtAnchor(
             labelState,
@@ -468,12 +459,12 @@ function placePointLabelChoosingAnchor(
             textCanvas,
             screenCollisions,
             false,
-            !recentPlacementTest,
+            !isLastPlacement,
             outScreenPosition
         );
 
         // Store last successful (previous) placement coordinates in temp variables.
-        if (recentPlacementTest) {
+        if (isLastPlacement) {
             assert(label.bounds !== undefined);
             tmpPlacementPosition.copy(outScreenPosition);
             tmpPlacementBounds.copy(label.bounds!);
@@ -495,23 +486,14 @@ function placePointLabelChoosingAnchor(
 
         // Glyphs arrangement have been changed remove text buffer object and apply
         // new text layout to the label.
-        if (!recentPlacementTest) {
+        if (!isLastPlacement) {
             label.textBufferObject = undefined;
         }
 
-        if (!basePlacementTest) {
-            // Text elements with alternative placement require their own unique layout style.
-            // Provide private copy of label layout and attach it to current label's text canvas.
-            textCanvas.textLayoutStyle = label.layoutStyle!.clone();
-            // Setup TextCanvas layout settings of the new placement as it is required for further
-            // TextBufferObject allocations and measurements in addText().
-            textCanvas.textLayoutStyle.horizontalAlignment = anchorPlacement.h;
-            textCanvas.textLayoutStyle.verticalAlignment = anchorPlacement.v;
-        }
+        applyTextPlacement(textCanvas, labelState, anchorPlacement);
+
         // Save current placement in layout state.
-        if (labelStateLayout !== undefined) {
-            labelStateLayout.setPlacement(labelThemeLayout, anchorPlacement);
-        }
+        labelState.textPlacement = anchorPlacement;
 
         // Proper placement found.
         return PlacementResult.Ok;
@@ -559,22 +541,13 @@ function placePointLabelAtCurrentAnchor(
 ): PlacementResult {
     assert(labelState.element.layoutStyle !== undefined);
 
-    const label = labelState.element;
-    const persistent = labelState.visible;
-    const labelThemeLayout = label.layoutStyle!;
-    const labelStateLayout = labelState.textLayoutState;
-    // Either not persistent or textLayoutState should be already initialized.
-    assert(!persistent || labelStateLayout !== undefined);
     // Use recently rendered (state stored) layout if available, otherwise theme based style.
-    const placement =
-        persistent && labelStateLayout !== undefined
-            ? labelStateLayout.getPlacement(labelThemeLayout)
-            : { h: labelThemeLayout.horizontalAlignment, v: labelThemeLayout.verticalAlignment };
+    const lastPlacement = labelState.textPlacement;
     const result = placePointLabelAtAnchor(
         labelState,
         screenPosition,
-        placement.h,
-        placement.v,
+        lastPlacement.h,
+        lastPlacement.v,
         scale,
         textCanvas,
         screenCollisions,
@@ -582,19 +555,8 @@ function placePointLabelAtCurrentAnchor(
         false,
         outScreenPosition
     );
-    const basePlacementTest =
-        placement.h === labelThemeLayout.horizontalAlignment &&
-        placement.v === labelThemeLayout.verticalAlignment;
 
-    if (!basePlacementTest) {
-        // Text elements with different then base placement require their own unique layout style.
-        // Provide private copy of label layout and attach it to current label's text canvas.
-        textCanvas.textLayoutStyle = label.layoutStyle!.clone();
-        // Setup TextCanvas layout settings of the new placement as it is required for further
-        // TextBufferObject allocations and measurements in addText().
-        textCanvas.textLayoutStyle.horizontalAlignment = placement.h;
-        textCanvas.textLayoutStyle.verticalAlignment = placement.v;
-    }
+    applyTextPlacement(textCanvas, labelState, lastPlacement);
     return result;
 }
 
@@ -706,12 +668,35 @@ function placePointLabelAtAnchor(
     // present in the new zoom level) before an even lower priority one takes the space.
     // Otherwise the lowest priority text will fade in and back out.
     // TODO: Add a unit test for this scenario.
-    // TODO!: Move this out of the function to make it full utility only!
     if (label.textReservesSpace) {
         screenCollisions.allocate(tmp2DBox);
     }
 
     return PlacementResult.Ok;
+}
+
+/**
+ * Applied modified text layout style to TextCanvas for further use.
+ * @param textCanvas TextCanvas reference.
+ * @param labelState The current label state.
+ * @param placement The text placement to be used.
+ */
+function applyTextPlacement(
+    textCanvas: TextCanvas,
+    labelState: TextElementState,
+    placement: AnchorPlacement
+) {
+    const labelStyleLayout = labelState.element.layoutStyle!;
+    const isBaseTextPlacement = labelState.isBaseTextPlacement(placement);
+    if (!isBaseTextPlacement) {
+        // Text elements with different then base placement require their own unique layout style.
+        // Provide private copy of label layout and attach it to current label's text canvas.
+        textCanvas.textLayoutStyle = labelStyleLayout.clone();
+        // Setup TextCanvas layout settings of the new placement as it is required for further
+        // TextBufferObject creation and measurements in addText().
+        textCanvas.textLayoutStyle.horizontalAlignment = placement.h;
+        textCanvas.textLayoutStyle.verticalAlignment = placement.v;
+    }
 }
 
 /**
