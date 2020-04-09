@@ -909,6 +909,34 @@ describe("ExprEvaluator", function() {
                 "invalid number of samples"
             );
         });
+
+        it("interpolate vector2", () => {
+            const $zoom = 14;
+            const v1 = new THREE.Vector2(0, 0);
+            const v2 = new THREE.Vector2(20, 200);
+            assert.deepStrictEqual(
+                (evaluate(
+                    ["interpolate", ["linear"], ["zoom"], 0, ["get", "v1"], 20, ["get", "v2"]],
+                    { $zoom, v1, v2 },
+                    ExprScope.Dynamic
+                ) as any).toArray(),
+                [14, 140]
+            );
+        });
+
+        it("interpolate vector3", () => {
+            const $zoom = 14;
+            const v1 = new THREE.Vector3(0, 0, 0);
+            const v2 = new THREE.Vector3(20, 200, 2000);
+            assert.deepStrictEqual(
+                (evaluate(
+                    ["interpolate", ["linear"], ["zoom"], 0, ["get", "v1"], 20, ["get", "v2"]],
+                    { $zoom, v1, v2 },
+                    ExprScope.Dynamic
+                ) as any).toArray(),
+                [14, 140, 1400]
+            );
+        });
     });
 
     describe("Operator 'zoom'", function() {
