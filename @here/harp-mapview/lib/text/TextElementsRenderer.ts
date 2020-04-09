@@ -830,8 +830,7 @@ export class TextElementsRenderer {
                             placementStats.numPathTooSmall++;
                         }
                     }
-                    textElementState.textRenderState!.reset();
-                    textElementState.textLayoutState!.reset();
+                    textElementState.reset();
                     continue;
                 }
             }
