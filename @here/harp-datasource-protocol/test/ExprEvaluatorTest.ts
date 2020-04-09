@@ -512,6 +512,163 @@ describe("ExprEvaluator", function() {
         });
     });
 
+    describe("Operator 'make-vector'", function() {
+        it("create", function() {
+            assert.isTrue(
+                new THREE.Vector2(1, 2).equals(evaluate(["make-vector", 1, 2]) as THREE.Vector2)
+            );
+
+            assert.isTrue(
+                new THREE.Vector3(1, 2, 3).equals(
+                    evaluate(["make-vector", 1, 2, 3]) as THREE.Vector3
+                )
+            );
+
+            assert.isTrue(
+                new THREE.Vector4(1, 2, 3, 4).equals(
+                    evaluate(["make-vector", 1, 2, 3, 4]) as THREE.Vector4
+                )
+            );
+        });
+
+        it("syntax", function() {
+            assert.throws(() => evaluate(["make-vector"]), "not enough arguments");
+            assert.throws(() => evaluate(["make-vector", 1]), "not enough arguments");
+            assert.throws(() => evaluate(["make-vector", 1, 2, 3, 4, 5]), "too many arguments");
+            assert.throws(
+                () => evaluate(["make-vector", 1, "x"]),
+                'expected vector component at index 1 to have type "number"'
+            );
+            assert.throws(
+                () => evaluate(["make-vector", 1, false]),
+                'expected vector component at index 1 to have type "number"'
+            );
+        });
+    });
+
+    describe("Operator 'vector2/3/4'", function() {
+        it("evaluate", function() {
+            const v2 = new THREE.Vector2(10, 20);
+            const v3 = new THREE.Vector3(10, 20, 30);
+            const v4 = new THREE.Vector4(10, 20, 30, 40);
+            const env = { v2, v3, v4 };
+
+            assert.strictEqual(evaluate(["vector2", ["get", "v2"]], env), v2);
+
+            assert.strictEqual(evaluate(["vector2", ["get", "v3"], ["get", "v2"]], env), v2);
+
+            assert.strictEqual(
+                evaluate(["vector2", ["get", "v4"], ["get", "v3"], ["get", "v2"]], env),
+                v2
+            );
+
+            assert.strictEqual(evaluate(["vector3", ["get", "v3"]], env), v3);
+
+            assert.strictEqual(evaluate(["vector3", ["get", "v3"], ["get", "v2"]], env), v3);
+
+            assert.strictEqual(
+                evaluate(["vector3", ["get", "v4"], ["get", "v3"], ["get", "v2"]], env),
+                v3
+            );
+
+            assert.strictEqual(evaluate(["vector4", ["get", "v4"]], env), v4);
+
+            assert.strictEqual(
+                evaluate(["vector4", ["get", "v4"], ["get", "v3"], ["get", "v2"]], env),
+                v4
+            );
+
+            assert.throws(
+                () => evaluate(["vector2", ["get", "v3"], ["get", "v4"]], env),
+                'expected a "vector2"'
+            );
+
+            assert.throws(
+                () => evaluate(["vector3", ["get", "v2"], ["get", "v4"]], env),
+                'expected a "vector3"'
+            );
+
+            assert.throws(
+                () => evaluate(["vector4", ["get", "v2"], ["get", "v3"]], env),
+                'expected a "vector4"'
+            );
+        });
+    });
+
+    describe("Operator 'to-vector2/3/4'", function() {
+        it("evaluate", function() {
+            const v2 = new THREE.Vector2(10, 20);
+            const v3 = new THREE.Vector3(10, 20, 30);
+            const v4 = new THREE.Vector4(10, 20, 30, 40);
+            const env = { v2, v3, v4 };
+
+            assert.strictEqual(evaluate(["to-vector2", ["get", "v2"]], env), v2);
+
+            assert.strictEqual(evaluate(["to-vector2", ["get", "v3"], ["get", "v2"]], env), v2);
+
+            assert.strictEqual(
+                evaluate(["to-vector2", ["get", "v4"], ["get", "v3"], ["get", "v2"]], env),
+                v2
+            );
+
+            assert.strictEqual(evaluate(["to-vector3", ["get", "v3"]], env), v3);
+
+            assert.strictEqual(evaluate(["to-vector3", ["get", "v3"], ["get", "v2"]], env), v3);
+
+            assert.strictEqual(
+                evaluate(["to-vector3", ["get", "v4"], ["get", "v3"], ["get", "v2"]], env),
+                v3
+            );
+
+            assert.strictEqual(evaluate(["to-vector4", ["get", "v4"]], env), v4);
+
+            assert.strictEqual(
+                evaluate(["to-vector4", ["get", "v4"], ["get", "v3"], ["get", "v2"]], env),
+                v4
+            );
+
+            assert.throws(
+                () => evaluate(["to-vector2", ["get", "v3"], ["get", "v4"]], env),
+                'expected a "vector2"'
+            );
+
+            assert.throws(
+                () => evaluate(["to-vector3", ["get", "v2"], ["get", "v4"]], env),
+                'expected a "vector3"'
+            );
+
+            assert.throws(
+                () => evaluate(["to-vector4", ["get", "v2"], ["get", "v3"]], env),
+                'expected a "vector4"'
+            );
+        });
+
+        it("convert from array", function() {
+            const v2 = [10, 20];
+            const v3 = [10, 20, 30];
+            const v4 = [10, 20, 30, 40];
+            const env = { v2, v3, v4 };
+
+            assert.isTrue(
+                new THREE.Vector2()
+                    .fromArray(v2)
+                    .equals(evaluate(["to-vector2", ["get", "v2"]], env) as THREE.Vector2)
+            );
+
+            assert.isTrue(
+                new THREE.Vector3()
+                    .fromArray(v3)
+                    .equals(evaluate(["to-vector3", ["get", "v3"]], env) as THREE.Vector3)
+            );
+
+            assert.isTrue(
+                new THREE.Vector4()
+                    .fromArray(v4)
+                    .equals(evaluate(["to-vector4", ["get", "v4"]], env) as THREE.Vector4)
+            );
+        });
+    });
+
     describe("Operator 'typeof'", function() {
         it("evaluate", function() {
             assert.strictEqual(evaluate(["typeof", "x"]), "string");

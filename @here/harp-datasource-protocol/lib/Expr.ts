@@ -15,6 +15,8 @@ import {
 } from "./InterpolatedPropertyDefs";
 import { Definitions, isBoxedDefinition, isLiteralDefinition } from "./Theme";
 
+import * as THREE from "three";
+
 export * from "./Env";
 
 const exprEvaluator = new ExprEvaluator();
@@ -628,6 +630,13 @@ class ExprSerializer implements ExprVisitor<JsonValue, void> {
     }
 
     visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: void): JsonValue {
+        if (expr.value instanceof THREE.Vector2) {
+            return ["make-vector", expr.value.x, expr.value.y];
+        } else if (expr.value instanceof THREE.Vector3) {
+            return ["make-vector", expr.value.x, expr.value.y, expr.value.z];
+        } else if (expr.value instanceof THREE.Vector4) {
+            return ["make-vector", expr.value.x, expr.value.y, expr.value.z, expr.value.w];
+        }
         return ["literal", expr.value as JsonObject];
     }
 
