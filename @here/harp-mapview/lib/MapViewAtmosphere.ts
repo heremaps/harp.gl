@@ -12,7 +12,7 @@ import { MapView, WorldAnchor } from "./MapView";
 
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
-import { InterpolatedClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import { TiltViewClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 
 /**
  * Atmosphere effect variants.
@@ -39,6 +39,16 @@ export enum AtmosphereLightMode {
     LightOverhead = 0,
     LightDynamic = 1
 }
+
+/**
+ * Maximum altitude that atmosphere reaches as the percent of the Earth radius.
+ */
+const SKY_ATMOSPHERE_ALTITUDE_FACTOR = 0.025;
+
+/**
+ * Maximum altitude that ground atmosphere is visible as the percent of the Earth radius.
+ */
+const GROUND_ATMOSPHERE_ALTITUDE_FACTOR = 0.0001;
 
 /**
  * Class that provides [[MapView]]'s atmospheric scattering effect.
@@ -75,12 +85,12 @@ export class MapViewAtmosphere {
     private m_groundMaterial?: THREE.Material;
     private m_groundMesh?: THREE.Mesh;
 
-    // tslint:disable-next-line:deprecation
-    private m_clipPlanesEvaluator = new InterpolatedClipPlanesEvaluator(
-        0.1,
-        0.1,
-        50.0,
-        EarthConstants.EQUATORIAL_RADIUS * 0.6
+    private m_clipPlanesEvaluator = new TiltViewClipPlanesEvaluator(
+        EarthConstants.EQUATORIAL_RADIUS * SKY_ATMOSPHERE_ALTITUDE_FACTOR,
+        0,
+        1.0,
+        0.05,
+        10000000.0
     );
     // TODO: Support for Theme definition should be added.
     //private m_cachedTheme: Theme = { styles: {} };
@@ -88,12 +98,17 @@ export class MapViewAtmosphere {
     private readonly m_lightDirection = new THREE.Vector3(0.0, 1.0, 0.0);
 
     /**
-     * Creates and adds `Atmosphere` effects.
+     * Creates and adds `Atmosphere` effects to the scene.
      *
      * @note Currently works only with globe projection.
      *
      * @param m_mapView [[MapView]] instance where the effect will be added.
-     * @param m_atmosphere Atmosphere configuration parameters.
+     * @param m_atmosphereVariant The optional atmosphere configuration variant enum
+     * [[AtmosphereVariant]], which denotes where the atmosphere scattering effect should be
+     * applied, it may be ground or sky atmosphere only or most realistic for both, which is
+     * chosen by default.
+     * @param m_materialVariant The optional material variant to be used, mainly for
+     * testing and tweaking purposes.
      */
     constructor(
         private m_mapView: MapView,
@@ -264,7 +279,7 @@ export class MapViewAtmosphere {
         switch (this.m_mapView.projection.type) {
             case ProjectionType.Spherical:
                 skyGeometry = new THREE.SphereGeometry(
-                    EarthConstants.EQUATORIAL_RADIUS * 1.025, //+ this.m_atmosphere.maxAltitude,
+                    EarthConstants.EQUATORIAL_RADIUS * (1 + SKY_ATMOSPHERE_ALTITUDE_FACTOR),
                     256,
                     256
                 );
@@ -315,7 +330,7 @@ export class MapViewAtmosphere {
         switch (this.m_mapView.projection.type) {
             case ProjectionType.Spherical:
                 groundGeometry = new THREE.SphereGeometry(
-                    EarthConstants.EQUATORIAL_RADIUS * 1.001, //+ this.m_atmosphere.minAltitude,
+                    EarthConstants.EQUATORIAL_RADIUS * (1 + GROUND_ATMOSPHERE_ALTITUDE_FACTOR),
                     256,
                     256
                 );
@@ -434,27 +449,28 @@ export class MapViewAtmosphere {
         };
     }
 
-    private overrideClipPlanes(camera: THREE.Camera) {
-        const { projection, elevationProvider } = this.m_mapView;
-        const viewRanges = this.m_clipPlanesEvaluator.evaluateClipPlanes(
-            camera,
-            projection,
-            elevationProvider
-        );
-        assert(camera instanceof THREE.PerspectiveCamera);
-        const c = camera as THREE.PerspectiveCamera;
+    private overrideClipPlanes(rteCamera: THREE.Camera) {
+        const { camera, projection } = this.m_mapView;
+        // Calculate view ranges using world camera.
+        // NOTE: ElevationProvider is not passed to evaluator, leaves min/max altitudes unchanged.
+        const viewRanges = this.m_clipPlanesEvaluator.evaluateClipPlanes(camera, projection);
+        // Update relative to eye camera used internally in rendering.
+        assert(rteCamera instanceof THREE.PerspectiveCamera);
+        const c = rteCamera as THREE.PerspectiveCamera;
         c.near = viewRanges.near;
-        c.far = viewRanges.far;
+        // Small margin ensures that we never cull small triangles just below or at
+        // horizon - possible due to frustum culling in-precisions.
+        c.far = viewRanges.far + EarthConstants.EQUATORIAL_RADIUS * 0.1;
         c.updateProjectionMatrix();
     }
 
-    private revertClipPlanes(camera: THREE.Camera) {
-        const viewRanges = this.m_mapView.viewRanges;
-        assert(camera instanceof THREE.PerspectiveCamera);
-        const cam = camera as THREE.PerspectiveCamera;
-        cam.near = viewRanges.near;
-        cam.far = viewRanges.far;
-        cam.updateProjectionMatrix();
+    private revertClipPlanes(rteCamera: THREE.Camera) {
+        const { viewRanges } = this.m_mapView;
+        assert(rteCamera instanceof THREE.PerspectiveCamera);
+        const c = rteCamera as THREE.PerspectiveCamera;
+        c.near = viewRanges.near;
+        c.far = viewRanges.far;
+        c.updateProjectionMatrix();
     }
 }
 
