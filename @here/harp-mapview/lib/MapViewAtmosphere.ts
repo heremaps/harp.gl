@@ -8,7 +8,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 
 import { GroundAtmosphereMaterial, SkyAtmosphereMaterial } from "@here/harp-materials";
-import { MapView, WorldAnchor } from "./MapView";
+import { WorldAnchor } from "./MapView";
 
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
@@ -51,6 +51,13 @@ const SKY_ATMOSPHERE_ALTITUDE_FACTOR = 0.025;
 const GROUND_ATMOSPHERE_ALTITUDE_FACTOR = 0.0001;
 
 /**
+ * Utility cache for holding temporary values.
+ */
+const cache = {
+    clipPlanes: { near: 0, far: 0 }
+};
+
+/**
  * Class that provides [[MapView]]'s atmospheric scattering effect.
  */
 export class MapViewAtmosphere {
@@ -64,14 +71,18 @@ export class MapViewAtmosphere {
     static GroundAtmosphereUserName: string = "GroundAtmosphere";
 
     /**
-     * Check if scene and map view has already atmosphere effect added.
-     * @param where [[MapView]] or [[THREE.Scene]] instance.
+     * Check if scene or root scene object has already atmosphere effect added.
+     *
+     * @param where [[THREE.Object3D]] or [[THREE.Scene]] instance.
      */
-    static isPresent(where: MapView | THREE.Scene): boolean {
-        const scene = where instanceof MapView ? where.scene : where;
-        if (scene.getObjectByName(MapViewAtmosphere.SkyAtmosphereUserName)) {
+    static isPresent(where: THREE.Scene | THREE.Object3D): boolean {
+        const root = where instanceof THREE.Scene ? where.parent : where;
+        if (root == null) {
+            return false;
+        }
+        if (root.getObjectByName(MapViewAtmosphere.SkyAtmosphereUserName)) {
             return true;
-        } else if (scene.getObjectByName(MapViewAtmosphere.GroundAtmosphereUserName)) {
+        } else if (root.getObjectByName(MapViewAtmosphere.GroundAtmosphereUserName)) {
             return true;
         }
         return false;
@@ -102,7 +113,12 @@ export class MapViewAtmosphere {
      *
      * @note Currently works only with globe projection.
      *
-     * @param m_mapView [[MapView]] instance where the effect will be added.
+     * @param m_sceneRoot The scene's root [[THREE.Object3D]] instance where the effect will
+     * be added.
+     * @param m_sceneCamera The camera used to render entire scene.
+     * @param m_projection The geo-projection used to transform geo coordinates to cartesian space.
+     * @param m_updateCallback The optional callback to that should be called whenever atmosphere
+     * configuration changes, may be used to inform related components (`MapView`) to redraw.
      * @param m_atmosphereVariant The optional atmosphere configuration variant enum
      * [[AtmosphereVariant]], which denotes where the atmosphere scattering effect should be
      * applied, it may be ground or sky atmosphere only or most realistic for both, which is
@@ -111,9 +127,11 @@ export class MapViewAtmosphere {
      * testing and tweaking purposes.
      */
     constructor(
-        private m_mapView: MapView,
+        private m_sceneRoot: THREE.Object3D,
+        private m_sceneCamera: THREE.Camera,
+        private m_projection: Projection,
+        private m_updateCallback?: () => void,
         private m_atmosphereVariant: AtmosphereVariant = AtmosphereVariant.SkyAndGround,
-        // TODO: To be removed just for debugging purposed.
         private m_materialVariant = AtmosphereShadingVariant.ScatteringShader
     ) {
         // tslint:disable-next-line: no-bitwise
@@ -124,7 +142,7 @@ export class MapViewAtmosphere {
         if (this.m_atmosphereVariant & AtmosphereVariant.Ground) {
             this.createGroundGeometry();
         }
-        this.addToMapView(this.m_mapView);
+        this.addToScene(this.m_sceneRoot);
     }
 
     get skyMesh(): THREE.Mesh | undefined {
@@ -151,11 +169,11 @@ export class MapViewAtmosphere {
             return;
         }
         this.m_enabled = enable;
-        const isAdded = MapViewAtmosphere.isPresent(this.m_mapView);
+        const isAdded = MapViewAtmosphere.isPresent(this.m_sceneRoot);
         if (enable && !isAdded) {
-            this.addToMapView(this.m_mapView);
+            this.addToScene(this.m_sceneRoot);
         } else if (!enable && isAdded) {
-            this.removeFromMapView(this.m_mapView);
+            this.removeFromScene(this.m_sceneRoot);
         }
     }
 
@@ -220,19 +238,6 @@ export class MapViewAtmosphere {
         //this.m_cachedTheme = theme;
     }
 
-    /**
-     * Updates the atmosphere at runtime, depending on the camera and projection settings.
-     *
-     * @param camera An instance of a `THREE.Camera`.
-     * @param projection An instance of Projection currently in use.
-     */
-    update(camera: THREE.PerspectiveCamera | THREE.OrthographicCamera, projection: Projection) {
-        assert(
-            projection.type === this.m_mapView.projection.type,
-            "Projection type changed, please re-create MapViewAtmosphere"
-        );
-    }
-
     private get disposed() {
         return this.m_skyMesh === undefined && this.m_groundMesh === undefined;
     }
@@ -240,43 +245,45 @@ export class MapViewAtmosphere {
     /**
      * Handles atmosphere effect adding.
      */
-    private addToMapView(mapView: MapView) {
-        assert(!MapViewAtmosphere.isPresent(mapView.scene), "Atmosphere already added");
+    private addToScene(sceneRoot: THREE.Object3D) {
+        assert(!MapViewAtmosphere.isPresent(sceneRoot), "Atmosphere already added");
         if (this.m_skyMesh !== undefined) {
-            mapView.worldAnchors.add(createWorldAnchor(this.m_skyMesh, Number.MIN_SAFE_INTEGER));
+            sceneRoot.add(createWorldAnchor(this.m_skyMesh, Number.MIN_SAFE_INTEGER));
         }
         if (this.m_groundMesh !== undefined) {
-            mapView.worldAnchors.add(createWorldAnchor(this.m_groundMesh, Number.MAX_SAFE_INTEGER));
+            sceneRoot.add(createWorldAnchor(this.m_groundMesh, Number.MAX_SAFE_INTEGER));
         }
 
         // Request an update once the anchor is added to [[MapView]].
-        mapView.update();
+        if (this.m_updateCallback) {
+            this.m_updateCallback();
+        }
     }
 
     /**
      * Handles atmosphere effect removal.
      */
-    private removeFromMapView(mapView: MapView) {
-        if (!MapViewAtmosphere.isPresent(mapView.scene)) {
+    private removeFromScene(sceneRoot: THREE.Object3D) {
+        if (!MapViewAtmosphere.isPresent(sceneRoot)) {
             return;
         }
         let update = false;
         if (this.m_skyMesh !== undefined) {
-            mapView.worldAnchors.remove(this.m_skyMesh);
+            sceneRoot.remove(this.m_skyMesh);
             update = true;
         }
         if (this.m_groundMesh !== undefined) {
-            mapView.worldAnchors.remove(this.m_groundMesh);
+            sceneRoot.remove(this.m_groundMesh);
             update = true;
         }
-        if (update) {
-            mapView.update();
+        if (update && this.m_updateCallback) {
+            this.m_updateCallback();
         }
     }
 
     private createSkyGeometry() {
         let skyGeometry: THREE.Geometry;
-        switch (this.m_mapView.projection.type) {
+        switch (this.m_projection.type) {
             case ProjectionType.Spherical:
                 skyGeometry = new THREE.SphereGeometry(
                     EarthConstants.EQUATORIAL_RADIUS * (1 + SKY_ATMOSPHERE_ALTITUDE_FACTOR),
@@ -327,7 +334,7 @@ export class MapViewAtmosphere {
 
     private createGroundGeometry() {
         let groundGeometry: THREE.Geometry;
-        switch (this.m_mapView.projection.type) {
+        switch (this.m_projection.type) {
             case ProjectionType.Spherical:
                 groundGeometry = new THREE.SphereGeometry(
                     EarthConstants.EQUATORIAL_RADIUS * (1 + GROUND_ATMOSPHERE_ALTITUDE_FACTOR),
@@ -450,10 +457,16 @@ export class MapViewAtmosphere {
     }
 
     private overrideClipPlanes(rteCamera: THREE.Camera) {
-        const { camera, projection } = this.m_mapView;
+        // Store current clip planes used by global camera before modifying them.
+        const sceneCam = this.m_sceneCamera as THREE.PerspectiveCamera;
+        cache.clipPlanes.near = sceneCam.near;
+        cache.clipPlanes.far = sceneCam.far;
         // Calculate view ranges using world camera.
         // NOTE: ElevationProvider is not passed to evaluator, leaves min/max altitudes unchanged.
-        const viewRanges = this.m_clipPlanesEvaluator.evaluateClipPlanes(camera, projection);
+        const viewRanges = this.m_clipPlanesEvaluator.evaluateClipPlanes(
+            this.m_sceneCamera,
+            this.m_projection
+        );
         // Update relative to eye camera used internally in rendering.
         assert(rteCamera instanceof THREE.PerspectiveCamera);
         const c = rteCamera as THREE.PerspectiveCamera;
@@ -465,11 +478,11 @@ export class MapViewAtmosphere {
     }
 
     private revertClipPlanes(rteCamera: THREE.Camera) {
-        const { viewRanges } = this.m_mapView;
         assert(rteCamera instanceof THREE.PerspectiveCamera);
         const c = rteCamera as THREE.PerspectiveCamera;
-        c.near = viewRanges.near;
-        c.far = viewRanges.far;
+        // Restore scene camera clip planes.
+        c.near = cache.clipPlanes.near;
+        c.far = cache.clipPlanes.far;
         c.updateProjectionMatrix();
     }
 }

@@ -74,7 +74,9 @@ export namespace GlobeAtmosphereExample {
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         map.canvas.parentElement!.appendChild(ui.domElement);
 
-        const atmosphere = new MapViewAtmosphere(map);
+        const { camera, projection, worldAnchors } = map;
+        const updateCallback = () => map.update();
+        const atmosphere = new MapViewAtmosphere(worldAnchors, camera, projection, updateCallback);
         atmosphere.lightMode = AtmosphereLightMode.LightDynamic;
 
         const coords = new GeoCoordinates(10.0, -10.0);
