@@ -211,6 +211,8 @@ export interface MemoryUsage {
  * and properly layout SDF and MSDF text.
  */
 export class TextCanvas {
+    private static defaultTextRenderStyle: TextRenderStyle = new TextRenderStyle();
+    private static defaultTextLayoutStyle: TextLayoutStyle = new TextLayoutStyle();
     /**
      * Minimum amount of glyphs each [[TextCanvas]] layer can store.
      */
@@ -224,9 +226,7 @@ export class TextCanvas {
     private m_renderer: THREE.WebGLRenderer;
     private m_fontCatalog: FontCatalog;
 
-    private readonly m_defaultTextRenderStyle: TextRenderStyle;
     private m_currentTextRenderStyle: TextRenderStyle;
-    private readonly m_defaultTextLayoutStyle: TextLayoutStyle;
     private m_currentTextLayoutStyle: TextLayoutStyle;
 
     private m_material: SdfTextMaterial | THREE.Material;
@@ -283,10 +283,12 @@ export class TextCanvas {
         };
         this.m_layers = [this.m_defaultLayer];
 
-        this.m_defaultTextRenderStyle = new TextRenderStyle();
-        this.m_currentTextRenderStyle = this.m_defaultTextRenderStyle;
-        this.m_defaultTextLayoutStyle = new TextLayoutStyle();
-        this.m_currentTextLayoutStyle = this.m_defaultTextLayoutStyle;
+        this.m_currentTextRenderStyle = new TextRenderStyle().copy(
+            TextCanvas.defaultTextRenderStyle
+        );
+        this.m_currentTextLayoutStyle = new TextLayoutStyle().copy(
+            TextCanvas.defaultTextLayoutStyle
+        );
 
         this.m_lineTypesetter = new LineTypesetter();
         this.m_pathTypesetter = new PathTypesetter();
@@ -365,7 +367,7 @@ export class TextCanvas {
         return this.m_currentTextRenderStyle;
     }
     set textRenderStyle(style: TextRenderStyle) {
-        this.m_currentTextRenderStyle = style;
+        this.m_currentTextRenderStyle.copy(style);
     }
 
     /**
@@ -375,7 +377,7 @@ export class TextCanvas {
         return this.m_currentTextLayoutStyle;
     }
     set textLayoutStyle(style: TextLayoutStyle) {
-        this.m_currentTextLayoutStyle = style;
+        this.m_currentTextLayoutStyle.copy(style);
     }
 
     /**
@@ -385,7 +387,8 @@ export class TextCanvas {
         for (const layer of this.m_layers) {
             layer.storage.clear();
         }
-        this.m_currentTextRenderStyle = this.m_defaultTextRenderStyle;
+        this.m_currentTextRenderStyle.copy(TextCanvas.defaultTextRenderStyle);
+        this.m_currentTextLayoutStyle.copy(TextCanvas.defaultTextLayoutStyle);
     }
 
     /**
