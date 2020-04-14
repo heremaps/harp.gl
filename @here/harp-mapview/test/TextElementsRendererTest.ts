@@ -617,7 +617,7 @@ describe("TextElementsRenderer", function() {
             const dummyUserData = {};
             const element = builder(inputElement)
                 .withUserData(dummyUserData)
-                .build(sandbox);
+                .build();
             elementFrameStates.push([element, frameStates(inputElement)]);
             return element;
         });

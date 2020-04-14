@@ -513,19 +513,11 @@ export class TestFixture {
         const addTextSpy = this.m_addTextSpy.withArgs(sinon.match.same(textElement));
         expect(textElement.renderStyle, this.getErrorHeading(textElement) + "render style not set")
             .exist;
-        const opacitySpy = Object.getOwnPropertyDescriptor(textElement.renderStyle, "opacity")!
-            .set! as sinon.SinonSpy;
-        assert(opacitySpy.called, this.getErrorHeading(textElement) + "opacity not set");
         assert(
             addTextSpy.calledOnce,
             this.getErrorHeading(textElement) + "path text was NOT rendered."
         );
-        const firstOpacityCallSpy = opacitySpy.firstCall;
-        assert(
-            firstOpacityCallSpy.calledBefore(addTextSpy.firstCall),
-            this.getErrorHeading(textElement) + ", opacity not set before addText"
-        );
-        const actualOpacity = firstOpacityCallSpy.args[0];
+        const actualOpacity = addTextSpy.firstCall.args[1];
         this.checkOpacity(actualOpacity, textElement, "text", opacityMatcher);
         return actualOpacity;
     }

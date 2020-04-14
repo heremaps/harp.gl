@@ -686,12 +686,8 @@ function applyTextPlacement(
     labelState: TextElementState,
     placement: AnchorPlacement
 ) {
-    const labelStyleLayout = labelState.element.layoutStyle!;
     const isBaseTextPlacement = labelState.isBaseTextPlacement(placement);
     if (!isBaseTextPlacement) {
-        // Text elements with different then base placement require their own unique layout style.
-        // Provide private copy of label layout and attach it to current label's text canvas.
-        textCanvas.textLayoutStyle = labelStyleLayout.clone();
         // Setup TextCanvas layout settings of the new placement as it is required for further
         // TextBufferObject creation and measurements in addText().
         textCanvas.textLayoutStyle.horizontalAlignment = placement.h;
