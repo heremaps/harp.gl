@@ -14,7 +14,6 @@
     "scripts": {
         "build": "tsc --build $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/OmvTest.js",
-        "gen-decoder": "pbjs -t static-module -w commonjs --no-encode --no-verify --no-create lib/proto/vector_tile.proto -o lib/proto/vector_tile.js && pbts lib/proto/vector_tile.js -o lib/proto/vector_tile.d.ts",
         "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
@@ -29,6 +28,7 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@here/harp-datasource-protocol": "^0.14.0",
+        "@here/harp-vectortile-datasource": "^0.14.0",
         "@here/harp-geometry": "^0.14.0",
         "@here/harp-geoutils": "^0.14.0",
         "@here/harp-lines": "^0.14.0",

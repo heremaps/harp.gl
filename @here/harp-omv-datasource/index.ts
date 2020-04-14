@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export * from "./lib/OmvDataFilter";
 export * from "./lib/OmvDataSource";
-export * from "./lib/OmvDecoderDefs";
-export * from "./lib/OmvTile";
-export * from "./lib/OmvDebugLabelsTile";
-export * from "./lib/OmvRestClient";
+export * from "./lib/OmvDecoder";
+
+export { Tile as OmvTile } from "@here/harp-mapview";

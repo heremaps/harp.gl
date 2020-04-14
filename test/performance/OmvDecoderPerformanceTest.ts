@@ -13,21 +13,21 @@ import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-
 import { apikey } from "@here/harp-examples/config";
 import { sphereProjection, TileKey, webMercatorProjection } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
+import { getTestResourceUrl } from "@here/harp-test-utils";
+import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
 import {
     APIFormat,
     AuthenticationMethod,
-    OmvRestClient,
-    OmvRestClientParameters
-} from "@here/harp-omv-datasource";
+    RestClient,
+    RestClientParameters
+} from "@here/harp-vectortile-datasource";
+import { OmvDataAdapter } from "@here/harp-vectortile-datasource/lib/adapters/omv/OmvDataAdapter";
 import {
-    IGeometryProcessor,
+    GeometryProcessor,
     ILineGeometry,
     IPolygonGeometry
-} from "@here/harp-omv-datasource/lib/IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "@here/harp-omv-datasource/lib/OmvData";
-import { OmvDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
-import { getTestResourceUrl } from "@here/harp-test-utils";
-import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
+} from "@here/harp-vectortile-datasource/lib/GeometryProcessor";
+import { VectorTileGeometryProcessor } from "@here/harp-vectortile-datasource/lib/VectorTileGeometryProcessor";
 
 export interface OMVDecoderPerformanceTestOptions {
     /**
@@ -54,7 +54,7 @@ export interface OMVDecoderPerformanceTestOptions {
     /**
      * Requires settings for [[OmvRestClient]] to download tiles.
      */
-    omvRestClientOptions: OmvRestClientParameters;
+    omvRestClientOptions: RestClientParameters;
 }
 
 /**
@@ -76,7 +76,7 @@ export function createOMVDecoderPerformanceTest(
 
         before(async function() {
             this.timeout(10000);
-            const omvDataProvider = new OmvRestClient(options.omvRestClientOptions);
+            const omvDataProvider = new RestClient(options.omvRestClientOptions);
 
             await omvDataProvider.connect();
             assert(omvDataProvider.ready());
@@ -103,7 +103,7 @@ export function createOMVDecoderPerformanceTest(
                 theme.definitions
             );
 
-            const geometryProcessor: IGeometryProcessor = {
+            const geometryProcessor: GeometryProcessor = {
                 storageLevelOffset: 0,
 
                 processPointFeature(
@@ -135,7 +135,7 @@ export function createOMVDecoderPerformanceTest(
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvProtobufDataAdapter(geometryProcessor, undefined);
+                    const decoder = new OmvDataAdapter(geometryProcessor, undefined);
                     decoder.process(tileData, tileKey);
                 }
             });
@@ -154,7 +154,7 @@ export function createOMVDecoderPerformanceTest(
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvDecoder(projection, styleSetEvaluator, false);
+                    const decoder = new VectorTileGeometryProcessor(projection, styleSetEvaluator);
                     decoder.getDecodedTile(tileKey, tileData);
                 }
             });
@@ -174,7 +174,7 @@ export function createOMVDecoderPerformanceTest(
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvDecoder(projection, styleSetEvaluator, false);
+                    const decoder = new VectorTileGeometryProcessor(projection, styleSetEvaluator);
                     decoder.getDecodedTile(tileKey, tileData);
                 }
             });
