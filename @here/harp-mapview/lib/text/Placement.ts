@@ -124,7 +124,7 @@ export enum PrePlacementResult {
 
 /**
  * @hidden
- * Possible placement scenarios in clock-wise order, based on centered placements.
+ * Possible placement scenarios in counter clock-wise order, based on centered placements.
  *
  * TODO: HARP-6487 This array should be parsed from the theme style definition.
  */
@@ -137,7 +137,7 @@ const anchorPlacementsCentered: AnchorPlacement[] = [
 
 /**
  * @hidden
- * Placement anchors in clock-wise order, for corner based placements.
+ * Placement anchors in counter clock-wise order, for corner based placements.
  *
  * TODO: HARP-6487 This array should be parsed from the theme style definition.
  */
