@@ -36,7 +36,7 @@ const tmpBuffer = new Array<number>(StringEncodedNumeralFormatMaxSize);
 /**
  * Property which value is interpolated across different zoom levels.
  */
-export interface InterpolatedProperty {
+export interface InterpolatedPropertyDescriptor {
     /**
      * Interpolation mode that should be used for this property.
      */
@@ -45,12 +45,12 @@ export interface InterpolatedProperty {
     /**
      * Zoom level keys array.
      */
-    zoomLevels: Float32Array;
+    zoomLevels: ArrayLike<number>;
 
     /**
      * Property values array.
      */
-    values: ArrayLike<any>;
+    values: ArrayLike<Value>;
 
     /**
      * Exponent used in interpolation. Only valid with `Exponential` [[InterpolationMode]].
@@ -77,23 +77,209 @@ export interface InterpolatedProperty {
     _stringEncodedNumeralDynamicMask?: Float32Array;
 }
 
+export class InterpolatedProperty {
+    /**
+     * Convert JSON representation of interpolated property to internal, normalized version that
+     * can be evaluated by [[getPropertyValue]].
+     *
+     * @internal
+     */
+    static fromDefinition(
+        def: InterpolatedPropertyDefinition<Value>
+    ): InterpolatedProperty | undefined {
+        removeDuplicatePropertyValues(def);
+
+        const interpolationMode =
+            def.interpolation !== undefined
+                ? InterpolationMode[def.interpolation]
+                : InterpolationMode.Discrete;
+
+        const zoomLevels = new Float32Array(def.zoomLevels);
+
+        let vectorComponents: number | undefined;
+        if (def.values.every(v => v instanceof THREE.Vector2)) {
+            vectorComponents = 2;
+        } else if (def.values.every(v => v instanceof THREE.Vector3)) {
+            vectorComponents = 3;
+        } else if (def.values.every(v => v instanceof THREE.Vector4)) {
+            vectorComponents = 4;
+        }
+
+        if (vectorComponents !== undefined) {
+            const values = new Float32Array(def.values.length * vectorComponents);
+
+            (def.values as Array<THREE.Vector2 | THREE.Vector3 | THREE.Vector4>).forEach((v, i) =>
+                v.toArray(values, i * vectorComponents!)
+            );
+
+            return new InterpolatedProperty({
+                interpolationMode,
+                zoomLevels,
+                values,
+                _vectorInterpolation: true,
+                exponent: def.exponent
+            });
+        }
+
+        const firstValue = def.values[0];
+        switch (typeof firstValue) {
+            default:
+            case "number":
+            case "boolean":
+                return new InterpolatedProperty({
+                    interpolationMode,
+                    zoomLevels,
+                    values: new Float32Array(def.values as any),
+                    exponent: def.exponent
+                });
+            case "string":
+                // TODO: Minimize effort for pre-matching the numeral format.
+                const matchedFormat = StringEncodedNumeralFormats.find(format =>
+                    format.regExp.test(firstValue)
+                );
+
+                if (matchedFormat === undefined) {
+                    if (interpolationMode === InterpolationMode.Discrete) {
+                        return new InterpolatedProperty({
+                            interpolationMode,
+                            zoomLevels,
+                            values: def.values
+                        });
+                    }
+
+                    logger.error(`No StringEncodedNumeralFormat matched ${firstValue}.`);
+                    return undefined;
+                }
+
+                let needsMask = false;
+
+                const propValues = new Float32Array(def.values.length * matchedFormat.size);
+                const maskValues = new Float32Array(def.values.length);
+                needsMask = processStringEnocodedNumeralInterpolatedProperty(
+                    matchedFormat,
+                    def as InterpolatedPropertyDefinition<string>,
+                    propValues,
+                    maskValues
+                );
+
+                return new InterpolatedProperty({
+                    interpolationMode,
+                    zoomLevels,
+                    values: propValues,
+                    exponent: def.exponent,
+                    _stringEncodedNumeralType: matchedFormat.type,
+                    _stringEncodedNumeralDynamicMask: needsMask ? maskValues : undefined
+                });
+        }
+    }
+
+    constructor(readonly descriptor: InterpolatedPropertyDescriptor) {}
+
+    evaluate(env: Env): Value {
+        const zoom = env.lookup("$zoom") as number;
+        const pixelToMeters = env.lookup("$pixelToMeters") as number;
+        const { _stringEncodedNumeralType } = this.descriptor;
+
+        switch (_stringEncodedNumeralType) {
+            case StringEncodedNumeralType.Meters:
+            case StringEncodedNumeralType.Pixels:
+                return this.getInterpolatedMetric(zoom, pixelToMeters);
+
+            case StringEncodedNumeralType.Hex:
+            case StringEncodedNumeralType.RGB:
+            case StringEncodedNumeralType.RGBA:
+            case StringEncodedNumeralType.HSL:
+                return this.getInterpolatedColor(zoom);
+
+            default:
+                return this.getInterpolatedMetric(zoom, pixelToMeters);
+        }
+    }
+
+    private getInterpolatedMetric(
+        zoom: number,
+        pixelToMeters: number
+    ): number | number[] | THREE.Vector2 | THREE.Vector3 | THREE.Vector4 {
+        const {
+            values,
+            zoomLevels,
+            interpolationMode,
+            exponent,
+            _stringEncodedNumeralDynamicMask,
+            _vectorInterpolation
+        } = this.descriptor;
+        const nChannels = values.length / zoomLevels.length;
+        const interpolant = new interpolants[interpolationMode](zoomLevels, values, nChannels);
+        if (interpolationMode === InterpolationMode.Exponential && exponent !== undefined) {
+            (interpolant as ExponentialInterpolant).exponent = exponent;
+        }
+        interpolant.evaluate(zoom);
+
+        if (_stringEncodedNumeralDynamicMask === undefined) {
+            if (_vectorInterpolation) {
+                if (nChannels === 2) {
+                    return new THREE.Vector2().fromArray(interpolant.resultBuffer);
+                } else if (nChannels === 3) {
+                    return new THREE.Vector3().fromArray(interpolant.resultBuffer);
+                } else if (nChannels === 4) {
+                    return new THREE.Vector4().fromArray(interpolant.resultBuffer);
+                }
+                throw new Error("invalid number of components");
+            }
+            return nChannels === 1 ? interpolant.resultBuffer[0] : [...interpolant.resultBuffer];
+        } else {
+            const maskInterpolant = new interpolants[interpolationMode](
+                zoomLevels,
+                _stringEncodedNumeralDynamicMask,
+                1
+            );
+            if (interpolationMode === InterpolationMode.Exponential && exponent !== undefined) {
+                (maskInterpolant as ExponentialInterpolant).exponent = exponent;
+            }
+            maskInterpolant.evaluate(zoom);
+
+            return (
+                interpolant.resultBuffer[0] *
+                (1 + maskInterpolant.resultBuffer[0] * (pixelToMeters - 1))
+            );
+        }
+    }
+
+    private getInterpolatedColor(level: number): number {
+        const { values, zoomLevels, interpolationMode, exponent } = this.descriptor;
+
+        const nChannels = values.length / zoomLevels.length;
+        const interpolant = new interpolants[interpolationMode](zoomLevels, values, nChannels);
+        if (interpolationMode === InterpolationMode.Exponential && exponent !== undefined) {
+            (interpolant as ExponentialInterpolant).exponent = exponent;
+        }
+        interpolant.evaluate(level);
+
+        assert(nChannels === 3 || nChannels === 4);
+        // ColorUtils.getHexFromRgba() does not clamp the values which may be out of
+        // color channels range (0 <= c <= 1) after interpolation.
+        if (nChannels === 4) {
+            return ColorUtils.getHexFromRgba(
+                THREE.MathUtils.clamp(interpolant.resultBuffer[0], 0, 1),
+                THREE.MathUtils.clamp(interpolant.resultBuffer[1], 0, 1),
+                THREE.MathUtils.clamp(interpolant.resultBuffer[2], 0, 1),
+                THREE.MathUtils.clamp(interpolant.resultBuffer[3], 0, 1)
+            );
+        } else {
+            return ColorUtils.getHexFromRgb(
+                THREE.MathUtils.clamp(interpolant.resultBuffer[0], 0, 1),
+                THREE.MathUtils.clamp(interpolant.resultBuffer[1], 0, 1),
+                THREE.MathUtils.clamp(interpolant.resultBuffer[2], 0, 1)
+            );
+        }
+    }
+}
+
 /**
  * Type guard to check if an object is an instance of `InterpolatedProperty`.
  */
 export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
-    if (
-        p &&
-        p.interpolationMode !== undefined &&
-        p.zoomLevels instanceof Float32Array &&
-        p.values !== undefined &&
-        p.values.length > 0 &&
-        (p.zoomLevels.length === p.values.length / 4 ||
-            p.zoomLevels.length === p.values.length / 3 ||
-            p.zoomLevels.length === p.values.length)
-    ) {
-        return true;
-    }
-    return false;
+    return p instanceof InterpolatedProperty;
 }
 
 /**
@@ -130,204 +316,6 @@ export function getPropertyValue(property: Value | Expr | undefined, env: Env): 
     }
 }
 
-export function evaluateInterpolatedProperty(property: InterpolatedProperty, env: Env): any {
-    const level = env.lookup("$zoom") as number;
-    const pixelToMeters = env.lookup("$pixelToMeters") as number;
-
-    if (property._stringEncodedNumeralType !== undefined) {
-        switch (property._stringEncodedNumeralType) {
-            case StringEncodedNumeralType.Meters:
-            case StringEncodedNumeralType.Pixels:
-                return getInterpolatedMetric(property, level, pixelToMeters);
-            case StringEncodedNumeralType.Hex:
-            case StringEncodedNumeralType.RGB:
-            case StringEncodedNumeralType.RGBA:
-            case StringEncodedNumeralType.HSL:
-                return getInterpolatedColor(property, level);
-        }
-    }
-    return getInterpolatedMetric(property, level, pixelToMeters);
-}
-
-function getInterpolatedMetric(
-    property: InterpolatedProperty,
-    level: number,
-    pixelToMeters: number
-): number | number[] | THREE.Vector2 | THREE.Vector3 | THREE.Vector4 {
-    const nChannels = property.values.length / property.zoomLevels.length;
-    const interpolant = new interpolants[property.interpolationMode](
-        property.zoomLevels,
-        property.values,
-        nChannels
-    );
-    if (
-        property.interpolationMode === InterpolationMode.Exponential &&
-        property.exponent !== undefined
-    ) {
-        (interpolant as ExponentialInterpolant).exponent = property.exponent;
-    }
-    interpolant.evaluate(level);
-
-    if (property._stringEncodedNumeralDynamicMask === undefined) {
-        if (property._vectorInterpolation) {
-            if (nChannels === 2) {
-                return new THREE.Vector2().fromArray(interpolant.resultBuffer);
-            } else if (nChannels === 3) {
-                return new THREE.Vector3().fromArray(interpolant.resultBuffer);
-            } else if (nChannels === 4) {
-                return new THREE.Vector4().fromArray(interpolant.resultBuffer);
-            }
-            throw new Error("invalid number of components");
-        }
-        return nChannels === 1 ? interpolant.resultBuffer[0] : [...interpolant.resultBuffer];
-    } else {
-        const maskInterpolant = new interpolants[property.interpolationMode](
-            property.zoomLevels,
-            property._stringEncodedNumeralDynamicMask,
-            1
-        );
-        if (
-            property.interpolationMode === InterpolationMode.Exponential &&
-            property.exponent !== undefined
-        ) {
-            (maskInterpolant as ExponentialInterpolant).exponent = property.exponent;
-        }
-        maskInterpolant.evaluate(level);
-
-        return (
-            interpolant.resultBuffer[0] *
-            (1 + maskInterpolant.resultBuffer[0] * (pixelToMeters - 1))
-        );
-    }
-}
-
-function getInterpolatedColor(property: InterpolatedProperty, level: number): number {
-    const nChannels = property.values.length / property.zoomLevels.length;
-    const interpolant = new interpolants[property.interpolationMode](
-        property.zoomLevels,
-        property.values,
-        nChannels
-    );
-    if (
-        property.interpolationMode === InterpolationMode.Exponential &&
-        property.exponent !== undefined
-    ) {
-        (interpolant as ExponentialInterpolant).exponent = property.exponent;
-    }
-    interpolant.evaluate(level);
-
-    assert(nChannels === 3 || nChannels === 4);
-    // ColorUtils.getHexFromRgba() does not clamp the values which may be out of
-    // color channels range (0 <= c <= 1) after interpolation.
-    if (nChannels === 4) {
-        return ColorUtils.getHexFromRgba(
-            THREE.MathUtils.clamp(interpolant.resultBuffer[0], 0, 1),
-            THREE.MathUtils.clamp(interpolant.resultBuffer[1], 0, 1),
-            THREE.MathUtils.clamp(interpolant.resultBuffer[2], 0, 1),
-            THREE.MathUtils.clamp(interpolant.resultBuffer[3], 0, 1)
-        );
-    } else {
-        return ColorUtils.getHexFromRgb(
-            THREE.MathUtils.clamp(interpolant.resultBuffer[0], 0, 1),
-            THREE.MathUtils.clamp(interpolant.resultBuffer[1], 0, 1),
-            THREE.MathUtils.clamp(interpolant.resultBuffer[2], 0, 1)
-        );
-    }
-}
-
-/**
- * Convert JSON representation of interpolated property to internal, normalized version that
- * can be evaluated by [[getPropertyValue]].
- */
-export function createInterpolatedProperty(
-    prop: InterpolatedPropertyDefinition<unknown>
-): InterpolatedProperty | undefined {
-    removeDuplicatePropertyValues(prop);
-
-    const interpolationMode =
-        prop.interpolation !== undefined
-            ? InterpolationMode[prop.interpolation]
-            : InterpolationMode.Discrete;
-
-    const zoomLevels = new Float32Array(prop.zoomLevels);
-
-    let vectorComponents: number | undefined;
-    if (prop.values.every(v => v instanceof THREE.Vector2)) {
-        vectorComponents = 2;
-    } else if (prop.values.every(v => v instanceof THREE.Vector3)) {
-        vectorComponents = 3;
-    } else if (prop.values.every(v => v instanceof THREE.Vector4)) {
-        vectorComponents = 4;
-    }
-
-    if (vectorComponents !== undefined) {
-        const values = new Float32Array(prop.values.length * vectorComponents);
-
-        (prop.values as Array<THREE.Vector2 | THREE.Vector3 | THREE.Vector4>).forEach((v, i) =>
-            v.toArray(values, i * vectorComponents!)
-        );
-
-        return {
-            interpolationMode,
-            zoomLevels,
-            values,
-            _vectorInterpolation: true,
-            exponent: prop.exponent
-        };
-    }
-
-    const firstValue = prop.values[0];
-    switch (typeof firstValue) {
-        default:
-        case "number":
-        case "boolean":
-            return {
-                interpolationMode,
-                zoomLevels,
-                values: new Float32Array(prop.values as any),
-                exponent: prop.exponent
-            };
-        case "string":
-            // TODO: Minimize effort for pre-matching the numeral format.
-            const matchedFormat = StringEncodedNumeralFormats.find(format =>
-                format.regExp.test(firstValue)
-            );
-
-            if (matchedFormat === undefined) {
-                if (interpolationMode === InterpolationMode.Discrete) {
-                    return {
-                        interpolationMode,
-                        zoomLevels,
-                        values: prop.values
-                    };
-                }
-
-                logger.error(`No StringEncodedNumeralFormat matched ${firstValue}.`);
-                return undefined;
-            }
-
-            let needsMask = false;
-
-            const propValues = new Float32Array(prop.values.length * matchedFormat.size);
-            const maskValues = new Float32Array(prop.values.length);
-            needsMask = procesStringEnocodedNumeralInterpolatedProperty(
-                matchedFormat,
-                prop as InterpolatedPropertyDefinition<string>,
-                propValues,
-                maskValues
-            );
-
-            return {
-                interpolationMode,
-                zoomLevels,
-                values: propValues,
-                exponent: prop.exponent,
-                _stringEncodedNumeralType: matchedFormat.type,
-                _stringEncodedNumeralDynamicMask: needsMask ? maskValues : undefined
-            };
-    }
-}
-
 function removeDuplicatePropertyValues<T>(p: InterpolatedPropertyDefinition<T>) {
     const eps = 0.001;
 
@@ -347,7 +335,7 @@ function removeDuplicatePropertyValues<T>(p: InterpolatedPropertyDefinition<T>) 
     }
 }
 
-function procesStringEnocodedNumeralInterpolatedProperty(
+function processStringEnocodedNumeralInterpolatedProperty(
     baseFormat: StringEncodedNumeralFormat,
     prop: InterpolatedPropertyDefinition<string>,
     propValues: Float32Array,

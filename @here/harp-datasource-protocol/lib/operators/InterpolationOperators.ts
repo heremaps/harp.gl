@@ -6,11 +6,7 @@
 
 import { CallExpr, ExprScope, LiteralExpr, NumberLiteralExpr, Value } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
-import {
-    createInterpolatedProperty,
-    evaluateInterpolatedProperty,
-    InterpolatedProperty
-} from "../InterpolatedProperty";
+import { InterpolatedProperty } from "../InterpolatedProperty";
 import { InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
 
 type InterpolateCallExpr = CallExpr & {
@@ -146,7 +142,7 @@ function prepareInterpolateCallExpr(call: InterpolateCallExpr) {
     }
 
     if (isConstantInterpolation) {
-        const result = createInterpolatedProperty({
+        const result = InterpolatedProperty.fromDefinition({
             interpolation: mode,
             exponent,
             zoomLevels: stops,
@@ -264,7 +260,7 @@ function prepareStepCallExpr(call: StepCallExpr) {
         // all the values of this zoom-based `step` are constant,
         // create an interpolated property and store it together
         // with the call.
-        const interpolatedProperty = createInterpolatedProperty({
+        const interpolatedProperty = InterpolatedProperty.fromDefinition({
             interpolation: "Discrete",
             zoomLevels: stops,
             values
@@ -305,7 +301,7 @@ const operators = {
                     values.push(value);
                 }
 
-                interpolatedProperty = createInterpolatedProperty({
+                interpolatedProperty = InterpolatedProperty.fromDefinition({
                     interpolation: call._mode!,
                     exponent: call._exponent,
                     zoomLevels: call._stops!,
@@ -317,7 +313,7 @@ const operators = {
                 }
             }
 
-            return evaluateInterpolatedProperty(interpolatedProperty, context.env);
+            return interpolatedProperty.evaluate(context.env);
         }
     },
     step: {
@@ -349,7 +345,7 @@ const operators = {
                     values.push(value);
                 }
 
-                interpolatedProperty = createInterpolatedProperty({
+                interpolatedProperty = InterpolatedProperty.fromDefinition({
                     interpolation: "Discrete",
                     zoomLevels: call._stops!,
                     values
@@ -360,7 +356,7 @@ const operators = {
                 }
             }
 
-            return evaluateInterpolatedProperty(interpolatedProperty, context.env);
+            return interpolatedProperty.evaluate(context.env);
         }
     }
 };
