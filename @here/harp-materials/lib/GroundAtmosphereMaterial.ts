@@ -141,7 +141,7 @@ export const GroundAtmosphereShader: THREE.Shader = {
         // The ray starts already in atmosphere
         vec3 v3Start = u_eyePositionWorld;
         // Virtually fNear is just at eye position, so ray passing through atmosphere does not shorten
-        fFar -= 0.0;
+        // fFar -= 0.0;
         float fDepth = exp((fInnerRadius - fCameraHeight) / RayleighScaleDepth);
 #endif
 
@@ -189,7 +189,8 @@ export const GroundAtmosphereShader: THREE.Shader = {
 
         AtmosphereColor color;
         color.mie = v3BaseColor * (InvWavelength * KrESun + KmESun);
-        color.rayleigh = v3Attenuate; // Calculate the attenuation factor for the ground
+        // Calculate the attenuation factor for the ground
+        color.rayleigh = v3Attenuate;
 
         return color;
     }
@@ -216,13 +217,15 @@ export const GroundAtmosphereShader: THREE.Shader = {
 
     fragmentShader: `
 
+    // Exposure correction gives more subtle gradients on the ground.
+    #define CORRECT_EXPOSURE 1
     #define FADE_DEPTH 1
     #define NIGHT_LOCAL 1
 
     precision highp float;
     precision highp int;
 
-    #ifdef COLOR_CORRECT
+    #ifdef CORRECT_COLOR
     uniform vec3 u_hsvCorrection; // Hue, saturation, brightness
     #endif
 
@@ -254,24 +257,16 @@ export const GroundAtmosphereShader: THREE.Shader = {
             u_eyePositionWorld);
         lightDirection = normalize(lightDirection);
 
-        // Old Sky code:
-        // Extra normalize (division by length) added for mobile devices
-        //float cosAngle = dot(lightDirection, normalize(v_vertToCamera)); // / length(v_vertToCamera);
-        //float rayleighPhase = 0.75 * (1.0 + cosAngle * cosAngle);
-        //float miePhase = 1.5 * ((1.0 - g2) / (2.0 + g2)) * (1.0 + cosAngle * cosAngle) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5);
-        //vec3 rgb = rayleighPhase * v_rayleighColor + miePhase * v_mieColor;
-        // End of old Sky code
-
-        // Simply 50:50 balanced factors code:
-        //vec3 rgb = v_rayleighColor + v_mieColor;
         // GPU gems mix of ground solution, with custom alpha settings
         vec3 rgb = v_mieColor + 0.25 * v_rayleighColor;
 
+        // Not needed for HDR frame buffer
     #if !defined(HDR_FRAME_BUFFER) && defined(CORRECT_EXPOSURE)
-        rgb = correctExposure(rgb, 2.0);
+        // Interesting results with exposure factor: 2.0, 3.5, 4.0
+        rgb = correctExposure(rgb, 3.0);
     #endif
 
-    #ifdef COLOR_CORRECT
+    #ifdef CORRECT_COLOR
         rgb = correctColor(rgb, u_hsvCorrection);
     #endif
 
@@ -285,8 +280,11 @@ export const GroundAtmosphereShader: THREE.Shader = {
             (outerRadius - innerRadius), 0.0, 1.0);
     #ifdef FADE_DEPTH
         // Fade alpha based on the distance of camera between atmosphere layers
-        atmosphereAlpha *= pow(depthFactor, 1.5);
-        //atmosphereAlpha *= depthFactor;
+        #ifdef FADE_DEPTH_LINEAR
+            atmosphereAlpha *= depthFactor;
+        #else
+            atmosphereAlpha *= pow(depthFactor, 1.5);
+        #endif
     #endif
 
 #if defined(FADE_NIGHT) || defined(DARKEN_NIGHT)
@@ -333,19 +331,8 @@ export const GroundAtmosphereShader: THREE.Shader = {
         focusFactor = pow(focusFactor, 2.5);
         atmosphereAlpha *= focusFactor;
 
-        // Enable all features
+        // Integrate all features
         gl_FragColor = vec4(rgb, atmosphereAlpha);
-
-        // Sky base code
-        //gl_FragColor = vec4(rgb, mix(rgb.b, 1.0, atmosphereAlpha));
-        // Sky with ground
-        //gl_FragColor = vec4(rgb, mix(0.65, focusFactor, rgb.b));
-        // Selective features
-#ifdef CAMERA_IN_SPACE
-        //gl_FragColor = vec4(rgb, focusFactor);
-#else
-        //gl_FragColor = vec4(rgb, focusFactor * pow(depthFactor, 1.5));
-#endif
     }
     `
 };

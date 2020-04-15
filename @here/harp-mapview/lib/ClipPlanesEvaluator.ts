@@ -58,7 +58,7 @@ export interface ClipPlanesEvaluator {
  * slightly different in each case. General algorithm sets near plane between camera and
  * ground level, while far plane is just calculated using scale and bias approach with far offset
  * and multiplier.
- * @depreciated Class contains the legacy (first and original) clip planes evaluation method, which
+ * @deprecated Class contains the legacy (first and original) clip planes evaluation method, which
  * is widely used in examples thus is still kept for backward compatibility and comparisons.
  */
 export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {

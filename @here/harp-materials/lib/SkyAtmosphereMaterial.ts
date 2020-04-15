@@ -189,10 +189,13 @@ export const SkyAtmosphereShader: THREE.Shader = {
     `,
 
     fragmentShader: `
+    // Because of harsh light distribution the exposure correction is always enabled for the sky.
+    #define CORRECT_EXPOSURE 1
+
     precision highp float;
     precision highp int;
 
-    #ifdef COLOR_CORRECT
+    #ifdef CORRECT_COLOR
     uniform vec3 u_hsvCorrection; // Hue, saturation, brightness
     #endif
 
@@ -233,11 +236,12 @@ export const SkyAtmosphereShader: THREE.Shader = {
 
         vec3 rgb = rayleighPhase * v_rayleighColor + miePhase * v_mieColor;
 
-    #if !defined(HDR_FRAME_BUFFER)
+        // Sky produces very harsh lighting effect so exposure correction is always enabled.
+    #if !defined(HDR_FRAME_BUFFER) && defined(CORRECT_EXPOSURE)
         rgb = correctExposure(rgb, 2.0);
     #endif
 
-    #ifdef COLOR_CORRECT
+    #ifdef CORRECT_COLOR
         rgb = correctColor(rgb, u_hsvCorrection);
     #endif
 
@@ -249,7 +253,7 @@ export const SkyAtmosphereShader: THREE.Shader = {
         float nightAlpha = (lightMode != 0.0) ? clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0) : 1.0;
         atmosphereAlpha *= pow(nightAlpha, 0.5);
 
-        gl_FragColor = vec4(rgb, mix(rgb.b, 1.0, atmosphereAlpha)); // * smoothstep(0.0, 1.0, czm_morphTime));
+        gl_FragColor = vec4(rgb, mix(rgb.b, 1.0, atmosphereAlpha));
     }
     `
 };
