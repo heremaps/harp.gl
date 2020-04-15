@@ -4,21 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-    isLiteralDefinition,
-    Style,
-    StyleDeclaration,
-    Theme
-} from "@here/harp-datasource-protocol";
-import { isJsonExpr } from "@here/harp-datasource-protocol/lib/Expr";
+import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import {
-    CopyrightElementHandler,
-    MapView,
-    MapViewEventNames,
-    ThemeLoader
-} from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { assert } from "@here/harp-utils";
 import { GUI } from "dat.gui";
@@ -189,63 +178,6 @@ const addOmvDataSource = (): Promise<void> => {
     return map.addDataSource(omvDataSource);
 };
 
-const patchFillStyle = (styleDeclaration: StyleDeclaration) => {
-    if (!isJsonExpr(styleDeclaration)) {
-        const style = styleDeclaration as Style;
-        if (style.technique === "fill") {
-            (style as any).technique = "standard";
-        }
-    }
-};
-
-/**
- * Replace all occurences of "fill" technique in the theme with "standard" technique.
- * "standard" technique is using three.js MeshStandardMaterial and is needed to receive
- * shadows.
- * @param theme The theme to patch
- */
-const patchTheme = (theme: Theme) => {
-    theme.lights = [
-        {
-            type: "ambient",
-            color: "#ffffff",
-            name: "ambientLight",
-            intensity: 0.9
-        },
-        {
-            type: "directional",
-            color: "#ffcccc",
-            name: "light1",
-            intensity: 1,
-            direction: {
-                x: 0,
-                y: 0.01,
-                z: 1
-            },
-            castShadow: true
-        }
-    ];
-    if (theme.styles === undefined || theme.styles.tilezen === undefined) {
-        throw Error("Theme has no tilezen styles");
-    }
-
-    if (theme.definitions !== undefined) {
-        for (const definitionName in theme.definitions) {
-            if (!theme.definitions.hasOwnProperty(definitionName)) {
-                continue;
-            }
-            const definition = theme.definitions[definitionName];
-            if (!isLiteralDefinition(definition)) {
-                const styleDeclaration = definition as StyleDeclaration;
-                patchFillStyle(styleDeclaration);
-            }
-        }
-    }
-    theme.styles.tilezen.forEach((styleDeclaration: StyleDeclaration) => {
-        patchFillStyle(styleDeclaration);
-    });
-};
-
 const addGuiElements = () => {
     // Instructions
     const message = document.createElement("div");
@@ -277,8 +209,29 @@ const addGuiElements = () => {
 };
 
 export namespace ThreejsShadows {
-    ThemeLoader.load("resources/berlin_tilezen_base.json").then((theme: Theme) => {
-        patchTheme(theme);
-        initializeMapView("mapCanvas", theme);
-    });
+    const theme: Theme = {
+        extends: "resources/berlin_tilezen_base.json",
+        lights: [
+            {
+                type: "ambient",
+                color: "#ffffff",
+                name: "ambientLight",
+                intensity: 0.9
+            },
+            {
+                type: "directional",
+                color: "#ffffff",
+                name: "light1",
+                intensity: 1,
+                // Will be overriden immediately, see `updateLight`
+                direction: {
+                    x: 0,
+                    y: 0.01,
+                    z: -1
+                },
+                castShadow: true
+            }
+        ]
+    };
+    initializeMapView("mapCanvas", theme);
 }

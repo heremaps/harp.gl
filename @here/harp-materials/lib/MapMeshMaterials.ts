@@ -14,6 +14,7 @@ import { DisplacementFeature, DisplacementFeatureParameters } from "./Displaceme
 import { ExtrusionFeatureDefs } from "./MapMeshMaterialsDefs";
 import extrusionShaderChunk from "./ShaderChunks/ExtrusionChunks";
 import fadingShaderChunk from "./ShaderChunks/FadingChunks";
+import { simpleLightingShadowChunk } from "./ShaderChunks/ShadowChunks";
 
 const emptyTexture = new THREE.Texture();
 
@@ -40,6 +41,18 @@ export interface FadingFeatureParameters {
      * Distance to the camera (range: `[0.0, 1.0]`) from which the objects are transparent.
      */
     fadeFar?: number;
+}
+
+/**
+ * Parameter used to control patching the standard material shader to ensure that the materials
+ * color isn't affected by the light direction, only valid for techniques that are "fill"
+ */
+export interface ShadowFeatureParameters {
+    /**
+     * Whether the diffuse light component is removed (i.e. the materials color is therefore just
+     * the ambient + shadow).
+     */
+    removeDiffuseLight?: boolean;
 }
 
 /**
@@ -1121,7 +1134,8 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     constructor(
         params?: THREE.MeshStandardMaterialParameters &
             FadingFeatureParameters &
-            ExtrusionFeatureParameters
+            ExtrusionFeatureParameters &
+            ShadowFeatureParameters
     ) {
         super(params);
 
@@ -1134,6 +1148,15 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
 
         this.addExtrusionProperties();
         this.applyExtrusionParameters({ ...params, zFightingWorkaround: true });
+
+        if (params?.removeDiffuseLight === true) {
+            this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, shader => {
+                shader.fragmentShader = THREE.ShaderChunk.meshphysical_frag.replace(
+                    "#include <lights_physical_pars_fragment>",
+                    simpleLightingShadowChunk
+                );
+            });
+        }
     }
 
     clone(): this {
@@ -1198,6 +1221,21 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     // tslint:disable-next-line:no-unused-variable
     set extrusionRatio(value: number) {
         // to be overridden
+    }
+
+    /**
+     * This is needed to simplify the lighting calculation, currently there is no support for
+     * switching this at runtime. It is required here to be a property because the parameters
+     * are applied to this material, and if this isn't here, three.js will complain that the
+     * property is missing.
+     * @internal
+     */
+    get removeDiffuseLight(): boolean {
+        return false;
+    }
+    /** @internal */
+    set removeDiffuseLight(val: boolean) {
+        // Stays empty.
     }
 
     protected addFadingProperties(): void {
