@@ -130,7 +130,7 @@ export function createLight(lightDescription: Light): THREE.Light {
                 light.castShadow = lightDescription.castShadow;
             }
             if (light.castShadow) {
-                light.shadow.bias = 0.00001;
+                light.shadow.bias = -0.002;
                 light.shadow.mapSize.width = 1024;
                 light.shadow.mapSize.height = 1024;
             }

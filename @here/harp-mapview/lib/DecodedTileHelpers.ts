@@ -135,6 +135,7 @@ export function createMaterial(
     }
 
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
+    material.shadowSide = THREE.FrontSide;
 
     if (
         isStandardTechnique(technique) ||
