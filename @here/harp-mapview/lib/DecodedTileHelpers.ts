@@ -121,7 +121,7 @@ export function createMaterial(
     ) {
         settings.fog = options.fog;
     }
-    settings.removeDiffuseLight = technique.name === "fill";
+    settings.removeDiffuseLight = options.shadowsEnabled === true && technique.name === "fill";
 
     const material = new Constructor(settings);
 

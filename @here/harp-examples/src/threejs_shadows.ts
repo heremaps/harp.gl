@@ -7,12 +7,7 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import {
-    CopyrightElementHandler,
-    MapView,
-    MapViewEventNames,
-    ThemeLoader
-} from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { assert } from "@here/harp-utils";
 import { GUI } from "dat.gui";
@@ -183,34 +178,6 @@ const addOmvDataSource = (): Promise<void> => {
     return map.addDataSource(omvDataSource);
 };
 
-/**
- * Replaces the lights in the style to cast shadows.
- * @param theme The theme to patch
- */
-const fixLights = (theme: Theme) => {
-    theme.lights = [
-        {
-            type: "ambient",
-            color: "#ffffff",
-            name: "ambientLight",
-            intensity: 0.9
-        },
-        {
-            type: "directional",
-            color: "#ffffff",
-            name: "light1",
-            intensity: 1,
-            // Will be overriden immediately, see `updateLight`
-            direction: {
-                x: 0,
-                y: 0.01,
-                z: -1
-            },
-            castShadow: true
-        }
-    ];
-};
-
 const addGuiElements = () => {
     // Instructions
     const message = document.createElement("div");
@@ -242,8 +209,29 @@ const addGuiElements = () => {
 };
 
 export namespace ThreejsShadows {
-    ThemeLoader.load("resources/berlin_tilezen_base.json").then((theme: Theme) => {
-        fixLights(theme);
-        initializeMapView("mapCanvas", theme);
-    });
+    const theme: Theme = {
+        extends: "resources/berlin_tilezen_base.json",
+        lights: [
+            {
+                type: "ambient",
+                color: "#ffffff",
+                name: "ambientLight",
+                intensity: 0.9
+            },
+            {
+                type: "directional",
+                color: "#ffffff",
+                name: "light1",
+                intensity: 1,
+                // Will be overriden immediately, see `updateLight`
+                direction: {
+                    x: 0,
+                    y: 0.01,
+                    z: -1
+                },
+                castShadow: true
+            }
+        ]
+    };
+    initializeMapView("mapCanvas", theme);
 }

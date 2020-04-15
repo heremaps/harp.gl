@@ -728,27 +728,6 @@ export class FadingFeatureMixin implements FadingFeature {
     }
 }
 
-/**
- * Class to apply the code necessary to customize the standard shader to remove the diffuse light
- * component.
- */
-export class ShadowFeatureMixin {
-    onBeforeCompile?: CompileCallback;
-    private m_removeDiffuseLight?: boolean;
-
-    protected applyShadowParameters(params?: ShadowFeatureParameters) {
-        this.m_removeDiffuseLight = params?.removeDiffuseLight;
-        if (this.m_removeDiffuseLight === true) {
-            this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, shader => {
-                shader.fragmentShader = THREE.ShaderChunk.meshphysical_frag.replace(
-                    "#include <lights_physical_pars_fragment>",
-                    simpleLightingShadowChunk
-                );
-            });
-        }
-    }
-}
-
 export namespace ExtrusionFeature {
     /**
      * Checks if feature is enabled based on [[ExtrusionFeature]] properties.
@@ -1170,7 +1149,14 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         this.addExtrusionProperties();
         this.applyExtrusionParameters({ ...params, zFightingWorkaround: true });
 
-        this.applyShadowParameters(params);
+        if (params?.removeDiffuseLight === true) {
+            this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, shader => {
+                shader.fragmentShader = THREE.ShaderChunk.meshphysical_frag.replace(
+                    "#include <lights_physical_pars_fragment>",
+                    simpleLightingShadowChunk
+                );
+            });
+        }
     }
 
     clone(): this {
@@ -1236,11 +1222,12 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     set extrusionRatio(value: number) {
         // to be overridden
     }
+
     /**
      * This is needed to simplify the lighting calculation, currently there is no support for
-     * switching this at runtime. It is required here to be a parameter because the parameters
-     * are applied to this material, and if this isn't here, three.js will complain that the get/set
-     * properties are missing.
+     * switching this at runtime. It is required here to be a property because the parameters
+     * are applied to this material, and if this isn't here, three.js will complain that the
+     * property is missing.
      * @internal
      */
     get removeDiffuseLight(): boolean {
@@ -1278,14 +1265,6 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     protected copyExtrusionParameters(source: FadingFeature) {
         // to be overridden
     }
-
-    protected applyShadowParameters(params?: ShadowFeatureParameters) {
-        // to be overriden
-    }
-
-    protected addShadowProperty() {
-        // to be overriden
-    }
     // Mixin declarations end -----------------------------------------------------------
 }
 
@@ -1299,4 +1278,3 @@ applyMixinsWithoutProperties(MapMeshBasicMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshStandardMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshDepthMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshBasicMaterial, [DisplacementFeatureMixin]);
-applyMixinsWithoutProperties(MapMeshStandardMaterial, [ShadowFeatureMixin]);
