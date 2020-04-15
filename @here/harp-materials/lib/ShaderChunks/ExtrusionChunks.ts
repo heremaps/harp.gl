@@ -14,7 +14,9 @@ export default {
 // Extrusion axis (xyz: vector, w: factor).
 attribute vec4 extrusionAxis;
 uniform float extrusionRatio;
+#ifdef FLAT_SHADED
 varying vec4 vExtrusionAxis;
+#endif
 #ifdef ZFIGHTING_WORKAROUND
 varying float vExtrusionRatio;
 #endif
@@ -29,7 +31,9 @@ vExtrusionRatio = (extrusionAxisLenSquared < MIN_BUILDING_HEIGHT_SQUARED) ? 1.0 
 float vExtrusionRatio = extrusionRatio;
 #endif
 transformed = transformed + extrusionAxis.xyz * (vExtrusionRatio - 1.0);
+#ifdef FLAT_SHADED
 vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
+#endif
 `,
     // Modified version of THREE <normal_fragment_begin> shader chunk which, for flat shaded
     // geometries, computes the normal either with the extrusion axis or fragment derivatives based

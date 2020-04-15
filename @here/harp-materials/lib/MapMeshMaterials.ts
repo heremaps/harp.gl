@@ -1079,7 +1079,12 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
         ExtrusionFeature.patchGlobalShaderChunks();
 
         this.addExtrusionProperties();
-        this.applyExtrusionParameters({ ...params, zFightingWorkaround: true });
+
+        // We need to set these to false, because otherwise three.js complains that there are
+        // outputs of the vertex shader not used in the pixel shader, the properties in question
+        // are `vExtrusionRatio` and `vExtrusionAxis`.
+        this.applyExtrusionParameters({ ...params, zFightingWorkaround: false });
+        this.flatShading = false;
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual
