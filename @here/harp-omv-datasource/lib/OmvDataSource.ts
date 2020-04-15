@@ -7,8 +7,11 @@
 import {
     AttributeMap,
     Definitions,
+    Expr,
     GeometryType,
+    isJsonExpr,
     ITileDecoder,
+    JsonArray,
     OptionsMap,
     StyleSet,
     WorkerServiceProtocol
@@ -251,7 +254,8 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
      */
     removeDataFilter(): void {
         this.configureDecoder(undefined, undefined, undefined, {
-            filterDescription: null
+            filterDescription: null,
+            dataFilter: null
         });
     }
 
@@ -261,14 +265,46 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
      *
      * @param filterDescription Data filter description created with
      * [[OmvFeatureFilterDescriptionBuilder]].
+     *
+     * @deprecated
      */
-    setDataFilter(filterDescription: OmvFeatureFilterDescription): void {
-        this.m_decoderOptions.filterDescription =
-            filterDescription !== null ? filterDescription : undefined;
+    setDataFilter(filterDescription: OmvFeatureFilterDescription): void;
 
-        this.configureDecoder(undefined, undefined, undefined, {
-            filterDescription
-        });
+    /**
+     * Sets the expression used to filter features.
+     *
+     * For example, the following expression can be used to filter
+     * features in the 'buildings' and 'water' layers.
+     * ```typescript
+     *   omvDataSource.setDataFilter([
+     *       "match", ["get", "$layer"],
+     *          ["buildings", "water"], true,
+     *          false
+     *   ]);
+     * ```
+     *
+     * @param dataFilter The expression used to filter data features.
+     */
+    // tslint:disable-next-line: unified-signatures
+    setDataFilter(dataFilter: JsonArray | Expr): void;
+
+    setDataFilter(filterDescription: OmvFeatureFilterDescription | JsonArray | Expr): void {
+        if (isJsonExpr(filterDescription) || Expr.isExpr(filterDescription)) {
+            this.m_decoderOptions.dataFilter = Expr.isExpr(filterDescription)
+                ? (filterDescription.toJSON() as JsonArray)
+                : filterDescription;
+
+            this.configureDecoder(undefined, undefined, undefined, {
+                dataFilter: filterDescription
+            });
+        } else {
+            this.m_decoderOptions.filterDescription =
+                filterDescription !== null ? filterDescription : undefined;
+
+            this.configureDecoder(undefined, undefined, undefined, {
+                filterDescription
+            });
+        }
     }
 
     /** @override */

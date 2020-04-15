@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Value } from "@here/harp-datasource-protocol/index-decoder";
+import { JsonArray, Value } from "@here/harp-datasource-protocol/index-decoder";
 
 /**
  * Feature Modifier ids to choose which OmvFeatureModifer should be used in OmvDecoder.
@@ -177,6 +177,11 @@ export interface OmvDecoderOptions {
     featureModifierId?: FeatureModifierId;
 
     enableElevationOverlay?: boolean;
+
+    /**
+     * The expression used to filter data features.
+     */
+    dataFilter?: JsonArray | null;
 }
 
 /**

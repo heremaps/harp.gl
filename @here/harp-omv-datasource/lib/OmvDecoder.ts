@@ -7,6 +7,7 @@
 import {
     DecodedTile,
     Definitions,
+    Expr,
     ExtendedTileInfo,
     GeometryKind,
     IndexedTechnique,
@@ -159,6 +160,7 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_projection: Projection,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_showMissingTechniques: boolean,
+        private readonly m_filter?: Expr,
         private readonly m_dataFilter?: OmvFeatureFilter,
         private readonly m_featureModifier?: OmvFeatureModifier,
         private readonly m_gatherFeatureAttributes = false,
@@ -174,7 +176,9 @@ export class OmvDecoder implements IGeometryProcessor {
             ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
             : styleSetDataFilter;
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(
+            new OmvProtobufDataAdapter(this, this.m_filter, dataPreFilter, logger)
+        );
         this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataPreFilter, logger));
     }
 
@@ -569,6 +573,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_gatherRoadSegments: boolean = false;
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
+    private m_dataFilter: Expr | undefined;
 
     /** @override */
     connect(): Promise<void> {
@@ -588,6 +593,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             projection,
             styleSetEvaluator,
             this.m_showMissingTechniques,
+            this.m_dataFilter,
             this.m_featureFilter,
             this.m_featureModifier,
             this.m_gatherFeatureAttributes,
@@ -623,6 +629,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             projection,
             styleSetEvaluator,
             this.m_showMissingTechniques,
+            this.m_dataFilter,
             this.m_featureFilter,
             this.m_featureModifier,
             this.m_gatherFeatureAttributes,
@@ -657,7 +664,14 @@ export class OmvTileDecoder extends ThemedTileDecoder {
                 this.m_showMissingTechniques = omvOptions.showMissingTechniques === true;
             }
 
-            if (omvOptions && omvOptions.filterDescription !== undefined) {
+            if (omvOptions.dataFilter !== undefined) {
+                this.m_dataFilter =
+                    omvOptions.dataFilter !== null
+                        ? Expr.fromJSON(omvOptions.dataFilter)
+                        : undefined;
+            }
+
+            if (omvOptions.filterDescription !== undefined) {
                 if (omvOptions.filterDescription !== null) {
                     // create new filter/modifier from description
                     this.m_featureFilter = new OmvGenericFeatureFilter(

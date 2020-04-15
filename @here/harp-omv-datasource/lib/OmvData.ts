@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
+import { Env, Expr, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import * as Long from "long";
@@ -367,6 +367,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     private readonly m_processor: IGeometryProcessor;
     private readonly m_logger?: ILogger;
     private m_dataFilter?: OmvFeatureFilter;
+    private m_filterExpr?: Expr;
 
     private m_tileKey!: TileKey;
     private m_layer!: com.mapbox.pb.Tile.ILayer;
@@ -378,8 +379,14 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
      * @param dataFilter The [[OmvFeatureFilter]] used to filter features.
      * @param logger The [[ILogger]] used to log diagnostic messages.
      */
-    constructor(processor: IGeometryProcessor, dataFilter?: OmvFeatureFilter, logger?: ILogger) {
+    constructor(
+        processor: IGeometryProcessor,
+        filterExpr?: Expr,
+        dataFilter?: OmvFeatureFilter,
+        logger?: ILogger
+    ) {
         this.m_processor = processor;
+        this.m_filterExpr = filterExpr;
         this.m_dataFilter = dataFilter;
         this.m_logger = logger;
     }
@@ -462,7 +469,21 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "point",
+            storageLevel,
+            this.m_processor.storageLevelOffset,
+            this.m_logger
+        );
+
+        if (this.shouldFilter(env)) {
+            return;
+        }
+
         const geometry: Vector2[] = [];
+
         this.m_geometryCommands.accept(feature.geometry, {
             type: "Point",
             visitCommand: command => {
@@ -475,15 +496,6 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
         if (geometry.length === 0) {
             return;
         }
-
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "point",
-            storageLevel,
-            this.m_processor.storageLevelOffset,
-            this.m_logger
-        );
 
         this.m_processor.processPointFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
@@ -509,6 +521,19 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "line",
+            storageLevel,
+            this.m_processor.storageLevelOffset,
+            this.m_logger
+        );
+
+        if (this.shouldFilter(env)) {
+            return;
+        }
+
         const geometry: ILineGeometry[] = [];
         let positions: Vector2[];
         this.m_geometryCommands.accept(feature.geometry, {
@@ -526,15 +551,6 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
         if (geometry.length === 0) {
             return;
         }
-
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "line",
-            storageLevel,
-            this.m_processor.storageLevelOffset,
-            this.m_logger
-        );
 
         this.m_processor.processLineFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
@@ -557,6 +573,19 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             this.m_dataFilter !== undefined &&
             !this.m_dataFilter.wantsPolygonFeature(layerName, asGeometryType(feature), storageLevel)
         ) {
+            return;
+        }
+
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "polygon",
+            storageLevel,
+            this.m_processor.storageLevelOffset,
+            this.m_logger
+        );
+
+        if (this.shouldFilter(env)) {
             return;
         }
 
@@ -584,15 +613,6 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "polygon",
-            storageLevel,
-            this.m_processor.storageLevelOffset,
-            this.m_logger
-        );
-
         this.m_processor.processPolygonFeature(
             layerName,
             layerExtents,
@@ -600,5 +620,16 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             env,
             storageLevel
         );
+    }
+
+    private shouldFilter(env: Env): boolean {
+        try {
+            return Boolean(this.m_filterExpr?.evaluate(env));
+        } catch (error) {
+            this.m_logger?.error(
+                `failed to evaluate expression '${JSON.stringify(this.m_filterExpr)}': ${error}`
+            );
+            return false;
+        }
     }
 }
