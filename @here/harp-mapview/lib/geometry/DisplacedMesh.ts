@@ -96,7 +96,7 @@ export class DisplacedMesh extends THREE.Mesh {
             return;
         }
         const displacementMap = firstMaterial.displacementMap;
-        const displacementRange = this.m_getDisplacementRange();
+        const displacementRange = { ...this.m_getDisplacementRange() };
 
         assert(this.geometry instanceof THREE.BufferGeometry, "Unsupported geometry type.");
         const geometry = this.geometry as THREE.BufferGeometry;

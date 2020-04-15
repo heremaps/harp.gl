@@ -27,6 +27,7 @@ export interface DisplacementRange {
  * @param box The original box to displace.
  * @param displacementRange The minimum and maximum displacement values.
  * @param displacementDir Direction in which the displacement will be applied.
+ * @return The displaced box.
  */
 export function displaceBox(
     box: THREE.Box3,

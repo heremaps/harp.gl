@@ -74,25 +74,33 @@ class BufferGeometryBuilder {
 }
 
 class SolidLineGeometryBuilder extends BufferGeometryBuilder {
+    private static replicateToExtrudedVertices(attribute: number[], itemSize: number): number[] {
+        const replicatedAttribute: number[] = [];
+        for (let i = 0; i < attribute.length - itemSize; i += itemSize) {
+            for (let j = i; j < i + 2 * itemSize; j += itemSize) {
+                replicatedAttribute.push(
+                    attribute[j],
+                    attribute[j + 1],
+                    attribute[j + 2],
+                    attribute[j],
+                    attribute[j + 1],
+                    attribute[j + 2]
+                );
+            }
+        }
+        return replicatedAttribute;
+    }
+
     private static computePositionsAndBitangets(
         polyline: number[],
         polylineBitangets: number[]
     ): { positions: number[]; bitangents: number[] } {
-        const positions: number[] = [];
+        const positions = SolidLineGeometryBuilder.replicateToExtrudedVertices(polyline, 3);
         const bitangents: number[] = [];
         const sameBitangent = polylineBitangets.length === 3;
 
         for (let i = 0; i < polyline.length - 3; i += 3) {
             for (let j = i; j < i + 6; j += 3) {
-                positions.push(
-                    polyline[j],
-                    polyline[j + 1],
-                    polyline[j + 2],
-                    polyline[j],
-                    polyline[j + 1],
-                    polyline[j + 2]
-                );
-
                 const bitangent1Idx = sameBitangent ? 0 : j;
                 const bitangent1 = new THREE.Vector3(
                     polylineBitangets[bitangent1Idx],
@@ -107,7 +115,14 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
     }
 
     private static triangulateLine(polyline: number[], indexOffset: number): number[] {
-        // triangulate lines.
+        // Same triangulation as in createLineGeometry() in Lines.ts.
+        // line start
+        // 1 ____0
+        // |\    |
+        // |  \  |
+        // |____\|
+        // 3     2
+        // line end
         const indices = [];
         for (let i = 0; i < polyline.length / 3 - 1; ++i) {
             const base = indexOffset + i * 4;
@@ -141,6 +156,18 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
         this.withBitangent(Array.from(oldBitangents).concat(bitangents));
         this.withIndices(Array.from(oldIndices).concat(indices));
         return this;
+    }
+
+    /** @override */
+    withUv(polylineUvs: number[]): BufferGeometryBuilder {
+        return super.withUv(SolidLineGeometryBuilder.replicateToExtrudedVertices(polylineUvs, 2));
+    }
+
+    /** @override */
+    withNormal(polylineNormals: number[]): BufferGeometryBuilder {
+        return super.withNormal(
+            SolidLineGeometryBuilder.replicateToExtrudedVertices(polylineNormals, 3)
+        );
     }
 }
 
@@ -234,7 +261,7 @@ function checkIntersect(
     expect(actualIntersects).has.lengthOf(1);
     const actualIntersect = actualIntersects[0];
     expect(actualIntersect.distance).closeTo(expectedIntersect.distance, 1e-5);
-    expect(actualIntersect.index).deep.equals(expectedIntersect.index);
+    expect(actualIntersect.index).equals(expectedIntersect.index);
     expect(actualIntersect.object).deep.equals(expectedIntersect.object);
     expect(actualIntersect.point.distanceTo(expectedIntersect.point)).closeTo(0, 1e-5);
 }
@@ -496,15 +523,15 @@ describe("SolidLineMesh", function() {
 
     it("raycast on displaced geometry expands bounding sphere by displacement range", function() {
         const meshBuilder = new SolidLineMeshBuilder([0, 0, 0, 2, 0, 0], [0, 1, 0]);
-        meshBuilder.geometryBuilder.withUv([0, 0, 0, 0]).withNormal([0, 0, 1, 0, 0, 1]);
+        meshBuilder.geometryBuilder.withUv([0, 0, 1, 1]).withNormal([0, 0, 1, 0, 0, 1]);
         const mesh = meshBuilder.build();
         mesh.geometry = new DisplacedBufferGeometry(
             mesh.geometry as THREE.BufferGeometry,
-            new THREE.DataTexture(new Float32Array([0]), 1, 1),
+            new THREE.DataTexture(new Float32Array([10.0, 12.0, 10.0, 12.0]), 2, 2),
             { min: 10, max: 12 }
         );
         const intersects: THREE.Intersection[] = [];
-        const { raycaster } = buildRayTo([0, 1, 0]);
+        const { raycaster, distance } = buildRayTo([0, 1, 10]);
         mesh.raycast(raycaster, intersects);
 
         expect(mesh.userData.feature?.boundingVolumes)
@@ -513,5 +540,12 @@ describe("SolidLineMesh", function() {
         expect(mesh.userData.feature.boundingVolumes[0]).deep.equals(
             new THREE.Sphere(new THREE.Vector3(1, 0, 11), Math.SQRT2)
         );
+
+        checkIntersect(intersects, {
+            distance,
+            point: new THREE.Vector3(0, 1, 10),
+            index: 0,
+            object: mesh
+        });
     });
 });

@@ -74,7 +74,7 @@ function computeFeatureBoundingSphere(
         // All normals in the geometry are assumed to be the same or close enough so that any of
         // them can be used as displacement direction. For sphere projection, the surface normals
         // within a tile are approximately the same from level 4 onwards. Here are some examples of
-        // the maximum dot product between normals in different tiles:
+        // the minimum dot product between normals in a tile (normals at tile's opposite corners):
         // TILE: (6,9,4): 0.9806892129880023
         // TILE: (12,17,5): 0.9946739445457075
         // TILE: (25,34,6): 0.9986326302953471
@@ -85,19 +85,7 @@ function computeFeatureBoundingSphere(
         return displaceBox(bbox, displacementRange, normal).getBoundingSphere(sphere);
     }
 
-    // If geometry is not displaced, the bounding sphere is placed in the center of the computed
-    // bounding box and expanded until it contains all vertices.
-    const center = bbox.getCenter(sphere.center);
-    let maxRSq = 0;
-    for (let i = featureBeginIndex; i < featureEndIndex; i += SEGMENT_STRIDE) {
-        maxRSq = Math.max(
-            maxRSq,
-            center.distanceToSquared(vertex.fromBufferAttribute(pos, indices[i])),
-            center.distanceToSquared(vertex.fromBufferAttribute(pos, indices[i + VERTEX_STRIDE]))
-        );
-    }
-    sphere.radius = Math.sqrt(maxRSq);
-    return sphere;
+    return bbox.getBoundingSphere(sphere);
 }
 
 /**
@@ -339,6 +327,9 @@ function intersectGroup(
         const bVolumeIdx = featureIdx;
         const endIdx = featureIdx < lastFeatureIdx ? featureStarts[++featureIdx] : groupEndIdx;
         if (bVolumeIdx >= bVolumes.length) {
+            // Geometry might be extruded on any direction. To avoid extruding all vertices, the
+            // centerline geometry is used to compute a bounding sphere whose radius is later
+            // expanded by the extrusion half width to ensure it contains the extruded geometry.
             bVolumes.push(computeFeatureBoundingSphere(geometry, beginIdx, endIdx));
         }
         intersectFeature(
