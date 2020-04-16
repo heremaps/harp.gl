@@ -474,6 +474,7 @@ export class TileGeometryCreator {
                 textElement.kind = technique.kind;
                 // Get the userData for text element picking.
                 textElement.userData = textPath.objInfos;
+                textElement.textFadeTime = technique.textFadeTime;
 
                 tile.addTextElement(textElement);
             }
@@ -561,10 +562,10 @@ export class TileGeometryCreator {
 
                     textElement.fadeNear = fadeNear;
                     textElement.fadeFar = fadeFar;
+                    textElement.textFadeTime = technique.textFadeTime;
 
                     // Get the userData for text element picking.
                     textElement.userData = userData;
-
                     tile.addTextElement(textElement);
                 }
             }

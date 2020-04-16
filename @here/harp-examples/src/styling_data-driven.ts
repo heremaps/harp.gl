@@ -32,7 +32,7 @@ export namespace DataDrivenThemeExample {
         }
     </style>
     <p id=info>This example shows how to utilize the data from the styles.<br/>` +
-        `Here the population of a country is displayed below its name.</p>`;
+        `Here the population of a city is displayed below its name.</p>`;
     function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
@@ -41,7 +41,7 @@ export namespace DataDrivenThemeExample {
             theme: {
                 extends: "resources/berlin_tilezen_base.json",
                 definitions: {
-                    countryPopulationLevel: {
+                    cityPopulationLevel: {
                         type: "number",
                         value: ["-", ["log10", ["number", ["get", "population"], 1000]], 3]
                     }
@@ -54,12 +54,12 @@ export namespace DataDrivenThemeExample {
                             when: [
                                 "all",
                                 ["==", ["get", "$layer"], "places"],
-                                ["==", ["get", "kind"], "country"]
+                                ["==", ["get", "kind"], "locality"]
                             ],
                             technique: "text",
                             attr: {
-                                priority: ["+", 100, ["^", 2, ["ref", "countryPopulationLevel"]]],
-                                size: ["+", 8, ["^", 1.7, ["ref", "countryPopulationLevel"]]],
+                                priority: ["+", 100, ["^", 2, ["ref", "cityPopulationLevel"]]],
+                                size: ["+", 8, ["^", 2, ["ref", "cityPopulationLevel"]]],
                                 text: [
                                     "concat",
                                     ["coalesce", ["get", "name:en"], ["get", "name"]],
@@ -70,13 +70,13 @@ export namespace DataDrivenThemeExample {
                                 backgroundColor: "#FFFFFF",
                                 backgroundOpacity: 0.7,
                                 fontVariant: "SmallCaps",
-                                opacity: 0.9
+                                opacity: 0.9,
+                                textFadeTime: 0
                             }
                         }
                     ]
                 }
             },
-            disableFading: true,
             target: new GeoCoordinates(50.443041, 11.4229649),
             zoomLevel: 5
         });

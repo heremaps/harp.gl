@@ -30,16 +30,29 @@ export const DEFAULT_FADE_TIME = 800;
  * @hidden
  */
 export class RenderState {
+    /**
+     * Current fading value [0..1]
+     */
+    value: number = 0.0;
+
+    /**
+     * Timestamp the fading started.
+     */
+    startTime: number = 0;
+
+    /**
+     * Computed opacity depending on value.
+     */
+    opacity: number = 1.0;
+
     private m_state = FadingState.Undefined;
 
     /**
      * Create a `RenderState`.
      *
-     * @param value Current fading value [0..1].
-     * @param startTime Time stamp the fading started.
-     * @param opacity Computed opacity depending on value.
+     * @param fadeTime The duration of the fading in milliseconds.
      */
-    constructor(public value = 0.0, public startTime = 0, public opacity = 1.0) {}
+    constructor(public fadeTime = DEFAULT_FADE_TIME) {}
 
     /**
      * Reset existing `RenderState` to appear like a fresh state.
@@ -122,7 +135,7 @@ export class RenderState {
             // The fadeout is not complete: compute the virtual fadingStartTime in the past, to get
             // a correct end time:
             this.value = 1.0 - this.value;
-            this.startTime = time - this.value * DEFAULT_FADE_TIME;
+            this.startTime = time - this.value * this.fadeTime;
         } else {
             this.startTime = time;
             this.value = 0.0;
@@ -147,7 +160,7 @@ export class RenderState {
         if (this.m_state === FadingState.FadingIn) {
             // The fade-in is not complete: compute the virtual fadingStartTime in the past, to get
             // a correct end time:
-            this.startTime = time - this.value * DEFAULT_FADE_TIME;
+            this.startTime = time - this.value * this.fadeTime;
             this.value = 1.0 - this.value;
         } else {
             this.startTime = time;
@@ -179,7 +192,7 @@ export class RenderState {
         const startValue = this.m_state === FadingState.FadingIn ? 0 : 1;
         const endValue = this.m_state === FadingState.FadingIn ? 1 : 0;
 
-        if (disableFading || fadingTime >= DEFAULT_FADE_TIME) {
+        if (disableFading || fadingTime >= this.fadeTime) {
             this.value = 1.0;
             this.opacity = endValue;
             this.m_state =
@@ -187,7 +200,7 @@ export class RenderState {
         } else {
             // TODO: HARP-7648. Do this once for all labels (calculate the last frame value
             // increment).
-            this.value = fadingTime / DEFAULT_FADE_TIME;
+            this.value = fadingTime / this.fadeTime;
 
             this.opacity = THREE.MathUtils.clamp(
                 MathUtils.smootherStep(startValue, endValue, this.value),
