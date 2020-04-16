@@ -65,13 +65,26 @@ export namespace PickingExample {
                 }
             }
         </style>
-        <p id=info>Click a feature on the map to read its data (Land masses are not features).</p>
+        <p id=info>Click/touch a feature on the map to read its data (Land masses are not features).
+        </p>
         <pre id="mouse-picked-result"></pre>
     `;
 
     initializeMapView("mapCanvas").catch(err => {
         throw err;
     });
+
+    let lastEventCoords: { x: number; y: number } | undefined;
+
+    // Trigger picking event only if there's (almost) no dragging.
+    function isPick(event: { pageX: number; pageY: number }) {
+        const MAX_MOVE = 5;
+        return (
+            lastEventCoords &&
+            Math.abs(lastEventCoords.x - event.pageX) <= MAX_MOVE &&
+            Math.abs(lastEventCoords.y - event.pageY) <= MAX_MOVE
+        );
+    }
 
     // snippet:datasource_object_picking_2.ts
     const element = document.getElementById("mouse-picked-result") as HTMLPreElement;
@@ -173,8 +186,30 @@ export namespace PickingExample {
 
         // snippet:datasource_object_picking_1.ts
         canvas.addEventListener("mousedown", event => {
-            handlePick(mapView, event.pageX, event.pageY);
+            lastEventCoords = { x: event.pageX, y: event.pageY };
         });
+        canvas.addEventListener("touchstart", event => {
+            if (event.touches.length !== 1) {
+                return;
+            }
+            lastEventCoords = { x: event.touches[0].pageX, y: event.touches[0].pageY };
+        });
+
+        canvas.addEventListener("mouseup", event => {
+            if (isPick(event)) {
+                handlePick(mapView, event.pageX, event.pageY);
+            }
+        });
+        canvas.addEventListener("touchend", event => {
+            if (event.changedTouches.length !== 1) {
+                return;
+            }
+            const touch = event.changedTouches[0];
+            if (isPick(touch)) {
+                handlePick(mapView, touch.pageX, touch.pageY);
+            }
+        });
+
         // end:datasource_object_picking_1.ts
 
         const omvDataSource = new OmvDataSource({
