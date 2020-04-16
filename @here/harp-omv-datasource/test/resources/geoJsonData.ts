@@ -51,14 +51,6 @@ export const GEOJSON_DATA: FeatureCollection = {
                 type: "Point",
                 coordinates: [-2.900390625, 26.115985925333536]
             }
-        },
-        {
-            type: "Feature",
-            properties: {},
-            geometry: {
-                type: "Point",
-                coordinates: [13.084716796874998, 22.61401087437029]
-            }
         }
     ]
 };
@@ -109,7 +101,7 @@ export const THEME: Theme = {
                     color: "#000000",
                     backgroundColor: "#FFFFFF",
                     backgroundOpacity: 0.5,
-                    size: 16,
+                    size: 8,
                     priority: 100
                 },
                 labelProperty: "name",

@@ -20,19 +20,28 @@ import {
     GeometryType
 } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
-import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import {
+    GeoCoordinates,
+    mercatorProjection,
+    Projection,
+    sphereProjection,
+    TileKey,
+    webMercatorTilingScheme
+} from "@here/harp-geoutils";
+import {
+    CalculationStatus,
+    DataSource,
+    ElevationProvider,
+    ElevationRangeSource,
     MapView,
     MapViewEventNames,
-    TextElementsRenderer,
     TileLoaderState
 } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/lib/GeoJsonTiler";
-import { waitForEvent, willEventually } from "@here/harp-test-utils/";
-import { loadTestResource } from "@here/harp-test-utils/lib/TestDataUtils";
+import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils/";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
-import { FontCatalog, TextCanvas } from "@here/harp-text-canvas";
-import { GlyphTextureCache } from "@here/harp-text-canvas/lib/rendering/GlyphTextureCache";
+import { FontCatalog } from "@here/harp-text-canvas";
+import { getAppBaseUrl } from "@here/harp-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -43,27 +52,18 @@ import { GEOJSON_DATA, THEME } from "./resources/geoJsonData";
 
 declare const global: any;
 
-// sets the given point in the middle of the screen
-async function displayLocation(mapView: MapView, location: GeoCoordinates) {
-    mapView.lookAt({ target: location, zoomLevel: 2 });
-    await waitForEvent(mapView, MapViewEventNames.CameraPositionChanged);
-
-    await willEventually(() => {
-        assert.isTrue(mapView.visibleTileSet.allVisibleTilesLoaded);
-    });
-}
-
-describe.skip("MapView Picking", async function() {
+describe("MapView Picking", async function() {
     const inNodeContext = typeof window === "undefined";
     const tileKey = new TileKey(0, 0, 0);
 
-    let sandbox: sinon.SinonSandbox;
-    let clearColorStub: sinon.SinonStub;
-    let addEventListenerSpy: sinon.SinonStub;
-    let removeEventListenerSpy: sinon.SinonStub;
+    const sandbox = sinon.createSandbox();
     let canvas: HTMLCanvasElement;
     let mapView: MapView;
     let geoJsonDataSource: OmvDataSource;
+    let fakeElevationSource: DataSource;
+    let fakeElevationRangeSource: ElevationRangeSource;
+    let fakeElevationProvider: ElevationProvider;
+    const FAKE_HEIGHT = 500000.0;
 
     async function getDecodedTile() {
         let tile = geoJsonDataSource.getTile(tileKey);
@@ -81,32 +81,24 @@ describe.skip("MapView Picking", async function() {
         return decodeTile;
     }
 
-    beforeEach(async function() {
-        sandbox = sinon.createSandbox();
-        clearColorStub = sandbox.stub();
-        sandbox
-            .stub(THREE, "WebGLRenderer")
-            .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
-
-        sandbox.stub(GlyphTextureCache.prototype as any, "update").callsFake(() => {});
-        sandbox.stub(TextCanvas.prototype as any, "render").callsFake(() => {});
-        sandbox.stub(TextElementsRenderer.prototype as any, "renderText").callsFake(() => {});
-
-        // load font data
-        sandbox.stub(FontCatalog as any, "loadJSON").callsFake((url: URL) => {
-            let urlStr = url.toString();
-
-            if (urlStr.includes("fonts/Default_FontCatalog.json")) {
-                return loadTestResource(
-                    "@here/harp-fontcatalog",
-                    "resources/Default_FontCatalog.json",
-                    "json"
-                );
-            }
-            const fontsDir = "/fonts";
-            urlStr = urlStr.slice(urlStr.indexOf(fontsDir) + fontsDir.length);
-            return loadTestResource("@here/harp-fontcatalog", "resources/" + urlStr, "json");
-        });
+    before(function() {
+        if (inNodeContext) {
+            const g = global as any;
+            g.window = {
+                window: { devicePixelRatio: 1.0 },
+                location: {
+                    href: getAppBaseUrl()
+                }
+            };
+            g.navigator = {};
+            g.requestAnimationFrame = (cb: (delta: number) => void) => {
+                return setTimeout(() => cb(15), 15);
+            };
+            g.cancelAnimationFrame = (id: any) => {
+                return clearTimeout(id);
+            };
+            g.performance = { now: Date.now };
+        }
 
         // fake texture loading
         sandbox.stub(FontCatalog as any, "loadTexture").callsFake((url: URL) => {
@@ -118,42 +110,84 @@ describe.skip("MapView Picking", async function() {
             };
         });
 
-        if (inNodeContext) {
-            const theGlobal: any = global;
-            theGlobal.window = {
-                window: { devicePixelRatio: 1.0 },
-                location: {
-                    href: "http://mocha-test"
-                }
-            };
-            theGlobal.navigator = {};
-            theGlobal.requestAnimationFrame = (cb: (delta: number) => void) => {
-                return setTimeout(() => cb(15), 15);
-            };
-            theGlobal.cancelAnimationFrame = (id: any) => {
-                return clearTimeout(id);
-            };
-            theGlobal.performance = { now: Date.now };
-        }
-
-        addEventListenerSpy = sinon.stub();
-        removeEventListenerSpy = sinon.stub();
-
         canvas = ({
             clientWidth: 800,
             clientHeight: 600,
-            addEventListener: addEventListenerSpy,
-            removeEventListener: removeEventListenerSpy
+            addEventListener: sinon.stub(),
+            removeEventListener: sinon.stub()
         } as unknown) as HTMLCanvasElement;
 
+        sandbox
+            .stub(THREE, "WebGLRenderer")
+            .returns(TestUtils.getWebGLRendererStub(sandbox, sandbox.stub()));
+
+        fakeElevationSource = {
+            name: "terrain",
+            attach(view: MapView) {
+                this.mapView = view;
+            },
+            clearCache() {},
+            detach() {
+                this.mapView = undefined;
+            },
+            dispose() {},
+            connect() {
+                return Promise.resolve();
+            },
+            setEnableElevationOverlay() {},
+            setTheme() {},
+            addEventListener() {},
+            getTilingScheme() {
+                return webMercatorTilingScheme;
+            },
+            mapView: undefined
+        } as any;
+        fakeElevationRangeSource = {
+            connect: () => Promise.resolve(),
+            ready: () => true,
+            getTilingScheme: () => webMercatorTilingScheme,
+            getElevationRange: () => ({
+                minElevation: 0,
+                maxElevation: FAKE_HEIGHT,
+                calculationStatus: CalculationStatus.FinalPrecise
+            })
+        } as any;
+        const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
+        geoBox.northEast.altitude = FAKE_HEIGHT;
+        fakeElevationProvider = {
+            clearCache() {},
+            getHeight: () => FAKE_HEIGHT,
+            sampleHeight: () => FAKE_HEIGHT,
+            getDisplacementMap: () => ({
+                tileKey,
+                texture: new THREE.DataTexture(new Float32Array([FAKE_HEIGHT]), 1, 1),
+                displacementMap: {
+                    xCountVertices: 1,
+                    yCountVertices: 1,
+                    buffer: new Float32Array([FAKE_HEIGHT])
+                },
+                geoBox
+            })
+        } as any;
+    });
+
+    beforeEach(async function() {
         mapView = new MapView({
             canvas,
             decoderCount: 0,
             theme: THEME,
-            enableRoadPicking: true
+            enableRoadPicking: true,
+            disableFading: true,
+            fontCatalog: getTestResourceUrl(
+                "@here/harp-fontcatalog",
+                "resources/Default_FontCatalog.json"
+            )
         });
 
         await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
+        sinon
+            .stub(mapView.textElementsRenderer, "renderText")
+            .callsFake((_camera: THREE.OrthographicCamera) => {});
 
         const geoJsonDataProvider = new GeoJsonDataProvider("italy_test", GEOJSON_DATA, {
             tiler: new GeoJsonTiler()
@@ -171,9 +205,7 @@ describe.skip("MapView Picking", async function() {
         await mapView.addDataSource(geoJsonDataSource);
     });
 
-    afterEach(function() {
-        sandbox.restore();
-        mapView.dispose();
+    after(function() {
         if (inNodeContext) {
             delete global.window;
             delete global.requestAnimationFrame;
@@ -182,141 +214,169 @@ describe.skip("MapView Picking", async function() {
         }
     });
 
-    it("Decoded tile is created", async () => {
-        const decodeTile = await getDecodedTile();
+    describe("Decoded tile tests", async function() {
+        it("Decoded tile is created", async () => {
+            const decodeTile = await getDecodedTile();
 
-        assert.isDefined(decodeTile.textGeometries);
-        assert.isDefined(decodeTile.geometries);
-        assert.equal(decodeTile.geometries.length, 2);
+            assert.isDefined(decodeTile.textGeometries);
+            assert.isDefined(decodeTile.geometries);
+            assert.equal(decodeTile.geometries.length, 2);
 
-        const tileInfo = decodeTile.tileInfo as ExtendedTileInfo;
-        assert.isDefined(tileInfo);
+            const tileInfo = decodeTile.tileInfo as ExtendedTileInfo;
+            assert.isDefined(tileInfo);
+        });
+
+        it("Decoded tile contains text pick info", async () => {
+            const decodeTile = await getDecodedTile();
+
+            assert.equal(decodeTile.textGeometries!.length, 1);
+            const textElem = decodeTile.textGeometries![0];
+
+            assert.isDefined(textElem.objInfos);
+            assert.deepInclude(textElem.objInfos![0], GEOJSON_DATA.features[2].properties);
+        });
+
+        it("Decoded tile contains line pick data pointer", async () => {
+            const decodeTile = await getDecodedTile();
+            const lineGeometry = decodeTile.geometries!.find(
+                geometry => geometry.type === GeometryType.SolidLine
+            );
+
+            assert.isDefined(lineGeometry);
+            assert.isDefined(lineGeometry!.groups);
+            assert.equal(lineGeometry!.groups.length, 1);
+        });
+
+        it("decodedTile contains polygon objInfos", async () => {
+            const decodeTile = await getDecodedTile();
+
+            const polygonGeometry = decodeTile.geometries!.find(
+                geometry => geometry.type === GeometryType.Polygon
+            ) as Geometry;
+
+            assert.isDefined(polygonGeometry, "polygon geometry missing");
+            assert.isDefined(polygonGeometry.groups, "polygon geometry groups missing");
+            assert.equal(polygonGeometry.groups.length, 1);
+            assert.isDefined(polygonGeometry.objInfos, "objInfos missing");
+            assert.equal(polygonGeometry.objInfos!.length, 1);
+
+            const objInfo = polygonGeometry.objInfos![0] as any;
+            assert.include(objInfo, GEOJSON_DATA.features[0].properties);
+        });
     });
 
-    it("Decoded tile contains text pick info", async () => {
-        const decodeTile = await getDecodedTile();
+    describe("Picking tests", async function() {
+        interface TestCase {
+            name: string;
+            rayOrigGeo: number[];
+            featureIdx: number;
+            projection: Projection;
+            elevation: boolean;
+            pixelRatio?: number;
+            lookAt?: number[];
+        }
+        const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
+        const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
+            .coordinates as number[][])[0];
+        const pickLabelAt: number[] = (GEOJSON_DATA.features[2].geometry as any).coordinates;
+        const offCenterLabelLookAt: number[] = [pickLabelAt[0] + 10.0, pickLabelAt[1] + 10.0];
 
-        assert.equal(decodeTile.textGeometries!.length, 1);
-        const textElem = decodeTile.textGeometries![0];
+        const testCases: TestCase[] = [];
 
-        assert.isDefined(textElem.objInfos);
-        assert.deepInclude(textElem.objInfos![0], GEOJSON_DATA.features[2].properties);
-    });
+        for (const { projName, projection } of [
+            { projName: "mercator", projection: mercatorProjection },
+            { projName: "sphere", projection: sphereProjection }
+        ]) {
+            for (const elevation of [false, true]) {
+                const elevatedText = elevation ? "elevated " : " ";
+                testCases.push(
+                    {
+                        name: `Pick ${elevatedText}polygon in ${projName} projection`,
+                        rayOrigGeo: elevation ? pickPolygonAt.concat([FAKE_HEIGHT]) : pickPolygonAt,
+                        featureIdx: 0,
+                        projection,
+                        elevation
+                    },
+                    {
+                        name: `Pick ${elevatedText}solid line in ${projName} projection`,
+                        rayOrigGeo: elevation ? pickLineAt.concat([FAKE_HEIGHT]) : pickLineAt,
+                        featureIdx: 1,
+                        projection,
+                        elevation
+                    },
+                    {
+                        name: `Pick ${elevatedText}label in ${projName} projection`,
+                        rayOrigGeo: elevation ? pickLabelAt.concat([FAKE_HEIGHT]) : pickLabelAt,
+                        featureIdx: 2,
+                        projection,
+                        elevation,
+                        pixelRatio: 1
+                    },
+                    {
+                        name: `Pick ${elevatedText}label in ${projName} projection on HiDPI Screen`,
+                        rayOrigGeo: elevation ? pickLabelAt.concat([FAKE_HEIGHT]) : pickLabelAt,
+                        featureIdx: 2,
+                        projection,
+                        elevation,
+                        pixelRatio: 2,
+                        // Any pixel ratio related bug might not be reproducible with a label
+                        // centered on screen, move the camera target away from the label.
+                        lookAt: elevation
+                            ? offCenterLabelLookAt.concat([FAKE_HEIGHT])
+                            : offCenterLabelLookAt
+                    }
+                );
+            }
+        }
 
-    it("Decoded tile contains line pick data pointer", async () => {
-        const decodeTile = await getDecodedTile();
-        const lineGeometry = decodeTile.geometries!.find(
-            geometry => geometry.type === GeometryType.SolidLine
-        );
+        for (const testCase of testCases) {
+            it(testCase.name, async () => {
+                mapView.projection = testCase.projection;
 
-        assert.isDefined(lineGeometry);
-        assert.isDefined(lineGeometry!.groups);
-        assert.equal(lineGeometry!.groups.length, 1);
-    });
+                if (testCase.pixelRatio !== undefined) {
+                    mapView.pixelRatio = testCase.pixelRatio;
+                }
 
-    it("TilInfo contains line pick data", async () => {
-        const decodeTile = await getDecodedTile();
-        const tileInfo = decodeTile.tileInfo as ExtendedTileInfo;
-        assert.isDefined(tileInfo);
+                if (testCase.elevation) {
+                    await mapView.setElevationSource(
+                        fakeElevationSource,
+                        fakeElevationRangeSource,
+                        fakeElevationProvider
+                    );
+                }
 
-        const lineGeometry = decodeTile.geometries!.find(
-            geometry => geometry.type === GeometryType.SolidLine
-        );
+                const feature = GEOJSON_DATA.features[testCase.featureIdx];
+                const rayOrigGeo = testCase.rayOrigGeo;
 
-        assert.isDefined(lineGeometry);
-        assert.isDefined(lineGeometry!.groups);
+                const rayOrigin = new GeoCoordinates(
+                    rayOrigGeo[1],
+                    rayOrigGeo[0],
+                    rayOrigGeo.length > 2 ? rayOrigGeo[2] : undefined
+                );
 
-        assert.isDefined(tileInfo.lineGroup);
+                // Set lookAt as camera target if given, otherwise use ray origin.
+                const target = testCase.lookAt
+                    ? new GeoCoordinates(
+                          testCase.lookAt[1],
+                          testCase.lookAt[0],
+                          testCase.lookAt.length > 2 ? testCase.lookAt[2] : undefined
+                      )
+                    : rayOrigin;
+                mapView.lookAt({ target, tilt: 60, zoomLevel: 2 });
+                await waitForEvent(mapView, MapViewEventNames.FrameComplete);
 
-        assert.isDefined(tileInfo.lineGroup.positionIndex);
-        assert.equal(tileInfo.lineGroup.positionIndex.length, 1);
+                const screenPointLocation = mapView.getScreenPosition(rayOrigin) as THREE.Vector2;
+                assert.isDefined(screenPointLocation);
 
-        assert.isDefined(tileInfo.lineGroup.userData);
-        assert.equal(tileInfo.lineGroup.userData.length, 1);
+                mapView.scene.updateWorldMatrix(false, true);
 
-        const index = tileInfo.lineGroup.positionIndex[0] as number;
-        assert.equal(lineGeometry!.groups[0].start, index);
+                const usableIntersections = mapView
+                    .intersectMapObjects(screenPointLocation.x, screenPointLocation.y)
+                    .filter(item => item.userData !== undefined);
 
-        const userData = tileInfo.lineGroup.userData[index] as any;
-        assert.isDefined(userData);
-        assert.include(userData, GEOJSON_DATA.features[1].properties);
-    });
-
-    it("decodedTile contains polygon objInfos", async () => {
-        const decodeTile = await getDecodedTile();
-
-        const polygonGeometry = decodeTile.geometries!.find(
-            geometry => geometry.type === GeometryType.Polygon
-        ) as Geometry;
-
-        assert.isDefined(polygonGeometry, "polygon geometry missing");
-        assert.isDefined(polygonGeometry.groups, "polygon geometry groups missing");
-        assert.equal(polygonGeometry.groups.length, 1);
-        assert.isDefined(polygonGeometry.objInfos, "objInfos missing");
-        assert.equal(polygonGeometry.objInfos!.length, 1);
-
-        const objInfo = polygonGeometry.objInfos![0] as any;
-        assert.include(objInfo, GEOJSON_DATA.features[0].properties);
-    });
-
-    // emulate a real pick in browser
-    it("Pick polygon", async () => {
-        const POLYGON_DATA = GEOJSON_DATA.features[0];
-        const POINT = GEOJSON_DATA.features[3];
-        const pointCoordinates = ((POINT.geometry as any).coordinates as any) as number[];
-
-        const point = new GeoCoordinates(pointCoordinates[1], pointCoordinates[0]);
-        await displayLocation(mapView, point);
-
-        const screenPointLocation = mapView.getScreenPosition(point) as THREE.Vector2;
-        assert.isDefined(screenPointLocation);
-
-        mapView.scene.updateWorldMatrix(false, true);
-
-        const usableIntersections = mapView
-            .intersectMapObjects(screenPointLocation.x, screenPointLocation.y)
-            .filter(item => item.userData !== undefined);
-
-        assert.equal(usableIntersections.length, 1);
-        assert.include(usableIntersections[0].userData, POLYGON_DATA.properties);
-    });
-
-    // emulate a real pick in browser
-    it("Pick line", async () => {
-        const LINE_DATA = GEOJSON_DATA.features[1];
-        const coordinates = ((LINE_DATA.geometry as any).coordinates as any) as number[][];
-        const pointLocation = new GeoCoordinates(coordinates[1][1], coordinates[1][0]);
-
-        await displayLocation(mapView, pointLocation);
-
-        const screenPointLocation = mapView.getScreenPosition(pointLocation) as THREE.Vector2;
-        assert.isDefined(screenPointLocation);
-
-        const usableIntersections = mapView
-            .intersectMapObjects(screenPointLocation.x, screenPointLocation.y)
-            .filter(item => item.userData !== undefined);
-
-        assert.equal(usableIntersections.length, 1);
-        assert.include(usableIntersections[0].userData, LINE_DATA.properties);
-    });
-
-    // emulate a real pick in browser
-    // INFO: Disabled until text renderer refactor (Travis ci build fails).
-    it.skip("Pick point", async () => {
-        const POINT_DATA = GEOJSON_DATA.features[2];
-        const coordinates = ((POINT_DATA.geometry as any).coordinates as any) as number[];
-        const pointLocation = new GeoCoordinates(coordinates[1], coordinates[0]);
-
-        await displayLocation(mapView, pointLocation);
-
-        const screenPointLocation = mapView.getScreenPosition(pointLocation) as THREE.Vector2;
-        assert.isDefined(screenPointLocation);
-
-        const usableIntersections = mapView
-            .intersectMapObjects(screenPointLocation.x, screenPointLocation.y)
-            .filter(item => item.userData !== undefined);
-
-        assert.equal(usableIntersections.length, 1);
-        assert.include(usableIntersections[0].userData, POINT_DATA.properties);
+                assert.equal(usableIntersections.length, 1);
+                assert.include(usableIntersections[0].userData, feature.properties);
+            });
+        }
     });
 });
