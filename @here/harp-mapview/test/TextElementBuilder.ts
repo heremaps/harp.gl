@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-    TextLayoutParameters,
-    TextRenderParameters,
-    TextRenderStyle
-} from "@here/harp-text-canvas";
+import { TextLayoutParameters, TextRenderParameters } from "@here/harp-text-canvas";
 import * as THREE from "three";
 import { TextElement } from "../lib/text/TextElement";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
@@ -123,7 +119,7 @@ export class TextElementBuilder {
         this.m_mayOverlap = mayOverlap;
         return this;
     }
-    build(sandbox: sinon.SinonSandbox): TextElement {
+    build(): TextElement {
         const textElement = new TextElement(
             this.m_text,
             this.m_points,
@@ -142,17 +138,6 @@ export class TextElementBuilder {
         textElement.pathLengthSqr = this.m_pathLengthSqr;
         textElement.mayOverlap = this.m_mayOverlap;
 
-        // Stub render style setter, so that a spy is installed on the style opacity
-        // whenever it's called.
-        const renderStyleProperty = Object.getOwnPropertyDescriptor(
-            TextElement.prototype,
-            "renderStyle"
-        )!;
-        sandbox.stub(textElement, "renderStyle").set((style: TextRenderStyle) => {
-            sandbox.spy(style, "opacity", ["set"]);
-            return renderStyleProperty.set!.call(textElement, style);
-        });
-        sandbox.stub(textElement, "renderStyle").get(renderStyleProperty.get!);
         return textElement;
     }
 }

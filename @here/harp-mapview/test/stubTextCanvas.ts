@@ -53,7 +53,7 @@ export function stubTextCanvas(
                 params?: AdditionParameters
             ) => {
                 if (params !== undefined) {
-                    addTextSpy(params.pickingData);
+                    addTextSpy(params.pickingData, textCanvas.textRenderStyle.opacity);
                 }
                 return true;
             }

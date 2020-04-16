@@ -137,7 +137,7 @@ export class TextRenderStyle {
                     : DefaultTextStyle.DEFAULT_FONT_NAME,
             fontSize:
                 params.fontSize !== undefined
-                    ? params.fontSize
+                    ? { ...params.fontSize }
                     : {
                           unit: DefaultTextStyle.DEFAULT_FONT_SIZE.unit,
                           size: DefaultTextStyle.DEFAULT_FONT_SIZE.size,
@@ -155,14 +155,14 @@ export class TextRenderStyle {
                 params.rotation !== undefined ? params.rotation : DefaultTextStyle.DEFAULT_ROTATION,
             color:
                 params.color !== undefined
-                    ? params.color
-                    : new THREE.Color(DefaultTextStyle.DEFAULT_COLOR),
+                    ? params.color.clone()
+                    : DefaultTextStyle.DEFAULT_COLOR.clone(),
             opacity:
                 params.opacity !== undefined ? params.opacity : DefaultTextStyle.DEFAULT_OPACITY,
             backgroundColor:
                 params.backgroundColor !== undefined
-                    ? params.backgroundColor
-                    : new THREE.Color(DefaultTextStyle.DEFAULT_BACKGROUND_COLOR),
+                    ? params.backgroundColor.clone()
+                    : DefaultTextStyle.DEFAULT_BACKGROUND_COLOR.clone(),
             backgroundOpacity:
                 params.backgroundOpacity !== undefined
                     ? params.backgroundOpacity
@@ -197,7 +197,7 @@ export class TextRenderStyle {
         return this.m_params.fontSize!;
     }
     set fontSize(value: FontSize) {
-        this.m_params.fontSize = value;
+        this.m_params.fontSize = { ...value };
     }
 
     /**
@@ -237,7 +237,7 @@ export class TextRenderStyle {
         return this.m_params.color!;
     }
     set color(value: THREE.Color) {
-        this.m_params.color = value;
+        this.m_params.color!.copy(value);
     }
 
     /**
@@ -247,7 +247,7 @@ export class TextRenderStyle {
         return this.m_params.backgroundColor!;
     }
     set backgroundColor(value: THREE.Color) {
-        this.m_params.backgroundColor = value;
+        this.m_params.backgroundColor!.copy(value);
     }
 
     /**
@@ -271,14 +271,35 @@ export class TextRenderStyle {
     }
 
     /**
-     * Clone this `TextRenderStyle`.
+     * Clone this [[TextRenderStyle]].
      *
      * @param params Input [[TextRenderParameters]].
      *
-     * @returns Cloned `TextRenderStyle`.
+     * @returns Cloned [[TextRenderStyle]].
      */
     clone(params: TextRenderParameters = {}): TextRenderStyle {
         return new TextRenderStyle({ ...this.m_params, ...params });
+    }
+
+    /**
+     * Copy other [[TextRenderStyle]] properties into this object instance.
+     *
+     * @param source The source object to be copied.
+     *
+     * @returns reference to `this` object.
+     */
+    copy(source: TextRenderStyle): TextRenderStyle {
+        // Given that all source and this params are always defined:
+        this.m_params.fontName = source.fontName;
+        this.m_params.fontSize = { ...source.fontSize };
+        this.m_params.fontStyle = source.fontStyle;
+        this.m_params.fontVariant = source.fontVariant;
+        this.m_params.rotation = source.rotation;
+        this.m_params.color!.copy(source.color);
+        this.m_params.backgroundColor!.copy(source.backgroundColor);
+        this.m_params.opacity = source.opacity;
+        this.m_params.backgroundOpacity = source.backgroundOpacity;
+        return this;
     }
 }
 
@@ -448,13 +469,25 @@ export class TextLayoutStyle {
     }
 
     /**
-     * Clone this `TextLayoutStyle`.
+     * Clone this [[TextLayoutStyle]].
      *
      * @param params Input [[TextLayoutParameters]].
      *
-     * @returns Cloned `TextLayoutStyle`.
+     * @returns Cloned [[TextLayoutStyle]].
      */
     clone(params: TextLayoutParameters = {}): TextLayoutStyle {
         return new TextLayoutStyle({ ...this.m_params, ...params });
+    }
+
+    /**
+     * Copy other [[TextLayoutStyle]] properties into this object instance.
+     *
+     * @param other The object to be copied.
+     *
+     * @returns reference to `this` object.
+     */
+    copy(other: TextLayoutStyle): TextLayoutStyle {
+        this.params = { ...other.params };
+        return this;
     }
 }
