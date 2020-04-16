@@ -86,7 +86,9 @@ uniform vec2 drawRange;
 uniform sampler2D displacementMap;
 #endif
 
+#ifdef USE_TILE_CLIP
 varying vec3 vPosition;
+#endif
 varying vec3 vRange;
 varying vec4 vCoords;
 #ifdef USE_COLOR
@@ -140,7 +142,9 @@ void main() {
     gl_Position = projectionMatrix * mvPosition;
 
     // Pass extruded position to fragment shader.
+    #ifdef USE_TILE_CLIP
     vPosition = pos;
+    #endif
 
     #ifdef USE_COLOR
     // Pass vertex color to fragment shader.
@@ -176,7 +180,10 @@ uniform vec3 dashColor;
 #define DASHES_DIAMOND ${LineDashesModes.DASHES_DIAMOND}
 #endif
 
+#ifdef USE_TILE_CLIP
 varying vec3 vPosition;
+#endif
+
 varying vec3 vRange;
 varying vec4 vCoords;
 #ifdef USE_COLOR
