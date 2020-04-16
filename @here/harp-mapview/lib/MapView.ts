@@ -6,7 +6,6 @@
 import {
     Env,
     Expr,
-    GeometryKind,
     getFeatureId,
     getPropertyValue,
     GradientSky,
@@ -3759,33 +3758,61 @@ export class MapView extends THREE.EventDispatcher {
                     object.setRotationFromMatrix(tile.boundingBox.getRotationMatrix());
                 }
                 object.frustumCulled = false;
-                if (object._backupRenderOrder === undefined) {
-                    object._backupRenderOrder = object.renderOrder;
-                }
 
-                const isBuilding = mapObjectAdapter?.kind?.includes(GeometryKind.Building);
-
-                // When falling back to a parent tile (i.e. tile.levelOffset < 0) there will
-                // be overlaps with the already loaded tiles. Therefore all (flat) objects
-                // in a fallback tile must be shifted, such that their renderOrder is less
-                // than the groundPlane that each neighbouring Tile has (it has a renderOrder
-                // of -10000, see addGroundPlane in TileGeometryCreator), only then can we be
-                // sure that nothing of the parent will be rendered on top of the children,
-                // as such, we shift using the FALLBACK_RENDER_ORDER_OFFSET.
-                // This does not apply to buildings b/c they are 3d and the overlaps
-                // are resolved with a depth prepass. Note we set this always to ensure that if
-                // the Tile is used as a fallback, and then used normally, that we have the correct
-                // renderOrder.
-                object.renderOrder =
-                    object._backupRenderOrder +
-                    (!isBuilding && tile.levelOffset < 0
-                        ? FALLBACK_RENDER_ORDER_OFFSET * tile.levelOffset
-                        : 0);
-
+                this.adjustRenderOrderForFallback(object, mapObjectAdapter, tile);
                 this.m_sceneRoot.add(object);
             }
             tile.didRender();
         }
+    }
+
+    private adjustRenderOrderForFallback(
+        object: TileObject,
+        mapObjectAdapter: MapObjectAdapter | undefined,
+        tile: Tile
+    ) {
+        // When falling back to a parent tile (i.e. tile.levelOffset < 0) there will
+        // be overlaps with the already loaded tiles. Therefore all (flat) objects
+        // in a fallback tile must be shifted, such that their renderOrder is less
+        // than the groundPlane that each neighbouring Tile has (it has a renderOrder
+        // of -10000, see addGroundPlane in TileGeometryCreator), only then can we be
+        // sure that nothing of the parent will be rendered on top of the children,
+        // as such, we shift using the FALLBACK_RENDER_ORDER_OFFSET.
+        // This does not apply to buildings b/c they are 3d and the overlaps
+        // are resolved with a depth prepass. Note we set this always to ensure that if
+        // the Tile is used as a fallback, and then used normally, that we have the correct
+        // renderOrder.
+
+        if (tile.levelOffset >= 0) {
+            if (object._backupRenderOrder !== undefined) {
+                // We messed up the render order when this tile was used as fallback.
+                // Now we render normally, so restore the original renderOrder.
+                object.renderOrder = object._backupRenderOrder;
+            }
+            return;
+        }
+        let offset = FALLBACK_RENDER_ORDER_OFFSET;
+        const technique = mapObjectAdapter?.technique;
+        if (technique?.name === "extruded-polygon") {
+            // Don't adjust render order for extruded-polygon b/c it's not flat.
+            return;
+        }
+
+        if ((technique as any)?._category?.startsWith("road") === true) {
+            // Don't adjust render order for roads b/c the outline of the child tile
+            // would overlap the outline of the fallback parent.
+            // Road geometry would be duplicated but since it's rendered with two passes
+            // it would just appear a bit wider. That artefact is not as disturbing
+            // as seeing the cap outlines.
+            // NOTE: Since our tests do pixel perfect image comparison we also need to add a
+            // tiny offset in this case so that the order is well defined.
+            offset = 1e-6;
+        }
+
+        if (object._backupRenderOrder === undefined) {
+            object._backupRenderOrder = object.renderOrder;
+        }
+        object.renderOrder = object._backupRenderOrder + offset * tile.levelOffset;
     }
 
     /**
