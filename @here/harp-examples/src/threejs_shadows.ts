@@ -99,9 +99,9 @@ const setupDebugCamera = () => {
 };
 
 const getDirectionalLight = (): THREE.DirectionalLight | undefined => {
-    for (const obj of map.scene.children) {
-        if ((obj as THREE.DirectionalLight).isDirectionalLight) {
-            return obj as THREE.DirectionalLight;
+    for (const light of map.lights) {
+        if ((light as THREE.DirectionalLight).isDirectionalLight) {
+            return light as THREE.DirectionalLight;
         }
     }
     return undefined;

@@ -1055,7 +1055,8 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns the lights configured by the theme.
+     * @returns The lights configured by the theme, this is just a convenience method, because the
+     * lights can still be accessed by traversing the children of the [[scene]].
      */
     get lights(): THREE.Light[] {
         return this.m_createdLights ?? [];
