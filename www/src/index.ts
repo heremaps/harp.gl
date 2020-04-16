@@ -111,8 +111,9 @@ function main() {
     map.addEventListener(MapViewEventNames.FrameComplete, () => {
         canvas.style.opacity = "1";
 
-        options.heading += 0.1;
-        map.addEventListener(MapViewEventNames.Render, () => map.lookAt(options));
+        map.addEventListener(MapViewEventNames.Render, () =>
+            map.lookAt({ heading: map.heading + 0.1 })
+        );
         setTimeout(() => {
             map.beginAnimation();
         }, 0.5);
