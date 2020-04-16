@@ -101,6 +101,7 @@ const tmpOBB = new OrientedBox3();
 
 /**
  * Handles the picking of scene geometry and roads.
+ * @internal
  */
 export class PickHandler {
     constructor(
