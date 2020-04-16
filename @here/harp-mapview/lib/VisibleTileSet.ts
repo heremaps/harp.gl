@@ -536,8 +536,6 @@ export class VisibleTileSet {
                     continue;
                 }
 
-                tile.prepareTileInfo();
-
                 allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.allGeometryLoaded;
                 if (!tile.allGeometryLoaded) {
                     numTilesLoading++;
