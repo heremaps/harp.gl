@@ -250,28 +250,39 @@ export class PickHandler {
         intersect: THREE.Intersection,
         pickResult: PickResult
     ) {
-        if (pickResult.intersection!.object instanceof MapViewPoints) {
-            pickResult.userData = featureData.objInfos![intersect.index!];
+        if (featureData.objInfos === undefined) {
             return;
-        } else if (
-            featureData.objInfos === undefined ||
+        }
+
+        if (pickResult.intersection!.object instanceof MapViewPoints) {
+            pickResult.userData = featureData.objInfos[intersect.index!];
+            return;
+        }
+
+        if (
             featureData.starts === undefined ||
-            intersect.faceIndex === undefined
+            featureData.starts.length === 0 ||
+            (intersect.faceIndex === undefined && intersect.index === undefined)
         ) {
             return;
         }
 
-        if (featureData.starts.length > 1) {
-            let objInfosIndex = 0;
-            for (const polygonStartFace of featureData.starts) {
-                if (polygonStartFace > intersect.faceIndex * 3) {
-                    break;
-                }
-                objInfosIndex++;
-            }
-            pickResult.userData = featureData.objInfos[objInfosIndex - 1];
-        } else {
+        if (featureData.starts.length === 1) {
             pickResult.userData = featureData.objInfos[0];
+            return;
         }
+
+        const intersectIndex =
+            intersect.faceIndex !== undefined ? intersect.faceIndex * 3 : intersect.index!;
+
+        // TODO: Implement binary search.
+        let objInfosIndex = 0;
+        for (const featureStartIndex of featureData.starts) {
+            if (featureStartIndex > intersectIndex) {
+                break;
+            }
+            objInfosIndex++;
+        }
+        pickResult.userData = featureData.objInfos[objInfosIndex - 1];
     }
 }

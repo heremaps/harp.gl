@@ -40,6 +40,7 @@ import {
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { DisplacedMesh } from "./geometry/DisplacedMesh";
+import { SolidLineMesh } from "./geometry/SolidLineMesh";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
 import { Tile } from "./Tile";
@@ -344,19 +345,26 @@ export function buildObject(
         case "extruded-polygon":
         case "fill":
             return elevationEnabled
+                ? new DisplacedMesh(geometry, material, () => ({
+                      min: tile.elevationRange.minElevation,
+                      max: tile.elevationRange.maxElevation
+                  }))
+                : new THREE.Mesh(geometry, material);
+        case "terrain":
+            return new THREE.Mesh(geometry, material);
+        case "dashed-line":
+        case "solid-line":
+            return elevationEnabled
                 ? new DisplacedMesh(
+                      geometry,
+                      material,
                       () => ({
                           min: tile.elevationRange.minElevation,
                           max: tile.elevationRange.maxElevation
                       }),
-                      geometry,
-                      material
+                      SolidLineMesh.raycast
                   )
-                : new THREE.Mesh(geometry, material);
-        case "terrain":
-        case "dashed-line":
-        case "solid-line":
-            return new THREE.Mesh(geometry, material);
+                : new SolidLineMesh(geometry, material);
 
         case "circles":
             return new Circles(geometry, material);

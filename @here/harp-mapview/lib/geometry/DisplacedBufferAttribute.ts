@@ -96,10 +96,9 @@ export class DisplacedBufferAttribute extends THREE.BufferAttribute {
         return this.m_lastPos;
     }
     private displacePosition(bufferIndex: number) {
-        this.m_lastPos.set(
-            super.getX(bufferIndex),
-            super.getY(bufferIndex),
-            super.getZ(bufferIndex)
+        this.m_lastPos.fromBufferAttribute(
+            this.originalAttribute as THREE.BufferAttribute,
+            bufferIndex
         );
         const normals = this.m_normals as THREE.BufferAttribute;
         this.m_tmpNormal.fromBufferAttribute(normals, bufferIndex);

@@ -61,8 +61,10 @@ export interface TileFeatureData {
     geometryType?: GeometryType;
 
     /**
-     * An optional array of indices into geometry where the feature starts. The lists of IDs
+     * An optional array of sorted indices into geometry where the feature starts. The lists of IDs
      * and starting indices (starts) must have the same size.
+     * Feature i starts at starts[i] and ends at starts[i+1]-1, except for the last feature, which
+     * ends at the last index in the object's geometry.
      */
     starts?: number[];
 
