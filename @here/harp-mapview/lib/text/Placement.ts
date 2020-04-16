@@ -319,16 +319,16 @@ export function placeIcon(
 }
 
 /**
- * Place a point label text using single or multiple optional placements.
+ * Place a point label text using single or multiple alternative placement anchors.
  *
  * @param labelState State of the point label to place.
  * @param screenPosition Position of the label in screen coordinates.
  * @param scale Scale factor to be applied to label dimensions.
+ * @param textCanvas The text canvas where the label will be placed.
+ * @param screenCollisions Used to check collisions with other labels.
  * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
  * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
  * for newly placed (upcoming) label or `PlacementResult.Rejected` if the label was persistent.
- * @param textCanvas The text canvas where the label will be placed.
- * @param screenCollisions Used to check collisions with other labels.
  * @param outScreenPosition The final label screen position after applying any offsets.
  * @param multiAnchor The parameter decides if multi-anchor placement algorithm should be
  * used, be default [[false]] meaning try to place label using current alignment settings only.
@@ -453,8 +453,7 @@ function placePointLabelChoosingAnchor(
         const placementResult = placePointLabelAtAnchor(
             labelState,
             screenPosition,
-            anchorPlacement.h,
-            anchorPlacement.v,
+            anchorPlacement,
             scale,
             textCanvas,
             screenCollisions,
@@ -484,23 +483,15 @@ function placePointLabelChoosingAnchor(
             continue;
         }
 
-        // Glyphs arrangement have been changed remove text buffer object and apply
-        // new text layout to the label.
-        if (!isLastPlacement) {
-            label.textBufferObject = undefined;
-        }
-
-        applyTextPlacement(textCanvas, labelState, anchorPlacement);
-
-        // Save current placement in layout state.
-        labelState.textPlacement = anchorPlacement;
-
         // Proper placement found.
         return PlacementResult.Ok;
     }
     // Revert recent screen position and bounds.
     outScreenPosition.copy(tmpPlacementPosition);
     label.bounds!.copy(tmpPlacementBounds);
+    // Revert back text canvas layout of the last placement.
+    // In case of label rejected this allows to fade out text in the last position.
+    applyTextPlacement(textCanvas, lastPlacement);
 
     return allInvisible
         ? // All text's placements out of the screen.
@@ -518,11 +509,11 @@ function placePointLabelChoosingAnchor(
  * @param labelState State of the point label to place.
  * @param screenPosition Position of the label in screen coordinates.
  * @param scale Scale factor to be applied to label dimensions.
+ * @param textCanvas The text canvas where the label will be placed.
+ * @param screenCollisions Used to check collisions with other labels.
  * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
  * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
  * `PlacementResult.Rejected`.
- * @param textCanvas The text canvas where the label will be placed.
- * @param screenCollisions Used to check collisions with other labels.
  * @param outScreenPosition The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if point label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
@@ -546,8 +537,7 @@ function placePointLabelAtCurrentAnchor(
     const result = placePointLabelAtAnchor(
         labelState,
         screenPosition,
-        lastPlacement.h,
-        lastPlacement.v,
+        lastPlacement,
         scale,
         textCanvas,
         screenCollisions,
@@ -556,7 +546,6 @@ function placePointLabelAtCurrentAnchor(
         outScreenPosition
     );
 
-    applyTextPlacement(textCanvas, labelState, lastPlacement);
     return result;
 }
 
@@ -564,13 +553,16 @@ function placePointLabelAtCurrentAnchor(
  * Auxiliary function that tries to place a point label on a text canvas using specified alignment.
  *
  * @param labelState State of the point label to place.
- * @param screenPosition Position of the label in screen coordinates.
+ * @param screenPosition Position of the label in screen coordinates
+ * @param placement Text placement relative to the label position.
  * @param scale Scale factor to be applied to label dimensions.
+ * @param textCanvas The text canvas where the label will be placed.
+ * @param screenCollisions Used to check collisions with other labels.
  * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
  * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
  * `PlacementResult.Rejected`.
- * @param textCanvas The text canvas where the label will be placed.
- * @param screenCollisions Used to check collisions with other labels.
+ * @param forceInvalidation Set to true if text layout or other params has changed such as text
+ * re-measurement is required and text buffer need to be invalidated.
  * @param outScreenPosition The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if point label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
@@ -581,32 +573,25 @@ function placePointLabelAtCurrentAnchor(
 function placePointLabelAtAnchor(
     labelState: TextElementState,
     screenPosition: THREE.Vector2,
-    hAlign: HorizontalAlignment,
-    vAlign: VerticalAlignment,
+    placement: AnchorPlacement,
     scale: number,
     textCanvas: TextCanvas,
     screenCollisions: ScreenCollisions,
     isRejected: boolean,
-    forceMeasurement: boolean,
+    forceInvalidation: boolean,
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
     const label = labelState.element;
     assert(label.glyphs !== undefined);
     assert(label.layoutStyle !== undefined);
 
-    const measureText = label.bounds === undefined || forceMeasurement;
+    const measureText = label.bounds === undefined || forceInvalidation;
     if (label.bounds === undefined) {
         label.bounds = new THREE.Box2();
     }
 
-    // Store base layout settings.
-    const baseAlign = {
-        h: label.layoutStyle!.horizontalAlignment,
-        v: label.layoutStyle!.verticalAlignment
-    };
-    // Override label text alignment (on TextCanvas) for measurements.
-    textCanvas.textLayoutStyle.horizontalAlignment = hAlign;
-    textCanvas.textLayoutStyle.verticalAlignment = vAlign;
+    // Override label text layout (on TextCanvas) for measurements and text buffer creation.
+    applyTextPlacement(textCanvas, placement);
 
     if (measureText) {
         // Setup measurements parameters for textCanvas.measureText().
@@ -618,12 +603,14 @@ function placePointLabelAtAnchor(
         textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
     }
 
-    // Revert back text canvas layout.
-    textCanvas.textLayoutStyle.horizontalAlignment = baseAlign.h;
-    textCanvas.textLayoutStyle.verticalAlignment = baseAlign.v;
-
     // Compute text offset from the anchor point
-    const textOffset = computePointTextOffset(label, hAlign, vAlign, scale, tmpTextOffset);
+    const textOffset = computePointTextOffset(
+        label,
+        placement.h,
+        placement.v,
+        scale,
+        tmpTextOffset
+    );
     textOffset.add(screenPosition);
     tmpBox.copy(label.bounds!);
     tmpBox.min.multiplyScalar(scale);
@@ -672,27 +659,30 @@ function placePointLabelAtAnchor(
         screenCollisions.allocate(tmp2DBox);
     }
 
+    // Glyphs arrangement have been changed remove text buffer object which needs to be
+    // re-created.
+    if (forceInvalidation) {
+        label.textBufferObject = undefined;
+    }
+
+    // Save current placement in label state.
+    // TextElementState creates layout snapshot solely for alternative placements which saves
+    // memory that could be wasted on unnecessary objects construction.
+    labelState.textPlacement = placement;
+
     return PlacementResult.Ok;
 }
 
 /**
  * Applied modified text layout style to TextCanvas for further use.
  * @param textCanvas TextCanvas reference.
- * @param labelState The current label state.
  * @param placement The text placement to be used.
  */
-function applyTextPlacement(
-    textCanvas: TextCanvas,
-    labelState: TextElementState,
-    placement: AnchorPlacement
-) {
-    const isBaseTextPlacement = labelState.isBaseTextPlacement(placement);
-    if (!isBaseTextPlacement) {
-        // Setup TextCanvas layout settings of the new placement as it is required for further
-        // TextBufferObject creation and measurements in addText().
-        textCanvas.textLayoutStyle.horizontalAlignment = placement.h;
-        textCanvas.textLayoutStyle.verticalAlignment = placement.v;
-    }
+function applyTextPlacement(textCanvas: TextCanvas, placement: AnchorPlacement) {
+    // Setup TextCanvas layout settings of the new placement as it is required for further
+    // TextBufferObject creation and measurements in addText().
+    textCanvas.textLayoutStyle.horizontalAlignment = placement.h;
+    textCanvas.textLayoutStyle.verticalAlignment = placement.v;
 }
 
 /**

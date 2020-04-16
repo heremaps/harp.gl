@@ -97,7 +97,7 @@ export class TextElementState {
      *
      * This may be base text anchor placement as defined by style or alternative placement.
      *
-     * @param placement The text placemenet to be used.
+     * @param placement The text placement to be used.
      */
     set textPlacement(placement: AnchorPlacement) {
         if (this.m_textLayoutState === undefined && this.isBaseTextPlacement(placement) === true) {
