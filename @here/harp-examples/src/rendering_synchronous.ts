@@ -177,7 +177,7 @@ export namespace SynchronousRendering {
         requestAnimationFrame(draw);
     }
 
-    function draw() {
+    function draw(frameStartTime: number) {
         // Avoids multiple redrawing
         if (drawing) {
             return;
@@ -193,9 +193,8 @@ export namespace SynchronousRendering {
         mapView.lookAt(state);
 
         // Draw map scene
-        mapView.renderSync();
+        mapView.renderSync(frameStartTime);
         drawing = false;
-        mapView.update();
     }
     // end:harp_gl_rendering_synchronous_3.ts
 }

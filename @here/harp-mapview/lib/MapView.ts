@@ -165,16 +165,6 @@ const DEFAULT_MAX_ZOOM_LEVEL = 20;
 const DEFAULT_MIN_CAMERA_HEIGHT = 20;
 
 /**
- * Amount of framerate values to pick average from
- */
-const FRAME_RATE_RING_SIZE = 12;
-
-/**
- * Default starting value for FPS computation.
- */
-const FALLBACK_FRAME_RATE = 30;
-
-/**
  * Style set used by [[PolarTileDataSource]] by default.
  */
 const DEFAULT_POLAR_STYLE_SET_NAME = "polar";
@@ -695,7 +685,16 @@ export interface LookAtParams {
  * linked to datasources.
  */
 export class MapView extends THREE.EventDispatcher {
-    dumpNext = false;
+    /**
+     * Maximum FPS (Frames Per Second). If VSync in enabled, the specified number may not be
+     * reached, but instead the next smaller number than `maxFps` that is equal to the refresh rate
+     * divided by an integer number.
+     *
+     * E.g.: If the monitors refresh rate is set to 60hz, and if `maxFps` is set to a value of `40`
+     * (60hz/1.5), the actual used FPS may be 30 (60hz/2). For displays that have a refresh rate of
+     * 60hz, good values for `maxFps` are 30, 20, 15, 12, 10, 6, 3 and 1. A value of `0` is ignored.
+     */
+    maxFps: number;
 
     /**
      * The instance of [[MapRenderingManager]] managing the rendering of the map. It is a public
@@ -774,8 +773,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_updatePending: boolean = false;
     private m_renderer: THREE.WebGLRenderer;
     private m_frameNumber = 0;
-    private m_maxFps = 0;
-    private m_detectedFps: number = FALLBACK_FRAME_RATE;
 
     private m_textElementsRenderer: TextElementsRenderer;
 
@@ -807,13 +804,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
     private m_initialTextPlacementDone = false;
-    private m_previousRequestAnimationTime?: number;
-    private m_targetRequestAnimationTime?: number;
-    private m_frameTimeIndex: number = 0;
-    private readonly m_frameTimeRing: number[] = [];
 
-    private handleRequestAnimationFrame: any;
-    private handlePostponedAnimationFrame: any;
+    private handleRequestAnimationFrame: (frameStartTime: number) => void;
 
     private m_pickHandler: PickHandler;
 
@@ -916,10 +908,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.m_pixelRatio = options.pixelRatio;
-
-        if (options.maxFps !== undefined) {
-            this.m_maxFps = Math.max(0, options.maxFps);
-        }
+        this.maxFps = options.maxFps === undefined ? 0 : options.maxFps;
 
         this.m_options.enableStatistics = this.m_options.enableStatistics === true;
 
@@ -934,8 +923,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_screenCollisions = new ScreenCollisionsDebug(this.m_collisionDebugCanvas);
         }
 
-        this.handleRequestAnimationFrame = this.renderFunc.bind(this);
-        this.handlePostponedAnimationFrame = this.postponedAnimationFrame.bind(this);
+        this.handleRequestAnimationFrame = this.renderLoop.bind(this);
         this.m_pickHandler = new PickHandler(
             this,
             this.m_rteCamera,
@@ -1049,7 +1037,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_textElementsRenderer = this.createTextRenderer();
 
-        this.drawFrame();
+        this.update();
     }
 
     /**
@@ -1369,17 +1357,6 @@ export class MapView extends THREE.EventDispatcher {
      */
     set forceCameraAspect(aspect: number | undefined) {
         this.m_forceCameraAspect = aspect;
-    }
-
-    /**
-     * Maximum FPS. If defined (and > 0) it is the maximum FPS that is used.
-     */
-    set maxFps(fps: number) {
-        this.m_maxFps = Math.max(0, fps);
-    }
-
-    get maxFps(): number {
-        return Math.max(0, this.m_maxFps);
     }
 
     /**
@@ -2125,10 +2102,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     beginAnimation() {
         if (this.m_animationCount++ === 0) {
-            if (!this.m_updatePending) {
-                this.m_updatePending = true;
-                this.drawFrame();
-            }
+            this.update();
             ANIMATION_STARTED_EVENT.time = Date.now();
             this.dispatchEvent(ANIMATION_STARTED_EVENT);
         }
@@ -2393,9 +2367,15 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @note Before using this method, set `synchronousRendering` to `true`
      * in the [[MapViewOptions]]
+     *
+     * @param frameStartTime Optional timestamp for start of frame.
+     * Default: [[PerformanceTimer.now()]]
      */
-    renderSync() {
-        this.renderFunc(PerformanceTimer.now());
+    renderSync(frameStartTime?: number) {
+        if (frameStartTime === undefined) {
+            frameStartTime = PerformanceTimer.now();
+        }
+        this.render(frameStartTime);
     }
 
     /**
@@ -2404,17 +2384,15 @@ export class MapView extends THREE.EventDispatcher {
     update() {
         this.dispatchEvent(UPDATE);
 
+        // Skip if update is already in progress
         if (this.m_updatePending) {
             return;
-        } // compress the update request
+        }
 
+        // Set update flag
         this.m_updatePending = true;
 
-        if (this.animating) {
-            return;
-        } // nothing to do
-
-        this.drawFrame();
+        this.startRenderLoop();
     }
 
     /**
@@ -2926,84 +2904,54 @@ export class MapView extends THREE.EventDispatcher {
         });
     }
 
-    private detectCurrentFps(now: number) {
-        // Skip the first frames, they are from not originated from requestAnimationFrame()
-        if (this.m_previousRequestAnimationTime !== undefined && this.m_frameNumber > 5) {
-            const currentFps = 1000 / (now - this.m_previousRequestAnimationTime);
-            this.m_frameTimeRing[this.m_frameTimeIndex % FRAME_RATE_RING_SIZE] = currentFps;
-            this.m_frameTimeIndex++;
+    /**
+     * Render loop callback that should only be called by [[requestAnimationFrame]].
+     * Will trigger [[requestAnimationFrame]] again if updates are pending or  animation is running.
+     * @param frameStartTime The start time of the current frame
+     */
+    private renderLoop(frameStartTime: number) {
+        // Render loop shouldn't run when synchronous rendering is enabled
+        if (this.m_options.synchronousRendering) {
+            return;
+        }
 
-            const capturedFrames = Math.min(this.m_frameTimeIndex, FRAME_RATE_RING_SIZE);
+        if (this.maxFps === 0) {
+            // Render with max fps
+            this.render(frameStartTime);
+        } else {
+            // Limit fps by skipping frames
 
-            let sum = 0;
-            for (let i = 0; i < capturedFrames; i++) {
-                sum += this.m_frameTimeRing[i];
+            // Magic ingredient to compensate time flux.
+            const fudgeTimeInMs = 3;
+            const frameInterval = 1000 / this.maxFps;
+            const previousFrameTime =
+                this.m_previousFrameTimeStamp === undefined ? 0 : this.m_previousFrameTimeStamp;
+            const targetTime = previousFrameTime + frameInterval - fudgeTimeInMs;
+
+            if (frameStartTime >= targetTime) {
+                this.render(frameStartTime);
             }
-
-            this.m_detectedFps = sum / capturedFrames;
-        }
-        this.m_previousRequestAnimationTime = now;
-    }
-
-    /**
-     * Draw a new frame.
-     */
-    private drawFrame() {
-        if (this.m_drawing || this.m_options.synchronousRendering) {
-            return;
-        }
-        // Cancel an active requestAnimationFrame() cycle. Failure to do this may end up in
-        // rendering multiple times during a single frame.
-        if (this.m_animationFrameHandle !== undefined) {
-            cancelAnimationFrame(this.m_animationFrameHandle);
-            this.m_animationFrameHandle = undefined;
         }
 
-        if (this.m_maxFps <= 0) {
-            // Render at maximum FPS.
+        // Continue rendering if update is pending or animation is running
+        // tslint:disable-next-line: prefer-conditional-expression
+        if (this.m_updatePending || this.animating) {
             this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
-            return;
-        }
-
-        // Magic ingredient to compensate time flux.
-        const fudgeTimeInMs = 3;
-        const vSyncFrameTime = 1000 / this.m_detectedFps;
-        const frameInterval = 1000 / this.m_maxFps;
-
-        const previousFrameTime =
-            this.m_previousFrameTimeStamp === undefined ? 0 : this.m_previousFrameTimeStamp;
-
-        // Compute a practical value to compare against.
-        const targetTime = previousFrameTime + frameInterval - vSyncFrameTime - fudgeTimeInMs;
-
-        this.m_targetRequestAnimationTime = targetTime;
-        this.postponedAnimationFrame(previousFrameTime);
-    }
-
-    private postponedAnimationFrame(now: number) {
-        if (this.m_targetRequestAnimationTime === undefined) {
-            return;
-        }
-
-        if (this.m_animationFrameHandle !== undefined) {
-            cancelAnimationFrame(this.m_animationFrameHandle);
+        } else {
+            // Stop rendering if no update is pending
             this.m_animationFrameHandle = undefined;
         }
-
-        this.detectCurrentFps(now);
-
-        this.m_animationFrameHandle = requestAnimationFrame(
-            now > this.m_targetRequestAnimationTime
-                ? this.handleRequestAnimationFrame
-                : this.handlePostponedAnimationFrame
-        );
     }
 
     /**
-     * Draw a new frame.
+     * Start render loop if not already running.
      */
-    private renderFunc(time: number) {
-        this.render(time);
+    private startRenderLoop() {
+        if (this.m_animationFrameHandle !== undefined || this.m_options.synchronousRendering) {
+            return;
+        }
+
+        this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
     }
 
     /**
@@ -3232,10 +3180,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles.disposePendingTiles();
 
         this.m_drawing = false;
-
-        if (this.animating || this.m_updatePending) {
-            this.drawFrame();
-        }
 
         this.checkCopyrightUpdates();
 
