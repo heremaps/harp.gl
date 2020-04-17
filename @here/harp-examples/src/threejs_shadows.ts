@@ -231,7 +231,11 @@ export namespace ThreejsShadows {
                 },
                 castShadow: true
             }
-        ]
+        ],
+        definitions: {
+            // Opaque buildings
+            defaultBuildingColor: "#EDE7E1FF"
+        }
     };
     initializeMapView("mapCanvas", theme);
 }
