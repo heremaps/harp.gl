@@ -165,202 +165,115 @@ describe("Placement", function() {
 
     describe("placePointLabel", function() {
         context("single line text", function() {
-            it("places text left below", async function() {
-                const textElement = await createTextElement(
-                    textCanvas,
-                    "Test 123456",
-                    new THREE.Vector3(),
-                    {},
-                    {
+            interface SingleTextPlacementRun {
+                // Test run name.
+                it: string;
+                // Input / base text layout.
+                layout: TextLayoutParameters;
+                // Expected output position, input position always at (0, 0).
+                outPosition: THREE.Vector2;
+                // Optional text offsets to be applied, otherwise zero.
+                xOffset?: number;
+                yOffset?: number;
+            }
+            const runs: SingleTextPlacementRun[] = [
+                {
+                    it: "places text with left-below alignment",
+                    layout: {
                         horizontalAlignment: HorizontalAlignment.Left,
-                        verticalAlignment: VerticalAlignment.Below,
-                        wrappingMode: WrappingMode.None
-                    }
-                );
-                const state = new TextElementState(textElement);
-
-                const position = new THREE.Vector3();
-                // Set the current style for the canvas.
-                textCanvas.textRenderStyle = textElement.renderStyle!;
-                textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                const result = placePointLabel(
-                    state,
-                    new THREE.Vector2(0, 0),
-                    1.0,
-                    textCanvas,
-                    screenCollisions,
-                    false,
-                    position
-                );
-
-                expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(0);
-                expect(position.y).to.equal(0);
-            });
-
-            it("places text center below", async function() {
-                const textElement = await createTextElement(
-                    textCanvas,
-                    "Test 123456",
-                    new THREE.Vector3(),
-                    {},
-                    {
+                        verticalAlignment: VerticalAlignment.Below
+                    },
+                    outPosition: new THREE.Vector2(0, 0)
+                },
+                {
+                    it: "places text center-below alignment",
+                    layout: {
                         horizontalAlignment: HorizontalAlignment.Center,
-                        verticalAlignment: VerticalAlignment.Below,
-                        wrappingMode: WrappingMode.None
-                    }
-                );
-                const state = new TextElementState(textElement);
-
-                const position = new THREE.Vector3();
-                // Set the current style for the canvas.
-                textCanvas.textRenderStyle = textElement.renderStyle!;
-                textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                const result = placePointLabel(
-                    state,
-                    new THREE.Vector2(0, 0),
-                    1.0,
-                    textCanvas,
-                    screenCollisions,
-                    false,
-                    position
-                );
-
-                expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(0);
-                expect(position.y).to.equal(0);
-            });
-
-            it("places text right below", async function() {
-                const textElement = await createTextElement(
-                    textCanvas,
-                    "Test 123456",
-                    new THREE.Vector3(),
-                    {},
-                    {
+                        verticalAlignment: VerticalAlignment.Below
+                    },
+                    outPosition: new THREE.Vector2(0, 0)
+                },
+                {
+                    it: "places text right-below alignment",
+                    layout: {
                         horizontalAlignment: HorizontalAlignment.Right,
-                        verticalAlignment: VerticalAlignment.Below,
-                        wrappingMode: WrappingMode.None
-                    }
-                );
-                const state = new TextElementState(textElement);
-
-                const position = new THREE.Vector3();
-                // Set the current style for the canvas.
-                textCanvas.textRenderStyle = textElement.renderStyle!;
-                textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                const result = placePointLabel(
-                    state,
-                    new THREE.Vector2(0, 0),
-                    1.0,
-                    textCanvas,
-                    screenCollisions,
-                    false,
-                    position
-                );
-
-                expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(0);
-                expect(position.y).to.equal(0);
-            });
-
-            it("places text center", async function() {
-                const textElement = await createTextElement(
-                    textCanvas,
-                    "Test 123456",
-                    new THREE.Vector3(),
-                    {},
-                    {
-                        verticalAlignment: VerticalAlignment.Center,
-                        wrappingMode: WrappingMode.None
-                    }
-                );
-                const state = new TextElementState(textElement);
-
-                const position = new THREE.Vector3();
-                // Set the current style for the canvas.
-                textCanvas.textRenderStyle = textElement.renderStyle!;
-                textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                const result = placePointLabel(
-                    state,
-                    new THREE.Vector2(0, 0),
-                    1.0,
-                    textCanvas,
-                    screenCollisions,
-                    false,
-                    position
-                );
-
-                expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(0);
-                expect(position.y).to.equal(0.25);
-            });
-
-            it("places text above", async function() {
-                const textElement = await createTextElement(
-                    textCanvas,
-                    "Test 123456",
-                    new THREE.Vector3(),
-                    {},
-                    {
-                        verticalAlignment: VerticalAlignment.Above,
-                        wrappingMode: WrappingMode.None
-                    }
-                );
-                const state = new TextElementState(textElement);
-
-                const position = new THREE.Vector3();
-                // Set the current style for the canvas.
-                textCanvas.textRenderStyle = textElement.renderStyle!;
-                textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                const result = placePointLabel(
-                    state,
-                    new THREE.Vector2(0, 0),
-                    1.0,
-                    textCanvas,
-                    screenCollisions,
-                    false,
-                    position
-                );
-
-                expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(0);
-                expect(position.y).to.equal(2.5);
-            });
-
-            it("places text with offset", async function() {
-                const textElement = await createTextElement(
-                    textCanvas,
-                    "Test 123456",
-                    new THREE.Vector3(),
-                    {},
-                    {
+                        verticalAlignment: VerticalAlignment.Below
+                    },
+                    outPosition: new THREE.Vector2(0, 0)
+                },
+                {
+                    it: "places text center aligned",
+                    layout: {
+                        verticalAlignment: VerticalAlignment.Center
+                    },
+                    outPosition: new THREE.Vector2(0, 0.25)
+                },
+                {
+                    it: "places text aligned above",
+                    layout: {
+                        verticalAlignment: VerticalAlignment.Above
+                    },
+                    outPosition: new THREE.Vector2(0, 2.5)
+                },
+                {
+                    it: "places text with left-below alignment and offset",
+                    layout: {
                         horizontalAlignment: HorizontalAlignment.Left,
-                        verticalAlignment: VerticalAlignment.Below,
-                        wrappingMode: WrappingMode.None
+                        verticalAlignment: VerticalAlignment.Below
+                    },
+                    xOffset: 5,
+                    yOffset: 5,
+                    outPosition: new THREE.Vector2(5, 5)
+                },
+                {
+                    it: "places text with right-below alignment and offset",
+                    layout: {
+                        horizontalAlignment: HorizontalAlignment.Right,
+                        verticalAlignment: VerticalAlignment.Below
+                    },
+                    xOffset: 5,
+                    yOffset: 5,
+                    outPosition: new THREE.Vector2(5, 5)
+                }
+            ];
+            runs.forEach(function(run) {
+                it(run.it, async function() {
+                    const textElement = await createTextElement(
+                        textCanvas,
+                        "Test 123456",
+                        new THREE.Vector3(),
+                        {},
+                        {
+                            ...run.layout,
+                            wrappingMode: WrappingMode.None
+                        }
+                    );
+                    if (run.xOffset) {
+                        textElement.xOffset = run.xOffset;
                     }
-                );
-                textElement.xOffset = 5;
-                textElement.yOffset = 5;
-                const state = new TextElementState(textElement);
+                    if (run.yOffset) {
+                        textElement.yOffset = run.yOffset;
+                    }
 
-                const position = new THREE.Vector3();
-                // Set the current style for the canvas.
-                textCanvas.textRenderStyle = textElement.renderStyle!;
-                textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                const result = placePointLabel(
-                    state,
-                    new THREE.Vector2(0, 0),
-                    1.0,
-                    textCanvas,
-                    screenCollisions,
-                    false,
-                    position
-                );
+                    const state = new TextElementState(textElement);
+                    const outPosition = new THREE.Vector3();
+                    // Set the current style for the canvas.
+                    textCanvas.textRenderStyle = textElement.renderStyle!;
+                    textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                    const result = placePointLabel(
+                        state,
+                        new THREE.Vector2(0, 0),
+                        1.0,
+                        textCanvas,
+                        screenCollisions,
+                        false,
+                        outPosition
+                    );
 
-                expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(5);
-                expect(position.y).to.equal(5);
+                    expect(result).to.equal(PlacementResult.Ok);
+                    expect(outPosition.x).to.equal(run.outPosition.x);
+                    expect(outPosition.y).to.equal(run.outPosition.y);
+                });
             });
         });
 
@@ -463,82 +376,82 @@ describe("Placement", function() {
                 expect(position.x).to.equal(0);
                 expect(position.y).to.equal(154.5);
             });
-        });
 
-        it("places text with offset", async function() {
-            const textElement = await createTextElement(
-                textCanvas,
-                "Test 123456",
-                new THREE.Vector3(),
-                {},
-                {
-                    horizontalAlignment: HorizontalAlignment.Center,
-                    verticalAlignment: VerticalAlignment.Above,
-                    wrappingMode: WrappingMode.Word,
-                    lineWidth: 1
-                }
-            );
-            textElement.xOffset = 5;
-            textElement.yOffset = 5;
-            const state = new TextElementState(textElement);
+            it("places text with offset", async function() {
+                const textElement = await createTextElement(
+                    textCanvas,
+                    "Test 123456",
+                    new THREE.Vector3(),
+                    {},
+                    {
+                        horizontalAlignment: HorizontalAlignment.Center,
+                        verticalAlignment: VerticalAlignment.Above,
+                        wrappingMode: WrappingMode.Word,
+                        lineWidth: 1
+                    }
+                );
+                textElement.xOffset = 5;
+                textElement.yOffset = 5;
+                const state = new TextElementState(textElement);
 
-            const position = new THREE.Vector3();
-            // Set the current style for the canvas.
-            textCanvas.textRenderStyle = textElement.renderStyle!;
-            textCanvas.textLayoutStyle = textElement.layoutStyle!;
-            const result = placePointLabel(
-                state,
-                new THREE.Vector2(0, 0),
-                1.0,
-                textCanvas,
-                screenCollisions,
-                false,
-                position
-            );
+                const position = new THREE.Vector3();
+                // Set the current style for the canvas.
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                const result = placePointLabel(
+                    state,
+                    new THREE.Vector2(0, 0),
+                    1.0,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    position
+                );
 
-            expect(result).to.equal(PlacementResult.Ok);
-            expect(position.x).to.equal(5);
-            expect(position.y).to.equal(26.5);
-        });
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(position.x).to.equal(5);
+                expect(position.y).to.equal(26.5);
+            });
 
-        it("scales offsets", async function() {
-            const textElement = await createTextElement(
-                textCanvas,
-                "Test 123456",
-                new THREE.Vector3(),
-                {},
-                {
-                    horizontalAlignment: HorizontalAlignment.Center,
-                    verticalAlignment: VerticalAlignment.Above,
-                    wrappingMode: WrappingMode.Word,
-                    lineWidth: 1
-                }
-            );
-            textElement.xOffset = 5;
-            textElement.yOffset = 5;
-            const state = new TextElementState(textElement);
+            it("scales offsets", async function() {
+                const textElement = await createTextElement(
+                    textCanvas,
+                    "Test 123456",
+                    new THREE.Vector3(),
+                    {},
+                    {
+                        horizontalAlignment: HorizontalAlignment.Center,
+                        verticalAlignment: VerticalAlignment.Above,
+                        wrappingMode: WrappingMode.Word,
+                        lineWidth: 1
+                    }
+                );
+                textElement.xOffset = 5;
+                textElement.yOffset = 5;
+                const state = new TextElementState(textElement);
 
-            const position = new THREE.Vector3();
-            // Set the current style for the canvas.
-            textCanvas.textRenderStyle = textElement.renderStyle!;
-            textCanvas.textLayoutStyle = textElement.layoutStyle!;
-            const result = placePointLabel(
-                state,
-                new THREE.Vector2(0, 0),
-                0.8,
-                textCanvas,
-                screenCollisions,
-                false,
-                position
-            );
+                const position = new THREE.Vector3();
+                // Set the current style for the canvas.
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                const result = placePointLabel(
+                    state,
+                    new THREE.Vector2(0, 0),
+                    0.8,
+                    textCanvas,
+                    screenCollisions,
+                    false,
+                    position
+                );
 
-            expect(result).to.equal(PlacementResult.Ok);
-            expect(position.x).to.equal(4);
-            expect(position.y).to.equal(21.200000000000003);
+                expect(result).to.equal(PlacementResult.Ok);
+                expect(position.x).to.equal(4);
+                expect(position.y).to.equal(21.200000000000003);
+            });
         });
 
         context("single text with and without alternative placement", function() {
-            interface TestAlternativesRun {
+            interface PlacementAlternativesRun {
                 // Test run name.
                 it: string;
                 // Label text.
@@ -550,7 +463,7 @@ describe("Placement", function() {
                 // Final placement.
                 placement: AnchorPlacement;
             }
-            const runs: TestAlternativesRun[] = [
+            const runs: PlacementAlternativesRun[] = [
                 {
                     it: "places text in the top-left screen corner",
                     text: "Test Diagonal Alternative",
@@ -718,7 +631,7 @@ describe("Placement", function() {
         });
 
         context("single text moving to the screen edge", function() {
-            interface TestMovementRun {
+            interface AlternativesWithMovementRun {
                 // Test run name.
                 it: string;
                 // Label text.
@@ -737,7 +650,7 @@ describe("Placement", function() {
                     placement: AnchorPlacement;
                 }>;
             }
-            const runsNoFading: TestMovementRun[] = [
+            const runsNoFading: AlternativesWithMovementRun[] = [
                 {
                     it: "places text moving to the center-left screen edge",
                     text: "Test Horizontal Alternative",
@@ -848,7 +761,7 @@ describe("Placement", function() {
                 }
             ];
             // Duplicate run set but with fading enabled.
-            const runsWithFading: TestMovementRun[] = [];
+            const runsWithFading: AlternativesWithMovementRun[] = [];
             runsNoFading.forEach(val =>
                 runsWithFading.push({
                     ...val,
