@@ -74,15 +74,23 @@ export namespace PickingExample {
         throw err;
     });
 
-    let lastEventCoords: { x: number; y: number } | undefined;
+    let lastCanvasPosition: { x: number; y: number } | undefined;
+
+    function getCanvasPosition(
+        event: MouseEvent | Touch,
+        canvas: HTMLCanvasElement
+    ): { x: number; y: number } {
+        const { left, top } = canvas.getBoundingClientRect();
+        return { x: event.clientX - Math.floor(left), y: event.clientY - Math.floor(top) };
+    }
 
     // Trigger picking event only if there's (almost) no dragging.
-    function isPick(event: { pageX: number; pageY: number }) {
+    function isPick(eventPosition: { x: number; y: number }) {
         const MAX_MOVE = 5;
         return (
-            lastEventCoords &&
-            Math.abs(lastEventCoords.x - event.pageX) <= MAX_MOVE &&
-            Math.abs(lastEventCoords.y - event.pageY) <= MAX_MOVE
+            lastCanvasPosition &&
+            Math.abs(lastCanvasPosition.x - eventPosition.x) <= MAX_MOVE &&
+            Math.abs(lastCanvasPosition.y - eventPosition.y) <= MAX_MOVE
         );
     }
 
@@ -186,27 +194,28 @@ export namespace PickingExample {
 
         // snippet:datasource_object_picking_1.ts
         canvas.addEventListener("mousedown", event => {
-            lastEventCoords = { x: event.pageX, y: event.pageY };
+            lastCanvasPosition = getCanvasPosition(event, canvas);
         });
         canvas.addEventListener("touchstart", event => {
             if (event.touches.length !== 1) {
                 return;
             }
-            lastEventCoords = { x: event.touches[0].pageX, y: event.touches[0].pageY };
+            lastCanvasPosition = getCanvasPosition(event.touches[0], canvas);
         });
 
         canvas.addEventListener("mouseup", event => {
-            if (isPick(event)) {
-                handlePick(mapView, event.pageX, event.pageY);
+            const canvasPos = getCanvasPosition(event, canvas);
+            if (isPick(canvasPos)) {
+                handlePick(mapView, canvasPos.x, canvasPos.y);
             }
         });
         canvas.addEventListener("touchend", event => {
             if (event.changedTouches.length !== 1) {
                 return;
             }
-            const touch = event.changedTouches[0];
-            if (isPick(touch)) {
-                handlePick(mapView, touch.pageX, touch.pageY);
+            const canvasPos = getCanvasPosition(event.changedTouches[0], canvas);
+            if (isPick(canvasPos)) {
+                handlePick(mapView, canvasPos.x, canvasPos.y);
             }
         });
 
