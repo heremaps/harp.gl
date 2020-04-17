@@ -65,13 +65,34 @@ export namespace PickingExample {
                 }
             }
         </style>
-        <p id=info>Click a feature on the map to read its data (Land masses are not features).</p>
+        <p id=info>Click/touch a feature on the map to read its data (Land masses are not features).
+        </p>
         <pre id="mouse-picked-result"></pre>
     `;
 
     initializeMapView("mapCanvas").catch(err => {
         throw err;
     });
+
+    let lastCanvasPosition: { x: number; y: number } | undefined;
+
+    function getCanvasPosition(
+        event: MouseEvent | Touch,
+        canvas: HTMLCanvasElement
+    ): { x: number; y: number } {
+        const { left, top } = canvas.getBoundingClientRect();
+        return { x: event.clientX - Math.floor(left), y: event.clientY - Math.floor(top) };
+    }
+
+    // Trigger picking event only if there's (almost) no dragging.
+    function isPick(eventPosition: { x: number; y: number }) {
+        const MAX_MOVE = 5;
+        return (
+            lastCanvasPosition &&
+            Math.abs(lastCanvasPosition.x - eventPosition.x) <= MAX_MOVE &&
+            Math.abs(lastCanvasPosition.y - eventPosition.y) <= MAX_MOVE
+        );
+    }
 
     // snippet:datasource_object_picking_2.ts
     const element = document.getElementById("mouse-picked-result") as HTMLPreElement;
@@ -173,8 +194,31 @@ export namespace PickingExample {
 
         // snippet:datasource_object_picking_1.ts
         canvas.addEventListener("mousedown", event => {
-            handlePick(mapView, event.pageX, event.pageY);
+            lastCanvasPosition = getCanvasPosition(event, canvas);
         });
+        canvas.addEventListener("touchstart", event => {
+            if (event.touches.length !== 1) {
+                return;
+            }
+            lastCanvasPosition = getCanvasPosition(event.touches[0], canvas);
+        });
+
+        canvas.addEventListener("mouseup", event => {
+            const canvasPos = getCanvasPosition(event, canvas);
+            if (isPick(canvasPos)) {
+                handlePick(mapView, canvasPos.x, canvasPos.y);
+            }
+        });
+        canvas.addEventListener("touchend", event => {
+            if (event.changedTouches.length !== 1) {
+                return;
+            }
+            const canvasPos = getCanvasPosition(event.changedTouches[0], canvas);
+            if (isPick(canvasPos)) {
+                handlePick(mapView, canvasPos.x, canvasPos.y);
+            }
+        });
+
         // end:datasource_object_picking_1.ts
 
         const omvDataSource = new OmvDataSource({
