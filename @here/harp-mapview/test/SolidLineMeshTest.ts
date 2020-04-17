@@ -405,6 +405,28 @@ describe("SolidLineMesh", function() {
         });
     });
 
+    it("raycast returns no intersection on degenerate line segment", function() {
+        const intersects: THREE.Intersection[] = [];
+
+        // Line segment with length 0
+        const mesh = new SolidLineMeshBuilder([0, 0, 0, 0, 0, 0], [1, 0, 0]).build();
+        mesh.raycast(buildRayTo([0, 0, 0]).raycaster, intersects);
+
+        expect(intersects).empty;
+
+        // Line segment with zero-length extrusion vector.
+        const mesh2 = new SolidLineMeshBuilder([0, 0, 0, 1, 0, 0], [0, 0, 0]).build();
+        mesh2.raycast(buildRayTo([0, 0, 0]).raycaster, intersects);
+
+        expect(intersects).empty;
+
+        // Line segment with same direction as extrusion vector.
+        const mesh3 = new SolidLineMeshBuilder([0, 0, 0, 1, 0, 0], [1, 0, 0]).build();
+        mesh3.raycast(buildRayTo([0, 0, 0]).raycaster, intersects);
+
+        expect(intersects).empty;
+    });
+
     it("raycast returns no intersection on extruded line miss", function() {
         const mesh = new SolidLineMeshBuilder([0, 0, 0, 0, 1, 0], [1, 0, 0]).build();
         const intersects: THREE.Intersection[] = [];
