@@ -241,6 +241,14 @@ function intersectFeature(
         line.end.fromBufferAttribute(position, b);
         vExt.set(bitangent.getX(a), bitangent.getY(a), bitangent.getZ(a)).normalize();
         plane.setFromCoplanarPoints(line.start, tmpV3.copy(line.start).add(vExt), line.end);
+        if (plane.normal.manhattanLength() === 0) {
+            // Invalid plane, coplanar points are actually collinear because:
+            // a) The line segment has length 0.
+            // b) The extrusion vector has length 0.
+            // c) The extrusion and segment directions are the same.
+            // In any case it's a degenerate segment, skip it.
+            continue;
+        }
 
         // The ray intersection if any, will be on the extrusion plane.
         if (!localRay.intersectPlane(plane, interPlane)) {
