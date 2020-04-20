@@ -228,7 +228,21 @@ void main() {
     // Decrease the line opacity by the distToEdge, making the transition steeper when the slope
     // of distToChange increases (i.e. the line is further away).
     float width = fwidth(distToEdge);
-    alpha *= (1.0 - smoothstep(-width, width, distToEdge));
+
+#ifndef USE_DASHED_LINE
+    float s = opacity < 0.98
+        ? clamp((distToEdge + width) / (2.0 * width), 0.0, 1.0) // prefer a boxstep
+        : smoothstep(-width, width, distToEdge);
+
+    if (opacity < 0.98 && 1.0 - s < opacity) {
+        // drop the fragment when the line is using opacity.
+        discard;
+    }
+#else
+    float s = smoothstep(-width, width, distToEdge);
+#endif
+
+    alpha *= 1.0 - s;
 
     #ifdef USE_DASHED_LINE
     // Compute the distance to the dash origin (0.0: dashOrigin, 1.0: dashEnd, (d+g)/d: gapEnd).
@@ -496,6 +510,12 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         this.m_fog = fogParam;
         this.m_opacity = opacityParam;
 
+        // initialize the stencil pass
+        this.stencilFunc = THREE.NotEqualStencilFunc;
+        this.stencilZPass = THREE.ReplaceStencilOp;
+        this.stencilRef = 1;
+        this.stencilWrite = false;
+
         enforceBlending(this);
         this.extensions.derivatives = true;
 
@@ -631,6 +651,10 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         if (this.uniforms !== undefined) {
             this.uniforms.opacity.value = value;
         }
+
+        if (this.uniforms?.gapSize?.value === 0) {
+            this.stencilWrite = this.m_opacity < 0.98;
+        }
     }
 
     /**
@@ -714,6 +738,10 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     set gapSize(value: number) {
         this.uniforms.gapSize.value = value;
         setShaderMaterialDefine(this, "USE_DASHED_LINE", value > 0.0);
+
+        if (this.uniforms?.gapSize?.value === 0) {
+            this.stencilWrite = this.m_opacity < 0.98;
+        }
     }
 
     /**
