@@ -726,7 +726,11 @@ export class MapControls extends THREE.EventDispatcher {
                 if (this.m_needsRenderLastFrame) {
                     this.m_needsRenderLastFrame = false;
                     this.m_zoomAnimationTime = this.zoomInertiaDampingDuration;
+
+                    this.m_targetedZoom = undefined;
+                    this.m_currentZoom = undefined;
                     this.stopZoom();
+                    return;
                 }
             } else {
                 this.m_needsRenderLastFrame = true;
