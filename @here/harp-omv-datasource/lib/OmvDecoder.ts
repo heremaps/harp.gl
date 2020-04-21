@@ -34,7 +34,6 @@ import * as THREE from "three";
 // tslint:disable-next-line:max-line-length
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "./OmvData";
 import {
     ComposedDataFilter,
     OmvFeatureFilter,
@@ -53,6 +52,7 @@ import { OmvTileInfoEmitter } from "./OmvTileInfoEmitter";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { WorldTileProjectionCookie } from "./OmvUtils";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
+import { VTDataAdapter } from "./VTDataAdapter";
 import { VTJsonDataAdapter } from "./VTJsonDataAdapter";
 
 const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
@@ -174,7 +174,7 @@ export class OmvDecoder implements IGeometryProcessor {
             ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
             : styleSetDataFilter;
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new VTDataAdapter(this, dataPreFilter, logger));
         this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataPreFilter, logger));
     }
 
