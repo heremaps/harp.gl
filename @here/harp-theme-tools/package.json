@@ -3,7 +3,7 @@
     "version": "0.14.0",
     "description": "Tools for harp.gl-theme optimiziation.",
     "bin": {
-        "harp-theme-optimizer": "lib/cli-build-theme.js"
+        "harp-theme-optimizer": "src/cli-build-theme.js"
     },
     "scripts": {
         "build": "tsc --build",
