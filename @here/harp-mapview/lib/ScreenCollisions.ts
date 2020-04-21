@@ -330,7 +330,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
             this.m_renderContext.strokeStyle = "#6666ff";
             this.m_renderContext.strokeRect(
                 bounds.x - this.screenBounds.x,
-                this.screenBounds.y + this.screenBounds.h - bounds.y - 1,
+                this.screenBounds.y + this.screenBounds.h - bounds.y,
                 bounds.w,
                 -bounds.h
             );
@@ -346,7 +346,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
                 this.m_renderContext.strokeStyle = "#aa2222";
                 this.m_renderContext.strokeRect(
                     bounds.minX - this.screenBounds.x,
-                    this.screenBounds.y + this.screenBounds.h - bounds.minY - 1,
+                    this.screenBounds.y + this.screenBounds.h - bounds.minY,
                     bounds.maxX - bounds.minX,
                     -(bounds.maxY - bounds.minY)
                 );
@@ -359,13 +359,13 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
     intersectsDetails(testBox: CollisionBox, boxes: IBox[]): boolean {
         const collisionFound = super.intersectsDetails(testBox, boxes);
         if (this.m_renderingEnabled && this.m_renderContext !== null) {
-            const offset = collisionFound ? 2 : 0;
+            const padding = collisionFound ? 2 : 1;
             this.m_renderContext.strokeStyle = collisionFound ? "#FF0000" : "#00ff00";
             this.m_renderContext.strokeRect(
-                testBox.x - this.screenBounds.x - offset,
-                this.screenBounds.y + this.screenBounds.h - testBox.y - 1 + offset,
-                testBox.w + 2 * offset,
-                -testBox.h - 2 * offset
+                testBox.x - this.screenBounds.x - padding,
+                this.screenBounds.y + this.screenBounds.h - testBox.y + padding,
+                testBox.w + 2 * padding,
+                -testBox.h - 2 * padding
             );
         }
 
