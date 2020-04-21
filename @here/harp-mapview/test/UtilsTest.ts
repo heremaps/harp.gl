@@ -7,9 +7,17 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { GeoCoordinates, mercatorProjection, TileKey } from "@here/harp-geoutils";
-import { assert, expect } from "chai";
+import {
+    GeoCoordinates,
+    mercatorProjection,
+    Projection,
+    sphereProjection,
+    TileKey
+} from "@here/harp-geoutils";
+import { expect } from "chai";
+import * as sinon from "sinon";
 import * as THREE from "three";
+import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
 
@@ -320,6 +328,81 @@ describe("map-view#Utils", function() {
         const objSize = MapViewUtils.estimateObject3dSize(scene);
         expect(objSize.heapSize).to.be.equal(1080);
         expect(objSize.gpuSize).to.be.equal(24);
+    });
+
+    describe("getTargetAndDistance", function() {
+        const elevationProvider = ({} as any) as ElevationProvider;
+        let sandbox: sinon.SinonSandbox;
+        let camera: THREE.Camera;
+        const geoTarget = GeoCoordinates.fromDegrees(0, 0);
+
+        function resetCamera(projection: Projection) {
+            const heading = 0;
+            const tilt = 0;
+            const distance = 1e6;
+            MapViewUtils.getCameraRotationAtTarget(
+                projection,
+                geoTarget,
+                -heading,
+                tilt,
+                camera.quaternion
+            );
+            MapViewUtils.getCameraPositionFromTargetCoordinates(
+                geoTarget,
+                distance,
+                -heading,
+                tilt,
+                projection,
+                camera.position
+            );
+            camera.updateMatrixWorld(true);
+        }
+
+        for (const { projName, projection } of [
+            { projName: "mercator", projection: mercatorProjection },
+            { projName: "sphere", projection: sphereProjection }
+        ]) {
+            describe(`${projName} projection`, function() {
+                beforeEach(function() {
+                    sandbox = sinon.createSandbox();
+                    camera = new THREE.PerspectiveCamera();
+                    resetCamera(projection);
+                });
+
+                it("camera target and distance are offset by elevation", function() {
+                    elevationProvider.getHeight = sandbox.stub().returns(0);
+
+                    // tslint:disable-next-line: deprecation
+                    const resultNoElevation = MapViewUtils.getTargetAndDistance(
+                        projection,
+                        camera,
+                        elevationProvider
+                    );
+
+                    const elevation = 42;
+                    elevationProvider.getHeight = sandbox.stub().returns(elevation);
+
+                    // tslint:disable-next-line: deprecation
+                    const resultElevation = MapViewUtils.getTargetAndDistance(
+                        projection,
+                        camera,
+                        elevationProvider
+                    );
+
+                    expect(resultElevation.distance).equals(resultNoElevation.distance - elevation);
+                    const geoTargetNoElevation = projection.unprojectPoint(
+                        resultNoElevation.target
+                    );
+                    expect(geoTargetNoElevation).deep.equals(
+                        GeoCoordinates.fromDegrees(geoTarget.lat, geoTarget.lng, 0)
+                    );
+                    const geoTargetElevation = projection.unprojectPoint(resultElevation.target);
+                    expect(geoTargetElevation).deep.equals(
+                        GeoCoordinates.fromDegrees(geoTarget.lat, geoTarget.lng, elevation)
+                    );
+                });
+            });
+        }
     });
 });
 
