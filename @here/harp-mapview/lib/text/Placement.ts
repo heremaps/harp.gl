@@ -235,18 +235,11 @@ function computePointTextOffset(
     assert(textElement.layoutStyle !== undefined);
     assert(textElement.bounds !== undefined);
 
-    switch (hAlign) {
-        case HorizontalAlignment.Right:
-            offset.x = -textElement.xOffset;
-            break;
-        default:
-            offset.x = textElement.xOffset;
-            break;
-    }
+    offset.x = textElement.xOffset;
 
     switch (vAlign) {
         case VerticalAlignment.Below:
-            offset.y = -textElement.yOffset;
+            offset.y = textElement.yOffset;
             break;
         case VerticalAlignment.Above:
             offset.y = textElement.yOffset - textElement.bounds!.min.y;

@@ -360,7 +360,7 @@ describe("Placement", function() {
 
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(position.x).to.equal(5);
-                expect(position.y).to.equal(-5);
+                expect(position.y).to.equal(5);
             });
         });
 
