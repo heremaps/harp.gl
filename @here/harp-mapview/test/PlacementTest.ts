@@ -265,6 +265,7 @@ describe("Placement", function() {
                         new THREE.Vector2(0, 0),
                         1.0,
                         textCanvas,
+                        new Env(),
                         screenCollisions,
                         false,
                         outPosition
@@ -301,6 +302,7 @@ describe("Placement", function() {
                     new THREE.Vector2(0, 0),
                     1.0,
                     textCanvas,
+                    new Env(),
                     screenCollisions,
                     false,
                     position
@@ -334,6 +336,7 @@ describe("Placement", function() {
                     new THREE.Vector2(0, 0),
                     1.0,
                     textCanvas,
+                    new Env(),
                     screenCollisions,
                     false,
                     position
@@ -367,6 +370,7 @@ describe("Placement", function() {
                     new THREE.Vector2(0, 0),
                     1.0,
                     textCanvas,
+                    new Env(),
                     screenCollisions,
                     false,
                     position
@@ -403,6 +407,7 @@ describe("Placement", function() {
                     new THREE.Vector2(0, 0),
                     1.0,
                     textCanvas,
+                    new Env(),
                     screenCollisions,
                     false,
                     position
@@ -439,6 +444,7 @@ describe("Placement", function() {
                     new THREE.Vector2(0, 0),
                     0.8,
                     textCanvas,
+                    new Env(),
                     screenCollisions,
                     false,
                     position
@@ -598,6 +604,7 @@ describe("Placement", function() {
                         inPosition,
                         1.0,
                         textCanvas,
+                        new Env(),
                         screenCollisions,
                         false,
                         outPosition,
@@ -616,6 +623,7 @@ describe("Placement", function() {
                         inPosition,
                         1.0,
                         textCanvas,
+                        new Env(),
                         screenCollisions,
                         false,
                         outPosition,
@@ -798,6 +806,7 @@ describe("Placement", function() {
                         inPosition,
                         1.0,
                         textCanvas,
+                        new Env(),
                         screenCollisions,
                         false,
                         outPosition,
@@ -821,6 +830,7 @@ describe("Placement", function() {
                             inPosition,
                             1.0,
                             textCanvas,
+                            new Env(),
                             screenCollisions,
                             false,
                             outPosition,
@@ -865,6 +875,7 @@ describe("Placement", function() {
                 const offset = 5; // Need to keep some offset because of internal margin
                 const inPositions = [new THREE.Vector2(-offset, 0), new THREE.Vector2(offset, 0)];
                 const outPositions = [new THREE.Vector3(), new THREE.Vector3()];
+                const env = new Env();
 
                 // Place each text element sequentially without multi-placement support
                 const results: PlacementResult[] = [0, 0];
@@ -876,6 +887,7 @@ describe("Placement", function() {
                         inPositions[i],
                         1.0,
                         textCanvas,
+                        env,
                         screenCollisions,
                         false,
                         outPositions[i]
@@ -900,6 +912,7 @@ describe("Placement", function() {
                         inPositions[i],
                         1.0,
                         textCanvas,
+                        env,
                         screenCollisions,
                         false,
                         outPositions[i],
@@ -938,6 +951,7 @@ describe("Placement", function() {
                 const offset = 5; // Need to keep some offset because of internal margin
                 const inPositions = [new THREE.Vector2(-offset, 0), new THREE.Vector2(offset, 0)];
                 const outPositions = [new THREE.Vector3(), new THREE.Vector3()];
+                const env = new Env();
 
                 // Place each text element sequentially without multi-placement support
                 const results: PlacementResult[] = [0, 0];
@@ -949,6 +963,7 @@ describe("Placement", function() {
                         inPositions[i],
                         1.0,
                         textCanvas,
+                        env,
                         screenCollisions,
                         false,
                         outPositions[i],
@@ -984,6 +999,7 @@ describe("Placement", function() {
                 let offset = 50;
                 const inPositions = [new THREE.Vector2(-offset, 0), new THREE.Vector2(offset, 0)];
                 const outPositions = [new THREE.Vector3(), new THREE.Vector3()];
+                const env = new Env();
 
                 // Place each text element sequentially.
                 const results: PlacementResult[] = [0, 0];
@@ -995,6 +1011,7 @@ describe("Placement", function() {
                         inPositions[i],
                         1.0,
                         textCanvas,
+                        env,
                         screenCollisions,
                         false,
                         outPositions[i],
@@ -1033,6 +1050,7 @@ describe("Placement", function() {
                         inPositions[i],
                         1.0,
                         textCanvas,
+                        env,
                         screenCollisions,
                         false,
                         outPositions[i],
@@ -1074,6 +1092,7 @@ describe("Placement", function() {
                         inPositions[i],
                         1.0,
                         textCanvas,
+                        env,
                         screenCollisions,
                         false,
                         outPositions[i],
