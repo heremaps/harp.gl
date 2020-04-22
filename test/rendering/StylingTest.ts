@@ -49,7 +49,8 @@ interface RenderingTestOptions extends TestOptions {
 function baseRenderingTest(
     name: string,
     options: RenderingTestOptions,
-    testFun: (canvas: HTMLCanvasElement) => Promise<void>
+    testFun: (canvas: HTMLCanvasElement) => Promise<void>,
+    cleanupFun?: () => void
 ) {
     const commonTestOptions = { module: "harp.gl" };
     const imageUrl = getReferenceImageUrl({ ...commonTestOptions, platform: getPlatform(), name });
@@ -72,6 +73,9 @@ function baseRenderingTest(
 
             await ibct.assertCanvasMatchesReference(canvas, name, options);
         } finally {
+            if (cleanupFun !== undefined) {
+                cleanupFun();
+            }
             if (canvas !== undefined) {
                 canvas.width = 0;
                 canvas.height = 0;
@@ -128,9 +132,11 @@ function mapViewFeaturesRenderingTest(
     options: GeoJsonMapViewRenderingTestOptions,
     testFun?: (mapView: MapView, dataSource: FeaturesDataSource) => Promise<void>
 ) {
-    baseRenderingTest(name, options, async function(canvas) {
-        let mapView: MapView | undefined;
-        try {
+    let mapView: MapView | undefined;
+    baseRenderingTest(
+        name,
+        options,
+        async function(canvas) {
             //document.body.appendChild(canvas);
             mapView = new MapView({
                 canvas,
@@ -180,13 +186,16 @@ function mapViewFeaturesRenderingTest(
             } else {
                 await waitForEvent(mapView, MapViewEventNames.FrameComplete);
             }
-        } finally {
+            // Don't dispose mapView yet b/c the context will be lost since three.js 0.115
+            // when WebGLRenderer.dispose is called (i.e. actual IBCT image will be empty).
+        },
+        () => {
             if (mapView !== undefined) {
                 mapView.dispose();
                 mapView = undefined!;
             }
         }
-    });
+    );
 }
 
 describe("MapView Styling Test", function() {

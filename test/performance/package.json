@@ -16,7 +16,7 @@
         "@here/harp-test-utils": "^0.14.0",
         "@types/chai": "^4.2.2",
         "chai": "^4.2.0",
-        "three": "^0.114.0"
+        "three": "^0.115.0"
     },
     "license": "Apache-2.0"
 }

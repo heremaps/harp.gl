@@ -33,12 +33,12 @@
         "mocha": "^7.1.1",
         "sinon": "^7.3.2",
         "source-map-support": "^0.5.2",
-        "three": "^0.114.0",
+        "three": "^0.115.0",
         "ts-node": "^8.9.1",
         "typescript": "^3.8.3"
     },
     "peerDependencies": {
-        "three": "^0.114.0"
+        "three": "^0.115.0"
     },
     "publishConfig": {
         "access": "public"
