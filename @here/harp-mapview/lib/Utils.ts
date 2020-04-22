@@ -455,20 +455,8 @@ export namespace MapViewUtils {
             pointOnScreenYinNDC,
             0
         );
-        const cameraPos = cache.vector3[1].copy(mapView.camera.position);
+        rayCaster.setFromCamera(pointInNDCPosition, mapView.camera);
 
-        cache.matrix4[0].extractRotation(mapView.camera.matrixWorld);
-
-        // Prepare the unprojection matrix which projects from NDC space to camera space
-        // and takes the current rotation of the camera into account.
-        cache.matrix4[1].multiplyMatrices(
-            cache.matrix4[0],
-            cache.matrix4[1].getInverse(mapView.camera.projectionMatrix)
-        );
-        // Unproject the point via the unprojection matrix.
-        const pointInCameraSpace = pointInNDCPosition.applyMatrix4(cache.matrix4[1]);
-        // Use the point in camera space as the vector towards this point.
-        rayCaster.set(cameraPos, pointInCameraSpace.normalize());
         if (elevation !== undefined) {
             groundPlane.constant -= elevation;
             groundSphere.radius += elevation;
