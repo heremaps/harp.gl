@@ -54,6 +54,12 @@ export interface Theme {
     clearColor?: string;
 
     /**
+     * Alpha to be used as a clear background - no map objects.
+     * @format 0-1
+     */
+    clearAlpha?: number;
+
+    /**
      * Define the default text style for styling labels and texts.
      */
     defaultTextStyle?: TextStyleDefinition;
