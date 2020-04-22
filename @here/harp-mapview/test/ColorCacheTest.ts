@@ -12,6 +12,10 @@ import { assert } from "chai";
 import { ColorCache } from "../lib/ColorCache";
 
 describe("ColorCache", function() {
+    this.beforeEach(() => {
+        ColorCache.instance.clear();
+    });
+
     it("empty", function() {
         assert.equal(ColorCache.instance.size, 0);
     });

@@ -5052,7 +5052,7 @@ mocha-webdriver-runner@^0.5.3:
     mocha "^6.2.0"
     selenium-webdriver "^4.0.0-alpha.4"
 
-mocha@^6.1.4, mocha@^6.2.0:
+mocha@^6.2.0:
   version "6.2.2"
   resolved "https://registry.yarnpkg.com/mocha/-/mocha-6.2.2.tgz#5d8987e28940caf8957a7d7664b910dc5b2fea20"
   integrity sha512-FgDS9Re79yU1xz5d+C4rv1G7QagNGHZ+iXF81hO8zY35YZZcLEsJVfFolfsqKFWunATEvNzMK0r/CwWd/szO9A==
