@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Env } from "@here/harp-datasource-protocol";
+import { Env, getPropertyValue } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import {
     HorizontalAlignment,
@@ -219,16 +219,16 @@ export function checkReadyForPlacement(
  * Computes the offset for a point text accordingly to text alignment (and icon, if any).
  * @param textElement The text element of which the offset will computed. It must be a point
  * label with [[layoutStyle]] and [[bounds]] already computed.
- * @param hAlign Text horizontal alignment.
- * @param vAlign The vertical alignment.
+ * @param placement The relative anchor placement (may be different then original alignment).
  * @param scale The scaling factor (due to distance, etc.).
+ * @param env The [[Env]] used to evaluate technique attributes.
  * @param offset The offset result.
  */
 function computePointTextOffset(
     textElement: TextElement,
-    hAlign: HorizontalAlignment,
-    vAlign: VerticalAlignment,
+    placement: AnchorPlacement,
     scale: number,
+    env: Env,
     offset: THREE.Vector2 = new THREE.Vector2()
 ): THREE.Vector2 {
     assert(textElement.type === TextElementType.PoiLabel);
@@ -236,17 +236,14 @@ function computePointTextOffset(
     assert(textElement.bounds !== undefined);
 
     offset.x = textElement.xOffset;
+    offset.y = textElement.yOffset;
 
-    switch (vAlign) {
-        case VerticalAlignment.Below:
-            offset.y = textElement.yOffset;
-            break;
+    switch (placement.v) {
         case VerticalAlignment.Above:
-            offset.y = textElement.yOffset - textElement.bounds!.min.y;
+            offset.y -= textElement.bounds!.min.y;
             break;
-        default:
-            offset.y =
-                textElement.yOffset - 0.5 * (textElement.bounds!.max.y + textElement.bounds!.min.y);
+        case VerticalAlignment.Center:
+            offset.y -= 0.5 * (textElement.bounds!.max.y + textElement.bounds!.min.y);
             break;
     }
 
@@ -254,8 +251,55 @@ function computePointTextOffset(
         assert(textElement.poiInfo.computedWidth !== undefined);
         assert(textElement.poiInfo.computedHeight !== undefined);
 
-        offset.x += textElement.poiInfo.computedWidth! * (0.5 + hAlign);
-        offset.y += textElement.poiInfo.computedHeight! * (0.5 + vAlign);
+        // Apply offset moving text out of the icon
+        offset.x += textElement.poiInfo.computedWidth! * (0.5 + placement.h);
+        offset.y += textElement.poiInfo.computedHeight! * (0.5 + placement.v);
+
+        // Reverse, mirror or project offsets on different axis depending on the placement
+        // required only for alternative placements.
+        const hAlign = textElement.layoutStyle!.horizontalAlignment;
+        const vAlign = textElement.layoutStyle!.verticalAlignment;
+        if (hAlign !== placement.h || vAlign !== placement.v) {
+            // Read icon offset used.
+            const technique = textElement.poiInfo.technique;
+            let iconXOffset = getPropertyValue(technique.iconXOffset, env);
+            let iconYOffset = getPropertyValue(technique.iconYOffset, env);
+            iconXOffset = typeof iconXOffset === "number" ? iconXOffset : 0;
+            iconYOffset = typeof iconYOffset === "number" ? iconYOffset : 0;
+
+            // Now mirror the text offset relative to icon so manhattan distance is preserved, when
+            // alternative position is taken, this ensures that text-icon relative position is
+            // the same as in base alignment.
+            const hAlignDiff = hAlign - placement.h;
+            const vAlignDiff = vAlign - placement.v;
+            const relOffsetX = iconXOffset - textElement.xOffset;
+            const relOffsetY = iconYOffset - textElement.yOffset;
+            const centerBased =
+                hAlign === HorizontalAlignment.Center || vAlign === VerticalAlignment.Center;
+            if (centerBased) {
+                // Center based alternative placements.
+                offset.x += 2 * Math.abs(hAlignDiff) * relOffsetX;
+                offset.y -= 2 * vAlignDiff * Math.abs(relOffsetX);
+
+                offset.y += 2 * Math.abs(vAlignDiff) * relOffsetY;
+                offset.x -= 2 * hAlignDiff * Math.abs(relOffsetY);
+            } else {
+                // Corner alternative placements
+                offset.x += 2 * Math.min(Math.abs(hAlignDiff), 0.5) * relOffsetX;
+                offset.y -=
+                    2 *
+                    Math.sign(vAlignDiff) *
+                    Math.min(Math.abs(vAlignDiff), 0.5) *
+                    Math.abs(relOffsetX);
+
+                offset.y += 2 * Math.min(Math.abs(vAlignDiff), 0.5) * relOffsetY;
+                offset.x -=
+                    2 *
+                    Math.sign(hAlignDiff) *
+                    Math.min(Math.abs(hAlignDiff), 0.5) *
+                    Math.abs(relOffsetY);
+            }
+        }
     }
 
     offset.multiplyScalar(scale);
@@ -318,6 +362,7 @@ export function placeIcon(
  * @param screenPosition Position of the label in screen coordinates.
  * @param scale Scale factor to be applied to label dimensions.
  * @param textCanvas The text canvas where the label will be placed.
+ * @param env The [[Env]] used to evaluate technique attributes.
  * @param screenCollisions Used to check collisions with other labels.
  * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
  * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
@@ -336,6 +381,7 @@ export function placePointLabel(
     screenPosition: THREE.Vector2,
     scale: number,
     textCanvas: TextCanvas,
+    env: Env,
     screenCollisions: ScreenCollisions,
     isRejected: boolean,
     outScreenPosition: THREE.Vector3,
@@ -364,6 +410,7 @@ export function placePointLabel(
             screenPosition,
             scale,
             textCanvas,
+            env,
             screenCollisions,
             isRejected,
             outScreenPosition
@@ -376,6 +423,7 @@ export function placePointLabel(
             screenPosition,
             scale,
             textCanvas,
+            env,
             screenCollisions,
             outScreenPosition
         );
@@ -392,6 +440,7 @@ export function placePointLabel(
  * @param screenPosition Position of the label in screen coordinates.
  * @param scale Scale factor to be applied to label dimensions.
  * @param textCanvas The text canvas where the label will be placed.
+ * @param env The [[Env]] used to evaluate technique attributes.
  * @param screenCollisions Used to check collisions with other labels.
  * @param outScreenPosition The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if label can be placed at the base or optional anchor point,
@@ -406,6 +455,7 @@ function placePointLabelChoosingAnchor(
     screenPosition: THREE.Vector2,
     scale: number,
     textCanvas: TextCanvas,
+    env: Env,
     screenCollisions: ScreenCollisions,
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
@@ -449,6 +499,7 @@ function placePointLabelChoosingAnchor(
             anchorPlacement,
             scale,
             textCanvas,
+            env,
             screenCollisions,
             false,
             !isLastPlacement,
@@ -503,6 +554,7 @@ function placePointLabelChoosingAnchor(
  * @param screenPosition Position of the label in screen coordinates.
  * @param scale Scale factor to be applied to label dimensions.
  * @param textCanvas The text canvas where the label will be placed.
+ * @param env The [[Env]] used to evaluate technique attributes.
  * @param screenCollisions Used to check collisions with other labels.
  * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
  * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
@@ -519,6 +571,7 @@ function placePointLabelAtCurrentAnchor(
     screenPosition: THREE.Vector2,
     scale: number,
     textCanvas: TextCanvas,
+    env: Env,
     screenCollisions: ScreenCollisions,
     isRejected: boolean,
     outScreenPosition: THREE.Vector3
@@ -533,6 +586,7 @@ function placePointLabelAtCurrentAnchor(
         lastPlacement,
         scale,
         textCanvas,
+        env,
         screenCollisions,
         isRejected,
         false,
@@ -550,6 +604,7 @@ function placePointLabelAtCurrentAnchor(
  * @param placement Text placement relative to the label position.
  * @param scale Scale factor to be applied to label dimensions.
  * @param textCanvas The text canvas where the label will be placed.
+ * @param env The [[Env]] used to evaluate technique attributes.
  * @param screenCollisions Used to check collisions with other labels.
  * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
  * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
@@ -569,6 +624,7 @@ function placePointLabelAtAnchor(
     placement: AnchorPlacement,
     scale: number,
     textCanvas: TextCanvas,
+    env: Env,
     screenCollisions: ScreenCollisions,
     isRejected: boolean,
     forceInvalidation: boolean,
@@ -597,13 +653,7 @@ function placePointLabelAtAnchor(
     }
 
     // Compute text offset from the anchor point
-    const textOffset = computePointTextOffset(
-        label,
-        placement.h,
-        placement.v,
-        scale,
-        tmpTextOffset
-    );
+    const textOffset = computePointTextOffset(label, placement, scale, env, tmpTextOffset);
     textOffset.add(screenPosition);
     tmpBox.copy(label.bounds!);
     tmpBox.min.multiplyScalar(scale);

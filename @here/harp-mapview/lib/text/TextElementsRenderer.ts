@@ -1619,6 +1619,7 @@ export class TextElementsRenderer {
                 tempScreenPosition,
                 distanceScaleFactor,
                 textCanvas,
+                this.m_viewState.env,
                 this.m_screenCollisions,
                 iconRejected,
                 tempPosition,
