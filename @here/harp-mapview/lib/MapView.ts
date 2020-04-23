@@ -1020,7 +1020,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
-        if (this.m_options.addBackgroundDatasource === true) {
+        if (this.m_options.addBackgroundDatasource !== false) {
             this.m_backgroundDataSource = new BackgroundDataSource();
             this.addDataSource(this.m_backgroundDataSource);
         }
@@ -1040,10 +1040,10 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         if (
-            options.backgroundTilingScheme !== undefined &&
+            this.m_options.backgroundTilingScheme !== undefined &&
             this.m_backgroundDataSource !== undefined
         ) {
-            this.m_backgroundDataSource.setTilingScheme(options.backgroundTilingScheme);
+            this.m_backgroundDataSource.setTilingScheme(this.m_options.backgroundTilingScheme);
         }
 
         this.initTheme();
