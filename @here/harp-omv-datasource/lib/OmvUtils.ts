@@ -6,7 +6,7 @@
 import { EarthConstants, webMercatorProjection } from "@here/harp-geoutils";
 import * as THREE from "three";
 
-import { OmvDecoder } from "./OmvDecoder";
+import { DecodeInfo } from "./DecodeInfo";
 import { VTJsonDataAdapterId } from "./VTJsonDataAdapter";
 
 /**
@@ -52,10 +52,7 @@ export interface WorldTileProjectionCookie {
     scale: number;
 }
 
-export function createWorldTileTransformationCookie(
-    extents: number,
-    decodeInfo: OmvDecoder.DecodeInfo
-) {
+export function createWorldTileTransformationCookie(extents: number, decodeInfo: DecodeInfo) {
     const { north, west } = decodeInfo.geoBox;
     const N = Math.log2(extents);
     const scale = Math.pow(2, decodeInfo.tileKey.level + N);
@@ -76,7 +73,7 @@ export function createWorldTileTransformationCookie(
  */
 export function tile2world(
     extents: number,
-    decodeInfo: OmvDecoder.DecodeInfo,
+    decodeInfo: DecodeInfo,
     position: THREE.Vector2,
     flipY: boolean = false,
     target: THREE.Vector2
@@ -105,7 +102,7 @@ export function tile2world(
  */
 export function world2tile(
     extents: number,
-    decodeInfo: OmvDecoder.DecodeInfo,
+    decodeInfo: DecodeInfo,
     position: THREE.Vector2,
     flipY: boolean = false,
     target: THREE.Vector2
@@ -132,7 +129,7 @@ const tempWorldPos = new THREE.Vector2();
 
 export function webMercatorTile2TargetWorld(
     extents: number,
-    decodeInfo: OmvDecoder.DecodeInfo,
+    decodeInfo: DecodeInfo,
     position: THREE.Vector2,
     target: THREE.Vector3,
     flipY: boolean = false
@@ -144,7 +141,7 @@ export function webMercatorTile2TargetWorld(
 
 export function webMercatorTile2TargetTile(
     extents: number,
-    decodeInfo: OmvDecoder.DecodeInfo,
+    decodeInfo: DecodeInfo,
     position: THREE.Vector2,
     target: THREE.Vector3,
     flipY: boolean = false

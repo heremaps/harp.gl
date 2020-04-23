@@ -14,8 +14,9 @@ import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder"
 import * as THREE from "three";
 
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
+import { DecodeInfo } from "./DecodeInfo";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
+import { IOmvEmitter, Ring } from "./OmvDecoder";
 import { webMercatorTile2TargetTile } from "./OmvUtils";
 
 export class OmvTileInfoEmitter implements IOmvEmitter {
@@ -31,7 +32,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
      * @param m_gatherRoadSegments
      */
     constructor(
-        private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
+        private readonly m_decodeInfo: DecodeInfo,
         // tslint:disable-next-line:no-unused-variable
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_storeExtendedTags: boolean,

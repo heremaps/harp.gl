@@ -10,9 +10,10 @@ import {
     MapEnv,
     ValueMap
 } from "@here/harp-datasource-protocol/index-decoder";
-import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
+import { GeoCoordinates } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2 } from "three";
+import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
@@ -111,7 +112,8 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
         return true;
     }
 
-    process(tile: VTJsonTileInterface, tileKey: TileKey, geoBox: GeoBox) {
+    process(tile: VTJsonTileInterface, decodeInfo: DecodeInfo) {
+        const { tileKey } = decodeInfo;
         for (const feature of tile.features) {
             const env = new MapEnv({
                 $layer: tile.layer,

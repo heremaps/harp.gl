@@ -11,7 +11,12 @@ import { assert } from "chai";
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { apikey } from "@here/harp-examples/config";
-import { sphereProjection, TileKey, webMercatorProjection } from "@here/harp-geoutils";
+import {
+    mercatorProjection,
+    sphereProjection,
+    TileKey,
+    webMercatorProjection
+} from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
 import {
     APIFormat,
@@ -19,6 +24,7 @@ import {
     OmvRestClient,
     OmvRestClientParameters
 } from "@here/harp-omv-datasource";
+import { DecodeInfo } from "@here/harp-omv-datasource/lib/DecodeInfo";
 import {
     IGeometryProcessor,
     ILineGeometry,
@@ -136,7 +142,8 @@ export function createOMVDecoderPerformanceTest(
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
                     const decoder = new OmvProtobufDataAdapter(geometryProcessor, undefined);
-                    decoder.process(tileData, tileKey);
+                    const decodeInfo = new DecodeInfo("profiler", mercatorProjection, tileKey, 0);
+                    decoder.process(tileData, decodeInfo);
                 }
             });
         });

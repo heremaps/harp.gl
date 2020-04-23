@@ -62,7 +62,7 @@ import {
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { LinesGeometry } from "./OmvDataSource";
-import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
+import { IOmvEmitter, Ring } from "./OmvDecoder";
 import {
     tile2world,
     webMercatorTile2TargetTile,
@@ -82,6 +82,7 @@ import {
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
+import { DecodeInfo } from "./DecodeInfo";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
@@ -216,7 +217,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private m_maxGeometryHeight: number = 0;
 
     constructor(
-        private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
+        private readonly m_decodeInfo: DecodeInfo,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_gatherFeatureAttributes: boolean,
         private readonly m_skipShortLabels: boolean,

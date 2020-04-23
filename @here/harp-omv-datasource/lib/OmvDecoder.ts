@@ -15,14 +15,7 @@ import {
     TileInfo
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-import {
-    GeoBox,
-    OrientedBox3,
-    Projection,
-    TileKey,
-    TilingScheme,
-    webMercatorTilingScheme
-} from "@here/harp-geoutils";
+import { Projection, TileKey } from "@here/harp-geoutils";
 import {
     ThemedTileDecoder,
     TileDecoderService,
@@ -33,6 +26,7 @@ import * as THREE from "three";
 
 // tslint:disable-next-line:max-line-length
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
+import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvProtobufDataAdapter } from "./OmvData";
 import {
@@ -51,8 +45,8 @@ import {
 } from "./OmvDecoderDefs";
 import { OmvTileInfoEmitter } from "./OmvTileInfoEmitter";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
-import { WorldTileProjectionCookie } from "./OmvUtils";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
+import { TiledGeoJsonDataAdapter } from "./TiledGeoJsonAdapter";
 import { VTJsonDataAdapter } from "./VTJsonDataAdapter";
 
 const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
@@ -142,10 +136,9 @@ export interface OmvDataAdapter {
      * Process the given raw data.
      *
      * @param data The raw data to process.
-     * @param tileKey The TileKey of the enclosing Tile.
-     * @param geoBox The GeoBox of the enclosing Tile.
+     * @param decodeInfo The [[DecodeInfo]] of the tile to process.
      */
-    process(data: ArrayBufferLike | {}, tileKey: TileKey, geoBox: GeoBox): void;
+    process(data: ArrayBufferLike | {}, decodeInfo: DecodeInfo): void;
 }
 
 export class OmvDecoder implements IGeometryProcessor {
@@ -176,6 +169,7 @@ export class OmvDecoder implements IGeometryProcessor {
         // Register the default adapters.
         this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataPreFilter, logger));
         this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new TiledGeoJsonDataAdapter(this, dataPreFilter, logger));
     }
 
     get storageLevelOffset() {
@@ -207,12 +201,11 @@ export class OmvDecoder implements IGeometryProcessor {
 
         this.m_styleSetEvaluator.resetTechniques();
 
-        const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
-        const decodeInfo = new OmvDecoder.DecodeInfo(
+        const decodeInfo = new DecodeInfo(
             dataAdapter.id,
             this.m_projection,
             tileKey,
-            tileSizeOnScreen
+            this.m_storageLevelOffset
         );
 
         this.m_decodedTileEmitter = new OmvDecodedTileEmitter(
@@ -233,7 +226,7 @@ export class OmvDecoder implements IGeometryProcessor {
             );
         }
 
-        dataAdapter.process(data, tileKey, decodeInfo.geoBox);
+        dataAdapter.process(data, decodeInfo);
         const decodedTile = this.m_decodedTileEmitter.getDecodedTile();
 
         if (this.m_createTileInfo) {
@@ -257,12 +250,11 @@ export class OmvDecoder implements IGeometryProcessor {
 
         this.m_styleSetEvaluator.resetTechniques();
 
-        const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
-        const decodeInfo = new OmvDecoder.DecodeInfo(
+        const decodeInfo = new DecodeInfo(
             dataAdapter.id,
             this.m_projection,
             tileKey,
-            tileSizeOnScreen
+            this.m_storageLevelOffset
         );
 
         const storeExtendedTags = true;
@@ -275,7 +267,7 @@ export class OmvDecoder implements IGeometryProcessor {
 
         for (const adapter of this.m_dataAdapters.values()) {
             if (adapter.canProcess(data)) {
-                adapter.process(data, tileKey, decodeInfo.geoBox);
+                adapter.process(data, decodeInfo);
                 break;
             }
         }
@@ -460,17 +452,6 @@ export class OmvDecoder implements IGeometryProcessor {
         }
     }
 
-    /**
-     * Estimate the number of screen pixels a tile will cover. The actual number of pixels will be
-     * influenced by tilt and rotation, so estimated the number here should be an upper bound.
-     *
-     * @returns {number} Estimated number of screen pixels.
-     */
-    protected estimatedTileSizeOnScreen(): number {
-        const tileSizeOnScreen = 256 * Math.pow(2, -this.m_storageLevelOffset);
-        return tileSizeOnScreen;
-    }
-
     private getZoomLevel(storageLevel: number) {
         return Math.max(0, storageLevel - (this.m_storageLevelOffset || 0));
     }
@@ -490,76 +471,6 @@ export class OmvDecoder implements IGeometryProcessor {
         return techniques;
     }
 }
-
-export namespace OmvDecoder {
-    export class DecodeInfo {
-        /**
-         * The [[GeoBox]] of the Tile to decode.
-         */
-        readonly geoBox: GeoBox;
-
-        readonly projectedBoundingBox = new OrientedBox3();
-
-        /**
-         * The tile bounds in the OMV tile space [[webMercatorTilingScheme]].
-         */
-        readonly tileBounds = new THREE.Box3();
-
-        /**
-         * The tile size in the OMV tile space [[webMercatorTilingScheme]].
-         */
-        readonly tileSize = new THREE.Vector3();
-
-        /**
-         * The center of the Tile in the target [[Projection]] space.
-         * Geometries generated by decoding the OMV tile must be relative
-         * to this position.
-         */
-        readonly center = new THREE.Vector3();
-
-        worldTileProjectionCookie?: WorldTileProjectionCookie;
-
-        /**
-         * Constructs a new [[DecodeInfo]].
-         *
-         * @param adapterId The id of the [[OmvDataAdapter]] used for decoding.
-         * @param targetProjection The [[Projection]]
-         * @param tileKey The [[TileKey]] of the Tile to decode.
-         * @param tileSizeOnScreen The estimated size of the Tile in pixels.
-         */
-        constructor(
-            readonly adapterId: string,
-            readonly targetProjection: Projection,
-            readonly tileKey: TileKey,
-            readonly tileSizeOnScreen: number
-        ) {
-            this.geoBox = this.tilingScheme.getGeoBox(tileKey);
-
-            this.targetProjection.projectBox(this.geoBox, this.projectedBoundingBox);
-            this.projectedBoundingBox.getCenter(this.center);
-
-            this.tilingScheme.getWorldBox(tileKey, this.tileBounds);
-            this.tileBounds.getSize(this.tileSize);
-        }
-
-        /**
-         * The [[TilingScheme]] of the OMV data, currenly it is defined
-         * to be [[webMercatorTilingScheme]].
-         */
-        get tilingScheme(): TilingScheme {
-            return webMercatorTilingScheme;
-        }
-
-        /**
-         * The [[Projection]] of OMV tiled data, currenly it is defined
-         * to be [[webMercatorProjection]].
-         */
-        get sourceProjection(): Projection {
-            return this.tilingScheme.projection;
-        }
-    }
-}
-
 export class OmvTileDecoder extends ThemedTileDecoder {
     private m_showMissingTechniques: boolean = false;
     private m_featureFilter?: OmvFeatureFilter;

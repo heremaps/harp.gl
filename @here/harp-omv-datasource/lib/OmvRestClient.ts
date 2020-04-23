@@ -426,7 +426,10 @@ export class OmvRestClient implements DataProvider {
                 .replace("{z}", String(tileKey.level));
         }
         let path = [`/${tileKey.level}`, tileKey.column, tileKey.row].join(
-            this.params.apiFormat === APIFormat.XYZSpace ? "_" : "/"
+            this.params.apiFormat === APIFormat.XYZSpace ||
+                this.params.apiFormat === APIFormat.XYZJson
+                ? "_"
+                : "/"
         );
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
@@ -440,7 +443,6 @@ export class OmvRestClient implements DataProvider {
                 path += ".mvt";
                 break;
             case APIFormat.XYZJson:
-                path += ".json";
                 break;
             case APIFormat.XYZSpace:
                 path += ".mvt";
