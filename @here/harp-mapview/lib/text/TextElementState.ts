@@ -155,6 +155,7 @@ export class TextElementState {
             }
         }
         this.m_viewDistance = undefined;
+        this.element.textBufferObject = undefined;
     }
 
     /**
@@ -176,6 +177,7 @@ export class TextElementState {
             this.element.bounds = predecessor.element.bounds;
             this.element.glyphCaseArray = predecessor.element.glyphCaseArray;
         }
+        this.element.textBufferObject = undefined;
     }
 
     /**
