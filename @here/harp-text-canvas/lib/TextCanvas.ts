@@ -635,8 +635,8 @@ export class TextCanvas {
                 characterBounds = [];
             }
             if (params.storeStyles === true) {
-                renderStyle = this.m_currentTextRenderStyle;
-                layoutStyle = this.m_currentTextLayoutStyle;
+                renderStyle = this.m_currentTextRenderStyle.clone();
+                layoutStyle = this.m_currentTextLayoutStyle.clone();
             }
         }
 
@@ -692,7 +692,7 @@ export class TextCanvas {
                 }
                 targetLayer = tempLayer;
             }
-            position = params.position;
+            position = params.position?.clone();
             scale = params.scale;
             rotation = params.rotation;
             color = params.color;

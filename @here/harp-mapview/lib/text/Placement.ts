@@ -589,7 +589,7 @@ function placePointLabelAtCurrentAnchor(
         env,
         screenCollisions,
         isRejected,
-        false,
+        !labelState.visible,
         outScreenPosition
     );
 
@@ -704,7 +704,7 @@ function placePointLabelAtAnchor(
 
     // Glyphs arrangement have been changed remove text buffer object which needs to be
     // re-created.
-    if (forceInvalidation) {
+    if (measureText) {
         label.textBufferObject = undefined;
     }
 
