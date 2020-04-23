@@ -20,7 +20,6 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@here/harp-datasource-protocol": "^0.14.0",
-        "@here/harp-geojson-datasource": "^0.14.0",
         "@here/harp-geoutils": "^0.14.0",
         "@here/harp-mapview": "^0.14.0",
         "@here/harp-omv-datasource": "^0.14.0",

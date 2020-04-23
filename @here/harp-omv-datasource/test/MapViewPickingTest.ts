@@ -19,7 +19,6 @@ import {
     Geometry,
     GeometryType
 } from "@here/harp-datasource-protocol";
-import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import {
     GeoCoordinates,
     mercatorProjection,
@@ -46,6 +45,7 @@ import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { OmvTileDecoder } from "../index-worker";
+import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
 import { OmvDataSource } from "../lib/OmvDataSource";
 import { OmvTile } from "../lib/OmvTile";
 import { GEOJSON_DATA, THEME } from "./resources/geoJsonData";

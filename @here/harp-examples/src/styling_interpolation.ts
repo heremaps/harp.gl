@@ -5,7 +5,7 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
-// import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
+// import { GeoJsonDataProvider } from "@here/harp-omv-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
