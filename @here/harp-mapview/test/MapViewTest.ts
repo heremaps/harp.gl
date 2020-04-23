@@ -709,6 +709,7 @@ describe("MapView", function() {
             mapView = new MapView({ canvas });
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
             expect(mapView.theme).to.deep.equal({
+                clearAlpha: undefined,
                 clearColor: undefined,
                 defaultTextStyle: undefined,
                 definitions: undefined,
@@ -762,6 +763,7 @@ describe("MapView", function() {
 
             mapView.theme = {};
             expect(mapView.theme).to.deep.equal({
+                clearAlpha: undefined,
                 clearColor: undefined,
                 defaultTextStyle: undefined,
                 definitions: undefined,

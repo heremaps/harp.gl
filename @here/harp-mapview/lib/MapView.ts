@@ -293,6 +293,13 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     alpha?: boolean;
 
     /**
+     * If `true`adds a Background Mesh for each tile
+     *
+     * @default `true`
+     */
+    addBackgroundDatasource?: boolean;
+
+    /**
      * Whether the native WebGL antialiasing should be enabled. It is better to disable it if the
      * MapView's MSAA is enabled.
      *
@@ -615,6 +622,7 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
  */
 const MapViewDefaults = {
     projection: mercatorProjection,
+    addBackgroundDatasource: true,
 
     maxVisibleDataSourceTiles: 100,
     extendedFrustumCulling: true,
@@ -1012,8 +1020,10 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
-        this.m_backgroundDataSource = new BackgroundDataSource();
-        this.addDataSource(this.m_backgroundDataSource);
+        if (this.m_options.addBackgroundDatasource !== false) {
+            this.m_backgroundDataSource = new BackgroundDataSource();
+            this.addDataSource(this.m_backgroundDataSource);
+        }
 
         if (this.m_enablePolarDataSource) {
             const styleSetName =
@@ -1029,8 +1039,11 @@ export class MapView extends THREE.EventDispatcher {
             this.updatePolarDataSource();
         }
 
-        if (options.backgroundTilingScheme !== undefined) {
-            this.m_backgroundDataSource.setTilingScheme(options.backgroundTilingScheme);
+        if (
+            this.m_options.backgroundTilingScheme !== undefined &&
+            this.m_backgroundDataSource !== undefined
+        ) {
+            this.m_backgroundDataSource.setTilingScheme(this.m_options.backgroundTilingScheme);
         }
 
         this.initTheme();
@@ -1293,7 +1306,8 @@ export class MapView extends THREE.EventDispatcher {
 
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
-        this.renderer.setClearColor(new THREE.Color(theme.clearColor));
+        this.m_theme.clearAlpha = theme.clearAlpha;
+        this.renderer.setClearColor(new THREE.Color(theme.clearColor), theme.clearAlpha);
         // Images.
         this.m_theme.images = theme.images;
         this.m_theme.imageTextures = theme.imageTextures;
@@ -1512,6 +1526,21 @@ export class MapView extends THREE.EventDispatcher {
      */
     set clearColor(color: number) {
         this.m_renderer.setClearColor(color);
+    }
+
+    /**
+     * The alpha used to clear the view.
+     */
+    get clearAlpha() {
+        const rendererClearAlpha = this.m_renderer.getClearAlpha();
+        return rendererClearAlpha !== undefined ? rendererClearAlpha : 0;
+    }
+
+    /**
+     * The alpha used to clear the view.
+     */
+    set clearAlpha(alpha: number) {
+        this.m_renderer.setClearAlpha(alpha);
     }
 
     /**
