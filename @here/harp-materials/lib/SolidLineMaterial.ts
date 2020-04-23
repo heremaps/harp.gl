@@ -80,6 +80,7 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float extrusionWidth;
 uniform float outlineWidth;
+uniform float offset;
 uniform vec2 drawRange;
 
 #ifdef USE_DISPLACEMENTMAP
@@ -138,6 +139,15 @@ void main() {
     #ifdef USE_DISPLACEMENTMAP
     pos += normalize( normal ) * texture2D( displacementMap, uv ).x;
     #endif
+
+    // Shift the line based on the offset, where the bitangent is the cross product of the average
+    // of the two direction vectors (the previous and next segment directions) and the normal of
+    // the line (facing into the sky). The w component is the angle between the two segments.
+    // Note, we need to take the angle into consideration, so we use trigonometry to calculate how
+    // much we need to extend the offset. Note, orthough this looks complicated we are doing this
+    // in the vertex shader, so it should not cause a performance issue.
+    pos += bitangent.xyz * offset * sqrt(1.0 + pow(abs(tan(bitangent.w / 2.0)), 2.0));
+
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
 
@@ -370,6 +380,11 @@ export interface SolidLineMaterialParameters
      * Size of the gaps between dashed segments.
      */
     gapSize?: number;
+
+    /**
+     * How much to offset in world units.
+     */
+    offset?: number;
 }
 
 /**
@@ -385,6 +400,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     static DEFAULT_DRAW_RANGE_END: number = 1.0;
     static DEFAULT_DASH_SIZE: number = 1.0;
     static DEFAULT_GAP_SIZE: number = 1.0;
+    static DEFAULT_OFFSET: number = 0.0;
 
     /**
      * @hidden
@@ -443,6 +459,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                     ),
                     extrusionWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_WIDTH),
                     outlineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_OUTLINE_WIDTH),
+                    offset: new THREE.Uniform(SolidLineMaterial.DEFAULT_OFFSET),
                     opacity: new THREE.Uniform(SolidLineMaterial.DEFAULT_OPACITY),
                     tileSize: new THREE.Uniform(new THREE.Vector2()),
                     fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
@@ -538,6 +555,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             if (params.fog !== undefined) {
                 this.fog = params.fog;
             }
+            this.offset = params.offset ?? 0;
         }
         // ShaderMaterial overrides requires invalidation cause super c-tor may set this
         // properties before related `defines` and `uniforms` were created.
@@ -565,6 +583,20 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
      */
     get fog(): boolean {
         return this.m_fog && getShaderMaterialDefine(this, "USE_FOG") === true;
+    }
+
+    /**
+     * Sets the offset used to shift the line in world space perpendicular to the direction.
+     */
+    set offset(offset: number) {
+        this.uniforms.offset.value = offset;
+    }
+
+    /**
+     * @return The offset to shift the line in world space perpendicular to the direction.
+     */
+    get offset(): number {
+        return this.uniforms.offset.value as number;
     }
 
     /**

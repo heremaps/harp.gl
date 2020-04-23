@@ -820,6 +820,9 @@ export class TileGeometryCreator {
                                 lineMaterial.gapSize =
                                     getPropertyValue(technique.gapSize, mapView.env) * unitFactor;
                             }
+
+                            lineMaterial.offset =
+                                getPropertyValue(technique.offset, mapView.env) * unitFactor;
                         }
                     );
                 }
