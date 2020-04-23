@@ -1020,7 +1020,10 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
-        if (this.m_options.addBackgroundDatasource === true) {
+        if (
+            this.m_options.addBackgroundDatasource === true ||
+            this.m_options.addBackgroundDatasource === undefined
+        ) {
             this.m_backgroundDataSource = new BackgroundDataSource();
             this.addDataSource(this.m_backgroundDataSource);
         }
