@@ -9,6 +9,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import * as Long from "long";
 import { Vector2 } from "three";
+import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
@@ -409,9 +410,10 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
      * Processes the given data payload using this adapter's [[IGeometryProcessor]].
      *
      * @param data The data payload to process.
-     * @param tileKey The [[TileKey]] of the tile enclosing the data.
+     * @param decodeInfo The [[DecodedInfo]] of the tile to proceess.
      */
-    process(data: ArrayBufferLike, tileKey: TileKey) {
+    process(data: ArrayBufferLike, decodeInfo: DecodeInfo) {
+        const { tileKey } = decodeInfo;
         const payload = new Uint8Array(data);
         const proto = com.mapbox.pb.Tile.decode(payload);
 

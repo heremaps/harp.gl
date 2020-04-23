@@ -23,9 +23,9 @@ import {
 } from "@here/harp-geoutils";
 import { assert } from "chai";
 import { Vector2, Vector3 } from "three";
+import { DecodeInfo } from "../lib/DecodeInfo";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
 import { OmvDecodedTileEmitter } from "../lib/OmvDecodedTileEmitter";
-import { OmvDecoder } from "../lib/OmvDecoder";
 import { world2tile } from "../lib/OmvUtils";
 
 class OmvDecodedTileEmitterTest extends OmvDecodedTileEmitter {
@@ -45,9 +45,8 @@ describe("OmvDecodedTileEmitter", function() {
     } {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
-        const tileSizeOnScreen = 100;
 
-        const decodeInfo = new OmvDecoder.DecodeInfo("test", projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new DecodeInfo("test", projection, tileKey);
 
         const styleSet: StyleSet = [
             {
@@ -93,9 +92,8 @@ describe("OmvDecodedTileEmitter", function() {
     it("Ring data conversion to polygon data: whole tile square shape", function() {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
-        const tileSizeOnScreen = 100;
 
-        const decodeInfo = new OmvDecoder.DecodeInfo("test", projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new DecodeInfo("test", projection, tileKey);
 
         const geoBox = decodeInfo.geoBox;
 
