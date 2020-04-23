@@ -12,9 +12,7 @@ if (!(self as any).THREE) {
     );
 }
 
-import { GeoJsonTileDecoderService } from "@here/harp-geojson-datasource/index-worker";
 import { OmvTileDecoderService, OmvTilerService } from "@here/harp-omv-datasource/index-worker";
 
 OmvTilerService.start();
 OmvTileDecoderService.start();
-GeoJsonTileDecoderService.start();

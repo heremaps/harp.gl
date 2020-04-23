@@ -10,10 +10,14 @@ import {
     FeatureGeometry,
     GeometryCollection
 } from "@here/harp-datasource-protocol";
-import { GeoJsonDataProvider, GeoJsonDataProviderOptions } from "@here/harp-geojson-datasource";
 import { GeoBox, GeoCoordinates } from "@here/harp-geoutils";
 import { MapView } from "@here/harp-mapview";
-import { OmvDataSource, OmvDataSourceParameters } from "@here/harp-omv-datasource";
+import {
+    GeoJsonDataProvider,
+    GeoJsonDataProviderOptions,
+    OmvDataSource,
+    OmvDataSourceParameters
+} from "@here/harp-omv-datasource";
 import { LoggerManager } from "@here/harp-utils";
 import { MapViewFeature } from "./Features";
 

@@ -5,10 +5,14 @@
  */
 
 import { Feature } from "@here/harp-datasource-protocol";
-import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    GeoJsonDataProvider,
+    OmvDataSource
+} from "@here/harp-omv-datasource";
 import { apikey, copyrightInfo } from "../config";
 import * as geojson from "../resources/italy.json";
 

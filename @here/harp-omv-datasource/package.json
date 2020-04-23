@@ -45,7 +45,6 @@
     },
     "devDependencies": {
         "@here/harp-fetch": "^0.14.0",
-        "@here/harp-geojson-datasource": "^0.14.0",
         "@here/harp-test-utils": "^0.14.0",
         "@types/chai": "^4.1.2",
         "@types/earcut": "^2.1.0",

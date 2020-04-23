@@ -8,10 +8,9 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
-import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
 import { mergeWithOptions } from "@here/harp-utils";

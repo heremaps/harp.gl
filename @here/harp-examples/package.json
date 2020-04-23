@@ -29,7 +29,6 @@
         "@here/harp-datasource-protocol": "^0.14.0",
         "@here/harp-debug-datasource": "^0.14.0",
         "@here/harp-features-datasource": "^0.14.0",
-        "@here/harp-geojson-datasource": "^0.14.0",
         "@here/harp-geoutils": "^0.14.0",
         "@here/harp-lines": "^0.14.0",
         "@here/harp-lrucache": "^0.14.0",
