@@ -48,7 +48,7 @@ export class TransferManager {
         fetchFunction: typeof fetch,
         retryCount: number,
         maxRetries: number,
-        url: string,
+        url: RequestInfo,
         init?: RequestInit
     ): Promise<Response> {
         try {
@@ -74,7 +74,7 @@ export class TransferManager {
     }
     private activeDownloadCount = 0;
     private downloadQueue = new Array<DeferredPromise<Response>>();
-    private activeDownloads = new Map<string, Promise<any>>();
+    private activeDownloads = new Map<RequestInfo, Promise<any>>();
     /**
      * Constructs a new [[TransferManager]].
      *
@@ -92,7 +92,7 @@ export class TransferManager {
      * @param url The URL to download
      * @param init Optional extra parameters for the download.
      */
-    downloadJson<T>(url: string, init?: RequestInit): Promise<T> {
+    downloadJson<T>(url: RequestInfo, init?: RequestInit): Promise<T> {
         return this.downloadAs<T>(response => response.json(), url, init);
     }
     /**
@@ -105,7 +105,7 @@ export class TransferManager {
      * @param url The URL to download
      * @param init Optional extra parameters for the download
      */
-    downloadArrayBuffer(url: string, init?: RequestInit): Promise<ArrayBuffer> {
+    downloadArrayBuffer(url: RequestInfo, init?: RequestInit): Promise<ArrayBuffer> {
         return this.download(url, init).then(response => response.arrayBuffer());
     }
     /**
@@ -116,7 +116,7 @@ export class TransferManager {
      * @param url The URL to download.
      * @param init Optional extra parameters for the download.
      */
-    download(url: string, init?: RequestInit): Promise<Response> {
+    download(url: RequestInfo, init?: RequestInit): Promise<Response> {
         if (this.activeDownloadCount >= TransferManager.maxParallelDownloads) {
             const deferred = new DeferredPromise<Response>(() => this.doDownload(url, init));
             this.downloadQueue.push(deferred);
@@ -124,7 +124,7 @@ export class TransferManager {
         }
         return this.doDownload(url, init);
     }
-    private async doDownload(url: string, init?: RequestInit): Promise<Response> {
+    private async doDownload(url: RequestInfo, init?: RequestInit): Promise<Response> {
         try {
             ++this.activeDownloadCount;
             const response = await TransferManager.fetchRepeatedly(
@@ -155,7 +155,7 @@ export class TransferManager {
     }
     private downloadAs<T>(
         converter: (response: Response) => Promise<T>,
-        url: string,
+        url: RequestInfo,
         init?: RequestInit
     ): Promise<T> {
         const cacheKey = url;
