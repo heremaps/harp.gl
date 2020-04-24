@@ -202,9 +202,9 @@ export class GeometryCommands {
                     const xx = geometry[cmdIndex++];
                     const yy = geometry[cmdIndex++];
 
-                    // tslint:disable:no-bitwise
-                    currX += (xx >> 1) ^ -(xx & 1);
-                    currY += (yy >> 1) ^ -(yy & 1);
+                    currX += xx % 2 ? (xx + 1) / -2 : xx / 2;
+                    currY += yy % 2 ? (yy + 1) / -2 : yy / 2;
+
                     if (visitor.type === "Polygon") {
                         xCoords.push(currX);
                         yCoords.push(currY);
