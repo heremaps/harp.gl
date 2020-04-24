@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TransferManager } from "@here/harp-transfer-manager";
+import { ITransferManager, TransferManager } from "@here/harp-transfer-manager";
 import {
     AreaCopyrightInfo,
     CopyrightCoverageProvider,
@@ -31,7 +31,8 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
     constructor(
         private m_fetchURL: string,
         private m_baseScheme: string,
-        private m_requestHeaders?: RequestHeaders
+        private m_requestHeaders?: RequestHeaders,
+        private m_transferManager: ITransferManager = TransferManager.instance()
     ) {
         super();
     }
@@ -53,7 +54,7 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
             return this.m_cachedCopyrightResponse;
         }
 
-        this.m_cachedCopyrightResponse = new TransferManager()
+        this.m_cachedCopyrightResponse = this.m_transferManager
             .downloadJson<CopyrightCoverageResponse>(this.m_fetchURL, {
                 headers: this.m_requestHeaders
             })
