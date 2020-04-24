@@ -7,7 +7,7 @@
 import "@here/harp-fetch";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
-import { TransferManager } from "@here/harp-transfer-manager";
+import { ITransferManager, TransferManager } from "@here/harp-transfer-manager";
 import { LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("OmvRestClient");
@@ -249,7 +249,7 @@ export interface OmvRestClientParameters {
     /**
      * Transfer Manager to use; creates an own instance if none passed.
      */
-    downloadManager?: TransferManager;
+    downloadManager?: ITransferManager;
 
     /**
      * Function to retrieve the Bearer Token
@@ -269,7 +269,7 @@ export interface OmvRestClientParameters {
  * REST client supporting getting protobuf OMV Tile from REST-based servers.
  */
 export class OmvRestClient implements DataProvider {
-    private readonly downloadManager: TransferManager;
+    private readonly downloadManager: ITransferManager;
     private readonly urlParams: { [key: string]: string };
 
     constructor(readonly params: OmvRestClientParameters) {
