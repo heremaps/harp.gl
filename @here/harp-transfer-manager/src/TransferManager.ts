@@ -114,26 +114,26 @@ export class TransferManager implements ITransferManager {
      */
     constructor(readonly fetchFunction = fetch, readonly maxRetries: number = 5) {}
     /**
-     * Downloads a JSON object. Merges downloads if requested multiple times.
+     * Downloads a JSON object. Merges downloads of string URLs if requested multiple times.
      *
      * Note: This method merges multiple downloads of the same string URL to
      * only one request. The init parameter is ignored if the download is merged.
      * Call [[download]] instead to download the resource without merging.
      *
-     * @param url The URL to download
+     * @param url The URL or RequestInfo to download
      * @param init Optional extra parameters for the download.
      */
     downloadJson<T>(url: RequestInfo, init?: RequestInit): Promise<T> {
         return this.downloadAs<T>(response => response.json(), url, init);
     }
     /**
-     * Downloads a binary object. Merges downloads if requested multiple times.
+     * Downloads a binary object. Merges downloads of string URLS if requested multiple times.
      *
      * Note: This method merges multiple downloads of the same string URL to
      * only one request. The init parameter is ignored if the download is merged.
      * Call [[download]] instead to download the resource without merging.
      *
-     * @param url The URL to download
+     * @param url The URL or RequestInfo to download
      * @param init Optional extra parameters for the download
      */
     downloadArrayBuffer(url: RequestInfo, init?: RequestInit): Promise<ArrayBuffer> {
@@ -144,7 +144,7 @@ export class TransferManager implements ITransferManager {
      *
      * Does not merge multiple requests to the same URL.
      *
-     * @param url The URL to download.
+     * @param url The URL or RequestInfo to download.
      * @param init Optional extra parameters for the download.
      */
     download(url: RequestInfo, init?: RequestInit): Promise<Response> {
