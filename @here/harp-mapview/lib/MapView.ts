@@ -122,7 +122,7 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
  * mesh.pickable = false;
  * mapView.worldAnchors.add(mesh);
  * ```
- *
+ * @internal
  */
 export type WorldAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
     /**
@@ -1713,8 +1713,6 @@ export class MapView extends THREE.EventDispatcher {
      * All (first level) children of this node will be positioned in world space according to the
      * [[MapAnchor.geoPosition]].
      * Deeper level children can be used to position custom objects relative to the anchor node.
-     *
-     * @see worldAnchors
      */
     get mapAnchors(): THREE.Object3D {
         return this.m_mapAnchors;
@@ -1728,6 +1726,7 @@ export class MapView extends THREE.EventDispatcher {
      * moving or just positioned in world space, i.e. light source, comet, spaceship, etc.
      *
      * @see mapAnchors.
+     * @internal
      */
     get worldAnchors(): THREE.Object3D {
         return this.m_worldAnchors;

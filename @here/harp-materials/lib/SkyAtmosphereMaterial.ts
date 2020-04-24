@@ -102,11 +102,10 @@ export const SkyAtmosphereShader: THREE.Shader = {
         float fOuterRadius = u_atmosphereEnv.y;
         float fCameraHeight = u_atmosphereEnv.z;
 
-        // All that should be const or defines:
+        // All that may be const or define(s) at further optimization:
         float fScale = 1.0 / (fOuterRadius - fInnerRadius);
         float fScaleOverScaleDepth = (fScale / RayleighScaleDepth);
         float fCameraHeight2 = fCameraHeight * fCameraHeight;
-        float fInnerRadius2 = fInnerRadius * fInnerRadius;
         float fOuterRadius2 = fOuterRadius * fOuterRadius;
 
         // Get the ray from the camera to the vertex and its length (which is the far point of the ray passing through the atmosphere)
@@ -171,15 +170,15 @@ export const SkyAtmosphereShader: THREE.Shader = {
 
     void main(void)
     {
-        float lightMode = u_atmosphereEnv.w;
-        bool dynamicLight = lightMode != 0.0;
+        float fLightMode = u_atmosphereEnv.w;
+        bool bDynamicLight = fLightMode != 0.0;
 
-        vec3 vLightDir = conditionalBranchFree(dynamicLight,
+        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
             u_lightDirectionWorld,
             u_eyePositionWorld);
         vLightDir = normalize(vLightDir);
 
-        AtmosphereColor atmColor = computeSkyAtmosphere(position.xyz, vLightDir, dynamicLight);
+        AtmosphereColor atmColor = computeSkyAtmosphere(position.xyz, vLightDir, bDynamicLight);
         v_mieColor = atmColor.mie;
         v_rayleighColor = atmColor.rayleigh;
         v_vertToCamera = u_eyePositionWorld - position.xyz;
@@ -218,10 +217,10 @@ export const SkyAtmosphereShader: THREE.Shader = {
         float fInnerRadius = u_atmosphereEnv.x;
         float fOuterRadius = u_atmosphereEnv.y;
         float fCameraHeight = u_atmosphereEnv.z;
-        float lightMode = u_atmosphereEnv.w;
-        bool dynamicLight = lightMode != 0.0;
+        float fLightMode = u_atmosphereEnv.w;
+        bool bDynamicLight = fLightMode != 0.0;
 
-        vec3 vLightDir = conditionalBranchFree(dynamicLight,
+        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
             u_lightDirectionWorld,
             u_eyePositionWorld);
         vLightDir = normalize(vLightDir);
@@ -230,30 +229,33 @@ export const SkyAtmosphereShader: THREE.Shader = {
         // For better precision normalization may be added on fragment (for mobile devices)
         // while in vertex shader may be left un-normalized
         // dot(vLightDir, normalize(v_vertToCamera)) / length(v_vertToCamera);
-        float cosAngle = dot(vLightDir, v_vertToCamera) / length(v_vertToCamera);
-        float rayleighPhase = 0.75 * (1.0 + cosAngle * cosAngle);
-        float miePhase = 1.5 * ((1.0 - g2) / (2.0 + g2)) * (1.0 + cosAngle * cosAngle) / pow(1.0 + g2 - 2.0 * g * cosAngle, 1.5);
+        float fCosAngle = dot(vLightDir, v_vertToCamera) / length(v_vertToCamera);
+        float fRayleighPhase = 0.75 * (1.0 + fCosAngle * fCosAngle);
+        float fMiePhase = 1.5 * ((1.0 - g2) / (2.0 + g2)) * (1.0 + fCosAngle * fCosAngle) / pow(1.0 + g2 - 2.0 * g * fCosAngle, 1.5);
 
-        vec3 rgb = rayleighPhase * v_rayleighColor + miePhase * v_mieColor;
+        vec3 cRgb = fRayleighPhase * v_rayleighColor + fMiePhase * v_mieColor;
 
         // Sky produces very harsh lighting effect so exposure correction is always enabled.
     #if !defined(HDR_FRAME_BUFFER) && defined(CORRECT_EXPOSURE)
-        rgb = correctExposure(rgb, 2.0);
+        // Exposure factor may be exposed to uniform variable.
+        cRgb = correctExposure(cRgb, 2.0);
     #endif
 
     #ifdef CORRECT_COLOR
-        rgb = correctColor(rgb, u_hsvCorrection);
+        cRgb = correctColor(cRgb, u_hsvCorrection);
     #endif
 
         // Alter alpha based on how close the viewer is to the ground (1.0 = on ground, 0.0 = at edge of atmosphere)
-        float atmosphereAlpha = clamp((fOuterRadius - fCameraHeight) /
+        float fAtmosphereAlpha = clamp((fOuterRadius - fCameraHeight) /
             (fOuterRadius - fInnerRadius), 0.0, 1.0);
 
         // Alter alpha based on time of day (0.0 = night , 1.0 = day)
-        float nightAlpha = (lightMode != 0.0) ? clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0) : 1.0;
-        atmosphereAlpha *= pow(nightAlpha, 0.5);
+        float fNightAlpha = conditionalBranchFree(bDynamicLight,
+            clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0),
+            1.0);
+        fAtmosphereAlpha *= pow(fNightAlpha, 0.5);
 
-        gl_FragColor = vec4(rgb, mix(rgb.b, 1.0, atmosphereAlpha));
+        gl_FragColor = vec4(cRgb, mix(cRgb.b, 1.0, fAtmosphereAlpha));
     }
     `
 };

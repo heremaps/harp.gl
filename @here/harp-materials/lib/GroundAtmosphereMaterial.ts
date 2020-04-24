@@ -108,7 +108,7 @@ export const GroundAtmosphereShader: THREE.Shader = {
         float fOuterRadius = u_atmosphereEnv.y;
         float fCameraHeight = u_atmosphereEnv.z;
 
-        // All that should be const or defines:
+        // All that may be moved to const or define(s) at further optimizations:
         float fScale = 1.0 / (fOuterRadius - fInnerRadius);
         float fScaleOverScaleDepth = fScale / RayleighScaleDepth;
         float fCameraHeight2 = fCameraHeight * fCameraHeight;
@@ -197,15 +197,15 @@ export const GroundAtmosphereShader: THREE.Shader = {
 
     void main(void)
     {
-        float lightMode = u_atmosphereEnv.w;
-        bool dynamicLight = lightMode != 0.0;
+        float fLightMode = u_atmosphereEnv.w;
+        bool bDynamicLight = fLightMode != 0.0;
 
-        vec3 vLightDir = conditionalBranchFree(dynamicLight,
+        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
             u_lightDirectionWorld,
             u_eyePositionWorld);
         vLightDir = normalize(vLightDir);
 
-        AtmosphereColor atmColor = computeGroundAtmosphere(position.xyz, vLightDir, dynamicLight);
+        AtmosphereColor atmColor = computeGroundAtmosphere(position.xyz, vLightDir, bDynamicLight);
         v_mieColor = atmColor.mie;
         v_rayleighColor = atmColor.rayleigh;
         v_vertToCamera = u_eyePositionWorld - position.xyz;
@@ -246,44 +246,44 @@ export const GroundAtmosphereShader: THREE.Shader = {
 
     void main(void)
     {
-        float innerRadius = u_atmosphereEnv.x;
-        float outerRadius = u_atmosphereEnv.y;
-        float cameraHeight = u_atmosphereEnv.z;
-        float lightMode = u_atmosphereEnv.w;
-        bool dynamicLight = lightMode != 0.0;
+        float fInnerRadius = u_atmosphereEnv.x;
+        float fOuterRadius = u_atmosphereEnv.y;
+        float fCameraHeight = u_atmosphereEnv.z;
+        float fLightMode = u_atmosphereEnv.w;
+        bool bDynamicLight = fLightMode != 0.0;
 
-        vec3 lightDirection = conditionalBranchFree(lightMode != 0.0,
+        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
             u_lightDirectionWorld,
             u_eyePositionWorld);
-        lightDirection = normalize(lightDirection);
+        vLightDir = normalize(vLightDir);
 
         // GPU gems mix of ground solution, with custom alpha settings
-        vec3 rgb = v_mieColor + 0.25 * v_rayleighColor;
+        vec3 cRgb = v_mieColor + 0.25 * v_rayleighColor;
 
         // Not needed for HDR frame buffer
     #if !defined(HDR_FRAME_BUFFER) && defined(CORRECT_EXPOSURE)
         // Interesting results with exposure factor: 2.0, 3.5, 4.0
-        rgb = correctExposure(rgb, 3.0);
+        cRgb = correctExposure(cRgb, 3.0);
     #endif
 
     #ifdef CORRECT_COLOR
-        rgb = correctColor(rgb, u_hsvCorrection);
+        cRgb = correctColor(cRgb, u_hsvCorrection);
     #endif
 
         // Base atmosphere opacity
-        float atmosphereAlpha = 1.0;
+        float fAtmosphereAlpha = 1.0;
 
         // Factor based on the distance of camera atmosphere and ground, results are:
         // 0.0 = camera on the ground surface,
         // 1.0 = at the outer edge of the atmosphere.
-        float depthFactor = clamp((cameraHeight - innerRadius) /
-            (outerRadius - innerRadius), 0.0, 1.0);
+        float fDepthFactor = clamp((fCameraHeight - fInnerRadius) /
+            (fOuterRadius - fInnerRadius), 0.0, 1.0);
     #ifdef FADE_DEPTH
         // Fade alpha based on the distance of camera between atmosphere layers
         #ifdef FADE_DEPTH_LINEAR
-            atmosphereAlpha *= depthFactor;
+            fAtmosphereAlpha *= fDepthFactor;
         #else
-            atmosphereAlpha *= pow(depthFactor, 1.5);
+            fAtmosphereAlpha *= pow(fDepthFactor, 1.5);
         #endif
     #endif
 
@@ -293,21 +293,21 @@ export const GroundAtmosphereShader: THREE.Shader = {
         // 1.0 = day.
     #ifdef NIGHT_GLOBAL
         // Global night fade based on camera and light orientation
-        float nightFactor = conditionalBranchFree(dynamicLight,
-            clamp(dot(normalize(u_eyePositionWorld), lightDirection), 0.0, 1.0),
+        float fNightFactor = conditionalBranchFree(bDynamicLight,
+            clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0),
              1.0);
-        nightFactor = pow(nightFactor, 0.5);
+        fNightFactor = pow(fNightFactor, 0.5);
     #else // NIGHT_LOCAL
-        float nightFactor = conditionalBranchFree(dynamicLight,
-            clamp(dot(v_vertToOrigin, lightDirection) / length(v_vertToOrigin), 0.0, 1.0),
+        float fNightFactor = conditionalBranchFree(bDynamicLight,
+            clamp(dot(v_vertToOrigin, vLightDir) / length(v_vertToOrigin), 0.0, 1.0),
             1.0);
-        nightFactor = pow(nightFactor, 0.8);
+        fNightFactor = pow(fNightFactor, 0.8);
     #endif
 #endif
 
     #ifdef FADE_NIGHT
         // Adjust alpha for night side of the globe
-        atmosphereAlpha *= nightFactor;
+        fAtmosphereAlpha *= fNightFactor;
     #endif
 
     #ifdef DARKEN_NIGHT
@@ -315,24 +315,24 @@ export const GroundAtmosphereShader: THREE.Shader = {
         // NOTE: Darkening should be rather applied in HSV space, without loss on saturation,
         // but it is much more GPU consuming.
         const float minBrightness = 0.5;
-        float darkenFactor = clamp(nightFactor, minBrightness, 1.0);
-        rgb *= darkenFactor;
+        float fDarkenFactor = clamp(fNightFactor, minBrightness, 1.0);
+        cRgb *= fDarkenFactor;
     #endif
 
     #ifdef EXPOSURE_DEPTH
         // Control exposure depending from ground distance
-        float exposureBoost = 3.0 - depthFactor;
-        rgb = correctExposure(rgb, exposureBoost);
+        float exposureBoost = 3.0 - fDepthFactor;
+        cRgb = correctExposure(cRgb, exposureBoost);
     #endif
 
         // Experimental fading out of focus point - similar to fresnel effect in top view.
         // This fade is handy to better expose cartographic/map features in screen center.
-        float focusFactor = 1.0 - clamp(dot(normalize(v_vertToCamera), v_vertToOrigin), 0.0, 1.0) + 0.1;
-        focusFactor = pow(focusFactor, 2.5);
-        atmosphereAlpha *= focusFactor;
+        float fFocusFactor = 1.0 - clamp(dot(normalize(v_vertToCamera), v_vertToOrigin), 0.0, 1.0) + 0.1;
+        fFocusFactor = pow(fFocusFactor, 2.5);
+        fAtmosphereAlpha *= fFocusFactor;
 
         // Integrate all features
-        gl_FragColor = vec4(rgb, atmosphereAlpha);
+        gl_FragColor = vec4(cRgb, fAtmosphereAlpha);
     }
     `
 };
