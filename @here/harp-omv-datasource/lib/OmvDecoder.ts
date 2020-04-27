@@ -7,12 +7,10 @@
 import {
     DecodedTile,
     Definitions,
-    ExtendedTileInfo,
     GeometryKind,
     IndexedTechnique,
     OptionsMap,
-    StyleSet,
-    TileInfo
+    StyleSet
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, TileKey } from "@here/harp-geoutils";
@@ -43,7 +41,6 @@ import {
     OmvDecoderOptions,
     OmvFeatureFilterDescription
 } from "./OmvDecoderDefs";
-import { OmvTileInfoEmitter } from "./OmvTileInfoEmitter";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
 import { TiledGeoJsonDataAdapter } from "./TiledGeoJsonAdapter";
@@ -142,10 +139,9 @@ export interface OmvDataAdapter {
 }
 
 export class OmvDecoder implements IGeometryProcessor {
-    // The emitters are both optional now.
+    // The emitter is optional now.
     // TODO: Add option to control emitter generation.
     private m_decodedTileEmitter: OmvDecodedTileEmitter | undefined;
-    private m_infoTileEmitter: OmvTileInfoEmitter | undefined;
     private readonly m_dataAdapters: OmvDataAdapter[] = [];
 
     constructor(
@@ -155,8 +151,6 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_dataFilter?: OmvFeatureFilter,
         private readonly m_featureModifier?: OmvFeatureModifier,
         private readonly m_gatherFeatureAttributes = false,
-        private readonly m_createTileInfo = false,
-        private readonly m_gatherRoadSegments = false,
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
         private readonly m_enableElevationOverlay = false,
@@ -216,63 +210,9 @@ export class OmvDecoder implements IGeometryProcessor {
             this.m_enableElevationOverlay,
             this.m_languages
         );
-        if (this.m_createTileInfo) {
-            const storeExtendedTags = true;
-            this.m_infoTileEmitter = new OmvTileInfoEmitter(
-                decodeInfo,
-                this.m_styleSetEvaluator,
-                storeExtendedTags,
-                this.m_gatherRoadSegments
-            );
-        }
 
         dataAdapter.process(data, decodeInfo);
-        const decodedTile = this.m_decodedTileEmitter.getDecodedTile();
-
-        if (this.m_createTileInfo) {
-            decodedTile.tileInfo = this.m_infoTileEmitter!.getTileInfo();
-        }
-
-        return decodedTile;
-    }
-
-    getTileInfo(tileKey: TileKey, data: ArrayBufferLike | {}): ExtendedTileInfo {
-        let dataAdapter;
-        for (const adapter of this.m_dataAdapters.values()) {
-            if (adapter.canProcess(data)) {
-                dataAdapter = adapter;
-                break;
-            }
-        }
-        if (dataAdapter === undefined) {
-            return new ExtendedTileInfo(tileKey, false);
-        }
-
-        this.m_styleSetEvaluator.resetTechniques();
-
-        const decodeInfo = new DecodeInfo(
-            dataAdapter.id,
-            this.m_projection,
-            tileKey,
-            this.m_storageLevelOffset
-        );
-
-        const storeExtendedTags = true;
-        this.m_infoTileEmitter = new OmvTileInfoEmitter(
-            decodeInfo,
-            this.m_styleSetEvaluator,
-            storeExtendedTags,
-            this.m_gatherRoadSegments
-        );
-
-        for (const adapter of this.m_dataAdapters.values()) {
-            if (adapter.canProcess(data)) {
-                adapter.process(data, decodeInfo);
-                break;
-            }
-        }
-
-        return this.m_infoTileEmitter.getTileInfo();
+        return this.m_decodedTileEmitter.getDecodedTile();
     }
 
     processPointFeature(
@@ -314,16 +254,6 @@ export class OmvDecoder implements IGeometryProcessor {
 
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPointFeature(
-                layer,
-                extents,
-                geometry,
-                context,
-                techniques,
-                featureId
-            );
-        }
-        if (this.m_infoTileEmitter) {
-            this.m_infoTileEmitter.processPointFeature(
                 layer,
                 extents,
                 geometry,
@@ -381,16 +311,6 @@ export class OmvDecoder implements IGeometryProcessor {
                 featureId
             );
         }
-        if (this.m_infoTileEmitter) {
-            this.m_infoTileEmitter.processLineFeature(
-                layer,
-                extents,
-                geometry,
-                context,
-                techniques,
-                featureId
-            );
-        }
     }
 
     processPolygonFeature(
@@ -440,16 +360,6 @@ export class OmvDecoder implements IGeometryProcessor {
                 featureId
             );
         }
-        if (this.m_infoTileEmitter) {
-            this.m_infoTileEmitter.processPolygonFeature(
-                layer,
-                extents,
-                geometry,
-                context,
-                techniques,
-                featureId
-            );
-        }
     }
 
     private getZoomLevel(storageLevel: number) {
@@ -476,8 +386,6 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_featureFilter?: OmvFeatureFilter;
     private m_featureModifier?: OmvFeatureModifier;
     private m_gatherFeatureAttributes: boolean = false;
-    private m_createTileInfo: boolean = false;
-    private m_gatherRoadSegments: boolean = false;
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
 
@@ -502,8 +410,6 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_featureFilter,
             this.m_featureModifier,
             this.m_gatherFeatureAttributes,
-            this.m_createTileInfo,
-            this.m_gatherRoadSegments,
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
@@ -515,41 +421,6 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         decodedTile.decodeTime = PerformanceTimer.now() - startTime;
 
         return Promise.resolve(decodedTile);
-    }
-
-    /** @override */
-    getTileInfo(
-        data: ArrayBufferLike,
-        tileKey: TileKey,
-        projection: Projection
-    ): Promise<TileInfo | undefined> {
-        const startTime = PerformanceTimer.now();
-
-        const styleSetEvaluator = this.m_styleSetEvaluator;
-        if (styleSetEvaluator === undefined) {
-            return Promise.reject(new Error("no theme loaded"));
-        }
-
-        const decoder = new OmvDecoder(
-            projection,
-            styleSetEvaluator,
-            this.m_showMissingTechniques,
-            this.m_featureFilter,
-            this.m_featureModifier,
-            this.m_gatherFeatureAttributes,
-            this.m_createTileInfo,
-            this.m_gatherRoadSegments,
-            this.m_skipShortLabels,
-            this.m_storageLevelOffset,
-            this.m_enableElevationOverlay,
-            this.languages
-        );
-
-        const tileInfo = decoder.getTileInfo(tileKey, data);
-
-        tileInfo.setupTime = PerformanceTimer.now() - startTime;
-
-        return Promise.resolve(tileInfo);
     }
 
     /** @override */
@@ -587,12 +458,6 @@ export class OmvTileDecoder extends ThemedTileDecoder {
 
             if (omvOptions.gatherFeatureAttributes !== undefined) {
                 this.m_gatherFeatureAttributes = omvOptions.gatherFeatureAttributes === true;
-            }
-            if (omvOptions.createTileInfo !== undefined) {
-                this.m_createTileInfo = omvOptions.createTileInfo === true;
-            }
-            if (omvOptions.gatherRoadSegments !== undefined) {
-                this.m_gatherRoadSegments = omvOptions.gatherRoadSegments === true;
             }
             if (omvOptions.skipShortLabels !== undefined) {
                 this.m_skipShortLabels = omvOptions.skipShortLabels;

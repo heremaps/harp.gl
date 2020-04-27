@@ -13,12 +13,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import {
-    DecodedTile,
-    ExtendedTileInfo,
-    Geometry,
-    GeometryType
-} from "@here/harp-datasource-protocol";
+import { DecodedTile, Geometry, GeometryType } from "@here/harp-datasource-protocol";
 import {
     GeoCoordinates,
     mercatorProjection,
@@ -198,8 +193,7 @@ describe("MapView Picking", async function() {
             dataProvider: geoJsonDataProvider,
             name: "geojson",
             styleSetName: "geojson",
-            gatherFeatureAttributes: true,
-            createTileInfo: true
+            gatherFeatureAttributes: true
         });
 
         await mapView.addDataSource(geoJsonDataSource);
@@ -221,9 +215,6 @@ describe("MapView Picking", async function() {
             assert.isDefined(decodeTile.textGeometries);
             assert.isDefined(decodeTile.geometries);
             assert.equal(decodeTile.geometries.length, 2);
-
-            const tileInfo = decodeTile.tileInfo as ExtendedTileInfo;
-            assert.isDefined(tileInfo);
         });
 
         it("Decoded tile contains text pick info", async () => {
