@@ -9,12 +9,12 @@ import {
     BufferAttribute,
     composeTechniqueTextureName,
     DecodedTile,
-    ExtendedTileInfo,
     ExtrudedPolygonTechnique,
     FillTechnique,
     Geometry,
     GeometryType,
     getFeatureId,
+    getFeatureText,
     Group,
     IndexedTechnique,
     InterleavedBufferAttribute,
@@ -293,11 +293,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             for (const pos of geometry) {
                 if (shouldCreateTextGeometries) {
                     const textTechnique = technique as TextTechnique;
-                    const text = ExtendedTileInfo.getFeatureText(
-                        context,
-                        textTechnique,
-                        this.m_languages
-                    );
+                    const text = getFeatureText(context, textTechnique, this.m_languages);
 
                     if (text !== undefined && text.length > 0) {
                         texts.push(meshBuffers.addText(text));
@@ -574,11 +570,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 isLineMarkerTechnique(technique)
             ) {
                 const textTechnique = technique as TextTechnique;
-                const text = ExtendedTileInfo.getFeatureText(
-                    context,
-                    textTechnique,
-                    this.m_languages
-                );
+                const text = getFeatureText(context, textTechnique, this.m_languages);
 
                 if (text === undefined || text.length === 0) {
                     continue;

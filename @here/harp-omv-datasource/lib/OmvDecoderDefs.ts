@@ -149,7 +149,19 @@ export interface OmvDecoderOptions {
      * Gather feature attributes from [[OmvData]]. Defaults to false.
      */
     gatherFeatureAttributes?: boolean;
+
+    /**
+     * @deprecated Tile info is not decoded anymore. The same information can be generated
+     * implementing a [[IGeometryProcessor]] and using [[OmvProtobufDataAdapter]] to decode OMV
+     * data.
+     */
     createTileInfo?: boolean;
+
+    /**
+     * @deprecated Tile info is not decoded anymore. The same information can be generated
+     * implementing a [[IGeometryProcessor]] and using [[OmvProtobufDataAdapter]] to decode OMV
+     * data.
+     */
     gatherRoadSegments?: boolean;
 
     /**

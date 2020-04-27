@@ -13,8 +13,6 @@ import { apikey, copyrightInfo } from "../config";
 /**
  * This example showcases how picking works.
  *
- * To enable line picking set `enableRoadPicking: true` in [[MapViewOptions]] and set
- * `createTileInfo: true` in [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
  * To enable polygon picking set `gatherFeatureAttributes: true` in
  * [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
  * To enable text element picking set `gatherFeatureAttributes: true` in
@@ -231,7 +229,6 @@ export namespace PickingExample {
                 name: "apikey"
             },
             gatherFeatureAttributes: true,
-            createTileInfo: true,
             copyrightInfo
         });
 

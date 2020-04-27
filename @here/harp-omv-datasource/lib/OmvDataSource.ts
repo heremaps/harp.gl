@@ -58,9 +58,9 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
     showMissingTechniques?: boolean;
 
     /**
-     * If set to `true`, an [[ExtendedTileInfo]] is created for every tile in addition to the
-     * [[DecodedTile]]. This is useful if the features should be passed on for processing without
-     * geometry being automatically created from them. One application is picking.
+     * @deprecated Tile info is not decoded anymore. The same information can be generated
+     * implementing a [[IGeometryProcessor]] and using [[OmvProtobufDataAdapter]] to decode OMV
+     * data.
      */
     createTileInfo?: boolean;
 
@@ -92,7 +92,9 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
     gatherFeatureAttributes?: boolean;
 
     /**
-     * Gather road segments data from [[OmvData]]. Defaults to `false`.
+     * @deprecated Tile info is not decoded anymore. The same information can be generated
+     * implementing a [[IGeometryProcessor]] and using [[OmvProtobufDataAdapter]] to decode OMV
+     * data.
      */
     gatherRoadSegments?: boolean;
 
@@ -211,8 +213,6 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             showMissingTechniques: this.m_params.showMissingTechniques === true,
             filterDescription: this.m_params.filterDescr,
             gatherFeatureAttributes: this.m_params.gatherFeatureAttributes === true,
-            createTileInfo: this.m_params.createTileInfo === true,
-            gatherRoadSegments: this.m_params.gatherRoadSegments === true,
             featureModifierId: this.m_params.featureModifierId,
             skipShortLabels: this.m_params.skipShortLabels,
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
