@@ -93,7 +93,7 @@ if (isProduction) {
  *
  * Example:
  * ```typescript
- * const mesh: MapObject<THREE.Mesh> = new THREE.Mesh(geometry, material);
+ * const mesh: MapAnchor<THREE.Mesh> = new THREE.Mesh(geometry, material);
  * mesh.geoPosition = new GeoCoordinates(latitude, longitude, altitude);
  * mapView.mapAnchors.add(mesh);
  * ```
@@ -101,9 +101,43 @@ if (isProduction) {
  */
 export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
     /**
-     * The position of this [[MapObject]] in [[GeoCoordinates]].
+     * The position of this [[MapAnchor]] in [[GeoCoordinates]].
      */
     geoPosition?: GeoCoordinates;
+    /**
+     * Flag defining if the object may be picked.
+     *
+     * @note By default all objects are pickable even if this flag is undefined.
+     */
+    pickable?: boolean;
+};
+
+/**
+ * An interface describing [[THREE.Object3D]]s anchored on given world coordinates.
+ *
+ * Example:
+ * ```typescript
+ * const mesh: WorldAnchor<THREE.Mesh> = new THREE.Mesh(geometry, material);
+ * mesh.worldPosition = new Vector3(x, y, z);
+ * mesh.pickable = false;
+ * mapView.worldAnchors.add(mesh);
+ * ```
+ * @internal
+ */
+export type WorldAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
+    /**
+     * The position of this [[WorldAnchor]] in world coordinates (and units).
+     *
+     * Word coordinates anchors may be used for objects that has not exact relation to the
+     * place on the Earth globe or map. This may include light sources, special cameras, effects.
+     */
+    worldPosition?: THREE.Vector3;
+    /**
+     * Flag defining if the object may be picked.
+     *
+     * @note By default all objects are pickable even if this flag is undefined.
+     */
+    pickable?: boolean;
 };
 
 export enum MapViewEventNames {
@@ -774,6 +808,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
     private readonly m_mapTilesRoot = new THREE.Object3D();
     private readonly m_mapAnchors = new THREE.Object3D();
+    private readonly m_worldAnchors = new THREE.Object3D();
 
     private m_animationCount: number = 0;
     private m_animationFrameHandle: number | undefined;
@@ -837,6 +872,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_env: MapEnv = new MapEnv({});
 
     private m_enableMixedLod: boolean | undefined;
+
     /**
      * Constructs a new `MapView` with the given options or canvas element.
      *
@@ -1680,6 +1716,20 @@ export class MapView extends THREE.EventDispatcher {
      */
     get mapAnchors(): THREE.Object3D {
         return this.m_mapAnchors;
+    }
+
+    /**
+     * The root node for user's defined objects that will be positioned by world coordinates.
+     *
+     * This objects are transformed according to camera setup, but are not _attached_ to map
+     * geo position. Such anchors may be used to add custom rendering geometry of effects that are
+     * moving or just positioned in world space, i.e. light source, comet, spaceship, etc.
+     *
+     * @see mapAnchors.
+     * @internal
+     */
+    get worldAnchors(): THREE.Object3D {
+        return this.m_worldAnchors;
     }
 
     /**
@@ -3122,11 +3172,17 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
-            if (childObject.geoPosition === undefined) {
-                return;
+            if (childObject.geoPosition !== undefined) {
+                this.projection.projectPoint(childObject.geoPosition, childObject.position);
+                childObject.position.sub(this.camera.position);
             }
-            this.projection.projectPoint(childObject.geoPosition, childObject.position);
-            childObject.position.sub(this.camera.position);
+        });
+        this.m_worldAnchors.children.forEach((childObject: WorldAnchor) => {
+            if (childObject.worldPosition !== undefined) {
+                const wp = childObject.worldPosition;
+                childObject.position.set(wp.x, wp.y, wp.z);
+                childObject.position.sub(this.camera.position);
+            }
         });
 
         this.m_animatedExtrusionHandler.zoom = this.m_zoomLevel;
@@ -3733,6 +3789,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_scene.add(this.m_mapTilesRoot);
         this.m_scene.add(this.m_mapAnchors);
+        this.m_scene.add(this.m_worldAnchors);
 
         this.shadowsEnabled = this.m_options.enableShadows ?? false;
     }

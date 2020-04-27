@@ -29,6 +29,7 @@ export * from "./lib/image/Image";
 export * from "./lib/image/ImageCache";
 export * from "./lib/image/MapViewImageCache";
 export * from "./lib/MapView";
+export * from "./lib/MapViewAtmosphere";
 export * from "./lib/MapViewFog";
 export * from "./lib/MapViewPoints";
 export * from "./lib/PickHandler";
