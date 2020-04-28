@@ -9,8 +9,10 @@ import * as THREE from "three";
 
 import { MapView } from "../MapView";
 import { ImageItem } from "./Image";
+import { MipMapGenerator } from "./MipMapGenerator";
 
 const logger = LoggerManager.instance.create("ImageCache");
+const mipMapGenerator = new MipMapGenerator();
 
 // override declaration of createImageBitmap, add optional options parameter that
 // was removed in typings for TypeScript 3.1
@@ -92,14 +94,6 @@ export class ImageCache {
         imageData: ImageData | ImageBitmap | undefined
     ): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
-        if (imageCacheItem !== undefined) {
-            if (mapView !== undefined && imageCacheItem.mapViews.indexOf(mapView) < 0) {
-                imageCacheItem.mapViews.push(mapView);
-            }
-            return imageCacheItem.imageItem;
-        }
-
-        imageCacheItem = this.findImageCacheItem(url);
         if (imageCacheItem !== undefined) {
             if (mapView !== undefined && imageCacheItem.mapViews.indexOf(mapView) < 0) {
                 imageCacheItem.mapViews.push(mapView);
@@ -224,6 +218,9 @@ export class ImageCache {
                     logger.debug(`... finished loading image: ${imageItem.url}`);
                     this.renderImage(imageItem, image)
                         .then(() => {
+                            imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                                imageItem
+                            );
                             imageItem.loadingPromise = undefined;
                             resolve(imageItem);
                         })

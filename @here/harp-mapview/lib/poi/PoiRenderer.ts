@@ -12,16 +12,15 @@ import * as THREE from "three";
 
 import { ColorCache } from "../ColorCache";
 import { ImageItem } from "../image/Image";
+import { MipMapGenerator } from "../image/MipMapGenerator";
 import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
 import { PoiInfo, TextElement } from "../text/TextElement";
 import { BoxBuffer } from "./BoxBuffer";
-import { IconTexture } from "./Poi";
 
 const logger = LoggerManager.instance.create("PoiRenderer");
 
 const INVALID_RENDER_BATCH = -1;
-
 const tempPos = new THREE.Vector3(0);
 
 /**
@@ -34,6 +33,9 @@ const tempPos = new THREE.Vector3(0);
  * in the atlas as well as the texture coordinates are specified in the `PoiRenderBufferBatch`.
  */
 class PoiRenderBufferBatch {
+    // Enable trilinear filtering to reduce flickering due to distance scaling
+    static trilinear: boolean = true;
+
     color: THREE.Color = ColorCache.instance.getColor("#000000");
 
     boxBuffer: BoxBuffer | undefined;
@@ -103,29 +105,26 @@ class PoiRenderBufferBatch {
      * Setup texture and material for the batch.
      */
     private setup() {
-        // Enable trilinear filtering to reduce flickering due to distance scaling
-        const trilinear = true;
-
         // Texture images should be generated with premultiplied alpha
         const premultipliedAlpha = true;
 
-        const iconTexture = new IconTexture(this.imageItem);
         const texture = new THREE.Texture(
-            iconTexture.image.imageData as any,
+            this.imageItem.imageData as any,
             THREE.UVMapping,
             undefined,
             undefined,
-            trilinear ? THREE.LinearFilter : THREE.NearestFilter,
-            trilinear ? THREE.LinearMipMapLinearFilter : THREE.NearestFilter,
+            PoiRenderBufferBatch.trilinear ? THREE.LinearFilter : THREE.LinearFilter,
+            PoiRenderBufferBatch.trilinear ? THREE.LinearMipMapLinearFilter : THREE.LinearFilter,
             THREE.RGBAFormat
         );
-        texture.needsUpdate = true;
-        texture.premultiplyAlpha = premultipliedAlpha;
-        // Generate mipmaps for distance scaling of icon
-        // TODO: Implement custom mip map generation if support for texture atlas
-        // with icons that are not power of two or have different sizes is necessary.
-        texture.generateMipmaps = true;
+        if (PoiRenderBufferBatch.trilinear && this.imageItem.mipMaps) {
+            // Generate mipmaps for distance scaling of icon
+            texture.mipmaps = this.imageItem.mipMaps;
+            texture.image = texture.mipmaps[0];
+        }
         texture.flipY = false;
+        texture.premultiplyAlpha = premultipliedAlpha;
+        texture.needsUpdate = true;
 
         this.m_material = new IconMaterial({
             map: texture
@@ -583,6 +582,10 @@ export class PoiRenderer {
 
         const imageWidth = imageItem.imageData.width;
         const imageHeight = imageItem.imageData.height;
+        const paddedSize = MipMapGenerator.getPaddedSize(imageWidth, imageHeight);
+        const trilinearFiltering = PoiRenderBufferBatch.trilinear && imageItem.mipMaps;
+        const paddedImageWidth = trilinearFiltering ? paddedSize.width : imageWidth;
+        const paddedImageHeight = trilinearFiltering ? paddedSize.height : imageHeight;
 
         const iconWidth = imageTexture.width !== undefined ? imageTexture.width : imageWidth;
         const iconHeight = imageTexture.height !== undefined ? imageTexture.height : imageHeight;
@@ -600,16 +603,16 @@ export class PoiRenderer {
         const xOffset = imageTexture.xOffset !== undefined ? imageTexture.xOffset : 0;
         const yOffset = imageTexture.yOffset !== undefined ? imageTexture.yOffset : 0;
 
-        minS = xOffset / imageWidth;
-        maxS = (xOffset + width) / imageWidth;
+        minS = xOffset / paddedImageWidth;
+        maxS = (xOffset + width) / paddedImageWidth;
 
         const flipY = false;
         if (flipY) {
-            minT = (imageHeight - yOffset) / imageHeight;
-            maxT = (imageHeight - yOffset - height) / imageHeight;
+            minT = (imageHeight - yOffset) / paddedImageHeight;
+            maxT = (imageHeight - yOffset - height) / paddedImageHeight;
         } else {
-            minT = yOffset / imageHeight;
-            maxT = (yOffset + height) / imageHeight;
+            minT = yOffset / paddedImageHeight;
+            maxT = (yOffset + height) / paddedImageHeight;
         }
 
         // minS += 0.5 / imageWidth;
