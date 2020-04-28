@@ -176,7 +176,7 @@ describe("DisplacedBufferGeometry", function() {
         );
 
         displacedGeometry.computeBoundingBox();
-        const bbox: THREE.Box3 = displacedGeometry.boundingBox;
+        const bbox: THREE.Box3 = displacedGeometry.boundingBox!;
 
         const positions = originalGeometry.attributes.position;
         const normals = originalGeometry.attributes.normal;

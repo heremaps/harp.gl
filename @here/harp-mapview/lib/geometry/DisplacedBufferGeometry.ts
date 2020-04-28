@@ -114,7 +114,7 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
         if (this.originalGeometry.boundingBox === null) {
             this.originalGeometry.computeBoundingBox();
         }
-        const origBBox = this.m_originalBoundingBox.copy(this.originalGeometry.boundingBox);
+        const origBBox = this.m_originalBoundingBox.copy(this.originalGeometry.boundingBox!);
         if (this.boundingBox === null) {
             this.boundingBox = origBBox.clone();
         } else {
@@ -137,13 +137,13 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
         if (this.boundingSphere === null) {
             this.boundingSphere = new THREE.Sphere();
         }
-        this.boundingBox.getBoundingSphere(this.boundingSphere);
+        this.boundingBox!.getBoundingSphere(this.boundingSphere!);
     }
 
     private needsBoundingBoxUpdate(displacementRangeChanged: boolean): boolean {
         return (
             displacementRangeChanged ||
-            (this.boundingBox &&
+            (this.boundingBox !== null &&
                 (!this.originalGeometry.boundingBox ||
                     !this.m_originalBoundingBox.equals(this.originalGeometry.boundingBox)))
         );
