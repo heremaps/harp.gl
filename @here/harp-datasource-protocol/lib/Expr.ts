@@ -16,6 +16,8 @@ import {
 import { Definitions, isBoxedDefinition, isLiteralDefinition } from "./Theme";
 
 import * as THREE from "three";
+import { Pixels } from "./Pixels";
+import { RGBA } from "./RGBA";
 
 export * from "./Env";
 
@@ -34,6 +36,8 @@ export interface ExprVisitor<Result, Context> {
     visitCallExpr(expr: CallExpr, context: Context): Result;
     visitMatchExpr(expr: MatchExpr, context: Context): Result;
     visitCaseExpr(expr: CaseExpr, context: Context): Result;
+    visitStepExpr(expr: StepExpr, context: Context): Result;
+    visitInterpolateExpr(expr: InterpolateExpr, context: Context): Result;
 }
 
 /**
@@ -126,6 +130,17 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
             branch.accept(this, context);
         });
         expr.fallback.accept(this, context);
+    }
+
+    visitStepExpr(expr: StepExpr, context: ExprDependencies): void {
+        expr.input.accept(this, context);
+        expr.defaultValue.accept(this, context);
+        expr.stops.forEach(([_, value]) => value.accept(this, context));
+    }
+
+    visitInterpolateExpr(expr: InterpolateExpr, context: ExprDependencies): void {
+        expr.input.accept(this, context);
+        expr.stops.forEach(([_, value]) => value.accept(this, context));
     }
 }
 
@@ -443,8 +458,20 @@ export class NumberLiteralExpr extends LiteralExpr {
  * @hidden
  */
 export class StringLiteralExpr extends LiteralExpr {
+    private m_promotedValue?: RGBA | Pixels | null;
+
     constructor(readonly value: string) {
         super();
+    }
+
+    /**
+     * Returns the value of parsing this string as [[RGBA]] or [[Pixels]] constant.
+     */
+    get promotedValue(): RGBA | Pixels | undefined {
+        if (this.m_promotedValue === undefined) {
+            this.m_promotedValue = RGBA.parse(this.value) ?? Pixels.parse(this.value) ?? null;
+        }
+        return this.m_promotedValue ?? undefined;
     }
 
     /** @override */
@@ -608,6 +635,62 @@ export class CaseExpr extends Expr {
 /**
  * @hidden
  */
+export class StepExpr extends Expr {
+    constructor(
+        readonly input: Expr,
+        readonly defaultValue: Expr,
+        readonly stops: Array<[number, Expr]>
+    ) {
+        super();
+    }
+
+    /** @override */
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitStepExpr(this, context);
+    }
+
+    /** @override */
+    protected exprIsDynamic(): boolean {
+        return (
+            this.input.isDynamic() ||
+            this.defaultValue.isDynamic() ||
+            this.stops.some(([_, value]) => value.isDynamic())
+        );
+    }
+}
+
+/**
+ * The type of the interpolation mode.
+ * @hidden
+ */
+export type InterpolateMode = ["discrete"] | ["linear"] | ["cubic"] | ["exponential", number];
+
+/**
+ * @hidden
+ */
+export class InterpolateExpr extends Expr {
+    constructor(
+        readonly mode: InterpolateMode,
+        readonly input: Expr,
+        readonly stops: Array<[number, Expr]>
+    ) {
+        super();
+    }
+
+    /** @override */
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitInterpolateExpr(this, context);
+    }
+
+    /** @override */
+    protected exprIsDynamic(): boolean {
+        return this.input.isDynamic() || this.stops.some(([_, value]) => value.isDynamic());
+    }
+}
+
+/**
+ * @hidden
+ */
 class ExprSerializer implements ExprVisitor<JsonValue, void> {
     serialize(expr: Expr): JsonValue {
         return expr.accept(this, undefined);
@@ -667,6 +750,27 @@ class ExprSerializer implements ExprVisitor<JsonValue, void> {
         }
         return ["case", ...branches, this.serialize(expr.fallback)];
     }
+
+    visitStepExpr(expr: StepExpr, context: void): JsonValue {
+        const result: JsonArray = ["step"];
+        result.push(this.serialize(expr.input));
+        result.push(this.serialize(expr.defaultValue));
+        expr.stops.forEach(([key, value]) => {
+            result.push(key);
+            result.push(this.serialize(value));
+        });
+        return result;
+    }
+
+    visitInterpolateExpr(expr: InterpolateExpr, context: void): JsonValue {
+        const result: JsonArray = ["interpolate", expr.mode];
+        result.push(this.serialize(expr.input));
+        expr.stops.forEach(([key, value]) => {
+            result.push(key);
+            result.push(this.serialize(value));
+        });
+        return result;
+    }
 }
 
 function parseNode(
@@ -716,6 +820,12 @@ function parseCall(node: JsonArray, referenceResolverState?: ReferenceResolverSt
 
         case "case":
             return parseCaseExpr(node, referenceResolverState);
+
+        case "interpolate":
+            return parseInterpolateExpr(node, referenceResolverState);
+
+        case "step":
+            return parseStepExpr(node, referenceResolverState);
 
         default:
             return makeCallExpr(op, node, referenceResolverState);
@@ -794,6 +904,70 @@ function parseCaseExpr(
     }
     const caseFallback = parseNode(node[node.length - 1], referenceResolverState);
     return new CaseExpr(branches, caseFallback);
+}
+
+function isInterpolationMode(object: any): object is InterpolateMode {
+    if (!Array.isArray(object)) {
+        return false;
+    }
+    switch (object[0]) {
+        case "discrete":
+        case "linear":
+        case "cubic":
+        case "exponential":
+            return true;
+        default:
+            return false;
+    }
+}
+
+function parseInterpolateExpr(
+    node: JsonArray,
+    referenceResolverState: ReferenceResolverState | undefined
+) {
+    const mode: InterpolateMode = node[1] as any;
+    if (!isInterpolationMode(mode)) {
+        throw new Error("expected an interpolation type");
+    }
+    if (mode[0] === "exponential" && typeof mode[1] !== "number") {
+        throw new Error("expected the base of the exponential interpolation");
+    }
+    const input = node[2] ? parseNode(node[2], referenceResolverState) : undefined;
+    if (!Expr.isExpr(input)) {
+        throw new Error(`expected the input of the interpolation`);
+    }
+    if (node.length === 3 || !(node.length % 2)) {
+        throw new Error("invalid number of samples");
+    }
+
+    const stops: Array<[number, Expr]> = [];
+    for (let i = 3; i < node.length - 1; i += 2) {
+        const key = node[i] as number;
+        const value = parseNode(node[i + 1], referenceResolverState);
+        stops.push([key, value]);
+    }
+    return new InterpolateExpr(mode, input, stops);
+}
+
+function parseStepExpr(
+    node: JsonArray,
+    referenceResolverState: ReferenceResolverState | undefined
+) {
+    if (node.length < 2) {
+        throw new Error("expected the input of the 'step' operator");
+    }
+    if (node.length < 3 || !(node.length % 2)) {
+        throw new Error("not enough arguments");
+    }
+    const input = parseNode(node[1], referenceResolverState);
+    const defaultValue = parseNode(node[2], referenceResolverState);
+    const stops: Array<[number, Expr]> = [];
+    for (let i = 3; i < node.length; i += 2) {
+        const key = node[i] as number;
+        const value = parseNode(node[i + 1], referenceResolverState);
+        stops.push([key, value]);
+    }
+    return new StepExpr(input, defaultValue, stops);
 }
 
 function makeCallExpr(

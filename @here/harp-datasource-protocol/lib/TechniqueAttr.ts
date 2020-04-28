@@ -4,30 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LoggerManager } from "@here/harp-utils";
-import { Env, Expr, ExprScope, MapEnv, Value } from "./Expr";
-
-const logger = LoggerManager.instance.create("TechniqueAttr");
+import { Env, Expr, MapEnv, Value } from "./Expr";
+import { getPropertyValue } from "./PropertyValue";
 
 export interface AttrEvaluationContext {
     /**
      * Expression evaluation environment containing variable bindings.
      */
     env: MapEnv;
-
-    /**
-     * Storage level of tile containing this feature.
-     *
-     * To be removed, when interpolators will be based on [[Expr]].
-     */
-    storageLevel: number;
-
-    /**
-     * Zoom level of tile containing this feature.
-     *
-     * To be removed, when interpolators will be based on [[Expr]].
-     */
-    zoomLevel: number;
 
     /**
      * Optional, cache of expression results.
@@ -52,7 +36,7 @@ export function evaluateTechniqueAttr<T = Value>(
  *
  * @returns actual value or `defaultValue`
  */
-export function evaluateTechniqueAttr<T = Value>(
+export function evaluateTechniqueAttr<T extends Value>(
     context: Env | AttrEvaluationContext,
     attrValue: T | Expr | undefined,
     defaultValue: T
@@ -60,29 +44,16 @@ export function evaluateTechniqueAttr<T = Value>(
 
 export function evaluateTechniqueAttr<T = Value>(
     context: Env | AttrEvaluationContext,
-    attrValue: T | Expr | undefined,
+    attrValue: Value | undefined,
     defaultValue?: T
 ): T | undefined {
-    const env = context instanceof Env ? context : context.env;
-
-    let evaluated: Value | undefined;
-    if (Expr.isExpr(attrValue)) {
-        try {
-            evaluated = attrValue.evaluate(
-                env,
-                ExprScope.Dynamic,
-                !(context instanceof Env) ? context.cachedExprResults : undefined
-            );
-        } catch (error) {
-            logger.error(`failed to evaluate expression '${JSON.stringify(attrValue)}': ${error}`);
-            evaluated = undefined;
-        }
-    } else {
-        evaluated = (attrValue as unknown) as Value;
-    }
-    if (evaluated === undefined || evaluated === null) {
+    if (attrValue === undefined) {
         return defaultValue;
-    } else {
-        return (evaluated as unknown) as T;
     }
+
+    const result = Env.isEnv(context)
+        ? getPropertyValue(attrValue, context)
+        : getPropertyValue(attrValue, context.env, context.cachedExprResults);
+
+    return result ?? defaultValue;
 }

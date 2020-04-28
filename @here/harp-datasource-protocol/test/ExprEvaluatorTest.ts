@@ -19,7 +19,7 @@ import {
     Value,
     ValueMap
 } from "../lib/Expr";
-import { getPropertyValue } from "../lib/InterpolatedProperty";
+import { getPropertyValue } from "../lib/PropertyValue";
 
 import * as THREE from "three";
 
@@ -896,7 +896,7 @@ describe("ExprEvaluator", function() {
 
             assert.throws(
                 () => evaluate(["interpolate", ["linear"], ["time"]]),
-                "only 'zoom' is supported"
+                "invalid number of samples"
             );
 
             assert.throws(
@@ -940,14 +940,97 @@ describe("ExprEvaluator", function() {
     });
 
     describe("Operator 'zoom'", function() {
-        it("evaluate", function() {
-            assert.throw(() => evaluate(["zoom"]), "invalid usage of the 'zoom' operator");
+        it("['zoom'] in a static scope should return itself", () => {
+            assert.strictEqual(JSON.stringify(evaluate(["zoom"])), JSON.stringify(["zoom"]));
 
-            assert.throw(
-                () => evaluate(["zoom"], { $zoom: 10 }),
-                "invalid usage of the 'zoom' operator"
+            assert.strictEqual(
+                JSON.stringify(evaluate(["+", ["zoom"], 1])),
+                JSON.stringify(["+", ["zoom"], 1])
+            );
+        });
+
+        it("partial evaluation of expressions containing ['zoom'] should evaluate constant expressions", () => {
+            assert.strictEqual(
+                JSON.stringify(evaluate(["+", ["zoom"], ["case", ["get", "offset"], 123, 321]])),
+                JSON.stringify(["+", ["zoom"], 321])
             );
 
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate(
+                        [
+                            "+",
+                            ["zoom"],
+                            ["match", ["get", "language"], ["it"], 123, ["en"], 321, 444]
+                        ],
+                        { language: "en" }
+                    )
+                ),
+                JSON.stringify(["+", ["zoom"], 321])
+            );
+        });
+
+        it("partial evaluation of dynamic interpolations", () => {
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate([
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"], // linear interpolation
+                        0,
+                        ["+", ["get", "zero"], 1],
+                        20,
+                        ["+", ["get", "one"], ["get", "two"]]
+                    ])
+                ),
+                JSON.stringify(["interpolate", ["linear"], ["zoom"], 0, 1, 20, 3])
+            );
+        });
+
+        it("partial evaluation of dynamic step", () => {
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate([
+                        "step",
+                        ["zoom"], // linear interpolation
+                        0,
+                        20,
+                        ["+", ["get", "one"], ["get", "two"]]
+                    ])
+                ),
+                JSON.stringify(["step", ["zoom"], 0, 20, 3])
+            );
+        });
+
+        it("partial evaluation of 'in' expressions", () => {
+            assert.strictEqual(
+                JSON.stringify(evaluate(["in", ["get", "two"], ["literal", ["aa", "bb"]]])),
+                JSON.stringify(false)
+            );
+
+            assert.strictEqual(
+                JSON.stringify(evaluate(["in", ["get", "two"], ["literal", [1, 2]]])),
+                JSON.stringify(true)
+            );
+
+            assert.strictEqual(
+                JSON.stringify(evaluate(["in", ["floor", ["zoom"]], ["literal", [14, 15]]])),
+                JSON.stringify(["in", ["floor", ["zoom"]], ["literal", [14, 15]]])
+            );
+
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate(
+                        ["in", ["floor", ["zoom"]], ["literal", [14, 15]]],
+                        { $zoom: 14 },
+                        ExprScope.Dynamic
+                    )
+                ),
+                JSON.stringify(true)
+            );
+        });
+
+        it("evaluate", function() {
             assert.strictEqual(evaluate(["zoom"], { $zoom: 10 }, ExprScope.Condition), 10);
         });
     });
@@ -1194,7 +1277,7 @@ describe("ExprEvaluator", function() {
                 evaluate(
                     ["step", ["get", "x"], "default value", 0, "value"],
                     {
-                        x: null
+                        x: -1
                     },
                     ExprScope.Dynamic
                 ),
@@ -1209,7 +1292,7 @@ describe("ExprEvaluator", function() {
         assert.deepEqual(dependencies(["has", "x"]), { properties: ["x"], dynamic: false });
 
         assert.deepEqual(
-            dependencies(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, ["get", "max"]]),
+            dependencies(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, ["get", "max"]]),
             { properties: ["max"], dynamic: true }
         );
 
@@ -1584,16 +1667,6 @@ describe("ExprEvaluator", function() {
                 ["step", ["zoom"], 0, 2, 123]
             );
 
-            // assert.deepStrictEqual(
-            //     instantiate(["in", ["get", "two"], ["literal", ["aa", "bb"]]]),
-            //     false
-            // );
-
-            // assert.deepStrictEqual(
-            //     instantiate(["in", ["get", "y"], ["literal", [123, 321]]]),
-            //     true
-            // );
-
             assert.deepStrictEqual(instantiate(["get", "x", ["dynamic-properties"]]), [
                 "get",
                 "x",
@@ -1656,9 +1729,9 @@ describe("ExprEvaluator", function() {
 
     describe("Operator 'feature-state'", () => {
         it("Syntax", () => {
-            assert.throws(
-                () => evaluate(["feature-state", "enabled"], undefined, ExprScope.Value),
-                "feature-state cannot be used in this context"
+            assert.strictEqual(
+                JSON.stringify(evaluate(["feature-state", "enabled"], undefined, ExprScope.Value)),
+                JSON.stringify(["feature-state", "enabled"])
             );
 
             assert.throws(

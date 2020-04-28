@@ -6,6 +6,7 @@
 
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+import { RGBA } from "./RGBA";
 
 const SHIFT_TRANSPARENCY: number = 24;
 const SHIFT_RED: number = 16;
@@ -112,16 +113,15 @@ export namespace ColorUtils {
      * @returns r, g, b, a channels in simple object, where each channel value is saved as floating
      * point from 0 to 1 inclusively.
      */
-    export function getRgbaFromHex(hex: number): { r: number; g: number; b: number; a: number } {
+    export function getRgbaFromHex(hex: number, target = new RGBA()): RGBA {
         assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format");
-        return {
-            r: ((hex >> SHIFT_RED) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL,
-            g: ((hex >> SHIFT_GREEN) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL,
-            b: ((hex >> SHIFT_BLUE) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL,
-            a:
-                (HEX_FULL_CHANNEL - ((hex >> SHIFT_TRANSPARENCY) & HEX_FULL_CHANNEL)) /
-                HEX_FULL_CHANNEL
-        };
+        target.r = ((hex >> SHIFT_RED) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL;
+        target.g = ((hex >> SHIFT_GREEN) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL;
+        target.b = ((hex >> SHIFT_BLUE) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL;
+        target.a =
+            (HEX_FULL_CHANNEL - ((hex >> SHIFT_TRANSPARENCY) & HEX_FULL_CHANNEL)) /
+            HEX_FULL_CHANNEL;
+        return target;
     }
 
     /**

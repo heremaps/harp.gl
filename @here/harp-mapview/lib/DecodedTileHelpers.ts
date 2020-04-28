@@ -10,10 +10,8 @@ import {
     Env,
     Expr,
     getPropertyValue,
-    InterpolatedProperty,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
-    isInterpolatedProperty,
     isJsonExpr,
     isShaderTechnique,
     isStandardTechnique,
@@ -687,7 +685,7 @@ function applyTechniquePropertyToMaterial(
  */
 export function applySecondaryColorToMaterial(
     materialColor: THREE.Color,
-    techniqueColor: Value | Expr | InterpolatedProperty,
+    techniqueColor: Value | Expr,
     env?: Env
 ) {
     let value = evaluateColorProperty(techniqueColor, env);
@@ -765,7 +763,7 @@ export function applyBaseColorToMaterial(
  * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function evaluateProperty(value: any, env?: Env): any {
-    if (env !== undefined && (isInterpolatedProperty(value) || Expr.isExpr(value))) {
+    if (env !== undefined && Expr.isExpr(value)) {
         value = getPropertyValue(value, env);
     }
     return value;

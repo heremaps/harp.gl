@@ -15,6 +15,7 @@ import {
     ExprScope,
     ExprVisitor,
     HasAttributeExpr,
+    InterpolateExpr,
     isJsonExpr,
     JsonExpr,
     LiteralExpr,
@@ -22,6 +23,7 @@ import {
     NullLiteralExpr,
     NumberLiteralExpr,
     ObjectLiteralExpr,
+    StepExpr,
     StringLiteralExpr,
     Value,
     VarExpr
@@ -208,6 +210,14 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
         }
 
         return call;
+    }
+
+    visitStepExpr(expr: StepExpr, enclosingExpr: Expr | undefined): Expr | undefined {
+        throw new Error("todo");
+    }
+
+    visitInterpolateExpr(expr: InterpolateExpr, enclosingExpr: Expr | undefined): Expr | undefined {
+        throw new Error("todo");
     }
 
     /**
@@ -836,15 +846,8 @@ export class StyleSetEvaluator {
             return [];
         }
 
-        const instantiationContext = { env };
-
         return style._dynamicTechniqueAttributes.map(([attrName, attrExpr]) => {
             try {
-                if (attrExpr.isDynamic()) {
-                    const reducedExpr = attrExpr.instantiate(instantiationContext);
-                    return [attrName, reducedExpr];
-                }
-
                 const evaluatedValue = attrExpr.evaluate(
                     env,
                     ExprScope.Value,

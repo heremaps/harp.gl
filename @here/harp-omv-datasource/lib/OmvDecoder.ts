@@ -243,11 +243,9 @@ export class OmvDecoder implements IGeometryProcessor {
             }
             return;
         }
-        const context = {
+        const context: AttrEvaluationContext = {
             env,
-            storageLevel,
-            zoomLevel: this.getZoomLevel(storageLevel),
-            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
+            cachedExprResults: new Map()
         };
 
         const featureId = env.lookup("$id") as number | undefined;
@@ -293,12 +291,11 @@ export class OmvDecoder implements IGeometryProcessor {
             return;
         }
 
-        const context = {
+        const context: AttrEvaluationContext = {
             env,
-            storageLevel,
-            zoomLevel: this.getZoomLevel(storageLevel),
-            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
+            cachedExprResults: new Map()
         };
+
         const featureId = env.lookup("$id") as number | undefined;
 
         if (this.m_decodedTileEmitter) {
@@ -344,10 +341,9 @@ export class OmvDecoder implements IGeometryProcessor {
 
         const context = {
             env,
-            storageLevel,
-            zoomLevel: this.getZoomLevel(storageLevel),
-            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
+            cachedExprResults: new Map()
         };
+
         const featureId = env.lookup("$id") as number | undefined;
 
         if (this.m_decodedTileEmitter) {
@@ -360,10 +356,6 @@ export class OmvDecoder implements IGeometryProcessor {
                 featureId
             );
         }
-    }
-
-    private getZoomLevel(storageLevel: number) {
-        return Math.max(0, storageLevel - (this.m_storageLevelOffset || 0));
     }
 
     private applyKindFilter(
