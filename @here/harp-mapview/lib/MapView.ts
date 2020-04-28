@@ -322,6 +322,12 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     canvas: HTMLCanvasElement;
 
     /**
+     * Optional WebGL Rendering Context.
+     * (https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext)
+     */
+    context?: WebGLRenderingContext;
+
+    /**
      * `true` if the canvas contains an alpha (transparency) buffer or not. Default is `false`.
      */
     alpha?: boolean;
@@ -987,6 +993,7 @@ export class MapView extends THREE.EventDispatcher {
         // Initialization of the renderer
         this.m_renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
+            context: this.m_options.context,
             antialias: this.nativeWebglAntialiasEnabled,
             alpha: this.m_options.alpha,
             preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true,
