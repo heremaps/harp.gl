@@ -37,27 +37,16 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
-import { assert, LoggerManager } from "@here/harp-utils";
+import { assert, LoggerManager, pick } from "@here/harp-utils";
 import * as THREE from "three";
 import { DisplacedMesh } from "./geometry/DisplacedMesh";
 import { SolidLineMesh } from "./geometry/SolidLineMesh";
+import { MapAdapterUpdateEnv, MapMaterialAdapter, StyledProperties } from "./MapMaterialAdapter";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
 import { Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
-
-const DEFAULT_SKIP_PROPERTIES = [
-    ...TEXTURE_PROPERTY_KEYS,
-    "mapProperties",
-    "normalMapProperties",
-    "displacementMapProperties",
-    "roughnessMapProperties",
-    "emissiveMapProperties",
-    "alphaMapProperties",
-    "metalnessMapProperties",
-    "bumpMapProperties"
-];
 
 /**
  * The structure of the options to pass into [[createMaterial]].
@@ -134,13 +123,6 @@ export function createMaterial(
 
     if (isExtrudedPolygonTechnique(technique)) {
         material.flatShading = true;
-        // We do not support mixing vertex colors (static) and material colors (may be dynamic)
-        // mixture. Vertex colors are stored in VBO and are not modifiable - some solution for
-        // this problem is proposed in the HARP-8289 and PR #1164.
-        // TODO: Remove when problem with substitute (vertex & material) colors will be solved.
-        if (technique.vertexColors === true) {
-            delete technique.color;
-        }
     }
 
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
@@ -245,10 +227,8 @@ export function createMaterial(
         // Special case for ShaderTechnique.
         applyShaderTechniqueToMaterial(technique, material);
     } else {
-        // Generic technique.
-        applyTechniqueToMaterial(technique, material, options.env, options.skipExtraProps);
+        MapMaterialAdapter.create(material, getMainMaterialStyledProps(technique));
     }
-
     return material;
 }
 
@@ -465,6 +445,141 @@ export function getMaterialConstructor(
 }
 
 /**
+ * Styled properties of main material (created by [[createMaterial]]) managed by
+ * [[MapObjectAdapter]].
+ */
+function getMainMaterialStyledProps(technique: Technique): StyledProperties {
+    switch (technique.name) {
+        case "dashed-line":
+        case "solid-line": {
+            const baseProps: StyledProperties = pick(technique, [
+                "color",
+                "outlineColor",
+                "transparent",
+                "opacity",
+                "caps",
+                "drawRangeStart",
+                "drawRangeEnd",
+                "dashes",
+                "dashColor",
+                "polygonOffset",
+                "polygonOffsetFactor",
+                "polygonOffsetUnits"
+            ]);
+            baseProps.lineWidth = buildMetricValueEvaluator(
+                technique.lineWidth ?? 0, // Compatibility: `undefined` lineWidth means hidden.
+                // tslint:disable-next-line: deprecation
+                technique.metricUnit
+            );
+            baseProps.outlineWidth = buildMetricValueEvaluator(
+                technique.outlineWidth,
+                // tslint:disable-next-line: deprecation
+                technique.metricUnit
+            );
+            baseProps.dashSize = buildMetricValueEvaluator(
+                technique.dashSize,
+                // tslint:disable-next-line: deprecation
+                technique.metricUnit
+            );
+            baseProps.gapSize = buildMetricValueEvaluator(
+                technique.gapSize,
+                // tslint:disable-next-line: deprecation
+                technique.metricUnit
+            );
+            baseProps.offset = buildMetricValueEvaluator(
+                technique.offset,
+                // tslint:disable-next-line: deprecation
+                technique.metricUnit
+            );
+            return baseProps;
+        }
+        case "fill":
+            return pick(technique, [
+                "color",
+                "transparent",
+                "opacity",
+                "polygonOffset",
+                "polygonOffsetFactor",
+                "polygonOffsetUnits"
+            ]);
+        case "standard":
+        case "terrain":
+        case "extruded-polygon": {
+            const baseProps: StyledProperties = pick(technique, [
+                "vertexColors",
+                "wireframe",
+                "roughness",
+                "metalness",
+                "alphaTest",
+                "depthTest",
+                "transparent",
+                "opacity",
+                "emissive",
+                "emissiveIntensity",
+                "refractionRatio",
+                "normalMapType"
+                // All texture related properties are skipped as for now as they are handled by
+                // [[createMaterial]] directly without possibility for them to be dynamic.
+                // TODO: move handling of texture-like params to [[MapMaterialAdapter]] with proper
+                // support for dynamic params
+            ]);
+            if (technique.vertexColors !== true) {
+                baseProps.color = technique.color;
+            }
+            return baseProps;
+        }
+        case "circles":
+        case "squares":
+            return pick(technique, ["color", "size", "opacity", "transparent"]);
+        case "extruded-line":
+            return pick(technique, [
+                "color",
+                "wireframe",
+                "transparent",
+                "opacity",
+                "polygonOffset",
+                "polygonOffsetFactor",
+                "polygonOffsetUnits"
+            ]);
+        case "line":
+        case "segments":
+            return pick(technique, ["color", "transparent", "opacity"]);
+        default:
+            return {};
+    }
+}
+
+/**
+ * Convert metric style property to expression that accounts [[MapView.pixelToWorld]] if
+ * `metricUnit === 'Pixel'`.
+ */
+export function buildMetricValueEvaluator(
+    value: Expr | Value | undefined,
+    metricUnit: string | undefined
+) {
+    if (value === undefined || value === null) {
+        return value;
+    }
+    if (typeof value === "string") {
+        if (value.endsWith("px")) {
+            metricUnit = "Pixel";
+            value = Number.parseFloat(value);
+        } else if (value.endsWith("m")) {
+            value = Number.parseFloat(value);
+        }
+    }
+    if (metricUnit === "Pixel") {
+        return (context: MapAdapterUpdateEnv) => {
+            const pixelToWorld = (context.env.lookup("$pixelToMeters") as number) ?? 1;
+            const evaluated = getPropertyValue(value, context.env);
+            return pixelToWorld * evaluated;
+        };
+    } else {
+        return value;
+    }
+}
+
+/**
  * Allows to easy parse/encode technique's base color property value as number coded color.
  *
  * Function takes care about property parsing, interpolation and encoding if neccessary.
@@ -522,76 +637,6 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
         const propColor = baseColorPropName as keyof THREE.Material;
         // Finally apply base color and related properties to material (opacity, transparent)
         applyBaseColorToMaterial(material, material[propColor], technique, params[propColor]);
-    }
-}
-
-/**
- * Apply generic technique parameters to material.
- *
- * Skips non-material [[Technique]] props:
- *  * [[BaseTechnique]] props,
- *  * `name` which is used as discriminator for technique types,
- *  * props starting with `_`
- *  * props found `skipExtraProps`
- *
- * `THREE.Color` properties are supported.
- *
- * @param technique technique from where params are copied
- * @param material target material
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
- * @param skipExtraProps optional, skipped props.
- */
-function applyTechniqueToMaterial(
-    technique: Technique,
-    material: THREE.Material,
-    env: Env,
-    skipExtraProps?: string[]
-) {
-    // Remove transparent color from the firstly processed properties set.
-    const baseColorPropName = getBaseColorPropName(technique);
-    const hasBaseColor = baseColorPropName && baseColorPropName in technique;
-    const genericProps = Object.getOwnPropertyNames(technique).filter(propertyName => {
-        if (
-            propertyName.startsWith("_") ||
-            BASE_TECHNIQUE_NON_MATERIAL_PROPS.indexOf(propertyName) !== -1 ||
-            DEFAULT_SKIP_PROPERTIES.indexOf(propertyName) !== -1 ||
-            (skipExtraProps !== undefined && skipExtraProps.indexOf(propertyName) !== -1)
-        ) {
-            return false;
-        }
-        // Omit base color and related transparency attributes if its defined in technique.
-        if (
-            baseColorPropName === propertyName ||
-            (hasBaseColor && TRANSPARENCY_PROPERTY_KEYS.indexOf(propertyName) !== -1)
-        ) {
-            return false;
-        }
-        const prop = propertyName as keyof typeof technique;
-        const m = material as any;
-        if (typeof m[prop] === "undefined") {
-            return false;
-        }
-        return true;
-    });
-
-    // Apply all other properties (even colors), but not transparent (base) ones.
-    genericProps.forEach(propertyName => {
-        const value = technique[propertyName as keyof Technique];
-        if (value !== undefined) {
-            applyTechniquePropertyToMaterial(material, propertyName, value, env);
-        }
-    });
-
-    // Finally apply base (possibly transparent) color itself, using blend modes to
-    // provide transparency if needed.
-    if (hasBaseColor) {
-        applyBaseColorToMaterial(
-            material,
-            material[baseColorPropName as keyof THREE.Material],
-            technique,
-            technique[baseColorPropName as keyof Technique] as Value,
-            env
-        );
     }
 }
 

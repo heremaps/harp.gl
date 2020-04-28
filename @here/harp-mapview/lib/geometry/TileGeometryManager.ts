@@ -5,6 +5,7 @@
  */
 
 import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
+import { MapObjectAdapter } from "../MapObjectAdapter";
 import { MapView } from "../MapView";
 import { Tile } from "../Tile";
 import { TileGeometryLoader } from "./TileGeometryLoader";
@@ -221,8 +222,8 @@ export class TileGeometryManager {
             tile.visibilityCounter = this.visibilityCounter;
 
             for (const object of tile.objects) {
-                const geometryKind: GeometryKind[] | undefined =
-                    object.userData !== undefined ? object.userData.kind : undefined;
+                const objectAdapter = MapObjectAdapter.get(object);
+                const geometryKind = objectAdapter?.kind;
                 if (geometryKind !== undefined) {
                     const nowVisible = !geometryKind.some(kind => this.hiddenKinds.has(kind));
                     needUpdate = needUpdate || object.visible !== nowVisible;

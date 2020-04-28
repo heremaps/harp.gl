@@ -31,6 +31,7 @@ import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
 
+import { Expr } from "@here/harp-datasource-protocol";
 import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
@@ -38,6 +39,8 @@ import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { DataSource } from "../lib/DataSource";
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSource";
+import { MapMaterialAdapter } from "../lib/MapMaterialAdapter";
+import { MapObjectAdapter } from "../lib/MapObjectAdapter";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
@@ -656,6 +659,104 @@ describe("MapView", function() {
                 mapView.dispose();
                 mapView = undefined;
             }
+        }
+    });
+    it("updates scene objects using & skips transparent", async function() {
+        if (inNodeContext) {
+            let time = 0;
+            global.requestAnimationFrame = (callback: FrameRequestCallback) => {
+                return setTimeout(() => {
+                    callback(time++);
+                    return 0;
+                }, 0);
+            };
+            global.cancelAnimationFrame = (id: number) => {
+                clearTimeout(id);
+            };
+        }
+        const getSceneObjects = () => {
+            const result: THREE.Object3D[] = [];
+            mapView!.scene.traverse(obj => result.push(obj));
+            return result;
+        };
+
+        const dataSource = new FakeOmvDataSource();
+        mapView = new MapView({ canvas, theme: {} });
+        await mapView.addDataSource(dataSource);
+
+        //
+        // Round zero - force MapView to create Tiles for current view
+        //
+        mapView.update();
+        await waitForEvent(mapView, MapViewEventNames.AfterRender);
+
+        const mapObjectAdapterEnsureUpdatedSpy = sandbox.spy(
+            MapObjectAdapter.prototype,
+            "ensureUpdated"
+        );
+        const mapMaterialAdapterEnsureUpdatedSpy = sandbox.spy(
+            MapMaterialAdapter.prototype,
+            "ensureUpdated"
+        );
+
+        // create dummy objects in currently selected tiles
+        const objects: THREE.Object3D[] = [];
+        const materials: THREE.Material[] = [];
+        mapView.forEachCachedTile(tile => {
+            if (tile.dataSource !== dataSource) {
+                return;
+            }
+            const materialAdapter = MapMaterialAdapter.create(new THREE.MeshBasicMaterial(), {
+                opacity: Expr.fromJSON(["get", "testOpacity", ["dynamic-properties"]])
+            });
+            materials.push(materialAdapter.material);
+            const object = new THREE.Mesh(new THREE.BufferGeometry(), materialAdapter.material);
+            tile.objects.push(object);
+            MapObjectAdapter.create(object, {});
+            objects.push(object);
+        });
+
+        //
+        // First round: normal objects with some transparency but still visible
+        //
+        mapView.setDynamicProperty("testOpacity", 0.7);
+
+        // update map, should call MapObjectAdapter.ensureUpdated for each object
+        mapView.update();
+        await waitForEvent(mapView, MapViewEventNames.AfterRender);
+        const objectsInScene1 = getSceneObjects();
+        assert.isAtLeast(mapObjectAdapterEnsureUpdatedSpy.callCount, objects.length);
+        assert.isAtLeast(mapMaterialAdapterEnsureUpdatedSpy.callCount, materials.length);
+
+        for (const material of materials) {
+            assert.equal(material.opacity, 0.7);
+        }
+        for (const object of objects) {
+            assert.equal(MapObjectAdapter.get(object)!.isVisible(), true);
+            assert.include(objectsInScene1, object);
+        }
+        mapObjectAdapterEnsureUpdatedSpy.resetHistory();
+        mapMaterialAdapterEnsureUpdatedSpy.resetHistory();
+
+        //
+        // Third round: all objects are transparent so should be skipped1
+        //
+        mapView.setDynamicProperty("testOpacity", 0);
+        mapView.update();
+        await waitForEvent(mapView, MapViewEventNames.AfterRender);
+
+        assert.isAtLeast(mapObjectAdapterEnsureUpdatedSpy.callCount, objects.length);
+        assert.isAtLeast(mapMaterialAdapterEnsureUpdatedSpy.callCount, materials.length);
+
+        const objectsInScene2 = getSceneObjects();
+
+        for (const material of materials) {
+            assert.equal(material.opacity, 0);
+        }
+
+        for (const object of objects) {
+            assert.equal(MapObjectAdapter.get(object)!.isVisible(), false);
+            assert.notInclude(objectsInScene2, object);
         }
     });
 
