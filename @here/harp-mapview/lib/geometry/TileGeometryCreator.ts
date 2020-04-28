@@ -1171,6 +1171,8 @@ export class TileGeometryCreator {
                             ? outlineTechnique.secondaryRenderOrder
                             : technique.renderOrder - 0.0000001;
 
+                    this.addUserData(tile, srcGeometry, technique, outlineObj);
+
                     const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
                     FadingFeature.addRenderHelper(
                         outlineObj,
@@ -1544,10 +1546,6 @@ export class TileGeometryCreator {
         technique: Technique,
         object: THREE.Object3D
     ) {
-        if ((srcGeometry.objInfos?.length ?? 0) === 0) {
-            return;
-        }
-
         if (isTerrainTechnique(technique)) {
             assert(
                 Object.keys(object.userData).length === 0,
