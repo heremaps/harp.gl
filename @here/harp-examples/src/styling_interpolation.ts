@@ -372,11 +372,17 @@ export namespace TiledGeoJsonTechniquesExample {
                                 "#fff250"
                             ]
                         },
-                        lineWidth: {
-                            interpolation: "Linear",
-                            zoomLevels: [16.9, 17, 20],
-                            values: ["10px", "4m", "1m"]
-                        }
+                        lineWidth: [
+                            "interpolate",
+                            ["linear"],
+                            ["zoom"],
+                            16.9,
+                            ["world-ppi-scale", 10],
+                            17,
+                            4,
+                            20,
+                            1
+                        ]
                     },
                     renderOrder: 1998
                 },

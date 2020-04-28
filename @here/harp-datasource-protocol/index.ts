@@ -10,7 +10,7 @@ export * from "./lib/Techniques";
 export * from "./lib/TechniqueParams";
 export * from "./lib/Theme";
 export * from "./lib/PostEffects";
-export * from "./lib/InterpolatedProperty";
+export * from "./lib/PropertyValue";
 export * from "./lib/InterpolatedPropertyDefs";
 export * from "./lib/WorkerServiceProtocol";
 export * from "./lib/WorkerTilerProtocol";

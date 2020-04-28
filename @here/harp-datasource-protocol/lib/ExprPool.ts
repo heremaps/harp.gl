@@ -11,10 +11,12 @@ import {
     Expr,
     ExprVisitor,
     HasAttributeExpr,
+    InterpolateExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
     ObjectLiteralExpr,
+    StepExpr,
     StringLiteralExpr,
     VarExpr
 } from "./Expr";
@@ -36,6 +38,8 @@ export class ExprPool implements ExprVisitor<Expr, void> {
     private readonly m_hasAttributeExprs = new Map<string, HasAttributeExpr>();
     private readonly m_matchExprs: MatchExpr[] = [];
     private readonly m_caseExprs: CaseExpr[] = [];
+    private readonly m_interpolateExprs: InterpolateExpr[] = [];
+    private readonly m_stepExprs: StepExpr[] = [];
     private readonly m_callExprs = new Map<string, CallExpr[]>();
 
     /**
@@ -225,6 +229,62 @@ export class ExprPool implements ExprVisitor<Expr, void> {
         }
         const e = new CallExpr(expr.op, expressions);
         calls.push(e);
+        return e;
+    }
+
+    visitStepExpr(expr: StepExpr, context: void): Expr {
+        if (this.m_stepExprs.includes(expr)) {
+            return expr;
+        }
+        const input = expr.input.accept(this, context);
+        const defaultValue = expr.defaultValue.accept(this, context);
+        const stops: Array<[number, Expr]> = expr.stops.map(stop => {
+            const key = stop[0];
+            const value = stop[1].accept(this, context);
+            return value === stop[1] ? stop : [key, value];
+        });
+        for (const step of this.m_stepExprs) {
+            if (
+                step.input === input &&
+                step.defaultValue === defaultValue &&
+                stops.length === step.stops.length &&
+                stops.every(
+                    ([key, value], i) => key === step.stops[i][0] && value === step.stops[i][1]
+                )
+            ) {
+                return step;
+            }
+        }
+        const e = new StepExpr(input, defaultValue, stops);
+        this.m_stepExprs.push(e);
+        return e;
+    }
+
+    visitInterpolateExpr(expr: InterpolateExpr, context: void): Expr {
+        if (this.m_interpolateExprs.includes(expr)) {
+            return expr;
+        }
+        const input = expr.input.accept(this, context);
+        const stops: Array<[number, Expr]> = expr.stops.map(stop => {
+            const key = stop[0];
+            const value = stop[1].accept(this, context);
+            return value === stop[1] ? stop : [key, value];
+        });
+        for (const interp of this.m_interpolateExprs) {
+            if (
+                interp.input === input &&
+                interp.mode[0] === expr.mode[0] &&
+                interp.mode[1] === expr.mode[1] &&
+                stops.length === interp.stops.length &&
+                stops.every(
+                    ([key, value], i) => key === interp.stops[i][0] && value === interp.stops[i][1]
+                )
+            ) {
+                return interp;
+            }
+        }
+        const e = new InterpolateExpr(expr.mode, input, stops);
+        this.m_interpolateExprs.push(e);
         return e;
     }
 }

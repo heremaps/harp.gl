@@ -12,12 +12,14 @@ import {
     ExprScope,
     ExprVisitor,
     HasAttributeExpr,
+    InterpolateExpr,
     LiteralExpr,
     MatchExpr,
     MatchLabel,
     NullLiteralExpr,
     NumberLiteralExpr,
     ObjectLiteralExpr,
+    StepExpr,
     StringLiteralExpr,
     VarExpr
 } from "./Expr";
@@ -179,5 +181,24 @@ export class ExprInstantiator implements ExprVisitor<Expr, InstantiationContext>
         }
 
         return new CaseExpr(branches, fallback);
+    }
+
+    visitStepExpr(expr: StepExpr, context: InstantiationContext): Expr {
+        const input = expr.input.accept(this, context);
+        const defaultValue = expr.defaultValue.accept(this, context);
+        const stops: Array<[number, Expr]> = expr.stops.map(([key, value]) => [
+            key,
+            value.accept(this, context)
+        ]);
+        return new StepExpr(input, defaultValue, stops);
+    }
+
+    visitInterpolateExpr(expr: InterpolateExpr, context: InstantiationContext): Expr {
+        const input = expr.input.accept(this, context);
+        const stops: Array<[number, Expr]> = expr.stops.map(([key, value]) => [
+            key,
+            value.accept(this, context)
+        ]);
+        return new InterpolateExpr(expr.mode, input, stops);
     }
 }
