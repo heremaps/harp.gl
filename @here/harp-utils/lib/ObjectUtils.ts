@@ -62,3 +62,18 @@ export function cloneDeep<T>(obj: T): T {
     cache.clear();
     return r;
 }
+
+/**
+ * Pick `props` from `object.
+ *
+ * Runtime version of `Pick<T,K>`.
+ */
+export function pick<T extends object, K extends keyof T>(object: T, props: K[]): Pick<T, K> {
+    const result: any = {};
+    for (const propName of props) {
+        if (object.hasOwnProperty(propName)) {
+            result[propName] = object[propName];
+        }
+    }
+    return result;
+}

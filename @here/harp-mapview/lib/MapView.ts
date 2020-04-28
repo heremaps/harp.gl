@@ -57,6 +57,7 @@ import { FrustumIntersection } from "./FrustumIntersection";
 import { overlayOnElevation } from "./geometry/overlayOnElevation";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
+import { MapObjectAdapter } from "./MapObjectAdapter";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PickingRaycaster } from "./PickingRaycaster";
@@ -3458,7 +3459,8 @@ export class MapView extends THREE.EventDispatcher {
         const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(zoomLevel)) {
             for (const object of tile.objects) {
-                if (!this.processTileObjectFeatures(tile, object)) {
+                const mapObjectAdapter = MapObjectAdapter.get(object);
+                if (!this.processTileObject(tile, object, mapObjectAdapter)) {
                     continue;
                 }
                 object.position.copy(tile.center);
@@ -3475,10 +3477,7 @@ export class MapView extends THREE.EventDispatcher {
                     object._backupRenderOrder = object.renderOrder;
                 }
 
-                const isBuilding =
-                    object.userData !== undefined &&
-                    object.userData.kind !== undefined &&
-                    (object.userData.kind as GeometryKind[]).includes(GeometryKind.Building);
+                const isBuilding = mapObjectAdapter?.kind?.includes(GeometryKind.Building);
 
                 // When falling back to a parent tile (i.e. tile.levelOffset < 0) there will
                 // be overlaps with the already loaded tiles. Therefore all (flat) objects
@@ -3501,6 +3500,28 @@ export class MapView extends THREE.EventDispatcher {
             }
             tile.didRender();
         }
+    }
+
+    /**
+     * Process dynamic updates of [[TileObject]]'s style.
+     *
+     * @returns `true` if object shall be used in scene, `false` otherwise
+     */
+    private processTileObject(tile: Tile, object: TileObject, mapObjectAdapter?: MapObjectAdapter) {
+        if (!object.visible) {
+            return false;
+        }
+        if (!this.processTileObjectFeatures(tile, object)) {
+            return false;
+        }
+
+        if (mapObjectAdapter) {
+            mapObjectAdapter.ensureUpdated(this);
+            if (!mapObjectAdapter.isVisible()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
