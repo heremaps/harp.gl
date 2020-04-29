@@ -99,7 +99,7 @@ export class PolarTileDataSource extends DataSource {
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
 
         return techniques.length !== 0
-            ? createMaterial({ technique: techniques[0], env })
+            ? createMaterial({ technique: techniques[0], env: this.mapView.env })
             : undefined;
     }
 

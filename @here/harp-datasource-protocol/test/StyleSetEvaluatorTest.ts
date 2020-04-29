@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Env, MapEnv, ValueMap } from "../lib/Expr";
+import { Env, Expr, MapEnv, ValueMap } from "../lib/Expr";
 import {
     InterpolatedPropertyDefinition,
     interpolatedPropertyDefinitionToJsonExpr
@@ -242,11 +242,18 @@ describe("StyleSetEvaluator", function() {
             const sse = new StyleSetEvaluator([sampleStyleDeclaration], sampleDefinitions);
             const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
 
+            const expr = Expr.fromJSON(interpolatedPropertyDefinitionToJsonExpr(interpolator));
+
+            // Expr.isDynamic and Expr.dependencies change the state, so we need to call them before
+            // camparing.
+            assert.isTrue(expr.isDynamic());
+            assert.isEmpty(expr.dependencies().properties);
+
             assert.equal(techniques.length, 1);
             assert.deepNestedInclude(techniques[0], {
                 name: "fill",
                 lineWidth: 123,
-                color: interpolatedPropertyDefinitionToJsonExpr(interpolator),
+                color: expr,
                 renderOrder: 0
             });
         });
