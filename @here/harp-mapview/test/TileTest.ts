@@ -11,7 +11,6 @@ import { assert, expect } from "chai";
 
 import { DecodedTile } from "@here/harp-datasource-protocol";
 import {
-    GeoBox,
     mercatorProjection,
     OrientedBox3,
     TileKey,
@@ -217,19 +216,15 @@ describe("Tile", function() {
     });
 
     it("decodedTile setter sets decoded tile bbox if defined but does not elevate it", function() {
-        const tile = new Tile(stubDataSource, tileKey);
-
+        const key = new TileKey(5, 5, 5);
+        const tile = new Tile(stubDataSource, key);
+        const expectedGeoBox = tile.dataSource.getTilingScheme().getGeoBox(key);
+        expectedGeoBox.southWest.altitude = 500;
+        expectedGeoBox.northEast.altitude = 1000;
         const expectedBBox = new OrientedBox3(
-            new THREE.Vector3(1, 0, 1),
+            new THREE.Vector3(1, 2, 3),
             new THREE.Matrix4(),
             new THREE.Vector3(1, 1, 1)
-        );
-        const projection = stubDataSource.mapView.projection;
-        const northEast = expectedBBox.position.clone().add(expectedBBox.extents);
-        const southWest = expectedBBox.position.clone().sub(expectedBBox.extents);
-        const expectedGeoBox = new GeoBox(
-            projection.unprojectPoint(southWest),
-            projection.unprojectPoint(northEast)
         );
 
         tile.elevationRange = { minElevation: 500, maxElevation: 1000 };
