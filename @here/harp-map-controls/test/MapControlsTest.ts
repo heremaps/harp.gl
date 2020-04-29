@@ -129,23 +129,22 @@ describe("MapControls", function() {
     describe("zoomOnTargetPosition", function() {
         const elevationProvider = ({} as any) as ElevationProvider;
 
-        function resetCamera() {
+        function resetCamera(pitch: number) {
             const target = GeoCoordinates.fromDegrees(0, 0);
             const heading = 0;
-            const tilt = 0;
             const distance = 1e6;
             MapViewUtils.getCameraRotationAtTarget(
                 mapView.projection,
                 target,
                 -heading,
-                tilt,
+                pitch,
                 camera.quaternion
             );
             MapViewUtils.getCameraPositionFromTargetCoordinates(
                 target,
                 distance,
                 -heading,
-                tilt,
+                pitch,
                 mapView.projection,
                 camera.position
             );
@@ -161,24 +160,32 @@ describe("MapControls", function() {
                     sandbox.stub(mapView, "projection").get(() => projection);
                     sandbox.stub(mapView, "focalLength").get(() => 100);
                     mapControls = new MapControls(mapView);
-                    resetCamera();
                 });
+                for (const pitch of [0, 45]) {
+                    it(`camera distance is offset by elevation at pitch ${pitch}`, function() {
+                        resetCamera(pitch);
 
-                it("camera distance is offset by elevation", function() {
-                    elevationProvider.getHeight = sandbox.stub().returns(0);
-                    sandbox.stub(mapView, "elevationProvider").get(() => elevationProvider);
+                        elevationProvider.getHeight = sandbox.stub().returns(0);
+                        sandbox.stub(mapView, "elevationProvider").get(() => elevationProvider);
 
-                    mapControls.zoomOnTargetPosition(0, 0, 10);
-                    const altitudeWithoutElevation = projection.unprojectAltitude(camera.position);
+                        mapControls.zoomOnTargetPosition(0, 0, 10);
+                        const altitudeWithoutElevation = projection.unprojectAltitude(
+                            camera.position
+                        );
 
-                    resetCamera();
-                    const elevation = 333;
-                    elevationProvider.getHeight = sandbox.stub().returns(elevation);
-                    mapControls.zoomOnTargetPosition(0, 0, 10);
-                    const altitudeWithElevation = projection.unprojectAltitude(camera.position);
+                        resetCamera(pitch);
+                        const elevation = 333;
+                        elevationProvider.getHeight = sandbox.stub().returns(elevation);
+                        mapControls.zoomOnTargetPosition(0, 0, 10);
+                        const altitudeWithElevation = projection.unprojectAltitude(camera.position);
 
-                    expect(altitudeWithElevation).equals(altitudeWithoutElevation + elevation);
-                });
+                        const eps = 1e-5;
+                        expect(altitudeWithElevation).closeTo(
+                            altitudeWithoutElevation + elevation,
+                            eps
+                        );
+                    });
+                }
             });
         }
     });

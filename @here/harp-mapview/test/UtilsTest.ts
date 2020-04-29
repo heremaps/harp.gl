@@ -14,7 +14,7 @@ import {
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { ElevationProvider } from "../lib/ElevationProvider";
@@ -378,6 +378,12 @@ describe("map-view#Utils", function() {
                         camera,
                         elevationProvider
                     );
+                    const geoTargetNoElevation = projection.unprojectPoint(
+                        resultNoElevation.target
+                    );
+                    expect(geoTargetNoElevation).deep.equals(
+                        GeoCoordinates.fromDegrees(geoTarget.lat, geoTarget.lng, 0)
+                    );
 
                     const elevation = 42;
                     elevationProvider.getHeight = sandbox.stub().returns(elevation);
@@ -390,12 +396,6 @@ describe("map-view#Utils", function() {
                     );
 
                     expect(resultElevation.distance).equals(resultNoElevation.distance - elevation);
-                    const geoTargetNoElevation = projection.unprojectPoint(
-                        resultNoElevation.target
-                    );
-                    expect(geoTargetNoElevation).deep.equals(
-                        GeoCoordinates.fromDegrees(geoTarget.lat, geoTarget.lng, 0)
-                    );
                     const geoTargetElevation = projection.unprojectPoint(resultElevation.target);
                     expect(geoTargetElevation).deep.equals(
                         GeoCoordinates.fromDegrees(geoTarget.lat, geoTarget.lng, elevation)
