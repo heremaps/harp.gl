@@ -20,7 +20,7 @@ import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materi
 import { assert, LoggerManager } from "@here/harp-utils";
 import { ElevationProvider } from "./ElevationProvider";
 import { LodMesh } from "./geometry/LodMesh";
-import { MapView, MAX_TILT_ANGLE } from "./MapView";
+import { MapView } from "./MapView";
 import { getFeatureDataSize, TileFeatureData } from "./Tile";
 
 const logger = LoggerManager.instance.create("MapViewUtils");
@@ -42,7 +42,6 @@ const groundNormalPlanarProj = new THREE.Vector3(0, 0, 1);
 const groundPlane = new THREE.Plane(groundNormalPlanarProj.clone());
 const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 const rayCaster = new THREE.Raycaster();
-const maxTiltAngleAllowed = THREE.MathUtils.degToRad(MAX_TILT_ANGLE);
 const epsilon = 1e-5;
 
 /**
@@ -120,7 +119,7 @@ export namespace MapViewUtils {
         targetNDCx: number,
         targetNDCy: number,
         zoomLevel: number,
-        maxTiltAngle: number = maxTiltAngleAllowed
+        maxTiltAngle: number = MAX_TILT_RAD
     ): void {
         const { elevationProvider, camera } = mapView;
 
@@ -190,7 +189,7 @@ export namespace MapViewUtils {
         mapView: MapView,
         deltaAzimuthDeg: number,
         deltaTiltDeg: number,
-        maxTiltAngleRad = maxTiltAngleAllowed
+        maxTiltAngleRad = MAX_TILT_RAD
     ) {
         const target = mapView.target;
         const sphericalCoordinates = extractSphericalCoordinatesFromLocation(
@@ -946,9 +945,9 @@ export namespace MapViewUtils {
             } else {
                 logger.warn(
                     "MapView camera is pointing in the void, using maxTilt: ",
-                    maxTiltAngleAllowed
+                    MAX_TILT_RAD
                 );
-                return maxTiltAngleAllowed;
+                return MAX_TILT_RAD;
             }
         }
     }
