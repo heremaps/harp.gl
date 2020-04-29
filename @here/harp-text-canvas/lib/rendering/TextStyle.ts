@@ -63,12 +63,58 @@ export enum HorizontalAlignment {
 }
 
 /**
+ * Vertical position of text area relative to the placement context (point, line).
+ */
+export enum VerticalPlacement {
+    Top = 0.0,
+    Center = -0.5,
+    Bottom = -1.0
+}
+
+/**
+ * Horizontal position of text element relative to the placement context (point, line).
+ *
+ * @note [[HorizontalPlacement]] value is exactly opposite to [[HorizontalAlignment]] value,
+ * cause when you place text on the right side of point (or icon) it will be left-aligned.
+ */
+export enum HorizontalPlacement {
+    Left = -1.0,
+    Center = -0.5,
+    Right = 0.0
+}
+
+export interface TextPlacement {
+    v: VerticalPlacement;
+    h: HorizontalPlacement;
+}
+
+export type TextPlacements = TextPlacement[];
+
+/**
  * Text wrapping rule used when `lineWidth` is reached.
  */
 export enum WrappingMode {
     None,
     Character,
     Word
+}
+
+/**
+ * @hidden
+ * @internal
+ * Utility function that gets deduced [[HorizontalAlignment]] from [[HorizontalPlacement]].
+ */
+export function hAlignFromPlacement(hP: HorizontalPlacement): HorizontalAlignment {
+    return (hP as unknown) as HorizontalAlignment;
+}
+
+/**
+ * @hidden
+ * @internal
+ * Utility function that gets deduced [[VerticalAlignment]] from [[VerticalPlacement]].
+ */
+export function vAlignFromPlacement(vP: VerticalPlacement): VerticalAlignment {
+    return (vP as unknown) as VerticalAlignment;
 }
 
 /**
@@ -316,6 +362,7 @@ export interface TextLayoutParameters {
     wrappingMode?: WrappingMode;
     verticalAlignment?: VerticalAlignment;
     horizontalAlignment?: HorizontalAlignment;
+    placements?: TextPlacements;
 }
 
 /**
@@ -332,6 +379,12 @@ export class TextLayoutStyle {
      * @returns New `TextLayoutStyle`.
      */
     constructor(params: TextLayoutParameters = {}) {
+        // Solve alignment and placement dependencies and fallbacks.
+        const { horizontalAlignment, verticalAlignment, placements } = resolvePlacementAndAlignment(
+            params.horizontalAlignment,
+            params.verticalAlignment,
+            params.placements
+        );
         this.m_params = {
             tracking:
                 params.tracking !== undefined ? params.tracking : DefaultTextStyle.DEFAULT_TRACKING,
@@ -357,14 +410,9 @@ export class TextLayoutStyle {
                 params.wrappingMode !== undefined
                     ? params.wrappingMode
                     : DefaultTextStyle.DEFAULT_WRAPPING_MODE,
-            verticalAlignment:
-                params.verticalAlignment !== undefined
-                    ? params.verticalAlignment
-                    : DefaultTextStyle.DEFAULT_VERTICAL_ALIGNMENT,
-            horizontalAlignment:
-                params.horizontalAlignment !== undefined
-                    ? params.horizontalAlignment
-                    : DefaultTextStyle.DEFAULT_HORIZONTAL_ALIGNMENT
+            verticalAlignment,
+            horizontalAlignment,
+            placements
         };
     }
 
@@ -469,6 +517,17 @@ export class TextLayoutStyle {
     }
 
     /**
+     * Text placement options relative to label anchor (origin).
+     */
+    get placements(): TextPlacements {
+        return this.m_params.placements!;
+    }
+    set placements(value: TextPlacements) {
+        // Make a deep (one level) copy.
+        this.m_params.placements = value.map(v => ({ ...v }));
+    }
+
+    /**
      * Clone this [[TextLayoutStyle]].
      *
      * @param params Input [[TextLayoutParameters]].
@@ -490,4 +549,31 @@ export class TextLayoutStyle {
         this.params = { ...other.params };
         return this;
     }
+}
+
+function resolvePlacementAndAlignment(
+    hAlignment?: HorizontalAlignment,
+    vAlignment?: VerticalAlignment,
+    placementsOpt?: TextPlacements
+): {
+    horizontalAlignment: HorizontalAlignment;
+    verticalAlignment: VerticalAlignment;
+    placements: TextPlacements;
+} {
+    // Make a deep copy or create new array.
+    const placements: TextPlacements = placementsOpt?.map(v => ({ ...v })) ?? [];
+    // Override alignment attributes with placement (if defined) or provide default
+    // values if none of them is defined.
+    // NOTE: Alignment override may be removed if we decide to support both attributes.
+    const horizontalAlignment =
+        placements.length > 0
+            ? hAlignFromPlacement(placements[0].h)
+            : hAlignment ?? DefaultTextStyle.DEFAULT_HORIZONTAL_ALIGNMENT;
+
+    const verticalAlignment =
+        placements.length > 0
+            ? vAlignFromPlacement(placements[0].v)
+            : vAlignment ?? DefaultTextStyle.DEFAULT_VERTICAL_ALIGNMENT;
+
+    return { horizontalAlignment, verticalAlignment, placements };
 }

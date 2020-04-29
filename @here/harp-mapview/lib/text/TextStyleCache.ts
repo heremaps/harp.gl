@@ -7,8 +7,10 @@
 import {
     ColorUtils,
     getPropertyValue,
+    isPoiTechnique,
     LineMarkerTechnique,
     MapEnv,
+    PlacementToken,
     PoiTechnique,
     TextStyleDefinition,
     TextTechnique,
@@ -19,13 +21,19 @@ import {
     FontStyle,
     FontUnit,
     FontVariant,
+    hAlignFromPlacement,
     HorizontalAlignment,
+    HorizontalPlacement,
     TextCanvas,
     TextLayoutParameters,
     TextLayoutStyle,
+    TextPlacement,
+    TextPlacements,
     TextRenderParameters,
     TextRenderStyle,
+    vAlignFromPlacement,
     VerticalAlignment,
+    VerticalPlacement,
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
@@ -49,9 +57,13 @@ const defaultTextRenderStyle = new TextRenderStyle({
     backgroundOpacity: 0.5
 });
 
+// By default text layout provides no options for placement, but single alignment.
 const defaultTextLayoutStyle = new TextLayoutStyle({
+    // TODO: Verify why default TextStyleCache layout style has different
+    // alignment settings then defaults in TextStyle.
     verticalAlignment: VerticalAlignment.Center,
-    horizontalAlignment: HorizontalAlignment.Center
+    horizontalAlignment: HorizontalAlignment.Center,
+    placements: []
 });
 
 const DEFAULT_STYLE_NAME = "default";
@@ -317,7 +329,7 @@ export class TextStyleCache {
     }
 
     /**
-     * Create the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
+     * Create the appropriate [[TextLayoutStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
      * @param tile The [[Tile]] to process.
@@ -334,25 +346,28 @@ export class TextStyleCache {
 
         const defaultLayoutParams = this.m_defaultStyle.layoutParams;
 
-        const hAlignment = getPropertyValue(technique.hAlignment, discreteZoomEnv) as
-            | string
-            | undefined;
-        const vAlignment = getPropertyValue(technique.vAlignment, discreteZoomEnv) as
-            | string
-            | undefined;
-        const wrapping = getPropertyValue(technique.wrappingMode, discreteZoomEnv) as
-            | string
-            | undefined;
+        const hAlignment = getPropertyValue(technique.hAlignment, discreteZoomEnv) as string | null;
+        const vAlignment = getPropertyValue(technique.vAlignment, discreteZoomEnv) as string | null;
 
-        const horizontalAlignment: HorizontalAlignment | undefined =
-            hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
-                ? HorizontalAlignment[hAlignment]
-                : defaultLayoutParams.horizontalAlignment;
+        // Text alternative placements are currently supported only for PoiTechnique.
+        const textPlacements = isPoiTechnique(technique)
+            ? (getPropertyValue((technique as PoiTechnique).placements, discreteZoomEnv) as
+                  | string
+                  | null)
+            : null;
 
-        const verticalAlignment: VerticalAlignment | undefined =
-            vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
-                ? VerticalAlignment[vAlignment]
-                : defaultLayoutParams.verticalAlignment;
+        const { horizontalAlignment, verticalAlignment, placements } = parseAlignmentAndPlacements(
+            hAlignment,
+            vAlignment,
+            textPlacements
+        );
+
+        const wrapping = getPropertyValue(technique.wrappingMode, discreteZoomEnv) as string | null;
+
+        const wrappingMode =
+            wrapping === "None" || wrapping === "Character" || wrapping === "Word"
+                ? WrappingMode[wrapping]
+                : defaultLayoutParams.wrappingMode;
 
         const layoutParams = {
             tracking:
@@ -372,12 +387,10 @@ export class TextStyleCache {
             lineRotation:
                 getPropertyValue(technique.lineRotation, discreteZoomEnv) ??
                 defaultLayoutParams.lineRotation,
-            wrappingMode:
-                wrapping === "None" || wrapping === "Character" || wrapping === "Word"
-                    ? WrappingMode[wrapping]
-                    : defaultLayoutParams.wrappingMode,
+            wrappingMode,
             horizontalAlignment,
-            verticalAlignment
+            verticalAlignment,
+            placements
         };
 
         const themeLayoutParams = this.getTextElementStyle(technique.style);
@@ -393,6 +406,11 @@ export class TextStyleCache {
         style: TextStyleDefinition,
         styleName: string
     ): TextElementStyle {
+        const { horizontalAlignment, verticalAlignment, placements } = parseAlignmentAndPlacements(
+            style.hAlignment,
+            style.vAlignment,
+            style.placements
+        );
         return {
             name: styleName,
             fontCatalog: getOptionValue(style.fontCatalogName, this.m_defaultStyle.fontCatalog),
@@ -441,19 +459,123 @@ export class TextStyleCache {
                     style.wrappingMode === "Word"
                         ? WrappingMode[style.wrappingMode]
                         : WrappingMode.Word,
-                verticalAlignment:
-                    style.vAlignment === "Above" ||
-                    style.vAlignment === "Center" ||
-                    style.vAlignment === "Below"
-                        ? VerticalAlignment[style.vAlignment]
-                        : VerticalAlignment.Center,
-                horizontalAlignment:
-                    style.hAlignment === "Left" ||
-                    style.hAlignment === "Center" ||
-                    style.hAlignment === "Right"
-                        ? HorizontalAlignment[style.hAlignment]
-                        : HorizontalAlignment.Center
+                verticalAlignment,
+                horizontalAlignment,
+                placements
             }
         };
     }
+}
+
+function parseAlignmentAndPlacements(
+    hAlignment: string | null | undefined,
+    vAlignment: string | null | undefined,
+    placementsTokens: string | null | undefined
+): {
+    horizontalAlignment: HorizontalAlignment;
+    verticalAlignment: VerticalAlignment;
+    placements: TextPlacements;
+} {
+    // Currently supported only for PoiTechnique.
+    const placements: TextPlacements = placementsTokens
+        ? parseTechniquePlacements(placementsTokens)
+        : [];
+
+    // Ignore alignment attributes when placements attributes are defined or provide default
+    // values if none of them are defined.
+    // NOTE: Alignment ignore may be removed if we decide to support both attributes separately.
+    const horizontalAlignment =
+        placements.length > 0
+            ? hAlignFromPlacement(placements[0].h)
+            : parseTechniqueHAlignValue(hAlignment);
+
+    const verticalAlignment =
+        placements.length > 0
+            ? vAlignFromPlacement(placements[0].v)
+            : parseTechniqueVAlignValue(vAlignment);
+
+    return { horizontalAlignment, verticalAlignment, placements };
+}
+
+function parseTechniqueHAlignValue(hAlignment: string | undefined | null): HorizontalAlignment {
+    return hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
+        ? HorizontalAlignment[hAlignment]
+        : defaultTextLayoutStyle.horizontalAlignment;
+}
+
+function parseTechniqueVAlignValue(vAlignment: string | undefined | null): VerticalAlignment {
+    return vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
+        ? VerticalAlignment[vAlignment]
+        : defaultTextLayoutStyle.verticalAlignment;
+}
+
+function parseTechniquePlacements(placementsString: string | undefined | null): TextPlacements {
+    // Parse placement properties if available.
+    const placements: TextPlacements = [];
+    const placementsTokens = placementsString
+        ? placementsString!
+              .toUpperCase()
+              .replace(" ", "")
+              .split(",")
+        : [];
+    placementsTokens.forEach(p => {
+        const val = parseTechniquePlacementValue(p);
+        if (val !== undefined) {
+            placements.push(val);
+        }
+    });
+    return placements;
+}
+
+function parseTechniquePlacementValue(p: string): TextPlacement | undefined {
+    // May be only literal of single or two characters.
+    if (p.length < 1 || p.length > 2) {
+        return undefined;
+    }
+    // If no value is specified for vertical/horizontal placement it is by default center.
+    const textPlacement: TextPlacement = {
+        h: HorizontalPlacement.Center,
+        v: VerticalPlacement.Center
+    };
+    // Firstly try to find vertical placement.
+    let modifier = p.charAt(0);
+    let found: boolean = true;
+    switch (modifier) {
+        // Top / north
+        case PlacementToken.TopCenter:
+        case PlacementToken.North:
+            textPlacement.v = VerticalPlacement.Top;
+            break;
+        // Bottom / south
+        case PlacementToken.BottomCenter:
+        case PlacementToken.South:
+            textPlacement.v = VerticalPlacement.Bottom;
+            break;
+        default:
+            found = false;
+            if (p.length === 2) {
+                // For 2 characters tag both vertical/horizontal should be defined.
+                return undefined;
+            }
+    }
+    if (found && p.length === 1) {
+        return textPlacement;
+    }
+    modifier = p.length === 1 ? p.charAt(0) : p.charAt(1);
+    switch (modifier) {
+        // Right / east
+        case PlacementToken.CenterRight:
+        case PlacementToken.East:
+            textPlacement.h = HorizontalPlacement.Right;
+            break;
+        // Left / west
+        case PlacementToken.CenterLeft:
+        case PlacementToken.West:
+            textPlacement.h = HorizontalPlacement.Left;
+            break;
+        default:
+            // Either for single character or multi-char tag, we must surrender.
+            return undefined;
+    }
+    return textPlacement;
 }
