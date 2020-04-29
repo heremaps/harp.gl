@@ -113,11 +113,14 @@ void main() {
     // Calculate the vertex position inside the line (segment) and extrusion direction and factor.
     float linePos = mix(segment.x, segment.y, segmentPos);
     vec2 extrusionDir = sign(extrusionCoord.xy);
-    float extrusionFactor = extrusionDir.y * tan(bitangent.w / 2.0);
+    // Precompute to avoid computing multiple times
+    float tanHalfAngle = tan(bitangent.w / 2.0);
+    float extrusionFactor = extrusionDir.y * tanHalfAngle;
 
     // Calculate the extruded vertex position (and scale the extrusion direction).
     vec3 pos = extrudeLine(
-        position, linePos, extrusionWidth + outlineWidth, bitangent, tangent, extrusionDir);
+        position, linePos, extrusionWidth + outlineWidth, bitangent, tangent, tanHalfAngle,
+        extrusionDir);
 
     // Store the normalized extrusion coordinates in vCoords (with their ranges in vRange).
     vRange = vec3(extrusionCoord.z, extrusionWidth, extrusionFactor);
@@ -146,7 +149,7 @@ void main() {
     // Note, we need to take the angle into consideration, so we use trigonometry to calculate how
     // much we need to extend the offset. Note, orthough this looks complicated we are doing this
     // in the vertex shader, so it should not cause a performance issue.
-    pos += bitangent.xyz * offset * sqrt(1.0 + pow(abs(tan(bitangent.w / 2.0)), 2.0));
+    pos += bitangent.xyz * offset * sqrt(1.0 + pow(abs(tanHalfAngle), 2.0));
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
