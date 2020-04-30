@@ -6,7 +6,13 @@
 
 import * as THREE from "three";
 
-import { Definitions, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import {
+    Definitions,
+    StandardGeometryKind,
+    StyleSet,
+    Technique,
+    Theme
+} from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
@@ -19,6 +25,7 @@ import {
 
 import { DataSource, DataSourceOptions } from "./DataSource";
 import { createMaterial } from "./DecodedTileHelpers";
+import { MapObjectAdapter } from "./MapObjectAdapter";
 import { Tile } from "./Tile";
 
 export interface PolarTileDataSourceOptions extends DataSourceOptions {
@@ -35,6 +42,11 @@ export interface PolarTileDataSourceOptions extends DataSourceOptions {
     debugTiles?: boolean;
 }
 
+interface TechniqueEntry {
+    technique: Technique;
+    material: THREE.Material;
+}
+
 /**
  * [[DataSource]] providing geometry for poles
  */
@@ -45,8 +57,8 @@ export class PolarTileDataSource extends DataSource {
     private m_debugTiles: boolean;
 
     private m_styleSetEvaluator?: StyleSetEvaluator;
-    private m_northPoleMaterial?: THREE.Material;
-    private m_southPoleMaterial?: THREE.Material;
+    private m_northPoleEntry?: TechniqueEntry;
+    private m_southPoleEntry?: TechniqueEntry;
 
     constructor({
         name = "polar",
@@ -76,31 +88,39 @@ export class PolarTileDataSource extends DataSource {
 
     /** @override */
     dispose() {
-        if (this.m_northPoleMaterial) {
-            this.m_northPoleMaterial.dispose();
-            delete this.m_northPoleMaterial;
+        if (this.m_northPoleEntry) {
+            this.m_northPoleEntry.material.dispose();
+            delete this.m_northPoleEntry;
         }
-        if (this.m_southPoleMaterial) {
-            this.m_southPoleMaterial.dispose();
-            delete this.m_southPoleMaterial;
+        if (this.m_southPoleEntry) {
+            this.m_southPoleEntry.material.dispose();
+            delete this.m_southPoleEntry;
         }
         if (this.m_styleSetEvaluator) {
             delete this.m_styleSetEvaluator;
         }
     }
 
-    createMaterial(kind: string, styleSetEvaluator: StyleSetEvaluator): THREE.Material | undefined {
+    createTechiqueEntry(kind: string): TechniqueEntry | undefined {
+        if (!this.m_styleSetEvaluator) {
+            return undefined;
+        }
         const env = new MapEnv({
             $geometryType: "polygon",
             $layer: "earth",
             kind
         });
+        const techniques = this.m_styleSetEvaluator.getMatchingTechniques(env);
 
-        const techniques = styleSetEvaluator.getMatchingTechniques(env);
-
-        return techniques.length !== 0
-            ? createMaterial({ technique: techniques[0], env: this.mapView.env })
-            : undefined;
+        if (techniques.length === 0) {
+            return undefined;
+        }
+        const technique = techniques[0];
+        const material = createMaterial({ technique, env: this.mapView.env });
+        if (!material) {
+            return undefined;
+        }
+        return { material, technique };
     }
 
     /** @override */
@@ -110,8 +130,8 @@ export class PolarTileDataSource extends DataSource {
         if (styleSet !== undefined) {
             this.m_styleSetEvaluator = new StyleSetEvaluator(styleSet, definitions);
 
-            this.m_northPoleMaterial = this.createMaterial("north_pole", this.m_styleSetEvaluator);
-            this.m_southPoleMaterial = this.createMaterial("south_pole", this.m_styleSetEvaluator);
+            this.m_northPoleEntry = this.createTechiqueEntry("north_pole");
+            this.m_southPoleEntry = this.createTechiqueEntry("south_pole");
         }
 
         this.mapView.markTilesDirty(this);
@@ -194,8 +214,8 @@ export class PolarTileDataSource extends DataSource {
         const { north, south } = tile.geoBox;
 
         const isNorthPole = north > 0 && south >= 0;
-        const material = isNorthPole ? this.m_northPoleMaterial : this.m_southPoleMaterial;
-        if (material === undefined) {
+        const techniqueEntry = isNorthPole ? this.m_northPoleEntry : this.m_southPoleEntry;
+        if (techniqueEntry === undefined) {
             tile.forceHasGeometry(true);
             return;
         }
@@ -325,7 +345,7 @@ export class PolarTileDataSource extends DataSource {
         geometry.fromGeometry(g);
         g.dispose();
 
-        const mesh = new THREE.Mesh(geometry, material);
+        const mesh = new THREE.Mesh(geometry, techniqueEntry.material);
         mesh.userData = {
             dataSource: this.name,
             tileKey: tile.tileKey
@@ -339,6 +359,11 @@ export class PolarTileDataSource extends DataSource {
                 new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color, wireframe: true }))
             );
         }
+
+        MapObjectAdapter.create(mesh, {
+            technique: techniqueEntry.technique,
+            kind: [isNorthPole ? StandardGeometryKind.Water : StandardGeometryKind.Background]
+        });
 
         tile.objects.push(mesh);
     }

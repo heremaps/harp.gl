@@ -661,7 +661,7 @@ describe("MapView", function() {
             }
         }
     });
-    it("updates scene objects using & skips transparent", async function() {
+    it("updates scene materials, objects & skips transparent ones", async function() {
         if (inNodeContext) {
             let time = 0;
             global.requestAnimationFrame = (callback: FrameRequestCallback) => {
