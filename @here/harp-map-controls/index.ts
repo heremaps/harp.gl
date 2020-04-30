@@ -17,3 +17,5 @@ export * from "./lib/MapControlsUI";
 export * from "./lib/LongPressHandler";
 export * from "./lib/Utils";
 export * from "./lib/MapAnimations";
+export * from "./lib/CameraKeyTrackAnimation";
+export * from "./lib/CameraAnimationBuilder";
