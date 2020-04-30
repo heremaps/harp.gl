@@ -110,31 +110,42 @@ export namespace MapViewUtils {
      * position after the zoom.
      *
      * @param mapView Instance of MapView.
-     * @param targetPositionOnScreenXinNDC Target x position in NDC space.
-     * @param targetPositionOnScreenYinNDC Target y position in NDC space.
+     * @param targetNDCx Target x position in NDC space.
+     * @param targetNDCy Target y position in NDC space.
      * @param zoomLevel The desired zoom level.
      * @param maxTiltAngle The maximum tilt angle to comply by, in globe projection, in radian.
      */
     export function zoomOnTargetPosition(
         mapView: MapView,
-        targetPositionOnScreenXinNDC: number,
-        targetPositionOnScreenYinNDC: number,
+        targetNDCx: number,
+        targetNDCy: number,
         zoomLevel: number,
         maxTiltAngle: number = maxTiltAngleAllowed
     ): void {
+        const { elevationProvider, camera } = mapView;
+
+        // Use for now elevation at camera position. See getTargetAndDistance.
+        const elevation = elevationProvider
+            ? elevationProvider.getHeight(
+                  mapView.projection.unprojectPoint(camera.position),
+                  TERRAIN_ZOOM_LEVEL
+              )
+            : undefined;
+
         // Get current target position in world space before we zoom.
-        const targetPosition = rayCastWorldCoordinates(
-            mapView,
-            targetPositionOnScreenXinNDC,
-            targetPositionOnScreenYinNDC
-        );
+        const worldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
+        if (!worldTarget) {
+            return;
+        }
+
         const groundDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
+        const cameraHeight = groundDistance + (elevation ?? 0);
 
         // Set the cameras height according to the given zoom level.
         if (mapView.projection.type === ProjectionType.Planar) {
-            mapView.camera.position.setZ(groundDistance);
+            camera.position.setZ(cameraHeight);
         } else if (mapView.projection.type === ProjectionType.Spherical) {
-            mapView.camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + groundDistance);
+            camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + cameraHeight);
         }
 
         // In sphere, we may have to also orbit the camera around the position located at the
@@ -144,7 +155,7 @@ export namespace MapViewUtils {
             // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
             // changes.
             // tslint:disable-next-line: deprecation
-            const tilt = extractCameraTilt(mapView.camera, mapView.projection);
+            const tilt = extractCameraTilt(camera, mapView.projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
                 orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
@@ -152,23 +163,18 @@ export namespace MapViewUtils {
         }
 
         // Get new target position after the zoom
-        const newTargetPosition = rayCastWorldCoordinates(
-            mapView,
-            targetPositionOnScreenXinNDC,
-            targetPositionOnScreenYinNDC
-        );
-
-        if (!targetPosition || !newTargetPosition) {
+        const newWorldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
+        if (!newWorldTarget) {
             return;
         }
 
         if (mapView.projection.type === ProjectionType.Planar) {
             // Calculate the difference and pan the map to maintain the map relative to the target
             // position.
-            targetPosition.sub(newTargetPosition);
-            panCameraAboveFlatMap(mapView, targetPosition.x, targetPosition.y);
+            worldTarget.sub(newWorldTarget);
+            panCameraAboveFlatMap(mapView, worldTarget.x, worldTarget.y);
         } else if (mapView.projection.type === ProjectionType.Spherical) {
-            panCameraAroundGlobe(mapView, targetPosition, newTargetPosition);
+            panCameraAroundGlobe(mapView, worldTarget, newWorldTarget);
         }
     }
 
@@ -310,14 +316,19 @@ export namespace MapViewUtils {
         //       This leads to zoomlevel changes while panning. We have to find a proper solution
         //       for terrain (e.g. raycast with the ground surfcae that is elevated by the average
         //       elevation in the scene)
-        const terrainEnabled = elevationProvider !== undefined;
+        const elevation = elevationProvider
+            ? elevationProvider.getHeight(
+                  projection.unprojectPoint(camera.position),
+                  TERRAIN_ZOOM_LEVEL
+              )
+            : undefined;
 
         // Even for a tilt of 90° raycastTargetFromCamera is returning some point almost at
         // infinity.
         const target =
-            !terrainEnabled && cameraPitch < MAX_TILT_RAD
+            cameraPitch < MAX_TILT_RAD
                 ? // tslint:disable-next-line: deprecation
-                  getWorldTargetFromCamera(camera, projection)
+                  getWorldTargetFromCamera(camera, projection, elevation)
                 : null;
         if (target !== null) {
             const distance = camera.position.distanceTo(target);
@@ -342,7 +353,6 @@ export namespace MapViewUtils {
                           Math.pow(cameraPosZ + EarthConstants.EQUATORIAL_RADIUS, 2) -
                               Math.pow(EarthConstants.EQUATORIAL_RADIUS, 2)
                       );
-
             const cameraDir = camera.getWorldDirection(cache.vector3[0]);
             cameraDir.multiplyScalar(distance);
             const fallbackTarget = cache.vector3[1];
