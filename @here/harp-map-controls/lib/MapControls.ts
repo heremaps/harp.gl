@@ -707,6 +707,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private handleZoom() {
+        let resetZoomState = false;
         if (this.m_zoomDeltaRequested !== 0) {
             this.m_targetedZoom = Math.max(
                 Math.min(this.zoomLevelTargeted + this.m_zoomDeltaRequested, this.maxZoomLevel),
@@ -727,10 +728,8 @@ export class MapControls extends THREE.EventDispatcher {
                     this.m_needsRenderLastFrame = false;
                     this.m_zoomAnimationTime = this.zoomInertiaDampingDuration;
 
-                    this.m_targetedZoom = undefined;
-                    this.m_currentZoom = undefined;
+                    resetZoomState = true;
                     this.stopZoom();
-                    return;
                 }
             } else {
                 this.m_needsRenderLastFrame = true;
@@ -754,6 +753,10 @@ export class MapControls extends THREE.EventDispatcher {
             this.m_maxTiltAngle
         );
 
+        if (resetZoomState) {
+            this.m_targetedZoom = undefined;
+            this.m_currentZoom = undefined;
+        }
         this.updateMapView();
     }
 
