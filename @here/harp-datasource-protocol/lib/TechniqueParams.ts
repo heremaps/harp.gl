@@ -984,6 +984,10 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Size of a gap between lines in meters for different zoom levels.
      */
     gapSize?: DynamicProperty<StyleLength>;
+    /**
+     * Size in world units how far to offset the line perpendicular to its direction.
+     */
+    offset?: number;
 }
 
 /**
