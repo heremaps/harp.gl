@@ -133,10 +133,6 @@ export namespace MapViewUtils {
 
         // Get current target position in world space before we zoom.
         const worldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
-        if (!worldTarget) {
-            return;
-        }
-
         const groundDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
         const cameraHeight = groundDistance + (elevation ?? 0);
 
@@ -163,7 +159,7 @@ export namespace MapViewUtils {
 
         // Get new target position after the zoom
         const newWorldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
-        if (!newWorldTarget) {
+        if (!worldTarget || !newWorldTarget) {
             return;
         }
 
