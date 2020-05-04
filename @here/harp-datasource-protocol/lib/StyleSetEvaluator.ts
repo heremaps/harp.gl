@@ -886,12 +886,7 @@ export class StyleSetEvaluator {
 
         if (style._dynamicForwardedAttributes !== undefined) {
             for (const [attrName, attrValue] of style._dynamicForwardedAttributes) {
-                // tslint:disable-next-line: prefer-conditional-expression
-                if (Expr.isExpr(attrValue)) {
-                    technique[attrName] = attrValue.toJSON();
-                } else {
-                    technique[attrName] = attrValue;
-                }
+                technique[attrName] = attrValue;
             }
         }
 
