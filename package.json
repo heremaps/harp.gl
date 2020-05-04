@@ -24,7 +24,7 @@
         "hard-source-webpack-plugin": "^0.13.1",
         "mkpath": "^1.0.0",
         "mocha": "^7.1.1",
-        "mocha-webdriver-runner": "^0.5.3",
+        "mocha-webdriver-runner": "^0.6.2",
         "node-fetch": "^2.2.0",
         "nyc": "^14.1.1",
         "prettier": "^1.19.1",
