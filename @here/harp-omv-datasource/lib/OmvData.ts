@@ -573,7 +573,10 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
                 } else if (isLineToCommand(command)) {
                     currentRing.push(command.position);
                 } else if (isClosePathCommand(command)) {
-                    currentPolygon.rings.push(currentRing);
+                    if (currentRing !== undefined && currentRing.length > 0) {
+                        currentRing.push(currentRing[0].clone());
+                        currentPolygon.rings.push(currentRing);
+                    }
                 }
             }
         });
