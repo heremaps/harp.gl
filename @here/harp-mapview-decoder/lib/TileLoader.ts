@@ -218,7 +218,7 @@ export class TileLoader {
             }
         }
         // Object is empty
-        if ((payload as {}) === {}) {
+        if (payload.constructor === Object && Object.keys(payload).length === 0) {
             this.onDone(TileLoaderState.Ready);
             return;
         }

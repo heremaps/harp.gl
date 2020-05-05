@@ -18,6 +18,7 @@ import {
 import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/harp-mapview";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
+import * as sinon from "sinon";
 chai.use(chaiAsPromised);
 const { expect } = chai;
 import { LoggerManager } from "@here/harp-utils";
@@ -39,7 +40,9 @@ class MockDataSource extends DataSource {
 }
 
 class MockDataProvider implements DataProvider {
-    constructor(public failsRequests: boolean = false, public emptyPayload: boolean = false) {}
+    constructor() {
+        // empty implementation
+    }
 
     async connect() {
         // empty implementation
@@ -49,13 +52,7 @@ class MockDataProvider implements DataProvider {
         return true;
     }
 
-    async getTile(): Promise<ArrayBuffer> {
-        if (this.failsRequests) {
-            return Promise.reject(new Error("No connection."));
-        } else if (this.emptyPayload) {
-            return Promise.resolve(new ArrayBuffer(0));
-        }
-
+    async getTile(): Promise<ArrayBufferLike | {}> {
         return Promise.resolve(new ArrayBuffer(5));
     }
 }
@@ -113,12 +110,10 @@ describe("TileLoader", function() {
         mapView = createMockMapView();
         dataSource = new MockDataSource();
         dataSource.attach(mapView);
-        dataProvider = new MockDataProvider(true);
     });
 
     beforeEach(function() {
-        dataProvider.failsRequests = false;
-        dataProvider.emptyPayload = false;
+        dataProvider = new MockDataProvider();
     });
 
     describe("loadAndDecode()", function() {
@@ -157,26 +152,24 @@ describe("TileLoader", function() {
         });
 
         it("should handle empty payloads", function() {
-            const tileLoader = new TileLoader(
-                dataSource,
-                tileKey,
-                dataProvider,
-                new MockTileDecoder(),
-                0
-            );
+            const tileDecoder = new MockTileDecoder();
+            const decodeTileSpy = sinon.spy(tileDecoder, "decodeTile");
+            const tileLoader = new TileLoader(dataSource, tileKey, dataProvider, tileDecoder, 0);
 
-            dataProvider.emptyPayload = true;
+            const getTileStub = sinon.stub(dataProvider, "getTile").resolves(new ArrayBuffer(0));
             let loadPromise = tileLoader.loadAndDecode();
             expect(loadPromise).to.not.be.undefined;
 
             return expect(loadPromise).to.eventually.be.fulfilled.then(() => {
                 expect(tileLoader.state).to.equal(TileLoaderState.Ready);
-
-                dataProvider.emptyPayload = false;
+                expect(decodeTileSpy.notCalled).to.be.true;
+                getTileStub.resolves({});
                 loadPromise = tileLoader.loadAndDecode();
                 expect(loadPromise).to.not.be.undefined;
 
-                return expect(loadPromise).to.eventually.be.fulfilled;
+                return expect(loadPromise).to.eventually.be.fulfilled.then(() => {
+                    expect(decodeTileSpy.notCalled).to.be.true;
+                });
             });
         });
 
@@ -200,15 +193,17 @@ describe("TileLoader", function() {
                 // This test writes an error to the console, so we disable it.
                 LoggerManager.instance.update("TileLoader", { enabled: false });
 
-                dataProvider.failsRequests = true;
+                const getTileStub = sinon
+                    .stub(dataProvider, "getTile")
+                    .rejects(new Error("No connection."));
                 const loadPromise = tileLoader.loadAndDecode();
                 expect(loadPromise).to.not.be.undefined;
 
                 // Chai.PromisedAssertion doesn't have .finally unfortunately.
                 return expect(loadPromise).to.eventually.be.rejected.then(() => {
                     expect(tileLoader.state).to.equal(TileLoaderState.Failed);
-                    dataProvider.failsRequests = false;
 
+                    getTileStub.restore();
                     // tslint:disable-next-line: no-shadowed-variable
                     const loadPromise = tileLoader.loadAndDecode();
                     expect(loadPromise).to.not.be.undefined;
