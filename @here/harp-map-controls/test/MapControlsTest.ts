@@ -203,7 +203,6 @@ describe("MapControls", function() {
                     });
 
                     it(`zl is applied even if target is not valid (pitch ${pitch})`, function() {
-                        this.timeout(0);
                         const eps = 1e-5;
 
                         resetCamera(pitch, 3);
