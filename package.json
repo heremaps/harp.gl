@@ -12,7 +12,7 @@
         "@ismarslomic/mermaid.cli": "^0.5.3",
         "@strictsoftware/typedoc-plugin-monorepo": "^0.3.1",
         "@types/chai": "^4.2.2",
-        "@types/express": "^4.17.2",
+        "@types/express": "^4.17.6",
         "@types/fs-extra": "^8.0.0",
         "chai": "^4.2.0",
         "chromedriver": "^80.0.0",
