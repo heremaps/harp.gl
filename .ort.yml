@@ -6,9 +6,6 @@ excludes:
   - pattern: "@here/*/test/**"
     reason: "TEST_OF"
     comment: "Directory is only used for testing. Not included in released artifacts."
-  - pattern: "@here/harp-test-utils/**"
-    reason: "TEST_OF"
-    comment: "Directory is only used for testing. Not included in released artifacts."
   scopes:
   - name: "devDependencies"
     reason: "DEV_DEPENDENCY_OF"
