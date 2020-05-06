@@ -221,6 +221,7 @@ describe("PolarTileDataSource", function() {
         });
 
         it("Geometry should not exceed pole radius", function() {
+            this.timeout(4000);
             const EPSILON = 1e-5;
             const minLevel = 1; // at zoomLevel 0 there's no hole at the poles
             const maxLevel = 8;

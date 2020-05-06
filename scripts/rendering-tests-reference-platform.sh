@@ -30,6 +30,5 @@ npx ts-node -- ./scripts/with-http-server.ts \
     -- \
     ./scripts/with-docker-selenium.sh --image $REFERENCE_IMAGE \
         npx mocha-webdriver-runner \
-            -C browserName=chrome \
-            -C goog:chromeOptions.args='["--headless", "--disable-gpu=true", "--no-sandbox", "--disable-dev-shm-usage", "--window-size=1280,800"]' \
+            --config ./test/rendering/chrome-headless-softgl.json \
             http://$testAppHost:7777/rendering.html

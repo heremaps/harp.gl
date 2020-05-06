@@ -1,0 +1,14 @@
+{
+    "capabilities": {
+        "browserName": "chrome",
+        "goog:chromeOptions": {
+            "args": [
+                "--headless",
+                "--disable-gpu=true",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--window-size=1280,800"
+            ]
+        }
+    }
+}

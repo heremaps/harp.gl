@@ -13,12 +13,149 @@ env:
   browserTestTimeout: 8000
 
 jobs:
-  test:
-    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+  build:
+    name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node_version: [10, 11, 12]
+        node_version: [14]
+        os: [ubuntu-latest]
+
+    steps:
+    - name: Reset git settings (Windows)
+      # Global git config on windows has autocrlf enabled.
+      # This breaks lot of checks, including tslint.
+      run: git config --global core.autocrlf false
+      if: matrix.os == 'windows-latest'
+
+    - uses: actions/checkout@v1
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v1
+      name: Yarn cache
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - uses: actions/cache@v1
+      name: hard-source-webpack-plugin cache
+      id: hard-source-webpack-plugin-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: node_modules/.cache/hard-source
+        key: ${{ runner.os }}-${{ matrix.node_version }}--hard-source-webpack-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}--hard-source-webpack-
+
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node_version }}
+
+    - name: Install dependencies
+      run: yarn --frozen-lockfile
+
+    - name: Pretest
+      run: yarn run pre-test
+
+    - name: Build bundle
+      run: yarn run build-bundle
+
+    - name: Build examples
+      run: yarn run build-examples
+
+    - name: Build website
+      run: yarn run build-www
+
+    - name: Generate doc
+      run: yarn run typedoc
+
+    - name: Save Examples
+      uses: actions/upload-artifact@v2
+      with:
+        name: examples
+        path: dist/examples/
+
+    - name: Save Docs
+      uses: actions/upload-artifact@v2
+      with:
+        name: doc
+        path: dist/doc/
+
+    - name: Save Docs
+      uses: actions/upload-artifact@v2
+      with:
+        name: website
+        path: www/dist/
+
+  build-browser-tests:
+    name: Build tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [14]
+        os: [ubuntu-latest]
+
+    steps:
+    - name: Reset git settings (Windows)
+      # Global git config on windows has autocrlf enabled.
+      # This breaks lot of checks, including tslint.
+      run: git config --global core.autocrlf false
+      if: matrix.os == 'windows-latest'
+
+    - uses: actions/checkout@v1
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v1
+      name: Yarn cache
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - uses: actions/cache@v1
+      name: hard-source-webpack-plugin cache
+      id: hard-source-webpack-plugin-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: node_modules/.cache/hard-source
+        key: ${{ runner.os }}-${{ matrix.node_version }}--hard-source-webpack-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}--hard-source-webpack-
+
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node_version }}
+
+    - name: Install dependencies
+      run: yarn --frozen-lockfile
+
+    - name: Build test bundle
+      run: yarn run build-tests
+
+    - name: Save Tests
+      uses: actions/upload-artifact@v2
+      with:
+        name: tests
+        path: dist/test/
+
+  test-browsers:
+    name: Tests browsers @ ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: build-browser-tests
+    strategy:
+      matrix:
+        node_version: [14]
         os: [ubuntu-latest,macOS-latest,windows-latest]
 
     steps:
@@ -27,77 +164,142 @@ jobs:
       # This breaks lot of checks, including tslint.
       run: git config --global core.autocrlf false
       if: matrix.os == 'windows-latest'
+
     - uses: actions/checkout@v1
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v1
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Download test bundle from build job
+      uses: actions/download-artifact@v2
+      with:
+        name: tests
+        path: dist/test
+
     - name: Use Node.js ${{ matrix.node_version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
+
+    - name: Install dependencies
+      run: yarn --frozen-lockfile
+
+    - name: Tests on Chrome
+      run: yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
+      if: always()
+
+    - name: Tests on Firefox
+      run: yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
+      if: always()
+
+    - name: Tests on Safari
+      run: |
+        sudo safaridriver --enable
+        yarn test-browser --safari --timeout ${{ env.browserTestTimeout }}
+      if: always() && matrix.os == 'macOS-latest'
+
+    - name: Tests on Edge
+      run: yarn test-browser --edge -C ms:edgeChromium=true --timeout ${{ env.browserTestTimeout }}
+      if: always() && matrix.os == 'windows-latest'
+
+  test-node:
+    name: Test node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [10, 12, 14]
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          # Disabled tempoarily, see https://github.com/heremaps/harp.gl/pull/958
+          # NodeJS tests on windows are disabled due to problems with paths when resolving
+          # - windows-latest
+
+    steps:
+    - name: Reset git settings (Windows)
+      # Global git config on windows has autocrlf enabled.
+      # This breaks lot of checks, including tslint.
+      run: git config --global core.autocrlf false
+      if: matrix.os == 'windows-latest'
+
+    - uses: actions/checkout@v1
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v1
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node_version }}
+
+    - name: Install dependencies
+      run: yarn --frozen-lockfile
+
+    - name: Test on Node.js ${{ matrix.node_version }}
+      run: yarn cov-test --forbid-only --timeout ${{ env.nodeTestTimeout }}
+
+  test-rendering:
+    name: Rendering tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: build-browser-tests
+    strategy:
+      matrix:
+        node_version: [14]
+        os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v1
+      name: Yarn cache
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node_version }}
+
     - name: Install dependencies
       run: yarn
-    - name: Pretest
-      run: yarn run pre-test
-      shell: bash
-    - name: Test on Node.js
-      run: |
-        yarn cov-test --forbid-only --timeout ${{ env.nodeTestTimeout }}
-      shell: bash
-      if: matrix.os != 'windows-latest'
-    - name: Generate coverage report
-      run: |
-        yarn cov-report-html
-      shell: bash
-      if: matrix.os != 'windows-latest'
-    - name: Save Coverage Report (Linux)
-      uses: actions/upload-artifact@master
-      with:
-        name: coverage-report
-        path: coverage
-      if: matrix.os == 'ubuntu-latest'
-    - name: Build test bundle
-      run: |
-        set -ex
-        yarn run build-tests
-      shell: bash
-    - name: Tests on Chrome (Windows)
-      run: |
-        export PATH=`pwd`:$PATH
-        cp node_modules/chromedriver/lib/chromedriver/chromedriver.exe .
-        yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
-      shell: bash
-      if: matrix.os == 'windows-latest'
-    - name: Tests on Chrome (Linux)
-      run: |
-        set -ex
-        yarn
-        google-chrome --version
-        whereis google-chrome
-        yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
-      shell: bash
-      if: matrix.os == 'ubuntu-latest'
-    - name: Tests on Firefox (Windows)
-      run: |
-        export PATH=`pwd`:$PATH
-        cp node_modules/geckodriver/geckodriver.exe .
-        yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
-      if: matrix.os == 'windows-latest'
-      shell: bash
-    - name: Tests on Firefox (Linux)
-      run: |
-        set -ex
-        firefox --version
-        whereis firefox
-        yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
-      shell: bash
-      if: matrix.os == 'ubuntu-latest'
-    - name: Build examples
-      run: yarn run build-examples
-      shell: bash
-    - name: Build bundle
-      run: yarn run build-bundle
-      shell: bash
-    - name: Generate doc
-      run: yarn run typedoc
-      shell: bash
-      #  typedoc doesn't work on windows -> https://github.com/unstubbable/typedoc-plugin-monorepo/pull/1
-      if: matrix.os != 'windows-latest'
 
+    - name: Download test bundle from build job
+      uses: actions/download-artifact@v2
+      with:
+        name: tests
+        path: dist/test
+
+    - name: Rendering Tests local Chrome
+      run: ./scripts/rendering-tests-headless-chrome-local.sh
+
+    - name: Save Rendering test output images
+      uses: actions/upload-artifact@v2
+      with:
+        name: rendering-test-results
+        path: rendering-test-results/
