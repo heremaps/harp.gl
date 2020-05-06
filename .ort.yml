@@ -1,6 +1,15 @@
 excludes:
+  paths:
+  - pattern: "test/**"
+    reason: "TEST_OF"
+    comment: "Directory is only used for testing. Not included in released artifacts."
+  - pattern: "@here/*/test/**"
+    reason: "TEST_OF"
+    comment: "Directory is only used for testing. Not included in released artifacts."
+  - pattern: "@here/harp-test-utils/**"
+    reason: "TEST_OF"
+    comment: "Directory is only used for testing. Not included in released artifacts."
   scopes:
   - name: "devDependencies"
-    reason: "BUILD_TOOL_OF"
-    comment: "These are dependencies only used for development."
-
+    reason: "DEV_DEPENDENCY_OF"
+    comment: "Packages for development only. Not included in released artifacts."
