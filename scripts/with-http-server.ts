@@ -69,7 +69,7 @@ server.listen(port, () => {
     const cmdArgs = command;
     console.error(`with-http-server: Running ${cmdFile} ${cmdArgs.join(" ")}`);
     const child = child_process.spawn(cmdFile!, cmdArgs, {
-        shell: false,
+        shell: true,
         stdio: "inherit"
     });
 
