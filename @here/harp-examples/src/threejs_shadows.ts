@@ -114,6 +114,10 @@ const updateLight = () => {
     lightPos.setX(guiOptions.xpos);
     lightPos.setY(guiOptions.ypos);
     lightPos.setZ(guiOptions.zpos);
+    // Resetting the target is important, because this is overriden in the MapView
+    // This is an ugly hack and HARP-10353 should improve this.
+    const lightTargetPos = directionalLight!.target.position;
+    lightTargetPos.set(0, 0, -map.targetDistance);
     map.shadowsEnabled = guiOptions.enabled;
     if (
         (guiOptions.debugCamera && map.pointOfView === undefined) ||
