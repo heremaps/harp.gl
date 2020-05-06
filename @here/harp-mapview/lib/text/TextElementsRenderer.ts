@@ -1712,7 +1712,7 @@ export class TextElementsRenderer {
         renderParams: RenderParams
     ): boolean {
         const poiLabel = labelState.element;
-        const worldPosition = poiLabel.points as THREE.Vector3;
+        const worldPosition = poiLabel.position;
 
         // Only process labels frustum-clipped labels
         if (this.m_screenProjector.project(worldPosition, tempScreenPosition) === undefined) {
