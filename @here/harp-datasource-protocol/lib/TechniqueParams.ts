@@ -773,6 +773,12 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      * @note This attribute may override [[hAlignment]] and [[vAlignment]] if defined.
      */
     placements?: string;
+
+    /**
+     * World space offset in meters applied to the icon. Valid only for icons which have the
+     * "offset_direction" property as an attribute of the data.
+     */
+    worldOffset?: number;
 }
 
 export interface LineTechniqueParams extends BaseTechniqueParams {

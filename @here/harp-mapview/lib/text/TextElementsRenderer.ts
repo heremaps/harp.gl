@@ -3,7 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import {
+    getPropertyValue,
+    LineMarkerTechnique,
+    PoiTechnique,
+    Theme
+} from "@here/harp-datasource-protocol";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -24,7 +29,7 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { TileKey } from "@here/harp-geoutils";
+import { OrientedBox3, TileKey } from "@here/harp-geoutils";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { overlayTextElement } from "../geometry/overlayOnElevation";
@@ -316,6 +321,8 @@ export class TextElementsRenderer {
     private m_debugGlyphTextureCacheWireMesh?: THREE.LineSegments;
 
     private m_tmpVector = new THREE.Vector2();
+    private m_tmpVector3 = new THREE.Vector3();
+    private m_tmpOrientedBox = new OrientedBox3();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_forceNewLabelsPass: boolean = false;
@@ -1712,7 +1719,23 @@ export class TextElementsRenderer {
         renderParams: RenderParams
     ): boolean {
         const poiLabel = labelState.element;
-        const worldPosition = poiLabel.position;
+        const worldPosition = this.m_tmpVector3.copy(poiLabel.position);
+
+        const worldOffsetShift = getPropertyValue(
+            (poiLabel.poiInfo?.technique as PoiTechnique)?.worldOffset,
+            this.m_viewState.env
+        );
+        const offsetDirection = poiLabel.userData?.offset_direction;
+        if (worldOffsetShift !== null && offsetDirection !== undefined) {
+            const transform = this.m_tmpOrientedBox;
+            this.m_viewState.projection.localTangentSpace(worldPosition, transform);
+            const offsetDirectionVector = transform.yAxis;
+            const offsetDirectionRad = THREE.MathUtils.degToRad(offsetDirection);
+            // Negate to get the normal, i.e. the vector pointing to the sky.
+            offsetDirectionVector.applyAxisAngle(transform.zAxis.negate(), offsetDirectionRad);
+
+            worldPosition.addScaledVector(transform.yAxis, worldOffsetShift);
+        }
 
         // Only process labels frustum-clipped labels
         if (this.m_screenProjector.project(worldPosition, tempScreenPosition) === undefined) {

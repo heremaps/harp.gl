@@ -373,6 +373,7 @@ export class TextElement {
      *              label starts fading out (opacity decreases).
      * @param fadeFar Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label becomes transparent. A value of <= 0.0 disables fading.
+     * @param offsetDirection In which direction to offset.
      */
     constructor(
         readonly text: string,
@@ -386,7 +387,8 @@ export class TextElement {
         public style?: string,
         public fadeNear?: number,
         public fadeFar?: number,
-        readonly tileOffset?: number
+        readonly tileOffset?: number,
+        readonly offsetDirection?: number
     ) {
         if (renderParams instanceof TextRenderStyle) {
             this.renderStyle = renderParams;
