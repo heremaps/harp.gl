@@ -7,10 +7,17 @@
 import { Env, getPropertyValue } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import {
+    hAlignFromPlacement,
     HorizontalAlignment,
+    HorizontalPlacement,
+    hPlacementFromAlignment,
     MeasurementParameters,
     TextCanvas,
-    VerticalAlignment
+    TextPlacement,
+    vAlignFromPlacement,
+    VerticalAlignment,
+    VerticalPlacement,
+    vPlacementFromAlignment
 } from "@here/harp-text-canvas";
 import { assert, Math2D, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
@@ -18,7 +25,6 @@ import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { CollisionBox, DetailedCollisionBox, IBox, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
-import { AnchorPlacement } from "./LayoutState";
 import { RenderState } from "./RenderState";
 import { PoiInfo, poiIsRenderable, TextElement } from "./TextElement";
 import { TextElementState } from "./TextElementState";
@@ -124,28 +130,28 @@ export enum PrePlacementResult {
 
 /**
  * @hidden
- * Possible placement scenarios in counter clock-wise order, based on centered placements.
+ * Possible placement scenarios in clock-wise order, based on centered placements.
  *
  * TODO: HARP-6487 This array should be parsed from the theme style definition.
  */
-const anchorPlacementsCentered: AnchorPlacement[] = [
-    { h: HorizontalAlignment.Center, v: VerticalAlignment.Above },
-    { h: HorizontalAlignment.Left, v: VerticalAlignment.Center },
-    { h: HorizontalAlignment.Center, v: VerticalAlignment.Below },
-    { h: HorizontalAlignment.Right, v: VerticalAlignment.Center }
+const anchorPlacementsCentered: TextPlacement[] = [
+    { h: HorizontalPlacement.Center, v: VerticalPlacement.Top },
+    { h: HorizontalPlacement.Right, v: VerticalPlacement.Center },
+    { h: HorizontalPlacement.Center, v: VerticalPlacement.Bottom },
+    { h: HorizontalPlacement.Left, v: VerticalPlacement.Center }
 ];
 
 /**
  * @hidden
- * Placement anchors in counter clock-wise order, for corner based placements.
+ * Placement anchors in clock-wise order, for corner based placements.
  *
  * TODO: HARP-6487 This array should be parsed from the theme style definition.
  */
-const anchorPlacementsCornered: AnchorPlacement[] = [
-    { h: HorizontalAlignment.Left, v: VerticalAlignment.Above },
-    { h: HorizontalAlignment.Left, v: VerticalAlignment.Below },
-    { h: HorizontalAlignment.Right, v: VerticalAlignment.Below },
-    { h: HorizontalAlignment.Right, v: VerticalAlignment.Above }
+const anchorPlacementsCornered: TextPlacement[] = [
+    { h: HorizontalPlacement.Right, v: VerticalPlacement.Top },
+    { h: HorizontalPlacement.Right, v: VerticalPlacement.Bottom },
+    { h: HorizontalPlacement.Left, v: VerticalPlacement.Bottom },
+    { h: HorizontalPlacement.Left, v: VerticalPlacement.Top }
 ];
 
 const tmpPlacementPosition = new THREE.Vector3();
@@ -226,7 +232,7 @@ export function checkReadyForPlacement(
  */
 function computePointTextOffset(
     textElement: TextElement,
-    placement: AnchorPlacement,
+    placement: TextPlacement,
     scale: number,
     env: Env,
     offset: THREE.Vector2 = new THREE.Vector2()
@@ -239,10 +245,10 @@ function computePointTextOffset(
     offset.y = textElement.yOffset;
 
     switch (placement.v) {
-        case VerticalAlignment.Above:
+        case VerticalPlacement.Top:
             offset.y -= textElement.bounds!.min.y;
             break;
-        case VerticalAlignment.Center:
+        case VerticalPlacement.Center:
             offset.y -= 0.5 * (textElement.bounds!.max.y + textElement.bounds!.min.y);
             break;
     }
@@ -257,8 +263,8 @@ function computePointTextOffset(
 
         // Reverse, mirror or project offsets on different axis depending on the placement
         // required only for alternative placements.
-        const hAlign = textElement.layoutStyle!.horizontalAlignment;
-        const vAlign = textElement.layoutStyle!.verticalAlignment;
+        const hAlign = hPlacementFromAlignment(textElement.layoutStyle!.horizontalAlignment);
+        const vAlign = vPlacementFromAlignment(textElement.layoutStyle!.verticalAlignment);
         if (hAlign !== placement.h || vAlign !== placement.v) {
             // Read icon offset used.
             const technique = textElement.poiInfo.technique;
@@ -275,7 +281,7 @@ function computePointTextOffset(
             const relOffsetX = iconXOffset - textElement.xOffset;
             const relOffsetY = iconYOffset - textElement.yOffset;
             const centerBased =
-                hAlign === HorizontalAlignment.Center || vAlign === VerticalAlignment.Center;
+                hAlign === HorizontalPlacement.Center || vAlign === VerticalPlacement.Center;
             if (centerBased) {
                 // Center based alternative placements.
                 offset.x += 2 * Math.abs(hAlignDiff) * relOffsetX;
@@ -474,8 +480,8 @@ function placePointLabelChoosingAnchor(
     // simply begin from layout defined in theme.
     const lastPlacement = labelState.textPlacement;
     const placementCentered =
-        lastPlacement.h === HorizontalAlignment.Center ||
-        lastPlacement.v === VerticalAlignment.Center;
+        lastPlacement.h === HorizontalPlacement.Center ||
+        lastPlacement.v === VerticalPlacement.Center;
     // TODO: HARP-6487: Read placements options from label.layoutStyle.placements.
     const placements = placementCentered ? anchorPlacementsCentered : anchorPlacementsCornered;
     const placementsNum = placements.length;
@@ -621,7 +627,7 @@ function placePointLabelAtCurrentAnchor(
 function placePointLabelAtAnchor(
     labelState: TextElementState,
     screenPosition: THREE.Vector2,
-    placement: AnchorPlacement,
+    placement: TextPlacement,
     scale: number,
     textCanvas: TextCanvas,
     env: Env,
@@ -721,11 +727,11 @@ function placePointLabelAtAnchor(
  * @param textCanvas TextCanvas reference.
  * @param placement The text placement to be used.
  */
-function applyTextPlacement(textCanvas: TextCanvas, placement: AnchorPlacement) {
+function applyTextPlacement(textCanvas: TextCanvas, placement: TextPlacement) {
     // Setup TextCanvas layout settings of the new placement as it is required for further
     // TextBufferObject creation and measurements in addText().
-    textCanvas.textLayoutStyle.horizontalAlignment = placement.h;
-    textCanvas.textLayoutStyle.verticalAlignment = placement.v;
+    textCanvas.textLayoutStyle.horizontalAlignment = hAlignFromPlacement(placement.h);
+    textCanvas.textLayoutStyle.verticalAlignment = vAlignFromPlacement(placement.v);
 }
 
 /**

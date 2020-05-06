@@ -6,18 +6,15 @@
 
 import {
     DefaultTextStyle,
+    hAlignFromPlacement,
     HorizontalAlignment,
+    hPlacementFromAlignment,
     TextLayoutStyle,
-    VerticalAlignment
+    TextPlacement,
+    vAlignFromPlacement,
+    VerticalAlignment,
+    vPlacementFromAlignment
 } from "@here/harp-text-canvas";
-
-/**
- * Defines possible text placement relative to anchor.
- */
-export interface AnchorPlacement {
-    h: HorizontalAlignment;
-    v: VerticalAlignment;
-}
 
 /**
  * Layout state of the text part of the `TextElement`.
@@ -29,7 +26,7 @@ export class LayoutState {
     private m_hAlign = DefaultTextStyle.DEFAULT_HORIZONTAL_ALIGNMENT;
     private m_vAlign = DefaultTextStyle.DEFAULT_VERTICAL_ALIGNMENT;
 
-    constructor(placement: AnchorPlacement) {
+    constructor(placement: TextPlacement) {
         this.textPlacement = placement;
     }
     /**
@@ -37,9 +34,9 @@ export class LayoutState {
      *
      * @param placement The optional new anchor placement.
      */
-    set textPlacement(placement: AnchorPlacement) {
-        this.m_hAlign = placement.h;
-        this.m_vAlign = placement.v;
+    set textPlacement(placement: TextPlacement) {
+        this.m_hAlign = hAlignFromPlacement(placement.h);
+        this.m_vAlign = vAlignFromPlacement(placement.v);
     }
 
     /**
@@ -49,8 +46,11 @@ export class LayoutState {
      *
      * @returns The current anchor placement.
      */
-    get textPlacement(): AnchorPlacement {
-        return { h: this.m_hAlign, v: this.m_vAlign };
+    get textPlacement(): TextPlacement {
+        return {
+            h: hPlacementFromAlignment(this.m_hAlign),
+            v: vPlacementFromAlignment(this.m_vAlign)
+        };
     }
 
     /**

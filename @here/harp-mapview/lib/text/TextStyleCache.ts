@@ -542,12 +542,12 @@ function parseTechniquePlacementValue(p: string): TextPlacement | undefined {
     let found: boolean = true;
     switch (modifier) {
         // Top / north
-        case PlacementToken.TopCenter:
+        case PlacementToken.Top:
         case PlacementToken.North:
             textPlacement.v = VerticalPlacement.Top;
             break;
         // Bottom / south
-        case PlacementToken.BottomCenter:
+        case PlacementToken.Bottom:
         case PlacementToken.South:
             textPlacement.v = VerticalPlacement.Bottom;
             break;
@@ -564,12 +564,12 @@ function parseTechniquePlacementValue(p: string): TextPlacement | undefined {
     modifier = p.length === 1 ? p.charAt(0) : p.charAt(1);
     switch (modifier) {
         // Right / east
-        case PlacementToken.CenterRight:
+        case PlacementToken.Right:
         case PlacementToken.East:
             textPlacement.h = HorizontalPlacement.Right;
             break;
         // Left / west
-        case PlacementToken.CenterLeft:
+        case PlacementToken.Left:
         case PlacementToken.West:
             textPlacement.h = HorizontalPlacement.Left;
             break;

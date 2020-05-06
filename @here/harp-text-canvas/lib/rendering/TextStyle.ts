@@ -103,6 +103,7 @@ export enum WrappingMode {
  * @hidden
  * @internal
  * Utility function that gets deduced [[HorizontalAlignment]] from [[HorizontalPlacement]].
+ * Horizontal alignments are exactly opposite to the placements.
  */
 export function hAlignFromPlacement(hP: HorizontalPlacement): HorizontalAlignment {
     return (hP as unknown) as HorizontalAlignment;
@@ -115,6 +116,25 @@ export function hAlignFromPlacement(hP: HorizontalPlacement): HorizontalAlignmen
  */
 export function vAlignFromPlacement(vP: VerticalPlacement): VerticalAlignment {
     return (vP as unknown) as VerticalAlignment;
+}
+
+/**
+ * @hidden
+ * @internal
+ * Utility function that gets deduced [[HorizontalPlacement]] from [[HorizontalAlignment]].
+ * Horizontal placements are exactly opposite to the alignment values.
+ */
+export function hPlacementFromAlignment(hA: HorizontalAlignment): HorizontalPlacement {
+    return (hA as unknown) as HorizontalPlacement;
+}
+
+/**
+ * @hidden
+ * @internal
+ * Utility function that gets deduced [[VerticalPlacement]] from [[VerticalAlignment]].
+ */
+export function vPlacementFromAlignment(vA: VerticalAlignment): VerticalPlacement {
+    return (vA as unknown) as VerticalPlacement;
 }
 
 /**

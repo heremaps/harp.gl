@@ -446,22 +446,27 @@ export enum PoiStackMode {
  * one of the axis may be ignored and then assumed centered. Moving clock-wise, we have:
  * `TL` (top-left), `T` (top-center), `TR` (top-right), `R` (center-right), `BR` (bottom-right),
  * `B` (bottom-center), `BL` (bottom-left), `L` (left), `C` (center-center).
- * Additionally instead of `T`, `B`, `L`, `R` geographic directions may be used accordingly:
- * `N` (north), `S` (south), `E` (east), `W` (west).
+ * Alternatively instead of `T`, `B`, `L`, `R` geographic directions may be used accordingly:
+ * `NW` (north-west), `N` (north), `NE` (north-east), `E` (east), `SE` (south-east), `S` (south),
+ * `SW` (south-west), `W` (west).
  */
 export enum PlacementToken {
     TopLeft = "TL",
-    TopCenter = "T",
+    Top = "T",
     TopRight = "TR",
-    CenterRight = "R",
+    Right = "R",
     BottomRight = "BR",
-    BottomCenter = "B",
+    Bottom = "B",
     BottomLeft = "BL",
-    CenterLeft = "L",
-    CenterCenter = "C",
+    Left = "L",
+    Center = "C",
+    NorthWest = "NW",
     North = "N",
-    South = "S",
+    NorthEast = "NE",
     East = "E",
+    SouthEast = "SE",
+    South = "S",
+    SouthWest = "SW",
     West = "W"
 }
 
@@ -746,28 +751,26 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Text position regarding the baseline.
      *
-     * @note The [[placements]] attribute may override the alignment settings when using
-     * alternative placements algorithm.
+     * @note The [[placements]] attribute may override the alignment settings.
      */
     hAlignment?: DynamicProperty<"Left" | "Center" | "Right">;
     /**
      * Text position inside a line.
      *
-     * @note The [[placements]] attribute may supersede it, when using alternative placement
-     * algorithm.
+     * @note The [[placements]] attribute may supersede it.
      */
     vAlignment?: DynamicProperty<"Above" | "Center" | "Below">;
     /**
      * Text label positions relative to the label central position (anchor point).
      *
-     * This attribute defines an comma separated tokens of possible text placements
+     * This attribute defines a comma separated tokens of possible text placements
      * relative to label central position (anchor), for example: "TL, TR, C".
-     * Keep in mind that horizontal placement define text position in opposite way to
+     * Keep in mind that horizontal placement defines text position in opposite way to
      * the alignment, so the text `R` placed (located on the **right side** of label position)
      * will be the same as `Left` aligned by deduction. On other side vertical placement is quite
      * similar to vertical alignment so `T` placement corresponds with `Above` alignment.
      *
-     * @note This attribute may supersede [[hAlignment]] and [[vAlignment]] if defined.
+     * @note This attribute may override [[hAlignment]] and [[vAlignment]] if defined.
      */
     placements?: string;
 }
