@@ -192,6 +192,12 @@ export class TileGeometryLoader {
             return;
         }
 
+        // Finish loading if tile has no data.
+        if (tile.tileLoader?.isFinished && tile.decodedTile === undefined) {
+            this.finish();
+            return;
+        }
+
         // Geometry kinds have changed when loading, if so reset entire loading because
         // this geometry loader generates all geometry at once.
         if (

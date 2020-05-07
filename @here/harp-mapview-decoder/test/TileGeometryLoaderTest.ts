@@ -21,12 +21,33 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { TileGeometryLoader } from "@here/harp-mapview/lib/geometry/TileGeometryLoader";
+import { ITileLoader, TileLoaderState } from "@here/harp-mapview/lib/Tile";
 import { willEventually } from "@here/harp-test-utils";
 import * as sinon from "sinon";
 
 class FakeVisibleTileSet {
     // tslint:disable-next-line: no-empty
     disposeTile(tile: Tile) {}
+}
+
+class FakeTileLoader implements ITileLoader {
+    state: TileLoaderState = TileLoaderState.Ready;
+    isFinished: boolean = false;
+
+    loadAndDecode(): Promise<TileLoaderState> {
+        return new Promise(() => this.state);
+    }
+
+    waitSettled(): Promise<TileLoaderState> {
+        return new Promise(() => this.state);
+    }
+
+    updatePriority(area: number): void {
+        // do nothing.
+    }
+    cancel(): void {
+        // do nothing.
+    }
 }
 
 class MockDataSource extends DataSource {
@@ -40,6 +61,7 @@ class MockDataSource extends DataSource {
         // Create a tile which is by default visible for test purposes.
         const tile = new Tile(this, tileKey);
         tile.isVisible = true;
+        tile.tileLoader = new FakeTileLoader();
         return tile;
     }
 }
@@ -159,6 +181,19 @@ describe("TileGeometryLoader", function() {
             tile.decodedTile = createFakeDecodedTile();
             tile.dispose();
 
+            geometryLoader!.update(undefined, undefined);
+
+            // tslint:disable-next-line: no-unused-expression
+            expect(geometryLoader.geometryCreationPending).to.be.false;
+
+            await willEventually(() => {
+                // tslint:disable-next-line: no-unused-expression
+                expect(geometryLoader.isFinished).to.be.true;
+            });
+        });
+
+        it("should not start geometry loading for empty tile", async function() {
+            tile.tileLoader!.isFinished = true;
             geometryLoader!.update(undefined, undefined);
 
             // tslint:disable-next-line: no-unused-expression

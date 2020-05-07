@@ -211,14 +211,12 @@ export class TileLoader {
         this.state = TileLoaderState.Loaded;
         this.payload = payload;
 
-        if ((payload as ArrayBufferLike).byteLength !== undefined) {
-            if ((payload as ArrayBufferLike).byteLength === 0) {
-                this.onDone(TileLoaderState.Ready);
-                return;
-            }
-        }
-        // Object is empty
-        if ((payload as {}) === {}) {
+        const byteLength = (payload as ArrayBufferLike).byteLength;
+        if (
+            byteLength === 0 ||
+            (payload.constructor === Object && Object.keys(payload).length === 0)
+        ) {
+            // Object is empty
             this.onDone(TileLoaderState.Ready);
             return;
         }
