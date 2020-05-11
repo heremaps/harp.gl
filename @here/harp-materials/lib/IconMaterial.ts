@@ -35,7 +35,7 @@ varying vec2 vUv;
 void main() {
 
     vec4 color = texture2D(map, vUv.xy);
-    color *= vColor.a;
+    color *= vColor;
     if (color.a < 0.05) {
         discard;
     }
@@ -63,6 +63,7 @@ export class IconMaterial extends THREE.RawShaderMaterial {
      * @param params `IconMaterial` parameters.
      */
     constructor(params: IconMaterialParameters) {
+        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "IconMaterial",
             vertexShader: vertexSource,

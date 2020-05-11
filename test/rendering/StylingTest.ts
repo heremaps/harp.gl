@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,6 +18,7 @@ import {
     FillStyle,
     GeometryCollection,
     Light,
+    PoiStyle,
     SolidLineStyle,
     StyleDeclaration,
     TextTechniqueStyle,
@@ -232,6 +233,20 @@ describe("MapView Styling Test", function() {
                 name: "fira",
                 url: "../@here/harp-fontcatalog/resources/Default_FontCatalog.json"
             }
+        ],
+        images: {
+            "my-marker-icon": {
+                // tslint:disable-next-line:max-line-length
+                url:
+                    "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIyLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHdpZHRoPSI0OHB4IiBoZWlnaHQ9IjQ4cHgiIHZlcnNpb249IjEuMSIgaWQ9Imx1aS1pY29uLWRlc3RpbmF0aW9ucGluLW9uZGFyay1zb2xpZC1sYXJnZSIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQ4IDQ4IgoJIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDQ4IDQ4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8ZyBpZD0ibHVpLWljb24tZGVzdGluYXRpb25waW4tb25kYXJrLXNvbGlkLWxhcmdlLWJvdW5kaW5nLWJveCIgb3BhY2l0eT0iMCI+CgkJPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQ3LDF2NDZIMVYxSDQ3IE00OCwwSDB2NDhoNDhWMEw0OCwweiIvPgoJPC9nPgoJPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9IiNmZmZmZmYiIGQ9Ik0yNCwyQzEzLjg3MDgsMiw1LjY2NjcsMTAuMTU4NCw1LjY2NjcsMjAuMjIzMwoJCWMwLDUuMDMyNSwyLjA1MzMsOS41ODg0LDUuMzcxNywxMi44ODgzTDI0LDQ2bDEyLjk2MTctMTIuODg4M2MzLjMxODMtMy4zLDUuMzcxNy03Ljg1NTgsNS4zNzE3LTEyLjg4ODMKCQlDNDIuMzMzMywxMC4xNTg0LDM0LjEyOTIsMiwyNCwyeiBNMjQsMjVjLTIuNzY1LDAtNS0yLjIzNS01LTVzMi4yMzUtNSw1LTVzNSwyLjIzNSw1LDVTMjYuNzY1LDI1LDI0LDI1eiIvPgo8L2c+Cjwvc3ZnPgo=",
+                preload: true
+            }
+        },
+        imageTextures: [
+            {
+                name: "my-marker-icon",
+                image: "my-marker-icon"
+            }
         ]
     };
 
@@ -301,6 +316,40 @@ describe("MapView Styling Test", function() {
                 });
             }
         }
+        function makePointPoiTestCases(
+            testCases: { [name: string]: PoiStyle["attr"] },
+            options?: Partial<GeoJsonMapViewRenderingTestOptions>
+        ) {
+            // tslint:disable-next-line:forin
+            for (const testCase in testCases) {
+                const attr: PoiStyle["attr"] = testCases[testCase]!;
+                mapViewFeaturesRenderingTest(`poi-styling-${testCase}`, {
+                    geoJson: {
+                        type: "FeatureCollection",
+                        features: [
+                            // tested horizontal line
+                            ...points,
+                            referenceBackground
+                        ]
+                    },
+                    theme: {
+                        ...themeTextSettings,
+                        clearColor: "#a0a0a0",
+                        styles: {
+                            geojson: [
+                                referenceBackroundStyle,
+                                {
+                                    when: "$geometryType == 'point'",
+                                    technique: "labeled-icon",
+                                    attr
+                                }
+                            ]
+                        }
+                    },
+                    ...options
+                });
+            }
+        }
         function makePointTestCases(
             testCases: { [name: string]: CirclesStyle["attr"] },
             options?: Partial<GeoJsonMapViewRenderingTestOptions>
@@ -349,6 +398,39 @@ describe("MapView Styling Test", function() {
                 },
                 {
                     margin: 0.5
+                }
+            );
+        });
+
+        describe("poi", function() {
+            makePointPoiTestCases(
+                {
+                    "poi-basic-icon-only": {
+                        imageTexture: "my-marker-icon",
+                        size: 10,
+                        screenHeight: 20,
+                        screenWidth: 20,
+                        text: "",
+                        iconBrightness: 0.7
+                    },
+                    "poi-basic-text-only": {
+                        color: "#fe09",
+                        size: 16,
+                        screenHeight: 20,
+                        screenWidth: 20
+                    },
+                    "poi-basic-both": {
+                        color: "#fe0",
+                        size: 16,
+                        imageTexture: "my-marker-icon",
+                        screenHeight: 20,
+                        screenWidth: 20,
+                        iconYOffset: 16,
+                        iconColor: "#e22"
+                    }
+                },
+                {
+                    margin: 0.1
                 }
             );
         });
@@ -427,6 +509,7 @@ describe("MapView Styling Test", function() {
                 });
             }
         }
+
         describe("solid-line technique", function() {
             describe("basic", function() {
                 makeLineTestCase({

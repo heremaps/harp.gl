@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -22,6 +22,7 @@ import {
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, assertExists, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+import { ColorCache } from "../ColorCache";
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
@@ -552,6 +553,12 @@ export class PoiManager {
                     ? textElement.textReservesSpace
                     : technique.iconReserveSpace !== false;
 
+            const iconColorRaw = technique.iconColor
+                ? getPropertyValue(technique.iconColor, env)
+                : null;
+            const iconColor =
+                iconColorRaw !== null ? ColorCache.instance.getColor(iconColorRaw) : undefined;
+
             textElement.poiInfo = {
                 technique,
                 imageTextureName,
@@ -565,6 +572,8 @@ export class PoiManager {
                 mayOverlap: iconMayOverlap,
                 reserveSpace: iconReserveSpace,
                 featureId,
+                iconBrightness: technique.iconBrightness,
+                iconColor,
                 iconMinZoomLevel: technique.iconMinZoomLevel,
                 iconMaxZoomLevel: technique.iconMaxZoomLevel,
                 textMinZoomLevel: technique.textMinZoomLevel,

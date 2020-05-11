@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -184,6 +184,8 @@ const lineMarkerTechniquePropTypes = mergeTechniqueDescriptor<LineMarkerTechniqu
             imageTextureField: AttrScope.TechniqueGeometry,
             imageTexturePrefix: AttrScope.TechniqueGeometry,
             imageTexturePostfix: AttrScope.TechniqueGeometry,
+            iconColor: AttrScope.TechniqueRendering,
+            iconBrightness: AttrScope.TechniqueRendering,
             style: AttrScope.TechniqueGeometry,
             fontName: AttrScope.TechniqueGeometry,
             fontStyle: AttrScope.TechniqueGeometry,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,7 +10,6 @@ import { MemoryUsage, TextCanvas } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { ColorCache } from "../ColorCache";
 import { ImageItem } from "../image/Image";
 import { MipMapGenerator } from "../image/MipMapGenerator";
 import { MapView } from "../MapView";
@@ -24,6 +23,17 @@ const INVALID_RENDER_BATCH = -1;
 const tempPos = new THREE.Vector3(0);
 
 /**
+ * Neutral color used as `vColor` attribute of [[IconMaterial]] if no `iconColor` color was
+ * specified.
+ */
+const neutralColor = new THREE.Color(1, 1, 1);
+
+/**
+ * Temporary color instance used by `addPoi` to pass color derived from `iconBrightness` property.
+ */
+const tmpIconColor = new THREE.Color();
+
+/**
  * The `PoiRenderBufferBatch` contains the geometry and the material for all POIs that share the
  * same icon image ([[ImageTexture]]). If the image is the same, all the objects in this batch can
  * share the same material, which makes them renderable in the same draw call, whatever the number
@@ -35,8 +45,6 @@ const tempPos = new THREE.Vector3(0);
 class PoiRenderBufferBatch {
     // Enable trilinear filtering to reduce flickering due to distance scaling
     static trilinear: boolean = true;
-
-    color: THREE.Color = ColorCache.instance.getColor("#000000");
 
     boxBuffer: BoxBuffer | undefined;
 
@@ -237,10 +245,21 @@ class PoiRenderBuffer {
             this.batches[batchIndex].init();
         }
 
+        let color: THREE.Color;
+        if (poiInfo.iconBrightness !== undefined) {
+            color = tmpIconColor.setScalar(poiInfo.iconBrightness);
+            if (poiInfo.iconColor !== undefined) {
+                color = tmpIconColor.multiply(poiInfo.iconColor);
+            }
+        } else if (poiInfo.iconColor !== undefined) {
+            color = poiInfo.iconColor;
+        } else {
+            color = neutralColor;
+        }
         this.batches[batchIndex].boxBuffer!.addBox(
             screenBox,
             poiInfo.uvBox!,
-            this.batches[batchIndex].color,
+            color,
             opacity,
             viewDistance,
             poiInfo.textElement
