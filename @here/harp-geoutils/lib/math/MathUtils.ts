@@ -64,6 +64,19 @@ export namespace MathUtils {
     }
 
     /**
+     * Copies the vector across.
+     *
+     * @param from The vector to copy from.
+     * @param to The resulting [Vector3Like] instance, with the contents copied from from
+     */
+    export function copyVector3<Vector extends Vector3Like>(from: Vector3Like, to: Vector): Vector {
+        to.x = from.x;
+        to.y = from.y;
+        to.z = from.z;
+        return to;
+    }
+
+    /**
      * Converts an angle measured in degrees to an equivalent value in radians.
      *
      * @param degrees Value in degrees.
