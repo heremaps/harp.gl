@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -41,6 +41,20 @@ export interface PoiInfo {
      * Name of the [[ImageTexture]].
      */
     imageTextureName: string;
+
+    /**
+     * Icon color override
+     *
+     * @see [[MarkerTechniqueParams.iconColor]];
+     */
+    iconColor?: THREE.Color;
+
+    /**
+     * Icon brightness.
+     *
+     * @see [[MarkerTechniqueParams.iconBrightness]];
+     */
+    iconBrightness?: number;
 
     /**
      * Name of the POI table [[PoiTable]].

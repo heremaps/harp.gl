@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -497,6 +497,26 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      * Maximum zoomLevel at which to display the label icon. No default.
      */
     iconMaxZoomLevel?: number;
+
+    /**
+     * Icon color.
+     *
+     * If specified, combined using multiplication with color value read from icon texture.
+     *
+     * Works best for grayscale or monochromatic textures.
+     */
+    iconColor?: StyleColor;
+
+    /**
+     * Icon brightness.
+     *
+     * Factor that multiplies a color on top of the icon texture (and `iconColor`) with `0` being
+     * fully black as final output, `1` being the original rgb colors of the texture.
+     *
+     * @default `1`
+     */
+    iconBrightness?: number;
+
     /**
      * Scaling factor of icon. Defaults to 0.5, reducing the size ot 50% in the distance.
      */
