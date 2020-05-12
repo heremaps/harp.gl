@@ -440,6 +440,37 @@ export enum PoiStackMode {
 }
 
 /**
+ * Defines options (tokens) supported for text placements defined via [[placements]] attribute.
+ *
+ * Possible values are defined as vertical placement letter and horizontal letter, where
+ * one of the axis may be ignored and then assumed centered. Moving clock-wise, we have:
+ * `TL` (top-left), `T` (top-center), `TR` (top-right), `R` (center-right), `BR` (bottom-right),
+ * `B` (bottom-center), `BL` (bottom-left), `L` (left), `C` (center-center).
+ * Alternatively instead of `T`, `B`, `L`, `R` geographic directions may be used accordingly:
+ * `NW` (north-west), `N` (north), `NE` (north-east), `E` (east), `SE` (south-east), `S` (south),
+ * `SW` (south-west), `W` (west).
+ */
+export enum PlacementToken {
+    TopLeft = "TL",
+    Top = "T",
+    TopRight = "TR",
+    Right = "R",
+    BottomRight = "BR",
+    Bottom = "B",
+    BottomLeft = "BL",
+    Left = "L",
+    Center = "C",
+    NorthWest = "NW",
+    North = "N",
+    NorthEast = "NE",
+    East = "E",
+    SouthEast = "SE",
+    South = "S",
+    SouthWest = "SW",
+    West = "W"
+}
+
+/**
  * Technique that describes icons with labels. Used in [[PoiTechnique]] and [[LineMarkerTechnique]]
  * (for road shields).
  */
@@ -448,7 +479,7 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      * Text to be displayed for feature.
      *
      * Defaults to first defined:
-     *  - feature property `label` if present in technique (depreacted)
+     *  - feature property `label` if present in technique (deprecated)
      *  - `["get", "name:short"]` is `useAbbreviation` is true
      *  - `["get", "iso_code"]` is `useIsoCode` is true
      *  - `["get", "name:$LANGUAGE"]` for each specified language
@@ -617,7 +648,7 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     poiTable?: string;
     /**
      * Fixed name to identify POI options in the POI table. If `poiName` has a value, this value
-     * supercedes any value read from the field referenced in `poiNameField`.
+     * supersedes any value read from the field referenced in `poiNameField`.
      */
     poiName?: string;
     /**
@@ -719,12 +750,29 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     wrappingMode?: DynamicProperty<"None" | "Character" | "Word">;
     /**
      * Text position regarding the baseline.
+     *
+     * @note The [[placements]] attribute may override the alignment settings.
      */
     hAlignment?: DynamicProperty<"Left" | "Center" | "Right">;
     /**
      * Text position inside a line.
+     *
+     * @note The [[placements]] attribute may supersede it.
      */
     vAlignment?: DynamicProperty<"Above" | "Center" | "Below">;
+    /**
+     * Text label positions relative to the label central position (anchor point).
+     *
+     * This attribute defines a comma separated tokens of possible text placements
+     * relative to label central position (anchor), for example: "TL, TR, C".
+     * Keep in mind that horizontal placement defines text position in opposite way to
+     * the alignment, so the text `R` placed (located on the **right side** of label position)
+     * will be the same as `Left` aligned by deduction. On other side vertical placement is quite
+     * similar to vertical alignment so `T` placement corresponds with `Above` alignment.
+     *
+     * @note This attribute may override [[hAlignment]] and [[vAlignment]] if defined.
+     */
+    placements?: string;
 }
 
 export interface LineTechniqueParams extends BaseTechniqueParams {

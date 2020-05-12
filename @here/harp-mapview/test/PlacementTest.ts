@@ -24,17 +24,21 @@ import { getTestResourceUrl } from "@here/harp-test-utils";
 import {
     FontCatalog,
     HorizontalAlignment,
+    HorizontalPlacement,
+    hPlacementFromAlignment,
     TextCanvas,
     TextLayoutParameters,
     TextLayoutStyle,
+    TextPlacement,
     TextRenderParameters,
     TextRenderStyle,
     VerticalAlignment,
+    VerticalPlacement,
+    vPlacementFromAlignment,
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
-import { AnchorPlacement } from "../lib/text/LayoutState";
 import { placeIcon, PlacementResult, placePointLabel } from "../lib/text/Placement";
 import { RenderState } from "../lib/text/RenderState";
 import { LoadingState, TextElement } from "../lib/text/TextElement";
@@ -467,7 +471,7 @@ describe("Placement", function() {
                 // Input / base text layout.
                 layout: TextLayoutParameters;
                 // Final placement.
-                placement: AnchorPlacement;
+                placement: TextPlacement;
             }
             const runs: PlacementAlternativesRun[] = [
                 {
@@ -479,8 +483,8 @@ describe("Placement", function() {
                         verticalAlignment: VerticalAlignment.Below
                     },
                     placement: {
-                        h: HorizontalAlignment.Left,
-                        v: VerticalAlignment.Above
+                        h: HorizontalPlacement.Right,
+                        v: VerticalPlacement.Top
                     }
                 },
                 {
@@ -492,8 +496,8 @@ describe("Placement", function() {
                         verticalAlignment: VerticalAlignment.Below
                     },
                     placement: {
-                        h: HorizontalAlignment.Right,
-                        v: VerticalAlignment.Above
+                        h: HorizontalPlacement.Left,
+                        v: VerticalPlacement.Top
                     }
                 },
                 {
@@ -505,8 +509,8 @@ describe("Placement", function() {
                         verticalAlignment: VerticalAlignment.Above
                     },
                     placement: {
-                        h: HorizontalAlignment.Right,
-                        v: VerticalAlignment.Below
+                        h: HorizontalPlacement.Left,
+                        v: VerticalPlacement.Bottom
                     }
                 },
                 {
@@ -518,8 +522,8 @@ describe("Placement", function() {
                         verticalAlignment: VerticalAlignment.Above
                     },
                     placement: {
-                        h: HorizontalAlignment.Left,
-                        v: VerticalAlignment.Below
+                        h: HorizontalPlacement.Right,
+                        v: VerticalPlacement.Bottom
                     }
                 },
                 {
@@ -530,11 +534,11 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Right,
                         verticalAlignment: VerticalAlignment.Center
                     },
-                    // Layout changed horizontally and vertically (counter clock-wise) to move
+                    // Layout changed horizontally and vertically (clock-wise) to move
                     // text away from screen edge.
                     placement: {
-                        h: HorizontalAlignment.Center,
-                        v: VerticalAlignment.Above
+                        h: HorizontalPlacement.Center,
+                        v: VerticalPlacement.Top
                     }
                 },
                 {
@@ -545,10 +549,10 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Left,
                         verticalAlignment: VerticalAlignment.Center
                     },
-                    // Layout changed horizontally and vertically (counter clock-wise).
+                    // Layout changed horizontally and vertically (clock-wise).
                     placement: {
-                        h: HorizontalAlignment.Center,
-                        v: VerticalAlignment.Below
+                        h: HorizontalPlacement.Center,
+                        v: VerticalPlacement.Bottom
                     }
                 },
                 {
@@ -560,8 +564,8 @@ describe("Placement", function() {
                         verticalAlignment: VerticalAlignment.Below
                     },
                     placement: {
-                        h: HorizontalAlignment.Right,
-                        v: VerticalAlignment.Center
+                        h: HorizontalPlacement.Left,
+                        v: VerticalPlacement.Center
                     }
                 },
                 {
@@ -573,8 +577,8 @@ describe("Placement", function() {
                         verticalAlignment: VerticalAlignment.Above
                     },
                     placement: {
-                        h: HorizontalAlignment.Left,
-                        v: VerticalAlignment.Center
+                        h: HorizontalPlacement.Right,
+                        v: VerticalPlacement.Center
                     }
                 }
             ];
@@ -613,9 +617,15 @@ describe("Placement", function() {
 
                     // Label out of screen and layout unchanged.
                     let textPlacement = state.textPlacement;
+                    expect(run.layout.horizontalAlignment).to.be.not.undefined;
+                    expect(run.layout.verticalAlignment).to.be.not.undefined;
                     expect(result).to.equal(PlacementResult.Invisible);
-                    expect(textPlacement.h).to.be.equal(run.layout.horizontalAlignment);
-                    expect(textPlacement.v).to.be.equal(run.layout.verticalAlignment);
+                    expect(textPlacement.h).to.be.equal(
+                        hPlacementFromAlignment(run.layout.horizontalAlignment!)
+                    );
+                    expect(textPlacement.v).to.be.equal(
+                        vPlacementFromAlignment(run.layout.verticalAlignment!)
+                    );
 
                     // Place again with multi-placement support.
                     result = placePointLabel(
@@ -655,7 +665,7 @@ describe("Placement", function() {
                     // Move offset as percent of (relative to) label size.
                     move: THREE.Vector2;
                     // Final placement.
-                    placement: AnchorPlacement;
+                    placement: TextPlacement;
                 }>;
             }
             const runsNoFading: AlternativesWithMovementRun[] = [
@@ -672,10 +682,10 @@ describe("Placement", function() {
                         {
                             move: new THREE.Vector2(0, 0),
                             // Label placed, layout changed horizontally and vertically
-                            // (counter clock-wise) in order to move text out of screen edge.
+                            // (clock-wise) in order to move text out of screen edge.
                             placement: {
-                                h: HorizontalAlignment.Center,
-                                v: VerticalAlignment.Above
+                                h: HorizontalPlacement.Center,
+                                v: VerticalPlacement.Top
                             }
                         },
                         {
@@ -683,8 +693,8 @@ describe("Placement", function() {
                             // Label placed with anchor changed to moved text even further from
                             // the screen edge.
                             placement: {
-                                h: HorizontalAlignment.Left,
-                                v: VerticalAlignment.Center
+                                h: HorizontalPlacement.Right,
+                                v: VerticalPlacement.Center
                             }
                         }
                     ]
@@ -702,15 +712,15 @@ describe("Placement", function() {
                         {
                             move: new THREE.Vector2(0, 0),
                             placement: {
-                                h: HorizontalAlignment.Center,
-                                v: VerticalAlignment.Below
+                                h: HorizontalPlacement.Center,
+                                v: VerticalPlacement.Bottom
                             }
                         },
                         {
                             move: new THREE.Vector2(0.5, 0),
                             placement: {
-                                h: HorizontalAlignment.Right,
-                                v: VerticalAlignment.Center
+                                h: HorizontalPlacement.Left,
+                                v: VerticalPlacement.Center
                             }
                         }
                     ]
@@ -728,15 +738,15 @@ describe("Placement", function() {
                         {
                             move: new THREE.Vector2(0, 0),
                             placement: {
-                                h: HorizontalAlignment.Right,
-                                v: VerticalAlignment.Center
+                                h: HorizontalPlacement.Left,
+                                v: VerticalPlacement.Center
                             }
                         },
                         {
                             move: new THREE.Vector2(0.0, -0.3),
                             placement: {
-                                h: HorizontalAlignment.Center,
-                                v: VerticalAlignment.Above
+                                h: HorizontalPlacement.Center,
+                                v: VerticalPlacement.Top
                             }
                         }
                     ]
@@ -754,15 +764,15 @@ describe("Placement", function() {
                         {
                             move: new THREE.Vector2(0, 0),
                             placement: {
-                                h: HorizontalAlignment.Left,
-                                v: VerticalAlignment.Center
+                                h: HorizontalPlacement.Right,
+                                v: VerticalPlacement.Center
                             }
                         },
                         {
                             move: new THREE.Vector2(0.0, 0.3),
                             placement: {
-                                h: HorizontalAlignment.Center,
-                                v: VerticalAlignment.Below
+                                h: HorizontalPlacement.Center,
+                                v: VerticalPlacement.Bottom
                             }
                         }
                     ]
@@ -973,8 +983,8 @@ describe("Placement", function() {
                     // alternative placement algorithm - they are excluded.
                     // TODO: HARP-6487 This may be due to change when placements will be
                     // parsed from theme.
-                    expect(states[i].textPlacement.h).to.equal(HorizontalAlignment.Center);
-                    expect(states[i].textPlacement.v).to.equal(VerticalAlignment.Center);
+                    expect(states[i].textPlacement.h).to.equal(HorizontalPlacement.Center);
+                    expect(states[i].textPlacement.v).to.equal(VerticalPlacement.Center);
                 }
                 // First element allocated, second collides, without alternative placement,
                 // centered labels are not handled with multi-anchor placement.

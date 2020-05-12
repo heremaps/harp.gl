@@ -1007,6 +1007,11 @@ export interface TextStyleDefinition {
     wrappingMode?: "None" | "Character" | "Word";
     hAlignment?: "Left" | "Center" | "Right";
     vAlignment?: "Above" | "Center" | "Below";
+    /**
+     * @format comma separated list of placement tokens, i.e. "TR, TL, C"
+     * @see [[PlacementToken]]
+     */
+    placements?: string;
 }
 
 /**

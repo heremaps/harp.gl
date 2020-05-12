@@ -4,8 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+    hAlignFromPlacement,
+    hPlacementFromAlignment,
+    TextPlacement,
+    vAlignFromPlacement,
+    vPlacementFromAlignment
+} from "@here/harp-text-canvas";
 import { assert } from "@here/harp-utils";
-import { AnchorPlacement, LayoutState } from "./LayoutState";
+import { LayoutState } from "./LayoutState";
 import { RenderState } from "./RenderState";
 import { TextElement } from "./TextElement";
 import { TextElementType } from "./TextElementType";
@@ -78,9 +85,9 @@ export class TextElementState {
      * If the text wasn't yet rendered or have no alternative placements it will fallback to
      * style/theme based placement.
      *
-     * @returns [[AnchorPlacement]] object containing vertical/horizontal align.
+     * @returns [[TextPlacement]] object containing vertical/horizontal align.
      */
-    get textPlacement(): AnchorPlacement {
+    get textPlacement(): TextPlacement {
         const themeLayout = this.element.layoutStyle!;
         const stateLayout = this.m_textLayoutState;
         // Would be good to test for persistence when getting state layout, but with this
@@ -88,7 +95,10 @@ export class TextElementState {
         const lastPlacement =
             stateLayout !== undefined
                 ? stateLayout.textPlacement
-                : { h: themeLayout.horizontalAlignment, v: themeLayout.verticalAlignment };
+                : {
+                      h: hPlacementFromAlignment(themeLayout.horizontalAlignment),
+                      v: vPlacementFromAlignment(themeLayout.verticalAlignment)
+                  };
         return lastPlacement;
     }
 
@@ -97,9 +107,9 @@ export class TextElementState {
      *
      * This may be base text anchor placement as defined by style or alternative placement.
      *
-     * @param placement The text placement to be used.
+     * @param placement The new [[TextPlacement]] to be used.
      */
-    set textPlacement(placement: AnchorPlacement) {
+    set textPlacement(placement: TextPlacement) {
         if (this.m_textLayoutState === undefined && this.isBaseTextPlacement(placement) === true) {
             // Do nothing, layout state is not required cause we leave the base placement.
             return;
@@ -116,17 +126,17 @@ export class TextElementState {
     /**
      * Returns information if the text placement provided is the base one defined in style (theme).
      *
-     * @param placement The text placement to check.
+     * @param placement The [[TextPlacement]] to check.
      * @returns [[true]] if the placement provided is exactly the same as in theme base layout,
      * [[false]] if it differs from the basic layout provided in style or
      * [[undefined]] if the layout style is not yet defined so it is hard to say.
      */
-    isBaseTextPlacement(placement: AnchorPlacement): boolean | undefined {
+    isBaseTextPlacement(placement: TextPlacement): boolean | undefined {
         const themeLayout = this.element.layoutStyle;
         if (themeLayout !== undefined) {
             return (
-                placement.h === themeLayout.horizontalAlignment &&
-                placement.v === themeLayout.verticalAlignment
+                hAlignFromPlacement(placement.h) === themeLayout.horizontalAlignment &&
+                vAlignFromPlacement(placement.v) === themeLayout.verticalAlignment
             );
         }
         return undefined;
