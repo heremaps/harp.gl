@@ -6,7 +6,7 @@
 
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
-import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
+import { GeoCoordinatesLike, isGeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
 import { Box3Like, isBox3Like } from "../math/Box3Like";
 import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
@@ -402,7 +402,19 @@ class SphereProjection extends Projection {
     }
 
     /** @override */
-    localTangentSpace(geoPoint: GeoCoordinatesLike, result: TransformLike): TransformLike {
+    localTangentSpace(
+        point: GeoCoordinatesLike | Vector3Like,
+        result: TransformLike
+    ): TransformLike {
+        let geoPoint: GeoCoordinatesLike;
+        if (isGeoCoordinatesLike(point)) {
+            this.projectPoint(point, result.position);
+            geoPoint = point;
+        } else {
+            MathUtils.copyVector3(point, result.position);
+            geoPoint = this.unprojectPoint(point);
+        }
+
         const latitude = THREE.MathUtils.degToRad(geoPoint.latitude);
         const longitude = THREE.MathUtils.degToRad(geoPoint.longitude);
 
@@ -426,9 +438,6 @@ class SphereProjection extends Projection {
             cosLatitude,
             result.yAxis
         );
-
-        this.projectPoint(geoPoint, result.position);
-
         return result;
     }
 }
