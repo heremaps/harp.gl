@@ -21,9 +21,9 @@ import {
     FontStyle,
     FontUnit,
     FontVariant,
-    hAlignFromPlacement,
     HorizontalAlignment,
     HorizontalPlacement,
+    resolvePlacementAndAlignment,
     TextCanvas,
     TextLayoutParameters,
     TextLayoutStyle,
@@ -31,7 +31,6 @@ import {
     TextPlacements,
     TextRenderParameters,
     TextRenderStyle,
-    vAlignFromPlacement,
     VerticalAlignment,
     VerticalPlacement,
     WrappingMode
@@ -59,8 +58,6 @@ const defaultTextRenderStyle = new TextRenderStyle({
 
 // By default text layout provides no options for placement, but single alignment.
 const defaultTextLayoutStyle = new TextLayoutStyle({
-    // TODO: Verify why default TextStyleCache layout style has different
-    // alignment settings then defaults in TextStyle.
     verticalAlignment: VerticalAlignment.Center,
     horizontalAlignment: HorizontalAlignment.Center,
     placements: []
@@ -477,24 +474,15 @@ function parseAlignmentAndPlacements(
     placements: TextPlacements;
 } {
     // Currently supported only for PoiTechnique.
-    const placements: TextPlacements = placementsTokens
+    const placements: TextPlacements | undefined = placementsTokens
         ? parseTechniquePlacements(placementsTokens)
-        : [];
+        : undefined;
 
-    // Ignore alignment attributes when placements attributes are defined or provide default
-    // values if none of them are defined.
-    // NOTE: Alignment ignore may be removed if we decide to support both attributes separately.
-    const horizontalAlignment =
-        placements.length > 0
-            ? hAlignFromPlacement(placements[0].h)
-            : parseTechniqueHAlignValue(hAlignment);
-
-    const verticalAlignment =
-        placements.length > 0
-            ? vAlignFromPlacement(placements[0].v)
-            : parseTechniqueVAlignValue(vAlignment);
-
-    return { horizontalAlignment, verticalAlignment, placements };
+    return resolvePlacementAndAlignment(
+        parseTechniqueHAlignValue(hAlignment),
+        parseTechniqueVAlignValue(vAlignment),
+        placements
+    );
 }
 
 function parseTechniqueHAlignValue(hAlignment: string | undefined | null): HorizontalAlignment {

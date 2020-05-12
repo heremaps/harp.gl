@@ -165,6 +165,7 @@ export namespace DefaultTextStyle {
     export const DEFAULT_WRAPPING_MODE: WrappingMode = WrappingMode.Word;
     export const DEFAULT_VERTICAL_ALIGNMENT: VerticalAlignment = VerticalAlignment.Above;
     export const DEFAULT_HORIZONTAL_ALIGNMENT: HorizontalAlignment = HorizontalAlignment.Left;
+    export const DEFAULT_PLACEMENTS: TextPlacement[] = [];
 }
 
 /**
@@ -538,13 +539,21 @@ export class TextLayoutStyle {
 
     /**
      * Text placement options relative to label anchor (origin).
+     *
+     * @note [[TextPlacement]]s options may override alignment settings.
      */
     get placements(): TextPlacements {
         return this.m_params.placements!;
     }
     set placements(value: TextPlacements) {
-        // Make a deep (one level) copy.
-        this.m_params.placements = value.map(v => ({ ...v }));
+        const { horizontalAlignment, verticalAlignment, placements } = resolvePlacementAndAlignment(
+            this.horizontalAlignment,
+            this.verticalAlignment,
+            value
+        );
+        this.m_params.horizontalAlignment = horizontalAlignment;
+        this.m_params.verticalAlignment = verticalAlignment;
+        this.m_params.placements = placements;
     }
 
     /**
@@ -571,7 +580,18 @@ export class TextLayoutStyle {
     }
 }
 
-function resolvePlacementAndAlignment(
+/**
+ * Deduce alignment and placement attributes depending on the availability.
+ *
+ * If placement is defined it may override alignment settings, if no attributes are
+ * provided they may be retrieved from defaults.
+ *
+ * @param hAlignment The optional horizontal alignment.
+ * @param vAlignment The vertical alignment - optional.
+ * @param placementsOpt Possible text placements - optional.
+ * @internal
+ */
+export function resolvePlacementAndAlignment(
     hAlignment?: HorizontalAlignment,
     vAlignment?: VerticalAlignment,
     placementsOpt?: TextPlacements
@@ -580,10 +600,12 @@ function resolvePlacementAndAlignment(
     verticalAlignment: VerticalAlignment;
     placements: TextPlacements;
 } {
-    // Make a deep copy or create new array.
-    const placements: TextPlacements = placementsOpt?.map(v => ({ ...v })) ?? [];
-    // Override alignment attributes with placement (if defined) or provide default
-    // values if none of them is defined.
+    // Make a deep copy or create new array from defaults.
+    const placements: TextPlacements =
+        placementsOpt?.map(v => ({ ...v })) ??
+        DefaultTextStyle.DEFAULT_PLACEMENTS.map(v => ({ ...v }));
+    // Ignore alignment attributes when placements attributes are defined or provide default
+    // values if none of them are provided.
     // NOTE: Alignment override may be removed if we decide to support both attributes.
     const horizontalAlignment =
         placements.length > 0
