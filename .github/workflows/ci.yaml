@@ -28,6 +28,28 @@ jobs:
       run: git config --global core.autocrlf false
       if: matrix.os == 'windows-latest'
     - uses: actions/checkout@v1
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - uses: actions/cache@v1
+      name: Yarn cache
+      id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - uses: actions/cache@v1
+      name: hard-source-webpack-plugin-cache
+      id: hard-source-webpack-plugin-cache
+      with:
+        path: node_modules/.cache/hard-source
+        key: ${{ runner.os }}-${{ matrix.node_version }}--hard-source-webpack-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}--hard-source-webpack-
+
     - name: Use Node.js ${{ matrix.node_version }}
       uses: actions/setup-node@v1
       with:
