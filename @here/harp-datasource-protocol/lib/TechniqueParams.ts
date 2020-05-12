@@ -974,7 +974,7 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     /**
      * Describes the category of the secondary geometry object created using this technique.
      */
-    secondaryCategory?: number;
+    secondaryCategory?: string;
     /**
      * Describes the starting drawing position for the line (in the range [0...1]).
      * Default is `0.0`.
