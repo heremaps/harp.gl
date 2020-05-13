@@ -1725,12 +1725,11 @@ export class TextElementsRenderer {
             (poiLabel.poiInfo?.technique as PoiTechnique)?.worldOffset,
             this.m_viewState.env
         );
-        const offsetDirection = poiLabel.userData?.offset_direction;
-        if (worldOffsetShift !== null && offsetDirection !== undefined) {
+        if (worldOffsetShift !== null && poiLabel.offsetDirection !== undefined) {
             const transform = this.m_tmpOrientedBox;
             this.m_viewState.projection.localTangentSpace(worldPosition, transform);
             const offsetDirectionVector = transform.yAxis;
-            const offsetDirectionRad = THREE.MathUtils.degToRad(offsetDirection);
+            const offsetDirectionRad = THREE.MathUtils.degToRad(poiLabel.offsetDirection);
             // Negate to get the normal, i.e. the vector pointing to the sky.
             offsetDirectionVector.applyAxisAngle(transform.zAxis.negate(), offsetDirectionRad);
 

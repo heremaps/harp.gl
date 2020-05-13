@@ -364,8 +364,7 @@ export class TextElement {
      * @param layoutParams `TextElement` text layout parameters.
      * @param priority The priority of the `TextElement. Elements with the highest priority get
      *              placed first, elements with priority of `0` are placed last, elements with a
-     *              negative value are always rendered, ignoring priorities and allowing
-     *              overrides.
+     *              negative value are always rendered, ignoring priorities and allowing overrides.
      * @param xOffset Optional X offset of this `TextElement` in screen coordinates.
      * @param yOffset Optional Y offset of this `TextElement` in screen coordinates.
      * @param featureId Optional number to identify feature (originated from `OmvDataSource`).
@@ -373,7 +372,8 @@ export class TextElement {
      *              label starts fading out (opacity decreases).
      * @param fadeFar Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label becomes transparent. A value of <= 0.0 disables fading.
-     * @param offsetDirection In which direction to offset.
+     * @param offsetDirection Direction represented as an angle in degrees clockwise from north to
+     * offset the icon in world space.
      */
     constructor(
         readonly text: string,

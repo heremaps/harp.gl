@@ -396,6 +396,7 @@ export class PoiManager {
             positionArray,
             undefined,
             undefined,
+            undefined,
             userData
         );
 
@@ -467,6 +468,7 @@ export class PoiManager {
                 x,
                 y,
                 z,
+                poiGeometry.offsetDirection,
                 userData
             );
 
@@ -491,6 +493,7 @@ export class PoiManager {
         x: number | THREE.Vector3[],
         y: number | undefined,
         z: number | undefined,
+        offsetDirection?: number,
         userData?: {}
     ): TextElement {
         const priority = technique.priority !== undefined ? technique.priority : 0;
@@ -523,7 +526,8 @@ export class PoiManager {
             technique.style,
             fadeNear,
             fadeFar,
-            tile.offset
+            tile.offset,
+            offsetDirection
         );
 
         textElement.mayOverlap = technique.textMayOverlap === true;
