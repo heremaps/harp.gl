@@ -15,7 +15,10 @@ branches:
     - release
 
 env:
-  - DETECT_CHROMEDRIVER_VERSION=true
+  global:
+    - DETECT_CHROMEDRIVER_VERSION=true
+    # chrome is already present in env, so no need to download it by yarn.
+    - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 before_install:
   - yarn global add codecov

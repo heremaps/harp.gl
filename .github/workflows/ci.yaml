@@ -12,6 +12,8 @@ env:
   nodeTestTimeout: 4000
   browserTestTimeout: 8000
   DETECT_CHROMEDRIVER_VERSION: true
+  # GitHub actions machines already have Chrome installed, so no need to download it by yarn.
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
 
 jobs:
   test:
