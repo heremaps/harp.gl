@@ -8,14 +8,12 @@ import { Env, getPropertyValue, PoiTechnique } from "@here/harp-datasource-proto
 import { OrientedBox3, Projection, ProjectionType } from "@here/harp-geoutils";
 import {
     hAlignFromPlacement,
-    HorizontalAlignment,
     HorizontalPlacement,
     hPlacementFromAlignment,
     MeasurementParameters,
     TextCanvas,
     TextPlacement,
     vAlignFromPlacement,
-    VerticalAlignment,
     VerticalPlacement,
     vPlacementFromAlignment
 } from "@here/harp-text-canvas";
@@ -127,32 +125,6 @@ export enum PrePlacementResult {
     Duplicate,
     Count
 }
-
-/**
- * @hidden
- * Possible placement scenarios in clock-wise order, based on centered placements.
- *
- * TODO: HARP-6487 This array should be parsed from the theme style definition.
- */
-const anchorPlacementsCentered: TextPlacement[] = [
-    { h: HorizontalPlacement.Center, v: VerticalPlacement.Top },
-    { h: HorizontalPlacement.Right, v: VerticalPlacement.Center },
-    { h: HorizontalPlacement.Center, v: VerticalPlacement.Bottom },
-    { h: HorizontalPlacement.Left, v: VerticalPlacement.Center }
-];
-
-/**
- * @hidden
- * Placement anchors in clock-wise order, for corner based placements.
- *
- * TODO: HARP-6487 This array should be parsed from the theme style definition.
- */
-const anchorPlacementsCornered: TextPlacement[] = [
-    { h: HorizontalPlacement.Right, v: VerticalPlacement.Top },
-    { h: HorizontalPlacement.Right, v: VerticalPlacement.Bottom },
-    { h: HorizontalPlacement.Left, v: VerticalPlacement.Bottom },
-    { h: HorizontalPlacement.Left, v: VerticalPlacement.Top }
-];
 
 const tmpPlacementPosition = new THREE.Vector3();
 const tmpPlacementBounds = new THREE.Box2();
@@ -403,14 +375,11 @@ export function placePointLabel(
     if (isRejected && newLabel) {
         return PlacementResult.Invisible;
     }
-    // For centered point labels and labels with icon rejected, do only current anchor testing.
-    // TODO: HARP-6487 Placements options should be provided from theme style definition.
-    if (
-        !multiAnchor ||
-        isRejected ||
-        (layoutStyle.verticalAlignment === VerticalAlignment.Center &&
-            layoutStyle.horizontalAlignment === HorizontalAlignment.Center)
-    ) {
+    // Check if alternative placements have been provided.
+    multiAnchor =
+        multiAnchor && layoutStyle.placements !== undefined && layoutStyle.placements.length > 1;
+    // For single placement labels or labels with icon rejected, do only current anchor testing.
+    if (!multiAnchor || isRejected) {
         return placePointLabelAtCurrentAnchor(
             labelState,
             screenPosition,
@@ -472,18 +441,10 @@ function placePointLabelChoosingAnchor(
     // Store label state - persistent or new label.
     const persistent = labelState.visible;
 
-    // The current implementation does not provide placements options via theme style yet,
-    // so function tries the anchor placements from pre-defined placements arrays.
-    // TODO: HARP-6487 Placements options should be loaded from the theme.
-
     // Start with last alignment settings if layout state was stored or
     // simply begin from layout defined in theme.
     const lastPlacement = labelState.textPlacement;
-    const placementCentered =
-        lastPlacement.h === HorizontalPlacement.Center ||
-        lastPlacement.v === VerticalPlacement.Center;
-    // TODO: HARP-6487: Read placements options from label.layoutStyle.placements.
-    const placements = placementCentered ? anchorPlacementsCentered : anchorPlacementsCornered;
+    const placements = label.layoutStyle!.placements;
     const placementsNum = placements.length;
     // Find current anchor placement on the optional placements list.
     // Index of exact match.
