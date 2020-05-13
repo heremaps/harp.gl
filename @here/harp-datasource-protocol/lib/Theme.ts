@@ -40,7 +40,16 @@ export interface Theme {
      * If used, base themes are loaded first, and then all the properties from inherited theme
      * overwrite these defined in base theme.
      */
+
     extends?: string | Theme | Array<string | Theme>;
+
+    //
+    // TODO: We support also [[FlatTheme]], but it's not exposed here since ts-json-schema-generator
+    // fails with too complex typing.
+    // See: https://github.com/vega/ts-json-schema-generator/issues/192
+    // Typing should look like this:
+    // extends?: string | Theme | FlatTheme| Array<string | Theme | FlatTheme>;
+    //
 
     /**
      * Actual URL the theme has been loaded from.

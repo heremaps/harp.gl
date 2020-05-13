@@ -33,7 +33,7 @@
         "cross-env": "^6.0.3",
         "mocha": "^7.1.1",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.8.3"
+        "typescript": "^3.9.2"
     },
     "publishConfig": {
         "access": "public"

@@ -103,10 +103,13 @@ describe("MapControls", function() {
             update: updateStub
         });
         sandbox.stub(controls, "dispatchEvent");
-        sandbox.stub(controls, "getPointerPosition").returns({ x: 0, y: 0 });
+        sandbox.stub(controls as any, "getPointerPosition").returns({ x: 0, y: 0 });
 
         expect(updateStub.callCount).to.be.equal(0);
-        controls.mouseMove({ preventDefault: sandbox.stub(), stopPropagation: sandbox.stub() });
+        (controls as any).mouseMove({
+            preventDefault: sandbox.stub(),
+            stopPropagation: sandbox.stub()
+        });
         expect(updateStub.callCount).to.be.equal(1);
     });
 
@@ -117,13 +120,13 @@ describe("MapControls", function() {
             renderer: { domElement: { addEventListener: sandbox.stub() } as any } as any,
             update: updateStub
         });
-        controls.m_touchState.touches = { length: 5 };
-        sandbox.stub(controls, "updateTouches");
+        (controls as any).m_touchState.touches = { length: 5 };
+        sandbox.stub(controls as any, "updateTouches");
         sandbox.stub(controls, "dispatchEvent");
-        sandbox.stub(controls, "getPointerPosition").returns({ x: 0, y: 0 });
+        sandbox.stub(controls as any, "getPointerPosition").returns({ x: 0, y: 0 });
 
         expect(updateStub.callCount).to.be.equal(0);
-        controls.touchMove({
+        (controls as any).touchMove({
             touches: [],
             preventDefault: sandbox.stub(),
             stopPropagation: sandbox.stub()
