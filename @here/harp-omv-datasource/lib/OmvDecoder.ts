@@ -89,8 +89,7 @@ export interface IOmvEmitter {
         extents: number,
         geometry: THREE.Vector2[],
         context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
+        techniques: IndexedTechnique[]
     ): void;
 
     processLineFeature(
@@ -248,16 +247,13 @@ export class OmvDecoder implements IGeometryProcessor {
             cachedExprResults: new Map()
         };
 
-        const featureId = env.lookup("$id") as number | undefined;
-
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPointFeature(
                 layer,
                 extents,
                 geometry,
                 context,
-                techniques,
-                featureId
+                techniques
             );
         }
     }
