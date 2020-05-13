@@ -10,6 +10,13 @@
 
 import { expect } from "chai";
 
+import { TextBufferObject } from "@here/harp-text-canvas";
+import {
+    HorizontalAlignment,
+    HorizontalPlacement,
+    VerticalAlignment,
+    VerticalPlacement
+} from "@here/harp-text-canvas/lib/rendering/TextStyle";
 import { TextElementState } from "../lib/text/TextElementState";
 import { TextElementType } from "../lib/text/TextElementType";
 
@@ -99,7 +106,7 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.be.undefined;
         });
 
-        it("resets text state", function() {
+        it("resets text render state", function() {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel
             } as any);
@@ -108,6 +115,33 @@ describe("TextElementState", function() {
 
             expect(textElementState.textRenderState!.isUndefined()).to.be.true;
             expect(textElementState.viewDistance).to.be.undefined;
+        });
+
+        it("resets text layout state", function() {
+            const textElementState = new TextElementState({
+                type: TextElementType.PoiLabel,
+                poiInfo: {
+                    technique: {
+                        placement: "LT, RB"
+                    }
+                },
+                layoutStyle: {
+                    horizontalAlignment: HorizontalAlignment.Right,
+                    verticalAlignment: VerticalAlignment.Above
+                }
+            } as any);
+            textElementState.update(0);
+            // Override with alternative text placement
+            textElementState.textPlacement = {
+                h: HorizontalPlacement.Right,
+                v: VerticalPlacement.Bottom
+            };
+            expect(() => textElementState.reset()).to.not.throw();
+
+            const textPlacement = textElementState.textPlacement;
+            expect(textPlacement.h).to.be.equal(HorizontalPlacement.Left);
+            expect(textPlacement.v).to.be.equal(VerticalPlacement.Top);
+            expect(textElementState.isBaseTextPlacement(textPlacement)).to.be.true;
         });
 
         it("resets text and icon state", function() {
@@ -151,27 +185,41 @@ describe("TextElementState", function() {
                 type: TextElementType.PoiLabel,
                 poiInfo: {
                     technique: {}
+                },
+                layoutStyle: {
+                    horizontalAlignment: HorizontalAlignment.Left,
+                    verticalAlignment: VerticalAlignment.Below
                 }
             } as any);
             predecessorState.update(0);
             const predecessorText = predecessorState.textRenderState!;
             const predecessorIcon = predecessorState.iconRenderState!;
+            // Need to access private member in via object's map, just for test.
+            // tslint:disable-next-line: no-string-literal
+            const predecessorLayout = predecessorState["m_textLayoutState"];
 
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
                     technique: {}
+                },
+                layoutStyle: {
+                    horizontalAlignment: HorizontalAlignment.Center,
+                    verticalAlignment: VerticalAlignment.Center
                 }
             } as any);
-            predecessorState.update(0);
+            textElementState.update(0);
 
             textElementState.replace(predecessorState);
             expect(predecessorState.textRenderState).to.be.undefined;
             expect(predecessorState.iconRenderState).to.be.undefined;
-            expect(predecessorState.iconRenderState).to.be.undefined;
+            // tslint:disable-next-line: no-string-literal
+            expect(predecessorState["m_textLayoutState"]).to.be.undefined;
 
             expect(textElementState.textRenderState).to.equal(predecessorText);
             expect(textElementState.iconRenderState).to.equal(predecessorIcon);
+            // tslint:disable-next-line: no-string-literal
+            expect(textElementState["m_textLayoutState"]).to.equal(predecessorLayout);
         });
 
         it("reuses text element glyphs and bounds", function() {
@@ -201,6 +249,31 @@ describe("TextElementState", function() {
             expect(textElementState.element.glyphs).to.equal(predecessorGlyphs);
             expect(textElementState.element.bounds).to.equal(predecessorBounds);
             expect(textElementState.element.glyphCaseArray).to.equal(predecessorGlyphCaseArray);
+        });
+
+        it("invalidates text buffer", function() {
+            const predecessorState = new TextElementState({
+                type: TextElementType.PoiLabel,
+                poiInfo: {
+                    technique: {}
+                }
+            } as any);
+            predecessorState.update(0);
+            const textElementState = new TextElementState({
+                type: TextElementType.PoiLabel,
+                poiInfo: {
+                    technique: {}
+                }
+            } as any);
+            predecessorState.update(0);
+            // Fake text buffer creation.
+            predecessorState.element.textBufferObject = new TextBufferObject(
+                [],
+                new Float32Array()
+            );
+
+            textElementState.replace(predecessorState);
+            expect(textElementState.element.textBufferObject).to.be.undefined;
         });
     });
 
