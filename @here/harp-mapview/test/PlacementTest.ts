@@ -30,6 +30,7 @@ import {
     TextLayoutParameters,
     TextLayoutStyle,
     TextPlacement,
+    TextPlacements,
     TextRenderParameters,
     TextRenderStyle,
     VerticalAlignment,
@@ -55,6 +56,26 @@ const screenCenterRight = new THREE.Vector2(screenWidth / 2, 0);
 const screenBottomLeft = new THREE.Vector2(-screenWidth / 2, screenHeight / 2);
 const screenBottomCenter = new THREE.Vector2(0, screenHeight / 2);
 const screenBottomRight = new THREE.Vector2(screenWidth / 2, screenHeight / 2);
+
+/**
+ * Possible placement scenarios in clock-wise order, based on centered placements.
+ */
+const placementsCentered: TextPlacement[] = [
+    { h: HorizontalPlacement.Center, v: VerticalPlacement.Top },
+    { h: HorizontalPlacement.Right, v: VerticalPlacement.Center },
+    { h: HorizontalPlacement.Center, v: VerticalPlacement.Bottom },
+    { h: HorizontalPlacement.Left, v: VerticalPlacement.Center }
+];
+
+/**
+ * Placement anchors in clock-wise order, for corner based placements.
+ */
+const placementsCornered: TextPlacement[] = [
+    { h: HorizontalPlacement.Right, v: VerticalPlacement.Top },
+    { h: HorizontalPlacement.Right, v: VerticalPlacement.Bottom },
+    { h: HorizontalPlacement.Left, v: VerticalPlacement.Bottom },
+    { h: HorizontalPlacement.Left, v: VerticalPlacement.Top }
+];
 
 async function createTextElement(
     textCanvas: TextCanvas,
@@ -127,6 +148,26 @@ function createTextElementState(textElement: TextElement): TextElementState {
 
 function createTextElementsStates(textElements: TextElement[]): TextElementState[] {
     return textElements.map(element => createTextElementState(element));
+}
+
+function createTextPlacements(
+    baseHPlacement: HorizontalPlacement,
+    baseVPlacement: VerticalPlacement
+): TextPlacements {
+    const placementCentered =
+        baseHPlacement === HorizontalPlacement.Center ||
+        baseVPlacement === VerticalPlacement.Center;
+    const placements = placementCentered ? placementsCentered : placementsCornered;
+    const placementsNum = placements.length;
+    // Find first placement on the placements list.
+    const firstIdx = placements.findIndex(p => p.h === baseHPlacement && p.v === baseVPlacement);
+    expect(firstIdx >= 0).to.be.true;
+    const result: TextPlacements = [];
+    // Iterate all placements starting from the first one and create full clock wise placement list.
+    for (let i = firstIdx; i < placementsNum + firstIdx; ++i) {
+        result.push(placements[i % placementsNum]);
+    }
+    return result;
 }
 
 describe("Placement", function() {
@@ -480,7 +521,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(-10, -10).add(screenTopLeft),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Right,
-                        verticalAlignment: VerticalAlignment.Below
+                        verticalAlignment: VerticalAlignment.Below,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Left,
+                            VerticalPlacement.Bottom
+                        )
                     },
                     placement: {
                         h: HorizontalPlacement.Right,
@@ -493,7 +538,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(10, -10).add(screenTopRight),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Left,
-                        verticalAlignment: VerticalAlignment.Below
+                        verticalAlignment: VerticalAlignment.Below,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Right,
+                            VerticalPlacement.Bottom
+                        )
                     },
                     placement: {
                         h: HorizontalPlacement.Left,
@@ -506,7 +555,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(10, 10).add(screenBottomRight),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Left,
-                        verticalAlignment: VerticalAlignment.Above
+                        verticalAlignment: VerticalAlignment.Above,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Right,
+                            VerticalPlacement.Top
+                        )
                     },
                     placement: {
                         h: HorizontalPlacement.Left,
@@ -519,7 +572,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(-10, 10).add(screenBottomLeft),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Right,
-                        verticalAlignment: VerticalAlignment.Above
+                        verticalAlignment: VerticalAlignment.Above,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Left,
+                            VerticalPlacement.Top
+                        )
                     },
                     placement: {
                         h: HorizontalPlacement.Right,
@@ -532,7 +589,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(-10, 0).add(screenCenterLeft),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Right,
-                        verticalAlignment: VerticalAlignment.Center
+                        verticalAlignment: VerticalAlignment.Center,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Left,
+                            VerticalPlacement.Center
+                        )
                     },
                     // Layout changed horizontally and vertically (clock-wise) to move
                     // text away from screen edge.
@@ -547,7 +608,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(10, 0).add(screenCenterRight),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Left,
-                        verticalAlignment: VerticalAlignment.Center
+                        verticalAlignment: VerticalAlignment.Center,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Right,
+                            VerticalPlacement.Center
+                        )
                     },
                     // Layout changed horizontally and vertically (clock-wise).
                     placement: {
@@ -561,7 +626,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(0, -10).add(screenTopCenter),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Center,
-                        verticalAlignment: VerticalAlignment.Below
+                        verticalAlignment: VerticalAlignment.Below,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Center,
+                            VerticalPlacement.Bottom
+                        )
                     },
                     placement: {
                         h: HorizontalPlacement.Left,
@@ -574,7 +643,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(0, 10).add(screenBottomCenter),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Center,
-                        verticalAlignment: VerticalAlignment.Above
+                        verticalAlignment: VerticalAlignment.Above,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Center,
+                            VerticalPlacement.Top
+                        )
                     },
                     placement: {
                         h: HorizontalPlacement.Right,
@@ -675,7 +748,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(-10, 0).add(screenCenterLeft),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Right,
-                        verticalAlignment: VerticalAlignment.Center
+                        verticalAlignment: VerticalAlignment.Center,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Left,
+                            VerticalPlacement.Center
+                        )
                     },
                     fading: false,
                     frames: [
@@ -705,7 +782,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(10, 0).add(screenCenterRight),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Left,
-                        verticalAlignment: VerticalAlignment.Center
+                        verticalAlignment: VerticalAlignment.Center,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Right,
+                            VerticalPlacement.Center
+                        )
                     },
                     fading: false,
                     frames: [
@@ -731,7 +812,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(0, -10).add(screenTopCenter),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Center,
-                        verticalAlignment: VerticalAlignment.Below
+                        verticalAlignment: VerticalAlignment.Below,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Center,
+                            VerticalPlacement.Bottom
+                        )
                     },
                     fading: false,
                     frames: [
@@ -757,7 +842,11 @@ describe("Placement", function() {
                     position: new THREE.Vector2(0, 10).add(screenBottomCenter),
                     layout: {
                         horizontalAlignment: HorizontalAlignment.Center,
-                        verticalAlignment: VerticalAlignment.Above
+                        verticalAlignment: VerticalAlignment.Above,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Center,
+                            VerticalPlacement.Top
+                        )
                     },
                     fading: false,
                     frames: [
@@ -877,6 +966,10 @@ describe("Placement", function() {
                     {
                         horizontalAlignment: HorizontalAlignment.Right,
                         verticalAlignment: VerticalAlignment.Below,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Left,
+                            VerticalPlacement.Bottom
+                        ),
                         wrappingMode: WrappingMode.None
                     }
                 );
@@ -953,6 +1046,12 @@ describe("Placement", function() {
                     {
                         horizontalAlignment: HorizontalAlignment.Center,
                         verticalAlignment: VerticalAlignment.Center,
+                        placements: [
+                            {
+                                h: HorizontalPlacement.Center,
+                                v: VerticalPlacement.Center
+                            }
+                        ],
                         wrappingMode: WrappingMode.None
                     }
                 );
@@ -979,10 +1078,8 @@ describe("Placement", function() {
                         outPositions[i],
                         true
                     );
-                    // Even with multi-placement turned on, the labels are not using
-                    // alternative placement algorithm - they are excluded.
-                    // TODO: HARP-6487 This may be due to change when placements will be
-                    // parsed from theme.
+                    // Even with multi-placement turned on, only single placement has been provided
+                    // alternative placement algorithm will have no options, but surrender.
                     expect(states[i].textPlacement.h).to.equal(HorizontalPlacement.Center);
                     expect(states[i].textPlacement.v).to.equal(VerticalPlacement.Center);
                 }
@@ -1001,6 +1098,10 @@ describe("Placement", function() {
                     {
                         horizontalAlignment: HorizontalAlignment.Right,
                         verticalAlignment: VerticalAlignment.Below,
+                        placements: createTextPlacements(
+                            HorizontalPlacement.Left,
+                            VerticalPlacement.Bottom
+                        ),
                         wrappingMode: WrappingMode.None
                     }
                 );
