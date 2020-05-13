@@ -610,9 +610,10 @@ export class Tile implements CachedResource {
         this.m_elevationRange.calculationStatus = elevationRange.calculationStatus;
         this.elevateGeoBox();
 
-        // Only elevate bounding box if tile has already been decoded and a maximum geometry height
+        // Only update bounding box if tile has already been decoded and a maximum geometry height
         // is provided by the data source.
         if (this.m_maxGeometryHeight !== undefined) {
+            assert(this.decodedTile?.boundingBox === undefined);
             this.updateBoundingBox();
         }
     }
