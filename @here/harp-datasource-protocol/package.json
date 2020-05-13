@@ -38,7 +38,7 @@
         "source-map-support": "^0.5.2",
         "three": "^0.115.0",
         "ts-json-schema-generator": "^0.61.0",
-        "typescript": "^3.8.3"
+        "typescript": "^3.9.2"
     },
     "peerDependencies": {
         "three": "^0.115.0"

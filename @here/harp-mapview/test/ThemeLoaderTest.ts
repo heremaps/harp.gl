@@ -595,7 +595,7 @@ describe("ThemeLoader", function() {
             };
 
             const source: FlatTheme = {
-                extends: [baseTheme],
+                extends: [(baseTheme as unknown) as Theme],
                 styles: [
                     {
                         styleSet: "tilezen",

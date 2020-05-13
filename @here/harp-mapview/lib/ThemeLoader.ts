@@ -138,12 +138,13 @@ export class ThemeLoader {
             // assume that theme url is same as baseUrl
             theme.url = getAppBaseUrl();
             theme = this.resolveUrls(theme, options);
+        } else {
+            theme = this.convertFlatTheme(theme);
         }
 
         if (theme === null || theme === undefined) {
             throw new Error("ThemeLoader#load: loaded resource is not valid JSON");
         }
-        theme = theme as Theme;
 
         ThemeLoader.checkTechniqueSupport(theme);
 
@@ -192,6 +193,7 @@ export class ThemeLoader {
     private static resolveUrls(theme: Theme | FlatTheme, options?: ThemeLoadOptions): Theme {
         // Ensure that all resources referenced in theme by relative URIs are in fact relative to
         // theme.
+        theme = ThemeLoader.convertFlatTheme(theme);
         if (theme.url === undefined) {
             return theme;
         }
@@ -230,6 +232,7 @@ export class ThemeLoader {
 
         return theme;
     }
+
     private static checkTechniqueSupport(theme: Theme) {
         if (theme.styles !== undefined) {
             for (const styleSetName in theme.styles) {
@@ -539,7 +542,7 @@ export class ThemeLoader {
         return { ...baseTheme, ...theme, definitions, styles };
     }
 
-    private static convertFlatTheme(theme: Theme | FlatTheme): theme is Theme {
+    private static convertFlatTheme(theme: Theme | FlatTheme): Theme {
         if (Array.isArray(theme.styles)) {
             // Convert the flat theme to a standard theme.
             const styles: Styles = {};
@@ -558,7 +561,7 @@ export class ThemeLoader {
             });
             theme.styles = styles;
         }
-        return true;
+        return theme as Theme;
     }
 
     private static resolveResources(theme: Theme, childUrlResolver: UriResolver) {
@@ -590,7 +593,7 @@ export class ThemeLoader {
             }
         }
 
-        if (theme.styles) {
+        if (theme.styles !== undefined) {
             for (const styleSetName in theme.styles) {
                 if (!theme.styles.hasOwnProperty(styleSetName)) {
                     continue;
