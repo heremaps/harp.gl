@@ -5,7 +5,7 @@
  */
 
 import { Env, getPropertyValue } from "@here/harp-datasource-protocol";
-import { ProjectionType } from "@here/harp-geoutils";
+import { OrientedBox3, Projection, ProjectionType } from "@here/harp-geoutils";
 import {
     hAlignFromPlacement,
     HorizontalAlignment,
@@ -868,4 +868,39 @@ export function isPathLabelTooSmall(
     }
 
     return false;
+}
+
+const tmpOrientedBox = new OrientedBox3();
+
+/**
+ * Calculates the world position of the supplied label. The label will be shifted if there is a
+ * specified offsetDirection and value to shift it in.
+ * @param poiLabel The label to shift
+ * @param projection The projection, required to compute the correct direction offset for spherical
+ * projections.
+ * @param outWorldPosition Preallocated vector to store the result in
+ * @param worldOffsetShiftValue How much to shift along the labels direction.
+ * @returns the [[outWorldPosition]] vector.
+ */
+export function getWorldPosition(
+    poiLabel: TextElement,
+    projection: Projection,
+    outWorldPosition: THREE.Vector3,
+    worldOffsetShiftValue?: number
+): THREE.Vector3 {
+    outWorldPosition?.copy(poiLabel.position);
+    if (
+        worldOffsetShiftValue !== null &&
+        worldOffsetShiftValue !== undefined &&
+        poiLabel.offsetDirection !== undefined
+    ) {
+        projection.localTangentSpace(poiLabel.position, tmpOrientedBox);
+        const offsetDirectionVector = tmpOrientedBox.yAxis;
+        const offsetDirectionRad = THREE.MathUtils.degToRad(poiLabel.offsetDirection);
+        // Negate to get the normal, i.e. the vector pointing to the sky.
+        offsetDirectionVector.applyAxisAngle(tmpOrientedBox.zAxis.negate(), offsetDirectionRad);
+
+        outWorldPosition.addScaledVector(tmpOrientedBox.yAxis, worldOffsetShiftValue);
+    }
+    return outWorldPosition;
 }
