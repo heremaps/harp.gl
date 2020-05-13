@@ -241,15 +241,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      * @param geometry The current feature containing the main geometry.
      * @param env The [[MapEnv]] containing the environment information for the map.
      * @param techniques The array of [[Technique]] that will be applied to the geometry.
-     * @param featureId The id of the feature.
      */
     processPointFeature(
         layer: string,
         extents: number,
         geometry: THREE.Vector2[],
         context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
+        techniques: IndexedTechnique[]
     ): void {
         const env = context.env;
         this.processFeatureCommon(env);
@@ -290,6 +288,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
             }
 
+            const featureId = getFeatureId(env.entries);
             for (const pos of geometry) {
                 if (shouldCreateTextGeometries) {
                     const textTechnique = technique as TextTechnique;
@@ -310,9 +309,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV3);
                 }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
-                objInfos.push(
-                    this.m_gatherFeatureAttributes ? env.entries : getFeatureId(env.entries)
-                );
+                objInfos.push(this.m_gatherFeatureAttributes ? env.entries : featureId);
 
                 if (wantsPoi) {
                     if (imageTexture === undefined) {
