@@ -185,7 +185,7 @@ export interface BaseTechniqueParams {
      * If not specified in style file, [[StyleSetEvaluator]] will assign monotonically increasing
      * values according to style position in file.
      */
-    renderOrder: number;
+    renderOrder?: DynamicProperty<number>;
 
     /**
      * The category of this technique.
@@ -193,7 +193,7 @@ export interface BaseTechniqueParams {
      * The category is used in conjunction with [[Theme.priorities]]
      * to assign render orders to the objects created by this [[Style]].
      */
-    category?: string;
+    category?: DynamicProperty<string>;
 
     /**
      * Optional. If `true`, no IDs will be saved for the geometry this technique creates.
@@ -487,7 +487,7 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      *
      * See [[ExtendedTileInfo.getFeatureText]]
      */
-    text?: string;
+    text?: DynamicProperty<string>;
 
     /**
      * Field name of object containing the text to be rendered.
@@ -658,7 +658,7 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Name of [[ImageTexture]] definition to use.
      */
-    imageTexture?: string;
+    imageTexture?: DynamicProperty<string>;
     /**
      * Field name to extract imageTexture content from.
      */
@@ -778,7 +778,7 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      * World space offset in meters applied to the icon. Valid only for icons which have the
      * "offset_direction" property as an attribute of the data.
      */
-    worldOffset?: number;
+    worldOffset?: DynamicProperty<number>;
 }
 
 export interface LineTechniqueParams extends BaseTechniqueParams {
@@ -928,7 +928,7 @@ export interface BasicExtrudedLineTechniqueParams
      * Style of both end caps. Possible values: `"None"`, `"Circle"`. A value of undefined maps to
      * `"Circle"`.
      */
-    caps?: "None" | "Circle";
+    caps?: DynamicProperty<"None" | "Circle">;
 }
 
 /**
@@ -953,7 +953,7 @@ export interface StandardExtrudedLineTechniqueParams
      * Style of both end caps. Possible values: `"None"`, `"Circle"`. A value of undefined maps to
      * `"Circle"`.
      */
-    caps?: "None" | "Circle";
+    caps?: DynamicProperty<"None" | "Circle">;
 }
 
 /**
@@ -999,12 +999,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     /**
      * Clip the line outside the tile if `true`.
      */
-    clipping?: boolean;
+    clipping?: DynamicProperty<boolean>;
     /**
      * Describes line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
      * Default is `"Round"`.
      */
-    caps?: LineCaps;
+    caps?: DynamicProperty<LineCaps>;
     /**
      * Color of secondary line geometry in hexadecimal or CSS-style notation, for example:
      * `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -1018,17 +1018,17 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     /**
      * The render order of the secondary line geometry object created using this technique.
      */
-    secondaryRenderOrder?: number;
+    secondaryRenderOrder?: DynamicProperty<number>;
     /**
      * Describes secondary line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`,
      * `"TriangleIn"`).
      * Default is `"Round"`.
      */
-    secondaryCaps?: LineCaps;
+    secondaryCaps?: DynamicProperty<LineCaps>;
     /**
      * Describes the category of the secondary geometry object created using this technique.
      */
-    secondaryCategory?: string;
+    secondaryCategory?: DynamicProperty<string>;
     /**
      * Describes the starting drawing position for the line (in the range [0...1]).
      * Default is `0.0`.
@@ -1043,7 +1043,7 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Describes line dash type (`"Round"`, `"Square"`, `"Diamond"`).
      * Default is `"Square"`.
      */
-    dashes?: LineDashes;
+    dashes?: DynamicProperty<LineDashes>;
     /**
      * Color of a line dashes in hexadecimal or CSS-style notation,
      * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -1061,7 +1061,7 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     /**
      * Size in world units how far to offset the line perpendicular to its direction.
      */
-    offset?: number;
+    offset?: DynamicProperty<number>;
 }
 
 /**
@@ -1138,14 +1138,14 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      *
      * Usually, unique per feature, so defaults to `["get", "height"]`.
      */
-    height?: number;
+    height?: DynamicProperty<number>;
 
     /**
      * Height of "floor" of extruded polygon in world units of extruded polygon.
      *
      * Usually, unique per feature, so defaults to `["number", ["get", "min_height"], 0]`.
      */
-    floorHeight?: number;
+    floorHeight?: DynamicProperty<number>;
 
     /**
      * In some data sources, for example Tilezen, building extrusion information might be missing.
@@ -1260,7 +1260,7 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      *
      * See [[ExtendedTileInfo.getFeatureText]].
      */
-    text?: string;
+    text?: DynamicProperty<string>;
 
     /**
      * Field name of object containing the text to be rendered.

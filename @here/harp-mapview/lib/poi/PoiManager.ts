@@ -341,9 +341,14 @@ export class PoiManager {
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
+        const env = this.mapView.env;
+
         let imageTextureName: string | undefined =
             technique.imageTexture !== undefined
-                ? composeTechniqueTextureName(technique.imageTexture, technique)
+                ? composeTechniqueTextureName(
+                      getPropertyValue(technique.imageTexture, env),
+                      technique
+                  )
                 : undefined;
 
         let text: string = "";
@@ -420,9 +425,14 @@ export class PoiManager {
             return;
         }
 
+        const env = tile.mapView.env;
+
         const techniqueTextureName: string | undefined =
             technique.imageTexture !== undefined
-                ? composeTechniqueTextureName(technique.imageTexture, technique)
+                ? composeTechniqueTextureName(
+                      getPropertyValue(technique.imageTexture, env),
+                      technique
+                  )
                 : undefined;
 
         const poiTechnique = technique as PoiTechnique;

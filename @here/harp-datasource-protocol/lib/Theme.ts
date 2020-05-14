@@ -13,6 +13,7 @@ import {
     DynamicProperty,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
+    LineTechniqueParams,
     MarkerTechniqueParams,
     PointTechniqueParams,
     SegmentsTechniqueParams,
@@ -465,7 +466,7 @@ export type StyleSet = StyleDeclaration[];
  * tile. [[Style]] is describing which features are shown on a map and in what way they are being
  * shown.
  */
-export interface BaseStyle {
+export type BaseStyle<Technique, Params> = Partial<Params> & {
     /**
      * Human readable description.
      */
@@ -486,7 +487,7 @@ export interface BaseStyle {
      * techniques are possible, includes `"line"`, `"fill"`, `"solid-line"`, `"extruded-line"`,
      * `"extruded-polygon"`, `"text"`, `"none"`.
      */
-    technique?: string;
+    technique: Technique;
 
     /**
      * Specify `renderOrder` of value.
@@ -530,7 +531,9 @@ export interface BaseStyle {
      * XYZ defines the property to display as text label of a feature in the styles.
      */
     labelProperty?: string;
-}
+
+    attr?: Partial<Params>;
+};
 
 /**
  *
@@ -801,121 +804,73 @@ export type Attr<T> = { [P in keyof T]?: T[P] | JsonExpr };
  *
  * @see [[PointTechniqueParams]].
  */
-export interface SquaresStyle extends BaseStyle {
-    technique: "squares";
-    attr?: Attr<PointTechniqueParams>;
-}
+export type SquaresStyle = BaseStyle<"squares", PointTechniqueParams>;
 
 /**
  * Render feature as set of circles rendered in screen space.
  *
  * @see [[PointTechniqueParams]].
  */
-export interface CirclesStyle extends BaseStyle {
-    technique: "circles";
-    attr?: Attr<PointTechniqueParams>;
-}
+export type CirclesStyle = BaseStyle<"circles", PointTechniqueParams>;
 
 /**
  * Render feature as POIs (icons and text) rendered in screen space.
  *
  * @see [[MarkerTechniqueParams]].
  */
-export interface PoiStyle extends BaseStyle {
-    technique: "labeled-icon";
-    attr?: Attr<MarkerTechniqueParams>;
-}
+export type PoiStyle = BaseStyle<"labeled-icon", MarkerTechniqueParams>;
 
 /**
  * Render feature as line markers, which is a recurring marker along a line (usually road).
  *
  * @see [[MarkerTechniqueParams]].
  */
-export interface LineMarkerStyle extends BaseStyle {
-    technique: "line-marker";
-    attr?: Attr<MarkerTechniqueParams>;
-}
+export type LineMarkerStyle = BaseStyle<"line-marker", MarkerTechniqueParams>;
 
 /**
  * Render feature as line.
  */
-export interface LineStyle extends BaseStyle {
-    technique: "line";
-    secondaryRenderOrder?: number;
-    secondaryCategory?: string;
-    attr?: Attr<MarkerTechniqueParams>;
-}
+export type LineStyle = BaseStyle<"line", LineTechniqueParams>;
 
 /**
  * Render feature as segments.
  */
-export interface SegmentsStyle extends BaseStyle {
-    technique: "segments";
-    attr?: Attr<SegmentsTechniqueParams>;
-}
+export type SegmentsStyle = BaseStyle<"segments", SegmentsTechniqueParams>;
 
-export interface SolidLineStyle extends BaseStyle {
-    technique: "solid-line" | "dashed-line";
-    secondaryRenderOrder?: number;
-    secondaryCategory?: string;
-    attr?: Attr<SolidLineTechniqueParams>;
-}
+export type SolidLineStyle = BaseStyle<"solid-line" | "dashed-line", SolidLineTechniqueParams>;
 
-export interface LabelRejectionLineStyle extends BaseStyle {
-    technique: "label-rejection-line";
-    attr?: Attr<BaseTechniqueParams>;
-}
+export type LabelRejectionLineStyle = BaseStyle<"label-rejection-line", BaseTechniqueParams>;
 
-export interface FillStyle extends BaseStyle {
-    technique: "fill";
-    attr?: Attr<FillTechniqueParams>;
-}
+export type FillStyle = BaseStyle<"fill", FillTechniqueParams>;
 
-export interface StandardStyle extends BaseStyle {
-    technique: "standard";
-    attr?: Attr<StandardTechniqueParams>;
-}
+export type StandardStyle = BaseStyle<"standard", StandardTechniqueParams>;
 
-export interface TerrainStyle extends BaseStyle {
-    technique: "terrain";
-    attr?: Attr<TerrainTechniqueParams>;
-}
+export type TerrainStyle = BaseStyle<"terrain", TerrainTechniqueParams>;
 
-export interface BasicExtrudedLineStyle extends BaseStyle {
-    technique: "extruded-line";
-    shading?: "basic";
-    attr?: Attr<BasicExtrudedLineTechniqueParams>;
-}
+export type BasicExtrudedLineStyle = BaseStyle<"extruded-line", BasicExtrudedLineTechniqueParams>;
 
-export interface StandardExtrudedLineStyle extends BaseStyle {
-    technique: "extruded-line";
-    shading: "standard";
-    attr?: Attr<StandardExtrudedLineTechniqueParams>;
-}
+export type StandardExtrudedLineStyle = BaseStyle<
+    "extruded-line",
+    StandardExtrudedLineTechniqueParams
+>;
 
 /**
  * Style used to draw a geometry as an extruded polygon, for example extruded buildings.
  */
-export interface ExtrudedPolygonStyle extends BaseStyle {
-    technique: "extruded-polygon";
-    attr?: Attr<ExtrudedPolygonTechniqueParams>;
-}
+export type ExtrudedPolygonStyle = BaseStyle<"extruded-polygon", ExtrudedPolygonTechniqueParams>;
 
-export interface ShaderStyle extends BaseStyle {
-    technique: "shader";
-    attr?: Attr<ShaderTechniqueParams>;
-}
+export type ShaderStyle = BaseStyle<"shader", ShaderTechniqueParams>;
 
-export interface TextTechniqueStyle extends BaseStyle {
-    technique: "text";
-    attr?: Attr<TextTechniqueParams>;
-}
+export type TextTechniqueStyle = BaseStyle<"text", TextTechniqueParams>;
 
-export interface NoneStyle extends BaseStyle {
-    technique: "none";
-    attr?: {
-        [name: string]: any;
-    };
+export interface NoneStyle
+    extends BaseStyle<
+        "none",
+        {
+            [name: string]: any;
+        }
+    > {
+    [name: string]: any;
 }
 
 /**

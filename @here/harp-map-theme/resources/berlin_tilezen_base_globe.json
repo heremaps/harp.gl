@@ -60,19 +60,15 @@
                 "description": "North pole",
                 "when": ["==", ["get", "kind"], "north_pole"],
                 "technique": "fill",
-                "attr": {
-                    "color": ["ref", "northPoleColor"]
-                },
-                "renderOrder": 5
+                "renderOrder": 5,
+                "color": ["ref", "northPoleColor"]
             },
             {
                 "description": "South pole",
                 "when": ["==", ["get", "kind"], "south_pole"],
                 "technique": "fill",
-                "attr": {
-                    "color": ["ref", "southPoleColor"]
-                },
-                "renderOrder": 5
+                "renderOrder": 5,
+                "color": ["ref", "southPoleColor"]
             }
         ]
     }
