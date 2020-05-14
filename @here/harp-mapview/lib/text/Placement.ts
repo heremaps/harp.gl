@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Env, getPropertyValue } from "@here/harp-datasource-protocol";
+import { Env, getPropertyValue, PoiTechnique } from "@here/harp-datasource-protocol";
 import { OrientedBox3, Projection, ProjectionType } from "@here/harp-geoutils";
 import {
     hAlignFromPlacement,
@@ -878,16 +878,21 @@ const tmpOrientedBox = new OrientedBox3();
  * @param poiLabel The label to shift
  * @param projection The projection, required to compute the correct direction offset for spherical
  * projections.
+ * @param env The environment to extract the worldOffset needed to shift the icon in world space,
+ * if configured in the style.
  * @param outWorldPosition Preallocated vector to store the result in
- * @param worldOffsetShiftValue How much to shift along the labels direction.
  * @returns the [[outWorldPosition]] vector.
  */
 export function getWorldPosition(
     poiLabel: TextElement,
     projection: Projection,
-    outWorldPosition: THREE.Vector3,
-    worldOffsetShiftValue?: number
+    env: Env,
+    outWorldPosition: THREE.Vector3
 ): THREE.Vector3 {
+    const worldOffsetShiftValue = getPropertyValue(
+        (poiLabel.poiInfo?.technique as PoiTechnique)?.worldOffset,
+        env
+    );
     outWorldPosition?.copy(poiLabel.position);
     if (
         worldOffsetShiftValue !== null &&

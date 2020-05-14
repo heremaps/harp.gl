@@ -181,9 +181,10 @@ class MeshBuffers implements IMeshBuffers {
     readonly objInfos: AttributeMap[] = [];
 
     /**
-     * Angle in degrees from north clockwise which represents the direction the icon can be shifted.
+     * Angle in degrees from north clockwise which represents the direction the icons can be
+     * shifted.
      */
-    offsetDirection: number = 0;
+    readonly offsetDirections: number[] = [];
 
     constructor(readonly type: GeometryType) {}
 
@@ -269,7 +270,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 continue;
             }
 
-            const { positions, texts, imageTextures, objInfos } = meshBuffers;
+            const { positions, texts, imageTextures, objInfos, offsetDirections } = meshBuffers;
 
             const shouldCreateTextGeometries =
                 isTextTechnique(technique) || isPoiTechnique(technique);
@@ -292,7 +293,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     imageTexture = composeTechniqueTextureName(imageTextureValue, poiTechnique);
                 }
             }
-            meshBuffers.offsetDirection = (env.lookup("offset_direction") as number) ?? 0;
 
             const featureId = getFeatureId(env.entries);
             for (const pos of geometry) {
@@ -316,6 +316,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
                 objInfos.push(this.m_gatherFeatureAttributes ? env.entries : featureId);
+                offsetDirections.push((env.lookup("offset_direction") as number) ?? 0);
 
                 if (wantsPoi) {
                     if (imageTexture === undefined) {
@@ -1665,7 +1666,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     stringCatalog: meshBuffers.stringCatalog,
                     imageTextures: meshBuffers.imageTextures,
                     objInfos: meshBuffers.objInfos,
-                    offsetDirection: meshBuffers.offsetDirection
+                    offsetDirections: meshBuffers.offsetDirections
                 });
                 return;
             }

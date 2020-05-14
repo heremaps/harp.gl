@@ -440,6 +440,8 @@ export class PoiManager {
             const userData =
                 poiGeometry.objInfos !== undefined ? poiGeometry.objInfos[i] : undefined;
             const featureId = getFeatureId(userData);
+            const offsetDirection =
+                poiGeometry.offsetDirections === undefined ? 0 : poiGeometry.offsetDirections[i];
             if (poiGeometry.imageTextures !== undefined && poiGeometry.imageTextures[i] >= 0) {
                 assert(poiGeometry.imageTextures.length > i);
                 imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[i]];
@@ -468,7 +470,7 @@ export class PoiManager {
                 x,
                 y,
                 z,
-                poiGeometry.offsetDirection,
+                offsetDirection,
                 userData
             );
 

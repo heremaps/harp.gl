@@ -3,12 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    getPropertyValue,
-    LineMarkerTechnique,
-    PoiTechnique,
-    Theme
-} from "@here/harp-datasource-protocol";
+import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -1718,16 +1713,11 @@ export class TextElementsRenderer {
         textCanvas: TextCanvas,
         renderParams: RenderParams
     ): boolean {
-        const poiLabel = labelState.element;
-        const worldOffsetShift = getPropertyValue(
-            (poiLabel.poiInfo?.technique as PoiTechnique)?.worldOffset,
-            this.m_viewState.env
-        );
         const worldPosition = getWorldPosition(
-            poiLabel,
+            labelState.element,
             this.m_viewState.projection,
-            this.m_tmpVector3,
-            worldOffsetShift
+            this.m_viewState.env,
+            this.m_tmpVector3
         );
         // Only process labels frustum-clipped labels
         if (this.m_screenProjector.project(worldPosition, tempScreenPosition) === undefined) {
