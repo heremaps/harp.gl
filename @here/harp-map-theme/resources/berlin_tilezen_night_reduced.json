@@ -91,15 +91,13 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#333334",
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 1.5, 14, 1.2, 15, 0.9],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
                 "renderOrder": 10,
-                "final": true
+                "final": true,
+                "color": "#333334",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 1.5, 14, 1.2, 15, 0.9],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "residential - background",
@@ -116,28 +114,26 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#535557",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        10,
-                        42,
-                        11,
-                        28,
-                        12,
-                        18,
-                        13,
-                        7,
-                        14,
-                        4
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
-                "renderOrder": 11
+                "renderOrder": 11,
+                "color": "#535557",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    42,
+                    11,
+                    28,
+                    12,
+                    18,
+                    13,
+                    7,
+                    14,
+                    4
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "residential - foreground",
@@ -154,28 +150,26 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3B3D3F",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        10,
-                        38,
-                        11,
-                        24,
-                        12,
-                        13,
-                        13,
-                        5,
-                        14,
-                        3
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
-                "renderOrder": 11.3
+                "renderOrder": 11.3,
+                "color": "#3B3D3F",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    38,
+                    11,
+                    24,
+                    12,
+                    13,
+                    13,
+                    5,
+                    14,
+                    3
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "residential - labels",
@@ -192,16 +186,14 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 16,
-                    "priority": 15,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 12
+                "renderOrder": 12,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 16,
+                "priority": 15,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "secondary",
@@ -213,16 +205,14 @@
                     ["==", ["get", "kind_detail"], "secondary"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 16,
-                    "priority": 15,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 12
+                "renderOrder": 12,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 16,
+                "priority": 15,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "when": [
@@ -233,58 +223,56 @@
                     ["==", ["get", "kind_detail"], "secondary"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#393A3C",
-                    "secondaryColor": "#616467",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        7,
-                        180,
-                        8,
-                        110,
-                        9,
-                        45,
-                        10,
-                        30,
-                        11,
-                        20,
-                        12,
-                        12,
-                        13,
-                        7,
-                        14,
-                        5
-                    ],
-                    "secondaryWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        7,
-                        180,
-                        8,
-                        110,
-                        9,
-                        45,
-                        10,
-                        30,
-                        11,
-                        20,
-                        12,
-                        16,
-                        13,
-                        9,
-                        14,
-                        6
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
                 "renderOrder": 15.3,
                 "secondaryRenderOrder": 10.3,
-                "final": true
+                "final": true,
+                "color": "#393A3C",
+                "secondaryColor": "#616467",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7,
+                    180,
+                    8,
+                    110,
+                    9,
+                    45,
+                    10,
+                    30,
+                    11,
+                    20,
+                    12,
+                    12,
+                    13,
+                    7,
+                    14,
+                    5
+                ],
+                "secondaryWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7,
+                    180,
+                    8,
+                    110,
+                    9,
+                    45,
+                    10,
+                    30,
+                    11,
+                    20,
+                    12,
+                    16,
+                    13,
+                    9,
+                    14,
+                    6
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "tertiary",
@@ -296,16 +284,14 @@
                     ["in", ["get", "kind_detail"], ["literal", ["primary", "tertiary"]]]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "priority": 20,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 13
+                "renderOrder": 13,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "priority": 20,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "tertiary",
@@ -317,36 +303,34 @@
                     ["in", ["get", "kind_detail"], ["literal", ["primary", "tertiary"]]]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#56585B",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        6,
-                        550,
-                        7,
-                        300,
-                        8,
-                        100,
-                        9,
-                        70,
-                        10,
-                        38,
-                        11,
-                        24,
-                        12,
-                        14,
-                        13,
-                        7,
-                        14,
-                        5
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#56585B",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    6,
+                    550,
+                    7,
+                    300,
+                    8,
+                    100,
+                    9,
+                    70,
+                    10,
+                    38,
+                    11,
+                    24,
+                    12,
+                    14,
+                    13,
+                    7,
+                    14,
+                    5
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "tertiary",
@@ -358,39 +342,37 @@
                     ["in", ["get", "kind_detail"], ["literal", ["primary", "tertiary"]]]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3D3E41",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        830,
-                        6,
-                        410,
-                        7,
-                        220,
-                        8,
-                        100,
-                        9,
-                        50,
-                        10,
-                        30,
-                        11,
-                        20,
-                        12,
-                        11,
-                        13,
-                        6,
-                        14,
-                        4
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
                 "renderOrder": 15.3,
-                "final": true
+                "final": true,
+                "color": "#3D3E41",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    830,
+                    6,
+                    410,
+                    7,
+                    220,
+                    8,
+                    100,
+                    9,
+                    50,
+                    10,
+                    30,
+                    11,
+                    20,
+                    12,
+                    11,
+                    13,
+                    6,
+                    14,
+                    4
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "primary",
@@ -406,16 +388,14 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 16,
-                    "priority": 25,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 10
+                "renderOrder": 10,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 16,
+                "priority": 25,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "primary",
@@ -431,36 +411,34 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#56585B",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        6,
-                        700,
-                        7,
-                        400,
-                        8,
-                        200,
-                        9,
-                        90,
-                        10,
-                        50,
-                        11,
-                        33,
-                        12,
-                        16,
-                        13,
-                        11,
-                        14,
-                        7
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
-                "renderOrder": 10.4
+                "renderOrder": 10.4,
+                "color": "#56585B",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    6,
+                    700,
+                    7,
+                    400,
+                    8,
+                    200,
+                    9,
+                    90,
+                    10,
+                    50,
+                    11,
+                    33,
+                    12,
+                    16,
+                    13,
+                    11,
+                    14,
+                    7
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "primary",
@@ -476,39 +454,37 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3C3D3F",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        830,
-                        6,
-                        550,
-                        7,
-                        300,
-                        8,
-                        150,
-                        9,
-                        70,
-                        10,
-                        35,
-                        11,
-                        22,
-                        12,
-                        12,
-                        13,
-                        8,
-                        14,
-                        6
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
                 "renderOrder": 15.4,
-                "final": true
+                "final": true,
+                "color": "#3C3D3F",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    830,
+                    6,
+                    550,
+                    7,
+                    300,
+                    8,
+                    150,
+                    9,
+                    70,
+                    10,
+                    35,
+                    11,
+                    22,
+                    12,
+                    12,
+                    13,
+                    8,
+                    14,
+                    6
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "ferry",
@@ -519,16 +495,14 @@
                     ["==", ["get", "kind"], "ferry"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "priority": 25,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 10
+                "renderOrder": 10,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "priority": 25,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "ferry",
@@ -539,89 +513,87 @@
                     ["==", ["get", "kind"], "ferry"]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "clipping": false,
-                    "color": "#484A4C",
-                    "dashSize": [
-                        "step",
-                        ["zoom"],
-                        4000,
-                        7,
-                        2500,
-                        8,
-                        1500,
-                        9,
-                        1200,
-                        10,
-                        560,
-                        11,
-                        100,
-                        12,
-                        50,
-                        13,
-                        25,
-                        14,
-                        16,
-                        15,
-                        12,
-                        16,
-                        10
-                    ],
-                    "gapSize": [
-                        "step",
-                        ["zoom"],
-                        4000,
-                        7,
-                        2500,
-                        8,
-                        1500,
-                        9,
-                        1200,
-                        10,
-                        300,
-                        11,
-                        100,
-                        12,
-                        50,
-                        13,
-                        25,
-                        14,
-                        16,
-                        15,
-                        12,
-                        16,
-                        10
-                    ],
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        320,
-                        6,
-                        160,
-                        7,
-                        80,
-                        8,
-                        40,
-                        9,
-                        15,
-                        10,
-                        9,
-                        11,
-                        6,
-                        12,
-                        3,
-                        13,
-                        1.5,
-                        14,
-                        1
-                    ],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
                 "renderOrder": 10,
-                "final": true
+                "final": true,
+                "clipping": false,
+                "color": "#484A4C",
+                "dashSize": [
+                    "step",
+                    ["zoom"],
+                    4000,
+                    7,
+                    2500,
+                    8,
+                    1500,
+                    9,
+                    1200,
+                    10,
+                    560,
+                    11,
+                    100,
+                    12,
+                    50,
+                    13,
+                    25,
+                    14,
+                    16,
+                    15,
+                    12,
+                    16,
+                    10
+                ],
+                "gapSize": [
+                    "step",
+                    ["zoom"],
+                    4000,
+                    7,
+                    2500,
+                    8,
+                    1500,
+                    9,
+                    1200,
+                    10,
+                    300,
+                    11,
+                    100,
+                    12,
+                    50,
+                    13,
+                    25,
+                    14,
+                    16,
+                    15,
+                    12,
+                    16,
+                    10
+                ],
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    320,
+                    6,
+                    160,
+                    7,
+                    80,
+                    8,
+                    40,
+                    9,
+                    15,
+                    10,
+                    9,
+                    11,
+                    6,
+                    12,
+                    3,
+                    13,
+                    1.5,
+                    14,
+                    1
+                ],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "TODO",
@@ -636,15 +608,13 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#5E6062",
-                    "lineWidth": 5,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
                 "renderOrder": 10,
-                "final": true
+                "final": true,
+                "color": "#5E6062",
+                "lineWidth": 5,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "pedestrian - background",
@@ -682,14 +652,12 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#5D5F62",
-                    "lineWidth": 1.5,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#5D5F62",
+                "lineWidth": 1.5,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "pedestrian - foreground",
@@ -727,14 +695,12 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#353637",
-                    "lineWidth": 1.3,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
-                },
-                "renderOrder": 12.3
+                "renderOrder": 12.3,
+                "color": "#353637",
+                "lineWidth": 1.3,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "clipping": false
             },
             {
                 "description": "pedestrian - labels",
@@ -772,16 +738,14 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 16,
-                    "priority": 15,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 12
+                "renderOrder": 12,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 16,
+                "priority": 15,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "tram",
@@ -794,12 +758,10 @@
                     ["==", ["get", "kind_detail"], "tram"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#57585B",
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 1.5, 16, 0.75, 17, 0.4]
-                },
                 "renderOrder": 50,
-                "final": true
+                "final": true,
+                "color": "#57585B",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 1.5, 16, 0.75, 17, 0.4]
             },
             {
                 "description": "industrial_railway",
@@ -816,11 +778,9 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#606164"
-                },
                 "renderOrder": 5,
-                "final": true
+                "final": true,
+                "color": "#606164"
             },
             {
                 "description": "Railway+S-Bahn background",
@@ -833,12 +793,10 @@
                     ["!", ["get", "is_tunnel"]]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#6A6C6F",
-                    "clipping": false,
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 3.5, 14.6, 1.5, 15, 0.5]
-                },
-                "renderOrder": 5.2
+                "renderOrder": 5.2,
+                "color": "#6A6C6F",
+                "clipping": false,
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 3.5, 14.6, 1.5, 15, 0.5]
             },
             {
                 "description": "Railway+S-Bahn background",
@@ -851,12 +809,10 @@
                     ["get", "is_tunnel"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#6A6C6F",
-                    "clipping": false,
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 3.5, 21, 2.5]
-                },
-                "renderOrder": 5.1
+                "renderOrder": 5.1,
+                "color": "#6A6C6F",
+                "clipping": false,
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 3.5, 21, 2.5]
             },
             {
                 "description": "Railway+S-Bahn dashes",
@@ -869,31 +825,13 @@
                     ["!", ["get", "is_tunnel"]]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "color": "#7B7E81",
-                    "clipping": false,
-                    "dashSize": ["step", ["zoom"], 30, 11, 20, 12, 12, 13, 7, 14, 4, 15, 2, 20, 1],
-                    "gapSize": [
-                        "step",
-                        ["zoom"],
-                        100,
-                        11,
-                        55,
-                        12,
-                        50,
-                        13,
-                        40,
-                        14,
-                        25,
-                        15,
-                        12,
-                        20,
-                        8
-                    ],
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 2.75, 21, 1.75]
-                },
                 "renderOrder": 5.25,
-                "final": true
+                "final": true,
+                "color": "#7B7E81",
+                "clipping": false,
+                "dashSize": ["step", ["zoom"], 30, 11, 20, 12, 12, 13, 7, 14, 4, 15, 2, 20, 1],
+                "gapSize": ["step", ["zoom"], 100, 11, 55, 12, 50, 13, 40, 14, 25, 15, 12, 20, 8],
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 2.75, 21, 1.75]
             },
             {
                 "description": "Railway+S-Bahn dashes",
@@ -906,47 +844,13 @@
                     ["get", "is_tunnel"]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "color": "#454648",
-                    "clipping": false,
-                    "dashSize": [
-                        "step",
-                        ["zoom"],
-                        100,
-                        11,
-                        40,
-                        12,
-                        24,
-                        13,
-                        30,
-                        14,
-                        25,
-                        15,
-                        15,
-                        16,
-                        8
-                    ],
-                    "gapSize": [
-                        "step",
-                        ["zoom"],
-                        100,
-                        11,
-                        40,
-                        12,
-                        24,
-                        13,
-                        30,
-                        14,
-                        25,
-                        15,
-                        15,
-                        16,
-                        8
-                    ],
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 2.75, 14, 1.75]
-                },
                 "renderOrder": 5.15,
-                "final": true
+                "final": true,
+                "color": "#454648",
+                "clipping": false,
+                "dashSize": ["step", ["zoom"], 100, 11, 40, 12, 24, 13, 30, 14, 25, 15, 15, 16, 8],
+                "gapSize": ["step", ["zoom"], 100, 11, 40, 12, 24, 13, 30, 14, 25, 15, 15, 16, 8],
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 2.75, 14, 1.75]
             },
             {
                 "description": "water",
@@ -956,22 +860,18 @@
                     ["==", ["geometry-type"], "Polygon"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#3A3C3E"
-                },
-                "renderOrder": 5
+                "renderOrder": 5,
+                "color": "#3A3C3E"
             },
             {
                 "description": "water",
                 "when": ["==", ["get", "$layer"], "water"],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "opacity": 0.5,
-                    "size": 12.8
-                }
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "opacity": 0.5,
+                "size": 12.8
             },
             {
                 "description": "country border",
@@ -982,43 +882,41 @@
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#373A3C",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        5000,
-                        2,
-                        4000,
-                        3,
-                        3500,
-                        4,
-                        2500,
-                        5,
-                        1500,
-                        6,
-                        1000,
-                        7,
-                        500,
-                        8,
-                        250,
-                        9,
-                        125,
-                        10,
-                        60,
-                        11,
-                        40,
-                        12,
-                        20,
-                        13,
-                        10,
-                        14,
-                        5
-                    ]
-                },
-                "renderOrder": 5
+                "renderOrder": 5,
+                "color": "#373A3C",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    5000,
+                    2,
+                    4000,
+                    3,
+                    3500,
+                    4,
+                    2500,
+                    5,
+                    1500,
+                    6,
+                    1000,
+                    7,
+                    500,
+                    8,
+                    250,
+                    9,
+                    125,
+                    10,
+                    60,
+                    11,
+                    40,
+                    12,
+                    20,
+                    13,
+                    10,
+                    14,
+                    5
+                ]
             },
             {
                 "description": "country border",
@@ -1029,41 +927,39 @@
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#2E3234",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        1000,
-                        3,
-                        700,
-                        4,
-                        500,
-                        5,
-                        250,
-                        6,
-                        110,
-                        7,
-                        45,
-                        8,
-                        25,
-                        9,
-                        15,
-                        10,
-                        10,
-                        11,
-                        7.5,
-                        12,
-                        5,
-                        13,
-                        2.5,
-                        14,
-                        1
-                    ]
-                },
-                "renderOrder": 5
+                "renderOrder": 5,
+                "color": "#2E3234",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    1000,
+                    3,
+                    700,
+                    4,
+                    500,
+                    5,
+                    250,
+                    6,
+                    110,
+                    7,
+                    45,
+                    8,
+                    25,
+                    9,
+                    15,
+                    10,
+                    10,
+                    11,
+                    7.5,
+                    12,
+                    5,
+                    13,
+                    2.5,
+                    14,
+                    1
+                ]
             },
             {
                 "description": "country border",
@@ -1074,13 +970,11 @@
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8
-                }
+                "priority": 100,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 12.8
             },
             {
                 "description": "disputed border line",
@@ -1105,75 +999,73 @@
                     ]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "color": "#2E3234",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        4000,
-                        3,
-                        2600,
-                        4,
-                        1500,
-                        5,
-                        1000,
-                        6,
-                        720,
-                        7,
-                        520,
-                        8,
-                        270,
-                        9,
-                        140,
-                        10,
-                        90,
-                        11,
-                        60,
-                        12,
-                        30,
-                        13,
-                        15,
-                        14,
-                        10,
-                        15,
-                        5,
-                        16,
-                        2
-                    ],
-                    "dashSize": [
-                        "interpolate",
-                        ["cubic"],
-                        ["zoom"],
-                        10,
-                        1024,
-                        11,
-                        512,
-                        12,
-                        256,
-                        13,
-                        128,
-                        14,
-                        64
-                    ],
-                    "gapSize": [
-                        "interpolate",
-                        ["cubic"],
-                        ["zoom"],
-                        10,
-                        512,
-                        11,
-                        256,
-                        12,
-                        128,
-                        13,
-                        64,
-                        14,
-                        32
-                    ]
-                },
-                "renderOrder": 4.1
+                "renderOrder": 4.1,
+                "color": "#2E3234",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    4000,
+                    3,
+                    2600,
+                    4,
+                    1500,
+                    5,
+                    1000,
+                    6,
+                    720,
+                    7,
+                    520,
+                    8,
+                    270,
+                    9,
+                    140,
+                    10,
+                    90,
+                    11,
+                    60,
+                    12,
+                    30,
+                    13,
+                    15,
+                    14,
+                    10,
+                    15,
+                    5,
+                    16,
+                    2
+                ],
+                "dashSize": [
+                    "interpolate",
+                    ["cubic"],
+                    ["zoom"],
+                    10,
+                    1024,
+                    11,
+                    512,
+                    12,
+                    256,
+                    13,
+                    128,
+                    14,
+                    64
+                ],
+                "gapSize": [
+                    "interpolate",
+                    ["cubic"],
+                    ["zoom"],
+                    10,
+                    512,
+                    11,
+                    256,
+                    12,
+                    128,
+                    13,
+                    64,
+                    14,
+                    32
+                ]
             },
             {
                 "description": "disputed border line - text",
@@ -1198,13 +1090,11 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8
-                }
+                "priority": 100,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 12.8
             },
             {
                 "description": "region border",
@@ -1215,41 +1105,39 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#7C7C7C",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        600,
-                        3,
-                        300,
-                        4,
-                        150,
-                        5,
-                        100,
-                        6,
-                        60,
-                        7,
-                        30,
-                        8,
-                        20,
-                        9,
-                        12,
-                        10,
-                        8,
-                        11,
-                        5,
-                        12,
-                        3,
-                        13,
-                        2,
-                        14,
-                        1
-                    ]
-                },
-                "renderOrder": 4.1
+                "renderOrder": 4.1,
+                "color": "#7C7C7C",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    600,
+                    3,
+                    300,
+                    4,
+                    150,
+                    5,
+                    100,
+                    6,
+                    60,
+                    7,
+                    30,
+                    8,
+                    20,
+                    9,
+                    12,
+                    10,
+                    8,
+                    11,
+                    5,
+                    12,
+                    3,
+                    13,
+                    2,
+                    14,
+                    1
+                ]
             },
             {
                 "description": "region border",
@@ -1260,41 +1148,39 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#7C7C7C",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        600,
-                        3,
-                        300,
-                        4,
-                        150,
-                        5,
-                        100,
-                        6,
-                        60,
-                        7,
-                        30,
-                        8,
-                        20,
-                        9,
-                        12,
-                        10,
-                        8,
-                        11,
-                        5,
-                        12,
-                        3,
-                        13,
-                        2,
-                        14,
-                        1
-                    ]
-                },
-                "renderOrder": 4.1
+                "renderOrder": 4.1,
+                "color": "#7C7C7C",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    600,
+                    3,
+                    300,
+                    4,
+                    150,
+                    5,
+                    100,
+                    6,
+                    60,
+                    7,
+                    30,
+                    8,
+                    20,
+                    9,
+                    12,
+                    10,
+                    8,
+                    11,
+                    5,
+                    12,
+                    3,
+                    13,
+                    2,
+                    14,
+                    1
+                ]
             },
             {
                 "description": "region border",
@@ -1305,13 +1191,11 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 90,
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8
-                }
+                "priority": 90,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 12.8
             },
             {
                 "when": [
@@ -1320,14 +1204,12 @@
                     ["==", ["geometry-type"], "Point"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#999999",
-                    "backgroundColor": "#141414",
-                    "backgroundOpacity": 0.5,
-                    "size": 27.2,
-                    "priority": 200
-                },
-                "renderOrder": 7
+                "renderOrder": 7,
+                "color": "#999999",
+                "backgroundColor": "#141414",
+                "backgroundOpacity": 0.5,
+                "size": 27.2,
+                "priority": 200
             },
             {
                 "description": "urban",
@@ -1338,11 +1220,9 @@
                     ["==", ["get", "kind"], "urban"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "opacity": 0.8,
-                    "color": "#525556"
-                },
-                "renderOrder": 0
+                "renderOrder": 0,
+                "opacity": 0.8,
+                "color": "#525556"
             },
             {
                 "description": "urban area",
@@ -1353,26 +1233,24 @@
                     ["==", ["get", "kind"], "urban_area"]
                 ],
                 "technique": "none",
-                "attr": {
-                    "color": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        7,
-                        "#646668",
-                        8,
-                        "#646668",
-                        9,
-                        "#616465",
-                        10,
-                        "#616365",
-                        11,
-                        "#616365",
-                        12,
-                        "#646668"
-                    ]
-                },
-                "renderOrder": 0.1
+                "renderOrder": 0.1,
+                "color": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7,
+                    "#646668",
+                    8,
+                    "#646668",
+                    9,
+                    "#616465",
+                    10,
+                    "#616365",
+                    11,
+                    "#616365",
+                    12,
+                    "#646668"
+                ]
             },
             {
                 "description": "park",
@@ -1403,10 +1281,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#474A4B"
-                },
-                "renderOrder": 0.2
+                "renderOrder": 0.2,
+                "color": "#474A4B"
             },
             {
                 "description": "runway",
@@ -1417,11 +1293,9 @@
                     ["==", ["get", "kind"], "runway"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#3F4243"
-                },
                 "renderOrder": 20,
-                "final": true
+                "final": true,
+                "color": "#3F4243"
             },
             {
                 "description": "aerodrome",
@@ -1432,10 +1306,8 @@
                     ["==", ["get", "kind"], "aerodrome"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#444748"
-                },
-                "renderOrder": 0.3
+                "renderOrder": 0.3,
+                "color": "#444748"
             },
             {
                 "description": "national_park",
@@ -1446,10 +1318,8 @@
                     ["==", ["get", "kind"], "national_park"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#454849"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#454849"
             },
             {
                 "description": "pitch",
@@ -1460,10 +1330,8 @@
                     ["==", ["get", "kind"], "pitch"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#444748"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#444748"
             },
             {
                 "description": "hospital",
@@ -1474,10 +1342,8 @@
                     ["==", ["get", "kind"], "hospital"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#46484A"
-                },
-                "renderOrder": 0.1
+                "renderOrder": 0.1,
+                "color": "#46484A"
             },
             {
                 "description": "cemetery",
@@ -1488,10 +1354,8 @@
                     ["==", ["get", "kind"], "cemetery"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#444748"
-                },
-                "renderOrder": 0.1
+                "renderOrder": 0.1,
+                "color": "#444748"
             },
             {
                 "description": "bridge",
@@ -1502,10 +1366,8 @@
                     ["==", ["get", "kind"], "bridge"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#505355"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#505355"
             },
             {
                 "description": "zoo",
@@ -1520,10 +1382,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#414345"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#414345"
             },
             {
                 "description": "religion",
@@ -1534,10 +1394,8 @@
                     ["==", ["get", "kind"], "religion"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#616466"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#616466"
             },
             {
                 "description": "industrial",
@@ -1552,10 +1410,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#444748"
-                },
-                "renderOrder": 0
+                "renderOrder": 0,
+                "color": "#444748"
             },
             {
                 "description": "farmyard",
@@ -1570,10 +1426,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#616364"
-                },
-                "renderOrder": 0
+                "renderOrder": 0,
+                "color": "#616364"
             },
             {
                 "description": "beach",
@@ -1584,10 +1438,8 @@
                     ["any", ["==", ["get", "kind"], "beach"], ["$=", ["get", "kind"], "_site"]]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#5B5E5F"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#5B5E5F"
             },
             {
                 "description": "Earth layer",
@@ -1597,13 +1449,11 @@
                     ["!=", ["get", "kind"], "island"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": ["interpolate", ["linear"], ["zoom"], 2, 120, 3, 100, 4, 60],
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.6
-                }
+                "priority": ["interpolate", ["linear"], ["zoom"], 2, 120, 3, 100, 4, 60],
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "fontVariant": "SmallCaps",
+                "opacity": 0.6
             },
             {
                 "description": "Earth layer",
@@ -1613,12 +1463,10 @@
                     ["==", ["get", "kind"], "island"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "opacity": 0.6,
-                    "size": 16
-                }
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "opacity": 0.6,
+                "size": 16
             },
             {
                 "description": "country_pop_>10000000",
@@ -1630,33 +1478,31 @@
                     [">", ["get", "population"], 10000000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        11.2,
-                        2,
-                        12.8,
-                        3,
-                        19.2,
-                        4,
-                        22.4,
-                        5,
-                        25.6
-                    ],
-                    "color": "#ffffff",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 100,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    11.2,
+                    2,
+                    12.8,
+                    3,
+                    19.2,
+                    4,
+                    22.4,
+                    5,
+                    25.6
+                ],
+                "color": "#ffffff",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "country_pop_>1000000",
@@ -1668,33 +1514,31 @@
                     [">", ["get", "population"], 1000000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        8,
-                        2,
-                        9.6,
-                        3,
-                        12.8,
-                        4,
-                        16,
-                        5,
-                        19.2
-                    ],
-                    "color": "#ffffff",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 100,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    8,
+                    2,
+                    9.6,
+                    3,
+                    12.8,
+                    4,
+                    16,
+                    5,
+                    19.2
+                ],
+                "color": "#ffffff",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "country",
@@ -1704,33 +1548,31 @@
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 90,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        6.4,
-                        2,
-                        11.2,
-                        3,
-                        9.6,
-                        4,
-                        12.8,
-                        5,
-                        16
-                    ],
-                    "color": "#ffffff",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 90,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    6.4,
+                    2,
+                    11.2,
+                    3,
+                    9.6,
+                    4,
+                    12.8,
+                    5,
+                    16
+                ],
+                "color": "#ffffff",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "Places",
@@ -1740,30 +1582,16 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "none",
-                "attr": {
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        3,
-                        9.6,
-                        4,
-                        10.88,
-                        5,
-                        12.8,
-                        6,
-                        14.4
-                    ],
-                    "priority": 65,
-                    "color": "#ffffff",
-                    "backgroundColor": "#000000",
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                }
+                "size": ["interpolate", ["linear"], ["zoom"], 3, 9.6, 4, 10.88, 5, 12.8, 6, 14.4],
+                "priority": 65,
+                "color": "#ffffff",
+                "backgroundColor": "#000000",
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "iconFadeTime": 0.5,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>10000000",
@@ -1778,42 +1606,40 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "fontStyle": "Bold",
-                    "priority": 61,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        9.6,
-                        2,
-                        11.2,
-                        3,
-                        12.8,
-                        4,
-                        14.4,
-                        5,
-                        16,
-                        6,
-                        19.2,
-                        7,
-                        22.4,
-                        8,
-                        25.6,
-                        9,
-                        28.8,
-                        10,
-                        32
-                    ],
-                    "color": "#ffffff",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "fontStyle": "Bold",
+                "priority": 61,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    9.6,
+                    2,
+                    11.2,
+                    3,
+                    12.8,
+                    4,
+                    14.4,
+                    5,
+                    16,
+                    6,
+                    19.2,
+                    7,
+                    22.4,
+                    8,
+                    25.6,
+                    9,
+                    28.8,
+                    10,
+                    32
+                ],
+                "color": "#ffffff",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>10000000",
@@ -1828,41 +1654,39 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 61,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        9.6,
-                        2,
-                        11.2,
-                        3,
-                        12.8,
-                        4,
-                        14.4,
-                        5,
-                        16,
-                        6,
-                        19.2,
-                        7,
-                        22.4,
-                        8,
-                        25.6,
-                        9,
-                        28.8,
-                        10,
-                        32
-                    ],
-                    "color": "#ffffff",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 61,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    9.6,
+                    2,
+                    11.2,
+                    3,
+                    12.8,
+                    4,
+                    14.4,
+                    5,
+                    16,
+                    6,
+                    19.2,
+                    7,
+                    22.4,
+                    8,
+                    25.6,
+                    9,
+                    28.8,
+                    10,
+                    32
+                ],
+                "color": "#ffffff",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>1000000",
@@ -1877,41 +1701,39 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 60,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        9.6,
-                        3,
-                        11.2,
-                        4,
-                        12.8,
-                        5,
-                        14.4,
-                        6,
-                        16,
-                        7,
-                        19.2,
-                        8,
-                        22.4,
-                        9,
-                        25.6,
-                        10,
-                        28.8,
-                        11,
-                        32
-                    ],
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 60,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    9.6,
+                    3,
+                    11.2,
+                    4,
+                    12.8,
+                    5,
+                    14.4,
+                    6,
+                    16,
+                    7,
+                    19.2,
+                    8,
+                    22.4,
+                    9,
+                    25.6,
+                    10,
+                    28.8,
+                    11,
+                    32
+                ],
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>400000",
@@ -1923,37 +1745,35 @@
                     [">", ["get", "population"], 400000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 59,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        4,
-                        11.2,
-                        5,
-                        12.8,
-                        6,
-                        16,
-                        7,
-                        19.2,
-                        8,
-                        22.4,
-                        9,
-                        24,
-                        10,
-                        25.6,
-                        11,
-                        27.2
-                    ],
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 59,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    4,
+                    11.2,
+                    5,
+                    12.8,
+                    6,
+                    16,
+                    7,
+                    19.2,
+                    8,
+                    22.4,
+                    9,
+                    24,
+                    10,
+                    25.6,
+                    11,
+                    27.2
+                ],
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>100000",
@@ -1965,39 +1785,37 @@
                     [">", ["get", "population"], 100000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 58,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        4,
-                        9.6,
-                        5,
-                        11.2,
-                        6,
-                        12.8,
-                        7,
-                        16,
-                        8,
-                        19.2,
-                        9,
-                        20.8,
-                        10,
-                        22.4,
-                        11,
-                        24,
-                        12,
-                        25.6
-                    ],
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 58,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    4,
+                    9.6,
+                    5,
+                    11.2,
+                    6,
+                    12.8,
+                    7,
+                    16,
+                    8,
+                    19.2,
+                    9,
+                    20.8,
+                    10,
+                    22.4,
+                    11,
+                    24,
+                    12,
+                    25.6
+                ],
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>50000",
@@ -2009,29 +1827,15 @@
                     [">", ["get", "population"], 50000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 57,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        10,
-                        16,
-                        11,
-                        19.2,
-                        12,
-                        22.4,
-                        13,
-                        24
-                    ],
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 57,
+                "size": ["interpolate", ["linear"], ["zoom"], 10, 16, 11, 19.2, 12, 22.4, 13, 24],
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>10000",
@@ -2043,31 +1847,29 @@
                     [">", ["get", "population"], 10000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 56,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        11,
-                        16,
-                        12,
-                        17.6,
-                        13,
-                        19.2,
-                        14,
-                        20.8,
-                        15,
-                        22.4
-                    ],
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 56,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    11,
+                    16,
+                    12,
+                    17.6,
+                    13,
+                    19.2,
+                    14,
+                    20.8,
+                    15,
+                    22.4
+                ],
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_<=10000",
@@ -2079,31 +1881,29 @@
                     ["<=", ["get", "population"], 10000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 50,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        11,
-                        12.8,
-                        12,
-                        14.4,
-                        13,
-                        16,
-                        14,
-                        17.6,
-                        15,
-                        19.2
-                    ],
-                    "color": "#f4f4f4",
-                    "backgroundColor": "#000000",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 50,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    11,
+                    12.8,
+                    12,
+                    14.4,
+                    13,
+                    16,
+                    14,
+                    17.6,
+                    15,
+                    19.2
+                ],
+                "color": "#f4f4f4",
+                "backgroundColor": "#000000",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "building_geometry",
@@ -2114,24 +1914,22 @@
                 ],
                 "technique": "extruded-polygon",
                 "minZoomLevel": 16,
-                "attr": {
-                    "color": "#7C7F81",
-                    "opacity": 0.95,
-                    "roughness": 1,
-                    "metalness": 0.9,
-                    "emissive": "#323436",
-                    "emissiveIntensity": 0.75,
-                    "footprint": true,
-                    "maxSlope": 0.8799999999999999,
-                    "lineWidth": 1,
-                    "lineColor": "#2F3233",
-                    "lineColorMix": 0,
-                    "fadeNear": 0.9,
-                    "fadeFar": 1,
-                    "lineFadeNear": 0.1,
-                    "lineFadeFar": 0.7
-                },
-                "renderOrder": 2000
+                "renderOrder": 2000,
+                "color": "#7C7F81",
+                "opacity": 0.95,
+                "roughness": 1,
+                "metalness": 0.9,
+                "emissive": "#323436",
+                "emissiveIntensity": 0.75,
+                "footprint": true,
+                "maxSlope": 0.8799999999999999,
+                "lineWidth": 1,
+                "lineColor": "#2F3233",
+                "lineColorMix": 0,
+                "fadeNear": 0.9,
+                "fadeFar": 1,
+                "lineFadeNear": 0.1,
+                "lineFadeFar": 0.7
             },
             {
                 "description": "building_address",
@@ -2143,17 +1941,14 @@
                 ],
                 "technique": "text",
                 "minZoomLevel": 18,
-                "attr": {
-                    "color": "#131313",
-                    "label": "addr_housenumber",
-                    "size": 14.4,
-                    "opacity": 0.6,
-                    "minZoomLevel": 18,
-                    "lineWidth": 1,
-                    "fadeNear": 0.9,
-                    "fadeFar": 1
-                },
-                "renderOrder": 100
+                "renderOrder": 100,
+                "color": "#131313",
+                "label": "addr_housenumber",
+                "size": 14.4,
+                "opacity": 0.6,
+                "lineWidth": 1,
+                "fadeNear": 0.9,
+                "fadeFar": 1
             }
         ]
     }

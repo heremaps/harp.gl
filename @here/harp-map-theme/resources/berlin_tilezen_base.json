@@ -16,34 +16,30 @@
                 ["==", ["geometry-type"], "Polygon"]
             ],
             "technique": "fill",
-            "attr": {
-                "color": ["ref", "waterColor"]
-            },
-            "renderOrder": 5
+            "renderOrder": 5,
+            "color": ["ref", "waterColor"]
         },
         "extrudedBuildings": {
             "description": "extruded buildings",
             "technique": "extruded-polygon",
             "when": ["ref", "extrudedBuildingsCondition"],
             "minZoomLevel": 16,
-            "attr": {
-                "height": ["get", "height"],
-                "color": ["ref", "defaultBuildingColor"],
-                "roughness": 1,
-                "metalness": 0.8,
-                "emissive": "#78858C",
-                "emissiveIntensity": 0.85,
-                "footprint": true,
-                "maxSlope": 0.8799999999999999,
-                "lineWidth": 1,
-                "lineColor": "#172023",
-                "lineColorMix": 0.6,
-                "fadeNear": 0.9,
-                "fadeFar": 1,
-                "lineFadeNear": -0.75,
-                "lineFadeFar": 1
-            },
-            "renderOrder": 2000
+            "renderOrder": 2000,
+            "height": ["get", "height"],
+            "color": ["ref", "defaultBuildingColor"],
+            "roughness": 1,
+            "metalness": 0.8,
+            "emissive": "#78858C",
+            "emissiveIntensity": 0.85,
+            "footprint": true,
+            "maxSlope": 0.8799999999999999,
+            "lineWidth": 1,
+            "lineColor": "#172023",
+            "lineColorMix": 0.6,
+            "fadeNear": 0.9,
+            "fadeFar": 1,
+            "lineFadeNear": -0.75,
+            "lineFadeFar": 1
         },
         "countryBorderLineWidth": [
             "interpolate",
@@ -120,11 +116,9 @@
                 ["==", ["get", "kind"], "country"]
             ],
             "technique": "solid-line",
-            "attr": {
-                "color": "#2F444B",
-                "lineWidth": ["ref", "countryBorderLineWidth"]
-            },
-            "renderOrder": 4.1
+            "renderOrder": 4.1,
+            "color": "#2F444B",
+            "lineWidth": ["ref", "countryBorderLineWidth"]
         },
         "countryBorderOutline": {
             "description": "country border - outline",
@@ -135,11 +129,9 @@
                 ["==", ["get", "kind"], "country"]
             ],
             "technique": "solid-line",
-            "attr": {
-                "color": "#52676E",
-                "lineWidth": ["ref", "countryBorderOutlineWidth"]
-            },
-            "renderOrder": 4
+            "renderOrder": 4,
+            "color": "#52676E",
+            "lineWidth": ["ref", "countryBorderOutlineWidth"]
         }
     },
     "sky": {
@@ -237,30 +229,24 @@
                 ],
                 "minZoomLevel": 9,
                 "technique": "line-marker",
-                "attr": {
-                    "style": "smallSign",
-                    "label": "ref",
-                    "size": 12.8,
-                    "imageTexture": [
-                        "concat",
-                        "default-",
-                        ["clamp", ["length", ["get", "ref"]], 2, 6]
-                    ],
-                    "iconScale": 1.28,
-                    "priority": ["-", 37, ["length", ["get", "ref"]]],
-                    "minDistance": 200,
-                    "vAlignment": "Center",
-                    "hAlignment": "Center",
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "color": "#000000",
-                    "showOnMap": false
-                }
+                "style": "smallSign",
+                "label": "ref",
+                "size": 12.8,
+                "imageTexture": ["concat", "default-", ["clamp", ["length", ["get", "ref"]], 2, 6]],
+                "iconScale": 1.28,
+                "priority": ["-", 37, ["length", ["get", "ref"]]],
+                "minDistance": 200,
+                "vAlignment": "Center",
+                "hAlignment": "Center",
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "color": "#000000",
+                "showOnMap": false
             },
             {
                 "description": "highway-outline",
@@ -271,42 +257,40 @@
                     ["==", ["get", "kind_detail"], "motorway"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3A4C69",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        3500,
-                        6,
-                        2300,
-                        7,
-                        1600,
-                        8,
-                        1200,
-                        9,
-                        700,
-                        10,
-                        400,
-                        11,
-                        215,
-                        12,
-                        120,
-                        13,
-                        65,
-                        14,
-                        45,
-                        16,
-                        15,
-                        18,
-                        9
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#3A4C69",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    3500,
+                    6,
+                    2300,
+                    7,
+                    1600,
+                    8,
+                    1200,
+                    9,
+                    700,
+                    10,
+                    400,
+                    11,
+                    215,
+                    12,
+                    120,
+                    13,
+                    65,
+                    14,
+                    45,
+                    16,
+                    15,
+                    18,
+                    9
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "highway-fill",
@@ -317,43 +301,41 @@
                     ["==", ["get", "kind_detail"], "motorway"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#D6C789",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        3500,
-                        6,
-                        2300,
-                        7,
-                        1600,
-                        8,
-                        850,
-                        9,
-                        510,
-                        10,
-                        300,
-                        11,
-                        160,
-                        12,
-                        95,
-                        13,
-                        52,
-                        14,
-                        35,
-                        16,
-                        13,
-                        18,
-                        8
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
                 "renderOrder": 15.6,
-                "final": true
+                "final": true,
+                "color": "#D6C789",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    3500,
+                    6,
+                    2300,
+                    7,
+                    1600,
+                    8,
+                    850,
+                    9,
+                    510,
+                    10,
+                    300,
+                    11,
+                    160,
+                    12,
+                    95,
+                    13,
+                    52,
+                    14,
+                    35,
+                    16,
+                    13,
+                    18,
+                    8
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "highway-link",
@@ -364,46 +346,44 @@
                     ["has", "is_link"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#D6C789",
-                    "secondaryColor": "#3A4C69",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        12,
-                        50,
-                        13,
-                        20,
-                        14,
-                        12,
-                        16,
-                        7,
-                        18,
-                        6
-                    ],
-                    "secondaryWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        12,
-                        60,
-                        13,
-                        25,
-                        14,
-                        18,
-                        16,
-                        9,
-                        18,
-                        7
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
                 "renderOrder": 15.5,
                 "secondaryRenderOrder": 10.3,
-                "final": true
+                "final": true,
+                "color": "#D6C789",
+                "secondaryColor": "#3A4C69",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    12,
+                    50,
+                    13,
+                    20,
+                    14,
+                    12,
+                    16,
+                    7,
+                    18,
+                    6
+                ],
+                "secondaryWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    12,
+                    60,
+                    13,
+                    25,
+                    14,
+                    18,
+                    16,
+                    9,
+                    18,
+                    7
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "primary-road-shield-2, zoom > 11",
@@ -417,27 +397,25 @@
                 ],
                 "minZoomLevel": 12,
                 "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-2",
-                    "iconScale": 1.28,
-                    "priority": 30,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
+                "label": "ref",
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "imageTexture": "default-2",
+                "iconScale": 1.28,
+                "priority": 30,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "minDistance": 300,
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "showOnMap": false
             },
             {
                 "description": "primary-road-shield-3, zoom > 11",
@@ -451,27 +429,25 @@
                 ],
                 "minZoomLevel": 12,
                 "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-3",
-                    "iconScale": 1.28,
-                    "priority": 29,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
+                "label": "ref",
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "imageTexture": "default-3",
+                "iconScale": 1.28,
+                "priority": 29,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "minDistance": 300,
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "showOnMap": false
             },
             {
                 "description": "primary-road-shield-4, zoom > 11",
@@ -485,27 +461,25 @@
                 ],
                 "minZoomLevel": 12,
                 "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-4",
-                    "iconScale": 1.28,
-                    "priority": 28,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
+                "label": "ref",
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "imageTexture": "default-4",
+                "iconScale": 1.28,
+                "priority": 28,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "minDistance": 300,
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "showOnMap": false
             },
             {
                 "description": "primary-road-shield-5, zoom > 11",
@@ -519,27 +493,25 @@
                 ],
                 "minZoomLevel": 12,
                 "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-5",
-                    "iconScale": 1.28,
-                    "priority": 27,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
+                "label": "ref",
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "imageTexture": "default-5",
+                "iconScale": 1.28,
+                "priority": 27,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "minDistance": 300,
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "showOnMap": false
             },
             {
                 "description": "primary-road-shield-5+, zoom > 11",
@@ -553,27 +525,25 @@
                 ],
                 "minZoomLevel": 12,
                 "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-6",
-                    "iconScale": 1.28,
-                    "priority": 26,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
+                "label": "ref",
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "imageTexture": "default-6",
+                "iconScale": 1.28,
+                "priority": 26,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "minDistance": 300,
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "showOnMap": false
             },
             {
                 "description": "primary-outline",
@@ -584,36 +554,34 @@
                     ["==", ["get", "kind_detail"], "primary"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3A4C69",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        8,
-                        950,
-                        9,
-                        600,
-                        10,
-                        320,
-                        11,
-                        170,
-                        12,
-                        90,
-                        13,
-                        45,
-                        14,
-                        35,
-                        16,
-                        11,
-                        18,
-                        8
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#3A4C69",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    8,
+                    950,
+                    9,
+                    600,
+                    10,
+                    320,
+                    11,
+                    170,
+                    12,
+                    90,
+                    13,
+                    45,
+                    14,
+                    35,
+                    16,
+                    11,
+                    18,
+                    8
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "primary-fill",
@@ -624,37 +592,35 @@
                     ["==", ["get", "kind_detail"], "primary"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#F0E8B5",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        8,
-                        650,
-                        9,
-                        400,
-                        10,
-                        220,
-                        11,
-                        120,
-                        12,
-                        65,
-                        13,
-                        35,
-                        14,
-                        27,
-                        16,
-                        9,
-                        18,
-                        7
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
                 "renderOrder": 15.5,
-                "final": true
+                "final": true,
+                "color": "#F0E8B5",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    8,
+                    650,
+                    9,
+                    400,
+                    10,
+                    220,
+                    11,
+                    120,
+                    12,
+                    65,
+                    13,
+                    35,
+                    14,
+                    27,
+                    16,
+                    9,
+                    18,
+                    7
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "highway-trunk-outline",
@@ -665,42 +631,40 @@
                     ["==", ["get", "kind_detail"], "trunk"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3A4C69",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        2500,
-                        6,
-                        1500,
-                        7,
-                        1100,
-                        8,
-                        950,
-                        9,
-                        600,
-                        10,
-                        320,
-                        11,
-                        170,
-                        12,
-                        90,
-                        13,
-                        45,
-                        14,
-                        35,
-                        16,
-                        11,
-                        18,
-                        8
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#3A4C69",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    2500,
+                    6,
+                    1500,
+                    7,
+                    1100,
+                    8,
+                    950,
+                    9,
+                    600,
+                    10,
+                    320,
+                    11,
+                    170,
+                    12,
+                    90,
+                    13,
+                    45,
+                    14,
+                    35,
+                    16,
+                    11,
+                    18,
+                    8
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "highway-trunk-fill",
@@ -711,43 +675,41 @@
                     ["==", ["get", "kind_detail"], "trunk"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#F0E8B5",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        2500,
-                        6,
-                        1500,
-                        7,
-                        1100,
-                        8,
-                        650,
-                        9,
-                        400,
-                        10,
-                        220,
-                        11,
-                        120,
-                        12,
-                        65,
-                        13,
-                        35,
-                        14,
-                        27,
-                        16,
-                        9,
-                        18,
-                        7
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
                 "renderOrder": 15.5,
-                "final": true
+                "final": true,
+                "color": "#F0E8B5",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    2500,
+                    6,
+                    1500,
+                    7,
+                    1100,
+                    8,
+                    650,
+                    9,
+                    400,
+                    10,
+                    220,
+                    11,
+                    120,
+                    12,
+                    65,
+                    13,
+                    35,
+                    14,
+                    27,
+                    16,
+                    9,
+                    18,
+                    7
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "secondary-road-shield, zoom > 12",
@@ -760,31 +722,25 @@
                 ],
                 "minZoomLevel": 13,
                 "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": [
-                        "concat",
-                        "default-",
-                        ["clamp", ["length", ["get", "ref"]], 2, 6]
-                    ],
-                    "iconScale": 1.28,
-                    "priority": ["-", 26, ["length", ["get", "ref"]]],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": true,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
+                "label": "ref",
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "imageTexture": ["concat", "default-", ["clamp", ["length", ["get", "ref"]], 2, 6]],
+                "iconScale": 1.28,
+                "priority": ["-", 26, ["length", ["get", "ref"]]],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "minDistance": 300,
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": true,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "showOnMap": false
             },
             {
                 "description": "secondary-fill",
@@ -795,54 +751,52 @@
                     ["==", ["get", "kind_detail"], "secondary"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#E3D49A",
-                    "secondaryColor": "#3A4C69",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        10,
-                        160,
-                        11,
-                        90,
-                        12,
-                        50,
-                        13,
-                        28,
-                        14,
-                        23,
-                        16,
-                        7,
-                        18,
-                        6
-                    ],
-                    "secondaryWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        10,
-                        250,
-                        11,
-                        130,
-                        12,
-                        70,
-                        13,
-                        35,
-                        14,
-                        30,
-                        16,
-                        9,
-                        18,
-                        7
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
                 "renderOrder": 15.4,
                 "secondaryRenderOrder": 10.3,
-                "final": true
+                "final": true,
+                "color": "#E3D49A",
+                "secondaryColor": "#3A4C69",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    160,
+                    11,
+                    90,
+                    12,
+                    50,
+                    13,
+                    28,
+                    14,
+                    23,
+                    16,
+                    7,
+                    18,
+                    6
+                ],
+                "secondaryWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    10,
+                    250,
+                    11,
+                    130,
+                    12,
+                    70,
+                    13,
+                    35,
+                    14,
+                    30,
+                    16,
+                    9,
+                    18,
+                    7
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "tertiary-road-shield, zoom > 14",
@@ -855,31 +809,25 @@
                 ],
                 "minZoomLevel": 15,
                 "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": [
-                        "concat",
-                        "default-",
-                        ["clamp", ["length", ["get", "ref"]], 2, 6]
-                    ],
-                    "iconScale": 1.28,
-                    "priority": ["-", 22, ["length", ["get", "ref"]]],
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 200,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
+                "label": "ref",
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "imageTexture": ["concat", "default-", ["clamp", ["length", ["get", "ref"]], 2, 6]],
+                "iconScale": 1.28,
+                "priority": ["-", 22, ["length", ["get", "ref"]]],
+                "fadeNear": 0.8,
+                "fadeFar": 0.9,
+                "minDistance": 200,
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": true,
+                "showOnMap": false
             },
             {
                 "description": "tertiary-outline",
@@ -890,14 +838,12 @@
                     ["==", ["get", "kind_detail"], "tertiary"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3A4C69",
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 16, 7.5, 18, 6],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#3A4C69",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 16, 7.5, 18, 6],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "tertiary-fill",
@@ -908,31 +854,29 @@
                     ["==", ["get", "kind_detail"], "tertiary"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#eae4c4",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        11,
-                        70,
-                        12,
-                        40,
-                        13,
-                        25,
-                        14,
-                        18,
-                        16,
-                        6,
-                        18,
-                        5
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
                 "renderOrder": 15.3,
-                "final": true
+                "final": true,
+                "color": "#eae4c4",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    11,
+                    70,
+                    12,
+                    40,
+                    13,
+                    25,
+                    14,
+                    18,
+                    16,
+                    6,
+                    18,
+                    5
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "residential-outline",
@@ -948,14 +892,12 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3A4C69",
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 16, 6, 18, 5],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#3A4C69",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 16, 6, 18, 5],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "residential-fill",
@@ -971,26 +913,12 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#d1d0bf",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        13,
-                        20,
-                        14,
-                        14,
-                        16,
-                        4.5,
-                        18,
-                        4
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 15.2
+                "renderOrder": 15.2,
+                "color": "#d1d0bf",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 20, 14, 14, 16, 4.5, 18, 4],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "residential - labels",
@@ -1006,16 +934,14 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 16,
-                    "priority": 14,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 12
+                "renderOrder": 12,
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 16,
+                "priority": 14,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "pedestrian - background",
@@ -1026,26 +952,12 @@
                     ["in", ["get", "kind_detail"], ["literal", ["pedestrian", "footway"]]]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#3A4C69",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        13,
-                        13,
-                        14,
-                        9,
-                        16,
-                        4.5,
-                        18,
-                        3.5
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 10.3
+                "renderOrder": 10.3,
+                "color": "#3A4C69",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 13, 14, 9, 16, 4.5, 18, 3.5],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "pedestrian - foreground",
@@ -1056,26 +968,12 @@
                     ["in", ["get", "kind_detail"], ["literal", ["pedestrian", "footway"]]]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#B1B5B6",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        13,
-                        13,
-                        14,
-                        9,
-                        16,
-                        3.5,
-                        18,
-                        2.5
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
-                "renderOrder": 15.1
+                "renderOrder": 15.1,
+                "color": "#B1B5B6",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 13, 14, 9, 16, 3.5, 18, 2.5],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "pedestrian - labels",
@@ -1086,16 +984,14 @@
                     ["in", ["get", "kind_detail"], ["literal", ["pedestrian", "footway"]]]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 16,
-                    "priority": 13,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 12
+                "renderOrder": 12,
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 16,
+                "priority": 13,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "ferry",
@@ -1106,16 +1002,14 @@
                     ["==", ["get", "kind"], "ferry"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#03334E",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "priority": 36,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "renderOrder": 10
+                "renderOrder": 10,
+                "color": "#03334E",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8,
+                "priority": 36,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "ferry",
@@ -1126,89 +1020,87 @@
                     ["==", ["get", "kind"], "ferry"]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "clipping": false,
-                    "color": "#184F6E",
-                    "dashSize": [
-                        "step",
-                        ["zoom"],
-                        4000,
-                        7,
-                        2500,
-                        8,
-                        1500,
-                        9,
-                        1200,
-                        10,
-                        560,
-                        11,
-                        100,
-                        12,
-                        50,
-                        13,
-                        25,
-                        14,
-                        16,
-                        15,
-                        12,
-                        16,
-                        10
-                    ],
-                    "gapSize": [
-                        "step",
-                        ["zoom"],
-                        4000,
-                        7,
-                        2500,
-                        8,
-                        1500,
-                        9,
-                        1200,
-                        10,
-                        300,
-                        11,
-                        100,
-                        12,
-                        50,
-                        13,
-                        25,
-                        14,
-                        16,
-                        15,
-                        12,
-                        16,
-                        10
-                    ],
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        5,
-                        320,
-                        6,
-                        160,
-                        7,
-                        80,
-                        8,
-                        40,
-                        9,
-                        15,
-                        10,
-                        9,
-                        11,
-                        6,
-                        12,
-                        3,
-                        13,
-                        1.5,
-                        14,
-                        1
-                    ],
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"]
-                },
                 "renderOrder": 10,
-                "final": true
+                "final": true,
+                "clipping": false,
+                "color": "#184F6E",
+                "dashSize": [
+                    "step",
+                    ["zoom"],
+                    4000,
+                    7,
+                    2500,
+                    8,
+                    1500,
+                    9,
+                    1200,
+                    10,
+                    560,
+                    11,
+                    100,
+                    12,
+                    50,
+                    13,
+                    25,
+                    14,
+                    16,
+                    15,
+                    12,
+                    16,
+                    10
+                ],
+                "gapSize": [
+                    "step",
+                    ["zoom"],
+                    4000,
+                    7,
+                    2500,
+                    8,
+                    1500,
+                    9,
+                    1200,
+                    10,
+                    300,
+                    11,
+                    100,
+                    12,
+                    50,
+                    13,
+                    25,
+                    14,
+                    16,
+                    15,
+                    12,
+                    16,
+                    10
+                ],
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5,
+                    320,
+                    6,
+                    160,
+                    7,
+                    80,
+                    8,
+                    40,
+                    9,
+                    15,
+                    10,
+                    9,
+                    11,
+                    6,
+                    12,
+                    3,
+                    13,
+                    1.5,
+                    14,
+                    1
+                ],
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"]
             },
             {
                 "description": "TODO",
@@ -1223,15 +1115,13 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#A8ABA8",
-                    "lineWidth": 5,
-                    "fadeNear": ["ref", "roadsFadeNear"],
-                    "fadeFar": ["ref", "roadsFadeFar"],
-                    "clipping": false
-                },
                 "renderOrder": 10,
-                "final": true
+                "final": true,
+                "color": "#A8ABA8",
+                "lineWidth": 5,
+                "fadeNear": ["ref", "roadsFadeNear"],
+                "fadeFar": ["ref", "roadsFadeFar"],
+                "clipping": false
             },
             {
                 "description": "tram",
@@ -1244,12 +1134,10 @@
                     ["==", ["get", "kind_detail"], "tram"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#B9B9B9",
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 1.5, 16, 0.75, 17, 0.4]
-                },
                 "renderOrder": 50,
-                "final": true
+                "final": true,
+                "color": "#B9B9B9",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 1.5, 16, 0.75, 17, 0.4]
             },
             {
                 "description": "industrial_railway",
@@ -1266,11 +1154,9 @@
                     ]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#A4A8A2"
-                },
                 "renderOrder": 5,
-                "final": true
+                "final": true,
+                "color": "#A4A8A2"
             },
             {
                 "description": "Railway+S-Bahn background",
@@ -1283,27 +1169,25 @@
                     ["!", ["get", "is_tunnel"]]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#696A6B",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        9,
-                        150,
-                        11,
-                        35,
-                        13,
-                        9,
-                        14,
-                        5,
-                        15,
-                        2.5,
-                        17,
-                        0.75
-                    ]
-                },
-                "renderOrder": 5.2
+                "renderOrder": 5.2,
+                "color": "#696A6B",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    9,
+                    150,
+                    11,
+                    35,
+                    13,
+                    9,
+                    14,
+                    5,
+                    15,
+                    2.5,
+                    17,
+                    0.75
+                ]
             },
             {
                 "description": "Railway+S-Bahn background",
@@ -1316,11 +1200,9 @@
                     ["get", "is_tunnel"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#696A6B",
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 3.5, 14, 2.5]
-                },
-                "renderOrder": 5.1
+                "renderOrder": 5.1,
+                "color": "#696A6B",
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 3.5, 14, 2.5]
             },
             {
                 "description": "Railway+S-Bahn dashes",
@@ -1333,70 +1215,68 @@
                     ["!", ["get", "is_tunnel"]]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "color": "#696A6B",
-                    "dashSize": [
-                        "step",
-                        ["zoom"],
-                        100,
-                        11,
-                        25,
-                        12,
-                        15,
-                        13,
-                        8,
-                        14,
-                        5,
-                        15,
-                        3,
-                        16,
-                        2,
-                        17,
-                        1
-                    ],
-                    "gapSize": [
-                        "step",
-                        ["zoom"],
-                        2500,
-                        11,
-                        600,
-                        12,
-                        400,
-                        13,
-                        150,
-                        14,
-                        70,
-                        15,
-                        45,
-                        16,
-                        25,
-                        17,
-                        15
-                    ],
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        9,
-                        0,
-                        11,
-                        0,
-                        12.9,
-                        0,
-                        13,
-                        22,
-                        14,
-                        12,
-                        15,
-                        9,
-                        16,
-                        5,
-                        17,
-                        3.5
-                    ]
-                },
                 "renderOrder": 5.25,
-                "final": true
+                "final": true,
+                "color": "#696A6B",
+                "dashSize": [
+                    "step",
+                    ["zoom"],
+                    100,
+                    11,
+                    25,
+                    12,
+                    15,
+                    13,
+                    8,
+                    14,
+                    5,
+                    15,
+                    3,
+                    16,
+                    2,
+                    17,
+                    1
+                ],
+                "gapSize": [
+                    "step",
+                    ["zoom"],
+                    2500,
+                    11,
+                    600,
+                    12,
+                    400,
+                    13,
+                    150,
+                    14,
+                    70,
+                    15,
+                    45,
+                    16,
+                    25,
+                    17,
+                    15
+                ],
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    9,
+                    0,
+                    11,
+                    0,
+                    12.9,
+                    0,
+                    13,
+                    22,
+                    14,
+                    12,
+                    15,
+                    9,
+                    16,
+                    5,
+                    17,
+                    3.5
+                ]
             },
             {
                 "description": "Railway+S-Bahn dashes",
@@ -1409,59 +1289,23 @@
                     ["get", "is_tunnel"]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "color": "#DDDDDD",
-                    "dashSize": [
-                        "step",
-                        ["zoom"],
-                        100,
-                        11,
-                        40,
-                        12,
-                        24,
-                        13,
-                        30,
-                        14,
-                        25,
-                        15,
-                        15,
-                        16,
-                        8
-                    ],
-                    "gapSize": [
-                        "step",
-                        ["zoom"],
-                        100,
-                        11,
-                        40,
-                        12,
-                        24,
-                        13,
-                        30,
-                        14,
-                        25,
-                        15,
-                        15,
-                        16,
-                        8
-                    ],
-                    "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 2.75, 14, 1.75]
-                },
                 "renderOrder": 5.15,
-                "final": true
+                "final": true,
+                "color": "#DDDDDD",
+                "dashSize": ["step", ["zoom"], 100, 11, 40, 12, 24, 13, 30, 14, 25, 15, 15, 16, 8],
+                "gapSize": ["step", ["zoom"], 100, 11, 40, 12, 24, 13, 30, 14, 25, 15, 15, 16, 8],
+                "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 2.75, 14, 1.75]
             },
             ["ref", "waterPolygons"],
             {
                 "description": "water",
                 "when": ["all", ["==", ["get", "$layer"], "water"]],
                 "technique": "text",
-                "attr": {
-                    "color": "#012337",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "opacity": 0.5,
-                    "size": 12.8
-                }
+                "color": "#012337",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "opacity": 0.5,
+                "size": 12.8
             },
             ["ref", "countryBorderOutline"],
             ["ref", "countryBorderLine"],
@@ -1474,13 +1318,11 @@
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8
-                }
+                "priority": 100,
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8
             },
             {
                 "description": "disputed border line",
@@ -1505,75 +1347,73 @@
                     ]
                 ],
                 "technique": "dashed-line",
-                "attr": {
-                    "color": "#2F444B",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        4000,
-                        3,
-                        2600,
-                        4,
-                        1500,
-                        5,
-                        1000,
-                        6,
-                        720,
-                        7,
-                        520,
-                        8,
-                        270,
-                        9,
-                        140,
-                        10,
-                        90,
-                        11,
-                        60,
-                        12,
-                        30,
-                        13,
-                        15,
-                        14,
-                        10,
-                        15,
-                        5,
-                        16,
-                        2
-                    ],
-                    "dashSize": [
-                        "interpolate",
-                        ["cubic"],
-                        ["zoom"],
-                        10,
-                        1024,
-                        11,
-                        512,
-                        12,
-                        256,
-                        13,
-                        128,
-                        14,
-                        64
-                    ],
-                    "gapSize": [
-                        "interpolate",
-                        ["cubic"],
-                        ["zoom"],
-                        10,
-                        512,
-                        11,
-                        256,
-                        12,
-                        128,
-                        13,
-                        64,
-                        14,
-                        32
-                    ]
-                },
-                "renderOrder": 4.1
+                "renderOrder": 4.1,
+                "color": "#2F444B",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    4000,
+                    3,
+                    2600,
+                    4,
+                    1500,
+                    5,
+                    1000,
+                    6,
+                    720,
+                    7,
+                    520,
+                    8,
+                    270,
+                    9,
+                    140,
+                    10,
+                    90,
+                    11,
+                    60,
+                    12,
+                    30,
+                    13,
+                    15,
+                    14,
+                    10,
+                    15,
+                    5,
+                    16,
+                    2
+                ],
+                "dashSize": [
+                    "interpolate",
+                    ["cubic"],
+                    ["zoom"],
+                    10,
+                    1024,
+                    11,
+                    512,
+                    12,
+                    256,
+                    13,
+                    128,
+                    14,
+                    64
+                ],
+                "gapSize": [
+                    "interpolate",
+                    ["cubic"],
+                    ["zoom"],
+                    10,
+                    512,
+                    11,
+                    256,
+                    12,
+                    128,
+                    13,
+                    64,
+                    14,
+                    32
+                ]
             },
             {
                 "description": "disputed border line - text",
@@ -1598,13 +1438,11 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8
-                }
+                "priority": 100,
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8
             },
             {
                 "description": "region border",
@@ -1615,41 +1453,39 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#7C7C7C",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        600,
-                        3,
-                        300,
-                        4,
-                        150,
-                        5,
-                        100,
-                        6,
-                        60,
-                        7,
-                        30,
-                        8,
-                        20,
-                        9,
-                        12,
-                        10,
-                        8,
-                        11,
-                        5,
-                        12,
-                        3,
-                        13,
-                        2,
-                        14,
-                        1
-                    ]
-                },
-                "renderOrder": 4.1
+                "renderOrder": 4.1,
+                "color": "#7C7C7C",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    600,
+                    3,
+                    300,
+                    4,
+                    150,
+                    5,
+                    100,
+                    6,
+                    60,
+                    7,
+                    30,
+                    8,
+                    20,
+                    9,
+                    12,
+                    10,
+                    8,
+                    11,
+                    5,
+                    12,
+                    3,
+                    13,
+                    2,
+                    14,
+                    1
+                ]
             },
             {
                 "description": "region border",
@@ -1660,41 +1496,39 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
-                "attr": {
-                    "color": "#7C7C7C",
-                    "lineWidth": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        600,
-                        3,
-                        300,
-                        4,
-                        150,
-                        5,
-                        100,
-                        6,
-                        60,
-                        7,
-                        30,
-                        8,
-                        20,
-                        9,
-                        12,
-                        10,
-                        8,
-                        11,
-                        5,
-                        12,
-                        3,
-                        13,
-                        2,
-                        14,
-                        1
-                    ]
-                },
-                "renderOrder": 4.1
+                "renderOrder": 4.1,
+                "color": "#7C7C7C",
+                "lineWidth": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    600,
+                    3,
+                    300,
+                    4,
+                    150,
+                    5,
+                    100,
+                    6,
+                    60,
+                    7,
+                    30,
+                    8,
+                    20,
+                    9,
+                    12,
+                    10,
+                    8,
+                    11,
+                    5,
+                    12,
+                    3,
+                    13,
+                    2,
+                    14,
+                    1
+                ]
             },
             {
                 "description": "region border",
@@ -1705,13 +1539,11 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 90,
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8
-                }
+                "priority": 90,
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 12.8
             },
             {
                 "when": [
@@ -1720,14 +1552,12 @@
                     ["==", ["geometry-type"], "Point"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 27.2,
-                    "priority": 200
-                },
-                "renderOrder": 7
+                "renderOrder": 7,
+                "color": "#000000",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "size": 27.2,
+                "priority": 200
             },
             {
                 "description": "urban",
@@ -1738,11 +1568,9 @@
                     ["==", ["get", "kind"], "urban"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "opacity": 0.8,
-                    "color": "#919ea3"
-                },
-                "renderOrder": 0
+                "renderOrder": 0,
+                "opacity": 0.8,
+                "color": "#919ea3"
             },
             {
                 "description": "urban area",
@@ -1753,26 +1581,24 @@
                     ["==", ["get", "kind"], "urban_area"]
                 ],
                 "technique": "none",
-                "attr": {
-                    "color": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        7,
-                        "#E6FCFF",
-                        8,
-                        "#E6FCFF",
-                        9,
-                        "#E7ECEF",
-                        10,
-                        "#E6EBEE",
-                        11,
-                        "#E5E9EC",
-                        12,
-                        "#E6FCFF"
-                    ]
-                },
-                "renderOrder": 0.1
+                "renderOrder": 0.1,
+                "color": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    7,
+                    "#E6FCFF",
+                    8,
+                    "#E6FCFF",
+                    9,
+                    "#E7ECEF",
+                    10,
+                    "#E6EBEE",
+                    11,
+                    "#E5E9EC",
+                    12,
+                    "#E6FCFF"
+                ]
             },
             {
                 "description": "park",
@@ -1803,10 +1629,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": ["ref", "parkColor"]
-                },
-                "renderOrder": 0.2
+                "renderOrder": 0.2,
+                "color": ["ref", "parkColor"]
             },
             {
                 "description": "runway",
@@ -1817,11 +1641,9 @@
                     ["==", ["get", "kind"], "runway"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#6A7A82"
-                },
                 "renderOrder": 20,
-                "final": true
+                "final": true,
+                "color": "#6A7A82"
             },
             {
                 "description": "aerodrome",
@@ -1832,10 +1654,8 @@
                     ["==", ["get", "kind"], "aerodrome"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#718189"
-                },
-                "renderOrder": 0.3
+                "renderOrder": 0.3,
+                "color": "#718189"
             },
             {
                 "description": "national_park",
@@ -1846,10 +1666,8 @@
                     ["==", ["get", "kind"], "national_park"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#789185"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#789185"
             },
             {
                 "description": "pitch",
@@ -1860,10 +1678,8 @@
                     ["==", ["get", "kind"], "pitch"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#718989"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#718989"
             },
             {
                 "description": "hospital",
@@ -1874,10 +1690,8 @@
                     ["==", ["get", "kind"], "hospital"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#89878A"
-                },
-                "renderOrder": 0.1
+                "renderOrder": 0.1,
+                "color": "#89878A"
             },
             {
                 "description": "cemetery",
@@ -1888,10 +1702,8 @@
                     ["==", ["get", "kind"], "cemetery"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#718989"
-                },
-                "renderOrder": 0.1
+                "renderOrder": 0.1,
+                "color": "#718989"
             },
             {
                 "description": "bridge",
@@ -1902,10 +1714,8 @@
                     ["==", ["get", "kind"], "bridge"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#7E939A"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#7E939A"
             },
             {
                 "description": "zoo",
@@ -1920,10 +1730,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#728989"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#728989"
             },
             {
                 "description": "religion",
@@ -1934,10 +1742,8 @@
                     ["==", ["get", "kind"], "religion"]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#0DF3ED"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#0DF3ED"
             },
             {
                 "description": "industrial",
@@ -1952,10 +1758,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#7B8990"
-                },
-                "renderOrder": 0
+                "renderOrder": 0,
+                "color": "#7B8990"
             },
             {
                 "description": "farmyard",
@@ -1970,10 +1774,8 @@
                     ]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#BFF90D"
-                },
-                "renderOrder": 0
+                "renderOrder": 0,
+                "color": "#BFF90D"
             },
             {
                 "description": "beach",
@@ -1984,10 +1786,8 @@
                     ["any", ["==", ["get", "kind"], "beach"], ["$=", ["get", "kind"], "_site"]]
                 ],
                 "technique": "fill",
-                "attr": {
-                    "color": "#A9A992"
-                },
-                "renderOrder": 1
+                "renderOrder": 1,
+                "color": "#A9A992"
             },
             {
                 "description": "Earth layer",
@@ -1997,12 +1797,10 @@
                     ["!=", ["get", "kind"], "island"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": ["interpolate", ["linear"], ["zoom"], 2, 120, 3, 100, 4, 60],
-                    "color": "#3F1821",
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.6
-                }
+                "priority": ["interpolate", ["linear"], ["zoom"], 2, 120, 3, 100, 4, 60],
+                "color": "#3F1821",
+                "fontVariant": "SmallCaps",
+                "opacity": 0.6
             },
             {
                 "description": "Earth layer",
@@ -2012,11 +1810,9 @@
                     ["==", ["get", "kind"], "island"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "color": "#57564D",
-                    "opacity": 0.6,
-                    "size": 16
-                }
+                "color": "#57564D",
+                "opacity": 0.6,
+                "size": 16
             },
             {
                 "description": "country_pop_>10000000",
@@ -2028,33 +1824,31 @@
                     [">", ["get", "population"], 10000000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        11.2,
-                        2,
-                        12.8,
-                        3,
-                        19.2,
-                        4,
-                        22.4,
-                        5,
-                        25.6
-                    ],
-                    "color": "#3F1821",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 100,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    11.2,
+                    2,
+                    12.8,
+                    3,
+                    19.2,
+                    4,
+                    22.4,
+                    5,
+                    25.6
+                ],
+                "color": "#3F1821",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "country_pop_>1000000",
@@ -2066,33 +1860,31 @@
                     [">", ["get", "population"], 1000000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 100,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        8,
-                        2,
-                        9.6,
-                        3,
-                        12.8,
-                        4,
-                        16,
-                        5,
-                        19.2
-                    ],
-                    "color": "#3F1821",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 100,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    8,
+                    2,
+                    9.6,
+                    3,
+                    12.8,
+                    4,
+                    16,
+                    5,
+                    19.2
+                ],
+                "color": "#3F1821",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "country",
@@ -2102,33 +1894,31 @@
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 90,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        6.4,
-                        2,
-                        11.2,
-                        3,
-                        9.6,
-                        4,
-                        12.8,
-                        5,
-                        16
-                    ],
-                    "color": "#3F1922",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 90,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    6.4,
+                    2,
+                    11.2,
+                    3,
+                    9.6,
+                    4,
+                    12.8,
+                    5,
+                    16
+                ],
+                "color": "#3F1922",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "Places",
@@ -2138,29 +1928,15 @@
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "none",
-                "attr": {
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        3,
-                        9.6,
-                        4,
-                        10.88,
-                        5,
-                        12.8,
-                        6,
-                        14.4
-                    ],
-                    "priority": 65,
-                    "color": "#060606",
-                    "fontVariant": "SmallCaps",
-                    "opacity": 0.8,
-                    "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                }
+                "size": ["interpolate", ["linear"], ["zoom"], 3, 9.6, 4, 10.88, 5, 12.8, 6, 14.4],
+                "priority": 65,
+                "color": "#060606",
+                "fontVariant": "SmallCaps",
+                "opacity": 0.8,
+                "textFadeTime": 0.75,
+                "iconFadeTime": 0.5,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>10000000",
@@ -2175,42 +1951,40 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "fontStyle": "Bold",
-                    "priority": 61,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        9.6,
-                        2,
-                        11.2,
-                        3,
-                        12.8,
-                        4,
-                        14.4,
-                        5,
-                        16,
-                        6,
-                        19.2,
-                        7,
-                        22.4,
-                        8,
-                        25.6,
-                        9,
-                        28.8,
-                        10,
-                        32
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "fontStyle": "Bold",
+                "priority": 61,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    9.6,
+                    2,
+                    11.2,
+                    3,
+                    12.8,
+                    4,
+                    14.4,
+                    5,
+                    16,
+                    6,
+                    19.2,
+                    7,
+                    22.4,
+                    8,
+                    25.6,
+                    9,
+                    28.8,
+                    10,
+                    32
+                ],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>10000000",
@@ -2225,41 +1999,39 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 61,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        1,
-                        9.6,
-                        2,
-                        11.2,
-                        3,
-                        12.8,
-                        4,
-                        14.4,
-                        5,
-                        16,
-                        6,
-                        19.2,
-                        7,
-                        22.4,
-                        8,
-                        25.6,
-                        9,
-                        28.8,
-                        10,
-                        32
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 61,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    1,
+                    9.6,
+                    2,
+                    11.2,
+                    3,
+                    12.8,
+                    4,
+                    14.4,
+                    5,
+                    16,
+                    6,
+                    19.2,
+                    7,
+                    22.4,
+                    8,
+                    25.6,
+                    9,
+                    28.8,
+                    10,
+                    32
+                ],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>1000000",
@@ -2274,41 +2046,39 @@
                     ]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 60,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        2,
-                        9.6,
-                        3,
-                        11.2,
-                        4,
-                        12.8,
-                        5,
-                        14.4,
-                        6,
-                        16,
-                        7,
-                        19.2,
-                        8,
-                        22.4,
-                        9,
-                        25.6,
-                        10,
-                        28.8,
-                        11,
-                        32
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 60,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    2,
+                    9.6,
+                    3,
+                    11.2,
+                    4,
+                    12.8,
+                    5,
+                    14.4,
+                    6,
+                    16,
+                    7,
+                    19.2,
+                    8,
+                    22.4,
+                    9,
+                    25.6,
+                    10,
+                    28.8,
+                    11,
+                    32
+                ],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>400000",
@@ -2320,37 +2090,35 @@
                     [">", ["get", "population"], 400000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 59,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        4,
-                        11.2,
-                        5,
-                        12.8,
-                        6,
-                        16,
-                        7,
-                        19.2,
-                        8,
-                        22.4,
-                        9,
-                        24,
-                        10,
-                        25.6,
-                        11,
-                        27.2
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 59,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    4,
+                    11.2,
+                    5,
+                    12.8,
+                    6,
+                    16,
+                    7,
+                    19.2,
+                    8,
+                    22.4,
+                    9,
+                    24,
+                    10,
+                    25.6,
+                    11,
+                    27.2
+                ],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>100000",
@@ -2362,39 +2130,37 @@
                     [">", ["get", "population"], 100000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 58,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        4,
-                        9.6,
-                        5,
-                        11.2,
-                        6,
-                        12.8,
-                        7,
-                        16,
-                        8,
-                        19.2,
-                        9,
-                        20.8,
-                        10,
-                        22.4,
-                        11,
-                        24,
-                        12,
-                        25.6
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 58,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    4,
+                    9.6,
+                    5,
+                    11.2,
+                    6,
+                    12.8,
+                    7,
+                    16,
+                    8,
+                    19.2,
+                    9,
+                    20.8,
+                    10,
+                    22.4,
+                    11,
+                    24,
+                    12,
+                    25.6
+                ],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>50000",
@@ -2406,29 +2172,15 @@
                     [">", ["get", "population"], 50000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 57,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        10,
-                        16,
-                        11,
-                        19.2,
-                        12,
-                        22.4,
-                        13,
-                        24
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 57,
+                "size": ["interpolate", ["linear"], ["zoom"], 10, 16, 11, 19.2, 12, 22.4, 13, 24],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_>10000",
@@ -2440,31 +2192,29 @@
                     [">", ["get", "population"], 10000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 56,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        11,
-                        16,
-                        12,
-                        17.6,
-                        13,
-                        19.2,
-                        14,
-                        20.8,
-                        15,
-                        22.4
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 56,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    11,
+                    16,
+                    12,
+                    17.6,
+                    13,
+                    19.2,
+                    14,
+                    20.8,
+                    15,
+                    22.4
+                ],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             {
                 "description": "locality_pop_<=10000",
@@ -2476,31 +2226,29 @@
                     ["<=", ["get", "population"], 10000]
                 ],
                 "technique": "text",
-                "attr": {
-                    "priority": 50,
-                    "size": [
-                        "interpolate",
-                        ["linear"],
-                        ["zoom"],
-                        11,
-                        12.8,
-                        12,
-                        14.4,
-                        13,
-                        16,
-                        14,
-                        17.6,
-                        15,
-                        19.2
-                    ],
-                    "color": "#090A0B",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "textFadeTime": 0.75,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
-                },
-                "final": true
+                "final": true,
+                "priority": 50,
+                "size": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    11,
+                    12.8,
+                    12,
+                    14.4,
+                    13,
+                    16,
+                    14,
+                    17.6,
+                    15,
+                    19.2
+                ],
+                "color": "#090A0B",
+                "backgroundColor": "#FFFFFF",
+                "backgroundOpacity": 0.5,
+                "textFadeTime": 0.75,
+                "fadeNear": 0.8,
+                "fadeFar": 0.9
             },
             ["ref", "extrudedBuildings"],
             {
@@ -2513,16 +2261,13 @@
                 ],
                 "minZoomLevel": 18,
                 "technique": "text",
-                "attr": {
-                    "color": "#A9A9A9",
-                    "label": "addr_housenumber",
-                    "size": 14.4,
-                    "opacity": 0.6,
-                    "minZoomLevel": 18,
-                    "fadeNear": 0.9,
-                    "fadeFar": 1
-                },
-                "renderOrder": 100
+                "renderOrder": 100,
+                "color": "#A9A9A9",
+                "label": "addr_housenumber",
+                "size": 14.4,
+                "opacity": 0.6,
+                "fadeNear": 0.9,
+                "fadeFar": 1
             }
         ]
     }

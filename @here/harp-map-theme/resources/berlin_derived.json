@@ -5,9 +5,7 @@
         "extrudedBuildings": {
             "technique": "fill",
             "when": ["ref", "extrudedBuildingsCondition"],
-            "attr": {
-                "color": "#00f"
-            }
+            "color": "#00f"
         },
         "countryBorderLineWidth": [
             "interpolate",

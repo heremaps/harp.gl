@@ -39,7 +39,6 @@ import {
     Definitions,
     isActualSelectorDefinition,
     isJsonExprReference,
-    LineStyle,
     Style,
     StyleDeclaration,
     StyleSelector,
@@ -815,17 +814,24 @@ export class StyleSetEvaluator {
             }
         };
 
-        processAttribute("_category", style.category);
-        processAttribute("_secondaryCategory", (style as LineStyle).secondaryCategory);
+        const replacement = new Map<string, string>([
+            ["category", "_category"],
+            ["secondaryCategory", "_secondaryCategory"]
+        ]);
 
-        processAttribute("renderOrder", style.renderOrder);
-
-        // TODO: What the heck is that !?
-        processAttribute("label", style.labelProperty);
-
-        // line & solid-line secondaryRenderOrder should be generic attr
-        // TODO: maybe just warn and force move it to `attr` ?
-        processAttribute("secondaryRenderOrder", (style as LineStyle).secondaryRenderOrder);
+        for (const p in style) {
+            if (!style.hasOwnProperty(p)) {
+                continue;
+            }
+            if (p.startsWith("_")) {
+                continue;
+            }
+            if (["when", "technique", "layer", "attr", "description"].includes(p)) {
+                continue;
+            }
+            const pp = replacement.get(p) ?? p;
+            processAttribute(pp, (style as any)[p]);
+        }
 
         if (style.attr !== undefined) {
             for (const attrName in style.attr) {

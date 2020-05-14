@@ -749,7 +749,7 @@ export class TileGeometryCreator {
                     elevationEnabled
                 );
 
-                object.renderOrder = technique.renderOrder!;
+                object.renderOrder = getPropertyValue(technique.renderOrder, mapView.env);
 
                 if (attachment.info.uuid !== undefined) {
                     object.uuid = attachment.info.uuid;
@@ -1057,7 +1057,10 @@ export class TileGeometryCreator {
                     );
 
                     if (outlineTechnique.secondaryCaps !== undefined) {
-                        outlineMaterial.caps = outlineTechnique.secondaryCaps;
+                        outlineMaterial.caps = getPropertyValue(
+                            outlineTechnique.secondaryCaps,
+                            mapView.env
+                        );
                     }
                     const outlineObj = buildObject(
                         technique,
@@ -1068,9 +1071,8 @@ export class TileGeometryCreator {
                     );
 
                     outlineObj.renderOrder =
-                        outlineTechnique.secondaryRenderOrder !== undefined
-                            ? outlineTechnique.secondaryRenderOrder
-                            : technique.renderOrder - 0.0000001;
+                        (getPropertyValue(outlineTechnique.secondaryRenderOrder, mapView.env) ??
+                            0) - 0.0000001;
 
                     this.addUserData(tile, srcGeometry, technique, outlineObj);
 
