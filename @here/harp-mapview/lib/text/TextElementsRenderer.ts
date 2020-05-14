@@ -42,6 +42,7 @@ import {
     checkReadyForPlacement,
     computeViewDistance,
     getMaxViewDistance,
+    getWorldPosition,
     isPathLabelTooSmall,
     placeIcon,
     PlacementResult,
@@ -316,6 +317,7 @@ export class TextElementsRenderer {
     private m_debugGlyphTextureCacheWireMesh?: THREE.LineSegments;
 
     private m_tmpVector = new THREE.Vector2();
+    private m_tmpVector3 = new THREE.Vector3();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_forceNewLabelsPass: boolean = false;
@@ -1711,9 +1713,12 @@ export class TextElementsRenderer {
         textCanvas: TextCanvas,
         renderParams: RenderParams
     ): boolean {
-        const poiLabel = labelState.element;
-        const worldPosition = poiLabel.position;
-
+        const worldPosition = getWorldPosition(
+            labelState.element,
+            this.m_viewState.projection,
+            this.m_viewState.env,
+            this.m_tmpVector3
+        );
         // Only process labels frustum-clipped labels
         if (this.m_screenProjector.project(worldPosition, tempScreenPosition) === undefined) {
             return false;

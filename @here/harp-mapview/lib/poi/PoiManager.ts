@@ -396,6 +396,7 @@ export class PoiManager {
             positionArray,
             undefined,
             undefined,
+            undefined,
             userData
         );
 
@@ -439,6 +440,8 @@ export class PoiManager {
             const userData =
                 poiGeometry.objInfos !== undefined ? poiGeometry.objInfos[i] : undefined;
             const featureId = getFeatureId(userData);
+            const offsetDirection =
+                poiGeometry.offsetDirections === undefined ? 0 : poiGeometry.offsetDirections[i];
             if (poiGeometry.imageTextures !== undefined && poiGeometry.imageTextures[i] >= 0) {
                 assert(poiGeometry.imageTextures.length > i);
                 imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[i]];
@@ -467,6 +470,7 @@ export class PoiManager {
                 x,
                 y,
                 z,
+                offsetDirection,
                 userData
             );
 
@@ -491,6 +495,7 @@ export class PoiManager {
         x: number | THREE.Vector3[],
         y: number | undefined,
         z: number | undefined,
+        offsetDirection?: number,
         userData?: {}
     ): TextElement {
         const priority = technique.priority !== undefined ? technique.priority : 0;
@@ -523,7 +528,8 @@ export class PoiManager {
             technique.style,
             fadeNear,
             fadeFar,
-            tile.offset
+            tile.offset,
+            offsetDirection
         );
 
         textElement.mayOverlap = technique.textMayOverlap === true;

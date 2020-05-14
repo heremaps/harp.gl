@@ -257,6 +257,8 @@ export interface PoiGeometry {
     technique?: number;
     stringCatalog?: Array<string | undefined>;
     objInfos?: AttributeMap[];
+    // Angle in degrees from north clockwise specifying the directions the icons can be shifted.
+    offsetDirections?: number[];
 }
 
 /**

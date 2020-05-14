@@ -7,7 +7,7 @@
 import { WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { LoggerManager } from "@here/harp-utils";
 
-const logger = LoggerManager.instance.create("WorkerService", { enabled: false });
+const logger = LoggerManager.instance.create("WorkerService", { enabled: true });
 
 declare let self: Worker;
 

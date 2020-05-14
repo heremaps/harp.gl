@@ -180,6 +180,12 @@ class MeshBuffers implements IMeshBuffers {
      */
     readonly objInfos: AttributeMap[] = [];
 
+    /**
+     * Angle in degrees from north clockwise which represents the direction the icons can be
+     * shifted.
+     */
+    readonly offsetDirections: number[] = [];
+
     constructor(readonly type: GeometryType) {}
 
     addText(text: string) {
@@ -264,7 +270,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 continue;
             }
 
-            const { positions, texts, imageTextures, objInfos } = meshBuffers;
+            const { positions, texts, imageTextures, objInfos, offsetDirections } = meshBuffers;
 
             const shouldCreateTextGeometries =
                 isTextTechnique(technique) || isPoiTechnique(technique);
@@ -310,6 +316,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
                 objInfos.push(this.m_gatherFeatureAttributes ? env.entries : featureId);
+                offsetDirections.push((env.lookup("offset_direction") as number) ?? 0);
 
                 if (wantsPoi) {
                     if (imageTexture === undefined) {
@@ -1658,7 +1665,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     technique: techniqueIdx,
                     stringCatalog: meshBuffers.stringCatalog,
                     imageTextures: meshBuffers.imageTextures,
-                    objInfos: meshBuffers.objInfos
+                    objInfos: meshBuffers.objInfos,
+                    offsetDirections: meshBuffers.offsetDirections
                 });
                 return;
             }
