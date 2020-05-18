@@ -138,6 +138,10 @@ export class PickHandler {
             dataSourceTileList.renderedTiles.forEach(tile => {
                 tmpOBB.copy(tile.boundingBox);
                 tmpOBB.position.sub(this.mapView.worldCenter);
+                // This offset shifts the box by the given tile offset, see renderTileObjects in
+                // MapView
+                const worldOffsetX = tile.computeWorldOffsetX();
+                tmpOBB.position.x += worldOffsetX;
 
                 if (tmpOBB.intersectsRay(rayCaster.ray) !== undefined) {
                     rayCaster.intersectObjects(tile.objects, true, intersects);

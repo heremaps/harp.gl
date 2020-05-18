@@ -265,6 +265,8 @@ describe("MapView Picking", async function() {
             elevation: boolean;
             pixelRatio?: number;
             lookAt?: number[];
+            // Whether to test a shift of 360.0 degrees
+            shiftLongitude: boolean;
         }
         const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
         const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
@@ -280,43 +282,56 @@ describe("MapView Picking", async function() {
         ]) {
             for (const elevation of [false, true]) {
                 const elevatedText = elevation ? "elevated " : " ";
-                testCases.push(
-                    {
-                        name: `Pick ${elevatedText}polygon in ${projName} projection`,
-                        rayOrigGeo: elevation ? pickPolygonAt.concat([FAKE_HEIGHT]) : pickPolygonAt,
-                        featureIdx: 0,
-                        projection,
-                        elevation
-                    },
-                    {
-                        name: `Pick ${elevatedText}solid line in ${projName} projection`,
-                        rayOrigGeo: elevation ? pickLineAt.concat([FAKE_HEIGHT]) : pickLineAt,
-                        featureIdx: 1,
-                        projection,
-                        elevation
-                    },
-                    {
-                        name: `Pick ${elevatedText}label in ${projName} projection`,
-                        rayOrigGeo: elevation ? pickLabelAt.concat([FAKE_HEIGHT]) : pickLabelAt,
-                        featureIdx: 2,
-                        projection,
-                        elevation,
-                        pixelRatio: 1
-                    },
-                    {
-                        name: `Pick ${elevatedText}label in ${projName} projection on HiDPI Screen`,
-                        rayOrigGeo: elevation ? pickLabelAt.concat([FAKE_HEIGHT]) : pickLabelAt,
-                        featureIdx: 2,
-                        projection,
-                        elevation,
-                        pixelRatio: 2,
-                        // Any pixel ratio related bug might not be reproducible with a label
-                        // centered on screen, move the camera target away from the label.
-                        lookAt: elevation
-                            ? offCenterLabelLookAt.concat([FAKE_HEIGHT])
-                            : offCenterLabelLookAt
-                    }
-                );
+                for (const shiftLongitude of [false, true]) {
+                    testCases.push(
+                        {
+                            name: `Pick ${elevatedText}polygon in ${projName} projection. \
+                            Shifted: ${shiftLongitude}`,
+                            rayOrigGeo: elevation
+                                ? pickPolygonAt.concat([FAKE_HEIGHT])
+                                : pickPolygonAt,
+                            featureIdx: 0,
+                            projection,
+                            elevation,
+                            shiftLongitude
+                        },
+                        {
+                            name: `Pick ${elevatedText}solid line in ${projName} projection. \
+                            Shifted: ${shiftLongitude}`,
+                            rayOrigGeo: elevation ? pickLineAt.concat([FAKE_HEIGHT]) : pickLineAt,
+                            featureIdx: 1,
+                            projection,
+                            elevation,
+                            shiftLongitude
+                        },
+                        {
+                            name: `Pick ${elevatedText}label in ${projName} projection. \
+                            Shifted: ${shiftLongitude}`,
+                            rayOrigGeo: elevation ? pickLabelAt.concat([FAKE_HEIGHT]) : pickLabelAt,
+                            featureIdx: 2,
+                            projection,
+                            elevation,
+                            pixelRatio: 1,
+                            shiftLongitude
+                        },
+                        {
+                            name: `Pick ${elevatedText}label in ${projName} projection on HiDPI \
+                            Screen. Shifted: ${shiftLongitude}`,
+                            rayOrigGeo: elevation ? pickLabelAt.concat([FAKE_HEIGHT]) : pickLabelAt,
+                            featureIdx: 2,
+                            projection,
+                            elevation,
+                            pixelRatio: 2,
+                            // Any pixel ratio related bug might not be reproducible with a label
+                            // centered on screen, move the camera target away from the label.
+                            lookAt: elevation
+                                ? offCenterLabelLookAt.concat([FAKE_HEIGHT])
+                                : offCenterLabelLookAt,
+                            // TODO: Investigate why this fails when picking on a HiDPI screen
+                            shiftLongitude: false
+                        }
+                    );
+                }
             }
         }
 
@@ -341,7 +356,7 @@ describe("MapView Picking", async function() {
 
                 const rayOrigin = new GeoCoordinates(
                     rayOrigGeo[1],
-                    rayOrigGeo[0],
+                    rayOrigGeo[0] + (testCase.shiftLongitude ? 360.0 : 0.0),
                     rayOrigGeo.length > 2 ? rayOrigGeo[2] : undefined
                 );
 
