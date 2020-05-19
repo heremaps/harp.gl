@@ -185,23 +185,13 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
 
     constructor(private m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory || new TileFactory(OmvTile), {
+            ...m_params,
             styleSetName: m_params.styleSetName || "omv",
-            name: m_params.name,
             tilingScheme: webMercatorTilingScheme,
             dataProvider: getDataProvider(m_params),
             concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,
-            decoder: m_params.decoder,
-            concurrentDecoderScriptUrl: m_params.concurrentDecoderScriptUrl,
-            copyrightInfo: m_params.copyrightInfo,
-            copyrightProvider: m_params.copyrightProvider,
-            // tslint:disable-next-line: deprecation
-            minZoomLevel: m_params.minZoomLevel,
-            // tslint:disable-next-line: deprecation
-            maxZoomLevel: m_params.maxZoomLevel,
             minDataLevel: getOptionValue(m_params.minDataLevel, 1),
             maxDataLevel: getOptionValue(m_params.maxDataLevel, 17),
-            minDisplayLevel: m_params.minDisplayLevel,
-            maxDisplayLevel: m_params.maxDisplayLevel,
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
         });
 
