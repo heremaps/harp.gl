@@ -20,7 +20,7 @@ import { TextElement } from "./text/TextElement";
 import { TextElementGroup } from "./text/TextElementGroup";
 import { TextElementGroupPriorityList } from "./text/TextElementGroupPriorityList";
 import { TileTextStyleCache } from "./text/TileTextStyleCache";
-import { MapViewUtils } from "./Utils";
+import { MapViewUtils, TileOffsetUtils } from "./Utils";
 
 const logger = LoggerManager.instance.create("Tile");
 
@@ -308,6 +308,7 @@ export class Tile implements CachedResource {
     private m_animatedExtrusionTileHandler: AnimatedExtrusionTileHandler | undefined;
 
     private m_textStyleCache: TileTextStyleCache;
+    private m_uniqueKey: number;
     /**
      * Creates a new [[Tile]].
      *
@@ -329,6 +330,7 @@ export class Tile implements CachedResource {
         this.m_worldCenter.copy(this.boundingBox.position);
         this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
         this.m_textStyleCache = new TileTextStyleCache(this);
+        this.m_uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(this.tileKey, this.offset);
     }
 
     /**
@@ -385,6 +387,15 @@ export class Tile implements CachedResource {
      */
     get center(): THREE.Vector3 {
         return this.m_worldCenter;
+    }
+
+    /**
+     * Gets the key to uniquely represent this tile (based on the [[tileKey]] and [[offset]]), note
+     * this key is only unique within the given [[DataSource]], to get a key which is unique across
+     * [[DataSource]]s see [[DataSourceCache.getKeyForTile]].
+     */
+    get uniqueKey(): number {
+        return this.m_uniqueKey;
     }
 
     /**
