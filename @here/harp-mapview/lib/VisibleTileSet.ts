@@ -33,6 +33,14 @@ export enum ResourceComputationType {
     NumberOfTiles
 }
 
+// Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
+enum SearchDirection {
+    NONE,
+    UP,
+    DOWN,
+    BOTH
+}
+
 /**
  * Limited set of [[MapViewOptions]] used for [[VisibleTileSet]].
  */
@@ -575,7 +583,7 @@ export class VisibleTileSet {
         this.allVisibleTilesLoaded =
             allVisibleTilesLoaded && visibleTileKeysResult.allBoundingBoxesFinal;
 
-        this.fillMissingTilesFromCache();
+        this.populateRenderedTiles();
 
         this.forEachCachedTile(tile => {
             // Remove all tiles that are still being loaded, but are no longer visible. They have to
@@ -712,7 +720,7 @@ export class VisibleTileSet {
             return tile;
         }
 
-        const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
+        const { searchLevelsUp, searchLevelsDown } = this.getSearchDirection(
             dataSource,
             visibleLevel
         );
@@ -855,7 +863,7 @@ export class VisibleTileSet {
             return;
         }
         if (dataSource.isFullyCovering()) {
-            const key = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            const key = tile.uniqueKey;
             const entry = this.m_coveringMap.get(key);
             if (entry === undefined) {
                 // We need to reset the flag so that if the covering datasource is disabled, that
@@ -874,10 +882,11 @@ export class VisibleTileSet {
         }
     }
 
-    private getCacheSearchLevels(
+    // Returns the search direction and the number of levels up / down that can be searched.
+    private getSearchDirection(
         dataSource: DataSource,
         visibleLevel: number
-    ): { searchLevelsUp: number; searchLevelsDown: number } {
+    ): { searchDirection: SearchDirection; searchLevelsUp: number; searchLevelsDown: number } {
         const searchLevelsUp = Math.min(
             this.options.quadTreeSearchDistanceUp,
             Math.max(0, visibleLevel - dataSource.minDataLevel)
@@ -886,67 +895,56 @@ export class VisibleTileSet {
             this.options.quadTreeSearchDistanceDown,
             Math.max(0, dataSource.maxDataLevel - visibleLevel)
         );
-
-        return { searchLevelsUp, searchLevelsDown };
+        const searchDirection =
+            searchLevelsDown > 0 && searchLevelsUp > 0
+                ? SearchDirection.BOTH
+                : searchLevelsDown > 0
+                ? SearchDirection.DOWN
+                : searchLevelsUp > 0
+                ? SearchDirection.UP
+                : SearchDirection.NONE;
+        return { searchDirection, searchLevelsUp, searchLevelsDown };
     }
 
     /**
-     * Search cache to replace visible but yet empty tiles with already loaded siblings in nearby
-     * zoom levels.
+     * Populates the list of tiles to render, see "renderedTiles". Tiles that are loaded and which
+     * are an exact match are added straight to the list, tiles that are still loading are replaced
+     * with tiles in the cache that are either a parent or child of the requested tile. This helps
+     * to prevent flickering when zooming in / out. The distance to search is based on the options
+     * [[quadTreeSearchDistanceDown]] and [[quadTreeSearchDistanceUp]].
      *
-     * Useful, when zooming in/out and when "newly elected" tiles are not yet loaded. Prevents
-     * flickering by rendering already loaded tiles from upper/higher zoom levels.
+     * Each [[DataSource]] can also switch this behaviour on / off using the [[canFallback]] flag.
+     *
      */
-    private fillMissingTilesFromCache() {
+    private populateRenderedTiles() {
         this.dataSourceTileList.forEach(renderListEntry => {
-            const dataSource = renderListEntry.dataSource;
-            const dataZoomLevel = renderListEntry.zoomLevel;
             const renderedTiles = renderListEntry.renderedTiles;
 
-            // Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
-            enum SearchDirection {
-                NONE,
-                UP,
-                DOWN,
-                BOTH
-            }
-            let defaultSearchDirection = SearchDirection.NONE;
+            // Tiles for which we need to fall(back/forward) to.
+            const incompleteTiles: number[] = [];
 
-            const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
-                dataSource,
-                dataZoomLevel
-            );
-
-            defaultSearchDirection =
-                searchLevelsDown > 0 && searchLevelsUp > 0
-                    ? SearchDirection.BOTH
-                    : searchLevelsDown > 0
-                    ? SearchDirection.DOWN
-                    : searchLevelsUp > 0
-                    ? SearchDirection.UP
-                    : SearchDirection.NONE;
-
-            const incompleteTiles: Map<number, SearchDirection> = new Map();
-
+            // Populate the list of tiles which can be shown ("renderedTiles"), and the list of
+            // tiles that are incomplete, and for which we search for an alternative
+            // ("incompleteTiles").
             renderListEntry.visibleTiles.forEach(tile => {
-                const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
-                    tile.tileKey,
-                    tile.offset
-                );
                 tile.levelOffset = 0;
                 if (tile.hasGeometry) {
-                    renderedTiles.set(tileCode, tile);
+                    renderedTiles.set(tile.uniqueKey, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
                     // then enable searching for loaded tiles in cache
-                    incompleteTiles.set(tileCode, defaultSearchDirection);
+                    incompleteTiles.push(tile.uniqueKey);
                 }
             });
 
-            if (incompleteTiles.size === 0) {
+            if (incompleteTiles.length === 0) {
                 // short circuit, nothing to be done
                 return;
             }
+
+            const dataSource = renderListEntry.dataSource;
+            const dataZoomLevel = renderListEntry.zoomLevel;
+            const { searchDirection } = this.getSearchDirection(dataSource, dataZoomLevel);
 
             // Minor optimization for the fallback search, only check parent tiles once, otherwise
             // the recursive algorithm checks all parent tiles multiple times, the key is the code
@@ -955,7 +953,7 @@ export class VisibleTileSet {
             // Iterate over incomplete (not loaded tiles) and find their parents or children that
             // are in cache that can be rendered temporarily until tile is loaded. Note, we favour
             // falling back to parent tiles rather than children.
-            for (const [tileKeyCode, searchDirection] of incompleteTiles) {
+            for (const tileKeyCode of incompleteTiles) {
                 if (
                     searchDirection === SearchDirection.BOTH ||
                     searchDirection === SearchDirection.UP
