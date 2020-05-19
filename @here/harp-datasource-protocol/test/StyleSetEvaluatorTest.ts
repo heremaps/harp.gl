@@ -247,13 +247,13 @@ describe("StyleSetEvaluator", function() {
             // Expr.isDynamic and Expr.dependencies change the state, so we need to call them before
             // camparing.
             assert.isTrue(expr.isDynamic());
-            assert.isEmpty(expr.dependencies().properties);
+            assert.deepStrictEqual(Array.from(expr.dependencies().properties), ["$zoom"]);
 
             assert.equal(techniques.length, 1);
-            assert.deepNestedInclude(techniques[0], {
+            assert.deepNestedInclude(JSON.parse(JSON.stringify(techniques[0])), {
                 name: "fill",
                 lineWidth: 123,
-                color: expr,
+                color: expr.toJSON(),
                 renderOrder: 0
             });
         });

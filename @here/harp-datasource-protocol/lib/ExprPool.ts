@@ -228,6 +228,7 @@ export class ExprPool implements ExprVisitor<Expr, void> {
             }
         }
         const e = new CallExpr(expr.op, expressions);
+        e.descriptor = expr.descriptor;
         calls.push(e);
         return e;
     }

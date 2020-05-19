@@ -59,12 +59,14 @@ describe("ExprEvaluator", function() {
         const dynamic = expr.isDynamic();
         const deps = expr.dependencies();
         const properties = Array.from(deps.properties).sort();
-        const featureState = deps.featureState;
+        const { volatile, featureState } = deps;
         const featureInfo = featureState !== undefined ? { featureState } : {};
+        const volatileInfo = volatile !== undefined ? { volatile } : {};
         return {
             properties,
             dynamic,
-            ...featureInfo
+            ...featureInfo,
+            ...volatileInfo
         };
     }
 
@@ -209,6 +211,14 @@ describe("ExprEvaluator", function() {
             assert.isTrue(
                 Expr.isExpr(evaluate(["dynamic-properties"], undefined, ExprScope.Condition))
             );
+        });
+
+        it("Dependencies", () => {
+            assert.deepStrictEqual(dependencies(["dynamic-properties"]), {
+                properties: [],
+                dynamic: true,
+                volatile: true
+            });
         });
 
         it("get", function() {
@@ -1293,11 +1303,11 @@ describe("ExprEvaluator", function() {
 
         assert.deepEqual(
             dependencies(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, ["get", "max"]]),
-            { properties: ["max"], dynamic: true }
+            { properties: ["$zoom", "max"], dynamic: true }
         );
 
         assert.deepEqual(dependencies(["step", ["zoom"], "default", 5, "a", 10, "b"]), {
-            properties: [],
+            properties: ["$zoom"],
             dynamic: true
         });
 
@@ -1316,7 +1326,7 @@ describe("ExprEvaluator", function() {
                 ["get", "fallback-value"]
             ]),
             {
-                properties: ["fallback-value", "x"],
+                properties: ["$zoom", "fallback-value", "x"],
                 dynamic: true
             }
         );
@@ -1747,7 +1757,7 @@ describe("ExprEvaluator", function() {
 
         it("Dependencies", () => {
             assert.deepStrictEqual(dependencies(["feature-state", "enabled"]), {
-                properties: ["$state"],
+                properties: ["$id", "$state"],
                 dynamic: true,
                 featureState: true
             });

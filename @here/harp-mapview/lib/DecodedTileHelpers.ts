@@ -12,7 +12,6 @@ import {
     getPropertyValue,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
-    isJsonExpr,
     isShaderTechnique,
     isStandardTechnique,
     isTerrainTechnique,
@@ -799,28 +798,6 @@ export function evaluateColorProperty(value: Value, env?: Env): number | undefin
 
     logger.error(`Unsupported color format: '${value}'`);
     return undefined;
-}
-
-/**
- * Compile expressions in techniques as they were received from decoder.
- */
-export function compileTechniques(techniques: Technique[]) {
-    techniques.forEach((technique: any) => {
-        for (const propertyName in technique) {
-            if (!technique.hasOwnProperty(propertyName)) {
-                continue;
-            }
-            const value = technique[propertyName];
-            if (isJsonExpr(value) && propertyName !== "kind") {
-                // "kind" is reserved.
-                try {
-                    technique[propertyName] = Expr.fromJSON(value);
-                } catch (error) {
-                    logger.error("#compileTechniques: Failed to compile expression:", error);
-                }
-            }
-        }
-    });
 }
 
 /**

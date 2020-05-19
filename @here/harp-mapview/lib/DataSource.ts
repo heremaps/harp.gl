@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Definitions, StyleSet, Theme, ValueMap } from "@here/harp-datasource-protocol";
+import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
@@ -116,6 +117,12 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * The maximum zoom level at which [[DataSource]] is displayed.
      */
     maxDisplayLevel: number = 20;
+
+    /**
+     * @internal
+     * @hidden
+     */
+    readonly exprPool = new ExprPool();
 
     /**
      * The [[MapView]] instance holding a reference to this `DataSource`.

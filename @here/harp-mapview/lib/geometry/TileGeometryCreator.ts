@@ -7,6 +7,7 @@ import {
     Attachment,
     BaseTechniqueParams,
     BufferAttribute,
+    CallExpr,
     DecodedTile,
     Env,
     Expr,
@@ -24,6 +25,7 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isJsonExpr,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -40,8 +42,13 @@ import {
     StandardExtrudedLineTechnique,
     Technique,
     TerrainTechnique,
-    TextPathGeometry
+    TextPathGeometry,
+    Value
 } from "@here/harp-datasource-protocol";
+import {
+    ExprEvaluatorContext,
+    OperatorDescriptor
+} from "@here/harp-datasource-protocol/lib/ExprEvaluator";
 // tslint:disable:max-line-length
 import {
     EdgeLengthGeometrySubdivisionModifier,
@@ -61,14 +68,13 @@ import {
     SolidLineMaterial
 } from "@here/harp-materials";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
-import { assert } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import {
     applyBaseColorToMaterial,
     buildMetricValueEvaluator,
     buildObject,
-    compileTechniques,
     createMaterial,
     getBufferAttribute,
     usesObject3D
@@ -89,6 +95,8 @@ import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { Tile, TileFeatureData } from "../Tile";
 import { LodMesh } from "./LodMesh";
 
+const logger = LoggerManager.instance.create("TileGeometryCreator");
+
 const tmpVector3 = new THREE.Vector3();
 const tmpVector2 = new THREE.Vector2();
 
@@ -99,6 +107,38 @@ class AttachmentCache {
         InterleavedBufferAttribute,
         Array<{ name: string; attribute: THREE.InterleavedBufferAttribute }>
     >();
+}
+
+class MemoCallExpr extends CallExpr implements OperatorDescriptor {
+    private readonly m_deps: string[];
+    private readonly m_cachedProperties: Array<Value | undefined> = [];
+    private m_cachedValue?: Value;
+
+    constructor(expr: Expr) {
+        super("memo", [expr]);
+        this.m_deps = Array.from(expr.dependencies().properties);
+        this.descriptor = this;
+    }
+
+    call(context: ExprEvaluatorContext): Value {
+        let changed = false;
+
+        this.m_deps.forEach((d, i) => {
+            const newValue = context.env.lookup(d);
+            if (!changed && newValue !== this.m_cachedProperties[i]) {
+                changed = true;
+            }
+            if (changed) {
+                this.m_cachedProperties[i] = newValue;
+            }
+        });
+
+        if (changed || this.m_cachedValue === undefined) {
+            this.m_cachedValue = context.evaluate(this.args[0]);
+        }
+
+        return this.m_cachedValue;
+    }
 }
 
 class AttachmentInfo {
@@ -221,9 +261,6 @@ export class TileGeometryCreator {
                 group.createdOffsets = [];
             }
         }
-
-        // compile the dynamic expressions.
-        compileTechniques(decodedTile.techniques);
     }
 
     /**
@@ -308,6 +345,29 @@ export class TileGeometryCreator {
         // enabledKinds and disabledKinds, in which case they are flagged. The disabledKinds can be
         // ignored hereafter.
         this.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
+
+        // compile the dynamic expressions.
+        const exprPool = tile.dataSource.exprPool;
+        decodedTile.techniques.forEach((technique: any) => {
+            for (const propertyName in technique) {
+                if (!technique.hasOwnProperty(propertyName)) {
+                    continue;
+                }
+                const value = technique[propertyName];
+                if (isJsonExpr(value) && propertyName !== "kind") {
+                    // "kind" is reserved.
+                    try {
+                        let expr = Expr.fromJSON(value);
+                        if (expr.dependencies().volatile !== true) {
+                            expr = new MemoCallExpr(Expr.fromJSON(value));
+                        }
+                        technique[propertyName] = expr.intern(exprPool);
+                    } catch (error) {
+                        logger.error("Failed to compile expression:", error);
+                    }
+                }
+            }
+        });
     }
 
     /**
