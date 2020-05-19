@@ -3069,23 +3069,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_createdLights.forEach(element => {
             const directionalLight = element as THREE.DirectionalLight;
             if (directionalLight.isDirectionalLight === true) {
-                const pointsInLightSpace = transformedPoints.map(p =>
-                    this.viewToLightSpace(p, directionalLight.shadow.camera)
-                );
-
-                const box = new THREE.Box3();
-                pointsInLightSpace.forEach(point => {
-                    box.expandByPoint(point);
-                });
-                const camera = directionalLight.shadow.camera;
-                camera.left = box.min.x;
-                camera.right = box.max.x;
-                camera.top = box.max.y;
-                camera.bottom = box.min.y;
-                camera.near = -box.max.z;
-                camera.far = -box.min.z;
-                camera.updateProjectionMatrix();
-
                 const lightDirection = cache.vector3[0];
                 lightDirection.copy(directionalLight.target.position);
                 lightDirection.sub(directionalLight.position);
@@ -3113,6 +3096,27 @@ export class MapView extends THREE.EventDispatcher {
                 directionalLight.position.copy(this.worldTarget);
                 directionalLight.position.addScaledVector(lightDirection, -lightPosHyp);
                 directionalLight.position.sub(this.camera.position);
+                directionalLight.updateMatrixWorld();
+                directionalLight.shadow.updateMatrices(directionalLight);
+
+                const camera = directionalLight.shadow.camera;
+                const pointsInLightSpace = transformedPoints.map(p =>
+                    this.viewToLightSpace(p.clone(), camera)
+                );
+
+                const box = new THREE.Box3();
+                pointsInLightSpace.forEach(point => {
+                    box.expandByPoint(point);
+                });
+                camera.left = box.min.x;
+                camera.right = box.max.x;
+                camera.top = box.max.y;
+                camera.bottom = box.min.y;
+                // Moving back to the light the near plane in order to catch high buildings, that
+                // are not visible by the camera, but existing on the scene.
+                camera.near = -box.max.z * 0.95;
+                camera.far = -box.min.z;
+                camera.updateProjectionMatrix();
             }
         });
     }
