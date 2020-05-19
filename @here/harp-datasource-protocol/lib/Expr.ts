@@ -53,6 +53,11 @@ export class ExprDependencies {
      * `true` if the expression depends on the feature state.
      */
     featureState?: boolean;
+
+    /**
+     * `true` if this expression cannot be cached.
+     */
+    volatile?: boolean;
 }
 
 class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
@@ -103,12 +108,21 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
         expr.args.forEach(childExpr => childExpr.accept(this, context));
 
         switch (expr.op) {
+            case "dynamic-properties":
+                context.volatile = true;
+                break;
             case "feature-state":
                 context.featureState = true;
                 context.properties.add("$state");
+                context.properties.add("$id");
                 break;
             case "id":
                 context.properties.add("$id");
+                break;
+            case "zoom":
+            case "world-ppi-scale":
+            case "world-discrete-ppi-scale":
+                context.properties.add("$zoom");
                 break;
             case "geometry-type":
                 context.properties.add("$geometryType");
