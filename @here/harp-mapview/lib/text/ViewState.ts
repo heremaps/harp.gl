@@ -13,7 +13,6 @@ import { ElevationProvider } from "../ElevationProvider";
  */
 export interface ViewState {
     worldCenter: THREE.Vector3; // View's center world coordinates.
-    cameraFov: number; // Camera field of view in degrees.
     cameraIsMoving: boolean; // Whether view's camera is currently moving.
     maxVisibilityDist: number; // Maximum far plane distance.
     zoomLevel: number; // View's zoom level.

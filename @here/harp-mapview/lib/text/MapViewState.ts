@@ -24,9 +24,6 @@ export class MapViewState implements ViewState {
     get worldCenter(): THREE.Vector3 {
         return this.m_mapView.worldCenter;
     }
-    get cameraFov(): number {
-        return this.m_mapView.camera.fov;
-    }
     get cameraIsMoving(): boolean {
         return this.m_mapView.cameraIsMoving;
     }

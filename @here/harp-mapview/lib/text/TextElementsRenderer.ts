@@ -1476,15 +1476,6 @@ export class TextElementsRenderer {
         }
     }
 
-    private getMinPlanarDistanceScalingFactor(label: TextElement, viewState: ViewState): number {
-        // Account for aspect ratio!
-        const fov = THREE.MathUtils.degToRad(viewState.cameraFov);
-        const lookAtDistance = viewState.lookAtDistance;
-        // cos(fov) = lookAtDistance / maxDistance
-        const maxDistance = lookAtDistance / Math.cos(fov);
-        return this.getDistanceScalingFactor(label, maxDistance, lookAtDistance);
-    }
-
     private getMaxPlanarDistanceScalingFactor(
         label: TextElement,
         cameraVec: THREE.Vector3,
