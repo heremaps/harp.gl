@@ -131,7 +131,8 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             maxDataLevel: m_options.maxDataLevel,
             minDisplayLevel: m_options.minDisplayLevel,
             maxDisplayLevel: m_options.maxDisplayLevel,
-            storageLevelOffset: m_options.storageLevelOffset
+            storageLevelOffset: m_options.storageLevelOffset,
+            allowOverlappingTiles: m_options.allowOverlappingTiles
         });
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
