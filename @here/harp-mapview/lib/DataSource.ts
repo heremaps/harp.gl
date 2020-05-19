@@ -57,6 +57,17 @@ export interface DataSourceOptions {
      * Storage level offset applied to this `DataSource`.
      */
     storageLevelOffset?: number;
+    /**
+     * Whether the datasource can overlap tiles. Such overlapping is necessary when zooming out and
+     * waiting for the tiles to load, in this case, we use cached tiles to fill the missing gaps if
+     * available (and in some cases, the tiles can overlap, i.e. for example when a child is next
+     * to a parent, the parent is rendered beneath the child), however for some datasources (those
+     * that produce transparent tiles for example), this gives bad results, and as such, it should
+     * be disabled to reduce flickening. Another way to put it is that loading tiles are replaced
+     * with cached tiles and we then fall (back/forward) to the next appropriate zoom level.
+     * @default true
+     */
+    allowOverlappingTiles?: boolean;
 }
 
 /**
@@ -117,6 +128,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      */
     maxDisplayLevel: number = 20;
 
+    allowOverlappingTiles: boolean = true;
     /**
      * The [[MapView]] instance holding a reference to this `DataSource`.
      */
@@ -157,7 +169,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
             maxDataLevel,
             minDisplayLevel,
             maxDisplayLevel,
-            storageLevelOffset
+            storageLevelOffset,
+            allowOverlappingTiles
         } = options;
         if (name === undefined || name.length === 0) {
             name = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
@@ -188,6 +201,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
         }
         if (storageLevelOffset !== undefined) {
             this.m_storageLevelOffset = storageLevelOffset;
+        }
+        if (allowOverlappingTiles !== undefined) {
+            this.allowOverlappingTiles = allowOverlappingTiles;
         }
     }
 

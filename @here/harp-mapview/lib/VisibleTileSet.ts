@@ -913,7 +913,8 @@ export class VisibleTileSet {
      * to prevent flickering when zooming in / out. The distance to search is based on the options
      * [[quadTreeSearchDistanceDown]] and [[quadTreeSearchDistanceUp]].
      *
-     * Each [[DataSource]] can also switch this behaviour on / off using the [[canFallback]] flag.
+     * Each [[DataSource]] can also switch this behaviour on / off using the
+     * [[allowOverlappingTiles]] flag.
      *
      */
     private populateRenderedTiles() {
@@ -937,12 +938,13 @@ export class VisibleTileSet {
                 }
             });
 
-            if (incompleteTiles.length === 0) {
-                // short circuit, nothing to be done
+            const dataSource = renderListEntry.dataSource;
+            if (incompleteTiles.length === 0 || dataSource.allowOverlappingTiles === false) {
+                // Either all tiles are loaded or the datasource doesn't support using cached tiles
+                // from other levels.
                 return;
             }
 
-            const dataSource = renderListEntry.dataSource;
             const dataZoomLevel = renderListEntry.zoomLevel;
             const { searchDirection } = this.getSearchDirection(dataSource, dataZoomLevel);
 
