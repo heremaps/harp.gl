@@ -61,7 +61,7 @@
         "typescript": "^3.9.2"
     },
     "peerDependencies": {
-        "three": "^0.115.0"
+        "three": "^0.116.1"
     },
     "publishConfig": {
         "access": "public"
