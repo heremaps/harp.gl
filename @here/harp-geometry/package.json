@@ -32,11 +32,11 @@
         "mocha": "^7.1.1",
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
-        "three": "^0.115.0",
+        "three": "^0.116.1",
         "typescript": "^3.9.2"
     },
     "peerDependencies": {
-        "three": "^0.115.0"
+        "three": "^0.116.1"
     },
     "dependencies": {
         "@here/harp-geoutils": "^0.15.0",

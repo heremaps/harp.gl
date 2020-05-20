@@ -7475,10 +7475,10 @@ textextensions@^2.5.0:
   resolved "https://registry.yarnpkg.com/textextensions/-/textextensions-2.6.0.tgz#d7e4ab13fe54e32e08873be40d51b74229b00fc4"
   integrity sha512-49WtAWS+tcsy93dRt6P0P3AMD2m5PvXRhuEA0kaXos5ZLlujtYmpmFsB+QvWUSxE1ZsstmYXfQ7L40+EcQgpAQ==
 
-three@^0.115.0:
-  version "0.115.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.115.0.tgz#540d800c381b9da2334c024f0fbe4d23f84eb05e"
-  integrity sha512-mAV2Ky3RdcbdSbR9capI+tKLvRldWYxd4151PZTT/o7+U2jh9Is3a4KmnYwzyUAhB2ZA3pXSgCd2DOY4Tj5kow==
+three@^0.116.1:
+  version "0.116.1"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.116.1.tgz#a393f7a81fdc3e2fbf57ded5ba47dc5bd3678ce0"
+  integrity sha512-l2JCMiA/lVZAuSrLWRYMalvpR+0j8hbIhCpfs4V6JFnw2+JQEQJ5HltNpfFr+9TDpQts1BhtcISehWf/xBGPvQ==
 
 throttleit@^1.0.0:
   version "1.0.0"
