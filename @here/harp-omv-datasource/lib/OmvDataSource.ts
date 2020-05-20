@@ -327,6 +327,9 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             }
             throw error;
         }
+        // This only works here, and not in the constructor, because the [[MapView]] isn't yet
+        // attached in the constructor, however here it is.
+        this.m_decoderOptions.removeInnerWalls = this.mapView.shadowsEnabled === true;
         this.configureDecoder(undefined, undefined, undefined, this.m_decoderOptions);
     }
 

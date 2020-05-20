@@ -154,7 +154,8 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
         private readonly m_enableElevationOverlay = false,
-        private readonly m_languages?: string[]
+        private readonly m_languages?: string[],
+        private readonly m_removeInternalWalls = false
     ) {
         const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
         const dataPreFilter = m_dataFilter
@@ -208,7 +209,8 @@ export class OmvDecoder implements IGeometryProcessor {
             this.m_gatherFeatureAttributes,
             this.m_skipShortLabels,
             this.m_enableElevationOverlay,
-            this.m_languages
+            this.m_languages,
+            this.m_removeInternalWalls
         );
 
         dataAdapter.process(data, decodeInfo);
@@ -388,6 +390,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_gatherFeatureAttributes: boolean = false;
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
+    private m_removeInternalWalls: boolean = false;
 
     /** @override */
     connect(): Promise<void> {
@@ -413,7 +416,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
-            this.languages
+            this.languages,
+            this.m_removeInternalWalls
         );
 
         const decodedTile = decoder.getDecodedTile(tileKey, data);
@@ -506,6 +510,9 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             }
             if (omvOptions.enableElevationOverlay !== undefined) {
                 this.m_enableElevationOverlay = omvOptions.enableElevationOverlay;
+            }
+            if (omvOptions.removeInnerWalls !== undefined) {
+                this.m_removeInternalWalls = omvOptions.removeInnerWalls;
             }
         }
         if (languages !== undefined) {
