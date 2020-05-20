@@ -11,6 +11,8 @@ on:
 env:
   nodeTestTimeout: 4000
   browserTestTimeout: 8000
+  #DETECT_CHROMEDRIVER_VERSION: true
+  CHROMEDRIVER_VERSION=LATEST_81
 
 jobs:
   test:

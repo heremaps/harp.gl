@@ -15,7 +15,8 @@ branches:
     - release
 
 env:
-  - DETECT_CHROMEDRIVER_VERSION=true
+  global:
+    - DETECT_CHROMEDRIVER_VERSION=true
 
 before_install:
   - yarn global add codecov
@@ -27,7 +28,11 @@ jobs:
         - yarn pre-test
         - yarn cov-test --forbid-only
         - yarn build-tests
+        - firefox --version
+        - ./node_modules/geckodriver/bin/geckodriver --version
         - yarn test-browser --headless-firefox
+        - google-chrome --version
+        - ./node_modules/chromedriver/lib/chromedriver/chromedriver --version
         - yarn test-browser --headless-chrome
         - ./scripts/test-npm-packages.sh
 
