@@ -216,12 +216,26 @@ function computePointTextOffset(
     offset.x = textElement.xOffset;
     offset.y = textElement.yOffset;
 
+    switch (placement.h) {
+        case HorizontalPlacement.Left:
+            // Already accounts for any margin that is already applied to the text element bounds.
+            offset.x -= textElement.bounds!.max.x;
+            break;
+        case HorizontalPlacement.Right:
+            // Account for any margin applied as above.
+            offset.x -= textElement.bounds!.min.x;
+            break;
+    }
     switch (placement.v) {
         case VerticalPlacement.Top:
             offset.y -= textElement.bounds!.min.y;
             break;
         case VerticalPlacement.Center:
             offset.y -= 0.5 * (textElement.bounds!.max.y + textElement.bounds!.min.y);
+            break;
+        case VerticalPlacement.Bottom:
+            // Accounts for vertical margin that may be applied to the text bounds.
+            offset.y -= textElement.bounds!.max.y;
             break;
     }
 
@@ -292,7 +306,11 @@ const tmpCollisionBox = new CollisionBox();
 const tmpScreenPosition = new THREE.Vector2();
 const tmpTextOffset = new THREE.Vector2();
 const tmp2DBox = new Math2D.Box();
-const pointLabelMargin = new THREE.Vector2(4, 2);
+
+/**
+ * The margin applied to the text bounds of every point label.
+ */
+export const persistentPointLabelTextMargin = new THREE.Vector2(2, 2);
 
 export enum PlacementResult {
     Ok,
@@ -617,6 +635,10 @@ function placePointLabelAtAnchor(
         tmpMeasurementParams.letterCaseArray = label.glyphCaseArray!;
         // Compute label bounds according to layout settings.
         textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
+        // Apply additional persistent margin, keep in mind that text bounds just calculated
+        // are not (0, 0, w, h) based, so their coords usually are also non-zero.
+        // TODO: Make the margin configurable
+        label.bounds.expandByVector(persistentPointLabelTextMargin);
     }
 
     // Compute text offset from the anchor point
@@ -625,10 +647,6 @@ function placePointLabelAtAnchor(
     tmpBox.copy(label.bounds!);
     tmpBox.min.multiplyScalar(scale);
     tmpBox.max.multiplyScalar(scale);
-    // Add margin after scaling, this ensures the margin is consistent across all
-    // labels - regardless of distance scaling (or any other) factor.
-    // TODO: Make the margin configurable
-    tmpBox.expandByVector(pointLabelMargin);
     tmpBox.translate(textOffset);
     tmp2DBox.set(
         tmpBox.min.x,
