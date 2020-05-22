@@ -128,6 +128,7 @@ const placementStats = PRINT_LABEL_DEBUG_INFO ? new PlacementStats(logger) : und
 
 const tempPosition = new THREE.Vector3();
 const tempScreenPosition = new THREE.Vector2();
+const tempCameraVec = new THREE.Vector3();
 const tempScreenPoints: THREE.Vector2[] = [];
 const tempPoiScreenPosition = new THREE.Vector2();
 const tmpTextBufferCreationParams: TextBufferCreationParameters = {};
@@ -1475,6 +1476,33 @@ export class TextElementsRenderer {
         }
     }
 
+    private getMinPlanarDistanceScalingFactor(label: TextElement, viewState: ViewState): number {
+        // Account for aspect ratio!
+        const fov = THREE.MathUtils.degToRad(viewState.cameraFov);
+        const lookAtDistance = viewState.lookAtDistance;
+        // cos(fov) = lookAtDistance / maxDistance
+        const maxDistance = lookAtDistance / Math.cos(fov);
+        return this.getDistanceScalingFactor(label, maxDistance, lookAtDistance);
+    }
+
+    private getMaxPlanarDistanceScalingFactor(
+        label: TextElement,
+        cameraVec: THREE.Vector3,
+        viewState: ViewState
+    ): number {
+        // Calculate minimum distance to camera for this label while being still on the same plane.
+        // This accounts for camera movements irrelevant to label depth and order
+        // (like co-planar panning).
+        const minDistance = cameraVec.dot(viewState.lookAtVector);
+        // Acquire maximum scaling factor for such movements.
+        const maxScale = this.getDistanceScalingFactor(
+            label,
+            minDistance,
+            viewState.lookAtDistance
+        );
+        return maxScale;
+    }
+
     private getDistanceScalingFactor(
         label: TextElement,
         distance: number,
@@ -1485,7 +1513,7 @@ export class TextElementsRenderer {
         // remains unchanged, the farther is label from that point the smaller size it is
         // rendered in screen space. This method is unaffected by near and far clipping planes
         // distances, but may be improved by taking FOV into equation or customizing the
-        // focus point screen position based on horizont, actual ground, tilt ets.
+        // focus point screen position based on horizon, actual ground, tilt ets.
         let factor = lookAtDistance / distance;
         // The label.distanceScale property defines the influence ratio at which
         // distance affects the final scaling of label.
@@ -1544,7 +1572,8 @@ export class TextElementsRenderer {
         tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
 
         // Scale the text depending on the label's distance to the camera.
-        const textDistance = this.m_viewState.worldCenter.distanceTo(position);
+        const cameraVec = tempCameraVec.copy(position).sub(this.m_viewState.worldCenter);
+        const textDistance = tempCameraVec.length();
         if (
             pointLabel.fadeFar !== undefined &&
             (pointLabel.fadeFar <= 0.0 ||
@@ -1610,16 +1639,21 @@ export class TextElementsRenderer {
             this.m_viewState.maxVisibilityDist
         );
         const renderText = shouldRenderPointText(labelState, this.m_viewState, this.m_options);
-
         // Render the label's text...
         // textRenderState is always defined at this point.
         if (renderText) {
+            const maxPlanarScaleFactor = this.getMaxPlanarDistanceScalingFactor(
+                pointLabel,
+                cameraVec,
+                this.m_viewState
+            );
             // Multi point (icons) features (line markers) will use single placement anchor, but
             // single point labels (POIs, etc.) may use multi-placement algorithm.
             const placeResult = placePointLabel(
                 labelState,
                 tempScreenPosition,
                 distanceScaleFactor,
+                maxPlanarScaleFactor,
                 textCanvas,
                 this.m_viewState.env,
                 this.m_screenCollisions,

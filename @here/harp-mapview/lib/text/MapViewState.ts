@@ -6,6 +6,7 @@
 
 import { Env, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { Projection } from "@here/harp-geoutils";
+import * as THREE from "three";
 import { ElevationProvider } from "../ElevationProvider";
 import { MapView } from "../MapView";
 import { ViewState } from "./ViewState";
@@ -14,6 +15,7 @@ import { ViewState } from "./ViewState";
  * View state obtained from a MapView instance.
  */
 export class MapViewState implements ViewState {
+    private m_lookAt = new THREE.Vector3();
     constructor(
         private readonly m_mapView: MapView,
         private readonly m_renderedTilesChangeCheck: () => boolean
@@ -21,6 +23,9 @@ export class MapViewState implements ViewState {
 
     get worldCenter(): THREE.Vector3 {
         return this.m_mapView.worldCenter;
+    }
+    get cameraFov(): number {
+        return this.m_mapView.camera.fov;
     }
     get cameraIsMoving(): boolean {
         return this.m_mapView.cameraIsMoving;
@@ -39,6 +44,9 @@ export class MapViewState implements ViewState {
     }
     get lookAtDistance(): number {
         return this.m_mapView.targetDistance;
+    }
+    get lookAtVector(): THREE.Vector3 {
+        return this.m_mapView.camera.getWorldDirection(this.m_lookAt).normalize();
     }
     get isDynamic(): boolean {
         return this.m_mapView.isDynamicFrame;

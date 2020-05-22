@@ -13,12 +13,14 @@ import { ElevationProvider } from "../ElevationProvider";
  */
 export interface ViewState {
     worldCenter: THREE.Vector3; // View's center world coordinates.
+    cameraFov: number; // Camera field of view in degrees.
     cameraIsMoving: boolean; // Whether view's camera is currently moving.
     maxVisibilityDist: number; // Maximum far plane distance.
     zoomLevel: number; // View's zoom level.
     env: Env;
     frameNumber: number; // Current frame number.
     lookAtDistance: number; // Distance to the lookAt point.
+    lookAtVector: THREE.Vector3; // The normalized camera look at vector.
     isDynamic: boolean; // Whether a new frame for the view is already requested.
     hiddenGeometryKinds?: GeometryKindSet; // Kinds of geometries that are disabled.
     renderedTilesChanged: boolean; // True if rendered tiles changed since previous frame.

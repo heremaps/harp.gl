@@ -47,12 +47,14 @@ function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox
     return {
         worldCenter,
         cameraIsMoving: false,
+        cameraFov: 45,
         maxVisibilityDist: 10000,
         // This level affects the distance tolerance applied to find label replacement by location.
         zoomLevel: 20,
         env: new MapEnv({ $zoom: 20 }),
         frameNumber: 0,
         lookAtDistance: 0,
+        lookAtVector: new THREE.Vector3(0, 0, 1),
         isDynamic: false,
         hiddenGeometryKinds: undefined,
         renderedTilesChanged: false,
