@@ -222,7 +222,7 @@ describe("TextElementState", function() {
             expect(textElementState["m_textLayoutState"]).to.equal(predecessorLayout);
         });
 
-        it("reuses text element glyphs and bounds", function() {
+        it("reuses text element glyphs", function() {
             const predecessorState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -234,7 +234,6 @@ describe("TextElementState", function() {
             } as any);
             predecessorState.update(0);
             const predecessorGlyphs = predecessorState.element.glyphs;
-            const predecessorBounds = predecessorState.element.bounds;
             const predecessorGlyphCaseArray = predecessorState.element.glyphCaseArray;
 
             const textElementState = new TextElementState({
@@ -247,8 +246,35 @@ describe("TextElementState", function() {
 
             textElementState.replace(predecessorState);
             expect(textElementState.element.glyphs).to.equal(predecessorGlyphs);
-            expect(textElementState.element.bounds).to.equal(predecessorBounds);
             expect(textElementState.element.glyphCaseArray).to.equal(predecessorGlyphCaseArray);
+        });
+
+        it("invalidates text element bounds", function() {
+            const predecessorState = new TextElementState({
+                type: TextElementType.PoiLabel,
+                poiInfo: {
+                    technique: {}
+                },
+                bounds: {},
+                glyphCaseArray: []
+            } as any);
+            predecessorState.update(0);
+
+            const textElementState = new TextElementState({
+                type: TextElementType.PoiLabel,
+                poiInfo: {
+                    technique: {}
+                },
+                bounds: {},
+                glyphCaseArray: []
+            } as any);
+            textElementState.update(0);
+
+            expect(textElementState.element.bounds).to.not.undefined;
+            expect(predecessorState.element.bounds).to.not.undefined;
+
+            textElementState.replace(predecessorState);
+            expect(textElementState.element.bounds).to.undefined;
         });
 
         it("invalidates text buffer", function() {
