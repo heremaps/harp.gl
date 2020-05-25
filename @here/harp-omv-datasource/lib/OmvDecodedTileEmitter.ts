@@ -25,6 +25,7 @@ import {
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
+    isShaderTechnique,
     isSolidLineTechnique,
     isSpecialDashesLineTechnique,
     isStandardTechnique,
@@ -54,6 +55,8 @@ import earcut from "earcut";
 import * as THREE from "three";
 
 import {
+    GeoBox,
+    GeoCoordinates,
     normalizedEquirectangularProjection,
     ProjectionType,
     Vector3Like,
@@ -754,14 +757,31 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 );
             }
 
+            let objectBounds: THREE.Box3 | undefined;
+
+            const bbox = env.lookup("bbox");
+            if (Array.isArray(bbox)) {
+                const [west, south, east, north] = bbox;
+                const geoBox = new GeoBox(
+                    new GeoCoordinates(south, west),
+                    new GeoCoordinates(north, east)
+                );
+                objectBounds = new THREE.Box3();
+                webMercatorProjection.projectBox(geoBox, objectBounds);
+            }
+
             const polygons: Ring[][] = [];
 
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
             const isStandard = isStandardTechnique(technique);
 
-            const isPolygon = isExtruded || isFilled || isStandard;
-            const computeTexCoords = this.getComputeTexCoordsFunc(technique);
+            const isPolygon =
+                isExtruded ||
+                isFilled ||
+                isStandard ||
+                (isShaderTechnique(technique) && technique.primitive === "mesh");
+            const computeTexCoords = this.getComputeTexCoordsFunc(technique, objectBounds);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
 
             let clipRing: THREE.Vector2[] | undefined;
@@ -1110,26 +1130,49 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         return textureCoordinateType(technique);
     }
 
-    private getComputeTexCoordsFunc(technique: Technique): TexCoordsFunction | undefined {
+    private getComputeTexCoordsFunc(
+        technique: Technique,
+        objectBounds?: THREE.Box3
+    ): TexCoordsFunction | undefined {
         const texCoordType = this.getTextureCoordinateType(technique);
 
-        return texCoordType === TextureCoordinateType.TileSpace
-            ? (tilePos: THREE.Vector2, tileExtents: number) => {
-                  const { x: u, y: v } = new THREE.Vector2()
-                      .copy(tilePos)
-                      .divideScalar(tileExtents);
-                  return { u, v: 1 - v };
-              }
-            : texCoordType === TextureCoordinateType.EquirectangularSpace
-            ? (tilePos: THREE.Vector2, extents: number) => {
-                  const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
-                  const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
-                      webMercatorProjection,
-                      new THREE.Vector3(worldPos.x, worldPos.y, 0)
-                  );
-                  return { u, v };
-              }
-            : undefined;
+        switch (texCoordType) {
+            case TextureCoordinateType.TileSpace:
+                return (tilePos: THREE.Vector2, tileExtents: number) => {
+                    const { x: u, y: v } = new THREE.Vector2()
+                        .copy(tilePos)
+                        .divideScalar(tileExtents);
+                    return { u, v: 1 - v };
+                };
+
+            case TextureCoordinateType.EquirectangularSpace:
+                return (tilePos: THREE.Vector2, extents: number) => {
+                    const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
+                    const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
+                        webMercatorProjection,
+                        new THREE.Vector3(worldPos.x, worldPos.y, 0)
+                    );
+                    return { u, v };
+                };
+
+            case TextureCoordinateType.FeatureSpace:
+                if (!objectBounds) {
+                    return undefined;
+                }
+                return (tilePos: THREE.Vector2, extents: number) => {
+                    const uv = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
+                    if (objectBounds) {
+                        uv.x -= objectBounds.min.x;
+                        uv.y -= objectBounds.min.y;
+                        uv.x /= objectBounds.max.x - objectBounds.min.x;
+                        uv.y /= objectBounds.max.y - objectBounds.min.y;
+                    }
+                    return { u: uv.x, v: 1 - uv.y };
+                };
+
+            default:
+                return undefined;
+        }
     }
 
     private applyLineTechnique(

@@ -733,6 +733,8 @@ export function textureCoordinateType(technique: Technique): TextureCoordinateTy
         return technique.textureCoordinateType;
     } else if (isTerrainTechnique(technique)) {
         return technique.textureCoordinateType;
+    } else if (isShaderTechnique(technique)) {
+        return technique.textureCoordinateType;
     } else {
         return undefined;
     }
