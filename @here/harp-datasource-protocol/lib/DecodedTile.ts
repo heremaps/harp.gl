@@ -349,13 +349,17 @@ export function getFeatureId(attributeMap: AttributeMap | undefined): number {
  */
 export function getFeatureName(
     env: Env,
+    basePropName: string | undefined,
     useAbbreviation?: boolean,
     useIsoCode?: boolean,
     languages?: string[]
 ): string | undefined {
     let name;
+    if (basePropName === undefined) {
+        basePropName = "name";
+    }
     if (useAbbreviation) {
-        const abbreviation = env.lookup(`name:short`);
+        const abbreviation = env.lookup(`${basePropName}:short`);
         if (typeof abbreviation === "string" && abbreviation.length > 0) {
             return abbreviation;
         }
@@ -368,13 +372,13 @@ export function getFeatureName(
     }
     if (languages !== undefined) {
         for (const lang of languages) {
-            name = env.lookup(`name:${lang}`) || env.lookup(`name_${lang}`);
+            name = env.lookup(`${basePropName}:${lang}`) || env.lookup(`${basePropName}_${lang}`);
             if (typeof name === "string" && name.length > 0) {
                 return name;
             }
         }
     }
-    name = env.lookup("name");
+    name = env.lookup(basePropName);
     if (typeof name === "string") {
         return name;
     }
@@ -398,6 +402,7 @@ export function getFeatureText(
     let useAbbreviation: boolean | undefined;
     let useIsoCode: boolean | undefined;
     const env = context instanceof Env ? context : context.env;
+    let propName: string = "name";
     if (
         isTextTechnique(technique) ||
         isPoiTechnique(technique) ||
@@ -409,12 +414,10 @@ export function getFeatureText(
         // tslint:disable-next-line: deprecation
         if (technique.label !== undefined) {
             // tslint:disable-next-line: deprecation
-            const attributeName = evaluateTechniqueAttr(context, technique.label);
-            if (typeof attributeName !== "string") {
+            propName = evaluateTechniqueAttr(context, technique.label)!;
+            if (typeof propName !== "string") {
                 return undefined;
             }
-            const name = env.lookup(attributeName);
-            return typeof name === "string" ? name : undefined;
         }
         // tslint:disable-next-line: deprecation
         useAbbreviation = technique.useAbbreviation;
@@ -422,5 +425,5 @@ export function getFeatureText(
         useIsoCode = technique.useIsoCode;
     }
 
-    return getFeatureName(env, useAbbreviation, useIsoCode, languages);
+    return getFeatureName(env, propName, useAbbreviation, useIsoCode, languages);
 }
