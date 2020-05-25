@@ -19,6 +19,7 @@ export interface ViewState {
     env: Env;
     frameNumber: number; // Current frame number.
     lookAtDistance: number; // Distance to the lookAt point.
+    lookAtVector: THREE.Vector3; // The normalized camera look at vector.
     isDynamic: boolean; // Whether a new frame for the view is already requested.
     hiddenGeometryKinds?: GeometryKindSet; // Kinds of geometries that are disabled.
     renderedTilesChanged: boolean; // True if rendered tiles changed since previous frame.

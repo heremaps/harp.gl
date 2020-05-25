@@ -53,6 +53,7 @@ function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox
         env: new MapEnv({ $zoom: 20 }),
         frameNumber: 0,
         lookAtDistance: 0,
+        lookAtVector: new THREE.Vector3(0, 0, 1),
         isDynamic: false,
         hiddenGeometryKinds: undefined,
         renderedTilesChanged: false,
