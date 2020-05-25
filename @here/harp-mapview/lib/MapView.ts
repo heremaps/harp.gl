@@ -798,6 +798,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_elevationRangeSource?: ElevationRangeSource;
     private m_elevationProvider?: ElevationProvider;
     private m_visibleTileSetLock: boolean = false;
+    private m_visibleTileUpdateDelay: number = 0;
     private m_tileGeometryManager: TileGeometryManager;
 
     private m_tileWrappingEnabled: boolean = true;
@@ -881,6 +882,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
     private m_initialTextPlacementDone = false;
+
+    private m_previousVisibleTilesUpdateTimeStamp: number = 0;
 
     private handleRequestAnimationFrame: (frameStartTime: number) => void;
 
@@ -1297,6 +1300,20 @@ export class MapView extends THREE.EventDispatcher {
      */
     set lockVisibleTileSet(value: boolean) {
         this.m_visibleTileSetLock = value;
+    }
+
+    /**
+     * Returns the status of the visible tile update delay in ms
+     */
+    get visibleTileUpdateDelay(): number {
+        return this.m_visibleTileUpdateDelay;
+    }
+
+    /**
+     * Enable the visible tile update delay in ms
+     */
+    set visibleTileUpdateDelay(value: number) {
+        this.m_visibleTileUpdateDelay = value;
     }
 
     /**
@@ -3253,13 +3270,18 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         // TBD: Update renderList only any of its params (camera, etc...) has changed.
-        if (!this.lockVisibleTileSet) {
+        if (
+            !this.lockVisibleTileSet &&
+            frameStartTime - this.m_previousVisibleTilesUpdateTimeStamp >
+                this.visibleTileUpdateDelay
+        ) {
             const viewRangesStatus = this.m_visibleTiles.updateRenderList(
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources(),
                 this.m_elevationRangeSource
             );
+            this.m_previousVisibleTilesUpdateTimeStamp = frameStartTime;
             // View ranges has changed due to features (with elevation) that affects clip planes
             // positioning, update cameras with new clip planes positions.
             if (viewRangesStatus.viewRangesChanged) {
