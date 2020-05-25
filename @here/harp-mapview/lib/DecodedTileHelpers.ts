@@ -602,6 +602,12 @@ export function evaluateBaseColorProperty(technique: Technique, env: Env): numbe
  * @param material material to which technique will be applied
  */
 function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: THREE.Material) {
+    if (technique.transparent) {
+        enableBlending(material);
+    } else {
+        disableBlending(material);
+    }
+
     // The shader technique takes the argument from its `params' member.
     const params = technique.params as { [key: string]: any };
     // Remove base color and transparency properties from the processed set.

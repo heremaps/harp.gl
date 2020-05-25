@@ -236,11 +236,21 @@ export enum TextureCoordinateType {
      * SW of the tile will have (0,0) and NE will have (1,1).
      */
     TileSpace = "tile-space",
+
     /**
      * Texture coordinates are in equirectangular space.
      * (u, v) = ( (longitude+180) / 360, (latitude+90) / 180).
      */
-    EquirectangularSpace = "equirectangular-space"
+    EquirectangularSpace = "equirectangular-space",
+
+    /**
+     * Texture coordinates in feature space.
+     *
+     * To compute texture coordinates in feature space,
+     * the feature must have a property named `bbox` with value
+     * the tuple `[west, south, east, north]`.
+     */
+    FeatureSpace = "feature-space"
 }
 
 /**
@@ -1218,6 +1228,15 @@ export interface ShaderTechniqueParams extends BaseTechniqueParams {
      * "mesh"
      */
     primitive: "point" | "line" | "segments" | "mesh";
+
+    /**
+     * Set to 'true' if line should appear transparent. Rendering transparent lines may come with a
+     * slight performance impact.
+     * See https://threejs.org/docs/#api/en/materials/Material.transparent.
+     */
+    transparent?: boolean;
+
+    [name: string]: any;
 }
 
 /**
