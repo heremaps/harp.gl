@@ -209,9 +209,19 @@ export class MapControlsUI {
             const zoomLevel = controls.zoomLevelTargeted + controls.zoomLevelDeltaOnControl;
             controls.setZoomLevel(zoomLevel);
         });
+        zoomInButton.addEventListener("dblclick", event => {
+            // HARP-10298: Avoid double click event propagation to canvas in WebKit-based browsers
+            // when a zoom button is quickly clicked multiple times.
+            event.stopPropagation();
+        });
         zoomOutButton.addEventListener("click", event => {
             const zoomLevel = controls.zoomLevelTargeted - controls.zoomLevelDeltaOnControl;
             controls.setZoomLevel(zoomLevel);
+        });
+        zoomOutButton.addEventListener("dblclick", event => {
+            // HARP-10298: Avoid double click event propagation to canvas in WebKit-based browsers
+            // when a zoom button is quickly clicked multiple times.
+            event.stopPropagation();
         });
         tiltButton.addEventListener("click", event => {
             controls.toggleTilt();
