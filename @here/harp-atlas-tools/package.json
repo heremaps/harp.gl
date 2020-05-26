@@ -37,7 +37,7 @@
     ],
     "dependencies": {
         "@types/mkpath": "^0.1.29",
-        "commander": "^4.0.1",
+        "commander": "^5.1.0",
         "glob": "^7.1.4",
         "jimp": "^0.2.28",
         "mkpath": "^1.0.0",
@@ -47,8 +47,8 @@
         "svg2png": "^4.1.1"
     },
     "devDependencies": {
-        "ts-node": "^8.9.1",
-        "typescript": "^3.9.2"
+        "ts-node": "^8.10.1",
+        "typescript": "^3.9.3"
     },
     "publishConfig": {
         "access": "public"

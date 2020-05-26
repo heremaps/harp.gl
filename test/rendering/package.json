@@ -17,7 +17,7 @@
         "@here/harp-omv-datasource": "^0.15.0",
         "@here/harp-test-utils": "^0.15.0",
         "@here/harp-utils": "^0.15.0",
-        "@types/chai": "^4.2.7",
+        "@types/chai": "^4.2.11",
         "chai": "^4.2.0",
         "three": "^0.116.1"
     },

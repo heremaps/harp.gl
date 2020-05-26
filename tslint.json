@@ -47,7 +47,8 @@
         "variable-name": false,
         "no-this-assignment": [true, { "allow-destructuring": true }],
         "explicit-override": [true, "exclude-interfaces", "new-line-after-decorators-and-tags"],
-        "deprecation": true
+        "deprecation": true,
+        "array-type": [true, "array-simple"]
     },
     "extends": ["tslint:latest", "tslint-config-prettier", "tslint-override"],
     "linterOptions": {

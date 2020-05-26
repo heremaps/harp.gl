@@ -14,7 +14,7 @@
         "@here/harp-mapview": "^0.15.0",
         "@here/harp-omv-datasource": "^0.15.0",
         "@here/harp-test-utils": "^0.15.0",
-        "@types/chai": "^4.2.2",
+        "@types/chai": "^4.2.11",
         "chai": "^4.2.0",
         "three": "^0.116.1"
     },

@@ -23,20 +23,20 @@
         "@here/harp-mapview": "^0.15.0",
         "@here/harp-mapview-decoder": "^0.15.0",
         "@here/harp-utils": "^0.15.0",
-        "@here/olp-sdk-dataservice-read": "^1.2.0"
+        "@here/olp-sdk-dataservice-read": "^1.4.0"
     },
     "devDependencies": {
         "@here/harp-fetch": "^0.15.0",
         "@here/harp-test-utils": "^0.15.0",
-        "@types/chai": "^4.1.2",
-        "@types/mocha": "^5.2.7",
-        "@types/node": "^12.0.8",
-        "@types/sinon": "^7.0.13",
+        "@types/chai": "^4.2.11",
+        "@types/mocha": "^7.0.2",
+        "@types/node": "^14.0.5",
+        "@types/sinon": "^9.0.4",
         "chai": "^4.1.2",
-        "cross-env": "^6.0.3",
-        "sinon": "^7.1.1",
-        "source-map-support": "^0.5.3",
-        "typescript": "^3.9.2"
+        "cross-env": "^7.0.2",
+        "sinon": "^9.0.2",
+        "source-map-support": "^0.5.19",
+        "typescript": "^3.9.3"
     },
     "publishConfig": {
         "access": "public"

@@ -31,16 +31,16 @@ program
         "-w, --width [num]",
         "Width of output sprite, set to zero leaves size unchanged " +
             "or constraints to height (if set) while preserving aspect ratio",
-        _defaultWidth
+        String(_defaultWidth)
     )
     .option(
         "-h, --height [num]",
         "Height of output sprite, zero leaves original size " +
             "or constraints to width (if set) while preserving aspect ratio",
-        _defaultHeight
+        String(_defaultHeight)
     )
     .option("-v, --verbose", "Verbose mode")
-    .option("-j, --jobs [num]", "Number of processing threads", _defaultJobsNum)
+    .option("-j, --jobs [num]", "Number of processing threads", String(_defaultJobsNum))
     .option("-c, --processConfig [path]", "Processing steps configuration json file")
     .parse(process.argv);
 

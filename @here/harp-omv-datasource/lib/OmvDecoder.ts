@@ -37,9 +37,9 @@ import {
 import { OmvDecodedTileEmitter } from "./OmvDecodedTileEmitter";
 import {
     FeatureModifierId,
-    OMV_TILE_DECODER_SERVICE_TYPE,
     OmvDecoderOptions,
-    OmvFeatureFilterDescription
+    OmvFeatureFilterDescription,
+    OMV_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
