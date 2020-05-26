@@ -1557,7 +1557,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         }
 
                         tempFootDisp.copy(tempVertNormal).multiplyScalar(floorHeight * scaleFactor);
-                        tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
                         positions.push(
                             tmpV3.x + tempFootDisp.x,
                             tmpV3.y + tempFootDisp.y,
@@ -1570,6 +1569,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             normals.push(...tempVertNormal.toArray());
                         }
                         if (isExtruded) {
+                            tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
                             positions.push(
                                 tmpV3.x + tempRoofDisp.x,
                                 tmpV3.y + tempRoofDisp.y,
