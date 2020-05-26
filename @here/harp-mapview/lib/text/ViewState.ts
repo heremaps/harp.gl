@@ -18,6 +18,7 @@ export interface ViewState {
     zoomLevel: number; // View's zoom level.
     env: Env;
     frameNumber: number; // Current frame number.
+    lookAtVector: THREE.Vector3; // Normalized camera viewing direction.
     lookAtDistance: number; // Distance to the lookAt point.
     isDynamic: boolean; // Whether a new frame for the view is already requested.
     hiddenGeometryKinds?: GeometryKindSet; // Kinds of geometries that are disabled.
