@@ -4,11 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ExtrusionFeatureDefs } from "../MapMeshMaterialsDefs";
-
-const MIN_BUILDING_HEIGHT_SQUARED =
-    ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT * ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT;
-
 export default {
     extrusion_pars_vertex: `
 // Extrusion axis (xyz: vector, w: factor).
@@ -23,10 +18,7 @@ varying float vExtrusionRatio;
 `,
     extrusion_vertex: `
 #ifdef ZFIGHTING_WORKAROUND
-// Cancel extrusionRatio (meaning, force to 1) if extrusionAxisLen < MIN_BUILDING_HEIGHT.
-const float MIN_BUILDING_HEIGHT_SQUARED = ${MIN_BUILDING_HEIGHT_SQUARED};
-float extrusionAxisLenSquared = dot(extrusionAxis.xyz, extrusionAxis.xyz);
-vExtrusionRatio = (extrusionAxisLenSquared < MIN_BUILDING_HEIGHT_SQUARED) ? 1.0 : extrusionRatio;
+vExtrusionRatio = (extrusionAxis.w == 0.0) ? 1.0 : extrusionRatio;
 #else
 float vExtrusionRatio = extrusionRatio;
 #endif

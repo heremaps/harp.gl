@@ -84,7 +84,6 @@ import {
 } from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
-import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
 import { DecodeInfo } from "./DecodeInfo";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
@@ -1260,13 +1259,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const isFilled = isFillTechnique(technique);
         const texCoordType = this.getTextureCoordinateType(technique);
 
-        let height = evaluateTechniqueAttr<number>(context, extrudedPolygonTechnique.height);
-
         let floorHeight = evaluateTechniqueAttr<number>(
             context,
             extrudedPolygonTechnique.floorHeight
         );
 
+        let height = evaluateTechniqueAttr<number>(context, extrudedPolygonTechnique.height);
         if (height === undefined) {
             // Get the height values for the footprint and extrusion.
             const featureHeight = context.env.lookup("height") as number;
@@ -1287,10 +1285,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const featureMinHeight = context.env.lookup("min_height") as number;
             floorHeight = featureMinHeight !== undefined && !isFilled ? featureMinHeight : 0;
         }
-
-        // Prevent that extruded buildings are completely flat (can introduce errors in normal
-        // computation and extrusion).
-        height = Math.max(floorHeight + ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT, height);
+        const isFlatExtrudedPolygon = isExtruded && height === 0;
 
         const styleSetConstantHeight = getOptionValue(
             extrudedPolygonTechnique.constantHeight,
@@ -1568,7 +1563,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         if (this.m_enableElevationOverlay) {
                             normals.push(...tempVertNormal.toArray());
                         }
-                        if (isExtruded) {
+                        if (isExtruded && !isFlatExtrudedPolygon) {
                             tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
                             positions.push(
                                 tmpV3.x + tempRoofDisp.x,
@@ -1594,12 +1589,19 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             if (color !== undefined) {
                                 colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
                             }
+                        } else if (isFlatExtrudedPolygon) {
+                            extrusionAxis.push(
+                                tempRoofDisp.x - tempFootDisp.x,
+                                tempRoofDisp.y - tempFootDisp.y,
+                                tempRoofDisp.z - tempFootDisp.z,
+                                0.0
+                            );
                         }
                     }
 
                     // Add the footprint/roof indices to the index buffer.
                     for (let i = 0; i < triangles.length; i += 3) {
-                        if (isExtruded) {
+                        if (isExtruded && !isFlatExtrudedPolygon) {
                             // When extruding we duplicate the vertices, so that all even vertices
                             // belong to the bottom and all odd vertices belong to the top.
                             const i0 = polygonBaseVertex + triangles[i + 0] * 2 + 1;
@@ -1629,7 +1631,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             extrudedPolygonTechnique.maxSlope
                         );
                     }
-                    if (isExtruded) {
+                    if (isExtruded && !isFlatExtrudedPolygon) {
                         this.addWalls(
                             polygonBaseVertex,
                             originalVertexCount,

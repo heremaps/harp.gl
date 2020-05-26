@@ -66,6 +66,8 @@ export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique,
 export function createDepthPrePassMaterial(baseMaterial: THREE.Material): THREE.Material {
     baseMaterial.depthWrite = false;
     baseMaterial.depthFunc = THREE.EqualDepth;
+    baseMaterial.polygonOffset = true;
+    baseMaterial.polygonOffsetFactor = -1;
     baseMaterial.colorWrite = true;
     enforceBlending(baseMaterial);
 
