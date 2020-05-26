@@ -318,6 +318,8 @@ export class TextElementsRenderer {
 
     private m_tmpVector = new THREE.Vector2();
     private m_tmpVector3 = new THREE.Vector3();
+    private m_tmpLabelCamVec = new THREE.Vector3();
+    private m_cameraLookAt = new THREE.Vector3();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_forceNewLabelsPass: boolean = false;
@@ -669,6 +671,7 @@ export class TextElementsRenderer {
      * Reset internal state at the beginning of a frame.
      */
     private reset() {
+        this.m_cameraLookAt.copy(this.m_viewState.lookAtVector);
         this.m_screenCollisions.reset();
         for (const textRenderer of this.m_textRenderers) {
             textRenderer.textCanvas.clear();
@@ -1544,8 +1547,11 @@ export class TextElementsRenderer {
         tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
         tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
 
-        // Scale the text depending on the label's distance to the camera.
-        const textDistance = this.m_viewState.worldCenter.distanceTo(position);
+        // Scale the text depending on the label's distance to the camera "zero" plane - near
+        // plane at zero distance. The result is the same as taking the distance from "Z"
+        // coordinate in camera space. This way we avoid co-planar labels' scale variation.
+        const labelCamVec = this.m_tmpLabelCamVec.copy(position).sub(this.m_viewState.worldCenter);
+        const textDistance = labelCamVec.dot(this.m_cameraLookAt);
         if (
             pointLabel.fadeFar !== undefined &&
             (pointLabel.fadeFar <= 0.0 ||
