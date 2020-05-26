@@ -58,6 +58,7 @@ async function main() {
         "base test results path",
         (value: string) => {
             baseResultsPath = value;
+            return value;
         },
         baseResultsPath
     );

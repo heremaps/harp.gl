@@ -29,22 +29,22 @@ program
     .usage("[options] URL")
     .option("-i, --in [path]", "Input path")
     .option("-o, --out [file]", "Output atlas and definition file name", _defaultOutputFile)
-    .option("-p, --padding [num]", "Padding between icons", _defaultPadding)
+    .option("-p, --padding [num]", "Padding between icons", String(_defaultPadding))
     .option(
         "-w, --width [num]",
         "Width of sprite in atlas, set to zero leaves size unchanged " +
             "or constraints to height (if set) while preserving aspect ratio",
-        _defaultWidth
+        String(_defaultWidth)
     )
     .option(
         "-h, --height [num]",
         "Height of sprite in atlas, zero leaves original size " +
             "or constraints to width (if set) while preserving aspect ratio",
-        _defaultHeight
+        String(_defaultHeight)
     )
     .option("-m, --minify", "Minify JSON")
     .option("-v, --verbose", "Verbose mode", _defaultVerbose)
-    .option("-j, --jobs [num]", "Number of processing threads", _defaultJobsNum)
+    .option("-j, --jobs [num]", "Number of processing threads", String(_defaultJobsNum))
     .option("-c, --processConfig [path]", "Processing steps configuration json file")
     .parse(process.argv);
 

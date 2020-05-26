@@ -28,13 +28,13 @@
     ],
     "dependencies": {
         "@here/harp-mapview": "^0.15.0",
-        "commander": "^4.1.0",
+        "commander": "^5.1.0",
         "glob": "^7.1.4",
         "path": "^0.12.7"
     },
     "devDependencies": {
-        "ts-node": "^8.9.1",
-        "typescript": "^3.9.2"
+        "ts-node": "^8.10.1",
+        "typescript": "^3.9.3"
     },
     "publishConfig": {
         "access": "public"

@@ -20,9 +20,9 @@ import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-de
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import {
     FeatureModifierId,
-    OMV_TILE_DECODER_SERVICE_TYPE,
     OmvDecoderOptions,
-    OmvFeatureFilterDescription
+    OmvFeatureFilterDescription,
+    OMV_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
 import { OmvRestClient, OmvRestClientParameters } from "./OmvRestClient";
 import { OmvTile } from "./OmvTile";

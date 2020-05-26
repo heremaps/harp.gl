@@ -21,7 +21,7 @@ function addLoadedModule(val: string) {
 }
 commander
     .usage("[options] COMMAND")
-    .option("-p, --port <PORT>", "change port number", 8000)
+    .option("-p, --port <PORT>", "change port number", "8000")
     .option("-r, --require <MODULE>", "load module as middleware", addLoadedModule)
     .option("-C, --dir <DIR>", "serve files from DIR", process.cwd());
 
@@ -61,7 +61,7 @@ for (const modulePath of modulesToLoad) {
 app.use(express.static(dir));
 const server = http.createServer(app);
 
-const port: number = commander.opts().port || 8000;
+const port: number = parseInt(commander.opts().port, 10) ?? 8000;
 
 server.listen(port, () => {
     console.error(`with-http-server: Serving ${dir} at http://localhost:${port}`);

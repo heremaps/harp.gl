@@ -110,7 +110,7 @@ function createPlugins(htmlTemplate?: string): Plugin[] {
         plugins.push(
             new HtmlWebpackPlugin({
                 template: htmlTemplate
-            })
+            }) as any
         );
     }
     return plugins;

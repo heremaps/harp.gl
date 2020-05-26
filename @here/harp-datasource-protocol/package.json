@@ -30,15 +30,15 @@
     },
     "devDependencies": {
         "@here/harp-test-utils": "^0.15.0",
-        "@types/chai": "^4.1.2",
-        "@types/mocha": "^5.2.7",
+        "@types/chai": "^4.2.11",
+        "@types/mocha": "^7.0.2",
         "chai": "^4.0.2",
-        "cross-env": "^6.0.3",
-        "mocha": "^7.1.1",
-        "source-map-support": "^0.5.2",
+        "cross-env": "^7.0.2",
+        "mocha": "^7.2.0",
+        "source-map-support": "^0.5.19",
         "three": "^0.116.1",
-        "ts-json-schema-generator": "^0.61.0",
-        "typescript": "^3.9.2"
+        "ts-json-schema-generator": "^0.68.1",
+        "typescript": "^3.9.3"
     },
     "peerDependencies": {
         "three": "^0.116.1"
