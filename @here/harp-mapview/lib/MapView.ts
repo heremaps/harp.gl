@@ -780,6 +780,7 @@ export class MapView extends THREE.EventDispatcher {
     readonly mapRenderingManager: IMapRenderingManager;
 
     private m_renderLabels: boolean = true;
+    private m_placeLabels: boolean = true;
 
     private m_movementFinishedUpdateTimerId?: any;
     private m_postEffects?: PostEffects;
@@ -1148,6 +1149,21 @@ export class MapView extends THREE.EventDispatcher {
      */
     set renderLabels(value: boolean) {
         this.m_renderLabels = value;
+    }
+    j;
+    /**
+     * @returns Whether label placement is enabled.
+     */
+    get placeLabels() {
+        return this.m_placeLabels;
+    }
+
+    /**
+     * Enables or disables placement of labels.
+     * @param value `true` to enable labels `false` to disable them.
+     */
+    set placeLabels(value: boolean) {
+        this.m_placeLabels = value;
     }
 
     /**
@@ -3648,7 +3664,11 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
 
-        this.m_textElementsRenderer.placeText(this.m_visibleTiles.dataSourceTileList, time);
+        this.m_textElementsRenderer.placeText(
+            this.m_visibleTiles.dataSourceTileList,
+            time,
+            this.placeLabels
+        );
     }
 
     private finishRenderTextElements() {
