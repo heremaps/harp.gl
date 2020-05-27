@@ -370,6 +370,7 @@ export class VisibleTileSet {
     dataSourceTileList: DataSourceTileList[] = [];
     allVisibleTilesLoaded: boolean = false;
     options: VisibleTileSetOptions;
+    maxTilesPerFrame: number = 100;
 
     private readonly m_cameraOverride = new THREE.PerspectiveCamera();
     private m_dataSourceCache: DataSourceCache;
@@ -492,6 +493,7 @@ export class VisibleTileSet {
         elevationRangeSource?: ElevationRangeSource
     ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
         let allVisibleTilesLoaded: boolean = true;
+        let newTilesPerFrame = 0;
 
         const visibleTileKeysResult = this.getVisibleTileKeysForDataSources(
             zoomLevel,
@@ -547,7 +549,21 @@ export class VisibleTileSet {
 
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
-                        tile.frameNumVisible = dataSource.mapView.frameNumber;
+                        newTilesPerFrame++;
+                        if (newTilesPerFrame > this.maxTilesPerFrame) {
+                            //console.log("skip tile: ", tile.tileKey.mortonCode());
+                            tile.skipRendering = true;
+                        } else {
+                            //console.log(
+                            //    "new tile this frame, tile: ",
+                            //    tile.tileKey.mortonCode(),
+                            //    " frame: ",
+                            //    tile.mapView.frameNumber
+                            //);
+                            tile.frameNumVisible = dataSource.mapView.frameNumber;
+                            tile.skipRendering = false;
+                            tile.mapView.requestUpdateIfNeeded();
+                        }
                     }
                 }
                 // Update the visible area of the tile. This is used for those tiles that are
