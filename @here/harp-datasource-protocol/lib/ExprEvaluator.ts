@@ -241,6 +241,15 @@ export class ExprEvaluatorContext {
         this.cache?.set(expr, result);
         return result;
     }
+
+    /**
+     * Wraps the given value in an [[Expr]] if needed.
+     *
+     * @param value
+     */
+    wrapValue(value: Value | Expr): Expr {
+        return Expr.isExpr(value) ? value : LiteralExpr.fromValue(value);
+    }
 }
 
 /**
@@ -309,11 +318,59 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     }
 
     visitCaseExpr(match: CaseExpr, context: ExprEvaluatorContext): Value {
+        if (context.scope === ExprScope.Value) {
+            const firstDynamicCondition = match.branches.findIndex(([condition, _]) =>
+                condition.isDynamic()
+            );
+
+            if (firstDynamicCondition !== -1) {
+                let branches: Array<[Expr, Expr]> | undefined;
+
+                // tslint:disable-next-line: prefer-for-of
+                for (let i = 0; i < match.branches.length; ++i) {
+                    const [condition, body] = match.branches[i];
+
+                    const evaluatedCondition = context.evaluate(condition);
+                    const evaluatedBody = context.evaluate(body);
+
+                    if (i < firstDynamicCondition && Boolean(evaluatedCondition)) {
+                        return evaluatedBody;
+                    }
+
+                    if (!Expr.isExpr(evaluatedCondition) && !Boolean(evaluatedCondition)) {
+                        // skip this branch, it constantly evaluates to false.
+                        continue;
+                    }
+
+                    if (branches === undefined) {
+                        branches = [];
+                    }
+
+                    branches?.push([
+                        context.wrapValue(evaluatedCondition),
+                        context.wrapValue(evaluatedBody)
+                    ]);
+
+                    if (!Expr.isExpr(evaluatedCondition) && Boolean(evaluatedCondition)) {
+                        // skip unreachble expressions
+                        return new CaseExpr(branches, LiteralExpr.fromValue(null));
+                    }
+                }
+
+                const fallback = context.evaluate(match.fallback);
+
+                return branches === undefined
+                    ? fallback
+                    : new CaseExpr(branches, context.wrapValue(fallback));
+            }
+        }
+
         for (const [condition, body] of match.branches) {
             if (context.evaluate(condition)) {
                 return context.evaluate(body);
             }
         }
+
         return context.evaluate(match.fallback);
     }
 
@@ -331,10 +388,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
                 }
 
                 const args = expr.args.map(arg => {
-                    const partialEvaluatedArg = context.evaluate(arg);
-                    return Expr.isExpr(partialEvaluatedArg)
-                        ? partialEvaluatedArg
-                        : LiteralExpr.fromValue(partialEvaluatedArg);
+                    return context.wrapValue(context.evaluate(arg));
                 });
 
                 if (args.every((arg, i) => arg === expr.args[i])) {
@@ -357,12 +411,12 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             const input = context.evaluate(expr.input);
             const defaultValue = context.evaluate(expr.defaultValue);
             return new StepExpr(
-                Expr.isExpr(input) ? input : LiteralExpr.fromValue(input),
-                Expr.isExpr(defaultValue) ? defaultValue : LiteralExpr.fromValue(defaultValue),
+                context.wrapValue(input),
+                context.wrapValue(defaultValue),
                 // tslint:disable-next-line: no-shadowed-variable
                 expr.stops.map(([key, value]) => {
                     const v = context.evaluate(value);
-                    return [key, Expr.isExpr(v) ? v : LiteralExpr.fromValue(v)];
+                    return [key, context.wrapValue(v)];
                 })
             );
         } else {
@@ -391,10 +445,10 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             const input = context.evaluate(expr.input);
             return new InterpolateExpr(
                 expr.mode,
-                Expr.isExpr(input) ? input : LiteralExpr.fromValue(input),
+                context.wrapValue(input),
                 expr.stops.map(([key, value]) => {
                     const v = context.evaluate(value);
-                    return [key, Expr.isExpr(v) ? v : LiteralExpr.fromValue(v)];
+                    return [key, context.wrapValue(v)];
                 })
             );
         } else {
