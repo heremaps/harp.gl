@@ -306,11 +306,22 @@ const tmpCollisionBox = new CollisionBox();
 const tmpScreenPosition = new THREE.Vector2();
 const tmpTextOffset = new THREE.Vector2();
 const tmp2DBox = new Math2D.Box();
+const tmpCenter = new THREE.Vector2();
+const tmpSize = new THREE.Vector2();
 
 /**
  * The margin applied to the text bounds of every point label.
  */
 export const persistentPointLabelTextMargin = new THREE.Vector2(2, 2);
+/**
+ * Additional bounds scaling (described as percentage of full size) applied to the new labels.
+ *
+ * This additional scaling (margin) allows to account for slight camera position and
+ * orientation changes, so new labels are placed only if there is enough space around them.
+ * Such margin limits collisions with neighboring labels while doing small camera movements and
+ * thus reduces labels flickering.
+ */
+export const newPointLabelTextMarginPercent = 0.1;
 
 export enum PlacementResult {
     Ok,
@@ -645,15 +656,13 @@ function placePointLabelAtAnchor(
     const textOffset = computePointTextOffset(label, placement, scale, env, tmpTextOffset);
     textOffset.add(screenPosition);
     tmpBox.copy(label.bounds!);
-    tmpBox.min.multiplyScalar(scale);
-    tmpBox.max.multiplyScalar(scale);
     tmpBox.translate(textOffset);
-    tmp2DBox.set(
-        tmpBox.min.x,
-        tmpBox.min.y,
-        tmpBox.max.x - tmpBox.min.x,
-        tmpBox.max.y - tmpBox.min.y
-    );
+
+    tmpBox.getCenter(tmpCenter);
+    tmpBox.getSize(tmpSize);
+
+    tmpSize.multiplyScalar(scale);
+    tmp2DBox.set(tmpCenter.x - tmpSize.x / 2, tmpCenter.y - tmpSize.y / 2, tmpSize.x, tmpSize.y);
 
     // Update output screen position.
     outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
@@ -672,6 +681,21 @@ function placePointLabelAtAnchor(
         // It might be changed if we would like to render text without icon (at border, etc.).
         return persistent ? PlacementResult.Rejected : PlacementResult.Invisible;
     }
+
+    if (measureText) {
+        // Up-scaled label bounds are used only for new labels and after visibility check, this is
+        // intentional to avoid processing labels out of the screen due to increased bounds, such
+        // labels would be again invisible in the next frame.
+        tmpBox.getSize(tmpSize);
+        tmpSize.multiplyScalar(scale * (1 + newPointLabelTextMarginPercent));
+        tmp2DBox.set(
+            tmpCenter.x - tmpSize.x / 2,
+            tmpCenter.y - tmpSize.y / 2,
+            tmpSize.x,
+            tmpSize.y
+        );
+    }
+
     // Check label's text collision.
     if (!label.textMayOverlap && screenCollisions.isAllocated(tmp2DBox)) {
         // Allows to fade persistent and ignore new label.

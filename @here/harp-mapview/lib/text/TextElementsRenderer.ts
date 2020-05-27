@@ -758,7 +758,8 @@ export class TextElementsRenderer {
                     ++placementStats.total;
                 }
             }
-            if (
+            // Limit labels only in new labels pass (Pass.NewLabels).
+            else if (
                 maxNumPlacedLabels >= 0 &&
                 renderParams.numRenderedTextElements >= maxNumPlacedLabels
             ) {
@@ -1485,7 +1486,7 @@ export class TextElementsRenderer {
         // remains unchanged, the farther is label from that point the smaller size it is
         // rendered in screen space. This method is unaffected by near and far clipping planes
         // distances, but may be improved by taking FOV into equation or customizing the
-        // focus point screen position based on horizont, actual ground, tilt ets.
+        // focus point screen position based on horizon, actual ground, tilt ets.
         let factor = lookAtDistance / distance;
         // The label.distanceScale property defines the influence ratio at which
         // distance affects the final scaling of label.
