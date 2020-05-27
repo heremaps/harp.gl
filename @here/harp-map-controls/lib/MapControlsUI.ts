@@ -362,6 +362,7 @@ function getTextStyle() {
             -moz-appearance:textfield; /* Firefox */
         }
         #harp-gl_controls-button_compass{
+            overflow: hidden;
             margin: 5px 0 0 0;
         }
         #harp-gl_controls_compass{
