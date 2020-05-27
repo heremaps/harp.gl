@@ -297,6 +297,21 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         });
     }
 
+    /** keeps the already loaded tiles and only new ones will be affected */
+    setSmoothStorageLevelOffset(levelOffset: number) {
+        super.storageLevelOffset = levelOffset;
+        this.m_decoderOptions.storageLevelOffset = this.storageLevelOffset;
+        this.configureDecoder(
+            undefined,
+            undefined,
+            undefined,
+            {
+                storageLevelOffset: this.storageLevelOffset
+            },
+            true
+        );
+    }
+
     /** @override */
     setEnableElevationOverlay(enable: boolean) {
         if (this.m_decoderOptions.enableElevationOverlay !== enable) {
@@ -311,10 +326,13 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
-        options?: OptionsMap
+        options?: OptionsMap,
+        keepTiles: boolean = false
     ) {
         this.clearCache();
         this.decoder.configure(styleSet, definitions, languages, options);
-        this.mapView.markTilesDirty(this);
+        if (!keepTiles) {
+            this.mapView.markTilesDirty(this);
+        }
     }
 }
