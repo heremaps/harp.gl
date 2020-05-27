@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Licensed under Apache 2.0, see full license in LICENSE
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//@ts-check
+
 const webpack = require("webpack");
 const glob = require("glob");
 const path = require("path");
@@ -21,13 +29,16 @@ const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatal
 const allTests = [
     ...glob.sync("@here/*/test/**/*.ts"),
     ...glob.sync("./test/performance/**/*.ts"),
-    ...glob.sync("./test/rendering/*.ts"),
+    ...glob.sync("./test/rendering/*.ts")
 ];
 
-const unitTests = allTests.filter(name => (name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1));
+const unitTests = allTests.filter(
+    name => name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1
+);
 const performanceTests = allTests.filter(name => name.indexOf("/performance/") > -1);
 const renderingTests = allTests.filter(name => name.indexOf("/rendering/") > -1);
 
+/** @type{webpack.Configuration} */
 const browserTestsConfig = {
     devtool: "source-map",
     resolve: {
@@ -102,7 +113,9 @@ const browserTestsConfig = {
             typescript: "undefined"
         },
         function(context, request, callback) {
-            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+            return /three\.module\.js$/.test(request)
+                ? callback(null, "THREE")
+                : callback(undefined, undefined);
         }
     ],
     performance: {
@@ -126,6 +139,7 @@ const browserTestsConfig = {
         entrypoints: true,
         warnings: true
     },
+    // @ts-ignore
     mode: process.env.NODE_ENV || "development"
 };
 
