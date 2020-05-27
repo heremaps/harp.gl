@@ -20,7 +20,7 @@ import { OmvTile } from "./OmvTile";
 
 const debugMaterial = new THREE.LineBasicMaterial({
     color: 0x000000,
-    linewidth: 2,
+    linewidth: 1,
     depthTest: false,
     depthFunc: THREE.NeverDepth
 });
@@ -51,6 +51,14 @@ const debugBlackCircleMaterial = new THREE.MeshBasicMaterial({
     depthFunc: THREE.NeverDepth
 });
 
+const debugBlueCircleMaterial = new THREE.MeshBasicMaterial({
+    color: 0x0000ff,
+    depthTest: false,
+    depthFunc: THREE.NeverDepth,
+    opacity: 0.75,
+    transparent: true
+});
+
 const textRenderStyle = new TextRenderStyle();
 const textLayoutStyle = new TextLayoutStyle();
 
@@ -61,6 +69,10 @@ textRenderStyle.fontSize = {
 };
 textRenderStyle.opacity = 0.75;
 textRenderStyle.backgroundOpacity = 0.75;
+textRenderStyle.color = new THREE.Color(0.8, 0.2, 0.2);
+
+// Set maximum priority.
+const PRIORITY_ALWAYS = Number.MAX_SAFE_INTEGER;
 
 export class OmvDebugLabelsTile extends OmvTile {
     constructor(dataSource: DataSource, tileKey: TileKey) {
@@ -80,6 +92,7 @@ export class OmvDebugLabelsTile extends OmvTile {
         // window.__debugContext.setValue("DEBUG_TEXT_PATHS", true)
         const debugTextPaths = debugContext.getValue("DEBUG_TEXT_PATHS");
         const debugTextPathsFull = debugContext.getValue("DEBUG_TEXT_PATHS_FULL");
+        const debugTextPoisFull = debugContext.getValue("DEBUG_TEXT_POIS_FULL");
 
         if (!(debugTextPaths || debugTextPathsFull) || this.decodedTile === undefined) {
             return;
@@ -104,6 +117,102 @@ export class OmvDebugLabelsTile extends OmvTile {
             );
         }
 
+        const centerX = this.center.x;
+        const centerY = this.center.y;
+        const centerZ = this.center.z;
+        const pointScale = this.mapView.pixelToWorld;
+        const worldOffsetX = this.computeWorldOffsetX();
+
+        let pointLabelIndex = 0;
+
+        if (this.textElementGroups.count() > 0) {
+            const bluePointGeometry = new THREE.BufferGeometry();
+            const bluePointIndices = new Array<number>();
+            const bluePointPositions = new Array<number>();
+
+            const addedTextElements: TextElement[] = [];
+
+            this.textElementGroups.forEach((textElement: TextElement) => {
+                if (textElement.path !== undefined) {
+                    return;
+                }
+
+                const x = textElement.position.x - centerX;
+                const y = textElement.position.y - centerY;
+                const z = 5 - centerZ;
+
+                // bluePointIndices.push(bluePointPositions.length / 3);
+                // bluePointPositions.push(x, y, z);
+
+                const pointSize = pointScale * 3;
+
+                bluePointPositions.push(x, y - pointSize, z);
+                bluePointPositions.push(x + pointSize, y, z);
+                bluePointPositions.push(x, y + pointSize, z);
+                bluePointPositions.push(x - pointSize, y, z);
+
+                const pointIndex = bluePointPositions.length / 3;
+
+                bluePointIndices.push(pointIndex - 4);
+                bluePointIndices.push(pointIndex - 3);
+                bluePointIndices.push(pointIndex - 2);
+                bluePointIndices.push(pointIndex - 4);
+                bluePointIndices.push(pointIndex - 2);
+                bluePointIndices.push(pointIndex - 1);
+
+                if (debugTextPoisFull) {
+                    const offsetXY = pointSize * 0.5;
+                    const label: string = `${textElement.text} [${pointLabelIndex}]`;
+
+                    const labelElement = new TextElement(
+                        ContextualArabicConverter.instance.convert(label),
+                        new THREE.Vector3(
+                            x + worldOffsetX + centerX + offsetXY,
+                            y + centerY + offsetXY,
+                            z + centerZ
+                        ),
+                        textRenderStyle,
+                        textLayoutStyle,
+                        PRIORITY_ALWAYS,
+                        0.0,
+                        0.0
+                    );
+                    labelElement.minZoomLevel = 0;
+                    labelElement.mayOverlap = true;
+                    labelElement.reserveSpace = false;
+                    labelElement.alwaysOnTop = true;
+                    labelElement.ignoreDistance = true;
+                    labelElement.priority = TextElement.HIGHEST_PRIORITY;
+
+                    (labelElement as any)._isDebug = true;
+
+                    addedTextElements.push(labelElement);
+                }
+
+                pointLabelIndex++;
+            });
+
+            for (const labelElement of addedTextElements) {
+                this.addTextElement(labelElement);
+            }
+
+            if (bluePointIndices.length > 0) {
+                bluePointGeometry.addGroup(0, bluePointIndices.length, 0);
+
+                bluePointGeometry.setAttribute(
+                    "position",
+                    new THREE.BufferAttribute(new Float32Array(bluePointPositions), 3)
+                );
+
+                bluePointGeometry.setIndex(
+                    new THREE.BufferAttribute(new Uint32Array(bluePointIndices), 1)
+                );
+                const bluePointMesh = new THREE.Mesh(bluePointGeometry, debugBlueCircleMaterial);
+                bluePointMesh.renderOrder = PRIORITY_ALWAYS;
+                this.objects.push(bluePointMesh);
+            }
+        }
+
         if (this.preparedTextPaths !== undefined) {
             const lineGeometry = new THREE.BufferGeometry();
             const lineIndices = new Array<number>();
@@ -118,12 +227,10 @@ export class OmvDebugLabelsTile extends OmvTile {
             const blackPointPositions = new Array<number>();
 
             let baseVertex = 0;
-            const pointScale = this.mapView.pixelToWorld;
-            const worldOffsetX = this.computeWorldOffsetX();
 
             for (const textPath of this.preparedTextPaths) {
                 const technique = decodedTile.techniques[textPath.technique];
-                if (!isTextTechnique(technique)) {
+                if (!isTextTechnique(technique) || (textPath as any)._isDebug !== undefined) {
                     continue;
                 }
                 if (technique.color !== undefined) {
@@ -144,12 +251,14 @@ export class OmvDebugLabelsTile extends OmvTile {
                     (indexFilter === undefined || indexFilter === elementIndex);
 
                 if (createDebugInfo) {
+                    const zHeight = 10;
+
                     for (let i = 0; i < textPath.path.length; i += 3) {
                         const pathIndex = i / 3;
-                        const x = textPath.path[i];
-                        const y = textPath.path[i + 1];
+                        const x = textPath.path[i] - centerX;
+                        const y = textPath.path[i + 1] - centerY;
                         // raise it a bit, so we get identify connectivity visually by tilting
-                        const z = textPath.path[i + 2] + i / 3;
+                        const z = zHeight + textPath.path[i + 2] + i / 3 - centerZ;
 
                         if (debugTextPaths) {
                             linePositions.push(x, y, z);
@@ -185,7 +294,11 @@ export class OmvDebugLabelsTile extends OmvTile {
                                         : Number(pathIndex).toString();
                                 const labelElement = new TextElement(
                                     ContextualArabicConverter.instance.convert(label),
-                                    new THREE.Vector3(x + worldOffsetX, y, z),
+                                    new THREE.Vector3(
+                                        x + worldOffsetX + centerX,
+                                        y + centerY,
+                                        z + centerZ
+                                    ),
                                     textRenderStyle,
                                     textLayoutStyle,
                                     getPropertyValue(technique.priority || 0, env),
@@ -226,7 +339,7 @@ export class OmvDebugLabelsTile extends OmvTile {
 
                 lineGeometry.setIndex(new THREE.BufferAttribute(new Uint32Array(lineIndices), 1));
                 const lineMesh = new THREE.LineSegments(lineGeometry, debugMaterial);
-                lineMesh.renderOrder = 2000;
+                lineMesh.renderOrder = PRIORITY_ALWAYS - 2;
                 this.objects.push(lineMesh);
             }
 
@@ -242,7 +355,7 @@ export class OmvDebugLabelsTile extends OmvTile {
                     new THREE.BufferAttribute(new Uint32Array(redPointIndices), 1)
                 );
                 const redPointMesh = new THREE.Mesh(redPointGeometry, debugCircleMaterial);
-                redPointMesh.renderOrder = 3000;
+                redPointMesh.renderOrder = PRIORITY_ALWAYS;
                 this.objects.push(redPointMesh);
             }
 
@@ -258,7 +371,7 @@ export class OmvDebugLabelsTile extends OmvTile {
                     new THREE.BufferAttribute(new Uint32Array(blackPointIndices), 1)
                 );
                 const blackPointMesh = new THREE.Mesh(blackPointGeometry, debugBlackCircleMaterial);
-                blackPointMesh.renderOrder = 2500;
+                blackPointMesh.renderOrder = PRIORITY_ALWAYS - 1;
                 this.objects.push(blackPointMesh);
             }
         }
