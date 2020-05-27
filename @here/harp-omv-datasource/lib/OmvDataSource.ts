@@ -119,10 +119,20 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
 
     /**
      * Identifier used to choose OmvFeatureModifier, if undefined [[OmvGenericFeatureModifier]] is
-     * used. This parameter gets applied to the decoder used in the [[OmvDataSource]] which might
+     * used only if [[politicalView]] is undefined, otherwise [[OmvPoliticalViewFeatureModifier]]
+     * will be used.
+     * This parameter gets applied to the decoder used in the [[OmvDataSource]] which might
      * be shared between various [[OmvDataSource]]s.
      */
     featureModifierId?: FeatureModifierId;
+
+    /**
+     * Expresses specific country point of view that is used when rendering disputed features,
+     * like borders, names, etc. If undefined "defacto" or most widely accepted political view
+     * will be presented.
+     * @see featureModifierId
+     */
+    politicalView?: string;
 
     /**
      * Optional, default copyright information of tiles provided by this data source.
@@ -204,6 +214,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             filterDescription: this.m_params.filterDescr,
             gatherFeatureAttributes: this.m_params.gatherFeatureAttributes === true,
             featureModifierId: this.m_params.featureModifierId,
+            politicalView: this.m_params.politicalView,
             skipShortLabels: this.m_params.skipShortLabels,
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
             enableElevationOverlay: this.m_params.enableElevationOverlay === true
@@ -270,6 +281,18 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     setLanguages(languages?: string[]): void {
         if (languages !== undefined) {
             this.configureDecoder(undefined, undefined, languages, undefined);
+        }
+    }
+
+    /** @override */
+    setPoliticalView(pointOfView?: string): void {
+        if (this.m_decoderOptions.politicalView !== pointOfView) {
+            this.m_decoderOptions.politicalView = pointOfView;
+            this.configureDecoder(undefined, undefined, undefined, {
+                filterDescription: this.m_decoderOptions.filterDescription,
+                featureModifierId: FeatureModifierId.pointOfView,
+                politicalView: pointOfView
+            });
         }
     }
 

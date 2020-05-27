@@ -19,7 +19,7 @@ import {
     TileDecoderService,
     WorkerServiceManager
 } from "@here/harp-mapview-decoder/index-worker";
-import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
 // tslint:disable-next-line:max-line-length
@@ -41,6 +41,7 @@ import {
     OmvDecoderOptions,
     OmvFeatureFilterDescription
 } from "./OmvDecoderDefs";
+import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
 import { TiledGeoJsonDataAdapter } from "./TiledGeoJsonAdapter";
@@ -435,7 +436,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
                     );
                     this.m_featureModifier = this.createFeatureModifier(
                         omvOptions.filterDescription,
-                        omvOptions.featureModifierId
+                        omvOptions.featureModifierId,
+                        omvOptions.politicalView
                     );
                 } else {
                     // null is the signal to clear the filter/modifier
@@ -461,11 +463,34 @@ export class OmvTileDecoder extends ThemedTileDecoder {
 
     private createFeatureModifier(
         filterDescription: OmvFeatureFilterDescription,
-        featureModifierId?: FeatureModifierId
+        featureModifierId?: FeatureModifierId,
+        respectedPov?: string | null
     ): OmvFeatureModifier {
         if (featureModifierId === FeatureModifierId.tomTom) {
+            assert(
+                respectedPov === undefined,
+                "TomTom does not support different political views!"
+            );
             return new OmvTomTomFeatureModifier(filterDescription);
+        } else if (
+            respectedPov !== undefined &&
+            respectedPov !== null &&
+            respectedPov.length === 2
+        ) {
+            return new OmvPoliticalViewFeatureModifier(filterDescription, [respectedPov]);
         } else {
+            // TODO: Remove validation from here and provide the stack of
+            // features modifiers as discussed in solutioning.
+            assert(
+                respectedPov === undefined || respectedPov === null || respectedPov.length === 2,
+                "The point of view (political view) must be specified in two letters  ISO 3166-1 standard!"
+            );
+            assert(
+                featureModifierId !== FeatureModifierId.pointOfView ||
+                    respectedPov === undefined ||
+                    respectedPov === null,
+                "FeatureModifierId.pointOfView requires point of view to be specified and not null!"
+            );
             return new OmvGenericFeatureModifier(filterDescription);
         }
     }
