@@ -203,6 +203,8 @@ function testRGBAColor() {
     // cause full alpha (1.0) will be encoded as transparency:
     // T = 255 - (1 * 255) with 24 bits shift.
     assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,0,0.0)`), 255 << 24);
+    assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,0,.0)`), 255 << 24);
+    assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,0,.5)`), 255 << 31);
     assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,0,1.0)`), 0);
     assert.strictEqual(parseStringEncodedNumeral(`rgba(255,0,0,1.0)`), 255 << 16);
     assert.strictEqual(parseStringEncodedNumeral(`rgba(255,0,0,0.0)`), (255 << 16) | (255 << 24));
