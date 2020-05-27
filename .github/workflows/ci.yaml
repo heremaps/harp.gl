@@ -42,14 +42,18 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-yarn-
 
-    - uses: actions/cache@v1
+    - uses: actions/cache@v2
       name: hard-source-webpack-plugin-cache
       id: hard-source-webpack-plugin-cache
       with:
-        path: node_modules/.cache/hard-source
-        key: ${{ runner.os }}-${{ matrix.node_version }}--hard-source-webpack-${{ hashFiles('**/yarn.lock') }}
+        path: |
+          node_modules/.cache/hard-source
+          @here/harp.gl/node_modules/.cache/hard-source
+          @here/harp-examples/node_modules/.cache/hard-source
+          www/node_modules/.cache/hard-source
+        key: ${{ runner.os }}-${{ matrix.node_version }}--hard-source-webpack2-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
-          ${{ runner.os }}--hard-source-webpack-
+          ${{ runner.os }}--hard-source-webpack2-
 
     - name: Use Node.js ${{ matrix.node_version }}
       uses: actions/setup-node@v1
