@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+//@ts-check
+
 const webpack = require("webpack");
 const merge = require("webpack-merge");
 const path = require("path");
@@ -21,7 +23,7 @@ const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatal
 const isProduction = process.env.NODE_ENV === "production";
 const harpBundleSuffix = isProduction ? ".min" : "";
 
-themeList = {
+const themeList = {
     default: "resources/berlin_tilezen_base.json",
     berlinDay: "resources/berlin_tilezen_base.json",
     berlinReducedDay: "resources/berlin_tilezen_day_reduced.json",
@@ -42,6 +44,7 @@ function resolveOptional(path, message) {
     }
 }
 
+/** @type{webpack.Configuration} */
 const commonConfig = {
     context: __dirname,
     devtool: prepareOnly ? undefined : "source-map",
@@ -51,7 +54,9 @@ const commonConfig = {
             fs: "undefined"
         },
         function(context, request, callback) {
-            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+            return /three\.module\.js$/.test(request)
+                ? callback(null, "THREE")
+                : callback(undefined, undefined);
         }
     ],
     resolve: {
@@ -94,6 +99,7 @@ const commonConfig = {
         entrypoints: true,
         warnings: true
     },
+    // @ts-ignore
     mode: process.env.NODE_ENV || "development",
     plugins: [
         new HardSourceWebpackPlugin(),
@@ -201,7 +207,7 @@ const assets = [
         from: __dirname + "/example-definitions.js.in",
         to: "example-definitions.js",
         transform: content => {
-            return content.toString().replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, true, 4));
+            return content.toString().replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, null, 4));
         }
     },
     {
@@ -244,6 +250,7 @@ const assets = [
 }); // ignore stuff that is not found
 
 browserConfig.plugins.push(
+    // @ts-ignore
     new CopyWebpackPlugin(assets, { ignore: ["*.npmignore", "*.gitignore"] })
 );
 
