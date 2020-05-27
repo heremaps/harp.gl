@@ -23,19 +23,18 @@ const logger = LoggerManager.instance.create("OmvPoliticalViewFeatureModifier");
  * may be visible or not for certain regions and different users (clients).
  */
 export class OmvPoliticalViewFeatureModifier extends OmvGenericFeatureModifier {
-    private readonly m_countriesPov: string[];
+    private readonly m_countryCode: string;
 
     /**
      * C-tor.
      *
      * @param description Contains layers and features filtering rules.
-     * @param respectedPov The codes (in ISO 3166-1 alpha-2 format) of countries which
-     * point of view should be taken firstly into account. The position on the lists
-     * relates to priority, so the first entries have precedence before the later.
+     * @param respectedPov The code of the country (in ISO 3166-1 alpha-2 format) which
+     * point of view should be taken firstly into account.
      */
-    constructor(description: OmvFeatureFilterDescription, respectedPov: string[]) {
+    constructor(description: OmvFeatureFilterDescription, respectedPov: string) {
         super(description);
-        this.m_countriesPov = respectedPov;
+        this.m_countryCode = respectedPov;
     }
 
     /**
@@ -59,32 +58,32 @@ export class OmvPoliticalViewFeatureModifier extends OmvGenericFeatureModifier {
      */
     private rewriteEnvironment(layer: string, env: MapEnv) {
         // For now we need to rewrite "boundaries" layer only.
-        if (this.isBoundary(layer)) {
-            this.updateEnvironment(env, this.m_countriesPov, "kind");
+        if (this.isPoliticalViewLayer(layer)) {
+            this.updateEnvironment(env, this.m_countryCode, "kind");
         }
     }
 
-    private updateEnvironment(env: MapEnv, countryCodes: string[], propName: string): void {
-        const value = this.getAlternativePov(env, countryCodes, propName);
+    private updateEnvironment(env: MapEnv, countryCode: string, propName: string): void {
+        const value = this.getAlternativePov(env, countryCode, propName);
         if (value !== undefined) {
             env.entries[propName] = value;
         }
     }
 
-    private getAlternativePov(env: MapEnv, countryCodes: string[], propName: string) {
+    private getAlternativePov(env: MapEnv, countryCode: string, propName: string) {
         logger.log("Get alternate POV: ", JSON.stringify(env));
-        for (const cc of countryCodes) {
-            const value = env.lookup(`${propName}:${cc}`);
-            logger.log("Lookup POV: ", `${propName}:${cc}`, value);
-            if (typeof value === "string" && value.length > 0) {
-                logger.log("Found POV: ", `${propName}:${cc}`, value);
-                return value;
-            }
+        const cc = countryCode;
+        const value = env.lookup(`${propName}:${cc}`);
+        logger.log("Lookup POV: ", `${propName}:${cc}`, value);
+        if (typeof value === "string" && value.length > 0) {
+            logger.log("Found POV: ", `${propName}:${cc}`, value);
+            return value;
+        } else {
+            return undefined;
         }
-        return undefined;
     }
 
-    private isBoundary(layer: string): boolean {
+    private isPoliticalViewLayer(layer: string): boolean {
         return layer === "boundaries";
     }
 }

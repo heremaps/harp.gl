@@ -194,7 +194,7 @@ export interface OmvDecoderOptions {
 
     /**
      * Country code in ISO 3166-1 alpha-2 format defining optional point of view to be used.
-     * Set to null if you want to revert to default point of view.
+     * Set to `null` if you want to use default (commonly accepted) point of view.
      */
     politicalView?: string | null;
 
