@@ -1040,6 +1040,104 @@ describe("ExprEvaluator", function() {
             );
         });
 
+        it("partial evaluation of dynamic 'case' expressions", () => {
+            assert.strictEqual(
+                JSON.stringify(evaluate(["case", ["<=", ["zoom"], 10], 123, 444])),
+                JSON.stringify(["case", ["<=", ["zoom"], 10], 123, 444])
+            );
+        });
+
+        it("partial evaluation of 'case' with static conditions", () => {
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate(["case", false, 1, ["get", "off"], 2, ["<=", ["zoom"], 10], 3, 99])
+                ),
+                JSON.stringify(["case", ["<=", ["zoom"], 10], 3, 99])
+            );
+        });
+
+        it("partial evaluation of 'case' with some dynamic conditions", () => {
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate([
+                        "case",
+                        false, // unreachable
+                        1,
+                        ["<=", ["zoom"], 10],
+                        2,
+                        ["get", "off"], // unreachable
+                        3,
+                        ["zoom"],
+                        4,
+                        99
+                    ])
+                ),
+                JSON.stringify(["case", ["<=", ["zoom"], 10], 2, ["zoom"], 4, 99])
+            );
+
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate([
+                        "case",
+                        true,
+                        1,
+                        ["get", "off"],
+                        2,
+                        ["<=", ["zoom"], 10],
+                        3,
+                        ["zoom"],
+                        4,
+                        99
+                    ])
+                ),
+                JSON.stringify(1)
+            );
+
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate([
+                        "case",
+                        false,
+                        1,
+                        ["get", "off"],
+                        2,
+                        ["<=", ["zoom"], 10],
+                        3,
+                        ["zoom"],
+                        4,
+                        99
+                    ])
+                ),
+                JSON.stringify(["case", ["<=", ["zoom"], 10], 3, ["zoom"], 4, 99])
+            );
+        });
+
+        it("partial evaluation of 'case' with unreachable branches", () => {
+            assert.strictEqual(
+                JSON.stringify(
+                    evaluate([
+                        "case",
+                        false,
+                        1,
+                        ["get", "off"],
+                        2,
+                        ["<=", ["zoom"], 10],
+                        3,
+                        true,
+                        ["+", ["zoom"], 1],
+                        ["zoom"],
+                        4,
+                        ["zoom"], // unreachable
+                        5,
+                        true, // unreachable
+                        6,
+                        99
+                    ])
+                ),
+                JSON.stringify(["case", ["<=", ["zoom"], 10], 3, true, ["+", ["zoom"], 1], null])
+            );
+        });
+
         it("evaluate", function() {
             assert.strictEqual(evaluate(["zoom"], { $zoom: 10 }, ExprScope.Condition), 10);
         });
