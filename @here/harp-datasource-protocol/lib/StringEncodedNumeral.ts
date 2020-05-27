@@ -109,7 +109,7 @@ const StringEncodedRGBA: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.RGBA,
     size: 4,
     // tslint:disable-next-line:max-line-length
-    regExp: /^rgba\( ?(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:(0(?:\.[0-9]+)?|1(?:\.0+)?)) ?\)$/,
+    regExp: /^rgba\( ?(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:(0?(?:\.[0-9]+)?|1(?:\.0+)?)) ?\)$/,
     decoder: (encodedValue: string, target: number[]) => {
         const channels = StringEncodedRGBA.regExp.exec(encodedValue);
         if (channels === null) {
