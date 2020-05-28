@@ -71,6 +71,27 @@ const cache = {
     ]
 };
 
+/**
+ * Rounds a given zoom level up to the nearest integer value if it's close enough.
+ *
+ * The zoom level set in [[MapView]] after a zoom level target is given to [[MapView.lookAt]] or
+ * [[MapControls]] never matches exactly the target due to the precision loss caused by the
+ * conversion from zoom level to camera distance (done in [[MapView.lookAt]] and [[MapControls]])
+ * and from distance back to zoom level (done at every frame on camera update).
+ * As a result, given a fixed integer zoom level input, the final zoom level computed at every frame
+ * may fall sometimes below the integer value and others above. This causes flickering since each
+ * frame will use different tile levels and different style evaluations for object visibility.
+ * See HARP-9673 and HARP-8523.
+ * @param zoomLevel Input zoom level
+ * @return The ceiling zoom level if input zoom level is close enough, otherwise the unmodified
+ * input zoom level.
+ */
+function snapToCeilingZoomLevel(zoomLevel: number) {
+    const eps = 1e-6;
+    const ceiling = Math.ceil(zoomLevel);
+    return ceiling - zoomLevel < eps ? ceiling : zoomLevel;
+}
+
 export namespace MapViewUtils {
     export const MAX_TILT_DEG = 89;
     export const MAX_TILT_RAD = MAX_TILT_DEG * THREE.MathUtils.DEG2RAD;
@@ -1228,10 +1249,7 @@ export namespace MapViewUtils {
             options.minZoomLevel,
             options.maxZoomLevel
         );
-        // Round to avoid modify the zoom level without distance change, with the imprecision
-        // introduced by ray-casting and distance calculus.
-        // NOTE: Using 10 fractional digits as rounding precision, this solves HARP-8523.
-        return roundZoomLevel(zoomLevel);
+        return snapToCeilingZoomLevel(zoomLevel);
     }
 
     /**
@@ -1335,26 +1353,6 @@ export namespace MapViewUtils {
         screenSize: number
     ): number {
         return (distance * screenSize) / focalLength;
-    }
-
-    /**
-     * Function performs zoom level rounding to 10-th place after comma.
-     *
-     * Inaccuracies on the 13-th fractional digit may be observed when doing small
-     * tilt changes, thus causing the zoom level to be discretized to smaller value then real
-     * one, for example when acquiring tiles storage level or visibility level.
-     * This causes zoom level jitter and displaying wrong tile set (with different zoom level)
-     * for a certain camera arrangements (angles).
-     *
-     * @note Rounding function is used to limit zoom level jitter and fluctuations.
-     *
-     * @param zoomLevel Input zoom level from based on camera distance.
-     * @return The resulting zoom level rounded to 10-th place after comma.
-     */
-    export function roundZoomLevel(zoomLevel: number) {
-        // Here 10 digits gives quite big safety margin, yet still giving enough precision for
-        // zoom level based interpolations.
-        return Math.round(zoomLevel * 10e10) / 10e10;
     }
 
     /**
