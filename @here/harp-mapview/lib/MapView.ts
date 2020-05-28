@@ -555,7 +555,7 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      * some regions and it mainly regards to so called __disputed borders__. Although not all
      * data sources or themes may support it.
      *
-     * @note Country code should be coded in ISO 3166-1 alpha-2 standard, if this option
+     * @note Country code should be coded in lower-case ISO 3166-1 alpha-2 standard, if this option
      * is `undefined` the majority point of view will be used.
      */
     politicalView?: string;
@@ -1480,7 +1480,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Get currently presented political point of view - the country code.
      *
-     * @note Country code is stored in ISO 3166-1 alpha-2 standard.
+     * @note Country code is stored in lower-case ISO 3166-1 alpha-2 standard.
      * @return Country code or undefined if default
      * (majorly accepted) point of view is used.
      */
@@ -1491,9 +1491,10 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Set the political view (country code) to be used when rendering disputed features (borders).
      *
-     * @note Country code should be encoded in ISO 3166-1 alpha-2 standard.
+     * @note Country code should be encoded in lower-case ISO 3166-1 alpha-2 standard.
      * @param pov The code of the country which point of view should be presented,
-     * `undefined` if default (commonly accepted) political view should be used.
+     * if `undefined` or empty string is set then "defacto" or most widely accepted point of view
+     * will be presented.
      */
     set politicalView(pov: string | undefined) {
         if (this.m_politicalView === pov) {
@@ -1503,8 +1504,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_tileDataSources.forEach((dataSource: DataSource) => {
             dataSource.setPoliticalView(pov);
         });
-        this.clearTileCache();
-        this.update();
     }
 
     get copyrightInfo(): CopyrightInfo[] {

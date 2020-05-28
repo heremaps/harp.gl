@@ -401,9 +401,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Used to express different country point of view (political view).
      *
-     * @note Set to null if you want to reset to default point of view.
-     * @param pov The country code which point of view should be presented in ISO 3166-1 alpha-2
-     * format.
+     * @note Set to `undefined` (or empty string) if you want to reset to default point of view.
+     * @param pov The country code which point of view should be presented in lower-case
+     * ISO 3166-1 alpha-2 format.
      */
     setPoliticalView(pov?: string): void {
         // to be overloaded by subclasses

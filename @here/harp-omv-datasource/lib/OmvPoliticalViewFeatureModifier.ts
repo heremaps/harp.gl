@@ -6,8 +6,7 @@
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { LoggerManager } from "@here/harp-utils";
-import { OmvGenericFeatureModifier } from "./OmvDataFilter";
-import { OmvFeatureFilterDescription } from "./OmvDecoderDefs";
+import { OmvFeatureModifier } from "./OmvDataFilter";
 
 const logger = LoggerManager.instance.create("OmvPoliticalViewFeatureModifier");
 
@@ -17,37 +16,62 @@ const logger = LoggerManager.instance.create("OmvPoliticalViewFeatureModifier");
  * This feature modifier updates feature properties according to different political
  * point of view.
  * Political views (or alternate point of views) are supported in Tilezen by adding
- * additional property with ISO 3166-1 alpha-2 compliant country posix to __default__ property name.
+ * country posix (lower-case ISO 3166-1 alpha-2 compliant) to __default__ property name.
  * For example country borders (__boundaries__ layer) may have both __kind__ property for
- * default (major POV) and __kind:xx__ for alternate points of view. This way disputed borders
- * may be visible or not for certain regions and different users (clients).
+ * default (commonly accepted point of view) and __kind:xx__ for alternate points of view.
+ * This way disputed borders may be visible or not for certain regions and different
+ * users (clients).
+ *
+ * @hidden
  */
-export class OmvPoliticalViewFeatureModifier extends OmvGenericFeatureModifier {
+export class OmvPoliticalViewFeatureModifier implements OmvFeatureModifier {
     private readonly m_countryCode: string;
 
     /**
      * C-tor.
      *
-     * @param description Contains layers and features filtering rules.
-     * @param respectedPov The code of the country (in ISO 3166-1 alpha-2 format) which
-     * point of view should be taken firstly into account.
+     * @param pov The code of the country (in lower-case ISO 3166-1 alpha-2 format) which
+     * point of view should be taken into account.
      */
-    constructor(description: OmvFeatureFilterDescription, respectedPov: string) {
-        super(description);
-        this.m_countryCode = respectedPov;
+    constructor(pov: string) {
+        this.m_countryCode = pov;
     }
 
     /**
-     * Overrides line features processing.
+     * Simply passes all points to rendering, points features does not support PoliticalView.
+     *
+     * @param layer Current layer.
+     * @param env Properties of point feature.
+     * @param level Level of tile.
+     * @returns always `true` to pass feature.
+     */
+    doProcessPointFeature(layer: string, env: MapEnv, level: number): boolean {
+        return true;
+    }
+
+    /**
+     * Implements line features processing changing "kind" attribute depending on point of view.
      *
      * Currently only line features support different point of view.
      * @param layer The name of the layer.
      * @param env The environment to use.
-     * @override
+     * @returns always `true` to pass lines for rendering.
      */
-    doProcessLineFeature(layer: string, env: MapEnv): boolean {
+    doProcessLineFeature(layer: string, env: MapEnv, level: number): boolean {
         this.rewriteEnvironment(layer, env);
-        return super.doProcessLineFeature(layer, env);
+        return true;
+    }
+
+    /**
+     * Simply pass all polygons to rendering, this feature does not support PoliticalView yet.
+     *
+     * @param layer Current layer.
+     * @param env Properties of polygon feature.
+     * @param level Level of tile.
+     * @returns `true` to pass feature.
+     */
+    doProcessPolygonFeature(layer: string, env: MapEnv, level: number): boolean {
+        return true;
     }
 
     /**
