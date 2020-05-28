@@ -30,7 +30,7 @@ To set a technique in a theme file, you can use a `technique` property. See exam
 ## How to Style a Map? - Overview of [harp.gl](https://github.com/harp.gl)'s Map Styling
 
 Techniques can be used to render map objects on the canvas in a certain way. The visual attributes
-of these techniques are defined and placed in the *theme* file.
+of these techniques are defined and placed in the _theme_ file.
 
 The theme JSON file enables writing conditions which the data received from the datasource
 must match for a style to be applied to it. When a condition is met a set of attributes are applied
@@ -110,77 +110,77 @@ line is rendered with different line widths depending on the current map zoom le
 
 Note that the typical logical operators like:
 
-- `&&` (and) for computing the conjunction of two sub-conditions
-- `||` (or) for computing the alternative of two sub-conditions
+-   `&&` (and) for computing the conjunction of two sub-conditions
+-   `||` (or) for computing the alternative of two sub-conditions
 
 `"when"` - is a property that holds a description of the condition. This condition queries the
 feature data which and uses one or many of the following operators:
 
-- `~=` (*tilde equal*), returns **true** when the value on the left *contains* the value on the
- right, for example:
+-   `~=` (_tilde equal_), returns **true** when the value on the left _contains_ the value on the
+    right, for example:
 
 ```js
     "when": "kind_detail ~= 'park'"
 ```
 
-this condition would match `kind_detail`s like *national_park*, *natural_park*, *theme_park* but
- also *parking*
+this condition would match `kind_detail`s like _national_park_, _natural_park_, _theme_park_ but
+also _parking_
 
-- `^=` (*caret equal*), returns **true** when the value on the left *starts with* the value on the
- right, for example:
+-   `^=` (_caret equal_), returns **true** when the value on the left _starts with_ the value on the
+    right, for example:
 
 ```js
     "when": "kind_detail ^= 'water'"
 ```
 
-the above condition would match `kind_detail`s like: *water_park*, *water_slide* or
-*water_works* but **not** *drinking_water*
+the above condition would match `kind_detail`s like: _water_park_, _water_slide_ or
+_water_works_ but **not** _drinking_water_
 
-- `$=` (*dollar equal*), returns **true** when the value on the left *ends with* the value on the
- right, for example:
+-   `$=` (_dollar equal_), returns **true** when the value on the left _ends with_ the value on the
+    right, for example:
 
 ```js
     "when": "kind_detail $= 'water'"
 ```
 
-the above condition would match `kind_detail`s like: *drinking_water* but **not** *water_park*
+the above condition would match `kind_detail`s like: _drinking_water_ but **not** _water_park_
 
-- `==` (*equal equal*), returns **true** when the value on the left *is equal to* the value on the
- right, for example:
+-   `==` (_equal equal_), returns **true** when the value on the left _is equal to_ the value on the
+    right, for example:
 
 ```js
     "when": $layer == 'roads' && kind == 'rail'"
 ```
 
-the above condition would match *roads* `$layer` and the `kind` of **rail**
+the above condition would match _roads_ `$layer` and the `kind` of **rail**
 
-- `!=` (*exclamation mark equal*), returns **true** when the value on the left *is not equal to* the
- value on the right, for example:
+-   `!=` (_exclamation mark equal_), returns **true** when the value on the left _is not equal to_ the
+    value on the right, for example:
 
 ```js
     "description": "All land roads except rail",
     "when": "$layer ^= 'roads' && kind != 'rail'",
 ```
 
-the above condition would match all `kind`s which are **not** *rail* on the *roads* `$layer`
+the above condition would match all `kind`s which are **not** _rail_ on the _roads_ `$layer`
 
 For more in-depth details about the equality operators check the [@here/harp-datasource-protocol/lib/Theme.ts](https://github.com/heremaps/harp.gl/blob/master/%40here/harp-datasource-protocol/lib/Theme.ts).
 
 Additionally there are two more operators available (`has` and `in`):
 
-- `has(`*variable name*`)` returns **true** when the feature contains the specified variable and it
- is not *undefined*, for example:
+-   `has(`_variable name_`)` returns **true** when the feature contains the specified variable and it
+    is not _undefined_, for example:
 
 ```js
     "description": "lakes (on high zoom level show only biggest lakes)",
     "when": "kind == 'lake' || has(area)",
 ```
 
-the above condition would match all `kind`s which have the value *lake* **or** the *area* property
- defined.
+the above condition would match all `kind`s which have the value _lake_ **or** the _area_ property
+defined.
 
-- `in[`*array of possible values*`]` returns **true** when the feature contains one of the values
- specified in the array, for example:
+-   `in[`_array of possible values_`]` returns **true** when the feature contains one of the values
+    specified in the array, for example:
 
 ```js
 {
@@ -195,8 +195,8 @@ the above condition would match all `kind`s which have the value *lake* **or** t
 }
 ```
 
-the above conditions would match all features from `earth` layer which `kind` is  equal either to
- 'archipelago', 'cliff' or 'island'.
+the above conditions would match all features from `earth` layer which `kind` is equal either to
+'archipelago', 'cliff' or 'island'.
 
 ## How to nest two or more conditions
 
@@ -239,7 +239,7 @@ The general structure of such nested conditions looks like this:
         },
         {
             "when": "...another condition",
-            "styles":[
+            "styles": [
                 {
                     "when": "... more fine grained condition"
                 }
@@ -262,12 +262,12 @@ the conditions. This behavior could be changed by adding a
 
 property to the style object. Setting `final` to true means essentially that when a map feature
 reaches the current condition it will not be taken into account in subsequent conditions and no
-additional styling would be made. In the above example if a feature has a `kind` equal to *lake* or
-*ocean* it will have a color applied:
+additional styling would be made. In the above example if a feature has a `kind` equal to _lake_ or
+_ocean_ it will have a color applied:
 
 ```json
  "color": "#ffcdff"
- ```
+```
 
 But such object would not have its color changed depending on the zoom level (`$level`), even if it
 would match any of the subsequent conditions.
@@ -294,10 +294,10 @@ A list of possible style modifier for each techniques can be found in the [`Tech
 
 Most common properties include:
 
-- `priority`: Sets a `priority` of a map object, defaults to `0`. Objects with highest priority get
- placed first. Can be defined to vary depending on the zoom level with some default value. (see the
- example above).
-- `renderOrder`: which enables to define the render order of the objects created using a particular
- technique.
-- `color`: color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
- `"rgb(255, 0, 0)"`, `"rgba(127, 127, 127, 1.0)"`, or `"hsl(35, 11%, 88%)"`.
+-   `priority`: Sets a `priority` of a map object, defaults to `0`. Objects with highest priority get
+    placed first. Can be defined to vary depending on the zoom level with some default value. (see the
+    example above).
+-   `renderOrder`: which enables to define the render order of the objects created using a particular
+    technique.
+-   `color`: color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
+    `"rgb(255, 0, 0)"`, `"rgba(127, 127, 127, 1.0)"`, or `"hsl(35, 11%, 88%)"`.
