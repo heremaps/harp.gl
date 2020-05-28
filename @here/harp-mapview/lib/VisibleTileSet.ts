@@ -502,6 +502,7 @@ export class VisibleTileSet {
         );
         this.dataSourceTileList = [];
         this.m_coveringMap.clear();
+        //console.log("frame: ", dataSources[0]?.mapView.frameNumber);
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
             // Sort by distance to camera, now the tiles that are further away are at the end
             // of the list.
@@ -553,16 +554,11 @@ export class VisibleTileSet {
                         if (newTilesPerFrame > this.maxTilesPerFrame) {
                             //console.log("skip tile: ", tile.tileKey.mortonCode());
                             tile.skipRendering = true;
+                            tile.mapView.update();
                         } else {
-                            //console.log(
-                            //    "new tile this frame, tile: ",
-                            //    tile.tileKey.mortonCode(),
-                            //    " frame: ",
-                            //    tile.mapView.frameNumber
-                            //);
+                            //console.log("new tile: ", tile.tileKey.mortonCode());
                             tile.frameNumVisible = dataSource.mapView.frameNumber;
                             tile.skipRendering = false;
-                            tile.mapView.requestUpdateIfNeeded();
                         }
                     }
                 }
