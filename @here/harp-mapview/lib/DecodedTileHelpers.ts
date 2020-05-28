@@ -20,8 +20,8 @@ import {
     ShaderTechnique,
     Technique,
     techniqueDescriptors,
-    TextureProperties,
     TEXTURE_PROPERTY_KEYS,
+    TextureProperties,
     TRANSPARENCY_PROPERTY_KEYS,
     Value
 } from "@here/harp-datasource-protocol";

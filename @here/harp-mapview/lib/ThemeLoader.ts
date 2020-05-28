@@ -31,7 +31,7 @@ import {
     resolveReferenceUri,
     UriResolver
 } from "@here/harp-utils";
-import { SkyCubemapFaceId, SKY_CUBEMAP_FACE_COUNT } from "./SkyCubemapTexture";
+import { SKY_CUBEMAP_FACE_COUNT, SkyCubemapFaceId } from "./SkyCubemapTexture";
 
 import "@here/harp-fetch";
 
