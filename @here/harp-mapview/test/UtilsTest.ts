@@ -8,6 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import {
+    EarthConstants,
     GeoCoordinates,
     mercatorProjection,
     Projection,
@@ -31,7 +32,7 @@ const cameraMock = {
 };
 
 describe("map-view#Utils", function() {
-    it("calculates zoom level", function() {
+    describe("calculateZoomLevelFromDistance", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
@@ -41,18 +42,28 @@ describe("map-view#Utils", function() {
             pixelRatio: 1.0
         };
         const mapView = (mapViewMock as any) as MapView;
+        it("calculates zoom level", function() {
+            let result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 0);
+            expect(result).to.be.equal(20);
+            result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 1000000000000);
+            expect(result).to.be.equal(1);
+            /*
+             *   23.04.2018 - Zoom level outputs come from HARP
+             */
+            result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 1000);
+            result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 10000);
+            result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 1000000);
+            expect(result).to.be.closeTo(5.32, 0.05);
+        });
 
-        let result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 0);
-        expect(result).to.be.equal(20);
-        result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 1000000000000);
-        expect(result).to.be.equal(1);
-        /*
-         *   23.04.2018 - Zoom level outputs come from HARP
-         */
-        result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 1000);
-        result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 10000);
-        result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 1000000);
-        expect(result).to.be.closeTo(5.32, 0.05);
+        it("snaps zoom level to ceiling integer if close enough to it", function() {
+            const eps = 1e-10;
+            const result = MapViewUtils.calculateZoomLevelFromDistance(
+                mapView,
+                EarthConstants.EQUATORIAL_CIRCUMFERENCE * (0.25 + eps)
+            );
+            expect(result).equals(2);
+        });
     });
 
     it("converts target coordinates from XYZ to camera coordinates", function() {
