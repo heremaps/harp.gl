@@ -48,6 +48,7 @@ import {
     PlacementResult,
     placePathLabel,
     placePointLabel,
+    pointToPlaneDistance,
     PrePlacementResult
 } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
@@ -318,7 +319,6 @@ export class TextElementsRenderer {
 
     private m_tmpVector = new THREE.Vector2();
     private m_tmpVector3 = new THREE.Vector3();
-    private m_tmpLabelCamVec = new THREE.Vector3();
     private m_cameraLookAt = new THREE.Vector3();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
@@ -1547,11 +1547,12 @@ export class TextElementsRenderer {
         tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
         tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
 
-        // Scale the text depending on the label's distance to the camera "zero" plane - near
-        // plane at zero distance. The result is the same as taking the distance from "Z"
-        // coordinate in camera space. This way we avoid co-planar labels' scale variation.
-        const labelCamVec = this.m_tmpLabelCamVec.copy(position).sub(this.m_viewState.worldCenter);
-        const textDistance = labelCamVec.dot(this.m_cameraLookAt);
+        // Scale the text depending on the label's distance to the camera "zero" plane.
+        const textDistance = pointToPlaneDistance(
+            position,
+            this.m_viewState.worldCenter,
+            this.m_cameraLookAt
+        );
         if (
             pointLabel.fadeFar !== undefined &&
             (pointLabel.fadeFar <= 0.0 ||
@@ -1896,7 +1897,9 @@ export class TextElementsRenderer {
         }
 
         // Update the real rendering distance to have smooth fading and scaling
-        labelState.setViewDistance(computeViewDistance(this.m_viewState.worldCenter, pathLabel));
+        labelState.setViewDistance(
+            computeViewDistance(pathLabel, this.m_viewState.worldCenter, this.m_cameraLookAt)
+        );
         const textRenderDistance = -labelState.renderDistance;
 
         // Scale the text depending on the label's distance to the camera.
