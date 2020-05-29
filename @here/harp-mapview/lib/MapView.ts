@@ -884,8 +884,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_firstFrameComplete = false;
     private m_initialTextPlacementDone = false;
 
-    private m_previousVisibleTilesUpdateTimeStamp: number = 0;
-
     private handleRequestAnimationFrame: (frameStartTime: number) => void;
 
     private m_pickHandler: PickHandler;
@@ -3286,18 +3284,16 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         // TBD: Update renderList only any of its params (camera, etc...) has changed.
-        if (
-            !this.lockVisibleTileSet &&
-            frameStartTime - this.m_previousVisibleTilesUpdateTimeStamp >
-                this.visibleTileUpdateDelay
-        ) {
+        if (!this.lockVisibleTileSet) {
             const viewRangesStatus = this.m_visibleTiles.updateRenderList(
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources(),
+                //skip if possible during delayed period
+                frameStartTime,
+                this.visibleTileUpdateDelay,
                 this.m_elevationRangeSource
             );
-            this.m_previousVisibleTilesUpdateTimeStamp = frameStartTime;
             // View ranges has changed due to features (with elevation) that affects clip planes
             // positioning, update cameras with new clip planes positions.
             if (viewRangesStatus.viewRangesChanged) {

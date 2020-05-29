@@ -382,6 +382,10 @@ export class VisibleTileSet {
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
 
+    private m_pendingCompleteTiles: boolean = false;
+
+    private m_previouslyUpdatedTime: number = 0;
+
     constructor(
         private readonly m_frustumIntersection: FrustumIntersection,
         private readonly m_tileGeometryManager: TileGeometryManager,
@@ -490,8 +494,37 @@ export class VisibleTileSet {
         storageLevel: number,
         zoomLevel: number,
         dataSources: DataSource[],
+        frameTime: number,
+        updateDelay: number = 0,
         elevationRangeSource?: ElevationRangeSource
     ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
+        //only skip if there is no pending complete tiles from the last frame
+        if (
+            frameTime - this.m_previouslyUpdatedTime <= updateDelay &&
+            !this.m_pendingCompleteTiles
+        ) {
+            //console.log(
+            //    "skipping update",
+            //    frameTime - this.m_previouslyUpdatedTime,
+            //    " <=  ",
+            //    updateDelay,
+            //    " && ",
+            //    this.m_pendingCompleteTiles
+            //);
+            return {
+                viewRanges: this.m_viewRange,
+                viewRangesChanged: false
+            };
+        }
+        //console.log(
+        //    "NOT skipping update",
+        //    frameTime - this.m_previouslyUpdatedTime,
+        //    " >  ",
+        //    updateDelay,
+        //    " || ",
+        //    this.m_pendingCompleteTiles
+        //);
+        this.m_previouslyUpdatedTime = frameTime;
         let allVisibleTilesLoaded: boolean = true;
         let newTilesPerFrame = 0;
 
@@ -554,11 +587,13 @@ export class VisibleTileSet {
                         if (newTilesPerFrame > this.maxTilesPerFrame) {
                             //console.log("skip tile: ", tile.tileKey.mortonCode());
                             tile.skipRendering = true;
+                            this.m_pendingCompleteTiles = true;
                             tile.mapView.update();
                         } else {
                             //console.log("new tile: ", tile.tileKey.mortonCode());
                             tile.frameNumVisible = dataSource.mapView.frameNumber;
                             tile.skipRendering = false;
+                            this.m_pendingCompleteTiles = false;
                         }
                     }
                 }
