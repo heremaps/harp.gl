@@ -258,6 +258,7 @@ export abstract class Expr {
     private m_dependencies?: ExprDependencies;
     private m_isDynamic?: boolean;
 
+    private m_exprEvaluatorContext = new ExprEvaluatorContext();
     /**
      * Evaluate an expression returning a [[Value]] object.
      *
@@ -272,7 +273,7 @@ export abstract class Expr {
     ): Value | never {
         return this.accept(
             exprEvaluator,
-            new ExprEvaluatorContext(exprEvaluator, env, scope, cache)
+            this.m_exprEvaluatorContext.update(exprEvaluator, env, scope, cache)
         );
     }
 

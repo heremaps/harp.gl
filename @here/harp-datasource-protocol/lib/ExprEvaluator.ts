@@ -214,12 +214,24 @@ function cubicInterpolate(
  * @hidden
  */
 export class ExprEvaluatorContext {
+    private evaluator: ExprEvaluator = new ExprEvaluator();
+    public env: Env = new Env();
+    public scope: ExprScope = ExprScope.Value;
+    private cache?: Map<Expr, Value>;
     constructor(
-        readonly evaluator: ExprEvaluator,
-        readonly env: Env,
-        readonly scope: ExprScope,
-        readonly cache?: Map<Expr, Value>
+        evaluator?: ExprEvaluator,
+        env?: Env,
+        scope?: ExprScope,
+        cache?: Map<Expr, Value>
     ) {}
+
+    update(evaluator: ExprEvaluator, env: Env, scope: ExprScope, cache?: Map<Expr, Value>) {
+        this.evaluator = evaluator;
+        this.env = env;
+        this.scope = scope;
+        this.cache = cache;
+        return this;
+    }
 
     /**
      * Evaluate the given expression.
@@ -237,6 +249,9 @@ export class ExprEvaluatorContext {
             return cachedResult;
         }
 
+        if (this.evaluator === undefined) {
+            throw "Update with an evaluator first";
+        }
         const result = expr.accept(this.evaluator, this);
         this.cache?.set(expr, result);
         return result;
