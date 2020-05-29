@@ -48,6 +48,7 @@ import {
     PlacementResult,
     placePathLabel,
     placePointLabel,
+    pointToPlaneDistance,
     PrePlacementResult
 } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
@@ -318,6 +319,7 @@ export class TextElementsRenderer {
 
     private m_tmpVector = new THREE.Vector2();
     private m_tmpVector3 = new THREE.Vector3();
+    private m_cameraLookAt = new THREE.Vector3();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_forceNewLabelsPass: boolean = false;
@@ -669,6 +671,7 @@ export class TextElementsRenderer {
      * Reset internal state at the beginning of a frame.
      */
     private reset() {
+        this.m_cameraLookAt.copy(this.m_viewState.lookAtVector);
         this.m_screenCollisions.reset();
         for (const textRenderer of this.m_textRenderers) {
             textRenderer.textCanvas.clear();
@@ -758,7 +761,8 @@ export class TextElementsRenderer {
                     ++placementStats.total;
                 }
             }
-            if (
+            // Limit labels only in new labels pass (Pass.NewLabels).
+            else if (
                 maxNumPlacedLabels >= 0 &&
                 renderParams.numRenderedTextElements >= maxNumPlacedLabels
             ) {
@@ -1485,7 +1489,7 @@ export class TextElementsRenderer {
         // remains unchanged, the farther is label from that point the smaller size it is
         // rendered in screen space. This method is unaffected by near and far clipping planes
         // distances, but may be improved by taking FOV into equation or customizing the
-        // focus point screen position based on horizont, actual ground, tilt ets.
+        // focus point screen position based on horizon, actual ground, tilt ets.
         let factor = lookAtDistance / distance;
         // The label.distanceScale property defines the influence ratio at which
         // distance affects the final scaling of label.
@@ -1543,8 +1547,12 @@ export class TextElementsRenderer {
         tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
         tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
 
-        // Scale the text depending on the label's distance to the camera.
-        const textDistance = this.m_viewState.worldCenter.distanceTo(position);
+        // Scale the text depending on the label's distance to the camera "zero" plane.
+        const textDistance = pointToPlaneDistance(
+            position,
+            this.m_viewState.worldCenter,
+            this.m_cameraLookAt
+        );
         if (
             pointLabel.fadeFar !== undefined &&
             (pointLabel.fadeFar <= 0.0 ||
@@ -1889,7 +1897,9 @@ export class TextElementsRenderer {
         }
 
         // Update the real rendering distance to have smooth fading and scaling
-        labelState.setViewDistance(computeViewDistance(this.m_viewState.worldCenter, pathLabel));
+        labelState.setViewDistance(
+            computeViewDistance(pathLabel, this.m_viewState.worldCenter, this.m_cameraLookAt)
+        );
         const textRenderDistance = -labelState.renderDistance;
 
         // Scale the text depending on the label's distance to the camera.

@@ -41,26 +41,29 @@ const MIN_AVERAGE_CHAR_WIDTH = 5;
 
 const tmpPosition = new THREE.Vector3(0, 0, 0);
 const tmpCameraDir = new THREE.Vector3(0, 0, 0);
+const tmpPointDir = new THREE.Vector3(0, 0, 0);
 const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Math.PI)
 
 /**
- * Checks whether the distance of the specified text element to the center of the given view is
- * lower than a maximum threshold.
+ * Checks whether the distance of the text element to the camera plane meets threshold criterias.
+ *
  * @param textElement The textElement of which the view distance will be checked, with coordinates
  * in world space.
- * @param mapView The view that will be used as reference to calculate the distance.
+ * @param eyePos The eye (or camera) position that will be used as reference to calculate
+ * the distance.
+ * @param eyeLookAt The eye looking direction - normalized.
  * @param maxViewDistance The maximum distance value.
  * @returns The text element view distance if it's lower than the maximum value, otherwise
  * `undefined`.
  */
 function checkViewDistance(
-    worldCenter: THREE.Vector3,
     textElement: TextElement,
+    eyePos: THREE.Vector3,
+    eyeLookAt: THREE.Vector3,
     projectionType: ProjectionType,
-    camera: THREE.Camera,
     maxViewDistance: number
 ): number | undefined {
-    const textDistance = computeViewDistance(worldCenter, textElement);
+    const textDistance = computeViewDistance(textElement, eyePos, eyeLookAt);
 
     if (projectionType !== ProjectionType.Spherical) {
         return textDistance <= maxViewDistance ? textDistance : undefined;
@@ -68,7 +71,7 @@ function checkViewDistance(
 
     // For sphere projection: Filter labels that are close to the horizon
     tmpPosition.copy(textElement.position).normalize();
-    camera.getWorldPosition(tmpCameraDir).normalize();
+    tmpCameraDir.copy(eyePos).normalize();
     const cosAlpha = tmpPosition.dot(tmpCameraDir);
     const viewDistance =
         cosAlpha > COS_TEXT_ELEMENT_FALLOFF_ANGLE && textDistance <= maxViewDistance
@@ -79,28 +82,60 @@ function checkViewDistance(
 }
 
 /**
- * Computes the distance of the specified text element to the given position.
- * @param refPosition The world coordinates used a reference position to calculate the distance.
+ * Computes distance of the specified text element to camera plane given with position and normal.
+ *
+ * The distance is measured as projection of the vector between @param eyePosition and text element
+ * onto the @param eyeLookAt vector, so it actually computes the distance to plane that
+ * contains @param eyePosition and is described with @param eyeLookAt as normal.
+ *
+ * @note Used for measuring the distances to camera, results in the metric that describes
+ * distance to camera near plane (assuming near = 0). Such metric is better as input for labels
+ * scaling or fading factors then simple euclidean distance because it does not fluctuate during
+ * simple camera panning.
+ *
  * @param textElement The textElement of which the view distance will be checked. It must have
  * coordinates in world space.
+ * @param eyePosition The world eye coordinates used a reference position to calculate the distance.
+ * @param eyeLookAt The eye looking direction or simply said projection plane normal.
  * @returns The text element view distance.
- * `undefined`.
  */
-export function computeViewDistance(refPosition: THREE.Vector3, textElement: TextElement): number {
+export function computeViewDistance(
+    textElement: TextElement,
+    eyePosition: THREE.Vector3,
+    eyeLookAt: THREE.Vector3
+): number {
     let viewDistance: number;
 
-    if (Array.isArray(textElement.points) && textElement.points.length > 1) {
-        const viewDistance0 = refPosition.distanceTo(textElement.points[0]);
-        const viewDistance1 = refPosition.distanceTo(
-            textElement.points[textElement.points.length - 1]
-        );
+    // Compute the distances as the distance along plane normal.
+    const path = textElement.path;
+    if (path && path.length > 1) {
+        const viewDistance0 = pointToPlaneDistance(path[0], eyePosition, eyeLookAt);
+        const viewDistance1 = pointToPlaneDistance(path[path.length - 1], eyePosition, eyeLookAt);
 
         viewDistance = Math.min(viewDistance0, viewDistance1);
     } else {
-        viewDistance = refPosition.distanceTo(textElement.points as THREE.Vector3);
+        viewDistance = pointToPlaneDistance(textElement.position, eyePosition, eyeLookAt);
     }
 
     return viewDistance;
+}
+
+/**
+ * Computes distance between the given point and a plane.
+ *
+ * May be used to measure distance of point labels to the camera projection (near) plane.
+ *
+ * @param pointPos The position to measure distance to.
+ * @param planePos The position of any point on the plane.
+ * @param planeNorm The plane normal vector (have to be normalized already).
+ */
+export function pointToPlaneDistance(
+    pointPos: THREE.Vector3,
+    planePos: THREE.Vector3,
+    planeNorm: THREE.Vector3
+) {
+    const labelCamVec = tmpPointDir.copy(pointPos).sub(planePos);
+    return labelCamVec.dot(planeNorm);
 }
 
 /**
@@ -177,12 +212,12 @@ export function checkReadyForPlacement(
 
     viewDistance =
         maxViewDistance === undefined
-            ? computeViewDistance(viewState.worldCenter, textElement)
+            ? computeViewDistance(textElement, viewState.worldCenter, viewState.lookAtVector)
             : checkViewDistance(
-                  viewState.worldCenter,
                   textElement,
+                  viewState.worldCenter,
+                  viewState.lookAtVector,
                   viewState.projection.type,
-                  viewCamera,
                   maxViewDistance
               );
 
@@ -306,11 +341,22 @@ const tmpCollisionBox = new CollisionBox();
 const tmpScreenPosition = new THREE.Vector2();
 const tmpTextOffset = new THREE.Vector2();
 const tmp2DBox = new Math2D.Box();
+const tmpCenter = new THREE.Vector2();
+const tmpSize = new THREE.Vector2();
 
 /**
  * The margin applied to the text bounds of every point label.
  */
 export const persistentPointLabelTextMargin = new THREE.Vector2(2, 2);
+/**
+ * Additional bounds scaling (described as percentage of full size) applied to the new labels.
+ *
+ * This additional scaling (margin) allows to account for slight camera position and
+ * orientation changes, so new labels are placed only if there is enough space around them.
+ * Such margin limits collisions with neighboring labels while doing small camera movements and
+ * thus reduces labels flickering.
+ */
+export const newPointLabelTextMarginPercent = 0.1;
 
 export enum PlacementResult {
     Ok,
@@ -645,15 +691,13 @@ function placePointLabelAtAnchor(
     const textOffset = computePointTextOffset(label, placement, scale, env, tmpTextOffset);
     textOffset.add(screenPosition);
     tmpBox.copy(label.bounds!);
-    tmpBox.min.multiplyScalar(scale);
-    tmpBox.max.multiplyScalar(scale);
     tmpBox.translate(textOffset);
-    tmp2DBox.set(
-        tmpBox.min.x,
-        tmpBox.min.y,
-        tmpBox.max.x - tmpBox.min.x,
-        tmpBox.max.y - tmpBox.min.y
-    );
+
+    tmpBox.getCenter(tmpCenter);
+    tmpBox.getSize(tmpSize);
+
+    tmpSize.multiplyScalar(scale);
+    tmp2DBox.set(tmpCenter.x - tmpSize.x / 2, tmpCenter.y - tmpSize.y / 2, tmpSize.x, tmpSize.y);
 
     // Update output screen position.
     outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
@@ -672,6 +716,21 @@ function placePointLabelAtAnchor(
         // It might be changed if we would like to render text without icon (at border, etc.).
         return persistent ? PlacementResult.Rejected : PlacementResult.Invisible;
     }
+
+    if (measureText) {
+        // Up-scaled label bounds are used only for new labels and after visibility check, this is
+        // intentional to avoid processing labels out of the screen due to increased bounds, such
+        // labels would be again invisible in the next frame.
+        tmpBox.getSize(tmpSize);
+        tmpSize.multiplyScalar(scale * (1 + newPointLabelTextMarginPercent));
+        tmp2DBox.set(
+            tmpCenter.x - tmpSize.x / 2,
+            tmpCenter.y - tmpSize.y / 2,
+            tmpSize.x,
+            tmpSize.y
+        );
+    }
+
     // Check label's text collision.
     if (!label.textMayOverlap && screenCollisions.isAllocated(tmp2DBox)) {
         // Allows to fade persistent and ignore new label.
