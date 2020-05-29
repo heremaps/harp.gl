@@ -41,40 +41,34 @@ archipelagos, cliffs and bridges.
 The theme file enables to define multiple `styles` which are bound to the data format received from
 a datasource (for example a tilezen based one, check [here for more information on tilezen vector tile datasource](https://github.com/tilezen/vector-datasource)).
 
-```JSON
+```json
 {
-    "styles": {
-        "tilezen": [
-            {
-                "description": "Earth layer",
-                "when": "$layer ^= 'earth'",
-                "styles": [
-                    {
-                        "when": "kind in ['continent']",
-                        "technique": "text",
-                        "attr": {
-                            "priority": {
-                                "interpolation": "Discrete",
-                                "zoomLevels": [2, 3, 4],
-                                "values": [120, 100, 60]
-                            },
-                            "color": "#E48892",
-                            "fontVariant": "AllCaps",
-                            "opacity": 0.6
-                        }
-                    },
-                    {
-                        "when": "kind in ['archipelago', 'cliff', 'ridge', 'island']",
-                        "technique": "line",
-                        "attr": {
-                            "color": "#C1BDB3"
-                        }
-                    }
-                ]
-            }
-        ]
-    }
-}
+    "styles": [
+        {
+            "styleSet": "tilezen",
+            "layer": "earth",
+            "when": "kind in ['continent']",
+            "technique": "text",
+            "priority": ["step", ["zoom"], 0,
+                2, 120,
+                3, 100,
+                4, 60
+            ],
+            "color": "#E48892",
+            "fontVariant": "AllCaps",
+            "opacity": 0.6
+        },
+        {
+            "styleSet": "tilezen",
+            "layer": "earth",
+            "when": ["match", ["get", "kind"],
+                ["archipelago", "cliff", "ridge", "island"], true,
+                false
+            ],
+            "technique": "line",
+            "color": "#C1BDB3"
+        }
+    ]
 ```
 
 The conditions can be based on the datasource metadata
@@ -86,19 +80,21 @@ Theme file is closely connected with the type of data received from the datasour
 
 `"technique"` - determines which technique should be applied to objects fulfilling the condition
 
-```JSON
+```json
 {
+    "styleSet": "tilezen",
     "description": "Exemplary theme condition",
-    "when": "kind_detail == 'pier' || landuse_kind == 'pier'",
+    "when": ["any",
+        ["==", ["get", "kind_detail"], "pier"],
+        ["==", ["get", "landuse_kind"], "pier"],
+    ],
     "technique": "solid-line",
-    "attr": {
-        "color": "#00f",
-        "lineWidth": {
-            "interpolation": "Linear",
-            "zoomLevels": [13, 14, 15],
-            "values": [1.5, 1.2, 0.9]
-        }
-    }
+    "color": "#00f",
+    "lineWidth": ["interpolate", ["linear"], ["zoom"],
+        13, "1.5px",
+        14, "1.2px",
+        15, "0.9px"
+    ]
 }
 ```
 
@@ -110,8 +106,8 @@ line is rendered with different line widths depending on the current map zoom le
 
 Note that the typical logical operators like:
 
--   `&&` (and) for computing the conjunction of two sub-conditions
--   `||` (or) for computing the alternative of two sub-conditions
+-   `all` for computing the conjunction of sub-conditions
+-   `any` for computing the alternative of sub-conditions
 
 `"when"` - is a property that holds a description of the condition. This condition queries the
 feature data which and uses one or many of the following operators:
@@ -119,8 +115,8 @@ feature data which and uses one or many of the following operators:
 -   `~=` (_tilde equal_), returns **true** when the value on the left _contains_ the value on the
     right, for example:
 
-```js
-    "when": "kind_detail ~= 'park'"
+```json
+    "when": ["~=", ["get", "kind_detail"], "park"]
 ```
 
 this condition would match `kind_detail`s like _national_park_, _natural_park_, _theme_park_ but
@@ -129,8 +125,8 @@ also _parking_
 -   `^=` (_caret equal_), returns **true** when the value on the left _starts with_ the value on the
     right, for example:
 
-```js
-    "when": "kind_detail ^= 'water'"
+```json
+    "when": ["^=", ["get", "kind_detail"], "water"]
 ```
 
 the above condition would match `kind_detail`s like: _water_park_, _water_slide_ or
@@ -139,8 +135,8 @@ _water_works_ but **not** _drinking_water_
 -   `$=` (_dollar equal_), returns **true** when the value on the left _ends with_ the value on the
     right, for example:
 
-```js
-    "when": "kind_detail $= 'water'"
+```json
+    "when": ["$=", ["get", "kind_detail"], "water"]
 ```
 
 the above condition would match `kind_detail`s like: _drinking_water_ but **not** _water_park_
@@ -148,8 +144,9 @@ the above condition would match `kind_detail`s like: _drinking_water_ but **not*
 -   `==` (_equal equal_), returns **true** when the value on the left _is equal to_ the value on the
     right, for example:
 
-```js
-    "when": $layer == 'roads' && kind == 'rail'"
+```json
+    "layer": "roads",
+    "when": ["==", ["get", "kind"], "rail"],
 ```
 
 the above condition would match _roads_ `$layer` and the `kind` of **rail**
@@ -157,9 +154,10 @@ the above condition would match _roads_ `$layer` and the `kind` of **rail**
 -   `!=` (_exclamation mark equal_), returns **true** when the value on the left _is not equal to_ the
     value on the right, for example:
 
-```js
+```json
     "description": "All land roads except rail",
-    "when": "$layer ^= 'roads' && kind != 'rail'",
+    "layer": "roads",
+    "when": ["!=", ["get", "kind"], "rail"],
 ```
 
 the above condition would match all `kind`s which are **not** _rail_ on the _roads_ `$layer`
@@ -171,9 +169,12 @@ Additionally there are two more operators available (`has` and `in`):
 -   `has(`_variable name_`)` returns **true** when the feature contains the specified variable and it
     is not _undefined_, for example:
 
-```js
+```json
     "description": "lakes (on high zoom level show only biggest lakes)",
-    "when": "kind == 'lake' || has(area)",
+    "when": ["any",
+        ["==", ["get", "kind"] "lake"],
+        ["has", "area"],
+    ]
 ```
 
 the above condition would match all `kind`s which have the value _lake_ **or** the _area_ property
@@ -182,95 +183,22 @@ defined.
 -   `in[`_array of possible values_`]` returns **true** when the feature contains one of the values
     specified in the array, for example:
 
-```js
+```json
 {
     "description": "Earth layer",
-    "when": "$layer ^= 'earth'",
-    "styles": [
-        {
-            "when": "kind in ['archipelago', 'cliff', 'island']",
-            (...)
-        }
-    ]
+    "layer": "earth",
+    "styleset": "tilezen",
+    "when": ["in", ["get", "kind"],
+        ["literal", ["archipelago",
+                     "cliff",
+                     "island"]]
+    ],
+    (...)
 }
 ```
 
 the above conditions would match all features from `earth` layer which `kind` is equal either to
 'archipelago', 'cliff' or 'island'.
-
-## How to nest two or more conditions
-
-`harp.gl`'s theming system enables nesting conditions. This comes in very handy when one wants to
-apply some general level styling to for example a whole `layer` and they define a more fine grained
-styling options for smaller subsets of feature (like `kind`s or `kind_detail`s).
-
-The general structure of such nested conditions looks like this:
-
-```json
-{
-    "when": "$layer ^= 'water'",
-    "styles": [
-        {
-            "when": "$geometryType ^= 'polygon'",
-            "technique": "fill",
-            "styles": [
-                {
-                    "when": "kind in ['lake', 'ocean']",
-                    "final": true,
-                    "attr": {
-                        "color": "#ffcdff"
-                    }
-                },
-                {
-                    "when": "$level <= 7",
-                    "technique": "fill",
-                    "attr": {
-                        "color": "#a0cfff"
-                    }
-                },
-                {
-                    "when": "$level > 7",
-                    "technique": "fill",
-                    "attr": {
-                        "color": "#a0cfff"
-                    }
-                }
-            ]
-        },
-        {
-            "when": "...another condition",
-            "styles": [
-                {
-                    "when": "... more fine grained condition"
-                }
-            ]
-        }
-    ]
-}
-```
-
-In the above example the first `when` condition matches all features from the `water` layer.
-All those features are then matched against each of the sub-conditions from the `styles` array.
-
-It is important to take into account that a certain map feature could be matched either none, one or
-many times. In such cases an object would have the parameters from `attr` applied in the order of
-the conditions. This behavior could be changed by adding a
-
-```json
- "final": true
-```
-
-property to the style object. Setting `final` to true means essentially that when a map feature
-reaches the current condition it will not be taken into account in subsequent conditions and no
-additional styling would be made. In the above example if a feature has a `kind` equal to _lake_ or
-_ocean_ it will have a color applied:
-
-```json
- "color": "#ffcdff"
-```
-
-But such object would not have its color changed depending on the zoom level (`$level`), even if it
-would match any of the subsequent conditions.
 
 ## Where to put style changes for a certain feature or map object?
 
@@ -278,16 +206,14 @@ A style for a certain feature (map object) on the map is kept in the `attr` obje
 example:
 
 ```json
-"attr": {
-    "priority": {
-        "interpolation": "Discrete",
-        "zoomLevels": [2, 3, 4],
-        "values": [120, 100, 60]
-    },
     "color": "#E48892",
     "fontVariant": "AllCaps",
-    "opacity": 0.6
-}
+    "opacity": 0.6,
+    "priority": ["step", ["zoom"], 0,
+        2, 120,
+        3, 100,
+        4, 60
+    ]
 ```
 
 A list of possible style modifier for each techniques can be found in the [`Techniques` class' source code](https://github.com/heremaps/harp.gl/blob/master/%40here/harp-datasource-protocol/lib/Techniques.ts).
@@ -297,7 +223,9 @@ Most common properties include:
 -   `priority`: Sets a `priority` of a map object, defaults to `0`. Objects with highest priority get
     placed first. Can be defined to vary depending on the zoom level with some default value. (see the
     example above).
+
 -   `renderOrder`: which enables to define the render order of the objects created using a particular
     technique.
+
 -   `color`: color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
     `"rgb(255, 0, 0)"`, `"rgba(127, 127, 127, 1.0)"`, or `"hsl(35, 11%, 88%)"`.
