@@ -1162,6 +1162,22 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * @returns Whether adding of new labels during interaction is enabled.
+     */
+    get delayLabelsUntilMovementFinished() {
+        return this.textElementsRenderer.delayLabelsUntilMovementFinished;
+    }
+
+    /**
+     * Enables or disables adding of  new labels during interaction. Has no influence on already
+     * placed labels
+     * @param value `true` to enable adding `false` to disable them.
+     */
+    set delayLabelsUntilMovementFinished(value: boolean) {
+        this.textElementsRenderer.delayLabelsUntilMovementFinished = value;
+    }
+
+    /**
      * @hidden
      * The [[TextElementsRenderer]] select the visible [[TextElement]]s and renders them.
      */

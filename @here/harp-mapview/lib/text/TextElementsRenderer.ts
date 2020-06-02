@@ -323,6 +323,7 @@ export class TextElementsRenderer {
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_forceNewLabelsPass: boolean = false;
+    private m_addNewLabels: boolean = true;
 
     private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
 
@@ -385,6 +386,14 @@ export class TextElementsRenderer {
         return this.m_textStyleCache;
     }
 
+    get delayLabelsUntilMovementFinished(): boolean {
+        return this.m_options.delayLabelsUntilMovementFinished === true;
+    }
+
+    set delayLabelsUntilMovementFinished(delay: boolean) {
+        this.m_options.delayLabelsUntilMovementFinished = delay;
+    }
+
     /**
      * Render the text using the specified camera into the current canvas.
      *
@@ -413,7 +422,9 @@ export class TextElementsRenderer {
      * Notify `TextElementsRenderer` that the camera has started a movement.
      */
     movementStarted() {
-        // Nothing to do (yet)
+        if (this.delayLabelsUntilMovementFinished) {
+            this.m_addNewLabels = false;
+        }
     }
 
     /**
@@ -421,6 +432,9 @@ export class TextElementsRenderer {
      */
     movementFinished() {
         this.invalidateCache();
+        if (this.delayLabelsUntilMovementFinished) {
+            this.m_addNewLabels = true;
+        }
     }
 
     /**
@@ -435,7 +449,6 @@ export class TextElementsRenderer {
      * Places text elements for the current frame.
      * @param dataSourceTileList List of tiles to be rendered for each data source.
      * @param time Current frame time.
-     * @param elevationProvider
      */
     placeText(dataSourceTileList: DataSourceTileList[], time: number) {
         const tileTextElementsChanged = checkIfTextElementsChanged(dataSourceTileList);
@@ -454,11 +467,11 @@ export class TextElementsRenderer {
             `FRAME: ${this.m_viewState.frameNumber}, ZOOM LEVEL: ${this.m_viewState.zoomLevel}`
         );
 
-        if (updateTextElements) {
+        if (updateTextElements && this.m_addNewLabels) {
             this.m_textElementStateCache.clearVisited();
             this.updateTextElements(dataSourceTileList);
         }
-        const findReplacements = updateTextElements;
+        const findReplacements = updateTextElements && this.m_addNewLabels;
         const anyTextGroupEvicted = this.m_textElementStateCache.update(
             time,
             this.m_options.disableFading!,
@@ -467,7 +480,9 @@ export class TextElementsRenderer {
         );
 
         this.reset();
-        this.prepopulateScreenWithBlockingElements(dataSourceTileList);
+        if (this.m_addNewLabels) {
+            this.prepopulateScreenWithBlockingElements(dataSourceTileList);
+        }
 
         // New text elements must be placed either if text elements were updated in this frame
         // or if any text element group was evicted. The second case happens when the group is not
@@ -475,7 +490,8 @@ export class TextElementsRenderer {
         // available screen space where new text elements could be placed. A common scenario where
         // this happens is zooming in/out: text groups from the old level may still be fading out
         // after all groups in the new level were updated.
-        const placeNewTextElements = updateTextElements || anyTextGroupEvicted;
+        const placeNewTextElements =
+            (updateTextElements || anyTextGroupEvicted) && this.m_addNewLabels;
         this.placeTextElements(time, placeNewTextElements);
         this.placeOverlayTextElements();
         this.updateTextRenderers();
