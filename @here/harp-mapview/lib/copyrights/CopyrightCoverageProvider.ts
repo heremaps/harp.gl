@@ -5,7 +5,7 @@
  */
 
 import { GeoBox } from "@here/harp-geoutils";
-import { getOptionValue, LoggerManager } from "@here/harp-utils";
+import { getOptionValue, ILogger, LoggerManager } from "@here/harp-utils";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { CopyrightProvider } from "./CopyrightProvider";
 
@@ -64,7 +64,7 @@ export interface CopyrightCoverageResponse {
  */
 export abstract class CopyrightCoverageProvider implements CopyrightProvider {
     /** Logger instance. */
-    protected readonly logger = LoggerManager.instance.create("CopyrightCoverageProvider");
+    protected readonly logger: ILogger = LoggerManager.instance.create("CopyrightCoverageProvider");
 
     private m_cachedTreePromise: Promise<any> | undefined;
 

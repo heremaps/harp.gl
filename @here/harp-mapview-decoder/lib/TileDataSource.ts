@@ -21,7 +21,7 @@ import {
     Tile,
     TileLoaderState
 } from "@here/harp-mapview";
-import { LoggerManager } from "@here/harp-utils";
+import { ILogger, LoggerManager } from "@here/harp-utils";
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
 
@@ -106,7 +106,7 @@ export class TileFactory<TileType extends Tile> {
  * asynchronous one is generated.
  */
 export class TileDataSource<TileType extends Tile> extends DataSource {
-    protected readonly logger = LoggerManager.instance.create("TileDataSource");
+    protected readonly logger: ILogger = LoggerManager.instance.create("TileDataSource");
     protected readonly m_decoder: ITileDecoder;
     private m_isReady: boolean = false;
 
