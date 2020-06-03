@@ -223,13 +223,15 @@ export class OmvDecoder implements IGeometryProcessor {
         storageLevel: number
     ): void {
         if (this.m_featureModifiers !== undefined) {
-            this.m_featureModifiers.forEach(fm => {
-                // TODO: The logic of feature ignore should be actually in the feature filtering
-                // mechanism - see OmvFeatureFilter.
-                if (!fm.doProcessPointFeature(layer, env, storageLevel)) {
-                    return;
-                }
-            });
+            if (
+                this.m_featureModifiers.find(fm => {
+                    // TODO: The logic of feature ignore should be actually in the feature filtering
+                    // mechanism - see OmvFeatureFilter.
+                    return !fm.doProcessPointFeature(layer, env, storageLevel);
+                }) !== undefined
+            ) {
+                return;
+            }
         }
 
         const techniques = this.applyKindFilter(
@@ -270,11 +272,13 @@ export class OmvDecoder implements IGeometryProcessor {
         storageLevel: number
     ): void {
         if (this.m_featureModifiers !== undefined) {
-            this.m_featureModifiers.forEach(fm => {
-                if (!fm.doProcessLineFeature(layer, env, storageLevel)) {
-                    return;
-                }
-            });
+            if (
+                this.m_featureModifiers.find(fm => {
+                    return !fm.doProcessLineFeature(layer, env, storageLevel);
+                }) !== undefined
+            ) {
+                return;
+            }
         }
 
         const techniques = this.applyKindFilter(
@@ -319,11 +323,13 @@ export class OmvDecoder implements IGeometryProcessor {
         storageLevel: number
     ): void {
         if (this.m_featureModifiers !== undefined) {
-            this.m_featureModifiers.forEach(fm => {
-                if (!fm.doProcessPolygonFeature(layer, env, storageLevel)) {
-                    return;
-                }
-            });
+            if (
+                this.m_featureModifiers.find(fm => {
+                    return !fm.doProcessPolygonFeature(layer, env, storageLevel);
+                }) !== undefined
+            ) {
+                return;
+            }
         }
 
         const techniques = this.applyKindFilter(
