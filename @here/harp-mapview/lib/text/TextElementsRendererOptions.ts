@@ -101,6 +101,12 @@ export interface TextElementsRendererOptions {
      * @default `false`
      */
     disableFading?: boolean;
+
+    /**
+     * Enable that new labels are delayed until movement is finished
+     * @default `true`
+     */
+    delayLabelsUntilMovementFinished?: boolean;
 }
 
 /**
@@ -140,5 +146,9 @@ export function initializeDefaultOptions(options: TextElementsRendererOptions) {
 
     if (options.disableFading === undefined) {
         options.disableFading = false;
+    }
+
+    if (options.delayLabelsUntilMovementFinished === undefined) {
+        options.delayLabelsUntilMovementFinished = true;
     }
 }
