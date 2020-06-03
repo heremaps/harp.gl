@@ -4,4 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * HERE WebTile Data source.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/WebTileDataSource";

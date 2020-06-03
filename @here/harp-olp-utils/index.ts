@@ -4,5 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * HERE OLP utilities.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/OlpCopyrightProvider";
 export * from "./lib/OlpDataProvider";

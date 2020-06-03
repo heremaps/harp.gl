@@ -38,6 +38,7 @@ export interface Theme {
     /**
      * The base `Theme`s or `theme` URLs to extend.
      *
+     * @remarks
      * If used, base themes are loaded first, and then all the properties from inherited theme
      * overwrite these defined in base theme.
      */
@@ -128,6 +129,7 @@ export interface Theme {
      * Optional list of symbolic priorities for the object
      * created using this [[Theme]].
      *
+     * @remarks
      * The attribute `styleSet` and `category` of the [[Technique]]
      * are used together with [[Theme.priorities]] to sort
      * the objects created using this [[Theme]], for example:
@@ -153,6 +155,7 @@ export interface Theme {
      * Optional list of priorities for the screen-space
      * objects created using this style.
      *
+     * @remarks
      * The name of the `category` attribute of the screen-space
      * technique (e.g. `"text"`) must match on the strings
      * defined by this [[Theme.labelPriorities]], for example:
@@ -362,41 +365,11 @@ export interface Definitions {
  */
 export interface StyleSelector {
     /**
+     * Condition when this style rule applies.
+     *
+     * @remarks
      * Condition that is applied to feature properties to check if given [[Style]] this feature
      * should emit geometry of this style.
-     *
-     * Conditions are defined using [[Array]]s describing literals, built-in symbols and function
-     * calls:
-     *  - `["has", string]` returns `true` if the given property exists.
-     *  - `["get", string]` returns the value of the given feature property with the given name.
-     *  - `["all", expressions...]` returns `true` if all the sub expressions evaluate to true.
-     *  - `["any", expressions...]` returns `true` if any sub expression evaluates to true.
-     *  - `["in", expression, [literals...]]` returns `true` if the result of evaluating the first
-     *    expression is included in the given `Array` of literals.
-     *  - `["!", expression]` returns `false` if the sub expression evaluates to `true`.
-     *  - `["<", expression, expression]` returns `true` if the result of evaluating the first
-     *    expression is less than the result of evaluating the second expression.
-     *  - `[">", expression, expression]` returns `true` if the result of evaluating the first
-     *    expression is greater than the result of evaluating the second expression.
-     *  - `["<=", expression, expression]` returns `true` if the result of evaluating the first
-     *    expression is less than or equal the result of evaluating the second expression.
-     *  - `[">=", expression, expression]` returns `true` if the result of evaluating the first
-     *    expression is greater than or equal the result of evaluating the second expression.
-     *  - `["==", expression, expression]` returns `true` if the result of evaluating the first
-     *    expression is equal the result of evaluating the second expression.
-     *  - `["!=", expression, expression]` returns `true` if the result of evaluating the first
-     *    expression is not equal to the result of evaluating the second expression.
-     *  - `["length", expression]` returns the length of the given expression if it evaluates to
-     *    a `string` or an `Array`; otherwise, returns `undefined`.
-     *  - `["~=", expression, expression]` if the expressions evaluate to `string`, returns `true`
-     *    if the `string` obtained from the first expression contains the `string` obtained from the
-     *    second expression; otherwise, returns `undefined`.
-     *  - `["^=", expression, expression]` if the expressions evaluate to `string`, returns `true`
-     *    if the `string` obtained from the first expression starts with the `string` obtained from
-     *    the second expression; otherwise, returns `undefined`.
-     *  - `["$=", expression, expression]` if the expressions evaluate to `string`, returns `true`
-     *    if the `string` obtained from the first expression ends with the `string` obtained from
-     *    the second expression; otherwise, returns `undefined`.
      */
     when: string | JsonExpr;
 
@@ -483,6 +456,9 @@ export type BaseStyle<Technique, Params> = Partial<Params> & {
     category?: string | JsonExpr;
 
     /**
+     * The name of the technique to use.
+     *
+     * @remarks
      * Technique name. See the classes extending from this class to determine what possible
      * techniques are possible, includes `"line"`, `"fill"`, `"solid-line"`, `"extruded-line"`,
      * `"extruded-polygon"`, `"text"`, `"none"`.
@@ -492,6 +468,7 @@ export type BaseStyle<Technique, Params> = Partial<Params> & {
     /**
      * Specify `renderOrder` of value.
      *
+     * @remarks
      * @default If not specified in style file, `renderOrder` will be assigned with monotonically
      * increasing values according to style position in file.
      */
@@ -535,215 +512,7 @@ export type BaseStyle<Technique, Params> = Partial<Params> & {
     attr?: Partial<Params>;
 };
 
-/**
- *
- * @defaultSnippets [
- *     {
- *         "label": "New solid-line",
- *         "description": "Add a new 'solid-line' Styling Rule",
- *         "body": {
- *             "technique": "solid-line",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "lineWidth": "^${3:1}",
- *                 "secondaryColor": "#$4ddd",
- *                 "secondaryWidth": "^${5:2}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New dashed-line",
- *         "description": "Add a new 'dashed-line' Styling Rule",
- *         "body": {
- *             "technique": "solid-line",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "lineWidth": "^${3:1}",
- *                 "gapSize": "^${4:10}",
- *                 "dashSize": "^${5:10}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New fill",
- *         "description": "Add a new 'fill' Styling Rule",
- *         "body": {
- *             "technique": "fill",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "lineWidth": "^${3:0}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New text",
- *         "description": "Add a new 'text' Styling Rule",
- *         "body": {
- *             "technique": "text",
- *             "when": "$1",
- *             "attr": {
- *                 "size": "^${2:24}",
- *                 "color": "#${3:fff}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New labeled-icon",
- *         "description": "Add a new 'labeled-icon' marker styling",
- *         "body": {
- *             "technique": "labeled-icon",
- *             "when": "$1",
- *             "attr": {
- *                 "size": "^${2:24}",
- *                 "color": "#${3:fff}",
- *                 "backgroundSize": "^${4:32}",
- *                 "backgroundColor": "#${5:aaa}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New line-marker",
- *         "description": "Add a new 'line-marker' marker styling",
- *         "body": {
- *             "technique": "line-marker",
- *             "when": "$1",
- *             "attr": {
- *                 "size": "^${2:24}",
- *                 "color": "#${3:fff}",
- *                 "backgroundSize": "^${4:32}",
- *                 "backgroundColor": "#${5:aaa}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New line",
- *         "description": "Add a new 'line' Styling Rule",
- *         "body": {
- *             "technique": "line",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "lineWidth": "^${3:1}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New segments",
- *         "description": "Add a new 'segments' Styling Rule",
- *         "body": {
- *             "technique": "segments",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "lineWidth": "^${3:1}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New standard",
- *         "description": "Add a new 'standard' Styling Rule",
- *         "body": {
- *             "technique": "standard",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "roughness": "^${3:0.5}",
- *                 "metalness": "^${4:0.5}",
- *                 "emissive": "#${5:c44}",
- *                 "emissiveIntensity": "^${6:0.8}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New extruded-line",
- *         "description": "Add a new 'extruded-line' Styling Rule",
- *         "body": {
- *             "technique": "extruded-line",
- *             "when": "$1",
- *             "attr": {
- *                 "shading": "${2:standard}",
- *                 "color": "#${3:fff}",
- *                 "lineWidth": "^${4:1}",
- *                 "caps": "${5:Circle}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New extruded-polygon",
- *         "description": "Add a new 'extruded-polygon' Styling Rule",
- *         "body": {
- *             "technique": "extruded-polygon",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "roughness": "^${3:0.5}",
- *                 "metalness": "^${4:0.5}",
- *                 "emissive": "#${5:c44}",
- *                 "emissiveIntensity": "^${6:0.8}",
- *                 "lineWidth": "^${7:1}",
- *                 "lineColor": "#${8:c0f}",
- *                 "defaultHeight": "^${9:20}",
- *                 "animateExtrusion": "^${10:true}",
- *                 "animateExtrusionDuration": "^${11:300}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New none",
- *         "description": "Add a new 'none' Styling Rule",
- *         "body": {
- *             "technique": "none",
- *             "when": "$1",
- *             "attr": {}
- *         }
- *     },
- *     {
- *         "label": "New shader",
- *         "description": "Add a new 'shader' Styling Rule",
- *         "body": {
- *             "technique": "shader",
- *             "when": "$1",
- *             "attr": {
- *                 "primitive": "${2:mesh}",
- *                 "params": {}
- *             }
- *         }
- *     },
- *     {
- *         "label": "New squares",
- *         "description": "Add a new 'squares' point styling",
- *         "body": {
- *             "technique": "squares",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "size": "^${3:32}",
- *                 "texture": "${4:url}",
- *                 "enablePicking": "^${5:true}"
- *             }
- *         }
- *     },
- *     {
- *         "label": "New circles",
- *         "description": "Add a new 'circles' point styling",
- *         "body": {
- *             "technique": "circles",
- *             "when": "$1",
- *             "attr": {
- *                 "color": "#${2:fff}",
- *                 "size": "^${3:32}",
- *                 "texture": "${4:url}",
- *                 "enablePicking": "^${5:true}"
- *             }
- *         }
- *     }
- * ]
- *
- */
-export type AllStyles =
+export type Style =
     | SquaresStyle
     | CirclesStyle
     | PoiStyle
@@ -762,7 +531,6 @@ export type AllStyles =
     | TextTechniqueStyle
     | NoneStyle;
 
-export type Style = AllStyles;
 /**
  * A dictionary of [[StyleSet]]s.
  */
@@ -885,6 +653,9 @@ export interface BaseLight {
 
 /**
  * Light type: ambient.
+ *
+ * @remarks
+ *
  * @defaultSnippets [
  *     {
  *         "label": "New Ambient Light",
@@ -909,6 +680,9 @@ export interface AmbientLight extends BaseLight {
 
 /**
  * Light type: directional.
+ *
+ * @remarks
+ *
  * @defaultSnippets [
  *     {
  *         "label": "New Directional Light",

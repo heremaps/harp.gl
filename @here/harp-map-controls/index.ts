@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Camera controller which implements a common default set of camera functionality in a map context.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/MapControls";
 export * from "./lib/MapControlsUI";
 export * from "./lib/LongPressHandler";

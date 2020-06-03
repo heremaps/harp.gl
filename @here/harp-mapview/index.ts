@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Functionality needed to render a map.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/AnimatedExtrusionHandler";
 export * from "./lib/CameraMovementDetector";
 export * from "./lib/ClipPlanesEvaluator";

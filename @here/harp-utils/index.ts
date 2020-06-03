@@ -4,5 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Provides utilities: logging and debugging.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./index-common";
 export * from "./lib/UrlPlatformUtils";

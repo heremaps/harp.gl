@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Decoder worker for {@ref MapView}.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/DataProvider";
 export * from "./lib/TileDataSource";
 export * from "./lib/TileLoader";
