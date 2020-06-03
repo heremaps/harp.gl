@@ -36,6 +36,7 @@ const targetFolderS3 = `dist/s3_deploy/${folderName}`;
 removeSync(targetFolderGh);
 ensureDirSync(targetFolderGh);
 copySync("www/dist/", `${targetFolderGh}/`);
+copySync("markdown/", `${targetFolderGh}/api/`);
 
 removeSync(targetFolderS3);
 ensureDirSync(targetFolderS3);
