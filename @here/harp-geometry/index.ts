@@ -4,4 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Algorithms and data structures for processing geometries.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/OrientedBox3";

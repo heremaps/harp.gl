@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Materials defining the appearance of map objects.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/CirclePointsMaterial";
 export * from "./lib/CopyMaterial";
 export * from "./lib/DisplacementFeature";

@@ -4,5 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Provides support for rendering custom carto features.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/Features";
 export * from "./lib/FeaturesDataSource";

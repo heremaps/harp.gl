@@ -4,4 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * This module adds a subset of the fetch API for Node.js
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export type FetchFunction = typeof fetch;

@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * HERE OMV Data source.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/OmvDataFilter";
 export * from "./lib/OmvDataSource";
 export * from "./lib/OmvDecoderDefs";

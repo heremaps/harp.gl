@@ -82,19 +82,20 @@ export enum StandardGeometryKind {
 /**
  * Geometry kind used for use by [[BaseTechniqueParams.kind]].
  *
+ * @remarks
  * The kind of geometry is used to group objects together,
  * allowing the group to be hidden or displayed.
  *
  * Any string can be used to specify the kind of the technique in a style in the theme file. Is is
  * suggested to specify multiple kinds for specific types of data. For a highway, the following list
  * of kinds is suggested:
- *
+ *```json
  *    ["line", "road", "road:highway"]
- *
+ *```
  * If it is a tunnel for a highway:
- *
+ *```json
  *    ["line", "road", "road:highway", "tunnel", "road:tunnel", "road:highway:tunnel"]
- *
+ *```
  * If specified in this way, specific types of data (here: highway roads) can be enabled and/or
  * disabled.
  */
@@ -106,13 +107,19 @@ export const GeometryKind = StandardGeometryKind;
  */
 export type DynamicProperty<T> = T | JsonExpr | InterpolatedPropertyDefinition<T>;
 
-/*
+/**
+ * Length literals.
+ *
+ * @remarks
  * Description of length units inside a style. Supports literal values (interpreted as `m`), `m` and
  * `px`(i.e. `80`, `14px`, `0.6m`, etc.).
  */
 export type StyleLength = string | number;
 
 /**
+ * Color literals.
+ *
+ * @remarks
  * Description of colors inside a style. Supports hex values as well as CSS hex, rgb and hsl values
  * (i.e. `0xffffff`, `#f00fab`, `#aaa`, `rgb(255, 0 120)`, `hsl(360, 100%, 100%)`, etc.).
  */

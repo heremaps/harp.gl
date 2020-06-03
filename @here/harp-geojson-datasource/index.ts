@@ -4,5 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Provides support for GeoJSON datasource.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/GeoJsonDataSource";
 export * from "./lib/GeoJsonDataProvider";

@@ -4,4 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * LRU cache.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/LRUCache";

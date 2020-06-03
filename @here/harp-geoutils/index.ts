@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Utility classes for working with geospatial data.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/coordinates/GeoBox";
 export * from "./lib/coordinates/GeoBoxExtentLike";
 export * from "./lib/coordinates/GeoCoordinatesLike";

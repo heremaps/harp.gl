@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * SDF based text rendering for TypeScript.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/rendering/FontCatalog";
 export * from "./lib/rendering/GlyphData";
 export * from "./lib/rendering/TextStyle";

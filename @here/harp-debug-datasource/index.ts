@@ -4,4 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Overlay useful for debugging map data.
+ *
+ * @remarks
+ *
+ * @packageDocumentation
+ */
+
 export * from "./lib/DebugTileDataSource";
