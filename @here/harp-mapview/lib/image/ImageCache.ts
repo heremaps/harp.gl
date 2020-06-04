@@ -91,7 +91,8 @@ export class ImageCache {
     registerImage(
         mapView: MapView,
         url: string,
-        imageData: ImageData | ImageBitmap | undefined
+        imageData: ImageData | ImageBitmap | undefined,
+        rawData?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
         if (imageCacheItem !== undefined) {
@@ -110,6 +111,7 @@ export class ImageCache {
             imageItem: {
                 url,
                 imageData,
+                rawData,
                 loaded: false
             },
             mapViews
@@ -126,13 +128,17 @@ export class ImageCache {
      * @param mapView [[MapView]] requesting the image.
      * @param url URL of image.
      * @param startLoading Optional flag. If `true` the image will be loaded in the background.
+     * @param rawData Optional raw data in case HTMLImageElement or HTMLCanvasElement reference is available.
+     *                In that case url is used as a unique identifier to avoid image duplicates and the specified
+     *                raw data is used for the rendering.
      */
     addImage(
         mapView: MapView,
         url: string,
-        startLoading = true
+        startLoading = true,
+        rawData?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem | Promise<ImageItem | undefined> | undefined {
-        const imageItem = this.registerImage(mapView, url, undefined);
+        const imageItem = this.registerImage(mapView, url, undefined, rawData);
         if (imageItem !== undefined && startLoading === true) {
             return this.loadImage(imageItem);
         }
@@ -208,37 +214,54 @@ export class ImageCache {
             return imageItem.loadingPromise;
         }
 
-        const imageLoader = new THREE.ImageLoader();
+        if (imageItem.rawData) {
+            imageItem.loadingPromise = new Promise(resolve => {
+                this.renderImage(imageItem, imageItem.rawData as (HTMLImageElement | HTMLCanvasElement))
+                    .then(() => {
+                        imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(imageItem);
+                        imageItem.loadingPromise = undefined;
+                        imageItem.rawData = undefined;
+                        resolve(imageItem);
+                    })
+                    .catch(ex => {
+                        imageItem.rawData = undefined;
+                        logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
+                        resolve(undefined);
+                    });
+            });
+        } else {
+            const imageLoader = new THREE.ImageLoader();
 
-        imageItem.loadingPromise = new Promise(resolve => {
-            logger.debug(`Loading image: ${imageItem.url}`);
-            imageLoader.load(
-                imageItem.url,
-                image => {
-                    logger.debug(`... finished loading image: ${imageItem.url}`);
-                    this.renderImage(imageItem, image)
-                        .then(() => {
-                            imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
-                                imageItem
-                            );
-                            imageItem.loadingPromise = undefined;
-                            resolve(imageItem);
-                        })
-                        .catch(ex => {
-                            logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
-                            resolve(undefined);
-                        });
-                },
-                // Loading events no longer supported
-                undefined,
-                errorEvent => {
-                    logger.error(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
+            imageItem.loadingPromise = new Promise(resolve => {
+                logger.debug(`Loading image: ${imageItem.url}`);
+                imageLoader.load(
+                    imageItem.url,
+                    image => {
+                        logger.debug(`... finished loading image: ${imageItem.url}`);
+                        this.renderImage(imageItem, image)
+                            .then(() => {
+                                imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                                    imageItem
+                                );
+                                imageItem.loadingPromise = undefined;
+                                resolve(imageItem);
+                            })
+                            .catch(ex => {
+                                logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
+                                resolve(undefined);
+                            });
+                    },
+                    // Loading events no longer supported
+                    undefined,
+                    errorEvent => {
+                        logger.error(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
 
-                    imageItem.loadingPromise = undefined;
-                    resolve(undefined);
-                }
-            );
-        });
+                        imageItem.loadingPromise = undefined;
+                        resolve(undefined);
+                    }
+                );
+            });
+        }
         return imageItem.loadingPromise;
     }
 
@@ -260,7 +283,7 @@ export class ImageCache {
      */
     private renderImage(
         imageItem: ImageItem,
-        image: HTMLImageElement
+        image: HTMLImageElement | HTMLCanvasElement
     ): Promise<ImageData | ImageBitmap | undefined> {
         return new Promise((resolve, reject) => {
             // use createImageBitmap if it is available. It should be available in webworkers as
@@ -300,9 +323,14 @@ export class ImageCache {
                     // the client, so it does not rely on the `document`.
 
                     // use the image, e.g. draw part of it on a canvas
-                    const canvas = document.createElement("canvas");
-                    canvas.width = image.width;
-                    canvas.height = image.height;
+                    let canvas: HTMLCanvasElement;
+                    if (image instanceof HTMLCanvasElement) {
+                        canvas = image;
+                    } else {
+                        canvas = document.createElement("canvas");
+                        canvas.width = image.width;
+                        canvas.height = image.height;
+                    }
 
                     const context = canvas.getContext("2d");
                     if (context !== null) {

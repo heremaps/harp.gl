@@ -14,6 +14,11 @@ export interface ImageItem {
     imageData?: ImageData | ImageBitmap;
     /** Mip maps for image data */
     mipMaps?: ImageData[];
+    /**
+     * Reference to image/canvas to use instead of attempting to load by url.
+     * When specified the url property is used as a unique identifier to avoid duplication.
+     */
+    rawData? : HTMLImageElement | HTMLCanvasElement,
     /** Turns to `true` when the data has finished loading. */
     loaded: boolean;
     /** `loadingPromise` is only used during loading/generating the image. */

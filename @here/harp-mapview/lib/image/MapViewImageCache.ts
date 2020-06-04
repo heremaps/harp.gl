@@ -33,11 +33,15 @@ export class MapViewImageCache {
      * @param name Name of the image from [[Theme]].
      * @param url URL of image.
      * @param image Optional [[ImageData]] of image.
+     * @param rawData Optional raw data in case [[HTMLImageElement]] or [[HTMLCanvasElement]] reference is available.
+     *                In that case url is used as a unique identifier to avoid image duplicates and the specified
+     *                raw data is used for the rendering.
      */
     registerImage(
         name: string | undefined,
         url: string,
-        image: ImageData | ImageBitmap | undefined
+        image: ImageData | ImageBitmap | undefined,
+        rawData?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem {
         if (name !== undefined) {
             if (this.hasName(name)) {
@@ -57,7 +61,7 @@ export class MapViewImageCache {
 
         const imageItem = ImageCache.instance.findImage(url);
         if (imageItem === undefined) {
-            return ImageCache.instance.registerImage(this.mapView, url, image);
+            return ImageCache.instance.registerImage(this.mapView, url, image, rawData);
         }
         return imageItem;
     }
@@ -68,14 +72,18 @@ export class MapViewImageCache {
      *
      * @param name Name of image from [[Theme]].
      * @param url URL of image.
+     * @param rawData Optional raw data in case HTMLImageElement or HTMLCanvasElement reference is available.
+     *                In that case url is used as a unique identifier to avoid image duplicates and the specified
+     *                raw data is used for the rendering.
      * @param startLoading Optional. Pass `true` to start loading the image in the background.
      */
     addImage(
         name: string,
         url: string,
-        startLoading = true
+        startLoading = true,
+        rawData?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem | Promise<ImageItem | undefined> {
-        const imageItem = this.registerImage(name, url, undefined);
+        const imageItem = this.registerImage(name, url, undefined, rawData);
         if (startLoading === true) {
             return ImageCache.instance.loadImage(imageItem);
         }
