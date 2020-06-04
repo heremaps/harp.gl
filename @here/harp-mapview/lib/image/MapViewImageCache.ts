@@ -34,30 +34,38 @@ export class MapViewImageCache {
     /**
      * Register an existing image by name.
      *
-     * Names are unique within a {@link MapView}. URLs are not unique, multiple images with
-     * different names can have the same URL. Still, URLs are are loaded only once.
-     *
      * @param name - Name of the image from {@link @here/harp-datasource-protocol#Theme}.
      * @param url - URL of image.
-     * @param image - Optional [[ImageData]] of image.
+     * @param image - Optional {@link ImageData} of image.
+     * @param htmlElement - Optional raw data in case {@link HTMLImageElement} or {@link HTMLCanvasElement} reference is available.
+     *                In that case url is used as a unique identifier to avoid image duplicates and the specified
+     *                raw data is used for the rendering.
      */
-    registerImage(name: string, url: string, image?: ImageData | ImageBitmap): ImageItem {
-        if (this.hasName(name)) {
-            throw new Error("duplicate name in cache");
-        }
-        const oldNames = this.m_url2Name.get(url);
-        if (oldNames !== undefined) {
-            if (!oldNames.includes(name)) {
-                oldNames.push(name);
+    registerImage(
+        name: string | undefined,
+        url: string,
+        image?: ImageData | ImageBitmap,
+        htmlElement?: HTMLImageElement | HTMLCanvasElement
+    ): ImageItem {
+        if (name !== undefined) {
+            if (this.hasName(name)) {
+                throw new Error("duplicate name in cache");
             }
-        } else {
-            this.m_url2Name.set(url, [name]);
+
+            const oldNames = this.m_url2Name.get(url);
+            if (oldNames !== undefined) {
+                if (!oldNames.includes(name)) {
+                    oldNames.push(name);
+                }
+            } else {
+                this.m_url2Name.set(url, [name]);
+            }
+            this.m_name2Url.set(name, url);
         }
-        this.m_name2Url.set(name, url);
 
         const imageItem = ImageCache.instance.findImage(url);
         if (imageItem === undefined) {
-            return ImageCache.instance.registerImage(this.mapView, url, image);
+            return ImageCache.instance.registerImage(this.mapView, url, image, htmlElement);
         }
         return imageItem;
     }
@@ -70,15 +78,20 @@ export class MapViewImageCache {
      * different names can have the same URL. Still, URLs are are loaded only once.
      *
      * @param name - Name of image from {@link @here/harp-datasource-protocol#Theme}.
-     * @param url - URL of image.
-     * @param startLoading - Optional. Pass `true` to start loading the image in the background.
+     * @param url URL of image.
+     * @param htmlElement Optional raw data in case HTMLImageElement or HTMLCanvasElement reference is available.
+     *                In that case url is used as a unique identifier to avoid image duplicates and the specified
+     *                raw data is used for the rendering.
+     * @param startLoading Optional. Pass `true` to start loading the image in the background or
+     *  to start rendering the htmlElement if available.
      */
     addImage(
         name: string,
         url: string,
-        startLoading = true
+        startLoading = true,
+        htmlElement?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem | Promise<ImageItem | undefined> {
-        const imageItem = this.registerImage(name, url, undefined);
+        const imageItem = this.registerImage(name, url, undefined, htmlElement);
         if (startLoading === true) {
             return ImageCache.instance.loadImage(imageItem);
         }

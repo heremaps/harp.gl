@@ -470,7 +470,18 @@ describe("ImageCache", function() {
     });
 
     if (typeof document !== "undefined") {
-        it("#addImage", async function() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 37;
+        canvas.height = 32;
+        var ctx = canvas.getContext("2d");
+        if (ctx) {
+            ctx.fillStyle = "#00FF00";
+            ctx.fillRect(0, 0, 37, 32);
+        }
+        const image = document.createElement("img");
+        image.src = getTestResourceUrl("@here/harp-mapview", "test/resources/headshot.png");
+
+        it("#addImage, from url", async function() {
             const mapView: MapView = {} as MapView;
             const cache = ImageCache.instance;
             cache.clearAll();
@@ -501,7 +512,7 @@ describe("ImageCache", function() {
             }
         });
 
-        it("#loadImage", async function() {
+        it("#loadImage, from url", async function() {
             const mapView: MapView = {} as MapView;
             const cache = ImageCache.instance;
             cache.clearAll();
@@ -531,6 +542,202 @@ describe("ImageCache", function() {
                 const image = loadedImageItem!.imageData!;
                 assert.equal(image.width, 37);
                 assert.equal(image.height, 32);
+            }
+        });
+
+        [
+            { element: canvas, name: "HtmlCanvasElement" },
+            { element: image, name: "HtmlImageElement" }
+        ].forEach(testSetting => {
+            it("#addImage, from htmlElement " + testSetting.name, async function() {
+                const mapView: MapView = {} as MapView;
+                const cache = ImageCache.instance;
+                cache.clearAll();
+
+                const imageUrl = "htmlElementImage";
+
+                const promise = cache.addImage(mapView, imageUrl, true, testSetting.element);
+
+                const testImage = cache.findImage(imageUrl);
+                assert.exists(testImage);
+                assert.isUndefined(testImage!.imageData);
+                assert.isFalse(testImage!.loaded);
+
+                assert.isTrue(promise instanceof Promise);
+
+                if (promise instanceof Promise) {
+                    await promise;
+                    const loadedImageItem = cache.findImage(imageUrl);
+                    assert.exists(loadedImageItem);
+                    assert.isDefined(loadedImageItem!.imageData);
+                    assert.isTrue(loadedImageItem!.loaded);
+                    const image = loadedImageItem!.imageData!;
+                    assert.equal(image.width, 37);
+                    assert.equal(image.height, 32);
+                }
+            });
+
+            it("#loadImage, from htmlElement:  " + testSetting.name, async function() {
+                const mapView: MapView = {} as MapView;
+                const cache = ImageCache.instance;
+                cache.clearAll();
+
+                const imageUrl = "htmlElementImage";
+
+                const cacheItem = cache.registerImage(
+                    mapView,
+                    imageUrl,
+                    undefined,
+                    testSetting.element
+                );
+
+                const testImage = cache.findImage(imageUrl);
+                assert.exists(testImage);
+                assert.isUndefined(testImage!.imageData);
+                assert.isFalse(testImage!.loaded);
+
+                const promise = cache.loadImage(cacheItem);
+
+                assert.isTrue(promise instanceof Promise);
+
+                if (promise instanceof Promise) {
+                    await promise;
+                    const loadedImageItem = cache.findImage(imageUrl);
+                    assert.exists(loadedImageItem);
+                    assert.isDefined(loadedImageItem!.imageData);
+                    assert.isTrue(loadedImageItem!.loaded);
+                    const image = loadedImageItem!.imageData!;
+                    assert.equal(image.width, 37);
+                    assert.equal(image.height, 32);
+                }
+            });
+
+            it(
+                "#addImage, from htmlElement and cancel loading: " + testSetting.name,
+                async function() {
+                    const mapView: MapView = {} as MapView;
+                    const cache = ImageCache.instance;
+                    cache.clearAll();
+
+                    const imageUrl = "htmlElement";
+
+                    const promise = cache.addImage(mapView, imageUrl, true, testSetting.element);
+
+                    const testImage = cache.findImage(imageUrl);
+                    assert.exists(testImage);
+                    assert.isUndefined(testImage!.imageData);
+                    assert.isFalse(testImage!.loaded);
+
+                    assert.isTrue(promise instanceof Promise);
+
+                    // removal leads to cancel
+                    assert.isTrue(cache.removeImage(imageUrl), "remove failed");
+
+                    if (promise instanceof Promise) {
+                        const imageItem = cache.findImage(imageUrl);
+                        assert.notExists(imageItem, "image is still in cache");
+                        assert.isTrue(testImage!.cancelled);
+                        // result of promise ignored, it depends on timing of load and image generation:
+                        await promise;
+                        // only assured that cancelled is set to `true`, loaded may also be set to true if
+                        // cancelled after/during image generation.
+                        assert.isTrue(testImage!.cancelled);
+                    }
+                }
+            );
+
+            it("#loadImage, from htmlElement: " + testSetting.name, async function() {
+                const mapView: MapView = {} as MapView;
+                const cache = ImageCache.instance;
+                cache.clearAll();
+
+                const imageUrl = "htmlElement";
+
+                const imageItem = cache.addImage(
+                    mapView,
+                    imageUrl,
+                    false,
+                    testSetting.element
+                ) as ImageItem;
+                assert.isDefined(imageItem);
+                assert.isFalse(imageItem instanceof Promise);
+
+                assert.isUndefined(imageItem.imageData);
+                assert.isFalse(imageItem!.loaded);
+
+                const promise = cache.loadImage(imageItem);
+                assert.isTrue(promise instanceof Promise);
+
+                if (promise instanceof Promise) {
+                    await promise;
+                    const loadedImageItem = cache.findImage(imageUrl);
+                    assert.exists(loadedImageItem);
+                    assert.isDefined(loadedImageItem!.imageData);
+                    assert.isTrue(loadedImageItem!.loaded);
+                    const image = loadedImageItem!.imageData!;
+                    assert.equal(image.width, 37);
+                    assert.equal(image.height, 32);
+                }
+            });
+        });
+
+        it("#loadImage, from  HtmlImageElement with bad src", async function() {
+            const mapView: MapView = {} as MapView;
+            const cache = ImageCache.instance;
+            cache.clearAll();
+
+            const imageUrl = "htmlElement";
+            const invalidImage = document.createElement("img");
+            invalidImage.src = "fooba.png";
+
+            const imageItem = cache.addImage(mapView, imageUrl, false, invalidImage) as ImageItem;
+
+            assert.isDefined(imageItem);
+            assert.isFalse(imageItem instanceof Promise);
+
+            assert.isUndefined(imageItem.imageData);
+            assert.isFalse(imageItem!.loaded);
+
+            const promise = cache.loadImage(imageItem);
+
+            assert.isTrue(promise instanceof Promise);
+
+            if (promise instanceof Promise) {
+                assert.isRejected(promise);
+
+                const loadedImageItem = cache.findImage(imageUrl);
+                assert.exists(loadedImageItem);
+                assert.isUndefined(loadedImageItem!.imageData);
+                assert.isFalse(loadedImageItem!.loaded);
+            }
+        });
+
+        it("#loadImage, from HtmlImageElement without src", async function() {
+            const mapView: MapView = {} as MapView;
+            const cache = ImageCache.instance;
+            cache.clearAll();
+
+            const imageUrl = "htmlElement";
+            const invalidImage = document.createElement("img");
+            invalidImage.src = "fooba.png";
+
+            const imageItem = cache.addImage(mapView, imageUrl, false, invalidImage) as ImageItem;
+
+            assert.isDefined(imageItem);
+            assert.isFalse(imageItem instanceof Promise);
+
+            assert.isUndefined(imageItem.imageData);
+            assert.isFalse(imageItem!.loaded);
+
+            const promise = cache.loadImage(imageItem);
+            assert.isTrue(promise instanceof Promise);
+
+            if (promise instanceof Promise) {
+                assert.isRejected(promise);
+                const loadedImageItem = cache.findImage(imageUrl);
+                assert.exists(loadedImageItem);
+                assert.isUndefined(loadedImageItem!.imageData);
+                assert.isFalse(loadedImageItem!.loaded);
             }
         });
     }
