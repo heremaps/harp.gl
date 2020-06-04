@@ -20,7 +20,7 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
-import { DataSource } from "../lib/DataSource";
+import { DataSource, DataSourceOptions } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { TileGeometryManager } from "../lib/geometry/TileGeometryManager";
@@ -74,10 +74,13 @@ class Fixture {
     frustumIntersection: FrustumIntersection;
     vts: VisibleTileSet;
 
-    constructor(params: FixtureOptions = {}) {
+    constructor(
+        params: FixtureOptions = {},
+        datasourceOptions: DataSourceOptions = { name: "omv" }
+    ) {
         this.worldCenter = new THREE.Vector3();
         this.camera = new THREE.PerspectiveCamera();
-        this.ds = [new FakeOmvDataSource()];
+        this.ds = [new FakeOmvDataSource(datasourceOptions)];
         this.mapView = new FakeMapView(
             getOptionValue(params.projection, mercatorProjection)
         ) as MapView;
@@ -338,6 +341,26 @@ describe("VisibleTileSet", function() {
         assert.equal(renderedTiles.get(parentKey)!.tileKey.mortonCode(), parentCode);
     });
 
+    it("#updateRenderList properly filters root tiles", function() {
+        fixture = new Fixture(
+            { tileWrappingEnabled: true },
+            {
+                name: "omv",
+                minDataLevel: 0,
+                maxDataLevel: 0
+            }
+        );
+        setupBerlinCenterCameraFromSamples();
+
+        const zoomLevel = 10;
+        const storageLevel = 0;
+
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+        assert.equal(dataSourceTileList.length, 1);
+        assert.equal(dataSourceTileList[0].visibleTiles.length, 1);
+        assert.equal(dataSourceTileList[0]?.visibleTiles[0].tileKey.mortonCode(), 1);
+    });
+
     it("#markTilesDirty properly handles cached & visible tiles", async function() {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
@@ -384,7 +407,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeOmvDataSource({ name: "omv" });
         fixture.addDataSource(secondDataSource);
 
         const intersectionSpy = sinon.spy(fixture.frustumIntersection, "compute");
@@ -531,7 +554,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeOmvDataSource({ name: "omv2" });
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
         assert.equal(result[0].visibleTiles.length, 5);
@@ -559,7 +582,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeOmvDataSource({ name: "omv2" });
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
         assert.equal(result[0].visibleTiles.length, 16);
@@ -591,7 +614,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeOmvDataSource({ name: "omv2" });
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
         assert.equal(result[0].visibleTiles.length, 100);
@@ -623,7 +646,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeOmvDataSource({ name: "omv2" });
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
         assert.equal(result[0].visibleTiles.length, 100);
