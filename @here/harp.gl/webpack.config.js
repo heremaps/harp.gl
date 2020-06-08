@@ -30,7 +30,8 @@ const commonConfig = {
                         ? path.resolve(__dirname, "../../tsconfig.json")
                         : path.resolve(__dirname, "./tsconfig.json"),
                     compilerOptions: {
-                        declaration: false
+                        declaration: false,
+                        declarationMap: false
                     }
                 }
             }
