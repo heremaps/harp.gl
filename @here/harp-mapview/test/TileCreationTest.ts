@@ -18,7 +18,7 @@ import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 describe("Tile Creation", function() {
     it("ShaderTechnique", function() {
-        const tile = new Tile(new FakeOmvDataSource(), new TileKey(0, 0, 0));
+        const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
         const technique: ShaderTechnique = {
             name: "shader",
             primitive: "line",
@@ -175,7 +175,7 @@ describe("Tile Creation", function() {
         const elevation = test.elevation ? "elevation" : "no elevation";
         const testName = `buildObject builds proper obj for ${name} technique with ${elevation}`;
         it(testName, function() {
-            const tile = new Tile(new FakeOmvDataSource(), new TileKey(0, 0, 0));
+            const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
             const geometry = new THREE.BufferGeometry();
             const material = new MapMeshStandardMaterial();
 

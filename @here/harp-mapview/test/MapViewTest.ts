@@ -532,7 +532,7 @@ describe("MapView", function() {
     });
 
     it("supports #dispose", async function() {
-        const dataSource = new FakeOmvDataSource();
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
         mapView = new MapView({ canvas });
         mapView.addDataSource(dataSource);
@@ -680,7 +680,7 @@ describe("MapView", function() {
             return result;
         };
 
-        const dataSource = new FakeOmvDataSource();
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ canvas, theme: {} });
         await mapView.addDataSource(dataSource);
 
@@ -779,7 +779,7 @@ describe("MapView", function() {
         mapView = new MapView({ canvas });
         mapView.theme = {};
 
-        const dataSource = new FakeOmvDataSource();
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
 
         await mapView.addDataSource(dataSource);
 

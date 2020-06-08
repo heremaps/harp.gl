@@ -104,7 +104,7 @@ export class TestFixture {
     private readonly m_renderPoiSpy: sinon.SinonSpy;
     private readonly m_addTextSpy: sinon.SinonSpy;
     private readonly m_addTextBufferObjSpy: sinon.SinonSpy;
-    private readonly m_dataSource: FakeOmvDataSource = new FakeOmvDataSource();
+    private readonly m_dataSource: FakeOmvDataSource = new FakeOmvDataSource({ name: "omv" });
     private readonly m_screenProjector: ScreenProjector;
     private readonly m_camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
     private readonly m_theme: Theme = {};

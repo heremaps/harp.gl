@@ -22,9 +22,9 @@ describe("BackgroundDataSource", function() {
         let backgroundDataSource: BackgroundDataSource;
         let mapViewStub: sinon.SinonStubbedInstance<MapView>;
         beforeEach(function() {
-            fakeDataSource1 = new FakeOmvDataSource();
-            fakeDataSource2 = new FakeOmvDataSource();
-            fakeDataSource3 = new FakeOmvDataSource();
+            fakeDataSource1 = new FakeOmvDataSource({ name: "omv1" });
+            fakeDataSource2 = new FakeOmvDataSource({ name: "omv2" });
+            fakeDataSource3 = new FakeOmvDataSource({ name: "omv3" });
             sinon.replace(fakeDataSource1, "getTilingScheme", sinon.fake.returns(hereTilingScheme));
             sinon.replace(
                 fakeDataSource2,

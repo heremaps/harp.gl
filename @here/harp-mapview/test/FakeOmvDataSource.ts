@@ -11,12 +11,12 @@ import {
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { DataSource } from "../lib/DataSource";
+import { DataSource, DataSourceOptions } from "../lib/DataSource";
 import { Tile } from "../lib/Tile";
 
 export class FakeOmvDataSource extends DataSource {
-    constructor() {
-        super({ name: "omv" });
+    constructor(options: DataSourceOptions) {
+        super(options);
         this.cacheable = true;
     }
 

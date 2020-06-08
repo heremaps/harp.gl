@@ -146,7 +146,6 @@ export class FrustumIntersection {
         dataSources: DataSource[]
     ): IntersectionResult {
         this.m_tileKeyEntries.clear();
-        let calculationFinal = true;
 
         // Compute target tile area in clip space size.
         // A tile should take up roughly 256x256 pixels on screen in accordance to
@@ -158,27 +157,39 @@ export class FrustumIntersection {
             elevationRangeSource.getTilingScheme() === tilingScheme;
         const obbIntersections =
             this.mapView.projection.type === ProjectionType.Spherical || useElevationRangeSource;
-        const tileBounds = obbIntersections ? new OrientedBox3() : new THREE.Box3();
         const uniqueZoomLevels = new Set(zoomLevels);
+
+        const cache = {
+            calculationFinal: true,
+            tileBounds: obbIntersections ? new OrientedBox3() : new THREE.Box3()
+        };
 
         // create tile key map per zoom level
         for (const zoomLevel of uniqueZoomLevels) {
             this.m_tileKeyEntries.set(zoomLevel, new Map());
         }
-        for (const item of this.m_rootTileKeys) {
-            const tileKeyEntry = new TileKeyEntry(
-                item.tileKey,
-                Infinity,
-                item.offset,
-                item.minElevation,
-                item.maxElevation
+        for (const tileEntry of this.m_rootTileKeys) {
+            const tileKey = tileEntry.tileKey;
+            const offset = tileEntry.offset;
+
+            // We even check the root tiles against the frustum b/c it can happen that
+            // computeRequiredInitialRootTileKeys is producing false positives.
+            const tileKeyEntry = this.getTileKeyEntry(
+                tileKey,
+                offset,
+                tilingScheme,
+                cache,
+                useElevationRangeSource ? elevationRangeSource : undefined
             );
-            for (const zoomLevel of uniqueZoomLevels) {
-                const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
-                tileKeyEntries.set(
-                    TileOffsetUtils.getKeyForTileKeyAndOffset(item.tileKey, item.offset),
-                    tileKeyEntry
-                );
+
+            if (tileKeyEntry !== undefined) {
+                for (const zoomLevel of uniqueZoomLevels) {
+                    const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
+                    tileKeyEntries.set(
+                        TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset),
+                        tileKeyEntry
+                    );
+                }
             }
         }
 
@@ -192,6 +203,7 @@ export class FrustumIntersection {
 
             // Stop subdivision if hightest visible level is reached
             const tileKey = tileEntry.tileKey;
+            const offset = tileEntry.offset;
             const subdivide = dataSources.some((ds, i) =>
                 ds.shouldSubdivide(zoomLevels[i], tileKey)
             );
@@ -204,10 +216,7 @@ export class FrustumIntersection {
                 continue;
             }
 
-            const parentTileKey = TileOffsetUtils.getKeyForTileKeyAndOffset(
-                tileKey,
-                tileEntry.offset
-            );
+            const tileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
 
             // delete parent tile key from applicable zoom levels
             for (const zoomLevel of uniqueZoomLevels) {
@@ -216,61 +225,79 @@ export class FrustumIntersection {
                 }
 
                 const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
-                tileKeyEntries.delete(parentTileKey);
+                tileKeyEntries.delete(tileKeyAndOffset);
             }
 
-            for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
-                const offset = tileEntry.offset;
-                const tileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(
-                    childTileKey,
-                    offset
+            for (const subTileKey of tilingScheme.getSubTileKeys(tileKey)) {
+                const subTileEntry = this.getTileKeyEntry(
+                    subTileKey,
+                    offset,
+                    tilingScheme,
+                    cache,
+                    useElevationRangeSource ? elevationRangeSource : undefined
                 );
 
-                const geoBox = getGeoBox(tilingScheme, childTileKey, offset);
-
-                // For tiles without elevation range source, default 0 (getGeoBox always
-                // returns box with altitude min/max equal to zero) will be propagated as
-                // min and max elevation, these tiles most probably contains features that
-                // lays directly on the ground surface.
-                if (useElevationRangeSource) {
-                    const range = elevationRangeSource!.getElevationRange(childTileKey);
-                    geoBox.southWest.altitude = range.minElevation;
-                    geoBox.northEast.altitude = range.maxElevation;
-                    calculationFinal =
-                        calculationFinal &&
-                        range.calculationStatus === CalculationStatus.FinalPrecise;
-                }
-
-                this.mapView.projection.projectBox(geoBox, tileBounds);
-                const { area, distance } = this.computeTileAreaAndDistance(tileBounds);
-
-                if (area > 0) {
-                    const subTileEntry = new TileKeyEntry(
-                        childTileKey,
-                        area,
-                        offset,
-                        geoBox.southWest.altitude, // minElevation
-                        geoBox.northEast.altitude, // maxElevation
-                        distance
-                    );
-
+                if (subTileEntry !== undefined) {
                     // insert sub tile entry into tile entries map per zoom level
                     for (const zoomLevel of uniqueZoomLevels) {
                         if (subTileEntry.tileKey.level > zoomLevel) {
                             continue;
                         }
 
-                        const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
-                        tileKeyEntries.set(tileKeyAndOffset, subTileEntry);
+                        const subTileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                            subTileKey,
+                            offset
+                        );
+                        this.m_tileKeyEntries
+                            .get(zoomLevel)!
+                            .set(subTileKeyAndOffset, subTileEntry);
                     }
 
                     workList.push(subTileEntry);
                 }
             }
         }
-        return { tileKeyEntries: this.m_tileKeyEntries, calculationFinal };
+        return { tileKeyEntries: this.m_tileKeyEntries, calculationFinal: cache.calculationFinal };
     }
 
+    private getTileKeyEntry(
+        tileKey: TileKey,
+        offset: number,
+        tilingScheme: TilingScheme,
+        cache: { calculationFinal: boolean; tileBounds: OrientedBox3 | THREE.Box3 },
+        elevationRangeSource?: ElevationRangeSource
+    ): TileKeyEntry | undefined {
+        const geoBox = getGeoBox(tilingScheme, tileKey, offset);
+
+        // For tiles without elevation range source, default 0 (getGeoBox always
+        // returns box with altitude min/max equal to zero) will be propagated as
+        // min and max elevation, these tiles most probably contains features that
+        // lays directly on the ground surface.
+        if (elevationRangeSource !== undefined) {
+            const range = elevationRangeSource!.getElevationRange(tileKey);
+            geoBox.southWest.altitude = range.minElevation;
+            geoBox.northEast.altitude = range.maxElevation;
+            cache.calculationFinal =
+                cache.calculationFinal &&
+                range.calculationStatus === CalculationStatus.FinalPrecise;
+        }
+
+        this.mapView.projection.projectBox(geoBox, cache.tileBounds);
+        const { area, distance } = this.computeTileAreaAndDistance(cache.tileBounds);
+
+        if (area > 0) {
+            return new TileKeyEntry(
+                tileKey,
+                area,
+                offset,
+                geoBox.southWest.altitude, // minElevation
+                geoBox.northEast.altitude, // maxElevation
+                distance
+            );
+        }
+
+        return undefined;
+    }
     /**
      * Estimate screen space area of tile and distance to center of tile
      * @param tileBounds The bounding volume of a tile
