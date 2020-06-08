@@ -12,10 +12,13 @@
         "harpgl"
     ],
     "main": "dist/harp.js",
+    "types": "dist/harp.gl.d.ts",
     "scripts": {
         "prepare": "webpack && NODE_ENV=production webpack",
+        "prepack": "yarn build-typings",
         "profile-min": "NODE_ENV=production webpack --profile --json > webpack-stats-production.json",
         "profile-dev": "webpack --profile --json > webpack-stats-dev.json",
+        "build-typings": "tsc --build && api-extractor run && echo 'export as namespace harp;' >> dist/harp.gl.d.ts",
         "test": "true"
     },
     "repository": {
@@ -48,6 +51,7 @@
         "@here/harp-text-canvas": "^0.16.0",
         "@here/harp-utils": "^0.16.0",
         "@here/harp-webtile-datasource": "^0.16.0",
+        "@microsoft/api-extractor": "^7.8.10",
         "ts-loader": "^7.0.5",
         "typescript": "^3.9.3",
         "webpack": "^4.43.0",

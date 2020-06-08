@@ -1,0 +1,79 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+
+    "mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
+
+    "bundledPackages": [
+        "@here/harp-datasource-protocol",
+        "@here/harp-debug-datasource",
+        "@here/harp-features-datasource",
+        "@here/harp-geojson-datasource",
+        "@here/harp-geoutils",
+        "@here/harp-map-controls",
+        "@here/harp-mapview",
+        "@here/harp-mapview-decoder",
+        "@here/harp-omv-datasource",
+        "@here/harp-webtile-datasource",
+        "@here/harp-text-canvas",
+        "@here/harp-utils",
+        "@here/harp-transfer-manager",
+        "@here/harp-lines"
+    ],
+
+    "apiReport": {
+        "enabled": false
+    },
+
+    "docModel": {
+        "enabled": false
+    },
+
+    "dtsRollup": {
+        "enabled": true
+    },
+
+    "tsdocMetadata": {
+        "enabled": false
+    },
+
+    "newlineKind": "lf",
+
+    "messages": {
+        "compilerMessageReporting": {
+            "default": {
+                "logLevel": "none"
+            }
+        },
+
+        "extractorMessageReporting": {
+            "default": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+
+            "ae-missing-release-tag": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "ae-forgotten-export": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "ae-internal-missing-underscore": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            },
+            "ae-incompatible-release-tags": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            }
+        },
+
+        "tsdocMessageReporting": {
+            "default": {
+                "logLevel": "none",
+                "addToApiReportFile": false
+            }
+        }
+    }
+}
