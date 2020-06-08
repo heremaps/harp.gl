@@ -1,0 +1,631 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.8.10",
+    "schemaVersion": 1003,
+    "oldestForwardsCompatibleVersion": 1001
+  },
+  "kind": "Package",
+  "canonicalReference": "@here/harp-webtile-datasource!",
+  "docComment": "/**\n * HERE WebTile Data source.\n *\n * @remarks\n *\n * @packageDocumentation\n */\n",
+  "name": "@here/harp-webtile-datasource",
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@here/harp-webtile-datasource!",
+      "name": "",
+      "members": [
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@here/harp-webtile-datasource!AuthenticationProvider:type",
+          "docComment": "/**\n * Authentification token/code provider.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare type AuthenticationProvider = "
+            },
+            {
+              "kind": "Content",
+              "text": "() => "
+            },
+            {
+              "kind": "Reference",
+              "text": "Promise",
+              "canonicalReference": "!Promise:interface"
+            },
+            {
+              "kind": "Content",
+              "text": "<string>"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "AuthenticationProvider",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 4
+          }
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource:class",
+          "docComment": "/**\n * Instances of `WebTileDataSource` can be used to add Web Tile to [[MapView]].\n *\n * Example:\n * ```typescript\n * const webTileDataSource = new WebTileDataSource({\n *     authenticationCode: <authenticationCode>\n * });\n * ```\n *\n * @see [[DataSource]], [[OmvDataSource]].\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class WebTileDataSource extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "DataSource",
+              "canonicalReference": "@here/harp-mapview!DataSource:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "WebTileDataSource",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource:constructor(1)",
+              "docComment": "/**\n * Constructs a new `WebTileDataSource`.\n *\n * @param m_options - Represents the [[WebTileDataSourceParameters]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(m_options: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "WebTileDataSourceParameters",
+                  "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSourceParameters:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "m_options",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource#getTile:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTile(tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Tile",
+                  "canonicalReference": "@here/harp-mapview!Tile:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "getTile"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource#getTilingScheme:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTilingScheme(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TilingScheme",
+                  "canonicalReference": "@here/harp-geoutils!TilingScheme:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "getTilingScheme"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource#isFullyCovering:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "isFullyCovering(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "isFullyCovering"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource#setLanguages:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setLanguages(languages?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "languages",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "setLanguages"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource#shouldPreloadTiles:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "shouldPreloadTiles(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "shouldPreloadTiles"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.TILE_AERIAL_HYBRID:member",
+              "docComment": "/**\n * Base address for Aerial Map rendered using `hybrid.day` scheme.  @see https://developer.here.com/documentation/map-tile/topics/example-hybrid-map.html\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static readonly TILE_AERIAL_HYBRID = \"aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/hybrid.day\";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TILE_AERIAL_HYBRID",
+              "propertyTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "isStatic": true
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.TILE_AERIAL_SATELLITE:member",
+              "docComment": "/**\n * Base address for Aerial Map rendered using `satellite.day` scheme.  @see https://developer.here.com/documentation/map-tile/topics/example-satellite-map.html\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static readonly TILE_AERIAL_SATELLITE = \"aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/satellite.day\";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TILE_AERIAL_SATELLITE",
+              "propertyTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "isStatic": true
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.TILE_BASE_NORMAL:member",
+              "docComment": "/**\n * Base address for Base Map rendered using `normal.day` scheme.  @see https://developer.here.com/documentation/map-tile/topics/example-normal-day-view.html\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static readonly TILE_BASE_NORMAL = \"base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day\";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TILE_BASE_NORMAL",
+              "propertyTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "isStatic": true
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.TILE_TRAFFIC_NORMAL:member",
+              "docComment": "/**\n * Base address for Traffic Map rendered using `normal.day` scheme.  @see https://developer.here.com/documentation/map-tile/topics/example-traffic.html\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static readonly TILE_TRAFFIC_NORMAL = \"traffic.maps.ls.hereapi.com/maptile/2.1/traffictile/newest/normal.day\";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TILE_TRAFFIC_NORMAL",
+              "propertyTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "isStatic": true
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Namespace",
+          "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource:namespace",
+          "docComment": "/**\n * Definitions of variable values to be used with `WebTileDataSource`\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare namespace WebTileDataSource "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "WebTileDataSource",
+          "members": [
+            {
+              "kind": "Enum",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.ppiValue:enum",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "enum ppiValue "
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "ppiValue",
+              "members": [
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.ppiValue.ppi250:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "ppi250 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "250"
+                    }
+                  ],
+                  "releaseTag": "Public",
+                  "name": "ppi250",
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.ppiValue.ppi320:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "ppi320 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "320"
+                    }
+                  ],
+                  "releaseTag": "Public",
+                  "name": "ppi320",
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.ppiValue.ppi500:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "ppi500 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "500"
+                    }
+                  ],
+                  "releaseTag": "Public",
+                  "name": "ppi500",
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.ppiValue.ppi72:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "ppi72 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "72"
+                    }
+                  ],
+                  "releaseTag": "Public",
+                  "name": "ppi72",
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Enum",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.resolutionValue:enum",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "enum resolutionValue "
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "resolutionValue",
+              "members": [
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.resolutionValue.resolution256:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "resolution256 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "256"
+                    }
+                  ],
+                  "releaseTag": "Public",
+                  "name": "resolution256",
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSource.resolutionValue.resolution512:member",
+                  "docComment": "",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "resolution512 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "512"
+                    }
+                  ],
+                  "releaseTag": "Public",
+                  "name": "resolution512",
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@here/harp-webtile-datasource!WebTileDataSourceParameters:type",
+          "docComment": "/**\n * An interface for the type of options that can be passed to the [[WebTileDataSource]].\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare type WebTileDataSourceParameters = "
+            },
+            {
+              "kind": "Reference",
+              "text": "WebTileDataSourceOptions",
+              "canonicalReference": "@here/harp-webtile-datasource!~WebTileDataSourceOptions:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & ("
+            },
+            {
+              "kind": "Reference",
+              "text": "ApiKeyAuthentication",
+              "canonicalReference": "@here/harp-webtile-datasource!~ApiKeyAuthentication:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "AppIdAuthentication",
+              "canonicalReference": "@here/harp-webtile-datasource!~AppIdAuthentication:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "TokenAuthentication",
+              "canonicalReference": "@here/harp-webtile-datasource!~TokenAuthentication:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ")"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "WebTileDataSourceParameters",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 9
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@here/harp-webtile-datasource!WebTileRenderingOptions:interface",
+          "docComment": "/**\n * An interface for the rendering options that can be passed to the [[WebTileDataSource]].\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface WebTileRenderingOptions "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "WebTileRenderingOptions",
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-webtile-datasource!WebTileRenderingOptions#opacity:member",
+              "docComment": "/**\n * Opacity of the rendered images.  @default 1.0\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "opacity?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "opacity",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        }
+      ]
+    }
+  ]
+}

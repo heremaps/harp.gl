@@ -1,0 +1,2180 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.8.10",
+    "schemaVersion": 1003,
+    "oldestForwardsCompatibleVersion": 1001
+  },
+  "kind": "Package",
+  "canonicalReference": "@here/harp-mapview-decoder!",
+  "docComment": "/**\n * Decoder worker for {@ref MapView}.\n *\n * @remarks\n *\n * @packageDocumentation\n */\n",
+  "name": "@here/harp-mapview-decoder",
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@here/harp-mapview-decoder!",
+      "name": "",
+      "members": [
+        {
+          "kind": "Interface",
+          "canonicalReference": "@here/harp-mapview-decoder!DataProvider:interface",
+          "docComment": "/**\n * Interface for all `DataProvider` subclasses. The `DataProvider` is an abstraction of the tile loader which is only responsible for loading the binary data of a specific tile, without any relation to displaying or even decoding the data.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface DataProvider "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "DataProvider",
+          "members": [
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@here/harp-mapview-decoder!DataProvider#connect:member(1)",
+              "docComment": "/**\n * Connect to the data source. Returns a promise to wait for successful (or failed) connection.\n *\n * @returns A promise which is resolved when the connection has been established.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "connect(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<void>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "connect"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@here/harp-mapview-decoder!DataProvider#getTile:member(1)",
+              "docComment": "/**\n * Load the data of a [[Tile]] asynchronously in form of an [[ArrayBufferLike]].\n *\n * @param tileKey - Address of a tile.\n *\n * @param abortSignal - Optional AbortSignal to cancel the request.\n *\n * @returns A promise delivering the data as an [[ArrayBufferLike]], or any object.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTile(tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", abortSignal?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "AbortSignal",
+                  "canonicalReference": "!AbortSignal:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ArrayBufferLike",
+                  "canonicalReference": "!ArrayBufferLike:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | {}>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 9
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "abortSignal",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "getTile"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@here/harp-mapview-decoder!DataProvider#ready:member(1)",
+              "docComment": "/**\n * Returns `true` if it has been connected successfully.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ready(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "ready"
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-mapview-decoder!TileDataSource:class",
+          "docComment": "/**\n * Common base class for the typical [[DataSource]] which uses an [[ITileDecoder]] to decode the tile content asynchronously. The decoder can be passed in as an option, or a default asynchronous one is generated.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class TileDataSource<TileType extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "Tile",
+              "canonicalReference": "@here/harp-mapview!Tile:class"
+            },
+            {
+              "kind": "Content",
+              "text": "> extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "DataSource",
+              "canonicalReference": "@here/harp-mapview!DataSource:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "typeParameters": [
+            {
+              "typeParameterName": "TileType",
+              "constraintTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "TileDataSource",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource:constructor(1)",
+              "docComment": "/**\n * Set up the `TileDataSource`.\n *\n * @param m_tileFactory - Factory to create the [[Tile]] instances.\n *\n * @param m_options - Options specifying the parameters of the [[DataSource]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(m_tileFactory: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileFactory",
+                  "canonicalReference": "@here/harp-mapview-decoder!TileFactory:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<TileType>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", m_options: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileDataSourceOptions",
+                  "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "m_tileFactory",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "m_options",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#connect:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "connect(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<void>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "connect"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#dataProvider:member(1)",
+              "docComment": "/**\n * Get the [[DataProvider]] that has been passed in with the options.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "dataProvider(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataProvider",
+                  "canonicalReference": "@here/harp-mapview-decoder!DataProvider:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "dataProvider"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#decoder:member",
+              "docComment": "/**\n * Get the [[ITileDecoder]] of this `ITileDataSource`, which has either been passed in with the options, or has been supplied by the [[ConcurrentDecoderFacade]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get decoder(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ITileDecoder",
+                  "canonicalReference": "@here/harp-datasource-protocol!ITileDecoder:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "decoder",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#dispose:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "dispose(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "dispose"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#getTile:member(1)",
+              "docComment": "/**\n * Create a [[Tile]] and start the asynchronous download of the tile content. The [[Tile]] will be empty, but the download and decoding will be scheduled immediately. [[Tile]] instance is initialized with default copyrights, concatenated with copyrights from copyright provider of this data source.\n *\n * @param tileKey - Quadtree address of the requested tile.\n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTile(tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "TileType | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "getTile"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#getTileInfo:member(1)",
+              "docComment": "/**\n * Get [[TileInfo]] of a tile.\n *\n * @param tileKey - Quadtree address of the requested tile.\n *\n * @returns A promise which will contain the [[TileInfo]] when resolved.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTileInfo(tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileInfo",
+                  "canonicalReference": "@here/harp-datasource-protocol!TileInfo:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 7
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "getTileInfo"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#getTilingScheme:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTilingScheme(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TilingScheme",
+                  "canonicalReference": "@here/harp-geoutils!TilingScheme:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "getTilingScheme"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#logger:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected readonly logger: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ILogger",
+                  "canonicalReference": "@here/harp-utils!ILogger:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "logger",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#m_decoder:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected readonly m_decoder: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ITileDecoder",
+                  "canonicalReference": "@here/harp-datasource-protocol!ITileDecoder:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "m_decoder",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#ready:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ready(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "ready"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#setStyleSet:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setStyleSet(styleSet?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StyleSet",
+                  "canonicalReference": "@here/harp-datasource-protocol!StyleSet:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", definitions?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Definitions",
+                  "canonicalReference": "@here/harp-datasource-protocol!Definitions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", languages?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "styleSet",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "definitions",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                },
+                {
+                  "parameterName": "languages",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  }
+                }
+              ],
+              "name": "setStyleSet"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSource#setTheme:member(1)",
+              "docComment": "/**\n * Apply the [[Theme]] to this data source.\n *\n * Applies new [[StyleSet]] and definitions from theme only if matching styleset (see `styleSetName` property) is found in `theme`.\n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setTheme(theme: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Theme",
+                  "canonicalReference": "@here/harp-datasource-protocol!Theme:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", languages?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "theme",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "languages",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "setTheme"
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 3,
+            "endIndex": 5
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions:interface",
+          "docComment": "/**\n * Set of common options for all [[TileDataSource]]s.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface TileDataSourceOptions extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "DataSourceOptions",
+              "canonicalReference": "@here/harp-mapview!DataSourceOptions:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TileDataSourceOptions",
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#concurrentDecoderScriptUrl:member",
+              "docComment": "/**\n * Optional URL for decoder bundle to be loaded into web worker.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "concurrentDecoderScriptUrl?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "concurrentDecoderScriptUrl",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#concurrentDecoderServiceName:member",
+              "docComment": "/**\n * Optional name of decoder service class.  @see [[ConcurrentDecoderFacade]]  @see [[ConcurrentWorkerSet]]\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "concurrentDecoderServiceName?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "concurrentDecoderServiceName",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#concurrentDecoderWorkerCount:member",
+              "docComment": "/**\n * Optional count of web workers to use with the decoder bundle.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "concurrentDecoderWorkerCount?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "concurrentDecoderWorkerCount",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#copyrightInfo:member",
+              "docComment": "/**\n * Optional, default copyright information of tiles provided by this data source. Implementation should provide this information from the source data if possible.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "copyrightInfo?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "CopyrightInfo",
+                  "canonicalReference": "@here/harp-mapview!CopyrightInfo:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "copyrightInfo",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#copyrightProvider:member",
+              "docComment": "/**\n * Optional copyright info provider for tiles provided by this data source. Copyrights from provider are concatenated with default ones from `copyrightInfo`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "copyrightProvider?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "CopyrightProvider",
+                  "canonicalReference": "@here/harp-mapview!CopyrightProvider:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "copyrightProvider",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#dataProvider:member",
+              "docComment": "/**\n * The [[DataProvider]] to use for downloading the actual data.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "dataProvider: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataProvider",
+                  "canonicalReference": "@here/harp-mapview-decoder!DataProvider:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "dataProvider",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#decoder:member",
+              "docComment": "/**\n * Optional: Specify [[ITileDecoder]] instance.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "decoder?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ITileDecoder",
+                  "canonicalReference": "@here/harp-datasource-protocol!ITileDecoder:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "decoder",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-mapview-decoder!TileDataSourceOptions#tilingScheme:member",
+              "docComment": "/**\n * The [[TilingScheme]] the data source is using.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "tilingScheme: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TilingScheme",
+                  "canonicalReference": "@here/harp-geoutils!TilingScheme:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tilingScheme",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 3
+            }
+          ]
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-mapview-decoder!TileFactory:class",
+          "docComment": "/**\n * Templated factory class to create instances of [[Tile]].\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class TileFactory<TileType extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "Tile",
+              "canonicalReference": "@here/harp-mapview!Tile:class"
+            },
+            {
+              "kind": "Content",
+              "text": "> "
+            }
+          ],
+          "releaseTag": "Public",
+          "typeParameters": [
+            {
+              "typeParameterName": "TileType",
+              "constraintTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "TileFactory",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-mapview-decoder!TileFactory:constructor(1)",
+              "docComment": "/**\n * Initialize the factory using the constructor of the element to be called when a [[Tile]] is created.\n *\n * @param m_modelConstructor - Constructor of (subclass of) [[Tile]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(m_modelConstructor: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "new (dataSource: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataSource",
+                  "canonicalReference": "@here/harp-mapview!DataSource:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => TileType"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "m_modelConstructor",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 6
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileFactory#create:member(1)",
+              "docComment": "/**\n * Create an instance of (subclass of) [[Tile]]. The required parameters are passed as arguments to the constructor of [[Tile]].\n *\n * @param dataSource - [[Datasource]] this class belongs to.\n *\n * @param tileKey - Quadtree address of the [[Tile]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "create(dataSource: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataSource",
+                  "canonicalReference": "@here/harp-mapview!DataSource:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "TileType"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "dataSource",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "create"
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-mapview-decoder!TileInfoLoader:class",
+          "docComment": "/**\n * Subclass of [[TileLoader]] which is used by [[TileDataSource]] to load the [[TileInfo]] meta data, not the tile data itself.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class TileInfoLoader extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "TileLoader",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TileInfoLoader",
+          "members": [
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileInfoLoader#startDecodeTile:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected startDecodeTile(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "startDecodeTile"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileInfoLoader#tileInfo:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "tileInfo?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileInfo",
+                  "canonicalReference": "@here/harp-datasource-protocol!TileInfo:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tileInfo",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-mapview-decoder!TileLoader:class",
+          "docComment": "/**\n * The [[TileLoader]] manages the different states of loading and decoding for a [[Tile]]. Used by the [[TileDataSource]].\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class TileLoader "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TileLoader",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader:constructor(1)",
+              "docComment": "/**\n * Set up loading of a single [[Tile]].\n *\n * @param dataSource - The [[DataSource]] the tile belongs to.\n *\n * @param tileKey - The quadtree address of a [[Tile]].\n *\n * @param dataProvider - The [[DataProvider]] that retrieves the binary tile data.\n *\n * @param tileDecoder - The [[ITileDecoder]] that decodes the binary tile to a [[DecodeTile]].\n *\n * @param priority - The priority given to the loading job. Highest number will be served first.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(dataSource: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataSource",
+                  "canonicalReference": "@here/harp-mapview!DataSource:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", dataProvider: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataProvider",
+                  "canonicalReference": "@here/harp-mapview-decoder!DataProvider:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", tileDecoder: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ITileDecoder",
+                  "canonicalReference": "@here/harp-datasource-protocol!ITileDecoder:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", priority: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "dataSource",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                },
+                {
+                  "parameterName": "dataProvider",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  }
+                },
+                {
+                  "parameterName": "tileDecoder",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 7,
+                    "endIndex": 8
+                  }
+                },
+                {
+                  "parameterName": "priority",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 9,
+                    "endIndex": 10
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#cancel:member(1)",
+              "docComment": "/**\n * Cancel loading of the [[Tile]]. Cancellation token is notified, an internal state is cleaned up.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "cancel(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "cancel"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#cancelDecoding:member(1)",
+              "docComment": "/**\n * Cancel the decoding process.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected cancelDecoding(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "cancelDecoding"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#dataProvider:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected dataProvider: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataProvider",
+                  "canonicalReference": "@here/harp-mapview-decoder!DataProvider:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "dataProvider",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#dataSource:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected dataSource: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataSource",
+                  "canonicalReference": "@here/harp-mapview!DataSource:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "dataSource",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#decodedTile:member",
+              "docComment": "/**\n * The result of decoding the `payload`: The [[DecodedTile]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "decodedTile?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DecodedTile",
+                  "canonicalReference": "@here/harp-datasource-protocol!DecodedTile:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "decodedTile",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#donePromise:member",
+              "docComment": "/**\n * The promise which is resolved when loading and decoding have finished.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected donePromise?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileLoaderState",
+                  "canonicalReference": "@here/harp-mapview!TileLoaderState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "donePromise",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#error:member",
+              "docComment": "/**\n * Error object if loading or decoding failed.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "error",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#isFinished:member",
+              "docComment": "/**\n * Return `true` if [[Tile]] is still loading, `false` otherwise.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get isFinished(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "isFinished",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#loadAbortController:member",
+              "docComment": "/**\n * The abort controller notifying the [[DataProvider]] to cancel loading.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected loadAbortController: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "AbortController",
+                  "canonicalReference": "!AbortController:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "loadAbortController",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#loadAndDecode:member(1)",
+              "docComment": "/**\n * Start loading and/or proceed through the various states of loading of this tile.\n *\n * @returns A promise which resolves the [[TileLoaderState]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "loadAndDecode(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileLoaderState",
+                  "canonicalReference": "@here/harp-mapview!TileLoaderState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "loadAndDecode"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#onDecoded:member(1)",
+              "docComment": "/**\n * Called when the decoding is finished, and the [[DecodedTile]] has been created.\n *\n * @param decodedTile - The [[DecodedTile]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected onDecoded(decodedTile: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DecodedTile",
+                  "canonicalReference": "@here/harp-datasource-protocol!DecodedTile:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "decodedTile",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "onDecoded"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#onDone:member(1)",
+              "docComment": "/**\n * Called when loading and decoding has finished successfully. Resolves loading promise if the state is Ready, otherwise it rejects the promise with the supplied state.\n *\n * @param doneState - The latest state of loading.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected onDone(doneState: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileLoaderState",
+                  "canonicalReference": "@here/harp-mapview!TileLoaderState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "doneState",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "onDone"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#onError:member(1)",
+              "docComment": "/**\n * Called when loading or decoding has finished with an error.\n *\n * @param error - Error object describing the failing.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected onError(error: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "onError"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#onLoaded:member(1)",
+              "docComment": "/**\n * Called when binary data has been loaded. The loading state is now progressing to decoding.\n *\n * @param payload - Binary data in form of [[ArrayBufferLike]], or any object.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected onLoaded(payload: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ArrayBufferLike",
+                  "canonicalReference": "!ArrayBufferLike:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | {}"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 4,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "payload",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                }
+              ],
+              "name": "onLoaded"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#payload:member",
+              "docComment": "/**\n * The binary data in form of [[ArrayBufferLike]], or any object.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "payload?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ArrayBufferLike",
+                  "canonicalReference": "!ArrayBufferLike:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | {}"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "payload",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#priority:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "priority: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "priority",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#rejectedDonePromise:member",
+              "docComment": "/**\n * The internal function that is called when loading and decoding failed.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected rejectedDonePromise?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(state: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileLoaderState",
+                  "canonicalReference": "@here/harp-mapview!TileLoaderState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "rejectedDonePromise",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#requestController:member",
+              "docComment": "/**\n * The notifying the [[ITileDecoder]] to cancel decoding.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected requestController?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestController",
+                  "canonicalReference": "@here/harp-datasource-protocol!RequestController:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "requestController",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#resolveDonePromise:member",
+              "docComment": "/**\n * The internal function that is called when loading and decoding have finished successfully.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected resolveDonePromise?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(state: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileLoaderState",
+                  "canonicalReference": "@here/harp-mapview!TileLoaderState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "resolveDonePromise",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#startDecodeTile:member(1)",
+              "docComment": "/**\n * Start decoding the payload.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected startDecodeTile(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "startDecodeTile"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#startLoading:member(1)",
+              "docComment": "/**\n * Start loading. Only call if loading did not start yet.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected startLoading(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "startLoading"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#state:member",
+              "docComment": "/**\n * Current state of `TileLoader`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "state: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileLoaderState",
+                  "canonicalReference": "@here/harp-mapview!TileLoaderState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "state",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#tileDecoder:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected tileDecoder: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ITileDecoder",
+                  "canonicalReference": "@here/harp-datasource-protocol!ITileDecoder:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tileDecoder",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#tileKey:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tileKey",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#updatePriority:member(1)",
+              "docComment": "/**\n * Update the priority of this [[Tile]]'s priority. Is effective to sort the decoding requests in the request queue (used during heavy load).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "updatePriority(priority: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "priority",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "updatePriority"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-mapview-decoder!TileLoader#waitSettled:member(1)",
+              "docComment": "/**\n * Return the current state in form of a promise. Caller can then wait for the promise to be resolved.\n *\n * @returns A promise which resolves the current [[TileLoaderState]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "waitSettled(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileLoaderState",
+                  "canonicalReference": "@here/harp-mapview!TileLoaderState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "waitSettled"
+            }
+          ],
+          "implementsTokenRanges": []
+        }
+      ]
+    }
+  ]
+}

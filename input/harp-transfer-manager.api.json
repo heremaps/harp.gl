@@ -1,0 +1,694 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.8.10",
+    "schemaVersion": 1003,
+    "oldestForwardsCompatibleVersion": 1001
+  },
+  "kind": "Package",
+  "canonicalReference": "@here/harp-transfer-manager!",
+  "docComment": "/**\n * Provides a manager that orchestrates downloading URLs, particularly static map resources.\n *\n * @remarks\n *\n * @packageDocumentation\n */\n",
+  "name": "@here/harp-transfer-manager",
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@here/harp-transfer-manager!",
+      "name": "",
+      "members": [
+        {
+          "kind": "Interface",
+          "canonicalReference": "@here/harp-transfer-manager!ITransferManager:interface",
+          "docComment": "/**\n * Abstract interface for a transfer manager.\n *\n * Provides functionality for downloading JSON or ArrayBuffers. Implementations typically implement retry on server congestion, limit the maximum amount of parallel downloads or merge duplicate downloads.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface ITransferManager "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "ITransferManager",
+          "members": [
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@here/harp-transfer-manager!ITransferManager#download:member(1)",
+              "docComment": "/**\n * Downloads a URL and returns the response.\n *\n * @param url - The URL to download.\n *\n * @param init - Optional extra parameters for the download.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "download(url: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInfo",
+                  "canonicalReference": "!RequestInfo:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", init?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInit",
+                  "canonicalReference": "!RequestInit:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Response",
+                  "canonicalReference": "!Response:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 9
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "url",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "init",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "download"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@here/harp-transfer-manager!ITransferManager#downloadArrayBuffer:member(1)",
+              "docComment": "/**\n * Downloads a binary object.\n *\n * @param url - The URL to download\n *\n * @param init - Optional extra parameters for the download\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "downloadArrayBuffer(url: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInfo",
+                  "canonicalReference": "!RequestInfo:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", init?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInit",
+                  "canonicalReference": "!RequestInit:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ArrayBuffer",
+                  "canonicalReference": "!ArrayBuffer:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 9
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "url",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "init",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "downloadArrayBuffer"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@here/harp-transfer-manager!ITransferManager#downloadJson:member(1)",
+              "docComment": "/**\n * Downloads a JSON object.\n *\n * @param url - The URL to download\n *\n * @param init - Optional extra parameters for the download.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "downloadJson<T>(url: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInfo",
+                  "canonicalReference": "!RequestInfo:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", init?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInit",
+                  "canonicalReference": "!RequestInit:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<T>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 7
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "url",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "init",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "typeParameters": [
+                {
+                  "typeParameterName": "T",
+                  "constraintTokenRange": {
+                    "startIndex": 0,
+                    "endIndex": 0
+                  },
+                  "defaultTypeTokenRange": {
+                    "startIndex": 0,
+                    "endIndex": 0
+                  }
+                }
+              ],
+              "name": "downloadJson"
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-transfer-manager!TransferManager:class",
+          "docComment": "/**\n * `TransferManager` for downloading URLs.\n *\n * Features:\n *\n * * Merges JSON downloads, for example, the same URL if requested as JSON will only be downloaded once. * Limits the amount of parallel downloads, useful when requesting a large amount of URLs that would otherwise stall the browser. * Retries the downloads with an increasing timeout on HTTP 503 replies.\n *\n * The static method [[instance]] can be used to get a default constructed instance.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class TransferManager implements "
+            },
+            {
+              "kind": "Reference",
+              "text": "ITransferManager",
+              "canonicalReference": "@here/harp-transfer-manager!ITransferManager:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TransferManager",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager:constructor(1)",
+              "docComment": "/**\n * Constructs a new [[TransferManager]].\n *\n * @param fetchFunction - The default fetch function to use.\n *\n * @param maxRetries - The maximum amount to try to re-fetch a resource.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(fetchFunction?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "typeof "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "fetch",
+                  "canonicalReference": "!fetch:function"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", maxRetries?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "fetchFunction",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "maxRetries",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager#download:member(1)",
+              "docComment": "/**\n * Downloads a URL and returns the response.\n *\n * Does not merge multiple requests to the same URL.\n *\n * @param url - The URL or RequestInfo to download.\n *\n * @param init - Optional extra parameters for the download.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "download(url: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInfo",
+                  "canonicalReference": "!RequestInfo:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", init?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInit",
+                  "canonicalReference": "!RequestInit:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Response",
+                  "canonicalReference": "!Response:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 9
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "url",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "init",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "download"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager#downloadArrayBuffer:member(1)",
+              "docComment": "/**\n * Downloads a binary object. Merges downloads of string URLS if requested multiple times.\n *\n * Note: This method merges multiple downloads of the same string URL to only one request. The init parameter is ignored if the download is merged. Call [[download]] instead to download the resource without merging.\n *\n * @param url - The URL or RequestInfo to download\n *\n * @param init - Optional extra parameters for the download\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "downloadArrayBuffer(url: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInfo",
+                  "canonicalReference": "!RequestInfo:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", init?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInit",
+                  "canonicalReference": "!RequestInit:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ArrayBuffer",
+                  "canonicalReference": "!ArrayBuffer:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 9
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "url",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "init",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "downloadArrayBuffer"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager#downloadJson:member(1)",
+              "docComment": "/**\n * Downloads a JSON object. Merges downloads of string URLs if requested multiple times.\n *\n * Note: This method merges multiple downloads of the same string URL to only one request. The init parameter is ignored if the download is merged. Call [[download]] instead to download the resource without merging.\n *\n * @param url - The URL or RequestInfo to download\n *\n * @param init - Optional extra parameters for the download.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "downloadJson<T>(url: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInfo",
+                  "canonicalReference": "!RequestInfo:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", init?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInit",
+                  "canonicalReference": "!RequestInit:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<T>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 7
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "url",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "init",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "typeParameters": [
+                {
+                  "typeParameterName": "T",
+                  "constraintTokenRange": {
+                    "startIndex": 0,
+                    "endIndex": 0
+                  },
+                  "defaultTypeTokenRange": {
+                    "startIndex": 0,
+                    "endIndex": 0
+                  }
+                }
+              ],
+              "name": "downloadJson"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager#fetchFunction:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly fetchFunction: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "typeof "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "fetch",
+                  "canonicalReference": "!fetch:function"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "fetchFunction",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager.instance:member(1)",
+              "docComment": "/**\n * Returns a default instance of [[TransferManager]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static instance(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TransferManager",
+                  "canonicalReference": "@here/harp-transfer-manager!TransferManager:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": true,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "instance"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager.maxParallelDownloads:member",
+              "docComment": "/**\n * The amount of maximum parallel downloads to allow.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static readonly maxParallelDownloads = 16;"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "maxParallelDownloads",
+              "propertyTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "isStatic": true
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager#maxRetries:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly maxRetries: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "maxRetries",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-transfer-manager!TransferManager.retryTimeout:member",
+              "docComment": "/**\n * The timeout in milliseconds to wait between retries. This timeout is multiplied with the number of retries. First retry waits for 0 ms, second retry for 500 ms, third for 1000 ms and so on.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static readonly retryTimeout = 500;"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "retryTimeout",
+              "propertyTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "isStatic": true
+            }
+          ],
+          "implementsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

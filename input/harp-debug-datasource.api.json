@@ -1,0 +1,348 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.8.10",
+    "schemaVersion": 1003,
+    "oldestForwardsCompatibleVersion": 1001
+  },
+  "kind": "Package",
+  "canonicalReference": "@here/harp-debug-datasource!",
+  "docComment": "/**\n * Overlay useful for debugging map data.\n *\n * @remarks\n *\n * @packageDocumentation\n */\n",
+  "name": "@here/harp-debug-datasource",
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@here/harp-debug-datasource!",
+      "name": "",
+      "members": [
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-debug-datasource!DebugTile:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class DebugTile extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "Tile",
+              "canonicalReference": "@here/harp-mapview!Tile:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "DebugTile",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-debug-datasource!DebugTile:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `DebugTile` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(dataSource: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DataSource",
+                  "canonicalReference": "@here/harp-mapview!DataSource:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "dataSource",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-debug-datasource!DebugTileDataSource:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class DebugTileDataSource extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "DataSource",
+              "canonicalReference": "@here/harp-mapview!DataSource:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "DebugTileDataSource",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-debug-datasource!DebugTileDataSource:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `DebugTileDataSource` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(m_tilingScheme: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TilingScheme",
+                  "canonicalReference": "@here/harp-geoutils!TilingScheme:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", name?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", maxDbgZoomLevel?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "m_tilingScheme",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "name",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                },
+                {
+                  "parameterName": "maxDbgZoomLevel",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-debug-datasource!DebugTileDataSource#canGetTile:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "canGetTile(zoomLevel: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "zoomLevel",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "canGetTile"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-debug-datasource!DebugTileDataSource#getTile:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTile(tileKey: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TileKey",
+                  "canonicalReference": "@here/harp-geoutils!TileKey:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DebugTile",
+                  "canonicalReference": "@here/harp-debug-datasource!DebugTile:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "tileKey",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "getTile"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-debug-datasource!DebugTileDataSource#getTilingScheme:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getTilingScheme(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TilingScheme",
+                  "canonicalReference": "@here/harp-geoutils!TilingScheme:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "getTilingScheme"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-debug-datasource!DebugTileDataSource#maxDbgZoomLevel:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "maxDbgZoomLevel: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "maxDbgZoomLevel",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        }
+      ]
+    }
+  ]
+}

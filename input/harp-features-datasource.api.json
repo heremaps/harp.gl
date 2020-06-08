@@ -1,0 +1,1725 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.8.10",
+    "schemaVersion": 1003,
+    "oldestForwardsCompatibleVersion": 1001
+  },
+  "kind": "Package",
+  "canonicalReference": "@here/harp-features-datasource!",
+  "docComment": "/**\n * Provides support for rendering custom carto features.\n *\n * @remarks\n *\n * @packageDocumentation\n */\n",
+  "name": "@here/harp-features-datasource",
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@here/harp-features-datasource!",
+      "name": "",
+      "members": [
+        {
+          "kind": "Interface",
+          "canonicalReference": "@here/harp-features-datasource!FeatureDataSourceOptions:interface",
+          "docComment": "/**\n * Options for [[FeaturesDataSource]].\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface FeatureDataSourceOptions extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "OmvDataSourceParameters",
+              "canonicalReference": "@here/harp-omv-datasource!OmvDataSourceParameters:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ", "
+            },
+            {
+              "kind": "Reference",
+              "text": "GeoJsonDataProviderOptions",
+              "canonicalReference": "@here/harp-omv-datasource!GeoJsonDataProviderOptions:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "FeatureDataSourceOptions",
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-features-datasource!FeatureDataSourceOptions#features:member",
+              "docComment": "/**\n * Initial set of features for new instance of [[FeaturesDataSource]].\n *\n * Shortcut for calling [[FeaturesDataSource.add]] after construction.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "features?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapViewFeature",
+                  "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "features",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-features-datasource!FeatureDataSourceOptions#geojson:member",
+              "docComment": "/**\n * Initial GeoJSON load for new instance of [[FeaturesDataSource]].\n *\n * Shortcut for calling [[FeaturesDataSource.setFromGeojson]] after construction.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "geojson?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "FeatureCollection",
+                  "canonicalReference": "@here/harp-datasource-protocol!FeatureCollection:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "GeometryCollection",
+                  "canonicalReference": "@here/harp-datasource-protocol!GeometryCollection:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Feature",
+                  "canonicalReference": "@here/harp-datasource-protocol!Feature:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "geojson",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 6
+              }
+            }
+          ],
+          "extendsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 2
+            },
+            {
+              "startIndex": 3,
+              "endIndex": 5
+            }
+          ]
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource:class",
+          "docComment": "/**\n * [[DataSource]] implementation to use for the addition of custom features.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class FeaturesDataSource extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "OmvDataSource",
+              "canonicalReference": "@here/harp-omv-datasource!OmvDataSource:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "FeaturesDataSource",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource:constructor(1)",
+              "docComment": "/**\n * Builds a `FeaturesDataSource`.\n *\n * @param options - specify custom options using [[FeatureDataSourceOptions]] interface.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(options?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "FeatureDataSourceOptions",
+                  "canonicalReference": "@here/harp-features-datasource!FeatureDataSourceOptions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "options",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#add:member(1)",
+              "docComment": "/**\n * Adds a custom feature in the datasource.\n *\n * @param features - The features to add in the datasource.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "add(...features: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapViewFeature",
+                  "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "this"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 4,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "features",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                }
+              ],
+              "name": "add"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#attach:member(1)",
+              "docComment": "/**\n * Override [[DataSource.attach]] to know if we're really connected to [[MapView]].\n *\n * @param mapView - \n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "attach(mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "mapView",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "attach"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#clear:member(1)",
+              "docComment": "/**\n * Removes all the custom features in this `FeaturesDataSource`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clear(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "clear"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#connect:member(1)",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "connect(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Promise",
+                  "canonicalReference": "!Promise:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<void>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "connect"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#detach:member(1)",
+              "docComment": "/**\n * Override [[DataSource.detach]] to know if we're really connected to [[MapView]].\n *\n * @param mapView - \n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "detach(mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "mapView",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "detach"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#getGeoBox:member(1)",
+              "docComment": "/**\n * Get [[GeoBox]] containing all the points in datasource.\n *\n * Returns undefined if there were no features added to this DS.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getGeoBox(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "GeoBox",
+                  "canonicalReference": "@here/harp-geoutils!GeoBox:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "getGeoBox"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#remove:member(1)",
+              "docComment": "/**\n * Removes a custom feature in the datasource.\n *\n * @param features - The features to add in the datasource.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "remove(...features: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapViewFeature",
+                  "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "this"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 4,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "features",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                }
+              ],
+              "name": "remove"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-features-datasource!FeaturesDataSource#setFromGeojson:member(1)",
+              "docComment": "/**\n * This method allows to directly add a GeoJSON without using [[MapViewFeature]] instances. It also overwrites existing features in this data source. To add a GeoJSON without overwriting the data source, one should loop through it to create [[MapViewFeature]] and add them with the `add` method.\n *\n * @param geojson - A javascript object matching the GeoJSON specification.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setFromGeojson(geojson: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "FeatureCollection",
+                  "canonicalReference": "@here/harp-datasource-protocol!FeatureCollection:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "GeometryCollection",
+                  "canonicalReference": "@here/harp-datasource-protocol!GeometryCollection:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Feature",
+                  "canonicalReference": "@here/harp-datasource-protocol!Feature:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "this"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "geojson",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 6
+                  }
+                }
+              ],
+              "name": "setFromGeojson"
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class",
+          "docComment": "/**\n * Base class to create features.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare abstract class MapViewFeature "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapViewFeature",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature:constructor(1)",
+              "docComment": "/**\n * Builds a new `MapViewFeature`.\n *\n * @param coordinates - The GeoJson geometry.\n *\n * @param style - The style to render the geometry.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "FeatureGeometry",
+                  "canonicalReference": "@here/harp-datasource-protocol!FeatureGeometry:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "coordinates",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "properties",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature#coordinates:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "FeatureGeometry",
+                  "canonicalReference": "@here/harp-datasource-protocol!FeatureGeometry:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "coordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature#properties:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "properties",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature#type:member",
+              "docComment": "/**\n * The type of the feature. The extended class should initialize this value. It defaults to \"Point\" in order to avoid allowing `null` or `undefined`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "FeatureGeometry",
+                  "canonicalReference": "@here/harp-datasource-protocol!FeatureGeometry:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"type\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "type",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature#uuid:member",
+              "docComment": "/**\n * A string identifying this feature.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "uuid: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "uuid",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!MapViewLineFeature:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapViewLineFeature extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "MapViewFeature",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapViewLineFeature",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!MapViewLineFeature:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `MapViewLineFeature` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LineString",
+                  "canonicalReference": "@here/harp-datasource-protocol!LineString:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "coordinates",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "properties",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewLineFeature#coordinates:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LineString",
+                  "canonicalReference": "@here/harp-datasource-protocol!LineString:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "coordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewLineFeature#properties:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "properties",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewLineFeature#type:member",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LineString",
+                  "canonicalReference": "@here/harp-datasource-protocol!LineString:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"type\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "type",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!MapViewMultiLineFeature:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapViewMultiLineFeature extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "MapViewFeature",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapViewMultiLineFeature",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiLineFeature:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `MapViewMultiLineFeature` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiLineString",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiLineString:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "coordinates",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "properties",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiLineFeature#coordinates:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiLineString",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiLineString:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "coordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiLineFeature#properties:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "properties",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiLineFeature#type:member",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiLineString",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiLineString:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"type\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "type",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!MapViewMultiPointFeature:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapViewMultiPointFeature extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "MapViewFeature",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapViewMultiPointFeature",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPointFeature:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `MapViewMultiPointFeature` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiPoint",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiPoint:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "coordinates",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "properties",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPointFeature#coordinates:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiPoint",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiPoint:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "coordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPointFeature#properties:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "properties",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPointFeature#type:member",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiPoint",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiPoint:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"type\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "type",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!MapViewMultiPolygonFeature:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapViewMultiPolygonFeature extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "MapViewFeature",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapViewMultiPolygonFeature",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPolygonFeature:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `MapViewMultiPolygonFeature` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiPolygon",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiPolygon:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "coordinates",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "properties",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPolygonFeature#coordinates:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiPolygon",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiPolygon:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "coordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPolygonFeature#properties:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "properties",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewMultiPolygonFeature#type:member",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MultiPolygon",
+                  "canonicalReference": "@here/harp-datasource-protocol!MultiPolygon:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"type\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "type",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!MapViewPointFeature:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapViewPointFeature extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "MapViewFeature",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapViewPointFeature",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPointFeature:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `MapViewPointFeature` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Point",
+                  "canonicalReference": "@here/harp-datasource-protocol!Point:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "coordinates",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "properties",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPointFeature#coordinates:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Point",
+                  "canonicalReference": "@here/harp-datasource-protocol!Point:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "coordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPointFeature#properties:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "properties",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPointFeature#type:member",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Point",
+                  "canonicalReference": "@here/harp-datasource-protocol!Point:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"type\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "type",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-features-datasource!MapViewPolygonFeature:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapViewPolygonFeature extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "MapViewFeature",
+              "canonicalReference": "@here/harp-features-datasource!MapViewFeature:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapViewPolygonFeature",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPolygonFeature:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `MapViewPolygonFeature` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Polygon",
+                  "canonicalReference": "@here/harp-datasource-protocol!Polygon:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "coordinates",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  }
+                },
+                {
+                  "parameterName": "properties",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 4,
+                    "endIndex": 5
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPolygonFeature#coordinates:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "coordinates: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Polygon",
+                  "canonicalReference": "@here/harp-datasource-protocol!Polygon:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"coordinates\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "coordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPolygonFeature#properties:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "properties?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{} | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "properties",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-features-datasource!MapViewPolygonFeature#type:member",
+              "docComment": "/**\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Polygon",
+                  "canonicalReference": "@here/harp-datasource-protocol!Polygon:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[\"type\"]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "type",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        }
+      ]
+    }
+  ]
+}

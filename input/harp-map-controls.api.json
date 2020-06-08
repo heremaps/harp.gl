@@ -1,0 +1,3965 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.8.10",
+    "schemaVersion": 1003,
+    "oldestForwardsCompatibleVersion": 1001
+  },
+  "kind": "Package",
+  "canonicalReference": "@here/harp-map-controls!",
+  "docComment": "/**\n * Camera controller which implements a common default set of camera functionality in a map context.\n *\n * @remarks\n *\n * @packageDocumentation\n */\n",
+  "name": "@here/harp-map-controls",
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@here/harp-map-controls!",
+      "name": "",
+      "members": [
+        {
+          "kind": "Function",
+          "canonicalReference": "@here/harp-map-controls!azimuthAltitudeToDirection:function(1)",
+          "docComment": "/**\n * Returns the direction vector that is described by the given azimuth and altitude.\n *\n * @param azimuth - Azimuth in radians.\n *\n * @param altitude - Altitude in radians.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function azimuthAltitudeToDirection(azimuth: "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": ", altitude: "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": "): "
+            },
+            {
+              "kind": "Reference",
+              "text": "Vector3",
+              "canonicalReference": "three!Vector3:class"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 5,
+            "endIndex": 6
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [
+            {
+              "parameterName": "azimuth",
+              "parameterTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "parameterName": "altitude",
+              "parameterTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              }
+            }
+          ],
+          "name": "azimuthAltitudeToDirection"
+        },
+        {
+          "kind": "Function",
+          "canonicalReference": "@here/harp-map-controls!calculateNormalizedDeviceCoordinates:function(1)",
+          "docComment": "/**\n * Transforms the given point in screen space into NDC space by taking the given screen dimension into account.\n *\n * @param screenCoordinateX - X coordinate in screen space.\n *\n * @param screenCoordinateY - Y coordinate in screen space.\n *\n * @param screenSizeX - Width of the reference screen size.\n *\n * @param screenSizeY - Height of the reference screen size.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function calculateNormalizedDeviceCoordinates(screenCoordinateX: "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": ", screenCoordinateY: "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": ", screenSizeX: "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": ", screenSizeY: "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": "): "
+            },
+            {
+              "kind": "Reference",
+              "text": "Vector2",
+              "canonicalReference": "three!Vector2:class"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 9,
+            "endIndex": 10
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [
+            {
+              "parameterName": "screenCoordinateX",
+              "parameterTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "parameterName": "screenCoordinateY",
+              "parameterTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              }
+            },
+            {
+              "parameterName": "screenSizeX",
+              "parameterTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              }
+            },
+            {
+              "parameterName": "screenSizeY",
+              "parameterTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              }
+            }
+          ],
+          "name": "calculateNormalizedDeviceCoordinates"
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-map-controls!CameraAnimation:class",
+          "docComment": "/**\n * Abstract class used as base to define camera animations.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare abstract class CameraAnimation "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "CameraAnimation",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation:constructor(1)",
+              "docComment": "/**\n * Creates a new `CameraAnimation` object.\n *\n * @param mapView - [[MapView]] which will be affected by the animation.\n *\n * @param name - Animation's name.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", name?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "mapView",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "name",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#duration:member",
+              "docComment": "/**\n * Duration of a whole animation in milliseconds. Defaults to `10` seconds.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected duration: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "duration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#easing:member",
+              "docComment": "/**\n * Easing function that control acceleration. Defaults to [[EasingFunction.Linear]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected easing: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(k: number) => number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "easing",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#isRunning:member",
+              "docComment": "/**\n * Returns `true` if the animation is being played.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get isRunning(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "isRunning",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#mapView:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "mapView",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#name:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "name?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "name",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#onFinished:member",
+              "docComment": "/**\n * Callback that gets triggered once the animation ends.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected onFinished?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "onFinished",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#repeat:member",
+              "docComment": "/**\n * Number of times the animation should be repeated. Defaults to `0`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected repeat: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "repeat",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#running:member",
+              "docComment": "/**\n * `True` if animation is being played.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected running: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "running",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#start:member(1)",
+              "docComment": "/**\n * Start the animation.\n *\n * @param time - Duration of the animation in milliseconds.\n *\n * @param onFinished - Callback that gets triggered once the animation ends.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "abstract start(time?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", onFinished?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "time",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "onFinished",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "start"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#stop:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "abstract stop(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "stop"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#stopped:member",
+              "docComment": "/**\n * `True` if the animation has been interrupted.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected stopped: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "stopped",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#tween:member",
+              "docComment": "/**\n * Tweening controller.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected tween?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TWEEN.Tween",
+                  "canonicalReference": "!TWEEN.Tween:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tween",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation#update:member(1)",
+              "docComment": "/**\n * Update function is to be called before the next frame is rendered.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "update(time?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "time",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "update"
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-map-controls!CameraPanAnimation:class",
+          "docComment": "/**\n * Class to pan between the specified geo coordinates. Height can be specified to move the camera in and out.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class CameraPanAnimation extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "CameraAnimation",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "CameraPanAnimation",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimation:constructor(1)",
+              "docComment": "/**\n * Creates a new `CameraPanAnimation` object.\n *\n * @param mapView - [[MapView]] which will be affected by the animation.\n *\n * @param options - Animation's options.\n *\n * @param name - Animation's name.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", options: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "CameraPanAnimationOptions",
+                  "canonicalReference": "@here/harp-map-controls!CameraPanAnimationOptions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", name?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "mapView",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "options",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                },
+                {
+                  "parameterName": "name",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimation#addPosition:member(1)",
+              "docComment": "/**\n * Add a geo coordinate that should be visited.\n *\n * @param geoPos - Geographical coordinate to animate to.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "addPosition(geoPos: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "GeoCoordinatesLike",
+                  "canonicalReference": "@here/harp-geoutils!GeoCoordinatesLike:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "geoPos",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "addPosition"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimation#interpolation:member",
+              "docComment": "/**\n * Specifies interpolation. Defaults to [[InterpolationFunction.CatmullRom]]\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly interpolation: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(v: number[], k: number) => number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "interpolation",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimation#isRunning:member",
+              "docComment": "/**\n * Returns `true` if the animation is being played.\n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get isRunning(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "isRunning",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimation#name:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "name?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "name",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimation#start:member(1)",
+              "docComment": "/**\n * Start the animation.\n *\n * @param time - Duration of the animation in milliseconds.\n *\n * @param onFinished - Callback that gets triggered once the animation ends.\n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "start(time?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", onFinished?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "time",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "onFinished",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "start"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimation#stop:member(1)",
+              "docComment": "/**\n * Stop the animation. Can be started again (with original values only, though).\n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "stop(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "stop"
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@here/harp-map-controls!CameraPanAnimationOptions:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface CameraPanAnimationOptions "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "CameraPanAnimationOptions",
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimationOptions#duration:member",
+              "docComment": "/**\n * Duration of a whole animation in milliseconds. Defaults to `10` seconds.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "duration?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "duration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimationOptions#easing:member",
+              "docComment": "/**\n * Easing function that control acceleration. Defaults to [[EasingFunction.Linear]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "easing?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "EasingFunction",
+                  "canonicalReference": "@here/harp-map-controls!EasingFunction:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | ((k: number) => number)"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "easing",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimationOptions#geoCoordinates:member",
+              "docComment": "/**\n * List of positions. May be added later.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "geoCoordinates?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "GeoCoordinatesLike",
+                  "canonicalReference": "@here/harp-geoutils!GeoCoordinatesLike:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "geoCoordinates",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimationOptions#interpolation:member",
+              "docComment": "/**\n * Specifies interpolation. Defaults to [[InterpolationFunction.Linear]]\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "interpolation?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "InterpolationFunction",
+                  "canonicalReference": "@here/harp-map-controls!InterpolationFunction:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | ((v: number[], k: number) => number)"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "interpolation",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraPanAnimationOptions#repeat:member",
+              "docComment": "/**\n * Number of times the animation should be repeated. Defaults to `0`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "repeat?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "repeat",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-map-controls!CameraRotationAnimation:class",
+          "docComment": "/**\n * Create an animation around the Z-axis of the camera.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class CameraRotationAnimation extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "CameraAnimation",
+              "canonicalReference": "@here/harp-map-controls!CameraAnimation:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "CameraRotationAnimation",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimation:constructor(1)",
+              "docComment": "/**\n * Creates a new `CameraRotationAnimation` object.\n *\n * @param mapView - [[MapView]] which will be affected by the animation.\n *\n * @param m_mapControls - [[MapControls]] this animation will be taking control of.\n *\n * @param options - Animation's options.\n *\n * @param name - Animation's name.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", m_mapControls: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapControls",
+                  "canonicalReference": "@here/harp-map-controls!MapControls:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", options: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "CameraRotationAnimationOptions",
+                  "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", name?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "mapView",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "m_mapControls",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 5
+                  }
+                },
+                {
+                  "parameterName": "options",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 6,
+                    "endIndex": 7
+                  }
+                },
+                {
+                  "parameterName": "name",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 8,
+                    "endIndex": 9
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimation#endAngle:member",
+              "docComment": "/**\n * Final camera rotation (in the Z-axis).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly endAngle: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "endAngle",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimation#start:member(1)",
+              "docComment": "/**\n * Start the animation.\n *\n * @param time - Duration of the animation in milliseconds.\n *\n * @param onFinished - Callback that gets triggered once the animation ends.\n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "start(time?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", onFinished?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "time",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "onFinished",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "start"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimation#startAngle:member",
+              "docComment": "/**\n * Initial camera rotation (in the Z-axis).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly startAngle: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "startAngle",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimation#stop:member(1)",
+              "docComment": "/**\n * Stop the animation. Can be started again (with original values only, though).\n *\n * @override\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "stop(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "stop"
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions:interface",
+          "docComment": "/**\n * Options for a camera animation.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface CameraRotationAnimationOptions "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "CameraRotationAnimationOptions",
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions#axis:member",
+              "docComment": "/**\n * Fixed rotation axis of camera. Defaults to `[0,0,1]` for z-axis.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "axis?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "THREE."
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Vector3",
+                  "canonicalReference": "three!Vector3:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "axis",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions#duration:member",
+              "docComment": "/**\n * Duration of a whole animation in milliseconds. Defaults to `10` seconds.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "duration?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "duration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions#easing:member",
+              "docComment": "/**\n * Easing function that control acceleration. Defaults to [[EasingFunction.Linear]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "easing?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "EasingFunction",
+                  "canonicalReference": "@here/harp-map-controls!EasingFunction:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | ((k: number) => number)"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "easing",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions#endAngle:member",
+              "docComment": "/**\n * End angle. May be greater than 360 in case more than one rotation is required.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "endAngle?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "endAngle",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions#repeat:member",
+              "docComment": "/**\n * Number of times the animation should be repeated. Defaults to `0`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "repeat?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "repeat",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@here/harp-map-controls!CameraRotationAnimationOptions#startAngle:member",
+              "docComment": "/**\n * Start angle in degrees. Defaults to 0.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "startAngle?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "startAngle",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "@here/harp-map-controls!EasingFunction:enum",
+          "docComment": "/**\n * Functions used for specifying animations' speed.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum EasingFunction "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "EasingFunction",
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.BackIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BackIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "25"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "BackIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.BackInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BackInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "27"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "BackInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.BackOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BackOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "26"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "BackOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.BounceIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BounceIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "28"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "BounceIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.BounceInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BounceInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "30"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "BounceInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.BounceOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BounceOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "29"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "BounceOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.CircularIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "CircularIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "19"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "CircularIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.CircularInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "CircularInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "21"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "CircularInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.CircularOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "CircularOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "20"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "CircularOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.CubicIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "CubicIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "4"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "CubicIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.CubicInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "CubicInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "6"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "CubicInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.CubicOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "CubicOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "5"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "CubicOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.ElasticIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ElasticIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "22"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "ElasticIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.ElasticInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ElasticInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "24"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "ElasticInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.ElasticOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ElasticOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "23"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "ElasticOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.ExponentialIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ExponentialIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "16"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "ExponentialIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.ExponentialInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ExponentialInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "18"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "ExponentialInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.ExponentialOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ExponentialOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "17"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "ExponentialOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.Linear:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "Linear = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "0"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "Linear",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuadraticIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuadraticIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "1"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuadraticIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuadraticInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuadraticInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "3"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuadraticInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuadraticOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuadraticOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "2"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuadraticOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuarticIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuarticIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "7"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuarticIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuarticInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuarticInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "9"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuarticInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuarticOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuarticOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "8"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuarticOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuinticIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuinticIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "10"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuinticIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuinticInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuinticInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "12"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuinticInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.QuinticOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "QuinticOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "11"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "QuinticOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.SinusoidalIn:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "SinusoidalIn = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "13"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "SinusoidalIn",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.SinusoidalInOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "SinusoidalInOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "15"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "SinusoidalInOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EasingFunction.SinusoidalOut:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "SinusoidalOut = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "14"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "SinusoidalOut",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ]
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "@here/harp-map-controls!EventNames:enum",
+          "docComment": "/**\n * Map interaction events' names.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum EventNames "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "EventNames",
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EventNames.BeginInteraction:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "BeginInteraction = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"begin-interaction\""
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "BeginInteraction",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EventNames.EndInteraction:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "EndInteraction = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"end-interaction\""
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "EndInteraction",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!EventNames.Update:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "Update = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"update\""
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "Update",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ]
+        },
+        {
+          "kind": "Function",
+          "canonicalReference": "@here/harp-map-controls!getWidthAndHeightFromCanvas:function(1)",
+          "docComment": "/**\n * Extracts the CSS width and height of the given canvas if available, or width and height of the canvas otherwise.\n *\n * @param canvas - The canvas.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function getWidthAndHeightFromCanvas(canvas: "
+            },
+            {
+              "kind": "Reference",
+              "text": "HTMLCanvasElement",
+              "canonicalReference": "!HTMLCanvasElement:interface"
+            },
+            {
+              "kind": "Content",
+              "text": "): "
+            },
+            {
+              "kind": "Content",
+              "text": "{\n    width: number;\n    height: number;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 3,
+            "endIndex": 4
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [
+            {
+              "parameterName": "canvas",
+              "parameterTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "name": "getWidthAndHeightFromCanvas"
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "@here/harp-map-controls!InterpolationFunction:enum",
+          "docComment": "/**\n * Functions used to generate intermediate animation values.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum InterpolationFunction "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "InterpolationFunction",
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!InterpolationFunction.Bezier:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "Bezier = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "1"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "Bezier",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!InterpolationFunction.CatmullRom:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "CatmullRom = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "2"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "CatmullRom",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!InterpolationFunction.Linear:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "Linear = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "0"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "Linear",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ]
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-map-controls!LongPressHandler:class",
+          "docComment": "/**\n * Class that can be used to track long presses on an HTML Element. A long press is a press that lasts a minimum duration (see the [[timeout]] member) while the mouse is not moved more than a certain threshold (see the [[moveThreshold]] member).\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class LongPressHandler "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "LongPressHandler",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-map-controls!LongPressHandler:constructor(1)",
+              "docComment": "/**\n * Default constructor.\n *\n * @param element - The HTML element to track.\n *\n * @param onLongPress - The callback to call when a long press occurred.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(element: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HTMLElement",
+                  "canonicalReference": "!HTMLElement:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", onLongPress: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(event: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MouseEvent",
+                  "canonicalReference": "!MouseEvent:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "element",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "onLongPress",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 6
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!LongPressHandler#buttonId:member",
+              "docComment": "/**\n * Button id that should be handled by this event.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "buttonId: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "buttonId",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!LongPressHandler#dispose:member(1)",
+              "docComment": "/**\n * Removes all events listeners. No more events will be sent.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "dispose(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "dispose"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!LongPressHandler#element:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly element: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HTMLElement",
+                  "canonicalReference": "!HTMLElement:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "element",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!LongPressHandler#moveThreshold:member",
+              "docComment": "/**\n * If the cursor moves more than the given number of pixels, it is not a long-press, but a pan.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "moveThreshold: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "moveThreshold",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!LongPressHandler#onLongPress:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "onLongPress: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(event: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MouseEvent",
+                  "canonicalReference": "!MouseEvent:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "onLongPress",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!LongPressHandler#timeout:member",
+              "docComment": "/**\n * How long to wait (in ms) until a press is considered a long press.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "timeout: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "timeout",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-map-controls!MapControls:class",
+          "docComment": "/**\n * This map control provides basic map-related building blocks to interact with the map. It also provides a default way of handling user input. Currently we support basic mouse interaction and touch input interaction.\n *\n * Mouse interaction: - Left mouse button + move = Panning the map. - Right mouse button + move = Orbits the camera around the focus point. - Middle mouse button + move = Rotating the view. Up down movement changes the pitch. Left/right movement changes the yaw. - Mouse wheel = Zooms up and down by one zoom level, zooms on target.\n *\n * Touch interaction: - One finger = Panning the map. - Two fingers = Scale, rotate and panning the map. - Three fingers = Orbiting the map. Up down movements influences the current orbit altitude. Left/right changes the azimuth.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapControls extends "
+            },
+            {
+              "kind": "Content",
+              "text": "THREE."
+            },
+            {
+              "kind": "Reference",
+              "text": "EventDispatcher",
+              "canonicalReference": "three!EventDispatcher:class"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapControls",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-map-controls!MapControls:constructor(1)",
+              "docComment": "/**\n * Constructs a new `MapControls` object.\n *\n * @param mapView - [[MapView]] this controller modifies.Z\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "mapView",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#attitude:member",
+              "docComment": "/**\n * Current viewing angles yaw/pitch/roll in degrees.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get attitude(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapViewUtils.Attitude",
+                  "canonicalReference": "@here/harp-mapview!MapViewUtils.Attitude:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "attitude",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#camera:member",
+              "docComment": "/**\n * Three.js camera that this controller affects.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly camera: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "THREE."
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Camera",
+                  "canonicalReference": "three!Camera:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "camera",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#cameraHeight:member",
+              "docComment": "/**\n * Get the current camera height.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get cameraHeight(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                },
+                {
+                  "kind": "Content",
+                  "text": "\n\nset cameraHeight(height: number);"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "cameraHeight",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!MapControls.create:member(1)",
+              "docComment": "/**\n * Creates MapControls object and attaches it specified [[MapView]].\n *\n * @param mapView - [[MapView]] object to which MapControls should be attached to.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "static create(mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapControls",
+                  "canonicalReference": "@here/harp-map-controls!MapControls:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": true,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "mapView",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "create"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#dispose:member",
+              "docComment": "/**\n * Destroy this `MapControls` instance.\n *\n * Unregisters all global event handlers used. This is method should be called when you stop using `MapControls`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "dispose: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "dispose",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#domElement:member",
+              "docComment": "/**\n * Map's HTML DOM element.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly domElement: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HTMLCanvasElement",
+                  "canonicalReference": "!HTMLCanvasElement:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "domElement",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#doubleTapTime:member",
+              "docComment": "/**\n * Double click uses the OS delay through the double click event. Tapping is implemented locally here in `MapControls` with this duration setting the maximum delay to define a double tap. The value is in seconds. `300ms` is picked as the default value as jQuery does.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "doubleTapTime: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "doubleTapTime",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#enabled:member",
+              "docComment": "/**\n * Set to `true` to enable input handling through this map control, `false` to disable input handling. Even when disabling input handling, you can manually use the public functions to change the view to the current map.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "enabled: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "enabled",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#inertiaEnabled:member",
+              "docComment": "/**\n * Set to `true` to enable an inertia dampening on zooming and panning. `false` cancels inertia.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "inertiaEnabled: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "inertiaEnabled",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#mapView:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly mapView: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapView",
+                  "canonicalReference": "@here/harp-mapview!MapView:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "mapView",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#maxTiltAngle:member",
+              "docComment": "/**\n * Get the camera max tilt angle in degrees.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get maxTiltAngle(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                },
+                {
+                  "kind": "Content",
+                  "text": "\n\nset maxTiltAngle(angle: number);"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "maxTiltAngle",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#maxZoomLevel:member",
+              "docComment": "/**\n * Determines the maximum zoom level we can zoom to.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "maxZoomLevel: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "maxZoomLevel",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#minCameraHeight:member",
+              "docComment": "/**\n * Determines the minimum camera height in meter.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "minCameraHeight: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "minCameraHeight",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#minZoomLevel:member",
+              "docComment": "/**\n * Determines the minimum zoom level we can zoom to.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "minZoomLevel: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "minZoomLevel",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!MapControls#moveAlongTheViewDirection:member(1)",
+              "docComment": "/**\n * Moves the camera along the view direction in meters. A positive value will move the camera further away from the point where the camera looks at. A negative value will move the camera near to the point where the camera looks at.\n *\n * @param amount - Amount to move along the view direction in meters.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "moveAlongTheViewDirection(amount: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "amount",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "moveAlongTheViewDirection"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#northResetAnimationDuration:member",
+              "docComment": "/**\n * Duration of the animation to reset the camera to looking north, in seconds. Independent of inertia.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "northResetAnimationDuration: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "northResetAnimationDuration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#orbitingMouseDeltaFactor:member",
+              "docComment": "/**\n * This factor will be applied to the delta of the current mouse pointer position and the last mouse pointer position: The result then will be used as an offset to orbit the camera. Default value is `0.1`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "orbitingMouseDeltaFactor: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "orbitingMouseDeltaFactor",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#orbitingTouchDeltaFactor:member",
+              "docComment": "/**\n * This factor will be applied to the delta of the current touch pointer position and the last touch pointer position: The result then will be used as an offset to orbit the camera. Default value is `0.1`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "orbitingTouchDeltaFactor: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "orbitingTouchDeltaFactor",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#panInertiaDampingDuration:member",
+              "docComment": "/**\n * Inertia damping duration for the panning, in seconds.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "panInertiaDampingDuration: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "panInertiaDampingDuration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!MapControls#pointToNorth:member(1)",
+              "docComment": "/**\n * Reset the camera to looking north, in an orbiting movement around the target point instead of changing the yaw (which would be the camera rotating on itself).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "pointToNorth(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "pointToNorth"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#rotateEnabled:member",
+              "docComment": "/**\n * Set to `true` to enable rotation through this map control, `false` to disable rotation.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "rotateEnabled: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "rotateEnabled",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#rotationMouseDeltaFactor:member",
+              "docComment": "/**\n * This factor will be applied to the delta of the current mouse pointer position and the last mouse pointer position: The result then will be used as an offset for the rotation then. Default value is `0.1`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "rotationMouseDeltaFactor: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "rotationMouseDeltaFactor",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!MapControls#setZoomLevel:member(1)",
+              "docComment": "/**\n * Zooms to the desired location by the provided value.\n *\n * @param zoomLevel - Zoom level.\n *\n * @param screenTarget - Zoom target on screen.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setZoomLevel(zoomLevel: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", screenTarget?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        x: number;\n        y: number;\n    } | THREE."
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Vector2",
+                  "canonicalReference": "three!Vector2:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 6,
+                "endIndex": 7
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "zoomLevel",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "screenTarget",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 5
+                  }
+                }
+              ],
+              "name": "setZoomLevel"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#tiltAngle:member",
+              "docComment": "/**\n * Camera tilt to the target when tilting from the `toggleTilt` public method.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "tiltAngle: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tiltAngle",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#tiltEnabled:member",
+              "docComment": "/**\n * Set to `true` to enable orbiting and tilting through these controls, `false` otherwise.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "tiltEnabled: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tiltEnabled",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#tiltState:member",
+              "docComment": "/**\n * Handy getter to know if the view is in the process of looking down or not.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get tiltState(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TiltState",
+                  "canonicalReference": "@here/harp-map-controls!TiltState:enum"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tiltState",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#tiltToggleDuration:member",
+              "docComment": "/**\n * Duration in seconds of the camera animation when the tilt button is clicked. Independent of inertia.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "tiltToggleDuration: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "tiltToggleDuration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!MapControls#toggleTilt:member(1)",
+              "docComment": "/**\n * Toggles the camera tilt between 0 (looking down) and the value at `this.tiltAngle`.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "toggleTilt(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "toggleTilt"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#zoomInertiaDampingDuration:member",
+              "docComment": "/**\n * Inertia damping duration for the zoom, in seconds.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "zoomInertiaDampingDuration: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "zoomInertiaDampingDuration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#zoomLevelDeltaOnControl:member",
+              "docComment": "/**\n * Zoom level delta when using the UI controls.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "zoomLevelDeltaOnControl: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "zoomLevelDeltaOnControl",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#zoomLevelDeltaOnDoubleClick:member",
+              "docComment": "/**\n * Zoom level delta to apply when double clicking or double tapping. `0` disables the feature.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "zoomLevelDeltaOnDoubleClick: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "zoomLevelDeltaOnDoubleClick",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#zoomLevelDeltaOnMouseWheel:member",
+              "docComment": "/**\n * Determines the zoom level delta for single mouse wheel movement. So after each mouse wheel movement the current zoom level will be added or subtracted by this value. The default value is `0.2` - this means that every 5th mouse wheel movement you will cross a zoom level.\n *\n * **Note**: To reverse the zoom direction, you can provide a negative value.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "zoomLevelDeltaOnMouseWheel: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "zoomLevelDeltaOnMouseWheel",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControls#zoomLevelTargeted:member",
+              "docComment": "/**\n * Get the zoom level targeted by `MapControls`. Useful when inertia is on, to add incremented values to the target instead of getting the random zoomLevel value during the interpolation.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get zoomLevelTargeted(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "zoomLevelTargeted",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!MapControls#zoomOnTargetPosition:member(1)",
+              "docComment": "/**\n * Zooms and moves the map in such a way that the given target position remains at the same position after the zoom.\n *\n * @param targetPositionOnScreenXinNDC - Target x position in NDC space.\n *\n * @param targetPositionOnScreenYinNDC - Target y position in NDC space.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "zoomOnTargetPosition(targetPositionOnScreenXinNDC: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", targetPositionOnScreenYinNDC: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", zoomLevel: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "targetPositionOnScreenXinNDC",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "targetPositionOnScreenYinNDC",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                },
+                {
+                  "parameterName": "zoomLevel",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  }
+                }
+              ],
+              "name": "zoomOnTargetPosition"
+            }
+          ],
+          "extendsTokenRange": {
+            "startIndex": 1,
+            "endIndex": 4
+          },
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-map-controls!MapControlsUI:class",
+          "docComment": "/**\n * Base class to handle UI overlay elements.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class MapControlsUI "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "MapControlsUI",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-map-controls!MapControlsUI:constructor(1)",
+              "docComment": "/**\n * Constructor of the UI.\n *\n * @param controls - Controls referencing a [[MapView]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(controls: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapControls",
+                  "canonicalReference": "@here/harp-map-controls!MapControls:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", options?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapControlsUIOptions",
+                  "canonicalReference": "@here/harp-map-controls!~MapControlsUIOptions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "controls",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "options",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControlsUI#controls:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly controls: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MapControls",
+                  "canonicalReference": "@here/harp-map-controls!MapControls:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "controls",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-map-controls!MapControlsUI#dispose:member(1)",
+              "docComment": "/**\n * Destroy this [[MapControlsUI]] instance. Unregisters all event handlers used. This method should be called when you stop using [[MapControlsUI]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "dispose(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "dispose"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-map-controls!MapControlsUI#domElement:member",
+              "docComment": "/**\n * The DOM node containing the UI.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly domElement: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HTMLDivElement",
+                  "canonicalReference": "!HTMLDivElement:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "domElement",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Function",
+          "canonicalReference": "@here/harp-map-controls!safeParseDecimalInt:function(1)",
+          "docComment": "/**\n * Safely parses decimal value into `number`.\n *\n * Safely falls back to default value for `null`, `undefined`, `NaN`, empty strings, and strings with characters other than digits.\n *\n * @param text - Number as a text to be parsed.\n *\n * @param fallback - Default value, which is returned if `text` doesn't represent a valid number.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function safeParseDecimalInt(text: "
+            },
+            {
+              "kind": "Content",
+              "text": "string | null | undefined"
+            },
+            {
+              "kind": "Content",
+              "text": ", fallback: "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": "): "
+            },
+            {
+              "kind": "Content",
+              "text": "number"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 5,
+            "endIndex": 6
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [
+            {
+              "parameterName": "text",
+              "parameterTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "parameterName": "fallback",
+              "parameterTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              }
+            }
+          ],
+          "name": "safeParseDecimalInt"
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "@here/harp-map-controls!TiltState:enum",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum TiltState "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TiltState",
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!TiltState.Down:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "Down = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "1"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "Down",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "@here/harp-map-controls!TiltState.Tilted:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "Tilted = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "0"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "Tilted",
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

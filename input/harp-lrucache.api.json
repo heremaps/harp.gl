@@ -1,0 +1,1158 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.8.10",
+    "schemaVersion": 1003,
+    "oldestForwardsCompatibleVersion": 1001
+  },
+  "kind": "Package",
+  "canonicalReference": "@here/harp-lrucache!",
+  "docComment": "/**\n * LRU cache.\n *\n * @remarks\n *\n * @packageDocumentation\n */\n",
+  "name": "@here/harp-lrucache",
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@here/harp-lrucache!",
+      "name": "",
+      "members": [
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-lrucache!Entry:class",
+          "docComment": "/**\n * @hidden\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class Entry<Key, Value> "
+            }
+          ],
+          "releaseTag": "Public",
+          "typeParameters": [
+            {
+              "typeParameterName": "Key",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            },
+            {
+              "typeParameterName": "Value",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "Entry",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-lrucache!Entry:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `Entry` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Key"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", value: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Value"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", size: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", newer: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value> | null"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", older: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value> | null"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "key",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "value",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                },
+                {
+                  "parameterName": "size",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  }
+                },
+                {
+                  "parameterName": "newer",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 7,
+                    "endIndex": 9
+                  }
+                },
+                {
+                  "parameterName": "older",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 10,
+                    "endIndex": 12
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!Entry#key:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Key"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "key",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!Entry#newer:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "newer: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value> | null"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "newer",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!Entry#older:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "older: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value> | null"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "older",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!Entry#size:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "size: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "size",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!Entry#value:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "value: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Value"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "value",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@here/harp-lrucache!LRUCache:class",
+          "docComment": "/**\n * Fixed size cache that evicts its entries in least-recently-used order when it overflows. Modeled after standard JavaScript `Map` otherwise.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class LRUCache<Key, Value> "
+            }
+          ],
+          "releaseTag": "Public",
+          "typeParameters": [
+            {
+              "typeParameterName": "Key",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            },
+            {
+              "typeParameterName": "Value",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "LRUCache",
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@here/harp-lrucache!LRUCache:constructor(1)",
+              "docComment": "/**\n * Creates a new instance of `LRUCache`.\n *\n * The optional [[sizeFunction]] can be used to fine tune the memory consumption of all cached elements, thus [[cacheCapacity]] means then memory used (in MBs). Otherwise, if [[sizeFunction]] is not specified, the [[cacheCapacity]] accounts for the maximum number of elements stored.\n *\n * @param cacheCapacity - Number used to configure the maximum cache size, may express number of entries or memory consumed in megabytes depending on [[sizeFunction]].\n *\n * @param sizeFunction - A function determining the size per element.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(cacheCapacity: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", sizeFunction?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(v: Value) => number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "cacheCapacity",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "sizeFunction",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#canEvict:member",
+              "docComment": "/**\n * Optional callback that is called on every item that should be evicted from the cache to determine if it can be removed, or should be locked in the cache.\n *\n * It returns `true` if the item can be removed from cache, `false` otherwise. Locking items in the cache should be a temporary measure, since if the cache is filled with non-evictable items only, it may grow beyond its capacity.\n *\n * **Note**: This callback is not called when an item is explicitly deleted from the map via [[delete]] or [[clear]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "canEvict?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: Key, value: Value) => boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "canEvict",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#capacity:member",
+              "docComment": "/**\n * Returns the maximum capacity of the cache, i.e. the maximum number of elements this cache can contain or the total amount of memory that may be consumed by cache if element size function was specified in cache c-tor.\n *\n * @returns The capacity of the cache.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get capacity(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "capacity",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#clear:member(1)",
+              "docComment": "/**\n * Clears the cache and removes all stored key-value pairs.\n *\n * Does not call the eviction callback. Use [[evictAll]] to clear the cache and call the eviction callback.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clear(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "clear"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#delete:member(1)",
+              "docComment": "/**\n * Explicitly removes a key-value pair from the cache.\n *\n * **Note**: This is an explicit removal, thus, the eviction callback will not be called.\n *\n * @param key - The key of the key-value pair to delete.\n *\n * @returns `true` if the key-value pair existed and was deleted, `false` otherwise.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "delete(key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Key"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "key",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "delete"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#evict:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected evict(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "evict"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#evictAll:member(1)",
+              "docComment": "/**\n * Evicts all items from the cache, calling the eviction callback on each item.\n *\n * Use [[clear]] to remove all items without calling the eviction callback.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "evictAll(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "evictAll"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#evictionCallback:member",
+              "docComment": "/**\n * Optional callback that is called on every item that is evicted from the cache.\n *\n * **Note**: This callback is not called when an item is explicitly deleted from the map via [[delete]] or [[clear]].\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "evictionCallback?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: Key, value: Value) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "evictionCallback",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#evictOldest:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "protected evictOldest(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value> | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "evictOldest"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#evictSelected:member(1)",
+              "docComment": "/**\n * Evict selected elements from the cache using [[selector]] function.\n *\n * @param selector - The function for selecting elements for eviction.\n *\n * @param thisArg - Optional _this_ object reference.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "evictSelected(selector: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(value: Value, key: Key) => boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", thisArg?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "any"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "selector",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "thisArg",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "evictSelected"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#forEach:member(1)",
+              "docComment": "/**\n * Iterates over all items from the most recently used item to the least recently used one.\n *\n * **Note**: Results are undefined if the entire cache is modified during iteration. You may although modify the current element in [[callbackfn]] function.\n *\n * @param callbackfn - The callback to call for each item.\n *\n * @param thisArg - Optional this argument for the callback.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "forEach(callbackfn: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(value: Value, key: Key, map: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LRUCache",
+                  "canonicalReference": "@here/harp-lrucache!LRUCache:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value>) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", thisArg?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "any"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "callbackfn",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 4
+                  }
+                },
+                {
+                  "parameterName": "thisArg",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  }
+                }
+              ],
+              "name": "forEach"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#get:member(1)",
+              "docComment": "/**\n * Looks up key in the cache and returns the associated value.\n *\n * @param key - The key to look up.\n *\n * @returns The associated value, or `undefined` if the key-value pair is not in the cache.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get(key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Key"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Value | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "key",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "get"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#has:member(1)",
+              "docComment": "/**\n * Test if a key/value pair is in the cache.\n *\n * @param key - The key to look up.\n *\n * @returns `true` if the key-value pair is in the cache, `false` otherwise.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "has(key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Key"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "key",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "has"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#map:member",
+              "docComment": "/**\n * @deprecated\n *\n * - DO NOT USE. Will be removed in future versions.\n *\n * Returns the internal map object that keeps the key-value pairs and their order.\n *\n * @returns The internal map object.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get map(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Map",
+                  "canonicalReference": "!Map:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value>>"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "map",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#newest:member",
+              "docComment": "/**\n * Returns the newest entry in the cache.\n *\n * @returns Newest entry in the cache.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get newest(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value> | null"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "newest",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#oldest:member",
+              "docComment": "/**\n * Returns the oldest entry in the cache.\n *\n * Note: Does not promote the oldest item as most recently used item.\n *\n * @returns Oldest entry in the cache.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get oldest(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Entry",
+                  "canonicalReference": "@here/harp-lrucache!Entry:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<Key, Value> | null"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "oldest",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              },
+              "isStatic": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#set:member(1)",
+              "docComment": "/**\n * Inserts or updates a key/value pair in the cache.\n *\n * If the key already existed in the cache, it will be updated and promoted to the most recently used item.\n *\n * If the key didn't exist in the cache, it will be inserted as most recently used item. An eviction of the least recently used item takes place if the cache exceeded its capacity.\n *\n * @param key - The key for the key-value pair to insert or update.\n *\n * @param value - The value for the key-value pair to insert or update.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "set(key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Key"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", value: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "Value"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "key",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "value",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "set"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#setCapacity:member(1)",
+              "docComment": "/**\n * Resets the capacity of this cache. If `newCapacity` is smaller than the current cache size, all items will be evicted until the cache shrinks to `newCapacity`.\n *\n * @param newCapacity - The new capacity of this cache.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setCapacity(newCapacity: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "newCapacity",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "name": "setCapacity"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#setCapacityAndMeasure:member(1)",
+              "docComment": "/**\n * Resets the cache capacity and function used to measure the element size.\n *\n * @param newCapacity - The new capacity masured in units returned from [[sizeMeasure]] funtion.\n *\n * @param sizeMeasure - Function that defines the size of element, if you want to measure number of elements only always return 1 from this function (default), you may also specify own function that measures entries by memory consumed, nubmer of sub-elements, etc.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setCapacityAndMeasure(newCapacity: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", sizeMeasure?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(v: Value) => number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "newCapacity",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                },
+                {
+                  "parameterName": "sizeMeasure",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  }
+                }
+              ],
+              "name": "setCapacityAndMeasure"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#shrinkToCapacity:member(1)",
+              "docComment": "/**\n * Updates the size of all elements in this cache. If their aggregated size is larger than the capacity, items will be evicted until the cache shrinks to fit the capacity.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "shrinkToCapacity(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "shrinkToCapacity"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "@here/harp-lrucache!LRUCache#size:member",
+              "docComment": "/**\n * The size of the cache, i.e. the sum of all the sizes of all the objects in the cache.\n *\n * @returns The size of the cache.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get size(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "size",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false
+            }
+          ],
+          "implementsTokenRanges": []
+        }
+      ]
+    }
+  ]
+}
