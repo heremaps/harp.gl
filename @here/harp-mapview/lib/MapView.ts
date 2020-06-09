@@ -2607,8 +2607,9 @@ export class MapView extends THREE.EventDispatcher {
      * provided, this method restricts the eviction the [[DataSource]] with the given name.
      *
      * @param dataSourceName The name of the [[DataSource]].
+     * @param filter Optional tile filter
      */
-    clearTileCache(dataSourceName?: string) {
+    clearTileCache(dataSourceName?: string, filter?: (tile: Tile) => boolean) {
         if (this.m_visibleTiles === undefined) {
             // This method is called in the shadowsEnabled function, which is initialized in the
             // setupRenderer function,
@@ -2617,11 +2618,11 @@ export class MapView extends THREE.EventDispatcher {
         if (dataSourceName !== undefined) {
             const dataSource = this.getDataSourceByName(dataSourceName);
             if (dataSource) {
-                this.m_visibleTiles.clearTileCache(dataSource);
+                this.m_visibleTiles.clearTileCache(dataSource, filter);
                 dataSource.clearCache();
             }
         } else {
-            this.m_visibleTiles.clearTileCache();
+            this.m_visibleTiles.clearTileCache(undefined, filter);
             this.m_tileDataSources.forEach(dataSource => dataSource.clearCache());
         }
 

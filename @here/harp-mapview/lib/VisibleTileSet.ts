@@ -817,12 +817,15 @@ export class VisibleTileSet {
      * provided, this method restricts the eviction the [[DataSource]] with the given name.
      *
      * @param dataSourceName The name of the [[DataSource]].
+     * @param filter Optional tile filter
      */
-    clearTileCache(dataSource?: DataSource) {
+    clearTileCache(dataSource?: DataSource, filter?: (tile: Tile) => boolean) {
         if (dataSource !== undefined) {
             this.m_dataSourceCache.evictSelected((tile: Tile, _) => {
-                return tile.dataSource === dataSource;
+                return tile.dataSource === dataSource && (filter ? filter(tile) : true);
             });
+        } else if (filter) {
+            this.m_dataSourceCache.evictSelected(filter);
         } else {
             this.m_dataSourceCache.evictAll();
         }
