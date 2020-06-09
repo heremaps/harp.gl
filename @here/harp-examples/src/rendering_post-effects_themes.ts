@@ -21,7 +21,7 @@ export namespace EffectsExample {
 
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/resources/berlin_tilezen_effects_streets.json"
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);

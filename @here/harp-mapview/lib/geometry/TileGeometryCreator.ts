@@ -766,7 +766,16 @@ export class TileGeometryCreator {
                     bufferGeometry.setIndex(attachment.getBufferAttribute(index));
                 }
 
-                if (!bufferGeometry.getAttribute("normal") && needsVertexNormals(technique)) {
+                // Geometry with edges are typically buildings. If they are buildings, the outline
+                // effect may be applied to it, which needs the normals.
+                const isBuilding =
+                    isExtrudedPolygonTechnique(technique) &&
+                    attachment.info.edgeIndex !== undefined;
+
+                if (
+                    !bufferGeometry.getAttribute("normal") &&
+                    (isBuilding || needsVertexNormals(technique))
+                ) {
                     bufferGeometry.computeVertexNormals();
                 }
 
@@ -961,7 +970,8 @@ export class TileGeometryCreator {
                 objects.push(object);
 
                 // Add the extruded building edges as a separate geometry.
-                if (isExtrudedPolygonTechnique(technique) && attachment.info.edgeIndex) {
+                if (isBuilding) {
+                    const buildingTechnique = technique as ExtrudedPolygonTechnique;
                     const edgeGeometry = new THREE.BufferGeometry();
                     edgeGeometry.setAttribute("position", bufferGeometry.getAttribute("position"));
 
@@ -1029,8 +1039,8 @@ export class TileGeometryCreator {
                         technique
                     });
                     MapMaterialAdapter.create(edgeMaterial, {
-                        color: technique.lineColor,
-                        opacity: technique.opacity
+                        color: buildingTechnique.lineColor,
+                        opacity: buildingTechnique.opacity
                     });
                     objects.push(edgeObj);
                 }

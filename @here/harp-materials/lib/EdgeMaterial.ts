@@ -19,12 +19,17 @@ import { enforceBlending, setShaderDefine, setShaderMaterialDefine } from "./Uti
 const vertexSource: string = `
 #define EDGE_DEPTH_OFFSET 0.0001
 
-attribute vec3 position;
 attribute vec4 color;
 
+// SHADER_NAME may be defined by THREE.JS own shaders in which case these attributes & uniforms are
+// already defined
+#ifndef SHADER_NAME
+attribute vec3 position;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat3 normalMatrix;
+#endif
+
 uniform vec3 edgeColor;
 uniform float edgeColorMix;
 
