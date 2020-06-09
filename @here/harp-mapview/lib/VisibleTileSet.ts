@@ -846,12 +846,17 @@ export class VisibleTileSet {
      * the {@link DataSource} with the given name.
      *
      * @param dataSourceName - The name of the {@link DataSource}.
+     * @param filter Optional tile filter
      */
-    clearTileCache(dataSource?: DataSource) {
+    clearTileCache(dataSource?: DataSource, filter?: (tile: Tile) => boolean) {
         if (dataSource !== undefined) {
             this.m_dataSourceCache.evictSelected((tile: Tile, _) => {
-                return tile.dataSource === dataSource;
+                return (
+                    tile.dataSource === dataSource && (filter !== undefined ? filter(tile) : true)
+                );
             });
+        } else if (filter !== undefined) {
+            this.m_dataSourceCache.evictSelected(filter);
         } else {
             this.m_dataSourceCache.evictAll();
         }
