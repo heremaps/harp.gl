@@ -14,8 +14,8 @@ import {
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
-import { apikey, copyrightInfo } from "../config";
+import { OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey } from "../config";
 import { faults, hotspots } from "../resources/geology";
 
 /**
@@ -224,16 +224,8 @@ export namespace LinesPointsFeaturesExample {
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 
         const baseMap = new OmvDataSource({
-            name: "basemap",
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
+            authenticationCode: apikey
         });
         mapView.addDataSource(baseMap);
 

@@ -14,9 +14,9 @@ import {
     MapViewOptions,
     MapViewUtils
 } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { apikey, copyrightInfo } from "../config";
+import { apikey } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
 // The controls are not in common.js they explicitly require a
@@ -102,14 +102,7 @@ export namespace FreeCameraAppDebuggingToolExample {
         start() {
             const omvDataSource = new OmvDataSource({
                 baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-                apiFormat: APIFormat.XYZOMV,
-                styleSetName: "tilezen",
-                authenticationCode: apikey,
-                authenticationMethod: {
-                    method: AuthenticationMethod.QueryString,
-                    name: "apikey"
-                },
-                copyrightInfo
+                authenticationCode: apikey
             });
 
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);

@@ -33,7 +33,7 @@ export class GeoJsonDataSource extends OmvDataSource {
      *
      * @param params Data source configuration's parameters.
      */
-    constructor(readonly params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
+    constructor(params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super({ styleSetName: "geojson", ...params });
     }
 }

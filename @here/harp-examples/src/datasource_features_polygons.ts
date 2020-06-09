@@ -13,9 +13,9 @@ import {
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { apikey, copyrightInfo } from "../config";
+import { apikey } from "../config";
 import { COUNTRIES } from "../resources/countries";
 
 /**
@@ -333,16 +333,8 @@ export namespace PolygonsFeaturesExample {
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 
         const baseMap = new OmvDataSource({
-            name: "basemap",
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
+            authenticationCode: apikey
         });
         mapView.addDataSource(baseMap);
 

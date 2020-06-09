@@ -10,11 +10,11 @@ import {
     ControlPoint
 } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
 import THREE = require("three");
 
-import { apikey, copyrightInfo } from "../config";
+import { apikey } from "../config";
 
 interface GeoLocations {
     [key: string]: GeoCoordinates;
@@ -245,14 +245,7 @@ export namespace CameraAnimationExample {
 
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
+            authenticationCode: apikey
         });
         mapView.addDataSource(omvDataSource);
 

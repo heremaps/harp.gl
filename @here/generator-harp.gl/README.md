@@ -22,14 +22,8 @@ Set you access token in `View.ts`:
 
 ```typescript
 const omvDataSource = new OmvDataSource({
-   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-   apiFormat: harp.APIFormat.XYZOMV,
-   styleSetName: "tilezen",
-   authenticationCode: "YOUR-APIKEY",
-   authenticationMethod: {
-         method: harp.AuthenticationMethod.QueryString,
-         name: "apikey"
-   }
+    baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+    authenticationCode: "YOUR-APIKEY"
 });
 ```
 Then start it using `webpack-dev-server`:

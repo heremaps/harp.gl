@@ -7,8 +7,8 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
-import { apikey, copyrightInfo } from "../config";
+import { OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey } from "../config";
 
 /**
  * MapView initialization sequence enables setting all the necessary elements on a map  and returns
@@ -114,14 +114,7 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_4.ts
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
+            authenticationCode: apikey
         });
         // end:harp_gl_hello_world_example_4.ts
 

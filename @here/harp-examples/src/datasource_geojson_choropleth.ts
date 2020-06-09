@@ -8,14 +8,9 @@ import { StyleDeclaration, StyleSet, Theme } from "@here/harp-datasource-protoco
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import {
-    APIFormat,
-    AuthenticationMethod,
-    GeoJsonDataProvider,
-    OmvDataSource
-} from "@here/harp-omv-datasource";
+import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { apikey, copyrightInfo } from "../config";
+import { apikey } from "../config";
 
 /**
  * This example demonstrates how to generate a heatmap-like [[StyleSet]] for a GeoJson. To do so,
@@ -93,14 +88,7 @@ export namespace GeoJsonHeatmapExample {
 
         const baseMapDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
+            authenticationCode: apikey
         });
 
         mapView.addDataSource(baseMapDataSource);
