@@ -16,7 +16,12 @@ import {
 import { EarthConstants, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LineGroup } from "@here/harp-lines";
 import { CopyrightInfo, CopyrightProvider, DataSourceOptions } from "@here/harp-mapview";
-import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
+import {
+    DataProvider,
+    TileDataSource,
+    TileDataSourceOptions,
+    TileFactory
+} from "@here/harp-mapview-decoder";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import {
     FeatureModifierId,
@@ -24,7 +29,12 @@ import {
     OmvFeatureFilterDescription,
     OMV_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
-import { OmvRestClient, OmvRestClientParameters } from "./OmvRestClient";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    OmvRestClient,
+    OmvRestClientParameters
+} from "./OmvRestClient";
 import { OmvTile } from "./OmvTile";
 
 const logger = LoggerManager.instance.create("OmvDataSource");
@@ -194,19 +204,87 @@ export type OmvWithCustomDataProvider = OmvDataSourceParameters & { dataProvider
 
 let missingOmvDecoderServiceInfoEmitted: boolean = false;
 
+/**
+ * The default vector tile service.
+ */
+const hereVectorTileBaseUrl = "https://vector.hereapi.com/v2/vectortiles/base/mc";
+
+/**
+ * Default options for the HERE Vector Tile service.
+ */
+const hereVectoTileDefaultOptions: OmvWithRestClientParams = {
+    baseUrl: hereVectorTileBaseUrl,
+    apiFormat: APIFormat.XYZOMV,
+    styleSetName: "tilezen",
+    authenticationMethod: {
+        method: AuthenticationMethod.QueryString,
+        name: "apikey"
+    },
+    copyrightInfo: [
+        {
+            id: "here.com",
+            year: new Date().getFullYear(),
+            label: "HERE",
+            link: "https://legal.here.com/terms"
+        }
+    ]
+};
+
+const defaultOptions = new Map<string, OmvWithRestClientParams>([
+    [hereVectorTileBaseUrl, hereVectoTileDefaultOptions]
+]);
+
+/**
+ * Tests if the given object has custom data provider.
+ * @param object
+ */
+function hasCustomDataProvider(
+    object: Partial<OmvWithCustomDataProvider>
+): object is OmvWithCustomDataProvider {
+    return object.dataProvider !== undefined;
+}
+
+/**
+ * Add service specific default values.
+ *
+ * @param params The configuration settings of the data source.
+ */
+function completeDataSourceParameters(
+    params: OmvWithRestClientParams | OmvWithCustomDataProvider
+): TileDataSourceOptions {
+    if (!hasCustomDataProvider(params) && params.url === undefined) {
+        const baseUrl = params.baseUrl ?? hereVectorTileBaseUrl;
+
+        const completedParams = {
+            ...defaultOptions.get(baseUrl),
+            ...params
+        };
+
+        return {
+            ...completedParams,
+            tilingScheme: webMercatorTilingScheme,
+            dataProvider: new OmvRestClient(completedParams)
+        };
+    }
+
+    return {
+        ...params,
+        tilingScheme: webMercatorTilingScheme,
+        dataProvider: getDataProvider(params)
+    };
+}
+
 export class OmvDataSource extends TileDataSource<OmvTile> {
     private readonly m_decoderOptions: OmvDecoderOptions;
 
     constructor(private m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory || new TileFactory(OmvTile), {
-            ...m_params,
-            styleSetName: m_params.styleSetName || "omv",
-            tilingScheme: webMercatorTilingScheme,
-            dataProvider: getDataProvider(m_params),
+            styleSetName: m_params.styleSetName ?? "omv",
             concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,
-            minDataLevel: getOptionValue(m_params.minDataLevel, 1),
-            maxDataLevel: getOptionValue(m_params.maxDataLevel, 17),
-            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
+            minDataLevel: m_params.minDataLevel ?? 1,
+            maxDataLevel: m_params.maxDataLevel ?? 17,
+            storageLevelOffset: m_params.storageLevelOffset ?? -1,
+            ...completeDataSourceParameters(m_params)
         });
 
         this.cacheable = true;
@@ -222,7 +300,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
                 : undefined,
             politicalView: this.m_params.politicalView,
             skipShortLabels: this.m_params.skipShortLabels,
-            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
+            storageLevelOffset: m_params.storageLevelOffset ?? -1,
             enableElevationOverlay: this.m_params.enableElevationOverlay === true
         };
 

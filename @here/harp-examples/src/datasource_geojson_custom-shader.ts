@@ -7,13 +7,8 @@
 import { GeoBox, GeoCoordinates, GeoPointLike } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import {
-    APIFormat,
-    AuthenticationMethod,
-    GeoJsonDataProvider,
-    OmvDataSource
-} from "@here/harp-omv-datasource";
-import { apikey, copyrightInfo } from "../config";
+import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey } from "../config";
 
 import * as geojson from "../resources/polygon.json";
 
@@ -125,14 +120,7 @@ export namespace GeoJsonCustomShaderExample {
         private addBaseMap() {
             const dataSource = new OmvDataSource({
                 baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-                apiFormat: APIFormat.XYZOMV,
-                styleSetName: "tilezen",
-                authenticationCode: apikey,
-                authenticationMethod: {
-                    method: AuthenticationMethod.QueryString,
-                    name: "apikey"
-                },
-                copyrightInfo
+                authenticationCode: apikey
             });
 
             this.mapView.addDataSource(dataSource);

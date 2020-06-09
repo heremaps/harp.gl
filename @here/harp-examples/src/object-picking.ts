@@ -7,8 +7,8 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, PickResult } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
-import { apikey, copyrightInfo } from "../config";
+import { OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey } from "../config";
 
 /**
  * This example showcases how picking works.
@@ -221,15 +221,7 @@ export namespace PickingExample {
 
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            gatherFeatureAttributes: true,
-            copyrightInfo
+            authenticationCode: apikey
         });
 
         mapView.setDynamicProperty("selection", []);

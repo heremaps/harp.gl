@@ -6,9 +6,9 @@
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { apikey, copyrightInfo } from "../config";
+import { apikey } from "../config";
 
 /**
  * In this example we simply use the `lookAt` method to make the camera orbit around a geolocation.
@@ -69,14 +69,7 @@ export namespace CameraOrbitExample {
 
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
+            authenticationCode: apikey
         });
         mapView.addDataSource(omvDataSource);
 

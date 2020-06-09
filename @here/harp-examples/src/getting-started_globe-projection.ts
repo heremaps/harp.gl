@@ -7,8 +7,8 @@
 import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
-import { apikey, copyrightInfo } from "../config";
+import { OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey } from "../config";
 
 export namespace GlobeExample {
     // Create a new MapView for the HTMLCanvasElement of the given id.
@@ -37,14 +37,7 @@ export namespace GlobeExample {
 
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
+            authenticationCode: apikey
         });
 
         map.addDataSource(omvDataSource);

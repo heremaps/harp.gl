@@ -8,11 +8,11 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
 import * as THREE from "three";
 import "three/examples/js/controls/TrackballControls";
-import { apikey, copyrightInfo } from "../config";
+import { apikey } from "../config";
 
 // tslint:disable-next-line:no-var-requires
 const SunCalc = require("suncalc");
@@ -252,14 +252,7 @@ function initializeMapView(id: string, theme: Theme): MapView {
 const addOmvDataSource = (): Promise<void> => {
     const omvDataSource = new OmvDataSource({
         baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-        apiFormat: APIFormat.XYZOMV,
-        styleSetName: "tilezen",
-        authenticationCode: apikey,
-        authenticationMethod: {
-            method: AuthenticationMethod.QueryString,
-            name: "apikey"
-        },
-        copyrightInfo
+        authenticationCode: apikey
     });
 
     return map.addDataSource(omvDataSource);
