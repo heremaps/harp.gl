@@ -250,7 +250,11 @@ export class OutlineEffect {
             skinning: false,
             morphTargets: false,
             morphNormals: false,
-            fog: false
+            fog: false,
+            transparent: true,
+            polygonOffset: true,
+            polygonOffsetFactor: 3.0,
+            polygonOffsetUnits: 1.0
         });
     }
 
