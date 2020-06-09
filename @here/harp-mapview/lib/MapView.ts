@@ -1524,6 +1524,8 @@ export class MapView extends THREE.EventDispatcher {
      */
     addEventListener(type: MapViewEventNames, listener: (event: RenderEvent) => void): void;
 
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
     addEventListener(type: string, listener: any): void {
         super.addEventListener(type, listener);
     }
@@ -1544,6 +1546,8 @@ export class MapView extends THREE.EventDispatcher {
      */
     removeEventListener(type: MapViewEventNames, listener: (event: RenderEvent) => void): void;
 
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
     removeEventListener(type: string, listener: any): void {
         super.removeEventListener(type, listener);
     }
@@ -3309,7 +3313,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_theme.priorities
         );
 
-        this.m_animatedExtrusionHandler.zoom = this.m_zoomLevel;
+        this.m_animatedExtrusionHandler.update(this.zoomLevel);
 
         if (currentFrameEvent !== undefined) {
             // Make sure the counters all have a value.

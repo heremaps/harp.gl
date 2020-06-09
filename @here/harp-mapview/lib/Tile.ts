@@ -5,9 +5,8 @@
  */
 import { DecodedTile, GeometryType, TextPathGeometry } from "@here/harp-datasource-protocol";
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
-import { assert, CachedResource, LoggerManager } from "@here/harp-utils";
+import { assert, CachedResource, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationRange } from "./ElevationRangeSource";
@@ -184,6 +183,8 @@ export interface TextElementIndex {
     elementIndex: number;
 }
 
+type TileCallback = (tile: Tile) => void;
+
 /**
  * The class that holds the tiled data for a [[DataSource]].
  */
@@ -273,6 +274,7 @@ export class Tile implements CachedResource {
     private readonly m_boundingBox = new OrientedBox3();
 
     private m_disposed: boolean = false;
+    private m_disposeCallback?: TileCallback;
     private m_localTangentSpace = false;
 
     private m_forceHasGeometry: boolean | undefined = undefined;
@@ -304,8 +306,6 @@ export class Tile implements CachedResource {
 
     // List of owned textures for disposal
     private m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
-
-    private m_animatedExtrusionTileHandler: AnimatedExtrusionTileHandler | undefined;
 
     private m_textStyleCache: TileTextStyleCache;
     private m_uniqueKey: number;
@@ -865,17 +865,6 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Handler for animation of `Tile` geometries.
-     */
-    get animatedExtrusionTileHandler(): AnimatedExtrusionTileHandler | undefined {
-        return this.m_animatedExtrusionTileHandler;
-    }
-
-    set animatedExtrusionTileHandler(handler: AnimatedExtrusionTileHandler | undefined) {
-        this.m_animatedExtrusionTileHandler = handler;
-    }
-
-    /**
      * Text style cache for this tile.
      * @hidden
      */
@@ -944,10 +933,6 @@ export class Tile implements CachedResource {
             this.preparedTextPaths = [];
         }
 
-        if (this.m_animatedExtrusionTileHandler !== undefined) {
-            this.m_animatedExtrusionTileHandler.dispose();
-        }
-
         this.m_textStyleCache.clear();
         this.clearTextElements();
         this.invalidateResourceInfo();
@@ -963,6 +948,16 @@ export class Tile implements CachedResource {
         this.textElementsChanged = true;
         this.m_pathBlockingElements.splice(0);
         this.textElementGroups.clear();
+    }
+
+    /**
+     * Adds a callback that will be called whenever the tile is disposed. Multiple callbacks may be
+     * added.
+     * @internal
+     * @param callback - The callback to be called when the tile is disposed.
+     */
+    addDisposeCallback(callback: TileCallback) {
+        this.m_disposeCallback = chainCallbacks(this.m_disposeCallback, callback);
     }
 
     /**
@@ -984,6 +979,9 @@ export class Tile implements CachedResource {
         this.m_disposed = true;
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
+        if (this.m_disposeCallback) {
+            this.m_disposeCallback(this);
+        }
     }
 
     /**
