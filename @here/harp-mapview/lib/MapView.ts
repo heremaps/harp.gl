@@ -3256,7 +3256,6 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         RENDER_EVENT.time = frameStartTime;
-        this.dispatchEvent(RENDER_EVENT);
 
         ++this.m_frameNumber;
 
@@ -3281,6 +3280,8 @@ export class MapView extends THREE.EventDispatcher {
             currentFrameEvent = currentFrameEvent as FrameStats;
             currentFrameEvent.setValue("renderCount.frameNumber", this.m_frameNumber);
         }
+
+        this.dispatchEvent(RENDER_EVENT);
 
         this.m_previousFrameTimeStamp = frameStartTime;
 
