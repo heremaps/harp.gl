@@ -1,10 +1,8 @@
-*.ts
-!*.d.ts
 test/
 lib/
 tsconfig.json
 api-extractor.json
-webpack.config.ts
+webpack.config.js
 .gitignore
 .gitreview
 *.tgz
