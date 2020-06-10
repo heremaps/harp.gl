@@ -265,6 +265,14 @@ export class Tile implements CachedResource {
     skipRendering: boolean = false;
 
     /**
+     * If the tile should not yet be rendered, this is used typically when the tile in question
+     * does not fit into the gpu upload limit of the current frame.
+     * Setting this value directly affects the [[willRender]] method, unless
+     * overriden by deriving classes.
+     */
+    delayRendering = false;
+
+    /**
      * @hidden
      *
      * Prepared text geometries optimized for display.
@@ -607,7 +615,7 @@ export class Tile implements CachedResource {
      * [[skipRendering]] property unless specifically overriden in deriving classes.
      */
     willRender(_zoomLevel: number): boolean {
-        return !this.skipRendering;
+        return !this.skipRendering && !this.delayRendering;
     }
 
     /**

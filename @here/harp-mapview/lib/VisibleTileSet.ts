@@ -85,6 +85,15 @@ export interface VisibleTileSetOptions {
      * Number of levels to go down when searching for fallback tiles.
      */
     quadTreeSearchDistanceDown: number;
+
+    /**
+     * Maximal number of new tiles, that can be added to the scene per frame.
+     * if set to `0`the limit will be ignored and all available tiles be uploaded.
+     * @beta
+     * @internal
+     * @defaultValue 0
+     */
+    maxTilesPerFrame: number;
 }
 
 const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
@@ -394,6 +403,8 @@ export class VisibleTileSet {
         private readonly m_tileGeometryManager: TileGeometryManager,
         public options: VisibleTileSetOptions
     ) {
+        this.options = options;
+        this.options.maxTilesPerFrame = Math.floor(this.options.maxTilesPerFrame ?? 0);
         this.m_resourceComputationType =
             options.resourceComputationType === undefined
                 ? ResourceComputationType.EstimationInMb
@@ -442,6 +453,28 @@ export class VisibleTileSet {
      */
     setNumberOfVisibleTiles(size: number) {
         this.options.maxVisibleDataSourceTiles = size;
+    }
+
+    /**
+     * Gets the maximum number of tiles that can be added to the scene per frame
+     * @beta
+     * @internal
+     */
+    get maxTilesPerFrame(): number {
+        return this.options.maxTilesPerFrame;
+    }
+
+    /**
+     * Gets the maximum number of tiles that can be added to the scene per frame
+     * @beta
+     * @internal
+     * @param value
+     */
+    set maxTilesPerFrame(value: number) {
+        if (value < 0) {
+            throw new Error("Invalid value, this will result in no tiles ever showing");
+        }
+        this.options.maxTilesPerFrame = Math.floor(value);
     }
 
     /**
@@ -500,6 +533,7 @@ export class VisibleTileSet {
         elevationRangeSource?: ElevationRangeSource
     ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
         let allVisibleTilesLoaded: boolean = true;
+        let newTilesPerFrame = 0;
 
         const visibleTileKeysResult = this.getVisibleTileKeysForDataSources(
             zoomLevel,
@@ -553,14 +587,27 @@ export class VisibleTileSet {
                 if (!tile.allGeometryLoaded) {
                     numTilesLoading++;
                 } else {
-                    tile.numFramesVisible++;
                     // If this tile's data source is "covering" then other tiles beneath it have
                     // their rendering skipped, see [[Tile.willRender]].
                     this.skipOverlappedTiles(dataSource, tile);
 
-                    if (tile.frameNumVisible < 0) {
-                        // Store the fist frame the tile became visible.
-                        tile.frameNumVisible = frameNumber;
+                    if (
+                        // if set to 0, it will ignore the limit and upload all available
+                        this.options.maxTilesPerFrame !== 0 &&
+                        newTilesPerFrame > this.options.maxTilesPerFrame &&
+                        //if the tile was already visible last frame dont delay it
+                        !(tile.frameNumLastVisible === frameNumber - 1)
+                    ) {
+                        tile.delayRendering = true;
+                        tile.mapView.update();
+                    } else {
+                        if (tile.frameNumVisible < 0) {
+                            // Store the fist frame the tile became visible.
+                            tile.frameNumVisible = frameNumber;
+                            newTilesPerFrame++;
+                        }
+                        tile.numFramesVisible++;
+                        tile.delayRendering = false;
                     }
                 }
                 // Update the visible area of the tile. This is used for those tiles that are
@@ -950,7 +997,7 @@ export class VisibleTileSet {
             // ("incompleteTiles").
             renderListEntry.visibleTiles.forEach(tile => {
                 tile.levelOffset = 0;
-                if (tile.hasGeometry) {
+                if (tile.hasGeometry && !tile.delayRendering) {
                     renderedTiles.set(tile.uniqueKey, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
@@ -1026,8 +1073,9 @@ export class VisibleTileSet {
             );
 
             const nextLevelDiff = Math.abs(childTileKey.level - dataZoomLevel);
-            if (childTile !== undefined && childTile.hasGeometry) {
-                // childTile has geometry, so can be reused as fallback
+            if (childTile !== undefined && childTile.hasGeometry && !childTile.delayRendering) {
+                //childTile has geometry and was/can be uploaded to the GPU,
+                //so we can use it as fallback
                 renderedTiles.set(childTileCode, childTile);
                 childTile.levelOffset = nextLevelDiff;
                 continue;
@@ -1071,7 +1119,7 @@ export class VisibleTileSet {
         const parentTile = this.m_dataSourceCache.get(mortonCode, offset, dataSource);
         const parentTileKey = parentTile ? parentTile.tileKey : TileKey.fromMortonCode(mortonCode);
         const nextLevelDiff = Math.abs(dataZoomLevel - parentTileKey.level);
-        if (parentTile !== undefined && parentTile.hasGeometry) {
+        if (parentTile !== undefined && parentTile.hasGeometry && !parentTile.delayRendering) {
             checkedTiles.set(parentCode, true);
             // parentTile has geometry, so can be reused as fallback
             renderedTiles.set(parentCode, parentTile);

@@ -108,7 +108,8 @@ class Fixture {
             tileCacheSize: 200,
             resourceComputationType: ResourceComputationType.EstimationInMb,
             quadTreeSearchDistanceUp: params.quadTreeSearchDistanceUp ?? 3,
-            quadTreeSearchDistanceDown: params.quadTreeSearchDistanceDown ?? 2
+            quadTreeSearchDistanceDown: params.quadTreeSearchDistanceDown ?? 2,
+            maxTilesPerFrame: 0
         };
         this.vts = new VisibleTileSet(
             this.frustumIntersection,
