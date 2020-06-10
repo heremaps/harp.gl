@@ -29,7 +29,8 @@
     },
 
     "dtsRollup": {
-        "enabled": true
+        "enabled": true,
+        "untrimmedFilePath": "dist/harp.d.ts"
     },
 
     "tsdocMetadata": {

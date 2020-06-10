@@ -12,13 +12,13 @@
         "harpgl"
     ],
     "main": "dist/harp.js",
-    "types": "dist/harp.gl.d.ts",
+    "types": "dist/harp.d.ts",
     "scripts": {
         "prepare": "webpack && NODE_ENV=production webpack",
         "prepack": "yarn build-typings",
         "profile-min": "NODE_ENV=production webpack --profile --json > webpack-stats-production.json",
         "profile-dev": "webpack --profile --json > webpack-stats-dev.json",
-        "build-typings": "tsc --build && api-extractor run && echo 'export as namespace harp;' >> dist/harp.gl.d.ts",
+        "build-typings": "tsc --build && api-extractor run && echo 'export as namespace harp;' >> dist/harp.d.ts",
         "test": "true"
     },
     "repository": {
