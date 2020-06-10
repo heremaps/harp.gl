@@ -10,8 +10,8 @@ import { DEFAULT_FONT_CATALOG_NAME, FontCatalogLoader } from "../lib/text/FontCa
 
 /**
  * Stubs font catalog loader.
- * @param sandbox Sinon sandbox to keep track of created stubs.
- * @param fontCatalog Font catalog the loader will always return.
+ * @param sandbox - Sinon sandbox to keep track of created stubs.
+ * @param fontCatalog - Font catalog the loader will always return.
  * @returns FontCatalogLoader stub.
  */
 export function stubFontCatalogLoader(

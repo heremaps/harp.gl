@@ -332,18 +332,18 @@ export class TextElementsRenderer {
      * a preprocessing step, which is not done every frame, and also renders the placed
      * [[TextElement]]s every frame.
      *
-     * @param m_viewState State of the view for which this renderer will draw text.
-     * @param m_viewCamera Camera used by the view for which this renderer will draw text.
-     * @param m_viewUpdateCallback To be called whenever the view needs to be updated.
-     * @param m_screenCollisions General 2D screen occlusion management, may be shared between
+     * @param m_viewState - State of the view for which this renderer will draw text.
+     * @param m_viewCamera - Camera used by the view for which this renderer will draw text.
+     * @param m_viewUpdateCallback - To be called whenever the view needs to be updated.
+     * @param m_screenCollisions - General 2D screen occlusion management, may be shared between
      *     instances.
-     * @param m_screenProjector Projects 3D coordinates into screen space.
-     * @param m_textCanvasFactory To create TextCanvas instances.
-     * @param m_poiRendererFactory To create PoiRenderer instances.
-     * @param m_poiManager To prepare pois for rendering.
-     * @param m_fontCatalogLoader To load font catalogs.
-     * @param m_theme Theme defining  text styles.
-     * @param options Configuration options for the text renderer. See
+     * @param m_screenProjector - Projects 3D coordinates into screen space.
+     * @param m_textCanvasFactory - To create TextCanvas instances.
+     * @param m_poiRendererFactory - To create PoiRenderer instances.
+     * @param m_poiManager - To prepare pois for rendering.
+     * @param m_fontCatalogLoader - To load font catalogs.
+     * @param m_theme - Theme defining  text styles.
+     * @param options - Configuration options for the text renderer. See
      * [[TextElementsRendererOptions]].
      */
     constructor(
@@ -397,7 +397,7 @@ export class TextElementsRenderer {
     /**
      * Render the text using the specified camera into the current canvas.
      *
-     * @param camera Orthographic camera to use.
+     * @param camera - Orthographic camera to use.
      */
     renderText(camera: THREE.OrthographicCamera) {
         if (!this.initialized) {
@@ -447,8 +447,8 @@ export class TextElementsRenderer {
 
     /**
      * Places text elements for the current frame.
-     * @param dataSourceTileList List of tiles to be rendered for each data source.
-     * @param time Current frame time.
+     * @param dataSourceTileList - List of tiles to be rendered for each data source.
+     * @param time - Current frame time.
      */
     placeText(dataSourceTileList: DataSourceTileList[], time: number) {
         const tileTextElementsChanged = checkIfTextElementsChanged(dataSourceTileList);
@@ -500,7 +500,7 @@ export class TextElementsRenderer {
     /**
      * Adds new overlay text elements to this `MapView`.
      *
-     * @param textElements Array of [[TextElement]] to be added.
+     * @param textElements - Array of [[TextElement]] to be added.
      */
     addOverlayText(textElements: TextElement[]): void {
         if (textElements.length === 0) {
@@ -515,7 +515,7 @@ export class TextElementsRenderer {
     /**
      * Adds new overlay text elements to this `MapView`.
      *
-     * @param textElements Array of [[TextElement]] to be added.
+     * @param textElements - Array of [[TextElement]] to be added.
      */
     clearOverlayText(): void {
         this.m_overlayTextElements = [];
@@ -539,8 +539,8 @@ export class TextElementsRenderer {
      * Note: [[TextElement]]s with identical `featureId` or identical `userData` will only appear
      * once in the list `pickResults`.
      *
-     * @param screenPosition Screen coordinate of picking position.
-     * @param pickResults Array filled with pick results.
+     * @param screenPosition - Screen coordinate of picking position.
+     * @param pickResults - Array filled with pick results.
      */
     pickTextElements(screenPosition: THREE.Vector2, pickResults: PickResult[]) {
         const pickHandler = (pickData: any | undefined, pickObjectType: PickObjectType) => {
@@ -667,7 +667,7 @@ export class TextElementsRenderer {
 
     /**
      * Initializes the text renderer once there's any text element available for rendering.
-     * @param textElementsAvailable Indicates whether there's any text element to be rendered.
+     * @param textElementsAvailable - Indicates whether there's any text element to be rendered.
      * @returns Whether the text renderer is initialized.
      */
     private initialize(textElementsAvailable: boolean): boolean {
@@ -707,7 +707,7 @@ export class TextElementsRenderer {
     /**
      * Fills the screen with lines projected from world space, see [[Tile.blockingElements]].
      * @note These boxes have highest priority, so will block all other labels.
-     * @param dataSourceTileList List of tiles to be rendered for each data source.
+     * @param dataSourceTileList - List of tiles to be rendered for each data source.
      */
     private prepopulateScreenWithBlockingElements(dataSourceTileList: DataSourceTileList[]) {
         const boxes: IBox[] = [];
@@ -1085,7 +1085,7 @@ export class TextElementsRenderer {
      *
      * The actually rendered [[TextElement]]s are stored internally until the next update is done
      * to speed up rendering when no camera movement was detected.
-     * @param dataSourceTileList List of tiles to be rendered for each data source.
+     * @param dataSourceTileList - List of tiles to be rendered for each data source.
      */
     private updateTextElements(dataSourceTileList: DataSourceTileList[]) {
         logger.debug("updateTextElements");

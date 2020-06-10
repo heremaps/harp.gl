@@ -712,7 +712,7 @@ export function isLabelRejectionLineTechnique(
 
 /**
  * Check if vertex normals should be generated for this technique (if no normals are in the data).
- * @param technique Technique to check.
+ * @param technique - Technique to check.
  */
 export function needsVertexNormals(technique: Technique): boolean {
     return (
@@ -764,8 +764,8 @@ export function addBuffersToTransferList(technique: Technique, transferList: Arr
  * Compose full texture name for given image name with technique specified.
  * Some techniques allows to add prefix/postfix to icons names specified, this
  * function uses technique information to create fully qualified texture name.
- * @param imageName base name of the marker icon.
- * @param technique the technique describing POI or line marker.
+ * @param imageName - base name of the marker icon.
+ * @param technique - the technique describing POI or line marker.
  * @returns fully qualified texture name for loading from atlas (without extension).
  */
 export function composeTechniqueTextureName(

@@ -44,8 +44,8 @@ declare const global: any;
  *
  * Use to stub global constructors like `Worker` or `XMLHttpRequest`.
  *
- * @param sandbox `sinon.Sandbox` instance, required for proper cleanup after test
- * @param name name of global symbol to be constructor
+ * @param sandbox - `sinon.Sandbox` instance, required for proper cleanup after test
+ * @param name - name of global symbol to be constructor
  */
 export function stubGlobalConstructor(sandbox: sinon.SinonSandbox, name: string) {
     const theGlobal: any = typeof window !== "undefined" ? window : global;
@@ -102,7 +102,7 @@ let mochaCurrentTest: any; // any is used to skip import of whole 'Mocha' for on
  *       assert.equals(foo.readyCount, 6);
  *   });
  *
- * @param test closure with assertions that must pass
+ * @param test - closure with assertions that must pass
  * @returns promise that resolves when `test` passes without any error
  */
 export function willEventually<T = void>(test: () => T): Promise<T> {
@@ -186,10 +186,10 @@ type IConsoleLike = Pick<Console, "error" | "info" | "log" | "warn">;
  *   );
  * ```
  *
- * @param fn test function that shall provoke certain log output
- * @param channel `Console` like object
- * @param type type of console message i.e `"log" | "error" | "warn" | "info`
- * @param errorMessagePattern string or regular expression that we look for in logs
+ * @param fn - test function that shall provoke certain log output
+ * @param channel - `Console` like object
+ * @param type - type of console message i.e `"log" | "error" | "warn" | "info`
+ * @param errorMessagePattern - string or regular expression that we look for in logs
  */
 export function assertLogsSync(
     fn: () => void,
@@ -236,9 +236,9 @@ export interface EventSource<T> {
  *
  * Automatically unregisters itself receiving the event.
  *
- * @param source event source or target that has add/removeEventListener(type, listener) method.
+ * @param source - event source or target that has add/removeEventListener(type, listener) method.
  *     protocol
- * @param eventType type of event
+ * @param eventType - type of event
  * @returns promise that resolves to first event that is received
  */
 export function waitForEvent<T>(source: EventSource<T>, eventType: string): Promise<T> {

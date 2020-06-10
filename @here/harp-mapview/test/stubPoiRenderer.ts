@@ -15,8 +15,8 @@ import { PoiInfo } from "../lib/text/TextElement";
 
 /**
  * Creates a PoiRenderer stub.
- * @param sandbox Sinon sandbox used to keep track of created stubs.
- * @param renderPoiSpy Spy that will be called when [[renderPoi]] method is called on
+ * @param sandbox - Sinon sandbox used to keep track of created stubs.
+ * @param renderPoiSpy - Spy that will be called when [[renderPoi]] method is called on
  * the created PoiRenderer stub.
  * @returns PoiRenderer stub.
  */
@@ -59,8 +59,8 @@ export function stubPoiRenderer(
 
 /**
  * Creates a PoiRendererFactory stub.
- * @param sandbox Sinon sandbox used to keep track of created stubs.
- * @param poiRendererStub Poi renderer that will be returned by the factory.
+ * @param sandbox - Sinon sandbox used to keep track of created stubs.
+ * @param poiRendererStub - Poi renderer that will be returned by the factory.
  * @returns PoiRendererFactory stub.
  */
 export function stubPoiRendererFactory(

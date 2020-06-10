@@ -65,7 +65,7 @@ export abstract class WorkerService {
     /**
      * Sets up the `WorkerService` with the specified name, and starts processing messages.
      *
-     * @param serviceId The service id.
+     * @param serviceId - The service id.
      */
     constructor(readonly serviceId: string) {
         self.addEventListener("message", this.onMessage);
@@ -90,7 +90,7 @@ export abstract class WorkerService {
     /**
      * Message handler to be overridden by implementation.
      *
-     * @param message `MessageEvent.data` as received by `WorkerService`.
+     * @param message - `MessageEvent.data` as received by `WorkerService`.
      */
     protected handleMessage(message: any): void {
         logger.error(`[${this.serviceId}]: Invalid message ${message.type}`);
@@ -99,7 +99,7 @@ export abstract class WorkerService {
     /**
      * Call request handler to be overridden by implementation.
      *
-     * @param request [[RequestMessage.request]] as received by `WorkerService`.
+     * @param request - [[RequestMessage.request]] as received by `WorkerService`.
      */
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
         throw new Error(`ServiceAdapter[${this.serviceId}]: Invalid request '${request.type}'`);
@@ -110,7 +110,7 @@ export abstract class WorkerService {
      *
      * Responsible for filtering message target and managing request/response sequence.
      *
-     * @param message Message to be dispatched.
+     * @param message - Message to be dispatched.
      */
     private onMessage = (message: MessageEvent) => {
         if (typeof message.data.service !== "string" || message.data.service !== this.serviceId) {

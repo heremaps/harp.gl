@@ -60,7 +60,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
 
     /**
      * Default constructor.
-     * @param m_params Copyright provider configuration.
+     * @param m_params - Copyright provider configuration.
      */
     constructor(private m_params: OlpCopyrightProviderParams) {
         super();

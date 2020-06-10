@@ -21,7 +21,7 @@ export class RingBuffer<T> {
     /**
      * Sets up the ring buffer.
      *
-     * @param capacity The buffer's capacity.
+     * @param capacity - The buffer's capacity.
      */
     constructor(readonly capacity: number) {
         this.buffer = new Array(capacity);
@@ -39,7 +39,7 @@ export class RingBuffer<T> {
     /**
      * Adds a single element to the ring buffer.
      *
-     * @param data Data element.
+     * @param data - Data element.
      */
     enqOne(data: T): void {
         let next = this.head + 1;
@@ -61,7 +61,7 @@ export class RingBuffer<T> {
     /**
      * Adds one or more elements.
      *
-     * @param data The elements to add.
+     * @param data - The elements to add.
      */
     enq(...data: T[]): void {
         for (const v of data) {
@@ -146,8 +146,8 @@ export namespace RingBuffer {
         /**
          * Creates an iterator for the ring buffer.
          *
-         * @param m_buffer `Ringbuffer` to iterate over.
-         * @param m_index Start index.
+         * @param m_buffer - `Ringbuffer` to iterate over.
+         * @param m_index - Start index.
          */
         constructor(private m_buffer: RingBuffer<T>, private m_index: number = 0) {}
 
@@ -208,7 +208,7 @@ export interface Timer {
      * Sets the measurement value for the amount of time that has elapsed from start() to stop().
      * Use this function to override the timer's duration.
      *
-     * @param val The timer's duration.
+     * @param val - The timer's duration.
      */
     setValue(val: number | undefined): void;
 }
@@ -236,7 +236,7 @@ export class SimpleTimer implements Timer {
      * Sets the measurement value for the amount of time that has elapsed from start() to stop().
      * Use this function to override the timer's duration.
      *
-     * @param val The timer's duration.
+     * @param val - The timer's duration.
      */
     setValue(val: number | undefined) {
         this.m_currentValue = val;
@@ -383,8 +383,8 @@ export class SampledTimer extends SimpleTimer {
     /**
      * Creates a `SampledTimer` instance. Must still be added to statistics if it should be logged!
      *
-     * @param statistics Statistics to use for management.
-     * @param name Name of the timer. Use colons to build a hierarchy.
+     * @param statistics - Statistics to use for management.
+     * @param name - Name of the timer. Use colons to build a hierarchy.
      */
     constructor(public statistics: Statistics, readonly name: string) {
         super(statistics, name);
@@ -404,7 +404,7 @@ export class SampledTimer extends SimpleTimer {
     /**
      * Add a single measurement to the sample.
      *
-     * @param val A measurement to add.
+     * @param val - A measurement to add.
      * @override
      */
     setValue(val: number | undefined) {
@@ -539,9 +539,9 @@ export class MultiStageTimer {
     /**
      * Defines the `MultiStageTimer` with a list of timer names that represent its stages.
      *
-     * @param statistics The statistics object that manages the timers.
-     * @param name Name of this `MultiStageTimer`.
-     * @param stages List of timer names.
+     * @param statistics - The statistics object that manages the timers.
+     * @param name - Name of this `MultiStageTimer`.
+     * @param stages - List of timer names.
      */
     constructor(private statistics: Statistics, readonly name: string, public stages: string[]) {
         if (stages.length < 1) {
@@ -605,7 +605,7 @@ export class MultiStageTimer {
      * stopped, and the next timer is started. If the timer in the next stage is `undefined`,
      * this is equivalent to calling `stop` on the `MultiStageTimer`.
      *
-     * @param stage The next stage to start.
+     * @param stage - The next stage to start.
      */
     set stage(stage: string | undefined) {
         if (this.currentStage === stage) {
@@ -636,8 +636,8 @@ export class Statistics {
     /**
      * Sets up a group of timers.
      *
-     * @param name The statistics name, for logging purposes.
-     * @param enabled If `false`, the timers do not measure the performance.
+     * @param name - The statistics name, for logging purposes.
+     * @param enabled - If `false`, the timers do not measure the performance.
      */
     constructor(public name?: string, public enabled = false) {
         this.timers = new Map<string, Timer>();
@@ -647,7 +647,7 @@ export class Statistics {
     /**
      * Adds a timer, based on the name specified.
      *
-     * @param name The timer's name; must be unique.
+     * @param name - The timer's name; must be unique.
      */
     createTimer(name: string, keepSamples = true): Timer {
         const timer = keepSamples ? new SampledTimer(this, name) : new SimpleTimer(this, name);
@@ -658,7 +658,7 @@ export class Statistics {
     /**
      * Adds the timer specified.
      *
-     * @param timer The timer's name, which must be unique within this statistics object.
+     * @param timer - The timer's name, which must be unique within this statistics object.
      */
     addTimer(timer: Timer): Timer {
         if (this.timers.get(timer.name) !== undefined) {
@@ -673,7 +673,7 @@ export class Statistics {
     /**
      * Gets a timer by name.
      *
-     * @param name The timer's name.
+     * @param name - The timer's name.
      */
     getTimer(name: string): Timer {
         if (!this.enabled) {
@@ -687,7 +687,7 @@ export class Statistics {
     /**
      * Checks if a timer with the specified name already exists.
      *
-     * @param name The timer's name.
+     * @param name - The timer's name.
      * @returns `true` if a timer with `name` already exists; `false` otherwise.
      */
     hasTimer(name: string): boolean {
@@ -707,8 +707,8 @@ export class Statistics {
     /**
      * Prints all values to the console.
      *
-     * @param header Optional header line.
-     * @param footer Optional footer line.
+     * @param header - Optional header line.
+     * @param footer - Optional footer line.
      */
     log(header?: string, footer?: string) {
         if (header !== undefined || this.name !== undefined) {
@@ -762,7 +762,7 @@ export class FrameStats {
     /**
      * Retrieve the value of the performance number.
      *
-     * @param name Name of the performance number.
+     * @param name - Name of the performance number.
      * @returns The value of the performance number or `undefined` if it has not been declared by
      *      `setValue` before.
      */
@@ -773,8 +773,8 @@ export class FrameStats {
     /**
      * Set the value of the performance number.
      *
-     * @param name Name of the performance number.
-     * @param name New value of the performance number.
+     * @param name - Name of the performance number.
+     * @param name - New value of the performance number.
      */
     setValue(name: string, value: number) {
         this.entries.set(name, value);
@@ -784,8 +784,8 @@ export class FrameStats {
      * Add a value to the current value of the performance number. If the performance is not known,
      * it will be initialized with `value`.
      *
-     * @param name Name of the performance number.
-     * @param name Value to be added to the performance number.
+     * @param name - Name of the performance number.
+     * @param name - Value to be added to the performance number.
      */
     addValue(name: string, value: number) {
         const oldValue = this.entries.get(name);
@@ -795,7 +795,7 @@ export class FrameStats {
     /**
      * Add a text message to the frame, like "Font XYZ has been loaded"
      *
-     * @param message The message to add.
+     * @param message - The message to add.
      */
     addMessage(message: string) {
         if (this.messages === undefined) {
@@ -1092,8 +1092,8 @@ export class PerformanceStatistics {
     /**
      * Logs all values to the logger.
      *
-     * @param header Optional header line.
-     * @param footer Optional footer line.
+     * @param header - Optional header line.
+     * @param footer - Optional footer line.
      */
     log(header?: string, footer?: string) {
         logger.log(header !== undefined ? header : "PerformanceStatistics");

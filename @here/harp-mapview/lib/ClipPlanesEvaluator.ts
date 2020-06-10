@@ -34,9 +34,9 @@ export interface ClipPlanesEvaluator {
      * compatibility with any evaluator type it is strongly recommended to update on every frame.
      * @note The camera clipping planes (near/far properties) aren't automatically updated
      * via #evaluateClipPlanes() call, user should do it manually if needed.
-     * @param camera The [[THREE.Camera]] in use.
-     * @param projection The geo-projection currently used for encoding geographic data.
-     * @param elevationProvider The optional elevation provider for fine tuned range calculation,
+     * @param camera - The [[THREE.Camera]] in use.
+     * @param projection - The geo-projection currently used for encoding geographic data.
+     * @param elevationProvider - The optional elevation provider for fine tuned range calculation,
      * taking into account terrain variability and unevenness.
      *
      */
@@ -177,7 +177,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
     /**
      * Set maximum elevation above sea level to be rendered.
      *
-     * @param elevation the elevation (altitude) value in world units (meters).
+     * @param elevation - the elevation (altitude) value in world units (meters).
      * @note If you set this exactly to the maximum rendered feature height (altitude above
      * the sea, you may notice some flickering or even polygons disappearing related to rounding
      * errors or depth buffer precision. In such cases increase [[nearFarMargin]] or add a little
@@ -203,7 +203,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
     /**
      * Set minimum elevation to be rendered, values beneath the sea level are negative.
      *
-     * @param elevation the minimum elevation (depression) in world units (meters).
+     * @param elevation - the minimum elevation (depression) in world units (meters).
      * @note If you set this parameter to zero you may not see any features rendered if they are
      * just below the sea level more than half of [[nearFarMargin]] assumed. Similarly if set to
      * -100m and rendered features lays exactly in such depression, you may notice that problem.
@@ -261,17 +261,17 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * level as also minimum near plane and maximum far plane distance constraints.
      * It is strongly recommended to set some reasonable [[nearFarMargin]] (offset) between near
      * and far planes to avoid flickering.
-     * @param maxElevation defines near plane offset from the ground in the surface normal
+     * @param maxElevation - defines near plane offset from the ground in the surface normal
      * direction, positive values allows to render elevated terrain features (mountains,
      * buildings). Defaults to Burj Khalifa building height.
-     * @param minElevation defines far plane offset from the ground surface, negative values moves
+     * @param minElevation - defines far plane offset from the ground surface, negative values moves
      * far plane below the ground level (use it to render depressions). Default zero - sea level.
-     * @param nearMin minimum allowable near plane distance from camera, must be bigger than zero.
-     * @param nearFarMarginRatio minimum distance between near and far plane, as a ratio of average
-     * near/far plane distance, it have to be significantly bigger than zero (especially if
+     * @param nearMin - minimum allowable near plane distance from camera, must be bigger than zero.
+     * @param nearFarMarginRatio - minimum distance between near and far plane, as a ratio of
+     * average near/far plane distance, it have to be significantly bigger than zero (especially if
      * [[maxElevation]] and [[minElevation]] are equal), otherwise you may notice flickering when
      * rendering, or even render empty scene if frustum planes are almost equal.
-     * @param farMaxRatio maximum ratio between ground and far plane distance, allows to limit
+     * @param farMaxRatio - maximum ratio between ground and far plane distance, allows to limit
      * viewing distance at overall. Have to be bigger than 1.0.
      * @note Keep in mind that this evaluator does not evaluate terrain (or building) elevation
      * automatically, to keep such features rendered (between frustum planes) use [[minElevation]],
@@ -331,8 +331,8 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
 
     /**
      * Calculate camera altitude (closest distance) to ground level in world units.
-     * @param camera
-     * @param projection
+     * @param camera -
+     * @param projection -
      */
     protected getCameraAltitude(camera: THREE.Camera, projection: Projection): number {
         return projection.groundDistance(camera.position);
@@ -454,8 +454,8 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * Calculate distance from a point to the tangent point of a sphere.
      *
      * Returns zero if point is below surface or only very slightly above surface of sphere.
-     * @param d Distance from point to center of sphere
-     * @param r Radius of sphere
+     * @param d - Distance from point to center of sphere
+     * @param r - Radius of sphere
      */
     protected getTangentDistance(d: number, r: number): number {
         // There may be situations when maximum elevation still remains below sea level
@@ -475,10 +475,10 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * Furthest visible distance is assumed to be distance from camera to horizon
      * plus distance from elevated geometry to horizon(so that high objects behind horizon
      * remain visible).
-     * @param camera The camera of the mapview
-     * @param d Distance from camera to origin
-     * @param r Radius of earth
-     * @param alpha Angle between camera eye vector and tangent
+     * @param camera - The camera of the mapview
+     * @param d - Distance from camera to origin
+     * @param r - Radius of earth
+     * @param alpha - Angle between camera eye vector and tangent
      */
     protected getTangentBasedFarPlane(
         camera: THREE.PerspectiveCamera,
@@ -651,8 +651,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
      * @note This method assumes the world surface (ground) to be flat and
      * works only with planar projections.
      *
-     * @param camera The [[THREE.Camera]] instance in use,
-     * @param projection The geo-projection used to convert geographic to world coordinates.
+     * @param camera - The [[THREE.Camera]] instance in use,
+     * @param projection - The geo-projection used to convert geographic to world coordinates.
      */
     protected getFrustumGroundIntersectionDist(
         camera: THREE.Camera,

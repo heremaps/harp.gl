@@ -46,7 +46,7 @@ export class ExprPool implements ExprVisitor<Expr, void> {
      * Add `expr` to this [[ExprPool]] and return a unique [[Expr]]
      * object that is structurally equivalent to `expr`.
      *
-     * @param expr The [[Expr]] to add to this [[ExprPool]].
+     * @param expr - The [[Expr]] to add to this [[ExprPool]].
      * @returns A unique [[Expr]] that is structurally equivalent to `expr`.
      */
     add(expr: Expr): Expr {

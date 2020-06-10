@@ -12,7 +12,7 @@ import { PoiManager } from "../lib/poi/PoiManager";
 
 /**
  * Stubs poi manager.
- * @param sandbox Sinon sandbox used to track created stubs.
+ * @param sandbox - Sinon sandbox used to track created stubs.
  * @returns PoiManager stub.
  */
 export function stubPoiManager(sandbox: sinon.SinonSandbox): PoiManager {

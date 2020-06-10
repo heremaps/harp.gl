@@ -24,9 +24,9 @@ export interface DisplacementRange {
  * @internal
  * Displace a box in a given direction by a specified range. The original box min and max vertices
  * are translated as a result by displacementRange.min and displacementRange.max respectively.
- * @param box The original box to displace.
- * @param displacementRange The minimum and maximum displacement values.
- * @param displacementDir Direction in which the displacement will be applied.
+ * @param box - The original box to displace.
+ * @param displacementRange - The minimum and maximum displacement values.
+ * @param displacementDir - Direction in which the displacement will be applied.
  * @return The displaced box.
  */
 export function displaceBox(
@@ -54,10 +54,10 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
 
     /**
      * Creates an instance of displaced buffer geometry.
-     * @param originalGeometry The goeometry to be displaced.
-     * @param displacementMap A texture with the displacement values.
-     * @param displacementRange The displacement value range found in the displacement map.
-     * @param displacedPositions Buffer attribute that will be used for displaced positions if
+     * @param originalGeometry - The goeometry to be displaced.
+     * @param displacementMap - A texture with the displacement values.
+     * @param displacementRange - The displacement value range found in the displacement map.
+     * @param displacedPositions - Buffer attribute that will be used for displaced positions if
      * provided, otherwise a new buffer attribute will be created.
      */
     constructor(
@@ -82,9 +82,9 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
 
     /**
      * Resets the displaced buffer geometry to use new geometry or displacement map.
-     * @param geometry The goeometry to be displaced.
-     * @param displacementMap A texture with the displacement values.
-     * @param displacementRange The displacement value range found in the displacement map.
+     * @param geometry - The goeometry to be displaced.
+     * @param displacementMap - A texture with the displacement values.
+     * @param displacementRange - The displacement value range found in the displacement map.
      */
     reset(
         geometry: THREE.BufferGeometry,

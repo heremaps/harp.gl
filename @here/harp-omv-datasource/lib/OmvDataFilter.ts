@@ -32,35 +32,35 @@ export interface OmvFeatureFilter {
     /**
      * Return `false` if the layer should not be processed.
      *
-     * @param layer Current layer.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param level - Level of tile.
      */
     wantsLayer(layer: string, level: number): boolean;
 
     /**
      * Return `false` if the point feature should not be processed.
      *
-     * @param layer Current layer.
-     * @param feature Current feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param feature - Current feature.
+     * @param level - Level of tile.
      */
     wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
 
     /**
      * Return `false` if the line feature should not be processed.
      *
-     * @param layer Current layer.
-     * @param feature Current feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param feature - Current feature.
+     * @param level - Level of tile.
      */
     wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
 
     /**
      * Return `false` if the polygon feature should not be processed.
      *
-     * @param layer Current layer.
-     * @param feature Current feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param feature - Current feature.
+     * @param level - Level of tile.
      */
     wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
 
@@ -88,9 +88,9 @@ export interface OmvFeatureModifier {
      * Check if the point feature described by `env` should be processed. The properties can be
      * modified or added to.
      *
-     * @param layer Current layer.
-     * @param env Properties of point feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param env - Properties of point feature.
+     * @param level - Level of tile.
      * @returns `false` to ignore feature.
      */
     doProcessPointFeature(layer: string, env: MapEnv, level: number): boolean;
@@ -99,9 +99,9 @@ export interface OmvFeatureModifier {
      * Check if the line feature described by `env` should be processed. The properties can be
      * modified or added to.
      *
-     * @param layer Current layer.
-     * @param env Properties of line feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param env - Properties of line feature.
+     * @param level - Level of tile.
      * @returns `false` to ignore feature.
      */
     doProcessLineFeature(layer: string, env: MapEnv, level: number): boolean;
@@ -110,9 +110,9 @@ export interface OmvFeatureModifier {
      * Check if the polygon feature described by `env` should be processed. The properties can be
      * modified or added to.
      *
-     * @param layer Current layer.
-     * @param env Properties of polygon feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param env - Properties of polygon feature.
+     * @param level - Level of tile.
      * @returns `false` to ignore feature.
      */
     doProcessPolygonFeature(layer: string, env: MapEnv, level: number): boolean;
@@ -145,14 +145,14 @@ export class OmvFeatureFilterDescriptionBuilder {
      * Builds an `OmvFilterDescription` (internal type) that specifies an [[OmvFeatureFilter]] as
      * well as an [[OmvFeatureModifier]].
      *
-     * @param processLayersDefault If `true`, all unspecified layers will be processed. If `false`,
-     * all unspecified layers will be ignored.
-     * @param processPointsDefault If `true`, all unspecified point features will be processed. If
+     * @param processLayersDefault - If `true`, all unspecified layers will be processed.
+     * If `false`, all unspecified layers will be ignored.
+     * @param processPointsDefault - If `true`, all unspecified point features will be processed. If
      * `false`, all unspecified point features will be ignored.
-     * @param processLinesDefault If `true`, all unspecified line features will be processed. If
+     * @param processLinesDefault - If `true`, all unspecified line features will be processed. If
      * `false`, all unspecified line features will be ignored.
-     * @param processPolygonsDefault If `true`, all unspecified polygon features will be processed.
-     * If `false`, all unspecified polygon features will be ignored.
+     * @param processPolygonsDefault - If `true`, all unspecified polygon features will be
+     * processed. If `false`, all unspecified polygon features will be ignored.
      */
     constructor(
         options?: OmvFeatureFilterDescriptionBuilder.OmvFeatureFilterDescriptionBuilderOptions
@@ -174,8 +174,8 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add a layer that should be processed.
      *
-     * @param layer Layer name to be matched.
-     * @param match Match condition.
+     * @param layer - Layer name to be matched.
+     * @param match - Match condition.
      */
     processLayer(
         layer: string,
@@ -193,8 +193,8 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add a layer that should be ignored.
      *
-     * @param layer Layer name to be matched.
-     * @param match Match condition.
+     * @param layer - Layer name to be matched.
+     * @param match - Match condition.
      */
     ignoreLayer(
         layer: string,
@@ -212,7 +212,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add a valid point feature.
      *
-     * @param options Feature options.
+     * @param options - Feature options.
      */
     processPoint(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_pointsToProcess, options);
@@ -221,7 +221,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add valid point features.
      *
-     * @param options Multi feature options.
+     * @param options - Multi feature options.
      */
     processPoints(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_pointsToProcess, options);
@@ -230,7 +230,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add a point feature that should be ignored.
      *
-     * @param options Feature options.
+     * @param options - Feature options.
      */
     ignorePoint(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_ignoredPoints, options);
@@ -239,7 +239,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add point features that should be ignored.
      *
-     * @param options Multi feature options.
+     * @param options - Multi feature options.
      */
     ignorePoints(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_ignoredPoints, options);
@@ -248,7 +248,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add a valid line feature.
      *
-     * @param options Feature options.
+     * @param options - Feature options.
      */
     processLine(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_linesToProcess, options);
@@ -257,7 +257,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add valid line features.
      *
-     * @param options Multi feature options.
+     * @param options - Multi feature options.
      */
     processLines(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_linesToProcess, options);
@@ -266,7 +266,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Ignore a line feature.
      *
-     * @param options Feature options.
+     * @param options - Feature options.
      */
     ignoreLine(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_linesToIgnore, options);
@@ -275,7 +275,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Ignore line features.
      *
-     * @param options Multi feature options.
+     * @param options - Multi feature options.
      */
     ignoreLines(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_linesToIgnore, options);
@@ -284,7 +284,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add a valid polygon feature.
      *
-     * @param options Feature options.
+     * @param options - Feature options.
      */
     processPolygon(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_polygonsToProcess, options);
@@ -293,7 +293,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Add valid polygon features.
      *
-     * @param options Multi feature options.
+     * @param options - Multi feature options.
      */
     processPolygons(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_polygonsToProcess, options);
@@ -302,7 +302,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Ignore a valid polygon feature.
      *
-     * @param options Feature options.
+     * @param options - Feature options.
      */
     ignorePolygon(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_polygonsToIgnore, options);
@@ -311,7 +311,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Ignore polygon features.
      *
-     * @param options Multi feature options.
+     * @param options - Multi feature options.
      */
     ignorePolygons(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_polygonsToIgnore, options);

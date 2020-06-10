@@ -78,7 +78,7 @@ export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
     /**
      * Constructs a new `HighPrecisionLineMaterial`.
      *
-     * @param params `HighPrecisionLineMaterial` parameters.
+     * @param params - `HighPrecisionLineMaterial` parameters.
      */
     constructor(params?: HighPrecisionLineMaterialParameters) {
         Object.assign(THREE.ShaderChunk, linesShaderChunk);

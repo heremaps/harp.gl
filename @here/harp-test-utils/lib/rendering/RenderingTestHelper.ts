@@ -139,8 +139,8 @@ export class RenderingTestHelper {
     /**
      * Save actual image only with comparison status OK
      *
-     * @param canvas actual image canvas
-     * @param name test name
+     * @param canvas - actual image canvas
+     * @param name - test name
      */
     async saveCanvasMatchesReference(canvas: HTMLCanvasElement, name: string) {
         const actualImage = await canvasToImageData(canvas);
@@ -166,9 +166,9 @@ export class RenderingTestHelper {
     /**
      * Compare actual image vs reference image then report comparison result to feedbackServer
      *
-     * @param canvas actual image canvas
-     * @param name test name
-     * @param options test options
+     * @param canvas - actual image canvas
+     * @param name - test name
+     * @param options - test options
      */
     async assertCanvasMatchesReference(
         canvas: HTMLCanvasElement,

@@ -73,7 +73,7 @@ export interface Typesetter {
     /**
      * Arranges the specified glyphs using this `Typesetter`.
      *
-     * @param params Typesetting parameters.
+     * @param params - Typesetting parameters.
      *
      * @returns If `false`, some error occurred during execution and the output should be dismissed.
      */

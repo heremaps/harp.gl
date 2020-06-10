@@ -35,7 +35,7 @@ export interface TransformLike {
 /**
  * Returns true if the given object implements the interface [[TransformLike]].
  *
- * @param object The object.
+ * @param object - The object.
  */
 export function isTransformLike(object: {}): object is TransformLike {
     const transform = object as Partial<TransformLike>;

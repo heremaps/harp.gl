@@ -148,8 +148,8 @@ interface MixinShaderProperties {
  *
  * Copy from MapViewUtils, since it cannot be accessed here because of circular dependencies.
  *
- * @param distance Distance from the camera (range: [0, 1]).
- * @param visibilityRange object describing maximum and minimum visibility range - distances
+ * @param distance - Distance from the camera (range: [0, 1]).
+ * @param visibilityRange - object describing maximum and minimum visibility range - distances
  * from camera at which objects won't be rendered anymore.
  */
 function cameraToWorldDistance(distance: number, visibilityRange: ViewRanges): number {
@@ -161,8 +161,8 @@ function cameraToWorldDistance(distance: number, visibilityRange: ViewRanges): n
  *
  * Call this function just after [THREE.Material] is constructed, so in derived classes after
  * super c-tor call.
- * @param mixin The mixin that will add features to [[THREE.Material]].
- * @param material The material that mixin feature is being applied.
+ * @param mixin - The mixin that will add features to [[THREE.Material]].
+ * @param material - The material that mixin feature is being applied.
  */
 function linkMixinWithMaterial(
     mixin: MixinShaderProperties,
@@ -196,8 +196,8 @@ function linkMixinWithMaterial(
  * This function should be called before material's shader is pre-compiled, so the new uniforms
  * from the mixin feature are known to shader processor. The best place to use is
  * [[Material.onBeforeCompile]].
- * @param mixin The mixin feature being applied to the material.
- * @param shader The actual shader linked to the [[THREE.Material]].
+ * @param mixin - The mixin feature being applied to the material.
+ * @param shader - The actual shader linked to the [[THREE.Material]].
  */
 function linkMixinWithShader(mixin: MixinShaderProperties, shader: THREE.Shader) {
     Object.assign(shader.uniforms, mixin.shaderUniforms);
@@ -239,7 +239,7 @@ namespace DisplacementFeature {
     /**
      * Checks if feature is enabled (displacement map defined).
      *
-     * @param displacementMaterial
+     * @param displacementMaterial -
      */
     export function isEnabled(displacementMaterial: DisplacementFeature) {
         return displacementMaterial.displacementMap !== null;
@@ -249,7 +249,7 @@ namespace DisplacementFeature {
      * Update the internals of the `DisplacementFeature` depending on the value of
      * [[displacementMap]].
      *
-     * @param displacementMaterial DisplacementFeature
+     * @param displacementMaterial - DisplacementFeature
      */
     export function updateDisplacementFeature(
         displacementMaterial: DisplacementFeature & MixinShaderProperties
@@ -282,8 +282,8 @@ namespace DisplacementFeature {
      * `onBeforeCompile` callback of that material. It adds the required code to the shaders to
      * apply displacement maps.
      *
-     * @param displacementMaterial Material to add uniforms to.
-     * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
+     * @param displacementMaterial - Material to add uniforms to.
+     * @param shader - [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
      *                  special includes to.
      */
     export function onBeforeCompile(
@@ -404,7 +404,7 @@ export class DisplacementFeatureMixin implements DisplacementFeature, MixinShade
     /**
      * Copy displacementMap from other DisplacementFeature.
      *
-     * @param source The material to copy property values from.
+     * @param source - The material to copy property values from.
      */
     protected copyDisplacementParameters(source: DisplacementFeature) {
         this.setDisplacementMap(source.displacementMap);
@@ -427,7 +427,7 @@ export namespace FadingFeature {
      * changes between enabled/disabled. Current approach is to keep feature on (once enabled)
      * whenever fading params are reasonable, even if it causes full fade in, no transparency.
      *
-     * @param fadingMaterial FadingFeature.
+     * @param fadingMaterial - FadingFeature.
      */
     export function isEnabled(fadingMaterial: FadingFeature) {
         // NOTE: We could also check if full fade is not achieved, then feature could be
@@ -452,7 +452,7 @@ export namespace FadingFeature {
      * Update the internals of the `FadingFeature` depending on the value of [[fadeNear]]. The
      * fading feature will be disabled if fadeFar <= 0.0.
      *
-     * @param fadingMaterial FadingFeature
+     * @param fadingMaterial - FadingFeature
      */
     export function updateFadingFeature(fadingMaterial: FadingFeature): void {
         assert(fadingMaterial.shaderDefines !== undefined);
@@ -499,8 +499,8 @@ export namespace FadingFeature {
      * callback of that material. It adds the required code to the shaders and declares the new
      * uniforms that control fading based on view distance.
      *
-     * @param fadingMaterial Material to add uniforms to.
-     * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
+     * @param fadingMaterial - Material to add uniforms to.
+     * @param shader - [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
      *                  special includes to.
      */
     export function onBeforeCompile(fadingMaterial: FadingFeature, shader: THREE.Shader) {
@@ -552,14 +552,14 @@ export namespace FadingFeature {
      * [[onBeforeRender]], the function [[calculateDepthFromCameraDistance]] sets it to true if the
      * fade distance value is less than 1.
      *
-     * @param object [[THREE.Object3D]] to prepare for rendering.
-     * @param viewRanges The visibility ranges (clip planes and maximum visible distance) for
+     * @param object - [[THREE.Object3D]] to prepare for rendering.
+     * @param viewRanges - The visibility ranges (clip planes and maximum visible distance) for
      * actual camera setup.
-     * @param fadeNear The fadeNear value to set in the material.
-     * @param fadeFar The fadeFar value to set in the material.
-     * @param updateUniforms If `true`, the fading uniforms are set. Not required if material is
+     * @param fadeNear - The fadeNear value to set in the material.
+     * @param fadeFar - The fadeFar value to set in the material.
+     * @param updateUniforms - If `true`, the fading uniforms are set. Not required if material is
      *          handling the uniforms already, like in a [[THREE.ShaderMaterial]].
-     * @param additionalCallback If defined, this function will be called before the function will
+     * @param additionalCallback - If defined, this function will be called before the function will
      *          return.
      */
     export function addRenderHelper(
@@ -681,7 +681,7 @@ export class FadingFeatureMixin implements FadingFeature {
     /**
      * Apply the fadeNear/fadeFar values from the parameters to the respective properties.
      *
-     * @param params `FadingMeshBasicMaterial` parameters.
+     * @param params - `FadingMeshBasicMaterial` parameters.
      */
     protected applyFadingParameters(params?: FadingFeatureParameters) {
         // Prepare maps for holding uniforms and defines references from the actual material.
@@ -715,7 +715,7 @@ export class FadingFeatureMixin implements FadingFeature {
     /**
      * Copy fadeNear/fadeFar values from other FadingFeature.
      *
-     * @param source The material to copy property values from.
+     * @param source - The material to copy property values from.
      */
     protected copyFadingParameters(source: FadingFeature) {
         this.setFadeNear(
@@ -732,7 +732,7 @@ export namespace ExtrusionFeature {
     /**
      * Checks if feature is enabled based on [[ExtrusionFeature]] properties.
      *
-     * @param extrusionMaterial
+     * @param extrusionMaterial -
      */
     export function isEnabled(extrusionMaterial: ExtrusionFeature) {
         return (
@@ -753,7 +753,7 @@ export namespace ExtrusionFeature {
     /**
      * Update the internals of the `ExtrusionFeature` depending on the value of [[extrusionRatio]].
      *
-     * @param ExtrusionMaterial ExtrusionFeature
+     * @param ExtrusionMaterial - ExtrusionFeature
      */
     export function updateExtrusionFeature(extrusionMaterial: ExtrusionFeature): void {
         assert(extrusionMaterial.shaderDefines !== undefined);
@@ -788,8 +788,8 @@ export namespace ExtrusionFeature {
      * callback of that material. It adds the required code to the shaders and declares the new
      * uniforms that control extrusion.
      *
-     * @param extrusionMaterial Material to add uniforms to.
-     * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
+     * @param extrusionMaterial - Material to add uniforms to.
+     * @param shader - [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
      *                  special includes to.
      */
     export function onBeforeCompile(extrusionMaterial: ExtrusionFeature, shader: THREE.Shader) {
@@ -922,7 +922,7 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
     /**
      * Copy extrusionRatio values from other ExtrusionFeature.
      *
-     * @param source The material to copy property values from.
+     * @param source - The material to copy property values from.
      */
     protected copyExtrusionParameters(source: ExtrusionFeature) {
         if (source.extrusionRatio !== undefined) {
@@ -946,7 +946,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     /**
      * Constructs a new `FadingMeshBasicMaterial`.
      *
-     * @param params `FadingMeshBasicMaterial` parameters.
+     * @param params - `FadingMeshBasicMaterial` parameters.
      */
     constructor(
         params?: THREE.MeshBasicMaterialParameters &
@@ -1134,7 +1134,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     /**
      * Constructs a new `FadingMeshStandardMaterial`.
      *
-     * @param params `FadingMeshStandardMaterial` parameters.
+     * @param params - `FadingMeshStandardMaterial` parameters.
      */
     constructor(
         params?: THREE.MeshStandardMaterialParameters &

@@ -313,12 +313,12 @@ export class Tile implements CachedResource {
     /**
      * Creates a new [[Tile]].
      *
-     * @param dataSource The [[DataSource]] that created this [[Tile]].
-     * @param tileKey The unique identifier for this [[Tile]]. Currently only up to level 24 is
+     * @param dataSource - The [[DataSource]] that created this [[Tile]].
+     * @param tileKey - The unique identifier for this [[Tile]]. Currently only up to level 24 is
      * supported, because of the use of the upper bits for the offset.
-     * @param offset The optional offset, this is an integer which represents what multiple of 360
+     * @param offset - The optional offset, this is an integer which represents what multiple of 360
      * degrees to shift, only useful for flat projections, hence optional.
-     * @param localTangentSpace Whether the tile geometry is in local tangent space or not.
+     * @param localTangentSpace - Whether the tile geometry is in local tangent space or not.
      */
     constructor(
         readonly dataSource: DataSource,
@@ -411,7 +411,7 @@ export class Tile implements CachedResource {
     /**
      * The optional offset, this is an integer which represents what multiple of 360 degrees to
      * shift, only useful for flat projections, hence optional.
-     * @param offset Which multiple of 360 degrees to apply to the [[Tile]].
+     * @param offset - Which multiple of 360 degrees to apply to the [[Tile]].
      */
     set offset(offset: number) {
         if (this.m_offset !== offset) {
@@ -444,7 +444,7 @@ export class Tile implements CachedResource {
     /**
      * Add ownership of a texture to this tile. The texture will be disposed if the `Tile` is
      * disposed.
-     * @param texture Texture to be owned by the `Tile`
+     * @param texture - Texture to be owned by the `Tile`
      */
     addOwnedTexture(texture: THREE.Texture): void {
         this.m_ownedTextures.add(texture);
@@ -472,7 +472,7 @@ export class Tile implements CachedResource {
      *
      * @deprecated use [[addTextElement]].
      *
-     * @param textElement The Text element to add.
+     * @param textElement - The Text element to add.
      */
     addUserTextElement(textElement: TextElement) {
         textElement.priority = TextElement.HIGHEST_PRIORITY;
@@ -484,7 +484,7 @@ export class Tile implements CachedResource {
      *
      * @deprecated use [[removeTextElement]].
      *
-     * @param textElement A developer-defined TextElement to remove.
+     * @param textElement - A developer-defined TextElement to remove.
      * @returns `true` if the element has been removed successfully; `false` otherwise.
      */
     removeUserTextElement(textElement: TextElement): boolean {
@@ -501,7 +501,7 @@ export class Tile implements CachedResource {
      * `TextElement.HIGHEST_PRIORITY`. Since the number of visible TextElements is limited by the
      * screen space, not all TextElements are visible at all times.
      *
-     * @param textElement The TextElement to add.
+     * @param textElement - The TextElement to add.
      */
     addTextElement(textElement: TextElement) {
         this.textElementGroups.add(textElement);
@@ -519,7 +519,7 @@ export class Tile implements CachedResource {
      * Adds a [[PathBlockingElement]] to this `Tile`. This path has the highest priority and blocks
      * all other labels. There maybe in future a use case to give it a priority, but as that isn't
      * yet required, it is left to be implemented later if required.
-     * @param blockingElement Element which should block all other labels.
+     * @param blockingElement - Element which should block all other labels.
      */
     addBlockingElement(blockingElement: PathBlockingElement) {
         this.m_pathBlockingElements.push(blockingElement);
@@ -529,7 +529,7 @@ export class Tile implements CachedResource {
      * Removes a [[TextElement]] from this `Tile`. For the element to be removed successfully, the
      * priority of the [[TextElement]] has to be equal to its priority when it was added.
      *
-     * @param textElement The TextElement to remove.
+     * @param textElement - The TextElement to remove.
      * @returns `true` if the TextElement has been removed successfully; `false` otherwise.
      */
     removeTextElement(textElement: TextElement): boolean {
@@ -586,7 +586,7 @@ export class Tile implements CachedResource {
     /**
      * Called before [[MapView]] starts rendering this `Tile`.
      *
-     * @param zoomLevel The current zoom level.
+     * @param zoomLevel - The current zoom level.
      * @returns Returns `true` if this `Tile` should be rendered. Influenced directly by the
      * [[skipRendering]] property unless specifically overriden in deriving classes.
      */
@@ -627,7 +627,7 @@ export class Tile implements CachedResource {
      * @internal
      * Sets the tile's ground elevation range in meters.
      *
-     * @param elevationRange The elevation range.
+     * @param elevationRange - The elevation range.
      */
     set elevationRange(elevationRange: ElevationRange) {
         if (
@@ -662,7 +662,7 @@ export class Tile implements CachedResource {
      * Applies the decoded tile to the tile.
      * If the geometry is empty, then the tile's forceHasGeometry flag is set.
      * Map is updated.
-     * @param decodedTile The decoded tile to set.
+     * @param decodedTile - The decoded tile to set.
      */
     set decodedTile(decodedTile: DecodedTile | undefined) {
         this.m_decodedTile = decodedTile;
@@ -718,7 +718,7 @@ export class Tile implements CachedResource {
      * Called when the default implementation of `dispose()` needs
      * to free the geometry of a `Tile` object.
      *
-     * @param object The object that references the geometry.
+     * @param object - The object that references the geometry.
      * @returns `true` if the geometry can be disposed.
      */
     // tslint:disable-next-line:no-unused-variable
@@ -730,7 +730,7 @@ export class Tile implements CachedResource {
      * Called when the default implementation of `dispose()` needs
      * to free a `Tile` object's material.
      *
-     * @param object The object referencing the geometry.
+     * @param object - The object referencing the geometry.
      * @returns `true` if the material can be disposed.
      */
     // tslint:disable-next-line:no-unused-variable
@@ -742,7 +742,7 @@ export class Tile implements CachedResource {
      * Called when the default implementation of `dispose()` needs
      * to free a Texture that is part of a `Tile` object's material.
      *
-     * @param texture The texture about to be disposed.
+     * @param texture - The texture about to be disposed.
      * @returns `true` if the texture can be disposed.
      */
     shouldDisposeTexture(texture: THREE.Texture): boolean {
@@ -766,7 +766,7 @@ export class Tile implements CachedResource {
     /**
      * Sets the [[TileGeometryLoader]] to manage this tile.
      *
-     * @param tileGeometryLoader A [[TileGeometryLoader]] instance to manage the geometry creation
+     * @param tileGeometryLoader - A [[TileGeometryLoader]] instance to manage the geometry creation
      *      for this tile.
      */
     set tileGeometryLoader(tileGeometryLoader: TileGeometryLoader | undefined) {
@@ -808,7 +808,7 @@ export class Tile implements CachedResource {
     /**
      * Overrides the default value for [[hasGeometry]] if value is not `undefined`.
      *
-     * @param value A new value for the [[hasGeometry]] flag.
+     * @param value - A new value for the [[hasGeometry]] flag.
      */
     forceHasGeometry(value: boolean | undefined) {
         this.m_forceHasGeometry = value;
@@ -832,7 +832,7 @@ export class Tile implements CachedResource {
     /**
      * Sets the [[ITileLoader]] to manage this tile.
      *
-     * @param tileLoader A [[ITileLoader]] instance to manage the loading process for this tile.
+     * @param tileLoader - A [[ITileLoader]] instance to manage the loading process for this tile.
      */
     set tileLoader(tileLoader: ITileLoader | undefined) {
         this.m_tileLoader = tileLoader;
@@ -997,7 +997,7 @@ export class Tile implements CachedResource {
 
     /**
      * Update tile for current map view zoom level
-     * @param zoomLevel Zoom level of the map view
+     * @param zoomLevel - Zoom level of the map view
      */
     update(zoomLevel: number): void {
         for (const object of this.objects) {

@@ -18,8 +18,8 @@ const isProduction = process.env.NODE_ENV === "production";
  * entire call when building for production.
  *
  * @hidden
- * @param condition Condition to match, if false, throws an Error(message)
- * @param message Optional message, defaults to "ASSERTION failed"
+ * @param condition - Condition to match, if false, throws an Error(message)
+ * @param message - Optional message, defaults to "ASSERTION failed"
  */
 export function assert(condition: boolean, message?: string): void {
     if (!isProduction) {

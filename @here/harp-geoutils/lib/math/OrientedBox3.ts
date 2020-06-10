@@ -83,9 +83,9 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Creates a new `OrientedBox3` with the given position, orientation and extents.
      *
-     * @param position The position of the center of the `OrientedBox3`.
-     * @param rotationMatrix The rotation of the `OrientedBox3`.
-     * @param extents The extents of the `OrientedBox3`.
+     * @param position - The position of the center of the `OrientedBox3`.
+     * @param rotationMatrix - The rotation of the `OrientedBox3`.
+     * @param extents - The extents of the `OrientedBox3`.
      */
     constructor(position: Vector3, rotationMatrix: Matrix4, extents: Vector3);
 
@@ -119,7 +119,7 @@ export class OrientedBox3 implements OrientedBox3Like {
 
     /**
      * Copies the values of `other` to this [[OrientedBox3]].
-     * @param other The other [[OrientedBox3]] to copy.
+     * @param other - The other [[OrientedBox3]] to copy.
      */
     copy(other: OrientedBox3) {
         this.position.copy(other.position);
@@ -132,7 +132,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Gets the center position of this [[OrientedBox3]].
      *
-     * @param center The returned center position.
+     * @param center - The returned center position.
      */
     getCenter(center = new Vector3()): Vector3 {
         return center.copy(this.position);
@@ -141,7 +141,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Gets the size of this [[OrientedBox3]].
      *
-     * @param size The returned size.
+     * @param size - The returned size.
      */
     getSize(size = new Vector3()): Vector3 {
         return size.copy(this.extents).multiplyScalar(2);
@@ -149,7 +149,7 @@ export class OrientedBox3 implements OrientedBox3Like {
 
     /**
      * Gets the orientation matrix of this `OrientedBox3`.
-     * @param matrix The output orientation matrix.
+     * @param matrix - The output orientation matrix.
      */
     getRotationMatrix(matrix: Matrix4 = new Matrix4()): Matrix4 {
         return matrix.makeBasis(this.xAxis, this.yAxis, this.zAxis);
@@ -158,7 +158,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Checks intersection with the given `THREE.Frustum` or array of `THREE.Plane`s.
      *
-     * @param frustumOrPlanes Frustum or array of planes.
+     * @param frustumOrPlanes - Frustum or array of planes.
      */
     intersects(frustumOrPlanes: Plane[] | Frustum): boolean {
         const planes: Plane[] = Array.isArray(frustumOrPlanes)
@@ -184,7 +184,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Checks intersection with the given ray.
      *
-     * @param ray The ray to test.
+     * @param ray - The ray to test.
      * @returns distance from ray origin to intersection point if it exist, undefined otherwise.
      */
     intersectsRay(ray: Ray): number | undefined {
@@ -208,7 +208,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Returns true if this [[OrientedBox3]] contains the given point.
      *
-     * @param point A valid point.
+     * @param point - A valid point.
      */
     contains(point: Vector3): boolean {
         const dx = point.x - this.position.x;
@@ -226,7 +226,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Returns the distance from this [[OrientedBox3]] and the given `point`.
      *
-     * @param point A point.
+     * @param point - A point.
      */
     distanceToPoint(point: Vector3): number {
         return Math.sqrt(this.distanceToPointSquared(point));
@@ -235,7 +235,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     /**
      * Returns the squared distance from this [[OrientedBox3]] and the given `point`.
      *
-     * @param point A point.
+     * @param point - A point.
      */
     distanceToPointSquared(point: Vector3): number {
         const d = new Vector3();

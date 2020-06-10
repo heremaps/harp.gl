@@ -19,12 +19,12 @@ import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
 
 /**
  * Creates a TextCanvas stub.
- * @param sandbox Sinon sandbox to keep track of created stubs.
- * @param addTextSpy Spy that will be called when [[addText]] method is called.
- * @param addTextBufferObjSpy Spy that will be called when [[addTextBufferObject]] method is called
- * on the created TextCanvas stub.
- * @param fontCatalog Font catalog used by the created text canvas.
- * @param textWidthHeight Text width and height used to compute bounds.
+ * @param sandbox - Sinon sandbox to keep track of created stubs.
+ * @param addTextSpy - Spy that will be called when [[addText]] method is called.
+ * @param addTextBufferObjSpy - Spy that will be called when [[addTextBufferObject]] method is
+ *                              called on the created TextCanvas stub.
+ * @param fontCatalog - Font catalog used by the created text canvas.
+ * @param textWidthHeight - Text width and height used to compute bounds.
  * @returns TextCanvas stub.
  */
 export function stubTextCanvas(
@@ -101,8 +101,8 @@ export function stubTextCanvas(
 
 /**
  * Stubs text canvas factory.
- * @param sandbox Sinon sandbox to keep track of created stubs.
- * @param textCanvas The text canvas to be returned by the factory.
+ * @param sandbox - Sinon sandbox to keep track of created stubs.
+ * @param textCanvas - The text canvas to be returned by the factory.
  * @returns TextCanvasFactory stub.
  */
 export function stubTextCanvasFactory(

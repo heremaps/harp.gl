@@ -17,8 +17,8 @@ export class PickingRaycaster extends THREE.Raycaster {
     /**
      * Constructor.
      *
-     * @param width the canvas width.
-     * @param height the canvas height.
+     * @param width - the canvas width.
+     * @param height - the canvas height.
      */
     constructor(public width: number, public height: number) {
         super();

@@ -88,10 +88,10 @@ export class TextGeometry {
     /**
      * Creates a new `TextGeometry`.
      *
-     * @param material Material used to render foreground glyphs.
-     * @param backgroundMaterial Material used to render background glyphs.
-     * @param initialSize Initial amount of glyphs that can be stored.
-     * @param capacity Maximum glyph capacity.
+     * @param material - Material used to render foreground glyphs.
+     * @param backgroundMaterial - Material used to render background glyphs.
+     * @param initialSize - Initial amount of glyphs that can be stored.
+     * @param capacity - Maximum glyph capacity.
      *
      * @returns New `TextGeometry`.
      */
@@ -182,12 +182,12 @@ export class TextGeometry {
     /**
      * Add a new glyph to the `TextGeometry`.
      *
-     * @param glyphData [[GlyphData]] holding the glyph description.
-     * @param corners Transformed glyph corners.
-     * @param weight Foreground glyph sampling weight.
-     * @param bgWeight Foreground glyph sampling weight.
-     * @param mirrored If `true`, UVs will be horizontally mirrored (needed for RTL punctuation).
-     * @param style Currently set [[TextRenderStyle]].
+     * @param glyphData - [[GlyphData]] holding the glyph description.
+     * @param corners - Transformed glyph corners.
+     * @param weight - Foreground glyph sampling weight.
+     * @param bgWeight - Foreground glyph sampling weight.
+     * @param mirrored - If `true`, UVs will be horizontally mirrored (needed for RTL punctuation).
+     * @param style - Currently set [[TextRenderStyle]].
      *
      * @returns Result of the addition.
      */
@@ -255,14 +255,14 @@ export class TextGeometry {
     /**
      * Add a new glyph to a text buffer.
      *
-     * @param buffer Target buffer where glyph attributes will be stored.
-     * @param offset Offset of the target buffer.
-     * @param glyphData [[GlyphData]] holding the glyph description.
-     * @param corners Transformed glyph corners.
-     * @param weight Foreground glyph sampling weight.
-     * @param bgWeight Foreground glyph sampling weight.
-     * @param mirrored If `true`, UVs will be mirrored (needed for RTL punctuation).
-     * @param style Currently set [[TextRenderStyle]].
+     * @param buffer - Target buffer where glyph attributes will be stored.
+     * @param offset - Offset of the target buffer.
+     * @param glyphData - [[GlyphData]] holding the glyph description.
+     * @param corners - Transformed glyph corners.
+     * @param weight - Foreground glyph sampling weight.
+     * @param bgWeight - Foreground glyph sampling weight.
+     * @param mirrored - If `true`, UVs will be mirrored (needed for RTL punctuation).
+     * @param style - Currently set [[TextRenderStyle]].
      */
     addToBuffer(
         buffer: Float32Array,
@@ -303,14 +303,14 @@ export class TextGeometry {
      * Add a previously computed [[TextBufferObject]] to the `TextGeometry`. Extra parameters can
      * be passed to override the passed attribute data.
      *
-     * @param textBufferObject [[TextBufferObject]] containing computed glyphs.
-     * @param position Override position value.
-     * @param scale Override scale value.
-     * @param rotation Override rotation value.
-     * @param color Override color value.
-     * @param opacity Override opacity value.
-     * @param bgColor Override background color value.
-     * @param bgOpacity Override background opacity value.
+     * @param textBufferObject - [[TextBufferObject]] containing computed glyphs.
+     * @param position - Override position value.
+     * @param scale - Override scale value.
+     * @param rotation - Override rotation value.
+     * @param color - Override color value.
+     * @param opacity - Override opacity value.
+     * @param bgColor - Override background color value.
+     * @param bgOpacity - Override background opacity value.
      *
      * @returns Result of the addition.
      */
@@ -433,9 +433,9 @@ export class TextGeometry {
     /**
      * Adds picking data for glyphs from the specified start until the last glyph added.
      *
-     * @param startIdx First glyph index that this picking data is associated to.
-     * @param endIdx Last glyph index that this picking data is associated to.
-     * @param pickingData Picking data to be added.
+     * @param startIdx - First glyph index that this picking data is associated to.
+     * @param endIdx - Last glyph index that this picking data is associated to.
+     * @param pickingData - Picking data to be added.
      */
     addPickingData(startIdx: number, endIdx: number, pickingData: any): boolean {
         if (this.m_pickingCount >= this.m_currentCapacity) {
@@ -456,8 +456,8 @@ export class TextGeometry {
      * Fill the picking results for the pixel with the given screen coordinate. If multiple glyphs
      * are found, the order of the results is unspecified.
      *
-     * @param screenPosition Screen coordinate of picking position.
-     * @param pickCallback Callback to be called for every picked element.
+     * @param screenPosition - Screen coordinate of picking position.
+     * @param pickCallback - Callback to be called for every picked element.
      */
     pick(screenPosition: THREE.Vector2, pickCallback: (pickData: any | undefined) => void) {
         for (const pickingData of this.m_pickingDataArray) {
@@ -509,7 +509,7 @@ export class TextGeometry {
     /**
      * Update the info with the memory footprint caused by objects owned by the `TextGeometry`.
      *
-     * @param info The info object to increment with the values from this `TextGeometry`.
+     * @param info - The info object to increment with the values from this `TextGeometry`.
      */
     updateMemoryUsage(info: MemoryUsage) {
         const numBytes =

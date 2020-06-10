@@ -14,8 +14,8 @@ export type BlendOperation = (dst: RGBA, src: RGBA) => RGBA;
  * If source pixel is semi-transulent color mixing occurs, but most typical use case is
  * merging src layer into the dst layer using simple (b over a) alpha compositing.
  *
- * @param dst destination color, that may be considered as background color.
- * @param src source color, that is overlaid on the background color.
+ * @param dst - destination color, that may be considered as background color.
+ * @param src - source color, that is overlaid on the background color.
  * @returns blending result (color).
  */
 export const BlendAlpha: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
@@ -37,8 +37,8 @@ export const BlendAlpha: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
  * In this blend mode background (dst) image alpha is ignored when mixing pixel colors.
  * The effect is that dst image is considered to be fully opaque.
  *
- * @param dst destination or background color,
- * @param src source color beeing overlaid on the destination.
+ * @param dst - destination or background color,
+ * @param src - source color beeing overlaid on the destination.
  * @returns blending result (color).
  */
 export const BlendAlphaPremultiplied: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
@@ -60,8 +60,8 @@ export const BlendAlphaPremultiplied: BlendOperation = (dst: RGBA, src: RGBA): R
  * the result. Multiply blend mode is equivalent to a quadratic curve, or gamma correction
  * with γ=2, final result of this blend mode is darker picture.
  *
- * @param dst destination color.
- * @param src source color.
+ * @param dst - destination color.
+ * @param src - source color.
  * @returns resulting color after blending operation.
  */
 export const BlendMultiply: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
@@ -87,8 +87,8 @@ export const BlendMultiply: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
  * color, so if destination is stored in grayscale it changes to source color while
  * preserving smooth gradient transitions. Source color alpha is ignored here.
  *
- * @param dst base surface color.
- * @param src multiplication factor (color).
+ * @param dst - base surface color.
+ * @param src - multiplication factor (color).
  * @return multiplied color.
  */
 export const BlendMultiplyRGB: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
@@ -112,8 +112,8 @@ export const BlendMultiplyRGB: BlendOperation = (dst: RGBA, src: RGBA): RGBA => 
  * This mode is symmetric, so exchanging layers (source and destination) doe not change
  * the result. The final result of this blend mode is brighter picture.
  *
- * @param dst destination color.
- * @param src source color.
+ * @param dst - destination color.
+ * @param src - source color.
  * @returns resulting color after blending operation.
  */
 export const BlendScreen: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
@@ -139,8 +139,8 @@ export const BlendScreen: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {
  * This mode is symmetric, so exchanging layers (source and destination) doe not change
  * the result. The final result of this blend mode is brighter picture.
  *
- * @param dst destination color.
- * @param src source color.
+ * @param dst - destination color.
+ * @param src - source color.
  * @returns resulting color after blending operation.
  */
 export const BlendOverlay: BlendOperation = (dst: RGBA, src: RGBA): RGBA => {

@@ -29,9 +29,9 @@ export class ConcurrentDecoderFacade {
     /**
      * Returns a [[WorkerBasedDecoder]] instance.
      *
-     * @param decoderServiceType The name of the decoder service type.
-     * @param scriptUrl The optional URL with the workers' script.
-     * @param workerCount The number of web workers to use.
+     * @param decoderServiceType - The name of the decoder service type.
+     * @param scriptUrl - The optional URL with the workers' script.
+     * @param workerCount - The number of web workers to use.
      */
     static getTileDecoder(
         decoderServiceType: string,
@@ -46,9 +46,9 @@ export class ConcurrentDecoderFacade {
     /**
      * Returns a [[ConcurrentWorkerSet]] instance based on the script URL specified.
      *
-     * @param scriptUrl The optional URL with the workers' script. If not specified,
+     * @param scriptUrl - The optional URL with the workers' script. If not specified,
      * the function uses [[defaultScriptUrl]] instead.
-     * @param workerCount The number of web workers to use.
+     * @param workerCount - The number of web workers to use.
      */
     static getWorkerSet(scriptUrl?: string, workerCount?: number): ConcurrentWorkerSet {
         if (scriptUrl === undefined) {
@@ -69,7 +69,7 @@ export class ConcurrentDecoderFacade {
     /**
      * Destroys a [[ConcurrentWorkerSet]] instance.
      *
-     * @param scriptUrl The worker script URL that was used to create the [[ConcurrentWorkerSet]].
+     * @param scriptUrl - The worker script URL that was used to create the [[ConcurrentWorkerSet]].
      */
     static destroyWorkerSet(scriptUrl: string) {
         const workerSet = this.workerSets[scriptUrl];

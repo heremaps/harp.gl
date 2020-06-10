@@ -90,8 +90,8 @@ export function getOptionValue<T>(...values: Array<T | undefined>): T | undefine
  *   * `Object.assign` & `spread operator` may copy `undefined` and `null`s if they really exist
  *     in options object
  *
- * @param parameters parmeters template object holding all expected parameters
- * @param options options object
+ * @param parameters - parmeters template object holding all expected parameters
+ * @param options - options object
  * @returns new object with `parameters` overriden by values from `options`
  */
 export function mergeWithOptions<T extends object>(parameters: T, options?: Partial<T>): T {

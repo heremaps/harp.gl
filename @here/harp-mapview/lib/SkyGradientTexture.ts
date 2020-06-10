@@ -62,9 +62,9 @@ export class SkyGradientTexture {
     /**
      * Constructs a new `SkyGradientTexture`.
      *
-     * @param sky Initial [[GradientSky]] configuration.
-     * @param m_projectionType [[MapView]]'s projection type.
-     * @param m_height Optional height parameter.
+     * @param sky - Initial [[GradientSky]] configuration.
+     * @param m_projectionType - [[MapView]]'s projection type.
+     * @param m_height - Optional height parameter.
      */
     constructor(
         sky: GradientSky,
@@ -129,7 +129,7 @@ export class SkyGradientTexture {
     /**
      * This method updates the position of the texture depending on the camera frustum.
      *
-     * @param camera The camera used in the map view.
+     * @param camera - The camera used in the map view.
      */
     update(camera: THREE.Camera) {
         if (this.m_projectionType === ProjectionType.Planar) {
@@ -141,7 +141,7 @@ export class SkyGradientTexture {
     /**
      * Updates the `SkyGradientTexture` with new parameters.
      *
-     * @param params New [[GradientSky]] configuration.
+     * @param params - New [[GradientSky]] configuration.
      */
     updateTexture(sky: GradientSky) {
         for (let i = 0; i < this.m_faceCount; ++i) {

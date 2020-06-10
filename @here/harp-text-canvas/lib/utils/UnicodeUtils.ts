@@ -26,7 +26,7 @@ export namespace UnicodeUtils {
     /**
      * Checks if a character should be considered as a white space.
      *
-     * @param codePoint Character's Unicode code point.
+     * @param codePoint - Character's Unicode code point.
      *
      * @returns Result of the test.
      */
@@ -52,7 +52,7 @@ export namespace UnicodeUtils {
     /**
      * Checks if a character should be considered as a new line.
      *
-     * @param codePoint Character's Unicode code point.
+     * @param codePoint - Character's Unicode code point.
      *
      * @returns Result of the test.
      */
@@ -77,7 +77,7 @@ export namespace UnicodeUtils {
     /**
      * Checks if a character's can be printed (rendered).
      *
-     * @param codePoint Character's Unicode code point.
+     * @param codePoint - Character's Unicode code point.
      *
      * @returns Result of the test.
      */
@@ -153,8 +153,8 @@ export namespace UnicodeUtils {
     /**
      * Returns the Unicode's character direction.
      *
-     * @param codePoint Character's Unicode code point.
-     * @param block Character's Unicode block.
+     * @param codePoint - Character's Unicode code point.
+     * @param block - Character's Unicode block.
      *
      * @returns Character's direction.
      */
@@ -201,7 +201,7 @@ export namespace UnicodeUtils {
     /**
      * Checks if a character should be mirrored on an RTL run.
      *
-     * @param codePoint Character's Unicode code point.
+     * @param codePoint - Character's Unicode code point.
      *
      * @returns Result of the test.
      */

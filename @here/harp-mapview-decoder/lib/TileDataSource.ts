@@ -82,7 +82,7 @@ export class TileFactory<TileType extends Tile> {
      * Initialize the factory using the constructor of the element to be called when a [[Tile]] is
      * created.
      *
-     * @param m_modelConstructor Constructor of (subclass of) [[Tile]].
+     * @param m_modelConstructor - Constructor of (subclass of) [[Tile]].
      */
     constructor(
         private m_modelConstructor: new (dataSource: DataSource, tileKey: TileKey) => TileType
@@ -92,8 +92,8 @@ export class TileFactory<TileType extends Tile> {
      * Create an instance of (subclass of) [[Tile]]. The required parameters are passed as arguments
      * to the constructor of [[Tile]].
      *
-     * @param dataSource [[Datasource]] this class belongs to.
-     * @param tileKey Quadtree address of the [[Tile]].
+     * @param dataSource - [[Datasource]] this class belongs to.
+     * @param tileKey - Quadtree address of the [[Tile]].
      */
     create(dataSource: DataSource, tileKey: TileKey): TileType {
         return new this.m_modelConstructor(dataSource, tileKey);
@@ -113,8 +113,8 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     /**
      * Set up the `TileDataSource`.
      *
-     * @param m_tileFactory Factory to create the [[Tile]] instances.
-     * @param m_options Options specifying the parameters of the [[DataSource]].
+     * @param m_tileFactory - Factory to create the [[Tile]] instances.
+     * @param m_options - Options specifying the parameters of the [[DataSource]].
      */
     constructor(
         private readonly m_tileFactory: TileFactory<TileType>,
@@ -222,7 +222,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      * initialized with default copyrights, concatenated with copyrights from copyright provider of
      * this data source.
      *
-     * @param tileKey Quadtree address of the requested tile.
+     * @param tileKey - Quadtree address of the requested tile.
      * @override
      */
     getTile(tileKey: TileKey): TileType | undefined {
@@ -254,7 +254,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     /**
      * Get [[TileInfo]] of a tile.
      *
-     * @param tileKey Quadtree address of the requested tile.
+     * @param tileKey - Quadtree address of the requested tile.
      * @returns A promise which will contain the [[TileInfo]] when resolved.
      */
     getTileInfo(tileKey: TileKey): Promise<TileInfo | undefined> {

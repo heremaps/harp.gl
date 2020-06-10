@@ -133,10 +133,10 @@ export class FrustumIntersection {
     /**
      * Computes the tiles intersected by the updated frustum, see [[updateFrustum]].
      *
-     * @param tilingScheme The tiling scheme used to generate the tiles.
-     * @param elevationRangeSource Source of elevation range data if any.
-     * @param zoomLevels A list of zoom levels to render.
-     * @param dataSources A list of data sources to render.
+     * @param tilingScheme - The tiling scheme used to generate the tiles.
+     * @param elevationRangeSource - Source of elevation range data if any.
+     * @param zoomLevels - A list of zoom levels to render.
+     * @param dataSources - A list of data sources to render.
      * @returns The computation result, see [[FrustumIntersection.Result]].
      */
     compute(
@@ -300,7 +300,7 @@ export class FrustumIntersection {
     }
     /**
      * Estimate screen space area of tile and distance to center of tile
-     * @param tileBounds The bounding volume of a tile
+     * @param tileBounds - The bounding volume of a tile
      * @return Area estimate and distance to tile center in clip space
      */
     private computeTileAreaAndDistance(
@@ -350,7 +350,7 @@ export class FrustumIntersection {
      *   values)
      * - the tilt of the camera (because we see more tiles when tilted).
      *
-     * @param worldCenter The center of the camera in world space.
+     * @param worldCenter - The center of the camera in world space.
      */
     private computeRequiredInitialRootTileKeys(worldCenter: THREE.Vector3) {
         this.m_rootTileKeys = [];

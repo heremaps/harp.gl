@@ -317,10 +317,10 @@ export class SkyAtmosphereMaterial extends THREE.RawShaderMaterial {
      * This includes only uniforms that may change frame by frame, other uniforms are
      * accessed with convenient material setters and getters.
      *
-     * @param shaderMaterial Material which uniforms will be updated.
-     * @param matrixWorldInverse Inverse of world matrix used to position the atmosphere dome.
-     * @param lightDirection The light directional vector in world space.
-     * @param camera Camera used in rendering.
+     * @param shaderMaterial - Material which uniforms will be updated.
+     * @param matrixWorldInverse - Inverse of world matrix used to position the atmosphere dome.
+     * @param lightDirection - The light directional vector in world space.
+     * @param camera - Camera used in rendering.
      */
     updateUniforms(
         shaderMaterial: THREE.ShaderMaterial,
@@ -372,8 +372,8 @@ export class SkyAtmosphereMaterial extends THREE.RawShaderMaterial {
     /*
      * Calculate camera position used in vertex shader of atmosphere materials.
      *
-     * @param object
-     * @param camera Camera used to get the eye position.
+     * @param object -
+     * @param camera - Camera used to get the eye position.
      */
     private getCameraInfo(
         object: THREE.Object3D,

@@ -59,7 +59,7 @@ export namespace CopyrightInfo {
      *
      * `id` and `label` are considered keys in deduplication algorithm.
      *
-     * @param sources non-duplicate elements from this array are added to `target`
+     * @param sources - non-duplicate elements from this array are added to `target`
      * @returns merge of all copyright infos in `sources`
      */
     export function mergeArrays(a: CopyrightInfo[], b?: CopyrightInfo[]): CopyrightInfo[] {
@@ -94,7 +94,7 @@ export namespace CopyrightInfo {
      * * Empty list returns empty string.
      * * Entries with empty (but defined) labels are skipped.
      *
-     * @param copyrightInfo Array of copyrights to format.
+     * @param copyrightInfo - Array of copyrights to format.
      */
     export function formatAsHtml(copyrightInfo: CopyrightInfo[]): string {
         if (copyrightInfo.length === 0) {

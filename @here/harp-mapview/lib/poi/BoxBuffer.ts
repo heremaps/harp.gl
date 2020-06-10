@@ -137,10 +137,10 @@ export class BoxBuffer {
     /**
      * Creates a new `BoxBuffer`.
      *
-     * @param material Material to be used for [[Mesh]] of this `BoxBuffer`.
-     * @param renderOrder Optional renderOrder of this buffer.
-     * @param startElementCount Initial number of elements this `BoxBuffer` can hold.
-     * @param maxElementCount Maximum number of elements this `BoxBuffer` can hold.
+     * @param material - Material to be used for [[Mesh]] of this `BoxBuffer`.
+     * @param renderOrder - Optional renderOrder of this buffer.
+     * @param startElementCount - Initial number of elements this `BoxBuffer` can hold.
+     * @param maxElementCount - Maximum number of elements this `BoxBuffer` can hold.
      */
     constructor(
         readonly material: THREE.Material | THREE.Material[],
@@ -197,7 +197,7 @@ export class BoxBuffer {
      * can only add the glyph by increasing the buffer size, the resize() method is called, which
      * will then create a new geometry for the mesh.
      *
-     * @param glyphCount Number of glyphs to be added to the buffer.
+     * @param glyphCount - Number of glyphs to be added to the buffer.
      * @returns `true` if the element (box or glyph) can be added to the buffer, `false` otherwise.
      */
     canAddElements(glyphCount = 1): boolean {
@@ -234,7 +234,7 @@ export class BoxBuffer {
     /**
      * Store this `BoxBuffer`'s attribute [[State]] to a previously stored one.
      *
-     * @param state [[State]] struct describing a previous attribute state.
+     * @param state - [[State]] struct describing a previous attribute state.
      */
     restoreState(state: State) {
         this.positionAttribute!.count = state.positionAttributeCount;
@@ -247,12 +247,12 @@ export class BoxBuffer {
     /**
      * Adds a new box to this `BoxBuffer`.
      *
-     * @param screenBox [[Math2D.Box]] holding screen coordinates for this box.
-     * @param uvBox [[Math2D.UvBox]] holding uv coordinates for this box.
-     * @param color Box's color.
-     * @param opacity Box's opacity.
-     * @param distance Box's distance to camera.
-     * @param pickInfo Box's picking information.
+     * @param screenBox - [[Math2D.Box]] holding screen coordinates for this box.
+     * @param uvBox - [[Math2D.UvBox]] holding uv coordinates for this box.
+     * @param color - Box's color.
+     * @param opacity - Box's opacity.
+     * @param distance - Box's distance to camera.
+     * @param pickInfo - Box's picking information.
      */
     addBox(
         screenBox: Math2D.Box,
@@ -388,9 +388,9 @@ export class BoxBuffer {
      * Fill the picking results for the pixel with the given screen coordinate. If multiple
      * boxes are found, the order of the results is unspecified.
      *
-     * @param screenPosition Screen coordinate of picking position.
-     * @param pickCallback Callback to be called for every picked element.
-     * @param imageData Image data to test if the pixel is transparent
+     * @param screenPosition - Screen coordinate of picking position.
+     * @param pickCallback - Callback to be called for every picked element.
+     * @param imageData - Image data to test if the pixel is transparent
      */
     pickBoxes(
         screenPosition: THREE.Vector2,
@@ -454,8 +454,8 @@ export class BoxBuffer {
      * Creates a new [[Geometry]] object from all the attribute data stored in this `BoxBuffer`.
      * The [[Mesh]] object may be created if it is not initialized already.
      *
-     * @param newSize Optional number of elements to resize the buffer to.
-     * @param forceResize Optional flag to force a resize even if new size is smaller than before.
+     * @param newSize - Optional number of elements to resize the buffer to.
+     * @param forceResize - Optional flag to force a resize even if new size is smaller than before.
      */
     resize(newSize?: number, forceResize?: boolean): BoxBufferMesh {
         if (this.geometry !== undefined) {
@@ -486,7 +486,7 @@ export class BoxBuffer {
     /**
      * Update the info with the memory footprint caused by objects owned by the `BoxBuffer`.
      *
-     * @param info The info object to increment with the values from this `BoxBuffer`.
+     * @param info - The info object to increment with the values from this `BoxBuffer`.
      */
     updateMemoryUsage(info: MemoryUsage) {
         const numBytes =
@@ -502,13 +502,13 @@ export class BoxBuffer {
     /**
      * Check if a pixel is transparent or not.
      *
-     * @param imageData Data containing the pixels.
-     * @param xScreenPos X position of the pixel.
-     * @param yScreenPos Y position of the pixel.
-     * @param box Bounding box of the image in screen coordinates.
-     * @param uvBox Uv box referred to the given bounding box.
-     * @param canvas Canvas element that will be used to draw the image, in case the imageData is an
-     *      ImageBitmap
+     * @param imageData - Data containing the pixels.
+     * @param xScreenPos - X position of the pixel.
+     * @param yScreenPos - Y position of the pixel.
+     * @param box - Bounding box of the image in screen coordinates.
+     * @param uvBox - Uv box referred to the given bounding box.
+     * @param canvas - Canvas element that will be used to draw the image, in case the imageData is
+     *      an `ImageBitmap`
      */
     protected isPixelTransparent(
         imageData: ImageBitmap | ImageData,
@@ -549,7 +549,7 @@ export class BoxBuffer {
     /**
      * Resize the attribute buffers. New value must be larger than the previous one.
      *
-     * @param newSize New number of elements in the buffer. Number has to be larger than the
+     * @param newSize - New number of elements in the buffer. Number has to be larger than the
      *      previous size.
      */
     protected resizeBuffer(newSize: number) {

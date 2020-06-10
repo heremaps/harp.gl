@@ -69,9 +69,9 @@ export class GlyphTextureCache {
     /**
      * Creates a `GlyphTextureCache` object.
      *
-     * @param capacity Cache's maximum glyph capacity.
-     * @param entryWidth Maximum entry width.
-     * @param entryHeight Maximum entry height.
+     * @param capacity - Cache's maximum glyph capacity.
+     * @param entryWidth - Maximum entry width.
+     * @param entryHeight - Maximum entry height.
      *
      * @returns New `GlyphTextureCache`.
      */
@@ -208,8 +208,8 @@ export class GlyphTextureCache {
      * Add a new entry to the GlyphTextureCache. If the limit of entries is hit, the least requested
      * entry will be replaced.
      *
-     * @param hash Entry's hash.
-     * @param glyph Entry's glyph data.
+     * @param hash - Entry's hash.
+     * @param glyph - Entry's glyph data.
      */
     add(hash: string, glyph: GlyphData): void {
         const entry = this.m_entryCache.get(hash);
@@ -228,7 +228,7 @@ export class GlyphTextureCache {
     /**
      * Checks if an entry is in the cache.
      *
-     * @param hash Entry's hash.
+     * @param hash - Entry's hash.
      *
      * @returns Test result.
      */
@@ -239,7 +239,7 @@ export class GlyphTextureCache {
     /**
      * Retrieves an entry from the cache.
      *
-     * @param hash Entry's hash.
+     * @param hash - Entry's hash.
      *
      * @returns Retrieval result.
      */
@@ -262,7 +262,7 @@ export class GlyphTextureCache {
      * Updates the internal WebGLRenderTarget.
      * The update will copy the newly introduced glyphs since the previous update.
      *
-     * @param renderer WebGLRenderer.
+     * @param renderer - WebGLRenderer.
      */
     update(renderer: THREE.WebGLRenderer): void {
         let oldRenderTarget: THREE.RenderTarget | null = null;

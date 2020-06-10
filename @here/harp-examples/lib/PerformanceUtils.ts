@@ -251,7 +251,7 @@ export namespace PerformanceUtils {
      * Render a frame. Can be used to gather the latest statistics of rendering just this last
      * frame.
      *
-     * @param clearFrameEvents If `true` the current frameEvents are cleared.
+     * @param clearFrameEvents - If `true` the current frameEvents are cleared.
      */
     async function renderMapFrame(
         mapViewApp: MapViewApp,

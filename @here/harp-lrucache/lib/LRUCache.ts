@@ -73,9 +73,9 @@ export class LRUCache<Key, Value> {
      * [[sizeFunction]] is not specified, the [[cacheCapacity]] accounts for the maximum
      * number of elements stored.
      *
-     * @param cacheCapacity Number used to configure the maximum cache size, may express
+     * @param cacheCapacity - Number used to configure the maximum cache size, may express
      * number of entries or memory consumed in megabytes depending on [[sizeFunction]].
-     * @param sizeFunction A function determining the size per element.
+     * @param sizeFunction - A function determining the size per element.
      */
     constructor(cacheCapacity: number, sizeFunction: (v: Value) => number = () => 1) {
         this.m_capacity = cacheCapacity;
@@ -88,8 +88,8 @@ export class LRUCache<Key, Value> {
      * **Note**: Results are undefined if the entire cache is modified during iteration. You may
      * although modify the current element in [[callbackfn]] function.
      *
-     * @param callbackfn The callback to call for each item.
-     * @param thisArg Optional this argument for the callback.
+     * @param callbackfn - The callback to call for each item.
+     * @param thisArg - Optional this argument for the callback.
      */
     forEach(
         callbackfn: (value: Value, key: Key, map: LRUCache<Key, Value>) => void,
@@ -160,7 +160,7 @@ export class LRUCache<Key, Value> {
      * Resets the capacity of this cache. If `newCapacity` is smaller than the current cache size,
      * all items will be evicted until the cache shrinks to `newCapacity`.
      *
-     * @param newCapacity The new capacity of this cache.
+     * @param newCapacity - The new capacity of this cache.
      */
     setCapacity(newCapacity: number): void {
         this.m_capacity = newCapacity;
@@ -170,8 +170,8 @@ export class LRUCache<Key, Value> {
     /**
      * Resets the cache capacity and function used to measure the element size.
      *
-     * @param newCapacity The new capacity masured in units returned from [[sizeMeasure]] funtion.
-     * @param sizeMeasure Function that defines the size of element, if you want to measure
+     * @param newCapacity - The new capacity masured in units returned from [[sizeMeasure]] funtion.
+     * @param sizeMeasure - Function that defines the size of element, if you want to measure
      * number of elements only always return 1 from this function (default), you may also
      * specify own function that measures entries by memory consumed, nubmer of sub-elements, etc.
      */
@@ -210,8 +210,8 @@ export class LRUCache<Key, Value> {
      * If the key didn't exist in the cache, it will be inserted as most recently used item. An
      * eviction of the least recently used item takes place if the cache exceeded its capacity.
      *
-     * @param key The key for the key-value pair to insert or update.
-     * @param value The value for the key-value pair to insert or update.
+     * @param key - The key for the key-value pair to insert or update.
+     * @param value - The value for the key-value pair to insert or update.
      */
     set(key: Key, value: Value) {
         const valueSize = this.m_sizeFunction(value);
@@ -246,7 +246,7 @@ export class LRUCache<Key, Value> {
     /**
      * Looks up key in the cache and returns the associated value.
      *
-     * @param key The key to look up.
+     * @param key - The key to look up.
      * @returns The associated value, or `undefined` if the key-value pair is not in the cache.
      */
     get(key: Key): Value | undefined {
@@ -262,7 +262,7 @@ export class LRUCache<Key, Value> {
     /**
      * Test if a key/value pair is in the cache.
      *
-     * @param key The key to look up.
+     * @param key - The key to look up.
      * @returns `true` if the key-value pair is in the cache, `false` otherwise.
      */
     has(key: Key): boolean {
@@ -297,8 +297,8 @@ export class LRUCache<Key, Value> {
     /**
      * Evict selected elements from the cache using [[selector]] function.
      *
-     * @param selector The function for selecting elements for eviction.
-     * @param thisArg Optional _this_ object reference.
+     * @param selector - The function for selecting elements for eviction.
+     * @param thisArg - Optional _this_ object reference.
      */
     evictSelected(selector: (value: Value, key: Key) => boolean, thisArg?: any) {
         const cb = this.evictionCallback;
@@ -321,7 +321,7 @@ export class LRUCache<Key, Value> {
      *
      * **Note**: This is an explicit removal, thus, the eviction callback will not be called.
      *
-     * @param key The key of the key-value pair to delete.
+     * @param key - The key of the key-value pair to delete.
      * @returns `true` if the key-value pair existed and was deleted, `false` otherwise.
      */
     delete(key: Key): boolean {

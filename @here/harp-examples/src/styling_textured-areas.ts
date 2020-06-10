@@ -55,7 +55,7 @@ West</a>.</p>`;
      * to use [[StandardTexturedTechnique]] instead.
      * This enables lighting for these areas and allows to specify textures.
      * This could solely be done in the theme json file but for explanatory reasons it's done here.
-     * @param theme The theme that should be modified.
+     * @param theme - The theme that should be modified.
      * @returns The modified theme.
      */
     function modifyTheme(theme: Theme): Theme {

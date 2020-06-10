@@ -44,7 +44,7 @@ function apply(
  *  - quadrant(+Math.PI *  0.5) = 3
  *  - quadrant(+Math.PI *  1.0) = 4
  *
- * @param longitude The longitude in radians.
+ * @param longitude - The longitude in radians.
  */
 function getLongitudeQuadrant(longitude: number) {
     const oneOverPI = 1 / Math.PI;
@@ -62,8 +62,8 @@ function lengthOfVector3(worldPoint: Vector3Like): number {
 /**
  * Creates a Box3 enclosing the geobox.
  *
- * @param geoBox Ghe given geobox
- * @param worldBox The resulting axis aligned bounding box.
+ * @param geoBox - Ghe given geobox
+ * @param worldBox - The resulting axis aligned bounding box.
  */
 function makeBox3<Bounds extends Box3Like>(
     geoBox: GeoBox,
@@ -136,8 +136,8 @@ function makeBox3<Bounds extends Box3Like>(
 /**
  * Computes the spherical projection of the given geo coordinates.
  *
- * @param geoPoint The geo coordinates.
- * @param worldpoint The resulting world coordinates.
+ * @param geoPoint - The geo coordinates.
+ * @param worldpoint - The resulting world coordinates.
  */
 function project<WorldCoordinates extends Vector3Like>(
     geoPoint: GeoCoordinatesLike,

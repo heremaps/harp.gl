@@ -75,7 +75,7 @@ export class HighPrecisionPointMaterial extends THREE.PointsMaterial {
     /**
      * Constructs a new `HighPrecisionPointMaterial`.
      *
-     * @param params `HighPrecisionPointMaterial` parameters.
+     * @param params - `HighPrecisionPointMaterial` parameters.
      */
     constructor(params?: HighPrecisionPointMaterialParameters) {
         Object.assign(THREE.ShaderChunk, linesShaderChunk);

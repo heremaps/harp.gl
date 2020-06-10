@@ -28,8 +28,8 @@ const DEPTH_PRE_PASS_RENDER_ORDER_OFFSET = 1e-6;
  * Depth prepass is enabled if correct opacity is specified (in range `(0,1)`) _and_ not explicitly
  * disabled by `enableDepthPrePass` option.
  *
- * @param technique [[BaseStandardTechnique]] instance to be checked
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param technique - [[BaseStandardTechnique]] instance to be checked
+ * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique, env: Env) {
     // Depth pass explicitly disabled
@@ -59,7 +59,7 @@ export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique,
  * Creates material that writes only to the z-buffer. Updates the original material instance, to
  * support depth prepass.
  *
- * @param baseMaterial The base material of mesh that is updated to work with depth prepass
+ * @param baseMaterial - The base material of mesh that is updated to work with depth prepass
  *     and then used. This parameter is a template for depth prepass material that is returned.
  * @returns depth prepass material, which is a clone of `baseMaterial` with the adapted settings.
  */
@@ -90,7 +90,7 @@ export function createDepthPrePassMaterial(baseMaterial: THREE.Material): THREE.
  * The DepthPrePass object is created wis a slightly smaller `renderOrder` as the original mesh
  * to ensure that it's rendered first.
  *
- * @param mesh original mesh
+ * @param mesh - original mesh
  * @returns `Mesh` depth pre pass
  */
 // tslint:enable:max-line-length
@@ -146,8 +146,8 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
  * This logic is in place to avoid z-fighting artifacts that can appear in geometries that have
  * coplanar triangles inside the same mesh.
  *
- * @param depthMesh Mesh created by `createDepthPrePassMesh`.
- * @param colorMesh Original mesh.
+ * @param depthMesh - Mesh created by `createDepthPrePassMesh`.
+ * @param colorMesh - Original mesh.
  */
 export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.Mesh) {
     // Set up depth mesh stencil logic.

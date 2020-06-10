@@ -26,7 +26,7 @@ export interface DisplacementFeature extends HiddenThreeJSMaterialProperties {
 
 /**
  * Determines whether a given material supports displacement maps for elevation overlay.
- * @param material The material to check.
+ * @param material - The material to check.
  * @returns Whether the given material supports displacement maps for elevation overlay.
  */
 export function hasDisplacementFeature(material: any): material is DisplacementFeature {

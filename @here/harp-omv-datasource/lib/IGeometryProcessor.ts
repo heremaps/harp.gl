@@ -67,11 +67,11 @@ export interface IGeometryProcessor {
      *
      * The points are represented as local webMercator coordinates.
      *
-     * @param layerName The name of the enclosing layer.
-     * @param layerExtents The extents of the enclosing layer.
-     * @param geometry The positions of the point features in the projected world coordinates.
-     * @param env The environment containing the properties of the geometry.
-     * @param storageLevel The storage level of the data.
+     * @param layerName - The name of the enclosing layer.
+     * @param layerExtents - The extents of the enclosing layer.
+     * @param geometry - The positions of the point features in the projected world coordinates.
+     * @param env - The environment containing the properties of the geometry.
+     * @param storageLevel - The storage level of the data.
      */
     processPointFeature(
         layerName: string,
@@ -86,11 +86,11 @@ export interface IGeometryProcessor {
      *
      * Each line is represented as an Array of local webMercator coordinates.
      *
-     * @param layerName The name of the enclosing layer.
-     * @param layerExtents The extents of the enclosing layer.
-     * @param geometry The list of line geometries.
-     * @param env The environment containing the properties of the geometry.
-     * @param storageLevel The storage level of the data.
+     * @param layerName - The name of the enclosing layer.
+     * @param layerExtents - The extents of the enclosing layer.
+     * @param geometry - The list of line geometries.
+     * @param env - The environment containing the properties of the geometry.
+     * @param storageLevel - The storage level of the data.
      */
     processLineFeature(
         layerName: string,
@@ -105,11 +105,11 @@ export interface IGeometryProcessor {
      *
      * Each polygon is represented as an Array of contour representing exterior and interior rings.
      *
-     * @param layerName The name of the enclosing layer.
-     * @param layerExtents The extents of the enclosing layer.
-     * @param geometry The list of polygons.
-     * @param env The environment containing the properties of the geometry.
-     * @param storageLevel The storage level of the data.
+     * @param layerName - The name of the enclosing layer.
+     * @param layerExtents - The extents of the enclosing layer.
+     * @param geometry - The list of polygons.
+     * @param env - The environment containing the properties of the geometry.
+     * @param storageLevel - The storage level of the data.
      */
     processPolygonFeature(
         layerName: string,

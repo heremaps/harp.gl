@@ -33,8 +33,8 @@ export abstract class MapViewFeature {
     /**
      * Builds a new `MapViewFeature`.
      *
-     * @param coordinates The GeoJson geometry.
-     * @param style The style to render the geometry.
+     * @param coordinates - The GeoJson geometry.
+     * @param style - The style to render the geometry.
      */
     constructor(public coordinates: FeatureGeometry["coordinates"], public properties?: {}) {}
 }

@@ -65,8 +65,8 @@ export class MSAARenderPass extends Pass {
      * The constructor for `MSAARenderPass`. It builds an internal scene with a camera looking at a
      * quad.
      *
-     * @param m_scene The scene to render.
-     * @param m_camera The camera to render the scene through.
+     * @param m_scene - The scene to render.
+     * @param m_camera - The camera to render the scene through.
      */
     constructor() {
         super();
@@ -98,11 +98,11 @@ export class MSAARenderPass extends Pass {
      * If there is no further pass, the [[Pass.renderToScreen]] flag can be set to `true` to
      * output directly to the framebuffer.
      *
-     * @param renderer The ThreeJS WebGLRenderer instance to render the scene with.
-     * @param scene The ThreeJS Scene instance to render the scene with.
-     * @param camera The ThreeJS Camera instance to render the scene with.
-     * @param writeBuffer A ThreeJS WebGLRenderTarget instance to render the scene to.
-     * @param readBuffer A ThreeJS WebGLRenderTarget instance to render the scene.
+     * @param renderer - The ThreeJS WebGLRenderer instance to render the scene with.
+     * @param scene - The ThreeJS Scene instance to render the scene with.
+     * @param camera - The ThreeJS Camera instance to render the scene with.
+     * @param writeBuffer - A ThreeJS WebGLRenderTarget instance to render the scene to.
+     * @param readBuffer - A ThreeJS WebGLRenderTarget instance to render the scene.
      * @override
      */
     render(
@@ -211,8 +211,8 @@ export class MSAARenderPass extends Pass {
     /**
      * Resize the internal render target to match the new size specified.
      *
-     * @param width New width to apply to the render target.
-     * @param height New height to apply to the render target.
+     * @param width - New width to apply to the render target.
+     * @param height - New height to apply to the render target.
      * @override
      */
     setSize(width: number, height: number) {

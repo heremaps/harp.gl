@@ -63,7 +63,7 @@ export class WorkerServiceManager extends WorkerService {
     /**
      * Register [[WorkerService]] class to this manager.
      *
-     * @param workerServiceDescriptor service type and factory
+     * @param workerServiceDescriptor - service type and factory
      */
     register(workerServiceDescriptor: WorkerServiceDescriptor): void {
         this.m_factories.set(workerServiceDescriptor.serviceType, workerServiceDescriptor.factory);

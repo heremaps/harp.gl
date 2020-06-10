@@ -115,8 +115,8 @@ export class PickHandler {
      * objects that THREE.js can raycast. However, any solid lines that have their geometry in the
      * shader cannot be tested for intersection.
      *
-     * @param x The X position in CSS/client coordinates, without the applied display ratio.
-     * @param y The Y position in CSS/client coordinates, without the applied display ratio.
+     * @param x - The X position in CSS/client coordinates, without the applied display ratio.
+     * @param y - The Y position in CSS/client coordinates, without the applied display ratio.
      * @returns the list of intersection results.
      */
     intersectMapObjects(x: number, y: number): PickResult[] {

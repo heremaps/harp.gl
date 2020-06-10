@@ -18,8 +18,8 @@ const isNode = typeof window === "undefined";
 export class MipMapGenerator {
     /**
      * Gets size of an image padded to the next bigger power-of-two size
-     * @param width Width of image
-     * @param height Height of image
+     * @param width - Width of image
+     * @param height - Height of image
      */
     static getPaddedSize(width: number, height: number): { width: number; height: number } {
         return {
@@ -46,7 +46,7 @@ export class MipMapGenerator {
      * Generate downsampled mip map levels from an image.
      * If the input image is not power-of-two the image is padded to the
      * next bigger power-of-two size.
-     * @param image Input image
+     * @param image - Input image
      * @returns A list of images with mip maps of the input image
      */
     generateTextureAtlasMipMap(image: ImageItem): ImageData[] {
@@ -84,9 +84,9 @@ export class MipMapGenerator {
 
     /**
      * Copy image to a canvas and add padding if necessary.
-     * @param image Input image.
-     * @param width Width of output image
-     * @param height Width of output image
+     * @param image - Input image.
+     * @param width - Width of output image
+     * @param height - Width of output image
      * @returns Canvas with image and padding.
      */
     private copyImageWithPadding(
@@ -143,9 +143,9 @@ export class MipMapGenerator {
      * Quality of resized image is best when
      * image.width and image.height are even numbers and the image
      * is resized by factor 0.5 or 2.
-     * @param image Input image
-     * @param width Width of output image
-     * @param height Height of output image
+     * @param image - Input image
+     * @param width - Width of output image
+     * @param height - Height of output image
      * @return Resized image
      */
     private resizeImage(image: ImageData, width: number, height: number): ImageData {

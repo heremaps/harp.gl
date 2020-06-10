@@ -16,8 +16,8 @@ export class GeoBox implements GeoBoxExtentLike {
     /**
      * Returns a `GeoBox` with the given geo coordinates.
      *
-     * @param southWest The south west position in geo coordinates.
-     * @param northEast The north east position in geo coordinates.
+     * @param southWest - The south west position in geo coordinates.
+     * @param northEast - The north east position in geo coordinates.
      */
     static fromCoordinates(southWest: GeoCoordinates, northEast: GeoCoordinates): GeoBox {
         return new GeoBox(southWest, northEast);
@@ -26,8 +26,8 @@ export class GeoBox implements GeoBoxExtentLike {
     /**
      * Returns a `GeoBox` with the given center and dimensions.
      *
-     * @param center The center position of geo box.
-     * @param extent Box latitude and logitude span
+     * @param center - The center position of geo box.
+     * @param extent - Box latitude and logitude span
      */
     static fromCenterAndExtents(center: GeoCoordinates, extent: GeoBoxExtentLike): GeoBox {
         return new GeoBox(
@@ -45,8 +45,8 @@ export class GeoBox implements GeoBoxExtentLike {
     /**
      * Constructs a new `GeoBox` with the given geo coordinates.
      *
-     * @param southWest The south west position in geo coordinates.
-     * @param northEast The north east position in geo coordinates.
+     * @param southWest - The south west position in geo coordinates.
+     * @param northEast - The north east position in geo coordinates.
      */
     constructor(readonly southWest: GeoCoordinates, readonly northEast: GeoCoordinates) {}
 
@@ -185,7 +185,7 @@ export class GeoBox implements GeoBoxExtentLike {
     /**
      * Returns `true` if the given geo coordinates are contained in this `GeoBox`.
      *
-     * @param point The geo coordinates.
+     * @param point - The geo coordinates.
      */
     contains(point: GeoCoordinates): boolean {
         if (
@@ -221,7 +221,7 @@ export class GeoBox implements GeoBoxExtentLike {
     /**
      * Update the bounding box by considering a given point.
      *
-     * @param point The point that may expand the bounding box.
+     * @param point - The point that may expand the bounding box.
      */
     growToContain(point: GeoCoordinates) {
         this.southWest.latitude = Math.min(this.southWest.latitude, point.latitude);

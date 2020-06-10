@@ -313,8 +313,8 @@ export class OmvRestClient implements DataProvider {
      * const payload = await response.arrayBuffer();
      * ```
      *
-     * @param tileKey The tile key of the tile.
-     * @param tileRequestInit Optional request options to be passed to fetch when downloading a
+     * @param tileKey - The tile key of the tile.
+     * @param tileRequestInit - Optional request options to be passed to fetch when downloading a
      * tile.
      * @returns A `Promise` of the HTTP response that contains the payload of the requested tile.
      */
@@ -386,9 +386,9 @@ export class OmvRestClient implements DataProvider {
     /**
      * Apply athentication code/token using configured (or default) authentication method.
      *
-     * @param url
-     * @param init request extra data
-     * @param authenticationCode authentication/token to be applied
+     * @param url -
+     * @param init - request extra data
+     * @param authenticationCode - authentication/token to be applied
      * @return new url to be used
      */
     private applyAuthCode(url: string, init: RequestInit, authenticationCode: string | undefined) {

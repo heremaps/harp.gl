@@ -139,7 +139,7 @@ export class ContextualArabicConverter {
     /**
      * Converts isolated arabic characters into their contextual form.
      *
-     * @param input String with isolated arabic characters.
+     * @param input - String with isolated arabic characters.
      */
     convert(input: string): string {
         let output = "";

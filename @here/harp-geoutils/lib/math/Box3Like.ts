@@ -24,7 +24,7 @@ export interface Box3Like {
 /**
  * Returns true if the given object implements the [[Box3Like]] interface.
  *
- * @param object A valid object.
+ * @param object - A valid object.
  */
 export function isBox3Like(object: {}): object is Box3Like {
     const box3 = object as Partial<Box3Like>;

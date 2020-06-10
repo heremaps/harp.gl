@@ -16,7 +16,7 @@ export interface UriResolver {
      * If given resolver doesn't know about this specific kind of `URI`, it should return string as
      * received.
      *
-     * @param input `URI`
+     * @param input - `URI`
      * @returns actual `URL` if this handler knows how locate given `uri` or original `uri`
      */
     resolveUri(uri: string): string;

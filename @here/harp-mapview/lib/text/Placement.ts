@@ -47,12 +47,12 @@ const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Mat
 /**
  * Checks whether the distance of the text element to the camera plane meets threshold criterias.
  *
- * @param textElement The textElement of which the view distance will be checked, with coordinates
+ * @param textElement - The textElement of which the view distance will be checked, with coordinates
  * in world space.
- * @param eyePos The eye (or camera) position that will be used as reference to calculate
+ * @param eyePos - The eye (or camera) position that will be used as reference to calculate
  * the distance.
- * @param eyeLookAt The eye looking direction - normalized.
- * @param maxViewDistance The maximum distance value.
+ * @param eyeLookAt - The eye looking direction - normalized.
+ * @param maxViewDistance - The maximum distance value.
  * @returns The text element view distance if it's lower than the maximum value, otherwise
  * `undefined`.
  */
@@ -84,19 +84,20 @@ function checkViewDistance(
 /**
  * Computes distance of the specified text element to camera plane given with position and normal.
  *
- * The distance is measured as projection of the vector between @param eyePosition and text element
- * onto the @param eyeLookAt vector, so it actually computes the distance to plane that
- * contains @param eyePosition and is described with @param eyeLookAt as normal.
+ * The distance is measured as projection of the vector between `eyePosition` and text
+ * eonto the `eyeLookAt` vector, so it actually computes the distance to plane that
+ * contains `eyePosition` and is described with `eyeLookAt` as normal.
  *
  * @note Used for measuring the distances to camera, results in the metric that describes
  * distance to camera near plane (assuming near = 0). Such metric is better as input for labels
  * scaling or fading factors then simple euclidean distance because it does not fluctuate during
  * simple camera panning.
  *
- * @param textElement The textElement of which the view distance will be checked. It must have
- * coordinates in world space.
- * @param eyePosition The world eye coordinates used a reference position to calculate the distance.
- * @param eyeLookAt The eye looking direction or simply said projection plane normal.
+ * @param textElement - The textElement of which the view distance will be checked. It must have
+ *                      coordinates in world space.
+ * @param eyePosition - The world eye coordinates used a reference position to calculate
+ *                      the distance.
+ * @param eyeLookAt - The eye looking direction or simply said projection plane normal.
  * @returns The text element view distance.
  */
 export function computeViewDistance(
@@ -125,9 +126,9 @@ export function computeViewDistance(
  *
  * May be used to measure distance of point labels to the camera projection (near) plane.
  *
- * @param pointPos The position to measure distance to.
- * @param planePos The position of any point on the plane.
- * @param planeNorm The plane normal vector (have to be normalized already).
+ * @param pointPos - The position to measure distance to.
+ * @param planePos - The position of any point on the plane.
+ * @param planeNorm - The plane normal vector (have to be normalized already).
  */
 export function pointToPlaneDistance(
     pointPos: THREE.Vector3,
@@ -141,8 +142,8 @@ export function pointToPlaneDistance(
 /**
  * Computes the maximum view distance for text elements as a ratio of the given view's maximum far
  * plane distance.
- * @param viewState The view for which the maximum view distance will be calculated.
- * @param farDistanceLimitRatio The ratio to apply to the maximum far plane distance.
+ * @param viewState - The view for which the maximum view distance will be calculated.
+ * @param farDistanceLimitRatio - The ratio to apply to the maximum far plane distance.
  * @returns Maximum view distance.
  */
 export function getMaxViewDistance(viewState: ViewState, farDistanceLimitRatio: number): number {
@@ -167,12 +168,12 @@ const tmpPlacementBounds = new THREE.Box2();
 /**
  * Applies early rejection tests for a given text element meant to avoid trying to place labels
  * that are not visible, not ready, duplicates etc...
- * @param textElement The Text element to check.
- * @param viewState The view for which the text element will be placed.
- * @param viewCamera The view's camera.
- * @param m_poiManager To prepare pois for rendering.
- * @param [maxViewDistance] If specified, text elements farther than this max distance will be
- * rejected.
+ * @param textElement - The Text element to check.
+ * @param viewState - The view for which the text element will be placed.
+ * @param viewCamera - The view's camera.
+ * @param m_poiManager - To prepare pois for rendering.
+ * @param maxViewDistance - If specified, text elements farther than this max distance will be
+ *                          rejected.
  * @returns An object with the result code and the text element view distance
  * ( or `undefined` of the checks failed) as second.
  */
@@ -230,12 +231,12 @@ export function checkReadyForPlacement(
 
 /**
  * Computes the offset for a point text accordingly to text alignment (and icon, if any).
- * @param textElement The text element of which the offset will computed. It must be a point
+ * @param textElement - The text element of which the offset will computed. It must be a point
  * label with [[layoutStyle]] and [[bounds]] already computed.
- * @param placement The relative anchor placement (may be different then original alignment).
- * @param scale The scaling factor (due to distance, etc.).
- * @param env The [[Env]] used to evaluate technique attributes.
- * @param offset The offset result.
+ * @param placement - The relative anchor placement (may be different then original alignment).
+ * @param scale - The scaling factor (due to distance, etc.).
+ * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param offset - The offset result.
  */
 function computePointTextOffset(
     textElement: TextElement,
@@ -366,12 +367,12 @@ export enum PlacementResult {
 
 /**
  * Places an icon on screen.
- * @param iconRenderState The icon state.
- * @param poiInfo Icon information necessary to compute its dimensions.
- * @param screenPosition Screen position of the icon.
- * @param scaleFactor Scaling factor to apply to the icon dimensions.
- * @param screenCollisions Used to check the icon visibility and collisions.
- * @param env Current map env.
+ * @param iconRenderState - The icon state.
+ * @param poiInfo - Icon information necessary to compute its dimensions.
+ * @param screenPosition - Screen position of the icon.
+ * @param scaleFactor - Scaling factor to apply to the icon dimensions.
+ * @param screenCollisions - Used to check the icon visibility and collisions.
+ * @param env - Current map env.
  * @returns `PlacementResult.Ok` if icon can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
  */
@@ -400,17 +401,17 @@ export function placeIcon(
 /**
  * Place a point label text using single or multiple alternative placement anchors.
  *
- * @param labelState State of the point label to place.
- * @param screenPosition Position of the label in screen coordinates.
- * @param scale Scale factor to be applied to label dimensions.
- * @param textCanvas The text canvas where the label will be placed.
- * @param env The [[Env]] used to evaluate technique attributes.
- * @param screenCollisions Used to check collisions with other labels.
- * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
- * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
+ * @param labelState - State of the point label to place.
+ * @param screenPosition - Position of the label in screen coordinates.
+ * @param scale - Scale factor to be applied to label dimensions.
+ * @param textCanvas - The text canvas where the label will be placed.
+ * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param screenCollisions - Used to check collisions with other labels.
+ * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
+ * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
  * for newly placed (upcoming) label or `PlacementResult.Rejected` if the label was persistent.
- * @param outScreenPosition The final label screen position after applying any offsets.
- * @param multiAnchor The parameter decides if multi-anchor placement algorithm should be
+ * @param outScreenPosition - The final label screen position after applying any offsets.
+ * @param multiAnchor - The parameter decides if multi-anchor placement algorithm should be
  * used, be default [[false]] meaning try to place label using current alignment settings only.
  * @returns `PlacementResult.Ok` if point __label can be placed__ at the base or any optional
  * anchor point. `PlacementResult.Rejected` if there's a collision for all placements or it's
@@ -475,13 +476,13 @@ export function placePointLabel(
  * @note Function should be called only for labels with icons not rejected and for text alignments
  * different then [[HorizontalAlignment.Center]] and [[VerticalAlignment.Center]].
  *
- * @param labelState State of the point label to place.
- * @param screenPosition Position of the label in screen coordinates.
- * @param scale Scale factor to be applied to label dimensions.
- * @param textCanvas The text canvas where the label will be placed.
- * @param env The [[Env]] used to evaluate technique attributes.
- * @param screenCollisions Used to check collisions with other labels.
- * @param outScreenPosition The final label screen position after applying any offsets.
+ * @param labelState - State of the point label to place.
+ * @param screenPosition - Position of the label in screen coordinates.
+ * @param scale - Scale factor to be applied to label dimensions.
+ * @param textCanvas - The text canvas where the label will be placed.
+ * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param screenCollisions - Used to check collisions with other labels.
+ * @param outScreenPosition - The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if label can be placed at the base or optional anchor point,
  * `PlacementResult.Rejected` if there's a collision for all placements, `PlacementResult.Invisible`
  * if it's not visible at any placement position.
@@ -581,16 +582,16 @@ function placePointLabelChoosingAnchor(
 /**
  * Places a point label on a specified text canvas using the alignment (anchor) currently set.
  *
- * @param labelState State of the point label to place.
- * @param screenPosition Position of the label in screen coordinates.
- * @param scale Scale factor to be applied to label dimensions.
- * @param textCanvas The text canvas where the label will be placed.
- * @param env The [[Env]] used to evaluate technique attributes.
- * @param screenCollisions Used to check collisions with other labels.
- * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
- * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
- * `PlacementResult.Rejected`.
- * @param outScreenPosition The final label screen position after applying any offsets.
+ * @param labelState - State of the point label to place.
+ * @param screenPosition - Position of the label in screen coordinates.
+ * @param scale - Scale factor to be applied to label dimensions.
+ * @param textCanvas - The text canvas where the label will be placed.
+ * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param screenCollisions - Used to check collisions with other labels.
+ * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
+ * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
+ * or `PlacementResult.Rejected`.
+ * @param outScreenPosition - The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if point label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
  *
@@ -630,19 +631,19 @@ function placePointLabelAtCurrentAnchor(
 /**
  * Auxiliary function that tries to place a point label on a text canvas using specified alignment.
  *
- * @param labelState State of the point label to place.
- * @param screenPosition Position of the label in screen coordinates
- * @param placement Text placement relative to the label position.
- * @param scale Scale factor to be applied to label dimensions.
- * @param textCanvas The text canvas where the label will be placed.
- * @param env The [[Env]] used to evaluate technique attributes.
- * @param screenCollisions Used to check collisions with other labels.
- * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
- * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
- * `PlacementResult.Rejected`.
- * @param forceInvalidation Set to true if text layout or other params has changed such as text
+ * @param labelState - State of the point label to place.
+ * @param screenPosition - Position of the label in screen coordinates
+ * @param placement - Text placement relative to the label position.
+ * @param scale - Scale factor to be applied to label dimensions.
+ * @param textCanvas - The text canvas where the label will be placed.
+ * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param screenCollisions - Used to check collisions with other labels.
+ * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
+ * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
+ * or `PlacementResult.Rejected`.
+ * @param forceInvalidation - Set to true if text layout or other params has changed such as text
  * re-measurement is required and text buffer need to be invalidated.
- * @param outScreenPosition The final label screen position after applying any offsets.
+ * @param outScreenPosition - The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if point label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
  *
@@ -762,8 +763,8 @@ function placePointLabelAtAnchor(
 
 /**
  * Applied modified text layout style to TextCanvas for further use.
- * @param textCanvas TextCanvas reference.
- * @param placement The text placement to be used.
+ * @param textCanvas - TextCanvas reference.
+ * @param placement - The text placement to be used.
  */
 function applyTextPlacement(textCanvas: TextCanvas, placement: TextPlacement) {
     // Setup TextCanvas layout settings of the new placement as it is required for further
@@ -774,11 +775,11 @@ function applyTextPlacement(textCanvas: TextCanvas, placement: TextPlacement) {
 
 /**
  * Places a path label along a given path on a specified text canvas.
- * @param labelState The state of the path label to place.
- * @param textPath The text path along which the label will be placed.
- * @param screenPosition Position of the label in screen coordinates.
- * @param textCanvas The text canvas where the label will be placed.
- * @param screenCollisions Used to check collisions with other labels.
+ * @param labelState - The state of the path label to place.
+ * @param textPath - The text path along which the label will be placed.
+ * @param screenPosition - Position of the label in screen coordinates.
+ * @param textCanvas - The text canvas where the label will be placed.
+ * @param screenCollisions - Used to check collisions with other labels.
  * @returns `PlacementResult.Ok` if path label can be placed, `PlacementResult.Rejected` if there's
  * a collision or text doesn't fit into path, `PlacementResult.Invisible` if it's not visible.
  */
@@ -852,9 +853,9 @@ export function placePathLabel(
 
 /**
  * Check if a given path label is too small to be rendered.
- * @param textElement The text element to check.
- * @param screenProjector Used to project coordinates from world to screen space.
- * @param outScreenPoints Label path projected to screen space.
+ * @param textElement - The text element to check.
+ * @param screenProjector - Used to project coordinates from world to screen space.
+ * @param outScreenPoints - Label path projected to screen space.
  * @returns `true` if label is too small, `false` otherwise.
  */
 export function isPathLabelTooSmall(
@@ -913,12 +914,12 @@ const tmpOrientedBox = new OrientedBox3();
 /**
  * Calculates the world position of the supplied label. The label will be shifted if there is a
  * specified offsetDirection and value to shift it in.
- * @param poiLabel The label to shift
- * @param projection The projection, required to compute the correct direction offset for spherical
- * projections.
- * @param env The environment to extract the worldOffset needed to shift the icon in world space,
- * if configured in the style.
- * @param outWorldPosition Preallocated vector to store the result in
+ * @param poiLabel - The label to shift
+ * @param projection - The projection, required to compute the correct direction offset for
+ *                     spherical projections.
+ * @param env - The environment to extract the worldOffset needed to shift the icon in world space,
+ *              if configured in the style.
+ * @param outWorldPosition - Preallocated vector to store the result in
  * @returns the [[outWorldPosition]] vector.
  */
 export function getWorldPosition(

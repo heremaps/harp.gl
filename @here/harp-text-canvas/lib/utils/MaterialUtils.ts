@@ -22,7 +22,7 @@ export interface SdfTextMaterialParameters {
  * Helper function designed to create [[SdfTextMaterials]] that can be rendered using
  * [[TextCanvas]].
  *
- * @param params Material parameters.
+ * @param params - Material parameters.
  *
  * @returns New `SdfTextMaterial`.
  */

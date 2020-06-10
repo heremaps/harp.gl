@@ -28,7 +28,7 @@ export abstract class SubdivisionModifier {
      * Please note that only the vertex position and their UV coordinates are subdivided.
      * Normals, vertex colors and other attributes are left unmodified.
      *
-     * @param geometry The [[THREE.BufferGeometry]] to subdivide.
+     * @param geometry - The [[THREE.BufferGeometry]] to subdivide.
      */
     modify(geometry: BufferGeometry): BufferGeometry {
         const positionAttr = geometry.getAttribute("position") as BufferAttribute;
@@ -181,9 +181,9 @@ export abstract class SubdivisionModifier {
      * the edge of the triangle to split (0, 1, or 2) or undefined if
      * the triangle doesn't need to be subdivided.
      *
-     * @param a The position of the first vertex of the triangle.
-     * @param b The position of the second vertex of the triangle.
-     * @param c The position of the third vertex of the triangle.
+     * @param a - The position of the first vertex of the triangle.
+     * @param b - The position of the second vertex of the triangle.
+     * @param c - The position of the third vertex of the triangle.
      */
     protected abstract shouldSplitTriangle(a: Vector3, b: Vector3, c: Vector3): number | undefined;
 }

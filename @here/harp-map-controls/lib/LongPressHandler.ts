@@ -35,8 +35,8 @@ export class LongPressHandler {
     /**
      * Default constructor.
      *
-     * @param element The HTML element to track.
-     * @param onLongPress The callback to call when a long press occurred.
+     * @param element - The HTML element to track.
+     * @param onLongPress - The callback to call when a long press occurred.
      */
     constructor(readonly element: HTMLElement, public onLongPress: (event: MouseEvent) => void) {
         // workaround - need to bind 'this' for our dynamic mouse move handler

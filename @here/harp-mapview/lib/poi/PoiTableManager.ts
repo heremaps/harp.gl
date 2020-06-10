@@ -23,7 +23,7 @@ class PoiTableEntry implements PoiTableEntryDef {
     /**
      * Verify that the JSON description of the POI table entry is valid.
      *
-     * @param jsonEntry JSON description of the POI table entry.
+     * @param jsonEntry - JSON description of the POI table entry.
      *
      * @returns `true` if the `jsonEntry` is valid.
      */
@@ -84,8 +84,8 @@ class PoiTableEntry implements PoiTableEntryDef {
      * Setup the [[PoiTableEntry]] from the JSON description. It is assumed that the jsonEntry has
      * been verified with [[PoiTableEntry#verifyJSON]].
      *
-     * @param jsonEntry JSON description of the POI table entry. Expected to have been verified with
-     *          [[PoiTableEntry#verifyJSON]].
+     * @param jsonEntry - JSON description of the POI table entry. Expected to have been verified
+     *                    with [[PoiTableEntry#verifyJSON]].
      */
     setup(jsonEntry: PoiTableEntryDef) {
         this.name = jsonEntry.name;
@@ -173,7 +173,7 @@ export class PoiTable {
     /**
      * Gets [[PoiTableEntry]] for poi name specified.
      *
-     * @param poiName poi name or one of its alternative names if [[useAltNamesForKey]] is
+     * @param poiName - poi name or one of its alternative names if [[useAltNamesForKey]] is
      * set to `true`.
      * @returns [[PoiTableEntry]] object or undefined if name was not found in dictionary.
      */

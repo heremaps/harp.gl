@@ -29,7 +29,7 @@ export namespace com {
 
                 /**
                  * Decodes a Tile message from the specified reader or buffer.
-                 * @param reader Reader or buffer to decode from
+                 * @param reader - Reader or buffer to decode from
                  * @param [length] Message length if known beforehand
                  * @returns Tile
                  * @throws {Error} If the payload is not a reader or valid buffer
@@ -39,7 +39,7 @@ export namespace com {
 
                 /**
                  * Decodes a Tile message from the specified reader or buffer, length delimited.
-                 * @param reader Reader or buffer to decode from
+                 * @param reader - Reader or buffer to decode from
                  * @returns Tile
                  * @throws {Error} If the payload is not a reader or valid buffer
                  * @throws {$protobuf.util.ProtocolError} If required fields are missing
@@ -48,14 +48,14 @@ export namespace com {
 
                 /**
                  * Creates a Tile message from a plain object. Also converts values to their respective internal types.
-                 * @param object Plain object
+                 * @param object - Plain object
                  * @returns Tile
                  */
                 public static fromObject(object: { [k: string]: any }): com.mapbox.pb.Tile;
 
                 /**
                  * Creates a plain object from a Tile message. Also converts values to other types if specified.
-                 * @param message Tile
+                 * @param message - Tile
                  * @param [options] Conversion options
                  * @returns Plain object
                  */
@@ -135,7 +135,7 @@ export namespace com {
 
                     /**
                      * Decodes a Value message from the specified reader or buffer.
-                     * @param reader Reader or buffer to decode from
+                     * @param reader - Reader or buffer to decode from
                      * @param [length] Message length if known beforehand
                      * @returns Value
                      * @throws {Error} If the payload is not a reader or valid buffer
@@ -145,7 +145,7 @@ export namespace com {
 
                     /**
                      * Decodes a Value message from the specified reader or buffer, length delimited.
-                     * @param reader Reader or buffer to decode from
+                     * @param reader - Reader or buffer to decode from
                      * @returns Value
                      * @throws {Error} If the payload is not a reader or valid buffer
                      * @throws {$protobuf.util.ProtocolError} If required fields are missing
@@ -154,14 +154,14 @@ export namespace com {
 
                     /**
                      * Creates a Value message from a plain object. Also converts values to their respective internal types.
-                     * @param object Plain object
+                     * @param object - Plain object
                      * @returns Value
                      */
                     public static fromObject(object: { [k: string]: any }): com.mapbox.pb.Tile.Value;
 
                     /**
                      * Creates a plain object from a Value message. Also converts values to other types if specified.
-                     * @param message Value
+                     * @param message - Value
                      * @param [options] Conversion options
                      * @returns Plain object
                      */
@@ -213,7 +213,7 @@ export namespace com {
 
                     /**
                      * Decodes a Feature message from the specified reader or buffer.
-                     * @param reader Reader or buffer to decode from
+                     * @param reader - Reader or buffer to decode from
                      * @param [length] Message length if known beforehand
                      * @returns Feature
                      * @throws {Error} If the payload is not a reader or valid buffer
@@ -223,7 +223,7 @@ export namespace com {
 
                     /**
                      * Decodes a Feature message from the specified reader or buffer, length delimited.
-                     * @param reader Reader or buffer to decode from
+                     * @param reader - Reader or buffer to decode from
                      * @returns Feature
                      * @throws {Error} If the payload is not a reader or valid buffer
                      * @throws {$protobuf.util.ProtocolError} If required fields are missing
@@ -232,14 +232,14 @@ export namespace com {
 
                     /**
                      * Creates a Feature message from a plain object. Also converts values to their respective internal types.
-                     * @param object Plain object
+                     * @param object - Plain object
                      * @returns Feature
                      */
                     public static fromObject(object: { [k: string]: any }): com.mapbox.pb.Tile.Feature;
 
                     /**
                      * Creates a plain object from a Feature message. Also converts values to other types if specified.
-                     * @param message Feature
+                     * @param message - Feature
                      * @param [options] Conversion options
                      * @returns Plain object
                      */
@@ -303,7 +303,7 @@ export namespace com {
 
                     /**
                      * Decodes a Layer message from the specified reader or buffer.
-                     * @param reader Reader or buffer to decode from
+                     * @param reader - Reader or buffer to decode from
                      * @param [length] Message length if known beforehand
                      * @returns Layer
                      * @throws {Error} If the payload is not a reader or valid buffer
@@ -313,7 +313,7 @@ export namespace com {
 
                     /**
                      * Decodes a Layer message from the specified reader or buffer, length delimited.
-                     * @param reader Reader or buffer to decode from
+                     * @param reader - Reader or buffer to decode from
                      * @returns Layer
                      * @throws {Error} If the payload is not a reader or valid buffer
                      * @throws {$protobuf.util.ProtocolError} If required fields are missing
@@ -322,14 +322,14 @@ export namespace com {
 
                     /**
                      * Creates a Layer message from a plain object. Also converts values to their respective internal types.
-                     * @param object Plain object
+                     * @param object - Plain object
                      * @returns Layer
                      */
                     public static fromObject(object: { [k: string]: any }): com.mapbox.pb.Tile.Layer;
 
                     /**
                      * Creates a plain object from a Layer message. Also converts values to other types if specified.
-                     * @param message Layer
+                     * @param message - Layer
                      * @param [options] Conversion options
                      * @returns Plain object
                      */

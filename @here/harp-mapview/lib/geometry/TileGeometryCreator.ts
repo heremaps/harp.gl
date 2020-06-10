@@ -228,10 +228,10 @@ export class TileGeometryCreator {
      * Apply `enabledKinds` and `disabledKinds` to all techniques in the `decodedTile`. If a
      * technique is identified as disabled, its property `enabled` is set to `false`.
      *
-     * @param decodedTile The decodedTile containing the actual tile map data.
-     * @param enabledKinds Optional [[GeometryKindSet]] used to specify which object kinds should be
+     * @param decodedTile - The decodedTile containing the actual tile map data.
+     * @param enabledKinds - Optional [[GeometryKindSet]] used to specify which object kinds should be
      *      created.
-     * @param disabledKinds Optional [[GeometryKindSet]] used to filter objects that should not be
+     * @param disabledKinds - Optional [[GeometryKindSet]] used to filter objects that should not be
      *      created.
      */
     initDecodedTile(
@@ -269,8 +269,8 @@ export class TileGeometryCreator {
      *
      * @see [[TileGeometryCreator#initDecodedTile]]
      *
-     * @param tile The [[Tile]] to process.
-     * @param decodedTile The decodedTile containing the actual tile map data.
+     * @param tile - The [[Tile]] to process.
+     * @param decodedTile - The decodedTile containing the actual tile map data.
      */
     createAllGeometries(tile: Tile, decodedTile: DecodedTile) {
         const filter = (technique: IndexedTechnique): boolean => {
@@ -376,10 +376,10 @@ export class TileGeometryCreator {
      * Sets the owning tiles datasource.name and the `tileKey` in the `userData` property of the
      * object, such that the tile it belongs to can be identified during picking.
      *
-     * @param tile The [[Tile]] to add the object to.
-     * @param object The object to add to the root of the tile.
-     * @param geometryKind The kind of object. Can be used for filtering.
-     * @param custom additional parameters for [[MapObjectAdapter]]
+     * @param tile - The [[Tile]] to add the object to.
+     * @param object - The object to add to the root of the tile.
+     * @param geometryKind - The kind of object. Can be used for filtering.
+     * @param custom - additional parameters for [[MapObjectAdapter]]
      */
     registerTileObject(
         tile: Tile,
@@ -417,9 +417,9 @@ export class TileGeometryCreator {
     /**
      * Splits the text paths that contain sharp corners.
      *
-     * @param tile The [[Tile]] to process paths on.
-     * @param textPathGeometries The original path geometries that may have defects.
-     * @param textFilter: Optional filter. Should return true for any text technique that is
+     * @param tile - The [[Tile]] to process paths on.
+     * @param textPathGeometries - The original path geometries that may have defects.
+     * @param textFilter -: Optional filter. Should return true for any text technique that is
      *      applicable.
      */
     prepareTextPaths(
@@ -454,9 +454,9 @@ export class TileGeometryCreator {
      * Creates [[TextElement]] objects from the decoded tile and list of materials specified. The
      * priorities of the [[TextElement]]s are updated to simplify label placement.
      *
-     * @param tile The [[Tile]] to create the testElements on.
-     * @param decodedTile The [[DecodedTile]].
-     * @param textFilter: Optional filter. Should return true for any text technique that is
+     * @param tile - The [[Tile]] to create the testElements on.
+     * @param decodedTile - The [[DecodedTile]].
+     * @param textFilter -: Optional filter. Should return true for any text technique that is
      *      applicable.
      */
     createTextElements(
@@ -649,9 +649,9 @@ export class TileGeometryCreator {
     /**
      * Creates `Tile` objects from the decoded tile and list of materials specified.
      *
-     * @param tile The [[Tile]] to create the geometry on.
-     * @param decodedTile The [[DecodedTile]].
-     * @param techniqueFilter: Optional filter. Should return true for any technique that is
+     * @param tile - The [[Tile]] to create the geometry on.
+     * @param decodedTile - The [[DecodedTile]].
+     * @param techniqueFilter -: Optional filter. Should return true for any technique that is
      *      applicable.
      */
     createObjects(
@@ -1218,9 +1218,9 @@ export class TileGeometryCreator {
 
     /**
      * Create a ground plane mesh for a tile
-     * @param tile Tile
-     * @param material Material
-     * @param createTexCoords Enable creation of texture coordinates
+     * @param tile - Tile
+     * @param material - Material
+     * @param createTexCoords - Enable creation of texture coordinates
      */
     createGroundPlane(
         tile: Tile,
@@ -1336,8 +1336,8 @@ export class TileGeometryCreator {
 
     /**
      * Creates and add a background plane for the tile.
-     * @param tile Tile
-     * @param renderOrder Render order of the tile
+     * @param tile - Tile
+     * @param renderOrder - Render order of the tile
      */
     addGroundPlane(tile: Tile, renderOrder: number) {
         const shadowsEnabled = tile.mapView.shadowsEnabled;
@@ -1377,7 +1377,7 @@ export class TileGeometryCreator {
     /**
      * Gets the attachments of the given [[DecodedTile]].
      *
-     * @param decodedTile The [[DecodedTile]].
+     * @param decodedTile - The [[DecodedTile]].
      */
     private *getAttachments(decodedTile: DecodedTile): Generator<AttachmentInfo> {
         const cache = new AttachmentCache();
@@ -1407,7 +1407,7 @@ export class TileGeometryCreator {
      * Process the given [[Tile]] and assign default values to render orders
      * and label priorities.
      *
-     * @param tile The [[Tile]] to process.
+     * @param tile - The [[Tile]] to process.
      */
     private processPriorities(tile: Tile) {
         const decodedTile = tile.decodedTile;

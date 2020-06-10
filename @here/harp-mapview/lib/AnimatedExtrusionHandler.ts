@@ -50,7 +50,7 @@ export class AnimatedExtrusionHandler {
     /**
      * Creates an [[AnimatedExtrusionHandler]] in [[MapView]].
      *
-     * @param m_mapView Instance of [[MapView]] that passes `zoomLevel`
+     * @param m_mapView - Instance of [[MapView]] that passes `zoomLevel`
      * through the `zoom` property update
      */
     constructor(private m_mapView: MapView) {

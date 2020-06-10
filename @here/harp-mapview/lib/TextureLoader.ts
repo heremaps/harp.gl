@@ -17,9 +17,9 @@ export class TextureLoader {
 
     /**
      * Load an image from url and create a texture
-     * @param url URL to the image
-     * @param requestHeaders Optional request headers to load image(e.g. Authorization)
-     * @param crossOrigin Enable/disable CORS
+     * @param url - URL to the image
+     * @param requestHeaders - Optional request headers to load image(e.g. Authorization)
+     * @param crossOrigin - Enable/disable CORS
      */
     async load(
         url: string,

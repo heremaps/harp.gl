@@ -22,9 +22,9 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     /**
      * Returns a `GeoCoordinates` from the given latitude, longitude, and optional altitude.
      *
-     * @param latitude Latitude in degrees.
-     * @param longitude Longitude in degrees.
-     * @param altitude Altitude in meters.
+     * @param latitude - Latitude in degrees.
+     * @param longitude - Longitude in degrees.
+     * @param altitude - Altitude in meters.
      */
     static fromDegrees(latitude: number, longitude: number, altitude?: number): GeoCoordinates {
         return new GeoCoordinates(latitude, longitude, altitude);
@@ -33,9 +33,9 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     /**
      * Returns a `GeoCoordinates` from the given latitude, longitude, and optional altitude.
      *
-     * @param latitude Latitude in radians.
-     * @param longitude Longitude in radians.
-     * @param altitude Altitude in meters.
+     * @param latitude - Latitude in radians.
+     * @param longitude - Longitude in radians.
+     * @param altitude - Altitude in meters.
      */
     static fromRadians(latitude: number, longitude: number, altitude?: number): GeoCoordinates {
         return new GeoCoordinates(
@@ -51,7 +51,7 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      * const center = { lat: 53.3, lng: 13.4 };
      * mapView.geoCenter = GeoCoordinates.fromLatLng(center);
      * ```
-     * @param latLng A [[LatLngLike]] object literal.
+     * @param latLng - A [[LatLngLike]] object literal.
      */
     static fromLatLng(latLng: LatLngLike) {
         return new GeoCoordinates(latLng.lat, latLng.lng);
@@ -70,7 +70,7 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      *     const p = GeoCoordinates.fromGeoPoint(geoCoords);
      * }
      * ```
-     * @param geoPoint An [[Array]] of at least two elements following the order
+     * @param geoPoint - An [[Array]] of at least two elements following the order
      * longitude, latitude, altitude.
      */
     static fromGeoPoint(geoPoint: GeoPointLike): GeoCoordinates {
@@ -88,7 +88,7 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      * const fromLatLngLike = GeoCoordinates.fromObject({ lat: latitude , lng: longitude });
      * ```
      *
-     * @param geoPoint Either [[GeoPointLike]], [[GeoCoordinatesLike]]
+     * @param geoPoint - Either [[GeoPointLike]], [[GeoCoordinatesLike]]
      * or [[LatLngLike]] object literal.
      */
     static fromObject(geoPoint: GeoCoordLike): GeoCoordinates {
@@ -110,9 +110,9 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     /**
      * Creates a `GeoCoordinates` from the given latitude, longitude, and optional altitude.
      *
-     * @param latitude Latitude in degrees.
-     * @param longitude Longitude in degrees.
-     * @param altitude Altitude in meters.
+     * @param latitude - Latitude in degrees.
+     * @param longitude - Longitude in degrees.
+     * @param altitude - Altitude in meters.
      */
     constructor(public latitude: number, public longitude: number, public altitude?: number) {}
 
@@ -212,7 +212,7 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     /**
      * Returns `true` if this `GeoCoordinates` is equal to the other.
      *
-     * @param other GeoCoordinatesLike to compare to.
+     * @param other - GeoCoordinatesLike to compare to.
      */
     equals(other: GeoCoordinatesLike): boolean {
         return (
@@ -225,7 +225,7 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     /**
      * Copy values from the other.
      *
-     * @param other GeoCoordinatesLike to copy all values from.
+     * @param other - GeoCoordinatesLike to copy all values from.
      */
     copy(other: GeoCoordinatesLike): GeoCoordinates {
         this.latitude = other.latitude;

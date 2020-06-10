@@ -303,7 +303,7 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Constructs a new `MapControls` object.
      *
-     * @param mapView [[MapView]] this controller modifies.Z
+     * @param mapView - [[MapView]] this controller modifies.Z
      */
     constructor(readonly mapView: MapView) {
         super();
@@ -348,7 +348,7 @@ export class MapControls extends THREE.EventDispatcher {
      * A positive value will move the camera further away from the point where the camera looks at.
      * A negative value will move the camera near to the point where the camera looks at.
      *
-     * @param amount Amount to move along the view direction in meters.
+     * @param amount - Amount to move along the view direction in meters.
      */
     moveAlongTheViewDirection(amount: number) {
         if (amount === 0) {
@@ -448,8 +448,8 @@ export class MapControls extends THREE.EventDispatcher {
      * Zooms and moves the map in such a way that the given target position remains at the same
      * position after the zoom.
      *
-     * @param targetPositionOnScreenXinNDC Target x position in NDC space.
-     * @param targetPositionOnScreenYinNDC Target y position in NDC space.
+     * @param targetPositionOnScreenXinNDC - Target x position in NDC space.
+     * @param targetPositionOnScreenYinNDC - Target y position in NDC space.
      */
     zoomOnTargetPosition(
         targetPositionOnScreenXinNDC: number,
@@ -468,8 +468,8 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Zooms to the desired location by the provided value.
      *
-     * @param zoomLevel Zoom level.
-     * @param screenTarget Zoom target on screen.
+     * @param zoomLevel - Zoom level.
+     * @param screenTarget - Zoom target on screen.
      */
     setZoomLevel(
         zoomLevel: number,
@@ -532,7 +532,7 @@ export class MapControls extends THREE.EventDispatcher {
      * projection, at runtime, the value is also clamped so that the camera does not look above the
      * horizon.
      *
-     * @param angle Angle in degrees.
+     * @param angle - Angle in degrees.
      */
     set maxTiltAngle(angle: number) {
         this.m_maxTiltAngle = Math.max(0, Math.min(90, THREE.MathUtils.degToRad(angle)));
@@ -1412,7 +1412,7 @@ export class MapControls extends THREE.EventDispatcher {
      * Function takes into account canvas position in client space (including scrolling) as also
      * canvas scaling factor.
      *
-     * @param event The mouse event.
+     * @param event - The mouse event.
      * @returns [[THREE.Vector2]] containing _x_, _y_ mouse pointer position.
      */
     private getPointerPosition(event: MouseEvent | Touch): THREE.Vector2 {

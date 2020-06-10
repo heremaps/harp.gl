@@ -50,7 +50,7 @@ export class RenderState {
     /**
      * Create a `RenderState`.
      *
-     * @param fadeTime The duration of the fading in milliseconds.
+     * @param fadeTime - The duration of the fading in milliseconds.
      */
     constructor(public fadeTime = DEFAULT_FADE_TIME) {}
 
@@ -124,7 +124,7 @@ export class RenderState {
      * If previous state is [[FadingState.FadingIn]] or [[FadingState.FadedIn]] it remains
      * unchanged.
      *
-     * @param time Current time.
+     * @param time - Current time.
      */
     startFadeIn(time: number) {
         if (this.m_state === FadingState.FadingIn || this.m_state === FadingState.FadedIn) {
@@ -150,7 +150,7 @@ export class RenderState {
      * If previous state is [[FadingState.FadingOut]] or [[FadingState.FadedOut]] it remains
      * unchanged.
      *
-     * @param time Current time.
+     * @param time - Current time.
      */
     startFadeOut(time: number) {
         if (this.m_state === FadingState.FadingOut || this.m_state === FadingState.FadedOut) {
@@ -176,8 +176,8 @@ export class RenderState {
      * [[FadingState.FadedIn]] when the opacity becomes 0 or 1 respectively.
      * It does nothing if [[isFading]] !== `true`.
      *
-     * @param time Current time.
-     * @param disableFading `true` if fading is disabled, `false` otherwise.
+     * @param time - Current time.
+     * @param disableFading - `true` if fading is disabled, `false` otherwise.
      */
     updateFading(time: number, disableFading: boolean): void {
         if (this.m_state !== FadingState.FadingIn && this.m_state !== FadingState.FadingOut) {

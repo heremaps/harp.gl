@@ -35,10 +35,10 @@ export class EdgeLengthGeometrySubdivisionModifier extends SubdivisionModifier {
     /**
      * Constructs a new [[EdgeLengthGeometrySubdivisionModifier]].
      *
-     * @param subdivision The subdivision factor
-     * @param geoBox The geo bounding box of a tile
-     * @param subdivisionMode Configures what edges to divide
-     * @param projection The projection that defines the world space of this geometry.
+     * @param subdivision - The subdivision factor
+     * @param geoBox - The geo bounding box of a tile
+     * @param subdivisionMode - Configures what edges to divide
+     * @param projection - The projection that defines the world space of this geometry.
      */
     constructor(
         readonly subdivision: number,

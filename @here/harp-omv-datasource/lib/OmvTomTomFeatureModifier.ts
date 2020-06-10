@@ -44,8 +44,8 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
      * different format combined in the environment with the road line geometry, which is
      * represented as two separate environment in the default format.
      *
-     * @param layer
-     * @param env
+     * @param layer -
+     * @param env -
      */
     private rewriteEnvironment(layer: string, env: MapEnv) {
         // Rewriting landuse layers

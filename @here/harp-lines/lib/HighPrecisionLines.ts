@@ -51,12 +51,12 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
     /**
      * Creates a `HighPrecisionWireFrameLine` object.
      *
-     * @param geometry [[BufferGeometry]] used to render this object.
-     * @param material [[HighPrecisionLineMaterial]] used to render this object.
+     * @param geometry - [[BufferGeometry]] used to render this object.
+     * @param material - [[HighPrecisionLineMaterial]] used to render this object.
      *     instances.
-     * @param positions Array of 2D/3D positions.
-     * @param color Color of the rendered line.
-     * @param opacity Opacity of the rendered line.
+     * @param positions - Array of 2D/3D positions.
+     * @param color - Color of the rendered line.
+     * @param opacity - Opacity of the rendered line.
      */
     constructor(
         geometry?: THREE.BufferGeometry,
@@ -126,12 +126,12 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
     /**
      * Creates a `HighPrecisionLine` object.
      *
-     * @param geometry [[BufferGeometry]] used to render this object.
-     * @param material [[HighPrecisionLineMaterial]] used to render this object.
+     * @param geometry - [[BufferGeometry]] used to render this object.
+     * @param material - [[HighPrecisionLineMaterial]] used to render this object.
      *     instances.
-     * @param positions Array of 2D/3D positions.
-     * @param color Color of the rendered line.
-     * @param opacity Opacity of the rendered line.
+     * @param positions - Array of 2D/3D positions.
+     * @param color - Color of the rendered line.
+     * @param opacity - Opacity of the rendered line.
      */
     constructor(
         geometry?: THREE.BufferGeometry,

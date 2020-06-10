@@ -8,9 +8,9 @@ export namespace MathUtils {
     /**
      * Ensures that input value fits in a given range.
      *
-     * @param value The value to be clamped.
-     * @param min Minimum value.
-     * @param max Maximum value.
+     * @param value - The value to be clamped.
+     * @param min - Minimum value.
+     * @param max - Maximum value.
      *
      * @returns Clamped value.
      */
@@ -26,9 +26,9 @@ export namespace MathUtils {
      * value is always const.
      * @see https://en.wikipedia.org/wiki/Linear_interpolation
      *
-     * @param edge0
-     * @param edge1
-     * @param factor Interpolation factor that ranges between: 0 <= x <= 1.
+     * @param edge0 -
+     * @param edge1 -
+     * @param factor - Interpolation factor that ranges between: 0 <= x <= 1.
      */
     export function lerp(edge0: number, edge1: number, factor: number): number {
         return edge0 * (1 - factor) + edge1 * factor;
@@ -39,9 +39,9 @@ export namespace MathUtils {
      * factor x. `0 <= x <= 1`.
      * @see https://en.wikipedia.org/wiki/Smoothstep
      *
-     * @param edge0
-     * @param edge1
-     * @param x
+     * @param edge0 -
+     * @param edge1 -
+     * @param x -
      */
     export function smoothStep(edge0: number, edge1: number, x: number) {
         // Scale, bias and saturate x to 0..1 range
@@ -59,9 +59,9 @@ export namespace MathUtils {
      *
      * @see https://en.wikipedia.org/wiki/Smoothstep
      *
-     * @param edge0
-     * @param edge1
-     * @param x
+     * @param edge0 -
+     * @param edge1 -
+     * @param x -
      */
     export function smootherStep(edge0: number, edge1: number, x: number) {
         // Scale, and clamp x to 0..1 range
@@ -73,11 +73,11 @@ export namespace MathUtils {
     /**
      * Maps a number from one range to another.
      *
-     * @param val The incoming value to be converted.
-     * @param inMin Lower bound of the value's current range.
-     * @param inMax Upper bound of the value's current range.
-     * @param outMin Lower bound of the value's target range.
-     * @param outMax Upper bound of the value's target range.
+     * @param val - The incoming value to be converted.
+     * @param inMin - Lower bound of the value's current range.
+     * @param inMax - Upper bound of the value's current range.
+     * @param outMin - Lower bound of the value's target range.
+     * @param outMax - Upper bound of the value's target range.
      */
     export function map(val: number, inMin: number, inMax: number, outMin: number, outMax: number) {
         return ((val - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
@@ -88,8 +88,8 @@ export namespace MathUtils {
      * the result is undefined. If only one of the numbers is undefined, the other number is
      * returned.
      *
-     * @param a First number.
-     * @param b Second number.
+     * @param a - First number.
+     * @param b - Second number.
      */
     export function min2(a: number | undefined, b: number | undefined): number | undefined {
         let result: number | undefined;
@@ -109,8 +109,8 @@ export namespace MathUtils {
      * the result is undefined. If only one of the numbers is undefined, the other number is
      * returned.
      *
-     * @param a First number.
-     * @param b Second number.
+     * @param a - First number.
+     * @param b - Second number.
      */
     export function max2(a: number | undefined, b: number | undefined): number | undefined {
         let result: number | undefined;
@@ -129,9 +129,9 @@ export namespace MathUtils {
      * Checks if the value of a given number is inside an upper or lower bound. The bounds may be
      * undefined, in which case their value is ignored.
      *
-     * @param value Value to check.
-     * @param lowerBound The lower bound to check the value against.
-     * @param upperBound The upper bound to check the value against.
+     * @param value - Value to check.
+     * @param lowerBound - The lower bound to check the value against.
+     * @param upperBound - The upper bound to check the value against.
      *
      * @returns `true` if value is inside the bounds or if the bounds are `undefined`, `false`
      *          otherwise.
@@ -153,9 +153,9 @@ export namespace MathUtils {
     /**
      * Smoothly interpolates between two values using cubic formula
      *
-     * @param startValue
-     * @param endValue
-     * @param time
+     * @param startValue -
+     * @param endValue -
+     * @param time -
      * @returns Result of the interpolation within the range of `[startValue, endValue]`
      */
     export function easeInOutCubic(startValue: number, endValue: number, time: number): number {

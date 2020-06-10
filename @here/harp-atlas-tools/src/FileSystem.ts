@@ -51,7 +51,7 @@ export class FileSystem {
     /**
      * Try to acquire file extention from the path specified.
      *
-     * @param filePath file path
+     * @param filePath - file path
      * @returns file extension in form of '.xxx' or empty string if not found.
      */
     static getFileExtension(filePath: string): string {
@@ -61,7 +61,7 @@ export class FileSystem {
     /**
      * Get array of known file extensions for ImageFormat specified.
      *
-     * @param imageFormat one of known ImageFormat specifiers.
+     * @param imageFormat - one of known ImageFormat specifiers.
      * @returns array of known image extensions or empty array if ImageFromat is
      * not recognized (unknown).
      */
@@ -79,7 +79,7 @@ export class FileSystem {
     /**
      * Try to recognize file extension and return mathing image format if known.
      *
-     * @param fileExtension file extension starting from "." dot character.
+     * @param fileExtension - file extension starting from "." dot character.
      * @returns recognized ImageFormat enum or ImageFormat.UNKNOWN if not match was found.
      */
     static getImageFormatByExtension(fileExtension: string): ImageFormat {
@@ -98,7 +98,7 @@ export class FileSystem {
      *
      * Decodes image format based on file extentsion.
      *
-     * @param filePath image file path to be recognized.
+     * @param filePath - image file path to be recognized.
      * @returns recognized image format or ImageFormat.UNKNOWN if not recognized.
      * @notes Later on this method may be extended by reading binary image
      * header and thus could recognize image format even without known
@@ -115,7 +115,7 @@ export class FileSystem {
      *
      * If file path specifies extension with unsuported mime type returns empty string.
      *
-     * @param filePath file path with one of supported image extensions.
+     * @param filePath - file path with one of supported image extensions.
      * @returns MIME type string or empty string if corresponding MIME type is not found or
      * not supported.
      */
@@ -127,7 +127,7 @@ export class FileSystem {
     /**
      * Get absolute path to the file or directory given path relative to package root.
      *
-     * @param relativePath path relative to package root directory.
+     * @param relativePath - path relative to package root directory.
      * @returns absolute path to resource given.
      * @note This utility does not check resource existance but simply modifies path,
      * which is assumed to be correct.
@@ -139,8 +139,8 @@ export class FileSystem {
     /**
      * Parse directory to find all files with extensions specified.
      *
-     * @param directoryPath absolute path to directory beeing searched.
-     * @param fileExtensions array of extensions to be searched for.
+     * @param directoryPath - absolute path to directory beeing searched.
+     * @param fileExtensions - array of extensions to be searched for.
      * @retuns array of files paths that matches the queried extensions in directory
      * specified.
      */
@@ -160,8 +160,8 @@ export class FileSystem {
     /**
      * Find list of files (images) in directory matching the format specified.
      *
-     * @param directoryPath absolute path to the directory.
-     * @param imageFormat image format to be searched for.
+     * @param directoryPath - absolute path to the directory.
+     * @param imageFormat - image format to be searched for.
      * @note Method uses naive approach that is based on the file extension, it
      * will never recognize files without known image extension.
      */
@@ -173,7 +173,7 @@ export class FileSystem {
     /**
      * Synchronously reads data buffer from file.
      *
-     * @param path A path to a file. If a URL is provided, it must use the `file:`
+     * @param path - A path to a file. If a URL is provided, it must use the `file:`
      * protocol.
      * @returns file contents in Buffer object.
      */
@@ -184,7 +184,7 @@ export class FileSystem {
     /**
      * Read entire content of the file asynchronously.
      *
-     * @param filePath A path to a file. If a URL is provided, it must use the `file:`
+     * @param filePath - A path to a file. If a URL is provided, it must use the `file:`
      * protocol.
      * @returns Promise with file contents in Buffer object.
      */
@@ -208,8 +208,8 @@ export class FileSystem {
     /**
      * Write entire buffer to file synchronously, replacing the file if it already exists.
      *
-     * @param filePath file storage path.
-     * @param data buffer to be stored.
+     * @param filePath - file storage path.
+     * @param data - buffer to be stored.
      */
     static writeFileSync(filePath: string, data: Buffer | string) {
         fileSystem.writeFileSync(filePath, data);
@@ -218,8 +218,8 @@ export class FileSystem {
     /**
      * Write entire buffer to file asynchronously, replacing the file if it already exists.
      *
-     * @param filePath file storage path.
-     * @param data buffer to be stored.
+     * @param filePath - file storage path.
+     * @param data - buffer to be stored.
      * @returns Promise.
      */
     static writeFile(filePath: string, data: Buffer | string): Promise<void> {
@@ -237,7 +237,7 @@ export class FileSystem {
     /**
      * Remove file at given path synchronously.
      *
-     * @param filePath path to existing file.
+     * @param filePath - path to existing file.
      */
     static removeFileSync(filePath: string) {
         fileSystem.unlinkSync(filePath);
@@ -246,7 +246,7 @@ export class FileSystem {
     /**
      * Allows to list a content of directory or files matching expression.
      *
-     * @param pathExpression path to directory or filtering expression that supports
+     * @param pathExpression - path to directory or filtering expression that supports
      * wildcards notation (i.e.: /dirPath/*.png)
      * @returns list of files as string array.
      */
@@ -259,7 +259,7 @@ export class FileSystem {
     /**
      * Create directory synchronously.
      *
-     * @param dirPath path to directory.
+     * @param dirPath - path to directory.
      */
     static createDirSync(dirPath: string) {
         mkpath.sync(dirPath);
@@ -268,7 +268,7 @@ export class FileSystem {
     /**
      * Remove directory synchronously.
      *
-     * @param dirPath path to existing directory.
+     * @param dirPath - path to existing directory.
      */
     static removeDirSync(dirPath: string, force: boolean = false) {
         if (force) {

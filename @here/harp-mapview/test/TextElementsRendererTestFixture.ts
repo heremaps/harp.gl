@@ -182,9 +182,9 @@ export class TestFixture {
 
     /**
      * Checks that the fading state of a given text element has the specified expected value.
-     * @param textElement The text element to verify.
-     * @param expectedState The expected fading state of the text element.
-     * @param prevOpacity The text element opacity in the previous frame.
+     * @param textElement - The text element to verify.
+     * @param expectedState - The expected fading state of the text element.
+     * @param prevOpacity - The text element opacity in the previous frame.
      * @returns The text element opacity in the current frame.
      */
     checkTextElementState(
@@ -219,7 +219,7 @@ export class TestFixture {
     /**
      * Adds a tile for testing that will contain the specified text elements. Tiles added this way
      * can later be referenced by index when rendering a frame. See [[renderFrame]].
-     * @param elements The text elements the new tile will contain.
+     * @param elements - The text elements the new tile will contain.
      */
     addTile(elements: TextElement[]) {
         const tile =
@@ -261,10 +261,11 @@ export class TestFixture {
 
     /**
      * Renders text elements for a given frame.
-     * @param time The time when the frame takes place.
-     * @param tileIndices The indices of the tiles that will be visible in this frame.
-     * @param terrainTileIndices The indices of the terrain tiles that will be ready in this frame.
-     * @param collisionEnabled Whether label collision will be enabled in this frame.
+     * @param time - The time when the frame takes place.
+     * @param tileIndices - The indices of the tiles that will be visible in this frame.
+     * @param terrainTileIndices - The indices of the terrain tiles that will be ready in
+     *                             this frame.
+     * @param collisionEnabled - Whether label collision will be enabled in this frame.
      */
     async renderFrame(
         time: number,

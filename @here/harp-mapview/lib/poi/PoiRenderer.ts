@@ -53,10 +53,10 @@ class PoiRenderBufferBatch {
     /**
      * Create the `PoiRenderBufferBatch`.
      *
-     * @param mapView The [[MapView]] instance.
-     * @param scene The three.js scene to add the POIs to.
-     * @param imageItem The icon that will have his material shared.
-     * @param renderOrder RenderOrder of the batch geometry's [[Mesh]].
+     * @param mapView - The [[MapView]] instance.
+     * @param scene - The three.js scene to add the POIs to.
+     * @param imageItem - The icon that will have his material shared.
+     * @param renderOrder - RenderOrder of the batch geometry's [[Mesh]].
      */
     constructor(
         readonly mapView: MapView,
@@ -101,7 +101,7 @@ class PoiRenderBufferBatch {
      * Update the info with the memory footprint caused by objects owned by the
      * `PoiRenderBufferBatch`.
      *
-     * @param info The info object to increment with the values from this `PoiRenderBufferBatch`.
+     * @param info - The info object to increment with the values from this `PoiRenderBufferBatch`.
      */
     updateMemoryUsage(info: MemoryUsage) {
         if (this.boxBuffer !== undefined) {
@@ -160,8 +160,9 @@ class PoiRenderBuffer {
     /**
      * Create the `PoiRenderBuffer`.
      *
-     * @param mapView The [[MapView]] to be rendered to.
-     * @param textCanvas The [[TextCanvas]] to which scenes this `PoiRenderBuffer` adds geometry to.
+     * @param mapView - The [[MapView]] to be rendered to.
+     * @param textCanvas - The [[TextCanvas]] to which scenes this `PoiRenderBuffer`
+     *                     adds geometry to.
      * The actual scene a [[TextElement]] is added to is specified by the renderOrder of the
      * [[TextElement]].
      */
@@ -170,7 +171,7 @@ class PoiRenderBuffer {
     /**
      * Register the POI and prepare the [[PoiRenderBufferBatch]] for the POI at first usage.
      *
-     * @param poiInfo Describes the POI icon.
+     * @param poiInfo - Describes the POI icon.
      */
     registerPoi(poiInfo: PoiInfo): number {
         const { imageItem, imageTexture, imageTextureName } = poiInfo;
@@ -225,10 +226,10 @@ class PoiRenderBuffer {
     /**
      * Render a POI image at the specified location.
      *
-     * @param poiInfo PoiInfo containing information for rendering the POI icon.
-     * @param screenBox Box to render icon into in 2D coordinates.
-     * @param viewDistance Box's distance to camera.
-     * @param opacity Opacity of icon to allow fade in/out.
+     * @param poiInfo - PoiInfo containing information for rendering the POI icon.
+     * @param screenBox - Box to render icon into in 2D coordinates.
+     * @param viewDistance - Box's distance to camera.
+     * @param opacity - Opacity of icon to allow fade in/out.
      */
     addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number): number {
         const poiRegistered =
@@ -272,7 +273,7 @@ class PoiRenderBuffer {
      * Retrieve the [[PoiRenderBufferBatch]] from the array at the specified index. May be invalid
      * if the imageTexture could not be found
      *
-     * @param index Index into batch array.
+     * @param index - Index into batch array.
      */
     getBatch(index: number): PoiRenderBufferBatch | undefined {
         if (index >= 0) {
@@ -306,8 +307,8 @@ class PoiRenderBuffer {
      * Fill the picking results for the pixel with the given screen coordinate. If multiple
      * [[PoiInfo]]s are found, the order of the results is unspecified.
      *
-     * @param screenPosition Screen coordinate of picking position.
-     * @param pickCallback Callback to be called for every picked element.
+     * @param screenPosition - Screen coordinate of picking position.
+     * @param pickCallback - Callback to be called for every picked element.
      */
     pickTextElements(
         screenPosition: THREE.Vector2,
@@ -324,7 +325,7 @@ class PoiRenderBuffer {
     /**
      * Update the info with the memory footprint caused by objects owned by the `PoiRenderBuffer`.
      *
-     * @param info The info object to increment with the values from this `PoiRenderBuffer`.
+     * @param info - The info object to increment with the values from this `PoiRenderBuffer`.
      */
     updateMemoryUsage(info: MemoryUsage) {
         for (const batch of this.batches) {
@@ -350,11 +351,11 @@ export class PoiRenderer {
      * Compute screen box for icon. It is required that `prepareRender` has been successfully called
      * before `computeScreenBox` may be called.
      *
-     * @param poiInfo PoiInfo containing information for rendering the POI icon.
-     * @param screenPosition Position on screen (2D).
-     * @param scale Scale to apply to icon.
-     * @param env Current zoom level.
-     * @param screenBox Box that will be used to store the result.
+     * @param poiInfo - PoiInfo containing information for rendering the POI icon.
+     * @param screenPosition - Position on screen (2D).
+     * @param scale - Scale to apply to icon.
+     * @param env - Current zoom level.
+     * @param screenBox - Box that will be used to store the result.
      * @returns The computed screen box for the icon.
      */
     static computeIconScreenBox(
@@ -397,8 +398,8 @@ export class PoiRenderer {
     /**
      * Create the `PoiRenderer` for the specified [[MapView]].
      *
-     * @param mapView The MapView to be rendered to.
-     * @param textCanvas The [[TextCanvas]] this `PoiRenderer` is associated to. POIs are added to
+     * @param mapView - The MapView to be rendered to.
+     * @param textCanvas - The [[TextCanvas]] this `PoiRenderer` is associated to. POIs are added to
      * the different layers of this [[TextCanvas]] based on renderOrder.
      */
     constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {
@@ -409,8 +410,8 @@ export class PoiRenderer {
      * Prepare the POI for rendering, and determine which `poiRenderBatch` should be used. If a
      * `poiRenderBatch` is assigned, the POI is ready to be rendered.
      *
-     * @param pointLabel TextElement with PoiInfo for rendering the POI icon.
-     * @param env TODO! The current zoomLevel level of [[MapView]]
+     * @param pointLabel - TextElement with PoiInfo for rendering the POI icon.
+     * @param env - TODO! The current zoomLevel level of [[MapView]]
      *
      * @returns `True` if the space is not already allocated by another object (text label or POI)
      */
@@ -436,13 +437,13 @@ export class PoiRenderer {
     /**
      * Render the icon.
      *
-     * @param poiInfo PoiInfo containing information for rendering the POI icon.
-     * @param screenPosition Position on screen (2D):
-     * @param screenCollisions Object handling the collision checks for screen-aligned 2D boxes.
-     * @param viewDistance Box's distance to camera.
-     * @param scale Scaling factor to apply to text and icon.
-     * @param allocateScreenSpace If `true` screen space will be allocated for the icon.
-     * @param opacity Opacity of icon to allow fade in/out.
+     * @param poiInfo - PoiInfo containing information for rendering the POI icon.
+     * @param screenPosition - Position on screen (2D):
+     * @param screenCollisions - Object handling the collision checks for screen-aligned 2D boxes.
+     * @param viewDistance - Box's distance to camera.
+     * @param scale - Scaling factor to apply to text and icon.
+     * @param allocateScreenSpace - If `true` screen space will be allocated for the icon.
+     * @param opacity - Opacity of icon to allow fade in/out.
      */
     renderPoi(
         poiInfo: PoiInfo,
@@ -476,8 +477,8 @@ export class PoiRenderer {
      * Fill the picking results for the pixel with the given screen coordinate. If multiple
      * [[PoiInfo]]s are found, the order of the results is unspecified.
      *
-     * @param screenPosition Screen coordinate of picking position.
-     * @param pickCallback Callback to be called for every picked element.
+     * @param screenPosition - Screen coordinate of picking position.
+     * @param pickCallback - Callback to be called for every picked element.
      */
     pickTextElements(
         screenPosition: THREE.Vector2,
@@ -489,7 +490,7 @@ export class PoiRenderer {
     /**
      * Update the info with the memory footprint caused by objects owned by the `PoiRenderer`.
      *
-     * @param info The info object to increment with the values from this `PoiRenderer`.
+     * @param info - The info object to increment with the values from this `PoiRenderer`.
      */
     getMemoryUsage(info: MemoryUsage) {
         this.m_renderBuffer.updateMemoryUsage(info);
@@ -576,10 +577,10 @@ export class PoiRenderer {
     /**
      * Setup texture and material for the batch.
      *
-     * @param poiInfo [[PoiInfo]] to initialize.
-     * @param imageTexture Shared [[ImageTexture]], defines used area in atlas.
-     * @param imageItem Shared [[ImageItem]], contains cached image for texture.
-     * @param env The current zoom level of [[MapView]]
+     * @param poiInfo - [[PoiInfo]] to initialize.
+     * @param imageTexture - Shared [[ImageTexture]], defines used area in atlas.
+     * @param imageItem - Shared [[ImageItem]], contains cached image for texture.
+     * @param env - The current zoom level of [[MapView]]
      */
     private setupPoiInfo(
         poiInfo: PoiInfo,

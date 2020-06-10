@@ -18,8 +18,8 @@ export class SphericalGeometrySubdivisionModifier extends SubdivisionModifier {
     /**
      * Constructs a new [[SphericalGeometrySubdivisionModifier]].
      *
-     * @param angle The maximum angle in radians between two vertices and the origin.
-     * @param projection The projection that defines the world space of this geometry.
+     * @param angle - The maximum angle in radians between two vertices and the origin.
+     * @param projection - The projection that defines the world space of this geometry.
      */
     constructor(readonly angle: number, readonly projection: Projection = sphereProjection) {
         super();

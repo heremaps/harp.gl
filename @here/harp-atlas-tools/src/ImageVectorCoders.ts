@@ -138,7 +138,7 @@ class ImageVectorEncoder implements ImageEncoder {
      * (based on the file extension provided) or if no extension is provided the PNG image
      * format is used.
      *
-     * @param filePath file storage path.
+     * @param filePath - file storage path.
      */
     write(filePath: string): Promise<any> {
         if (!this.m_pixelModified && FileSystem.getImageFormat(filePath) === ImageFormat.SVG) {

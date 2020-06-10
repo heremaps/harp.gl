@@ -29,9 +29,9 @@ export class ConcurrentTilerFacade {
     /**
      * Returns a [[WorkerBasedTiler]] instance.
      *
-     * @param tilerServiceType The name of the tiler service type.
-     * @param scriptUrl The optional URL with the workers' script.
-     * @param workerCount The number of web workers to use.
+     * @param tilerServiceType - The name of the tiler service type.
+     * @param scriptUrl - The optional URL with the workers' script.
+     * @param workerCount - The number of web workers to use.
      */
     static getTiler(tilerServiceType: string, scriptUrl?: string, workerCount?: number): ITiler {
         const workerSet = this.getWorkerSet(scriptUrl, workerCount);
@@ -42,9 +42,9 @@ export class ConcurrentTilerFacade {
     /**
      * Returns a [[ConcurrentWorkerSet]] instance based on the script URL specified.
      *
-     * @param scriptUrl The optional URL with the workers' script. If not specified,
+     * @param scriptUrl - The optional URL with the workers' script. If not specified,
      * the function uses [[defaultScriptUrl]] instead.
-     * @param workerCount The number of web workers to use.
+     * @param workerCount - The number of web workers to use.
      */
     static getWorkerSet(scriptUrl?: string, workerCount?: number): ConcurrentWorkerSet {
         if (scriptUrl === undefined) {
@@ -65,7 +65,7 @@ export class ConcurrentTilerFacade {
     /**
      * Destroys a [[ConcurrentWorkerSet]] instance.
      *
-     * @param scriptUrl The worker script URL that was used to create the [[ConcurrentWorkerSet]].
+     * @param scriptUrl - The worker script URL that was used to create the [[ConcurrentWorkerSet]].
      */
     static destroyWorkerSet(scriptUrl: string) {
         const workerSet = this.workerSets[scriptUrl];

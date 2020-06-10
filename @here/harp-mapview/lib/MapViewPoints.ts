@@ -30,12 +30,12 @@ export abstract class MapViewPoints extends THREE.Points {
      * drawing of the points being different between [[Circles]] and [[Squares]], this method is
      * implemented in these child classes.
      *
-     * @param point The point to test.
-     * @param screenPosition The point position on screen.
-     * @param pickCoordinates The picking position on screen.
-     * @param index The index of the point in the [[THREE.Geometry]].
-     * @param distance The distance between the point and the ray origin.
-     * @param intersects The results array.
+     * @param point - The point to test.
+     * @param screenPosition - The point position on screen.
+     * @param pickCoordinates - The picking position on screen.
+     * @param index - The index of the point in the [[THREE.Geometry]].
+     * @param distance - The distance between the point and the ray origin.
+     * @param intersects - The results array.
      */
     abstract testPoint(
         point: THREE.Vector3,
@@ -51,8 +51,8 @@ export abstract class MapViewPoints extends THREE.Points {
      * then calls the tailored `testPoint` method in the children classes to test intersections
      * depending on whether the points are circles or squares, which [[THREE.Points]] cannot do.
      *
-     * @param raycaster The raycaster.
-     * @param intersects The array to fill with the results.
+     * @param raycaster - The raycaster.
+     * @param intersects - The array to fill with the results.
      */
     raycast(raycaster: PickingRaycaster, intersects: THREE.Intersection[]) {
         if (!this.enableRayTesting) {

@@ -18,8 +18,8 @@ const promisedGlob = util.promisify(glob);
  *
  * Relative to `process.cwd()`, which is usually `mapsdk` folder.
  *
- * @param imageProps
- * @param outputBasePath
+ * @param imageProps -
+ * @param outputBasePath -
  */
 export function getOutputImagePath(imageProps: TestImageProps, outputBasePath: string): string {
     if (imageProps.name && imageProps.module) {
@@ -39,7 +39,7 @@ export function getOutputImagePath(imageProps: TestImageProps, outputBasePath: s
 /**
  * Search for IBCT results in `searchPath`.
  *
- * @param searchPath
+ * @param searchPath -
  */
 export async function loadSavedResults(searchPath: string = ".") {
     const paths = await promisedGlob(`${searchPath}/**/*.ibct-result.json`);

@@ -26,8 +26,8 @@ export interface IPass {
      * The resize method to extend in [[Pass]] implementations. It resizes the render targets. Call
      * on resize events.
      *
-     * @param width Width to resize to.
-     * @param height Height to resize to.
+     * @param width - Width to resize to.
+     * @param height - Height to resize to.
      */
     setSize(width: number, height: number): void;
 
@@ -35,12 +35,12 @@ export interface IPass {
      * The render method to extend in [[Pass]] implementations. This is the place where the desired
      * effects or render operations are executed.
      *
-     * @param renderer The WebGLRenderer instance in use.
-     * @param scene The scene to render.
-     * @param camera The camera to render the scene through.
-     * @param writeBuffer The optional WebGLRenderTarget instance to write to.
-     * @param readBuffer The optional WebGLRenderTarget instance of a previous pass to write onto.
-     * @param delta The time argument from the requestAnimationFrame.
+     * @param renderer - The WebGLRenderer instance in use.
+     * @param scene - The scene to render.
+     * @param camera - The camera to render the scene through.
+     * @param writeBuffer - The optional WebGLRenderTarget instance to write to.
+     * @param readBuffer - The optional WebGLRenderTarget instance of a previous pass to write onto.
+     * @param delta - The time argument from the requestAnimationFrame.
      */
     render(
         renderer: THREE.WebGLRenderer,

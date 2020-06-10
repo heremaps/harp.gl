@@ -23,16 +23,16 @@ export class MapViewImageCache {
     /**
      * The constructor for `MapViewImageCache`.
      *
-     * @param mapView a [[MapView]] instance.
+     * @param mapView - a [[MapView]] instance.
      */
     constructor(public mapView: MapView) {}
 
     /**
      * Register an existing image by name.
      *
-     * @param name Name of the image from [[Theme]].
-     * @param url URL of image.
-     * @param image Optional [[ImageData]] of image.
+     * @param name - Name of the image from [[Theme]].
+     * @param url - URL of image.
+     * @param image - Optional [[ImageData]] of image.
      */
     registerImage(
         name: string | undefined,
@@ -66,9 +66,9 @@ export class MapViewImageCache {
      * Add an image and optionally start loading it. Once done, the [[ImageData]] or [[ImageBitmap]]
      * will be stored in the [[ImageItem]].
      *
-     * @param name Name of image from [[Theme]].
-     * @param url URL of image.
-     * @param startLoading Optional. Pass `true` to start loading the image in the background.
+     * @param name - Name of image from [[Theme]].
+     * @param url - URL of image.
+     * @param startLoading - Optional. Pass `true` to start loading the image in the background.
      */
     addImage(
         name: string,
@@ -86,7 +86,7 @@ export class MapViewImageCache {
     /**
      * Find [[ImageItem]] by its name.
      *
-     * @param name Name of image.
+     * @param name - Name of image.
      */
     findImageByName(name: string): ImageItem | undefined {
         const url = this.m_name2Url.get(name);
@@ -99,7 +99,7 @@ export class MapViewImageCache {
     /**
      * Find [[ImageItem]] by URL.
      *
-     * @param url Url of image.
+     * @param url - Url of image.
      */
     findImageByUrl(url: string): ImageItem | undefined {
         return ImageCache.instance.findImage(url);
@@ -108,7 +108,7 @@ export class MapViewImageCache {
     /**
      * Load an [[ImageItem]]. Returns a promise or a loaded [[ImageItem]].
      *
-     * @param imageItem ImageItem to load.
+     * @param imageItem - ImageItem to load.
      */
     loadImage(imageItem: ImageItem): ImageItem | Promise<ImageItem | undefined> {
         return ImageCache.instance.loadImage(imageItem);
@@ -141,7 +141,7 @@ export class MapViewImageCache {
     /**
      * Return `true` if an image with the given name is known.
      *
-     * @param name Name of the image.
+     * @param name - Name of the image.
      */
     hasName(name: string): boolean {
         return this.m_name2Url.get(name) !== undefined;
@@ -149,7 +149,7 @@ export class MapViewImageCache {
 
     /**
      * Return `true` if an image with the given URL is known.
-     * @param url URL of image.
+     * @param url - URL of image.
      */
     hasUrl(url: string): boolean {
         return this.m_url2Name.get(url) !== undefined;

@@ -25,12 +25,12 @@ export class HighPrecisionPoints extends THREE.Points implements HighPrecisionOb
     /**
      * Creates a `HighPrecisionPoints` object.
      *
-     * @param geometry [[BufferGeometry]] used to render this object.
-     * @param material [[HighPrecisionLineMaterial]] used to render this object.
+     * @param geometry - [[BufferGeometry]] used to render this object.
+     * @param material - [[HighPrecisionLineMaterial]] used to render this object.
      *     instances.
-     * @param positions Array of 2D/3D positions.
-     * @param color Color of the rendered point.
-     * @param opacity Opacity of the rendered point.
+     * @param positions - Array of 2D/3D positions.
+     * @param color - Color of the rendered point.
+     * @param opacity - Opacity of the rendered point.
      */
     constructor(
         geometry?: THREE.BufferGeometry,

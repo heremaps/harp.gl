@@ -24,22 +24,22 @@ import { DeferredPromise } from "./DeferredPromise";
 export interface ITransferManager {
     /**
      * Downloads a JSON object.
-     * @param url The URL to download
-     * @param init Optional extra parameters for the download.
+     * @param url - The URL to download
+     * @param init - Optional extra parameters for the download.
      */
     downloadJson<T>(url: RequestInfo, init?: RequestInit): Promise<T>;
 
     /**
      * Downloads a binary object.
-     * @param url The URL to download
-     * @param init Optional extra parameters for the download
+     * @param url - The URL to download
+     * @param init - Optional extra parameters for the download
      */
     downloadArrayBuffer(url: RequestInfo, init?: RequestInit): Promise<ArrayBuffer>;
 
     /**
      * Downloads a URL and returns the response.
-     * @param url The URL to download.
-     * @param init Optional extra parameters for the download.
+     * @param url - The URL to download.
+     * @param init - Optional extra parameters for the download.
      */
     download(url: RequestInfo, init?: RequestInit): Promise<Response>;
 }
@@ -109,8 +109,8 @@ export class TransferManager implements ITransferManager {
     /**
      * Constructs a new [[TransferManager]].
      *
-     * @param fetchFunction The default fetch function to use.
-     * @param maxRetries The maximum amount to try to re-fetch a resource.
+     * @param fetchFunction - The default fetch function to use.
+     * @param maxRetries - The maximum amount to try to re-fetch a resource.
      */
     constructor(readonly fetchFunction = fetch, readonly maxRetries: number = 5) {}
     /**
@@ -120,8 +120,8 @@ export class TransferManager implements ITransferManager {
      * only one request. The init parameter is ignored if the download is merged.
      * Call [[download]] instead to download the resource without merging.
      *
-     * @param url The URL or RequestInfo to download
-     * @param init Optional extra parameters for the download.
+     * @param url - The URL or RequestInfo to download
+     * @param init - Optional extra parameters for the download.
      */
     downloadJson<T>(url: RequestInfo, init?: RequestInit): Promise<T> {
         return this.downloadAs<T>(response => response.json(), url, init);
@@ -133,8 +133,8 @@ export class TransferManager implements ITransferManager {
      * only one request. The init parameter is ignored if the download is merged.
      * Call [[download]] instead to download the resource without merging.
      *
-     * @param url The URL or RequestInfo to download
-     * @param init Optional extra parameters for the download
+     * @param url - The URL or RequestInfo to download
+     * @param init - Optional extra parameters for the download
      */
     downloadArrayBuffer(url: RequestInfo, init?: RequestInit): Promise<ArrayBuffer> {
         return this.download(url, init).then(response => response.arrayBuffer());
@@ -144,8 +144,8 @@ export class TransferManager implements ITransferManager {
      *
      * Does not merge multiple requests to the same URL.
      *
-     * @param url The URL or RequestInfo to download.
-     * @param init Optional extra parameters for the download.
+     * @param url - The URL or RequestInfo to download.
+     * @param init - Optional extra parameters for the download.
      */
     download(url: RequestInfo, init?: RequestInit): Promise<Response> {
         if (this.activeDownloadCount >= TransferManager.maxParallelDownloads) {

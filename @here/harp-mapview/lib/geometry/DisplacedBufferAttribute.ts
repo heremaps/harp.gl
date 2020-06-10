@@ -26,10 +26,11 @@ export class DisplacedBufferAttribute extends THREE.BufferAttribute {
 
     /**
      * Creates an instance of displaced buffer attribute.
-     * @param originalAttribute The buffer attribute to be displaced (e.g. the position attribute).
-     * @param m_normals The normals along which the coordinates will be displaced.
-     * @param m_uvs The uv coordinates to be used to sample the displacement map.
-     * @param displacementMap A texture with the displacement values in 32bit floats.
+     * @param originalAttribute - The buffer attribute to be displaced
+     *                            (e.g. the position attribute).
+     * @param m_normals - The normals along which the coordinates will be displaced.
+     * @param m_uvs - The uv coordinates to be used to sample the displacement map.
+     * @param displacementMap - A texture with the displacement values in 32bit floats.
      */
     constructor(
         public originalAttribute: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,
@@ -43,10 +44,11 @@ export class DisplacedBufferAttribute extends THREE.BufferAttribute {
 
     /**
      * Resets the displaced buffer attribute to use new buffer attributes or displacement map.
-     * @param originalAttribute The buffer attribute to be displaced (e.g. the position attribute).
-     * @param normals The normals along which the coordinates will be displaced.
-     * @param uvs  The uv coordinates to be used to sample the displacement map.
-     * @param displacementMap A texture with the displacement values in 32bit floats.
+     * @param originalAttribute - The buffer attribute to be displaced
+     *                            (e.g. the position attribute).
+     * @param normals - The normals along which the coordinates will be displaced.
+     * @param uvs -  The uv coordinates to be used to sample the displacement map.
+     * @param displacementMap - A texture with the displacement values in 32bit floats.
      */
     reset(
         originalAttribute: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,

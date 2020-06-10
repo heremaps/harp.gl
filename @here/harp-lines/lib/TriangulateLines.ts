@@ -16,12 +16,12 @@ const STEP = Math.PI / SECTORS_IN_CIRCLE;
 /**
  * Adds a half-circle geometry to original line
  *
- * @param x The line end X (used as circle center X)
- * @param y The line end Y (used as circle center Y)
- * @param lineAngle The cap incline angle
- * @param radius The cap (circle) radius
- * @param vertices The input vertex buffer (cap vertices are added there)
- * @param indices The input index buffer (cap indices are is added there)
+ * @param x - The line end X (used as circle center X)
+ * @param y - The line end Y (used as circle center Y)
+ * @param lineAngle - The cap incline angle
+ * @param radius - The cap (circle) radius
+ * @param vertices - The input vertex buffer (cap vertices are added there)
+ * @param indices - The input index buffer (cap indices are is added there)
  */
 function addCircle(
     x: number,
@@ -51,7 +51,7 @@ function addCircle(
 /**
  * Returns the number of points in circle used for caps.
  *
- * @param lineWidth Width of line.
+ * @param lineWidth - Width of line.
  */
 // tslint:disable-next-line:no-unused-variable
 export function numCirclePoints(lineWidth: number): number {
@@ -61,12 +61,12 @@ export function numCirclePoints(lineWidth: number): number {
 /**
  * Create a triangle mesh from the given polyline.
  *
- * @param points Sequence of (x,y,z) coordinates.
- * @param width The width of the extruded line.
- * @param vertices The output vertex buffer.
- * @param indices The output index buffer.
- * @param startWithCircle `true` if the line should start will a circle.
- * @param endWithCircle `true` if the line should end with a circle.
+ * @param points - Sequence of (x,y,z) coordinates.
+ * @param width - The width of the extruded line.
+ * @param vertices - The output vertex buffer.
+ * @param indices - The output index buffer.
+ * @param startWithCircle - `true` if the line should start will a circle.
+ * @param endWithCircle - `true` if the line should end with a circle.
  */
 export function triangulateLine(
     points: ArrayLike<number>,
@@ -227,8 +227,8 @@ export function triangulateLine(
 /**
  * Reconstruct the original points of a line from the vertices of the triangulated line.
  *
- * @param inBuffer Buffer with vertices.
- * @param startOffset Start index, will differ from `0` if the line has caps.
+ * @param inBuffer - Buffer with vertices.
+ * @param startOffset - Start index, will differ from `0` if the line has caps.
  * @returns Buffer containing the original points of the triangulated line.
  */
 export function reconstructLine(inBuffer: Float32Array, startOffset: number): Float32Array {
@@ -245,8 +245,8 @@ export function reconstructLine(inBuffer: Float32Array, startOffset: number): Fl
 /**
  * Extract the line width from a triangulated line.
  *
- * @param inBuffer Array of vertex elements of a triangulated line.
- * @param startIndex Start index, will differ from `0` if the line has caps.
+ * @param inBuffer - Array of vertex elements of a triangulated line.
+ * @param startIndex - Start index, will differ from `0` if the line has caps.
  */
 export function reconstructLineWidth(inBuffer: Float32Array, startIndex: number): number {
     const xd = inBuffer[startIndex * 2 + 3] - inBuffer[startIndex * 2];

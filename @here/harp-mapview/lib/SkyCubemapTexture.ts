@@ -36,7 +36,7 @@ export class SkyCubemapTexture {
     /**
      * Constructs a new `SkyCubemapTexture`.
      *
-     * @param sky Initial [[CubemapSky]] configuration.
+     * @param sky - Initial [[CubemapSky]] configuration.
      */
     constructor(sky: CubemapSky) {
         const faces = this.createCubemapFaceArray(sky);
@@ -61,7 +61,7 @@ export class SkyCubemapTexture {
     /**
      * Updates the `SkyCubemapTexture` with new parameters.
      *
-     * @param params New [[CubemapSky]] configuration.
+     * @param params - New [[CubemapSky]] configuration.
      */
     updateTexture(sky: CubemapSky) {
         const faces = this.createCubemapFaceArray(sky);

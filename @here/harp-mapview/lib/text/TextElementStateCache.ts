@@ -48,8 +48,8 @@ function getCacheKey(element: TextElement): string | number {
 
 /**
  * Finds a duplicate for a text element among a list of candidates using their feature ids.
- * @param elementState The state of the text element for which the duplicate will be found.
- * @param candidates The list of candidates to check.
+ * @param elementState - The state of the text element for which the duplicate will be found.
+ * @param candidates - The list of candidates to check.
  * @returns The index of the candidate chosen as duplicate, or `undefined` if none was found.
  */
 function findDuplicateById(
@@ -117,9 +117,9 @@ function isBetterPointDuplicate(
 
 /**
  * Finds a duplicate for a text element among a list of candidates using their text and distances.
- * @param elementState The state of the text element for which the duplicate will be found.
- * @param candidates The list of candidates to check.
- * @param zoomLevel Current zoom level.
+ * @param elementState - The state of the text element for which the duplicate will be found.
+ * @param candidates - The list of candidates to check.
+ * @param zoomLevel - Current zoom level.
  * @returns The index of the candidate chosen as duplicate, or `undefined` if none was found.
  */
 function findDuplicateByText(
@@ -181,9 +181,9 @@ export class TextElementStateCache {
      * Gets the state corresponding to a given text element group or sets a newly created state if
      * not found. It updates the states of the text elements belonging to the group using the
      * specified parameters.
-     * @param textElementGroup The group of which the state will be obtained.
-     * @param tileKey The key of the tile to which the group belongs.
-     * @param textElementFilter Filter used to decide if a text element must be initialized,
+     * @param textElementGroup - The group of which the state will be obtained.
+     * @param tileKey - The key of the tile to which the group belongs.
+     * @param textElementFilter - Filter used to decide if a text element must be initialized,
      * @see [[TextElementGroupState]] construction.
      * @returns Tuple with the group state as first element and a boolean indicating whether the
      * state was found in cache (`true`) or newly created (`false`) as second element.
@@ -228,11 +228,11 @@ export class TextElementStateCache {
 
     /**
      * Updates state of all cached groups, discarding those that are not needed anymore.
-     * @param time The current time.
-     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
-     * @param findReplacements `True` to replace each visible unvisited text element with a
+     * @param time - The current time.
+     * @param disableFading - `True` if fading is currently disabled, `false` otherwise.
+     * @param findReplacements - `True` to replace each visible unvisited text element with a
      * visited duplicate.
-     * @param zoomLevel Current zoom level.
+     * @param zoomLevel - Current zoom level.
      * @returns `True` if any textElementGroup was evicted from cache, false otherwise.
      */
     update(time: number, disableFading: boolean, findReplacements: boolean, zoomLevel: number) {
@@ -281,8 +281,8 @@ export class TextElementStateCache {
     /**
      * Removes duplicates for a given text element.
      *
-     * @param zoomLevel Current zoom level.
-     * @param elementState State of the text element to deduplicate.
+     * @param zoomLevel - Current zoom level.
+     * @param elementState - State of the text element to deduplicate.
      * @returns True if it's the remaining element after deduplication, false if it's been marked
      * as duplicate.
      */
@@ -316,8 +316,8 @@ export class TextElementStateCache {
 
     /**
      * Replaces a visible unvisited text element with a visited duplicate.
-     * @param zoomLevel Current zoom level.
-     * @param elementState State of the text element to deduplicate.
+     * @param zoomLevel - Current zoom level.
+     * @param elementState - State of the text element to deduplicate.
      */
     replaceElement(zoomLevel: number, elementState: TextElementState): void {
         assert(elementState.visible);
@@ -336,7 +336,7 @@ export class TextElementStateCache {
 
     /**
      * Gets the state corresponding to a given text element group.
-     * @param textElementGroup The group of which the state will be obtained.
+     * @param textElementGroup - The group of which the state will be obtained.
      * @returns The group state if cached, otherwise `undefined`.
      */
     private get(textElementGroup: TextElementGroup): TextElementGroupState | undefined {
@@ -350,8 +350,8 @@ export class TextElementStateCache {
 
     /**
      * Sets a specified state for a given text element group.
-     * @param textElementGroup  The group of which the state will be set.
-     * @param textElementGroupState The state to set for the group.
+     * @param textElementGroup -  The group of which the state will be set.
+     * @param textElementGroupState - The state to set for the group.
      */
     private set(textElementGroup: TextElementGroup, textElementGroupState: TextElementGroupState) {
         assert(textElementGroup.elements.length > 0);

@@ -55,8 +55,8 @@ export namespace OmvFilterString {
     /**
      * Check for a string against a filter.
      *
-     * @param str The string to check against a filter.
-     * @param filterString The filter containing the match condition.
+     * @param str - The string to check against a filter.
+     * @param filterString - The filter containing the match condition.
      * @returns `true` if the match condition is satisfied.
      */
     export function matchString(str: string, filterString: OmvFilterString): boolean {

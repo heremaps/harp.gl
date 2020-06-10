@@ -39,7 +39,7 @@ export type ElevationProviderStub = sinon.SinonStubbedInstance<ElevationProvider
 
 /**
  * Creates an ElevationProvider stub.
- * @param sandbox Sinon sandbox to keep track of created stubs.
+ * @param sandbox - Sinon sandbox to keep track of created stubs.
  * @returns ElevationProvider stub.
  */
 export function stubElevationProvider(sandbox: sinon.SinonSandbox): ElevationProviderStub {
@@ -62,7 +62,7 @@ const dummyDisplacementMap: DisplacementMap = {
 
 /**
  * Creates a fake TileDisplacementMap with no data.
- * @param tileKey The key corresponding to the tile to which this map belongs.
+ * @param tileKey - The key corresponding to the tile to which this map belongs.
  * @returns The fake map.
  */
 export function fakeTileDisplacementMap(tileKey: TileKey): TileDisplacementMap {

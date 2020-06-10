@@ -61,9 +61,10 @@ export class DisplacedMesh extends THREE.Mesh {
 
     /**
      * Creates an instance of displaced mesh.
-     * @param geometry Original geometry to displace.
-     * @param material Material(s) to be used by the mesh. All must have the same displacement map.
-     * @param m_getDisplacementRange Displacement values range getter.
+     * @param geometry - Original geometry to displace.
+     * @param material - Material(s) to be used by the mesh. All must have the same
+     *                   displacement map.
+     * @param m_getDisplacementRange - Displacement values range getter.
      * @param [m_raycastStrategy] Function that will be used to find ray intersections. If not
      * provided, THREE.Mesh's raycast will be used.
      */

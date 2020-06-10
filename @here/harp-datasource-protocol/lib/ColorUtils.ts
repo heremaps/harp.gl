@@ -91,9 +91,9 @@ export namespace ColorUtils {
      * Encode and convert HSL value to number coded color format (0xRRGGBB).
      *
      * @see getHexFromRgb.
-     * @param h Hue component value between 0 and 1.
-     * @param s Saturation value between 0 and 1.
-     * @param l Lightness channel between 0 and 1.
+     * @param h - Hue component value between 0 and 1.
+     * @param s - Saturation value between 0 and 1.
+     * @param l - Lightness channel between 0 and 1.
      */
     export function getHexFromHsl(h: number, s: number, l: number): number {
         assert(h >= 0 && h <= 1);
@@ -109,7 +109,7 @@ export namespace ColorUtils {
      * format.
      *
      * @see getHexFromRgba.
-     * @param hex The number encoded color value (0xRRGGBB or 0xTTRRGGBB in hex).
+     * @param hex - The number encoded color value (0xRRGGBB or 0xTTRRGGBB in hex).
      * @returns r, g, b, a channels in simple object, where each channel value is saved as floating
      * point from 0 to 1 inclusively.
      */
@@ -127,7 +127,7 @@ export namespace ColorUtils {
     /**
      * Determines if number encoded color contains alpha (opacity) defined and different then 255.
      *
-     * @param hex The number encoded color (0xRRGGBB or 0xTTRRGGBB in hex).
+     * @param hex - The number encoded color (0xRRGGBB or 0xTTRRGGBB in hex).
      * @returns True if color has transparency defined.
      */
     export function hasAlphaInHex(hex: number): boolean {
@@ -139,7 +139,7 @@ export namespace ColorUtils {
      * Retrieves alpha color channel from hex encoded color value.
      *
      * @see getHexFromRgba.
-     * @param hex The number encoded color value (representable as 0xRRGGBB or 0xTTRRGGBB in hex).
+     * @param hex - The number encoded color value (representable as 0xRRGGBB or 0xTTRRGGBB in hex).
      * @returns The floating point alpha component in <0, 1> range.
      */
     export function getAlphaFromHex(hex: number): number {
@@ -153,7 +153,7 @@ export namespace ColorUtils {
      * Remove transparency info from the number coded color, makes it compatible with external libs.
      *
      * @see getAlphaFromHex.
-     * @param hex The number encoded color value (representable as 0xRRGGBB or 0xTTRRGGBB in hex).
+     * @param hex - The number encoded color value (representable as 0xRRGGBB or 0xTTRRGGBB in hex).
      * @returns number coded color value representable as 0xRRGGBB in hex.
      */
     export function removeAlphaFromHex(hex: number): number {

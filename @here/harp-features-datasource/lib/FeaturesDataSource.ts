@@ -60,7 +60,7 @@ export class FeaturesDataSource extends OmvDataSource {
     /**
      * Builds a `FeaturesDataSource`.
      *
-     * @param options specify custom options using [[FeatureDataSourceOptions]] interface.
+     * @param options - specify custom options using [[FeatureDataSourceOptions]] interface.
      */
     constructor(options?: FeatureDataSourceOptions) {
         super({
@@ -83,7 +83,7 @@ export class FeaturesDataSource extends OmvDataSource {
      * the data source, one should loop through it to create [[MapViewFeature]] and add them with
      * the `add` method.
      *
-     * @param geojson A javascript object matching the GeoJSON specification.
+     * @param geojson - A javascript object matching the GeoJSON specification.
      */
     setFromGeojson(geojson: FeatureCollection | GeometryCollection | Feature) {
         if (geojson.type === "FeatureCollection") {
@@ -109,7 +109,7 @@ export class FeaturesDataSource extends OmvDataSource {
     /**
      * Adds a custom feature in the datasource.
      *
-     * @param features The features to add in the datasource.
+     * @param features - The features to add in the datasource.
      */
     add(...features: MapViewFeature[]): this {
         for (const feature of features) {
@@ -122,7 +122,7 @@ export class FeaturesDataSource extends OmvDataSource {
     /**
      * Removes a custom feature in the datasource.
      *
-     * @param features The features to add in the datasource.
+     * @param features - The features to add in the datasource.
      */
     remove(...features: MapViewFeature[]): this {
         for (const feature of features) {
@@ -149,7 +149,7 @@ export class FeaturesDataSource extends OmvDataSource {
     }
     /**
      * Override [[DataSource.attach]] to know if we're really connected to [[MapView]].
-     * @param mapView
+     * @param mapView -
      * @override
      */
     attach(mapView: MapView): void {
@@ -159,7 +159,7 @@ export class FeaturesDataSource extends OmvDataSource {
 
     /**
      * Override [[DataSource.detach]] to know if we're really connected to [[MapView]].
-     * @param mapView
+     * @param mapView -
      * @override
      */
     detach(mapView: MapView): void {

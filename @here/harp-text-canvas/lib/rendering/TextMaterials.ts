@@ -235,7 +235,7 @@ export class SdfTextMaterial extends THREE.RawShaderMaterial {
     /**
      * Creates a new `SdfTextMaterial`.
      *
-     * @param params Material parameters.
+     * @param params - Material parameters.
      *
      * @returns New `SdfTextMaterial`.
      */

@@ -22,7 +22,7 @@ export class QuadTree {
      * console.log(geoBox.center);
      * ```
      *
-     * @param tilingScheme The TilingScheme used by this `QuadTree`.
+     * @param tilingScheme - The TilingScheme used by this `QuadTree`.
      */
     constructor(readonly tilingScheme: TilingScheme) {}
 
@@ -44,8 +44,8 @@ export class QuadTree {
      * });
      * ```
      *
-     * @param accept A function that takes a [[TileKey]] and its bounding box in geo coordinates and
-     * returns `true` if the visit of the `QuadTree` should continue; otherwise `false`.
+     * @param accept - A function that takes a [[TileKey]] and its bounding box in geo coordinates
+     * and returns `true` if the visit of the `QuadTree` should continue; otherwise `false`.
      */
     visit(accept: (tileKey: TileKey, geoBox: GeoBox) => boolean) {
         this.visitTileKey(TileKey.fromRowColumnLevel(0, 0, 0), accept);
@@ -54,9 +54,9 @@ export class QuadTree {
     /**
      * Visits the subtree starting from the given tile.
      *
-     * @param tileKey The root of the subtree that should be visited.
-     * @param accept A function that takes a [[TileKey]] and its bounding box in geo coordinates and
-     * returns `true` if the visit of the `QuadTree` should continue; otherwise `false`.
+     * @param tileKey - The root of the subtree that should be visited.
+     * @param accept - A function that takes a [[TileKey]] and its bounding box in geo coordinates
+     * and returns `true` if the visit of the `QuadTree` should continue; otherwise `false`.
      */
     visitTileKey(tileKey: TileKey, accept: (tileKey: TileKey, geoBox: GeoBox) => boolean) {
         const geoBox = this.tilingScheme.getGeoBox(tileKey);

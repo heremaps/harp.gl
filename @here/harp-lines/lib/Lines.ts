@@ -108,13 +108,13 @@ function getVertexDescriptor(hasNormalsAndUvs: boolean, highPrecision: boolean):
 /**
  * Creates a [[LineGeometry]] object out of a polyline.
  *
- * @param center Center of the polyline.
- * @param polyline Array of `numbers` describing a polyline.
- * @param offsets Array of `numbers` representing line segment offsets.
- * @param uvs Array of `numbers` representing texture coordinates.
- * @param colors Array of `numbers` describing a polyline's colors.
- * @param geometry [[LineGeometry]] object used to store the vertex and index attributes.
- * @param highPrecision If `true` will create high-precision vertex information.
+ * @param center - Center of the polyline.
+ * @param polyline - Array of `numbers` describing a polyline.
+ * @param offsets - Array of `numbers` representing line segment offsets.
+ * @param uvs - Array of `numbers` representing texture coordinates.
+ * @param colors - Array of `numbers` describing a polyline's colors.
+ * @param geometry - [[LineGeometry]] object used to store the vertex and index attributes.
+ * @param highPrecision - If `true` will create high-precision vertex information.
  */
 export function createLineGeometry(
     center: THREE.Vector3,
@@ -278,9 +278,9 @@ export function createLineGeometry(
 /**
  * Creates a [[LineGeometry]] object out of a polyline.
  *
- * @param polyline Array of `numbers` describing a polyline.
- * @param colors Array of `numbers` describing a polyline's colors.
- * @param geometry [[LineGeometry]] object used to store the vertex and index attributes.
+ * @param polyline - Array of `numbers` describing a polyline.
+ * @param colors - Array of `numbers` describing a polyline's colors.
+ * @param geometry - [[LineGeometry]] object used to store the vertex and index attributes.
  */
 export function createSimpleLineGeometry(
     polyline: ArrayLike<number>,
@@ -321,13 +321,13 @@ export class LineGroup {
     /**
      * Adds all the attribute data needed to a [[BufferGeometry]] object for rendering `Lines`.
      *
-     * @param vertices Array of vertex attributes.
-     * @param colors Array of vertex colors.
-     * @param indices Array of vertex indices.
-     * @param geometry [[BufferGeometry]] object which will store all the `Lines` attribute data.
-     * @param hasNormalsAnUvs Whether vertices have normal and uv coordinates as attributes.
-     * @param highPrecision If `true` will create high-precision vertex information.
-     * @param isSimple `true` to create simple (nonsolid, nonextruded) lines. Defaults to `false`.
+     * @param vertices - Array of vertex attributes.
+     * @param colors - Array of vertex colors.
+     * @param indices - Array of vertex indices.
+     * @param geometry - [[BufferGeometry]] object which will store all the `Lines` attribute data.
+     * @param hasNormalsAnUvs - Whether vertices have normal and uv coordinates as attributes.
+     * @param highPrecision - If `true` will create high-precision vertex information.
+     * @param isSimple - `true` to create simple (nonsolid, nonextruded) lines. Defaults to `false`.
      */
     static createGeometry(
         vertices: ArrayLike<number>,
@@ -402,11 +402,11 @@ export class LineGroup {
     /**
      * Add the given points to this line group.
      *
-     * @param center World center of the provided points.
-     * @param points Sequence of (x,y,z) coordinates.
-     * @param offsets Sequence of line segment offsets.
-     * @param uvs Sequence of (u,v) texture coordinates.
-     * @param colors Sequence of (r,g,b) color components.
+     * @param center - World center of the provided points.
+     * @param points - Sequence of (x,y,z) coordinates.
+     * @param offsets - Sequence of line segment offsets.
+     * @param uvs - Sequence of (u,v) texture coordinates.
+     * @param colors - Sequence of (r,g,b) color components.
      */
     add(
         center: THREE.Vector3,

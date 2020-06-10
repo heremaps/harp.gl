@@ -117,7 +117,7 @@ export abstract class CopyrightCoverageProvider implements CopyrightProvider {
     /**
      * Initializes RBush.
      *
-     * @param entries Entries for tree.
+     * @param entries - Entries for tree.
      * @returns RBush instance.
      */
     initRBush(entries: AreaCopyrightInfo[]): any {

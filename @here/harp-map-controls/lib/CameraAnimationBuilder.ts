@@ -18,7 +18,7 @@ export class CameraAnimationBuilder {
      * Get the current [[LookAtParams]] from [[MapView]]
      * @beta
      *
-     * @param mapView The MapView
+     * @param mapView - The MapView
      */
     static getLookAtFromView(
         mapView: MapView
@@ -35,10 +35,10 @@ export class CameraAnimationBuilder {
      * Appends a [[ControlPoint]] to [[CameraKeyTrackAnimationOptions]]
      * @beta
      *
-     * @param options The [[CameraKeyTrackAnimationOptions]] that the [[ControlPoint]] should be
+     * @param options - The [[CameraKeyTrackAnimationOptions]] that the [[ControlPoint]] should be
      * appended to
-     * @param point The [[ControlPoint]] to append.
-     * @param appendTime The time it should take from the former end of the animation to the
+     * @param point - The [[ControlPoint]] to append.
+     * @param appendTime - The time it should take from the former end of the animation to the
      * appended [[ControlPoint]] in seconds, per default takes the controlpoints timestamp
      */
     static appendControlPoint(
@@ -63,9 +63,9 @@ export class CameraAnimationBuilder {
      * Adds a [[ControlPoint]] to the beginning of an [[CameraKeyTrackAnimationOptions]]
      * @beta
      *
-     * @param options
-     * @param point
-     * @param prependTime The time the animation from the inserted key to the next should take,
+     * @param options -
+     * @param point -
+     * @param prependTime - The time the animation from the inserted key to the next should take,
      *  in seconds, @default 10 seconds
      */
     static prependControlPoint(
@@ -86,12 +86,12 @@ export class CameraAnimationBuilder {
      * Creates Options for a Bow Animation from the start to the target [[ControlPoint]]
      * @beta
      *
-     * @param mapView
-     * @param startControlPoint
-     * @param targetControlPoint
-     * @param altitude The maximal altitude the bow should have, defaults to twice the start to
+     * @param mapView -
+     * @param startControlPoint -
+     * @param targetControlPoint -
+     * @param altitude - The maximal altitude the bow should have, defaults to twice the start to
      * target distance
-     * @param duration The duration of the Animation in seconds, @default 10
+     * @param duration - The duration of the Animation in seconds, @default 10
      */
     static createBowFlyToOptions(
         mapView: MapView,
@@ -170,8 +170,8 @@ export class CameraAnimationBuilder {
      * Creates [[CameraKeyTrackAnimationOptions]] for an Orbit Animation
      * @beta
      *
-     * @param startControlPoint
-     * @param duration
+     * @param startControlPoint -
+     * @param duration -
      */
     static createOrbitOptions(
         startControlPoint: ControlPoint,

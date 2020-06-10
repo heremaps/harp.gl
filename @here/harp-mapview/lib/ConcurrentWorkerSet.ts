@@ -171,7 +171,7 @@ export class ConcurrentWorkerSet {
      * Note: The worker set is implicitly started on construction - no need to call [[start]] on
      * fresh instance.
      *
-     * @param options optional, new worker set options
+     * @param options - optional, new worker set options
      */
     start(options?: ConcurrentWorkerSetOptions) {
         if (options !== undefined) {
@@ -274,7 +274,7 @@ export class ConcurrentWorkerSet {
      *
      * Promise is rejected if any of worker fails to start.
      *
-     * @param serviceId The service identifier.
+     * @param serviceId - The service identifier.
      */
     async connect(serviceId: string): Promise<void> {
         this.ensureStarted();
@@ -286,8 +286,8 @@ export class ConcurrentWorkerSet {
      * Registers an event listener for events that originated in a web worker, for a given
      * `serviceId`. You can only set one event listener per `serviceId`.
      *
-     * @param serviceId The service to listen to.
-     * @param callback The callback to invoke for matching events.
+     * @param serviceId - The service to listen to.
+     * @param callback - The callback to invoke for matching events.
      */
     addEventListener(serviceId: string, callback: (message: any) => void) {
         this.m_eventListeners.set(serviceId, callback);
@@ -296,7 +296,7 @@ export class ConcurrentWorkerSet {
     /**
      * Removes a previously set event listener for the given `serviceId`.
      *
-     * @param serviceId The service from which to remove the event listeners.
+     * @param serviceId - The service from which to remove the event listeners.
      */
     removeEventListener(serviceId: string) {
         this.m_eventListeners.delete(serviceId);
@@ -308,10 +308,10 @@ export class ConcurrentWorkerSet {
      * Sends [[RequestMessage]] and resolves when a matching [[ResponseMessage]] is received from
      * workers. Use this function when interfacing with "RPC-like" calls to services.
      *
-     * @param serviceId The name of service, as registered with the [[WorkerClient]] instance.
-     * @param request The request to process.
-     * @param transferList An optional array of `ArrayBuffer`s to transfer to the worker context.
-     * @param requestController An optional [[RequestController]] to store state of cancelling.
+     * @param serviceId - The name of service, as registered with the [[WorkerClient]] instance.
+     * @param request - The request to process.
+     * @param transferList - An optional array of `ArrayBuffer`s to transfer to the worker context.
+     * @param requestController - An optional [[RequestController]] to store state of cancelling.
      *
      * @returns A `Promise` that resolves with a response from the service.
      */
@@ -359,9 +359,9 @@ export class ConcurrentWorkerSet {
      * [[ResponseMessage]]. Use this function to wait on request that need to happen on all workers
      * before proceeding (like synchronous worker service creation).
      *
-     * @param serviceId The name of service, as registered with the [[WorkerClient]] instance.
-     * @param request The request to process.
-     * @param transferList An optional array of `ArrayBuffer`s to transfer to the worker context.
+     * @param serviceId - The name of service, as registered with the [[WorkerClient]] instance.
+     * @param request - The request to process.
+     * @param transferList - An optional array of `ArrayBuffer`s to transfer to the worker context.
      *
      * @returns Array of `Promise`s that resolves with a response from each worker (unspecified
      * order).
@@ -417,8 +417,8 @@ export class ConcurrentWorkerSet {
     /**
      * Posts a message to all workers.
      *
-     * @param message The message to send.
-     * @param buffers Optional buffers to transfer to the workers.
+     * @param message - The message to send.
+     * @param buffers - Optional buffers to transfer to the workers.
      */
     broadcastMessage(message: any, buffers?: ArrayBuffer[] | undefined) {
         this.ensureStarted();
@@ -454,7 +454,7 @@ export class ConcurrentWorkerSet {
     /**
      * Subclasses must call this function when a worker emits an event.
      *
-     * @param event The event to dispatch.
+     * @param event - The event to dispatch.
      */
     protected eventHandler(event: any) {
         if (typeof event.data.type !== "string") {
@@ -468,8 +468,8 @@ export class ConcurrentWorkerSet {
      * Handles messages received from workers. This method is protected so that the message
      * reception can be simulated through an extended class, to avoid relying on real workers.
      *
-     * @param workerId The workerId of the web worker.
-     * @param event The event to dispatch.
+     * @param workerId - The workerId of the web worker.
+     * @param event - The event to dispatch.
      */
     private onWorkerMessage = (workerId: number, event: MessageEvent) => {
         if (WorkerServiceProtocol.isResponseMessage(event.data)) {
@@ -538,9 +538,9 @@ export class ConcurrentWorkerSet {
      * Posts a [[WorkerServiceProtocol.RequestMessage]] to an available worker. If no worker is
      * available, the request is put into a queue.
      *
-     * @param message The message to send.
-     * @param buffers Optional buffers to transfer to the worker.
-     * @param requestController An optional [[RequestController]] to store state of cancelling.
+     * @param message - The message to send.
+     * @param buffers - Optional buffers to transfer to the worker.
+     * @param requestController - An optional [[RequestController]] to store state of cancelling.
      */
     private postRequestMessage(
         message: WorkerServiceProtocol.RequestMessage,

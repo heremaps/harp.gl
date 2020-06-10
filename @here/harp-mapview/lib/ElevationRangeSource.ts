@@ -33,7 +33,7 @@ export interface ElevationRange {
 export interface ElevationRangeSource {
     /**
      * Compute the elevation range for a given [[TileKey]].
-     * @param tileKey The tile for which the elevation range should be computed.
+     * @param tileKey - The tile for which the elevation range should be computed.
      */
     getElevationRange(tileKey: TileKey): ElevationRange;
 
