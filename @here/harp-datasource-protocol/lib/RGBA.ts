@@ -6,7 +6,7 @@
 
 import { MathUtils } from "three";
 import { ColorUtils } from "./ColorUtils";
-import { StringEncodedColorFormats } from "./StringEncodedNumeral";
+import { parseStringEncodedColor } from "./StringEncodedNumeral";
 
 /**
  * A class representing RGBA colors.
@@ -21,14 +21,13 @@ export class RGBA {
      * @param text - The string color literal
      */
     static parse(text: string) {
-        const format = StringEncodedColorFormats.find(f => f.regExp.test(text));
-        if (format === undefined) {
+        const color = parseStringEncodedColor(text);
+
+        if (color === undefined) {
             return undefined;
         }
 
-        const components = [1, 1, 1, 1];
-        format.decoder(text, components);
-        return new RGBA(...components);
+        return ColorUtils.getRgbaFromHex(color);
     }
 
     /**
