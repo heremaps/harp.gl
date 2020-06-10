@@ -13,7 +13,7 @@ export class TextCanvasFactory {
 
     /**
      * Creates an instance of text canvas factory.
-     * @param m_renderer
+     * @param m_renderer -
      */
     constructor(private readonly m_renderer: THREE.WebGLRenderer) {}
 
@@ -24,7 +24,7 @@ export class TextCanvasFactory {
 
     /**
      * Creates text canvas
-     * @param fontCatalog Initial [[FontCatalog]].
+     * @param fontCatalog - Initial [[FontCatalog]].
      */
     createTextCanvas(fontCatalog: FontCatalog): TextCanvas {
         assert(this.m_maxGlyphCount > 0);

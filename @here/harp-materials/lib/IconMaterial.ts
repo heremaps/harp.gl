@@ -60,7 +60,7 @@ export class IconMaterial extends THREE.RawShaderMaterial {
     /**
      * Constructs a new `IconMaterial`.
      *
-     * @param params `IconMaterial` parameters.
+     * @param params - `IconMaterial` parameters.
      */
     constructor(params: IconMaterialParameters) {
         // tslint:disable-next-line: deprecation

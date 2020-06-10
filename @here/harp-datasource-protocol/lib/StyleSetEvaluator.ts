@@ -223,7 +223,7 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
      * Tests if the given `call` matches the structure ["==", ["get", name], value].
      * If a match is found returns an object containing the `name` and the `value`;
      *
-     * @param call The expression to match.
+     * @param call - The expression to match.
      */
     private matchVarStringComparison(call: CallExpr) {
         if (call.op === "==") {
@@ -349,10 +349,10 @@ export class StyleSetEvaluator {
      * *The techniques in the resulting array may not be modified* since they are being reused for
      * identical objects.
      *
-     * @param env The objects environment, i.e. the attributes that are relevant for its
+     * @param env - The objects environment, i.e. the attributes that are relevant for its
      * representation.
-     * @param layer The optional layer name used to filter techniques.
-     * @param geometryType The optional geometryType used to filter techniques.
+     * @param layer - The optional layer name used to filter techniques.
+     * @param geometryType - The optional geometryType used to filter techniques.
      */
     getMatchingTechniques(
         env: Env,
@@ -395,7 +395,7 @@ export class StyleSetEvaluator {
     /**
      * Check if `styleSet` contains any rule related to `layer`.
      *
-     * @param layer name of layer
+     * @param layer - name of layer
      */
     wantsLayer(layer: string): boolean {
         return (
@@ -406,8 +406,8 @@ export class StyleSetEvaluator {
     /**
      * Check if `styleSet` contains any rule related to particular `[layer, geometryType]` pair.
      *
-     * @param layer name of layer
-     * @param geometryType type of layer - `point`, `line` or `polygon`
+     * @param layer - name of layer
+     * @param geometryType - type of layer - `point`, `line` or `polygon`
      */
     wantsFeature(layer: string, geometryType?: string): boolean {
         return (
@@ -505,7 +505,7 @@ export class StyleSetEvaluator {
     /**
      * Compile the `when` conditions reachable from the given `style`.
      *
-     * @param style The current style.
+     * @param style - The current style.
      */
     private compileStyle(style: InternalStyle) {
         this.checkStyleDynamicAttributes(style);
@@ -561,10 +561,10 @@ export class StyleSetEvaluator {
      * current objects' environment. The attributes of the styles are assembled to create a unique
      * technique for every object.
      *
-     * @param env The objects environment, i.e. the attributes that are relevant for its
+     * @param env - The objects environment, i.e. the attributes that are relevant for its
      *            representation.
-     * @param style Current style (could also be top of stack).
-     * @param result The array of resulting techniques. There may be more than one technique per
+     * @param style - Current style (could also be top of stack).
+     * @param result - The array of resulting techniques. There may be more than one technique per
      *               object, resulting in multiple graphical objects for representation.
      * @returns `true` if style has been found and processing is finished. `false` if not found, or
      *          more than one technique should be applied.

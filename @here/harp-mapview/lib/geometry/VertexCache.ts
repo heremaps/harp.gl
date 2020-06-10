@@ -32,7 +32,7 @@ export class VertexCache {
 
     /**
      * Creates a new cache with the specified maximum size.
-     * @param maxVertexCount The maximum number of vertices the cache will store.
+     * @param maxVertexCount - The maximum number of vertices the cache will store.
      */
     constructor(readonly maxVertexCount: number) {
         this.m_cache.length = this.maxVertexCount * Field.Count;
@@ -49,8 +49,8 @@ export class VertexCache {
 
     /**
      * Gets a vertex from cache.
-     * @param vertexId The id of the vertex to get.
-     * @param vertex The vertex coordinates will be set here if found.
+     * @param vertexId - The id of the vertex to get.
+     * @param vertex - The vertex coordinates will be set here if found.
      * @returns whether the vertex was found on cache.
      */
     get(vertexId: number, vertex: Vector3Like): boolean {
@@ -65,8 +65,8 @@ export class VertexCache {
 
     /**
      * Sets a vertex in cache. It's assumed there's no vertex with the same id already in cache.
-     * @param vertexId The vertex id.
-     * @param vertex The vertex coordinates.
+     * @param vertexId - The vertex id.
+     * @param vertex - The vertex coordinates.
      */
     set(vertexId: number, vertex: Vector3Like) {
         let vertexIdx = Invalid;

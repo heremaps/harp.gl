@@ -20,7 +20,7 @@ export interface OrientedBox3Like extends TransformLike {
 /**
  * Returns true if the given object implements the interface [[OrientedBox3Like]].
  *
- * @param object The object.
+ * @param object - The object.
  */
 export function isOrientedBox3Like(object: {}): object is OrientedBox3Like {
     const obb = object as Partial<OrientedBox3Like>;

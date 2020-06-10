@@ -389,7 +389,7 @@ export type JsonExprReference = ["ref", string];
 /**
  * Checks if the given value is a reference to a definition.
  *
- * @param value The value of a technique property.
+ * @param value - The value of a technique property.
  */
 export function isJsonExprReference(value: any): value is JsonExprReference {
     return (

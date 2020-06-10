@@ -65,7 +65,7 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
     /**
      * Constructs a new `CirclePointsMaterial`.
      *
-     * @param parameters The constructor's parameters.
+     * @param parameters - The constructor's parameters.
      */
     constructor(parameters: CirclePointsMaterialParameters = {}) {
         const { size, color, opacity, ...shaderParams } = parameters;

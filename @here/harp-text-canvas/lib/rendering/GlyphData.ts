@@ -54,19 +54,19 @@ export class GlyphData {
     /**
      * Creates a new `GlyphData` object.
      *
-     * @param codePoint Unicode code point.
-     * @param block Unicode block.
-     * @param width Glyph' width.
-     * @param height Glyph' height.
-     * @param advanceX Amount of pixel to move after placing this glyph.
-     * @param offsetX Horizontal offset from the glyph' origin.
-     * @param offsetY Vertical offset from the glyph' origin.
-     * @param u0 Glyph' left texture coordinate.
-     * @param v0 Glyph' bottom texture coordinate.
-     * @param u1 Glyph' right texture coordinate.
-     * @param v1 Glyph' top texture coordinate.
-     * @param texture Glyph' source texture atlas page.
-     * @param font Glyph' font.
+     * @param codePoint - Unicode code point.
+     * @param block - Unicode block.
+     * @param width - Glyph' width.
+     * @param height - Glyph' height.
+     * @param advanceX - Amount of pixel to move after placing this glyph.
+     * @param offsetX - Horizontal offset from the glyph' origin.
+     * @param offsetY - Vertical offset from the glyph' origin.
+     * @param u0 - Glyph' left texture coordinate.
+     * @param v0 - Glyph' bottom texture coordinate.
+     * @param u1 - Glyph' right texture coordinate.
+     * @param v1 - Glyph' top texture coordinate.
+     * @param texture - Glyph' source texture atlas page.
+     * @param font - Glyph' font.
      *
      * @returns New `GlyphData`.
      */

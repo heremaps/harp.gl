@@ -17,11 +17,11 @@ type TypedArray =
 
 /**
  * Returns a bilinear-interpolated texture sample for a given texture.
- * @param texture Two-dimensional texture to sample.
- * @param width Texture width.
- * @param height Texture height.
- * @param u Number between 0 and 1 representing the location to sample in the width dimension.
- * @param v Number between 0 and 1 representing the location to sample in the height dimension.
+ * @param texture - Two-dimensional texture to sample.
+ * @param width - Texture width.
+ * @param height - Texture height.
+ * @param u - Number between 0 and 1 representing the location to sample in the width dimension.
+ * @param v - Number between 0 and 1 representing the location to sample in the height dimension.
  */
 export function sampleBilinear(
     texture: TypedArray,

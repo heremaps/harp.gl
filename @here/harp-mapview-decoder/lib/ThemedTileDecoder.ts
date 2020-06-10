@@ -76,11 +76,11 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
      * Create a [[DecodedTile]] from binary tile data and a theme description in form of a
      * [[StyleSetEvaluator]].
      *
-     * @param data Binary data in form of [[ArrayBufferLike]], or any object.
-     * @param tileKey Quadtree address of tile.
-     * @param styleSetEvaluator Processor of [[Theme]], identifies styling techniques applicable to
-     *      individual objects.
-     * @param projection Projection used by the individual data sources.
+     * @param data - Binary data in form of [[ArrayBufferLike]], or any object.
+     * @param tileKey - Quadtree address of tile.
+     * @param styleSetEvaluator - Processor of [[Theme]], identifies styling techniques applicable
+     *                            to individual objects.
+     * @param projection - Projection used by the individual data sources.
      */
     abstract decodeThemedTile(
         data: ArrayBufferLike | {},

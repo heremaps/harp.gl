@@ -18,8 +18,8 @@ import { Tile, TileObject } from "../Tile";
  * Overlays the specified object's geometry on the elevation represented by the given displacement
  * map .
  *
- * @param object The object to be overlaid.
- * @param displacementMap Texture representing the elevation data used to overlay the object.
+ * @param object - The object to be overlaid.
+ * @param displacementMap - Texture representing the elevation data used to overlay the object.
  */
 function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): void {
     if (!("material" in object)) {
@@ -42,10 +42,10 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
 /**
  * Overlays the specified coordinates on top of elevation data if available.
  *
- * @param worldCoords World coordinates to overlay.
- * @param elevationProvider Used to sample elevation data.
- * @param displacementMap Elevation data to be sampled.
- * @param projection Projection from geo to world space.
+ * @param worldCoords - World coordinates to overlay.
+ * @param elevationProvider - Used to sample elevation data.
+ * @param displacementMap - Elevation data to be sampled.
+ * @param projection - Projection from geo to world space.
  * @returns `true` if the position was successfully overlaid, `false` otherwise (e.g. elevation
  * data not available).
  */
@@ -73,10 +73,10 @@ function overlayPosition(
 /**
  * Overlays the specified coordinates on top of elevation data if available.
  *
- * @param path World coordinates to overlay.
- * @param elevationProvider Used to sample elevation data.
- * @param displacementMap Elevation data to be sampled.
- * @param projection Projection from geo to world space.
+ * @param path - World coordinates to overlay.
+ * @param elevationProvider - Used to sample elevation data.
+ * @param displacementMap - Elevation data to be sampled.
+ * @param projection - Projection from geo to world space.
  * @returns `true` if the position was successfully overlaid, `false` otherwise (e.g. elevation
  * data not available).
  */
@@ -97,10 +97,10 @@ function overlayPath(
 /**
  * Overlays a text element on top of elevation data if available.
  *
- * @param textElement The text element whose geometry will be overlaid.
- * @param elevationProvider  Used to sample elevation data.
- * @param displacementMap Elevation data to be sampled.
- * @param projection Projection from geo to world space.
+ * @param textElement - The text element whose geometry will be overlaid.
+ * @param elevationProvider -  Used to sample elevation data.
+ * @param displacementMap - Elevation data to be sampled.
+ * @param projection - Projection from geo to world space.
  */
 export function overlayTextElement(
     textElement: TextElement,
@@ -122,7 +122,7 @@ export function overlayTextElement(
  * Overlays the geometry in the given tile on top of elevation data if available. The tile's
  * elevation may be updated with a more precise range.
  *
- * @param tile The tile whose geometry will be overlaid.
+ * @param tile - The tile whose geometry will be overlaid.
  */
 export function overlayOnElevation(tile: Tile): void {
     const elevationProvider = tile.mapView.elevationProvider;

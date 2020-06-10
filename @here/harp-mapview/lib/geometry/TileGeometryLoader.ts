@@ -370,8 +370,8 @@ export class TileGeometryLoader {
      *
      * This values are stored to detect geometry kind changes during loading.
      *
-     * @param enabledKinds Set of geometry kinds to be displayed or undefined.
-     * @param disabledKinds Set of geometry kinds that won't be rendered.
+     * @param enabledKinds - Set of geometry kinds to be displayed or undefined.
+     * @param disabledKinds - Set of geometry kinds that won't be rendered.
      */
     private setGeometryKinds(
         enabledKinds: GeometryKindSet | undefined,
@@ -397,8 +397,8 @@ export class TileGeometryLoader {
      * Method compares input sets with recently used geometry kinds in performance wise
      * manner, taking special care of undefined and zero size sets.
      *
-     * @param enabledKinds Set of geometry kinds to be displayed or undefined.
-     * @param disabledKinds Set of geometry kinds that won't be rendered.
+     * @param enabledKinds - Set of geometry kinds to be displayed or undefined.
+     * @param disabledKinds - Set of geometry kinds that won't be rendered.
      * @return `true` only if sets are logically equal, meaning that undefined and empty sets
      * may result in same geometry (techniques kind) beeing rendered.
      */

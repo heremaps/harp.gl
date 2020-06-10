@@ -32,7 +32,7 @@ export class LayoutState {
     /**
      * Set layout based on theme style defined and optional text placement.
      *
-     * @param placement The optional new anchor placement.
+     * @param placement - The optional new anchor placement.
      */
     set textPlacement(placement: TextPlacement) {
         this.m_hAlign = hAlignFromPlacement(placement.h);

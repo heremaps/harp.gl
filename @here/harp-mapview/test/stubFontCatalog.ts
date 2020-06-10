@@ -12,7 +12,7 @@ const DEF_TEXTURE_SIZE = 1;
 
 /**
  * Creates a font catalog stub that returns stubbed glyph data.
- * @param sandbox Sinon sandbox to keep track of created stubs.
+ * @param sandbox - Sinon sandbox to keep track of created stubs.
  * @returns FontCatalog stub.
  */
 export function stubFontCatalog(sandbox: sinon.SinonSandbox): FontCatalog {

@@ -111,7 +111,7 @@ export interface TextElementsRendererOptions {
 
 /**
  * Initializes undefined text renderer options to default values.
- * @param options The options to be initialized.
+ * @param options - The options to be initialized.
  */
 export function initializeDefaultOptions(options: TextElementsRendererOptions) {
     if (options.fontCatalog === undefined) {

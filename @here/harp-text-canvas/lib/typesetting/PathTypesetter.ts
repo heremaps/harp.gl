@@ -78,7 +78,7 @@ export class PathTypesetter implements Typesetter {
      * alongside this path following [[TextLayout]]'s [[VerticalAlignment]] and
      * [[HorizontalAlignment]].
      *
-     * @param params Typesetting parameters.
+     * @param params - Typesetting parameters.
      *
      * @returns If `false`, some error occurred during execution and the output should be dismissed.
      */

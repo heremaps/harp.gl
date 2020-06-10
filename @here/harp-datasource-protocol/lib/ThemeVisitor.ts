@@ -15,7 +15,7 @@ export class ThemeVisitor {
     /**
      * Applies a function to every style in the theme.
      *
-     * @param visitFunc Function to be called with `style` as an argument. Function should return
+     * @param visitFunc - Function to be called with `style` as an argument. Function should return
      *                  `true` to cancel visitation.
      * @returns `true` if function has finished prematurely.
      */

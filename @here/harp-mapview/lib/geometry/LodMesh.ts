@@ -17,8 +17,8 @@ export class LodMesh extends THREE.Mesh {
 
     /**
      * Creates a [[LodMesh]] with given geometries and materials
-     * @param geometries A list of geometries with different levels of detail
-     * @param material Material for the mesh
+     * @param geometries - A list of geometries with different levels of detail
+     * @param material - Material for the mesh
      */
     constructor(
         geometries?: Array<THREE.Geometry | THREE.BufferGeometry>,
@@ -53,7 +53,7 @@ export class LodMesh extends THREE.Mesh {
 
     /**
      * Change the rendered level of detail of the mesh
-     * @param level The level of detail (index of the geometry in the list).
+     * @param level - The level of detail (index of the geometry in the list).
      */
     setLevelOfDetail(level: number): void {
         if (!this.m_geometries || this.m_geometries.length === 0) {

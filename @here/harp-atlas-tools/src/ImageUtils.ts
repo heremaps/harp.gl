@@ -33,12 +33,12 @@ export class ImageUtils {
      * drawn on that _canvas_. This also affects that `offsetX`, `offsetY` specification, because
      * offset is always applied to the _secondary_ image relative to the _canvas_.
      *
-     * @param dstImage destination image for the blending operation.
-     * @param srcImage source image in blend operator.
-     * @param blitOp operation to be applied on the images during rendering.
-     * @param sizeRef enumeration that decides which image is used as base for output.
-     * @param offsetX offset that will be applied to the second image (not the base one).
-     * @param offsetY offset in Y coordinates starting from base image left-top corner,
+     * @param dstImage - destination image for the blending operation.
+     * @param srcImage - source image in blend operator.
+     * @param blitOp - operation to be applied on the images during rendering.
+     * @param sizeRef - enumeration that decides which image is used as base for output.
+     * @param offsetX - offset that will be applied to the second image (not the base one).
+     * @param offsetY - offset in Y coordinates starting from base image left-top corner,
      * pointing downwards.
      * @returns resulting image as new [[ImageEncoder]] instance.
      */
@@ -177,9 +177,9 @@ export class ImageUtils {
     /**
      * Perform pixel by pixel color blending on image source data.
      *
-     * @param srcImage
-     * @param colorOp
-     * @param blendColor
+     * @param srcImage -
+     * @param colorOp -
+     * @param blendColor -
      * @returns resulting image as new [[ImageEncoder]] instance.
      */
     static blendImageColor(
@@ -206,8 +206,8 @@ export class ImageUtils {
     /**
      * Perform pixel by pixel color transformation on image source data.
      *
-     * @param srcImage
-     * @param colorOp
+     * @param srcImage -
+     * @param colorOp -
      * @returns resulting image as new [[ImageEncoder]] instance.
      */
     static processImageColor(

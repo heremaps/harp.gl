@@ -192,7 +192,7 @@ export class TextRenderStyle {
     /**
      * Creates a new `TextRenderStyle`.
      *
-     * @param params Input [[TextRenderParameters]].
+     * @param params - Input [[TextRenderParameters]].
      *
      * @returns New `TextRenderStyle`.
      */
@@ -340,7 +340,7 @@ export class TextRenderStyle {
     /**
      * Clone this [[TextRenderStyle]].
      *
-     * @param params Input [[TextRenderParameters]].
+     * @param params - Input [[TextRenderParameters]].
      *
      * @returns Cloned [[TextRenderStyle]].
      */
@@ -351,7 +351,7 @@ export class TextRenderStyle {
     /**
      * Copy other [[TextRenderStyle]] properties into this object instance.
      *
-     * @param source The source object to be copied.
+     * @param source - The source object to be copied.
      *
      * @returns reference to `this` object.
      */
@@ -395,7 +395,7 @@ export class TextLayoutStyle {
     /**
      * Creates a new `TextLayoutStyle`.
      *
-     * @param params Input [[TextLayoutParameters]].
+     * @param params - Input [[TextLayoutParameters]].
      *
      * @returns New `TextLayoutStyle`.
      */
@@ -559,7 +559,7 @@ export class TextLayoutStyle {
     /**
      * Clone this [[TextLayoutStyle]].
      *
-     * @param params Input [[TextLayoutParameters]].
+     * @param params - Input [[TextLayoutParameters]].
      *
      * @returns Cloned [[TextLayoutStyle]].
      */
@@ -570,7 +570,7 @@ export class TextLayoutStyle {
     /**
      * Copy other [[TextLayoutStyle]] properties into this object instance.
      *
-     * @param other The object to be copied.
+     * @param other - The object to be copied.
      *
      * @returns reference to `this` object.
      */
@@ -586,9 +586,9 @@ export class TextLayoutStyle {
  * If placement is defined it may override alignment settings, if no attributes are
  * provided they may be retrieved from defaults.
  *
- * @param hAlignment The optional horizontal alignment.
- * @param vAlignment The vertical alignment - optional.
- * @param placementsOpt Possible text placements - optional.
+ * @param hAlignment - The optional horizontal alignment.
+ * @param vAlignment - The vertical alignment - optional.
+ * @param placementsOpt - Possible text placements - optional.
  * @internal
  */
 export function resolvePlacementAndAlignment(

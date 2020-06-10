@@ -11,7 +11,7 @@ import { TextElementState } from "./TextElementState";
 
 /**
  * Type of functions used to do early rejection of elements during group state creation or update.
- * @param textElementState The state of the text element to check.
+ * @param textElementState - The state of the text element to check.
  * @returns `undefined` if element was rejected, otherwise its current view distance.
  */
 export type TextElementFilter = (textElementState: TextElementState) => number | undefined;
@@ -26,9 +26,9 @@ export class TextElementGroupState {
 
     /**
      * Creates the state for specified group.
-     * @param group The group of which the state will be created.
-     * @param tileKey The key of the tile to which this group belongs.
-     * @param filter Function used to do early rejection. @see [[TextElementFilter]].
+     * @param group - The group of which the state will be created.
+     * @param tileKey - The key of the tile to which this group belongs.
+     * @param filter - Function used to do early rejection. @see [[TextElementFilter]].
      */
     constructor(
         readonly group: TextElementGroup,
@@ -75,8 +75,8 @@ export class TextElementGroupState {
 
     /**
      * Updates the fading state of all text elements within the group to the specified time.
-     * @param time The time to which the fading state will be updated.
-     * @param disableFading `true` if fading is disabled, `false` otherwise.
+     * @param time - The time to which the fading state will be updated.
+     * @param disableFading - `true` if fading is disabled, `false` otherwise.
      */
     updateFading(time: number, disableFading: boolean): void {
         for (const elementState of this.m_textElementStates) {
@@ -88,7 +88,7 @@ export class TextElementGroupState {
 
     /**
      * Calls the specified callback for every visible text elements in the group.
-     * @param visibleElementsCallback Functions that will be called for every visible text element
+     * @param visibleElementsCallback - Functions that will be called for every visible text element
      * in the group.
      */
     traverseVisibleElements(visibleElementsCallback: (e: TextElementState) => void): void {
@@ -101,7 +101,7 @@ export class TextElementGroupState {
 
     /**
      * Updates the states of elements within the group.
-     * @param filter Function used to do early rejection. @see [[TextElementFilter]].
+     * @param filter - Function used to do early rejection. @see [[TextElementFilter]].
      */
     updateElements(filter: TextElementFilter) {
         for (const elementState of this.m_textElementStates) {

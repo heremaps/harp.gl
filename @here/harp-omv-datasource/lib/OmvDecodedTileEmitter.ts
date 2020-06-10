@@ -245,11 +245,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     /**
      * Creates the Point of Interest geometries for the given feature.
      *
-     * @param layer Tile's layer to be processed.
-     * @param extents Tile's layer extents.
-     * @param geometry The current feature containing the main geometry.
-     * @param env The [[MapEnv]] containing the environment information for the map.
-     * @param techniques The array of [[Technique]] that will be applied to the geometry.
+     * @param layer - Tile's layer to be processed.
+     * @param extents - Tile's layer extents.
+     * @param geometry - The current feature containing the main geometry.
+     * @param env - The [[MapEnv]] containing the environment information for the map.
+     * @param techniques - The array of [[Technique]] that will be applied to the geometry.
      */
     processPointFeature(
         layer: string,
@@ -336,12 +336,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      *
      * Creates the line geometries for the given feature.
      *
-     * @param layer Tile's layer to be processed.
-     * @param extents Tile's layer extents.
-     * @param geometry The current feature containing the main geometry.
-     * @param env The [[MapEnv]] containing the environment information for the map.
-     * @param techniques The array of [[Technique]] that will be applied to the geometry.
-     * @param featureId The id of the feature.
+     * @param layer - Tile's layer to be processed.
+     * @param extents - Tile's layer extents.
+     * @param geometry - The current feature containing the main geometry.
+     * @param env - The [[MapEnv]] containing the environment information for the map.
+     * @param techniques - The array of [[Technique]] that will be applied to the geometry.
+     * @param featureId - The id of the feature.
      */
     processLineFeature(
         layer: string,
@@ -725,12 +725,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     /**
      * Creates the polygons geometries for the given feature.
      *
-     * @param layer Tile's layer to be processed.
-     * @param extents Tile's layer extents.
-     * @param geometry The current feature containing the main geometry.
-     * @param feature The [[MapEnv]] containing the environment information for the map.
-     * @param techniques The array of [[Technique]] that will be applied to the geometry.
-     * @param featureId The id of the feature.
+     * @param layer - Tile's layer to be processed.
+     * @param extents - Tile's layer extents.
+     * @param geometry - The current feature containing the main geometry.
+     * @param feature - The [[MapEnv]] containing the environment information for the map.
+     * @param techniques - The array of [[Technique]] that will be applied to the geometry.
+     * @param featureId - The id of the feature.
      */
     processPolygonFeature(
         layer: string,

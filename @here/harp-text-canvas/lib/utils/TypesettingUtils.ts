@@ -37,9 +37,9 @@ export namespace TypesettingUtils {
     /**
      * Convert between any size specified in any [[FontUnit]] to pixels.
      *
-     * @param size Font size (specified in `unit`).
-     * @param unit Size unit.
-     * @param originalSize Original size (pixels)
+     * @param size - Font size (specified in `unit`).
+     * @param unit - Size unit.
+     * @param originalSize - Original size (pixels)
      *
      * @returns Pixel size.
      */
@@ -62,9 +62,9 @@ export namespace TypesettingUtils {
     /**
      * Gets the scale applied to a certain character when using the [[FontVariant]].`SmallCaps`.
      *
-     * @param glyphs Array containing [[TransformedGlyphData]].
-     * @param index Index to `glyphDataArray`.
-     * @param fontVariant Currently active [[FontVariant]].
+     * @param glyphs - Array containing [[TransformedGlyphData]].
+     * @param index - Index to `glyphDataArray`.
+     * @param fontVariant - Currently active [[FontVariant]].
      *
      * @returns Glyph `SmallCaps` scale.
      */
@@ -84,8 +84,8 @@ export namespace TypesettingUtils {
     /**
      * Returns the first strong direction (LTR or RTL) found for a given array of [[GlyphData]].
      *
-     * @param glyphs Array containing [[GlyphData]].
-     * @param offset `glyphDataArray` offset.
+     * @param glyphs - Array containing [[GlyphData]].
+     * @param offset - `glyphDataArray` offset.
      *
      * @returns Strong direction.
      */
@@ -109,11 +109,11 @@ export namespace TypesettingUtils {
     /**
      * Computes the transformation matrix for a glyph.
      *
-     * @param transform Matrix used to store the results.
-     * @param position Glyph' position.
-     * @param scale Glyph' scale.
-     * @param rotation [[TextCanvas]] rotation.
-     * @param localRotation Glyph' local rotation.
+     * @param transform - Matrix used to store the results.
+     * @param position - Glyph' position.
+     * @param scale - Glyph' scale.
+     * @param rotation - [[TextCanvas]] rotation.
+     * @param localRotation - Glyph' local rotation.
      */
     export function computeGlyphTransform(
         transform: THREE.Matrix3,
@@ -142,9 +142,9 @@ export namespace TypesettingUtils {
     /**
      * Updates the supplied bounds with the computed screen-space corners for a given glyph.
      *
-     * @param corners Glyph' corners.
-     * @param globalBounds Global text bounds.
-     * @param individualBounds Individual per-character bounds.
+     * @param corners - Glyph' corners.
+     * @param globalBounds - Global text bounds.
+     * @param individualBounds - Individual per-character bounds.
      */
     export function updateBounds(
         corners: THREE.Vector3[],

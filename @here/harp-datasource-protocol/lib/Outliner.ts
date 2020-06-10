@@ -14,11 +14,11 @@ const prevEdgeGoal = new THREE.Vector2();
 /**
  * Fills an index buffer with the indices for the edges of a polygon contour.
  *
- * @param indexBuffer Edge index buffer to be filled.
- * @param vertexOffset Starting offset of the vertices composing the contour.
- * @param vertexStride Number of elements per contour vertex.
- * @param polygonContour Vertices that compose the contour.
- * @param polygonContourEdges Collection of booleans indicating if contour edges should be added.
+ * @param indexBuffer - Edge index buffer to be filled.
+ * @param vertexOffset - Starting offset of the vertices composing the contour.
+ * @param vertexStride - Number of elements per contour vertex.
+ * @param polygonContour - Vertices that compose the contour.
+ * @param polygonContourEdges - Collection of booleans indicating if contour edges should be added.
  */
 export function addPolygonEdges(
     indexBuffer: number[],

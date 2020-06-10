@@ -101,8 +101,8 @@ export abstract class CameraAnimation {
     /**
      * Creates a new `CameraAnimation` object.
      *
-     * @param mapView [[MapView]] which will be affected by the animation.
-     * @param name Animation's name.
+     * @param mapView - [[MapView]] which will be affected by the animation.
+     * @param name - Animation's name.
      */
     constructor(protected mapView: MapView, public name?: string) {
         checkSetupTween();
@@ -111,8 +111,8 @@ export abstract class CameraAnimation {
     /**
      * Start the animation.
      *
-     * @param time Duration of the animation in milliseconds.
-     * @param onFinished Callback that gets triggered once the animation ends.
+     * @param time - Duration of the animation in milliseconds.
+     * @param onFinished - Callback that gets triggered once the animation ends.
      */
     abstract start(time?: number, onFinished?: () => void): void;
 
@@ -176,10 +176,10 @@ export class CameraRotationAnimation extends CameraAnimation {
     /**
      * Creates a new `CameraRotationAnimation` object.
      *
-     * @param mapView [[MapView]] which will be affected by the animation.
-     * @param m_mapControls [[MapControls]] this animation will be taking control of.
-     * @param options Animation's options.
-     * @param name Animation's name.
+     * @param mapView - [[MapView]] which will be affected by the animation.
+     * @param m_mapControls - [[MapControls]] this animation will be taking control of.
+     * @param options - Animation's options.
+     * @param name - Animation's name.
      */
     constructor(
         mapView: MapView,
@@ -218,8 +218,8 @@ export class CameraRotationAnimation extends CameraAnimation {
     /**
      * Start the animation.
      *
-     * @param time Duration of the animation in milliseconds.
-     * @param onFinished Callback that gets triggered once the animation ends.
+     * @param time - Duration of the animation in milliseconds.
+     * @param onFinished - Callback that gets triggered once the animation ends.
      * @override
      */
     start(time?: number, onFinished?: () => void): void {
@@ -373,9 +373,9 @@ export class CameraPanAnimation extends CameraAnimation {
     /**
      * Creates a new `CameraPanAnimation` object.
      *
-     * @param mapView [[MapView]] which will be affected by the animation.
-     * @param options Animation's options.
-     * @param name Animation's name.
+     * @param mapView - [[MapView]] which will be affected by the animation.
+     * @param options - Animation's options.
+     * @param name - Animation's name.
      */
     constructor(mapView: MapView, options: CameraPanAnimationOptions, public name?: string) {
         super(mapView, name);
@@ -404,7 +404,7 @@ export class CameraPanAnimation extends CameraAnimation {
     /**
      * Add a geo coordinate that should be visited.
      *
-     * @param geoPos Geographical coordinate to animate to.
+     * @param geoPos - Geographical coordinate to animate to.
      */
     addPosition(geoPos: GeoCoordinatesLike): void {
         this.m_geoCoordinates.push(geoPos);
@@ -413,8 +413,8 @@ export class CameraPanAnimation extends CameraAnimation {
     /**
      * Start the animation.
      *
-     * @param time Duration of the animation in milliseconds.
-     * @param onFinished Callback that gets triggered once the animation ends.
+     * @param time - Duration of the animation in milliseconds.
+     * @param onFinished - Callback that gets triggered once the animation ends.
      * @override
      */
     start(time?: number, onFinished?: () => void): void {

@@ -57,13 +57,13 @@ export interface ILineAccessor {
 /**
  * Helper function to check if an accessor is of type `ILineAccessor`.
  *
- * @param arg `true` if `arg` is `ILineAccessor`.
+ * @param arg - `true` if `arg` is `ILineAccessor`.
  */
 export function isLineAccessor(arg: any): arg is ILineAccessor {
     /**
      * Get vertices from the object.
      *
-     * @param mode Specifies which part of the vertices should be returned.
+     * @param mode - Specifies which part of the vertices should be returned.
      */
 
     return typeof arg.isLineAccessor === "function" && arg.isLineAccessor() === true;
@@ -106,7 +106,7 @@ export interface IObject3dAccessor {
 /**
  * Helper function to check if an accessor is of type `IObject3dAccessor`.
  *
- * @param arg `true` if `arg` is `IObject3dAccessor`.
+ * @param arg - `true` if `arg` is `IObject3dAccessor`.
  */
 export function isObject3dAccessor(arg: any): arg is IObject3dAccessor {
     return typeof arg.isObject3dAccessor === "function" && arg.isObject3dAccessor() === true;
@@ -126,8 +126,8 @@ export interface IGeometryAccessor {
     /**
      * Set range of primitives in this object related to one or more buffers.
      *
-     * @param start Start index in buffers.
-     * @param end End index in buffers (+1).
+     * @param start - Start index in buffers.
+     * @param end - End index in buffers (+1).
      */
     setRange(start: number, end: number): void;
 }
@@ -376,8 +376,8 @@ export abstract class IndexedBufferedGeometryAccessor extends BufferedGeometryAc
      * @param object - mesh to be used
      * @param geometryType - type of geometry
      * @param bufferGeometry - geometry used
-     * @param start
-     * @param end
+     * @param start -
+     * @param end -
      */
     constructor(
         readonly object: THREE.Mesh,

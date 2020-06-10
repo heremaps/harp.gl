@@ -21,7 +21,7 @@ export class FontCatalogLoader {
 
     /**
      * Initializes font catalog loader.
-     * @param defaultFontCatalogUrl Url of the font catalog that will be used by default if the
+     * @param defaultFontCatalogUrl - Url of the font catalog that will be used by default if the
      * theme doesn't define any font catalog.
      * @returns Name of the default font catalog.
      */

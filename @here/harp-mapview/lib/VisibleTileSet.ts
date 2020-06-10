@@ -105,9 +105,9 @@ class DataSourceCache {
     /**
      * Creates unique tile key for caching based on morton code, tile offset and its data source.
      *
-     * @param mortonCode The tile morton code.
-     * @param offset The tile offset.
-     * @param dataSource The [[DataSource]] from which tile was loaded.
+     * @param mortonCode - The tile morton code.
+     * @param offset - The tile offset.
+     * @param dataSource - The [[DataSource]] from which tile was loaded.
      */
     static getKey(mortonCode: number, offset: number, dataSource: DataSource): TileCacheId {
         return `${dataSource.name}_${mortonCode}_${offset}`;
@@ -116,7 +116,7 @@ class DataSourceCache {
     /**
      * Create unique tile identifier for caching, based on tile object passed in.
      *
-     * @param tile The tile for which key is generated.
+     * @param tile - The tile for which key is generated.
      */
     static getKeyForTile(tile: Tile): TileCacheId {
         return DataSourceCache.getKey(tile.tileKey.mortonCode(), tile.offset, tile.dataSource);
@@ -199,8 +199,8 @@ class DataSourceCache {
      *
      * @see capacity.
      * @see resourceComputationType.
-     * @param size The new capacity declared in megabytes or number of entires.
-     * @param rct The enum value that determines how size and capacity are evaluated.
+     * @param size - The new capacity declared in megabytes or number of entires.
+     * @param rct - The enum value that determines how size and capacity are evaluated.
      */
     setCapacity(size: number, rct: ResourceComputationType) {
         this.m_resourceComputationType = rct;
@@ -217,9 +217,9 @@ class DataSourceCache {
     /**
      * Get tile cached or __undefined__ if tile is not yet in cache.
      *
-     * @param mortonCode An unique tile morton code.
-     * @param offset Tile offset.
-     * @param dataSource A [[DataSource]] the tile comes from.
+     * @param mortonCode - An unique tile morton code.
+     * @param offset - Tile offset.
+     * @param dataSource - A [[DataSource]] the tile comes from.
      */
     get(mortonCode: number, offset: number, dataSource: DataSource): Tile | undefined {
         return this.m_tileCache.get(DataSourceCache.getKey(mortonCode, offset, dataSource));
@@ -228,10 +228,10 @@ class DataSourceCache {
     /**
      * Add new tile to the cache.
      *
-     * @param mortonCode En unique tile code (morton code).
-     * @param offset The tile offset.
-     * @param dataSource A [[DataSource]] the tile comes from.
-     * @param tile The tile reference.
+     * @param mortonCode - En unique tile code (morton code).
+     * @param offset - The tile offset.
+     * @param dataSource - A [[DataSource]] the tile comes from.
+     * @param tile - The tile reference.
      */
     set(mortonCode: number, offset: number, dataSource: DataSource, tile: Tile) {
         this.m_tileCache.set(DataSourceCache.getKey(mortonCode, offset, dataSource), tile);
@@ -241,7 +241,7 @@ class DataSourceCache {
      * Delete tile from cache.
      *
      * @note This method will not call eviction callback.
-     * @param tile The tile reference to be removed from cache.
+     * @param tile - The tile reference to be removed from cache.
      */
     delete(tile: Tile) {
         const tileKey = DataSourceCache.getKeyForTile(tile);
@@ -255,7 +255,7 @@ class DataSourceCache {
      * [[DataSource]].
      * @note This is explicit removal thus eviction callback will not be processed.
      * @see DataSourceCache.getKey.
-     * @param tileKey The unique tile identifier.
+     * @param tileKey - The unique tile identifier.
      */
     deleteByKey(tileKey: TileCacheId) {
         this.m_tileCache.delete(tileKey);
@@ -294,7 +294,7 @@ class DataSourceCache {
     /**
      * Evict selected tiles implicitly.
      *
-     * @param selector The callback used to determine if tile should be evicted.
+     * @param selector - The callback used to determine if tile should be evicted.
      */
     evictSelected(selector: (tile: Tile, key: TileCacheId) => boolean) {
         this.m_tileCache.evictSelected(selector);
@@ -305,8 +305,8 @@ class DataSourceCache {
      *
      * Optionally you may specify from which [[DataSource]] tiles should be processed.
      * This limits the tiles visited to a sub-set originating from single [[DataSource]].
-     * @param callback The function to be called for each visited tile.
-     * @param inDataSource The optional [[DataSource]] to which tiles should belong.
+     * @param callback - The function to be called for each visited tile.
+     * @param inDataSource - The optional [[DataSource]] to which tiles should belong.
      */
     forEach(callback: (tile: Tile, key: TileCacheId) => void, inDataSource?: DataSource): void {
         this.m_tileCache.forEach((entry: Tile, key: TileCacheId) => {
@@ -415,9 +415,9 @@ export class VisibleTileSet {
     /**
      * Sets cache size.
      *
-     * @param size cache size
-     * @param computationType Optional value specifying the way a [[Tile]]s cache usage is computed,
-     *      either based on size in MB (mega bytes) or in number of tiles. Defaults to
+     * @param size - cache size
+     * @param computationType - Optional value specifying the way a [[Tile]]s cache usage is
+     *      computed, either based on size in MB (mega bytes) or in number of tiles. Defaults to
      *      `ResourceComputationType.EstimationInMb`.
      */
     setDataSourceCacheSize(
@@ -439,7 +439,7 @@ export class VisibleTileSet {
     /**
      * Sets maximum number of visible tiles.
      *
-     * @param size size of visible tiles array
+     * @param size - size of visible tiles array
      */
     setNumberOfVisibleTiles(size: number) {
         this.options.maxVisibleDataSourceTiles = size;
@@ -458,7 +458,7 @@ export class VisibleTileSet {
      *
      * Cache may be either keeping number of elements stored or the memory consumed by them.
      *
-     * @param computationType Type of algorith used in cache for checking full saturation,
+     * @param computationType - Type of algorith used in cache for checking full saturation,
      * may be counting number of elements or memory consumed by them.
      */
     set resourceComputationType(computationType: ResourceComputationType) {
@@ -487,10 +487,10 @@ export class VisibleTileSet {
 
     /**
      * Calculates a new set of visible tiles.
-     * @param storageLevel The camera storage level, see [[MapView.storageLevel]].
-     * @param zoomLevel The camera zoom level.
-     * @param dataSources The data sources for which the visible tiles will be calculated.
-     * @param elevationRangeSource Source of elevation range data if any.
+     * @param storageLevel - The camera storage level, see [[MapView.storageLevel]].
+     * @param zoomLevel - The camera zoom level.
+     * @param dataSources - The data sources for which the visible tiles will be calculated.
+     * @param elevationRangeSource - Source of elevation range data if any.
      * @returns view ranges and their status since last update (changed or not).
      */
     updateRenderList(
@@ -634,9 +634,9 @@ export class VisibleTileSet {
      * Gets the tile corresponding to the given data source, key and offset, creating it if
      * necessary.
      *
-     * @param dataSource The data source the tile belongs to.
-     * @param tileKey The key identifying the tile.
-     * @param offset Tile offset.
+     * @param dataSource - The data source the tile belongs to.
+     * @param tileKey - The key identifying the tile.
+     * @param offset - Tile offset.
      * @return The tile if it was found or created, undefined otherwise.
      */
     getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
@@ -647,9 +647,9 @@ export class VisibleTileSet {
     /**
      * Gets the tile corresponding to the given data source, key and offset from the cache.
      *
-     * @param dataSource The data source the tile belongs to.
-     * @param tileKey The key identifying the tile.
-     * @param offset Tile offset.
+     * @param dataSource - The data source the tile belongs to.
+     * @param tileKey - The key identifying the tile.
+     * @param offset - Tile offset.
      * @return The tile if found in cache, undefined otherwise.
      */
     getCachedTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
@@ -661,9 +661,9 @@ export class VisibleTileSet {
     /**
      * Gets the tile corresponding to the given data source, key and offset from the rendered tiles.
      *
-     * @param dataSource The data source the tile belongs to.
-     * @param tileKey The key identifying the tile.
-     * @param offset Tile offset.
+     * @param dataSource - The data source the tile belongs to.
+     * @param tileKey - The key identifying the tile.
+     * @param offset - Tile offset.
      * @return The tile if found among the rendered tiles, undefined otherwise.
      */
     getRenderedTile(
@@ -687,8 +687,8 @@ export class VisibleTileSet {
     /**
      * Gets the tile corresponding to the given data source and location from the rendered tiles.
      *
-     * @param dataSource The data source the tile belongs to.
-     * @param geoPoint The geolocation included within the tile.
+     * @param dataSource - The data source the tile belongs to.
+     * @param geoPoint - The geolocation included within the tile.
      * @return The tile if found among the rendered tiles, undefined otherwise.
      */
     getRenderedTileAtLocation(
@@ -777,7 +777,7 @@ export class VisibleTileSet {
      * Remove the [[Tile]] objects created by cacheable [[DataSource]]. If a [[DataSource]] name is
      * provided, this method restricts the eviction the [[DataSource]] with the given name.
      *
-     * @param dataSourceName The name of the [[DataSource]].
+     * @param dataSourceName - The name of the [[DataSource]].
      */
     clearTileCache(dataSource?: DataSource) {
         if (dataSource !== undefined) {
@@ -795,8 +795,8 @@ export class VisibleTileSet {
      *  * Visible and temporarily rendered tiles will be marked for update and retained.
      *  * Cached but not rendered/visible will be evicted.
      *
-     * @param dataSource If passed, only the tiles from this [[DataSource]] instance are processed.
-     *     If `undefined`, tiles from all [[DataSource]]s are processed.
+     * @param dataSource - If passed, only the tiles from this [[DataSource]] instance
+     *      are processed. If `undefined`, tiles from all [[DataSource]]s are processed.
      */
     markTilesDirty(dataSource?: DataSource) {
         if (dataSource === undefined) {
@@ -822,7 +822,7 @@ export class VisibleTileSet {
     /**
      * Process callback function [[fun]] with each visible tile in set.
      *
-     * @param fun The callback function to be called.
+     * @param fun - The callback function to be called.
      */
     forEachVisibleTile(fun: (tile: Tile) => void): void {
         for (const listEntry of this.dataSourceTileList) {
@@ -836,8 +836,8 @@ export class VisibleTileSet {
      * Optional [[dataSource]] parameter limits processing to the tiles that belongs to
      * DataSource passed in.
      *
-     * @param fun The callback function to be called.
-     * @param dataSource The optional DataSource reference for tiles selection.
+     * @param fun - The callback function to be called.
+     * @param dataSource - The optional DataSource reference for tiles selection.
      */
     forEachCachedTile(fun: (tile: Tile) => void, dataSource?: DataSource): void {
         this.m_dataSourceCache.forEach((tile, _) => fun(tile), dataSource);
@@ -1021,12 +1021,12 @@ export class VisibleTileSet {
 
     /**
      * Returns true if a tile was found in the cache which is a parent
-     * @param tileKeyCode Morton code of the current tile that should be searched for.
-     * @param dataZoomLevel The current data zoom level of tiles that are to be displayed.
-     * @param renderedTiles The list of tiles that are shown to the user.
-     * @param checkedTiles Used to map a given code to a boolean which tells us if an ancestor is
+     * @param tileKeyCode - Morton code of the current tile that should be searched for.
+     * @param dataZoomLevel - The current data zoom level of tiles that are to be displayed.
+     * @param renderedTiles - The list of tiles that are shown to the user.
+     * @param checkedTiles - Used to map a given code to a boolean which tells us if an ancestor is
      * displayed or not.
-     * @param dataSource The provider of tiles.
+     * @param dataSource - The provider of tiles.
      * @returns Whether a parent tile exists.
      */
     private findUp(

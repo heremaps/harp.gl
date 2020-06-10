@@ -30,7 +30,7 @@ export class OmvPoliticalViewFeatureModifier implements OmvFeatureModifier {
     /**
      * C-tor.
      *
-     * @param pov The code of the country (in lower-case ISO 3166-1 alpha-2 format) which
+     * @param pov - The code of the country (in lower-case ISO 3166-1 alpha-2 format) which
      * point of view should be taken into account.
      */
     constructor(pov: string) {
@@ -40,9 +40,9 @@ export class OmvPoliticalViewFeatureModifier implements OmvFeatureModifier {
     /**
      * Simply passes all points to rendering, points features does not support PoliticalView.
      *
-     * @param layer Current layer.
-     * @param env Properties of point feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param env - Properties of point feature.
+     * @param level - Level of tile.
      * @returns always `true` to pass feature.
      */
     doProcessPointFeature(layer: string, env: MapEnv, level: number): boolean {
@@ -53,8 +53,8 @@ export class OmvPoliticalViewFeatureModifier implements OmvFeatureModifier {
      * Implements line features processing changing "kind" attribute depending on point of view.
      *
      * Currently only line features support different point of view.
-     * @param layer The name of the layer.
-     * @param env The environment to use.
+     * @param layer - The name of the layer.
+     * @param env - The environment to use.
      * @returns always `true` to pass lines for rendering.
      */
     doProcessLineFeature(layer: string, env: MapEnv, level: number): boolean {
@@ -65,9 +65,9 @@ export class OmvPoliticalViewFeatureModifier implements OmvFeatureModifier {
     /**
      * Simply pass all polygons to rendering, this feature does not support PoliticalView yet.
      *
-     * @param layer Current layer.
-     * @param env Properties of polygon feature.
-     * @param level Level of tile.
+     * @param layer - Current layer.
+     * @param env - Properties of polygon feature.
+     * @param level - Level of tile.
      * @returns `true` to pass feature.
      */
     doProcessPolygonFeature(layer: string, env: MapEnv, level: number): boolean {
@@ -77,8 +77,8 @@ export class OmvPoliticalViewFeatureModifier implements OmvFeatureModifier {
     /**
      * Rewrites the Environment to match the different points of view.
      *
-     * @param layer The layer name.
-     * @param env The environment to use.
+     * @param layer - The layer name.
+     * @param env - The environment to use.
      */
     private rewriteEnvironment(layer: string, env: MapEnv) {
         // For now we need to rewrite "boundaries" layer only.

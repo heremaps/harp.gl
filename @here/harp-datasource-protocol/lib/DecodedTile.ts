@@ -92,7 +92,7 @@ export interface TextPathGeometry {
 /**
  * Returns an array with the data type specified as parameter.
  *
- * @param attr specifies which type of data is being stored in the array
+ * @param attr - specifies which type of data is being stored in the array
  */
 export function getArrayConstructor(attr: BufferElementType) {
     switch (attr) {
@@ -279,7 +279,7 @@ export interface Group {
 /**
  * Returns the projection object specified in the parameter.
  *
- * @param projectionName string describing projection to be used
+ * @param projectionName - string describing projection to be used
  */
 export function getProjection(projectionName: string): Projection | never {
     switch (projectionName) {
@@ -301,7 +301,7 @@ export function getProjection(projectionName: string): Projection | never {
 /**
  * String with the projection's name.
  *
- * @param projection `Projection` object containing the name of the projection to retrieve
+ * @param projection - `Projection` object containing the name of the projection to retrieve
  */
 export function getProjectionName(projection: Projection): string | never {
     if (projection === mercatorProjection) {
@@ -341,10 +341,10 @@ export function getFeatureId(attributeMap: AttributeMap | undefined): number {
  * Determine the name of (OMV) feature. It implements the special handling required
  * to determine the text content of a feature from its tags, which are passed in as the `env`.
  *
- * @param env Environment containing the tags from the (OMV) feature.
- * @param useAbbreviation `true` to use the abbreviation if available.
- * @param useIsoCode `true` to use the tag "iso_code".
- * @param languages List of languages to use, for example: Specify "en" to use the tag "name_en"
+ * @param env - Environment containing the tags from the (OMV) feature.
+ * @param useAbbreviation - `true` to use the abbreviation if available.
+ * @param useIsoCode - `true` to use the tag "iso_code".
+ * @param languages - List of languages to use, for example: Specify "en" to use the tag "name_en"
  *                  as the text of the string. Order reflects priority.
  */
 export function getFeatureName(
@@ -389,9 +389,9 @@ export function getFeatureName(
  * Determine the text string of the map feature. It implements the special handling required
  * to determine the text content of a feature from its tags, which are passed in as the `env`.
  *
- * @param feature Feature, including properties from the (OMV) feature.
- * @param technique technique defining how text should be created from feature
- * @param languages List of languages to use, for example: Specify "en" to use the tag "name_en"
+ * @param feature - Feature, including properties from the (OMV) feature.
+ * @param technique - technique defining how text should be created from feature
+ * @param languages - List of languages to use, for example: Specify "en" to use the tag "name_en"
  *                  as the text of the string. Order reflects priority.
  */
 export function getFeatureText(

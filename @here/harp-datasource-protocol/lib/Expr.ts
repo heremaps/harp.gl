@@ -66,9 +66,9 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
     /**
      * Gets the dependencies of an [[Expr]].
      *
-     * @param expr The [[Expr]] to process.
-     * @param scope The evaluation scope. Defaults to [[ExprScope.Value]].
-     * @param dependencies The output [[Set]] of dependency names.
+     * @param expr - The [[Expr]] to process.
+     * @param scope - The evaluation scope. Defaults to [[ExprScope.Value]].
+     * @param dependencies - The output [[Set]] of dependency names.
      */
     static of(expr: Expr) {
         const dependencies = new ExprDependencies();
@@ -221,7 +221,7 @@ export abstract class Expr {
     /**
      * Tests of given value is an [[Expr]].
      *
-     * @param value The object to test.
+     * @param value - The object to test.
      */
     static isExpr(value: any): value is Expr {
         return value instanceof Expr;
@@ -230,7 +230,7 @@ export abstract class Expr {
     /**
      * Creates an expression from the given `code`.
      *
-     * @param code The code to parse.
+     * @param code - The code to parse.
      * @returns The parsed [[Expr]].
      * @deprecated
      */
@@ -248,9 +248,9 @@ export abstract class Expr {
      * Pass `definitionExprCache` to reuse `Expr` instances created from definitions across
      * many `fromJSON` calls.
      *
-     * @param node expression in JSON format to parse
-     * @param definitions optional set of definitions needed definition resolved by `ref` operator
-     * @param definitionExprCache optional cache of `Expr` instances derived from `definitions`
+     * @param node - expression in JSON format to parse
+     * @param definitions - optional set of definitions needed definition resolved by `ref` operator
+     * @param definitionExprCache - optional cache of `Expr` instances derived from `definitions`
      */
     static fromJSON(
         node: JsonValue,
@@ -275,9 +275,9 @@ export abstract class Expr {
     /**
      * Evaluate an expression returning a [[Value]] object.
      *
-     * @param env The [[Env]] used to lookup symbols.
-     * @param scope The evaluation scope. Defaults to [[ExprScope.Value]].
-     * @param cache A cache of previously computed results.
+     * @param env - The [[Env]] used to lookup symbols.
+     * @param scope - The evaluation scope. Defaults to [[ExprScope.Value]].
+     * @param cache - A cache of previously computed results.
      */
     evaluate(
         env: Env,
@@ -294,7 +294,7 @@ export abstract class Expr {
      * Instantiates this [[Expr]] by resolving references to the `get` and
      * `has` operator using the given instantiation context.
      *
-     * @param context The [[InstantationContext]] used to resolve names.
+     * @param context - The [[InstantationContext]] used to resolve names.
      */
     instantiate(context: InstantiationContext): Expr {
         return this.accept(exprInstantiator, context);
@@ -313,7 +313,7 @@ export abstract class Expr {
     /**
      * Create a unique object that is structurally equivalent to this [[Expr]].
      *
-     * @param pool The [[ExprPool]] used to create a unique
+     * @param pool - The [[ExprPool]] used to create a unique
      * equivalent object of this [[Expr]].
      */
     intern(pool: ExprPool): Expr {
@@ -388,7 +388,7 @@ export abstract class LiteralExpr extends Expr {
     /**
      * Create a [[LiteralExpr]] from the given value.
      *
-     * @param value A constant value.
+     * @param value - A constant value.
      */
     static fromValue(value: Value): Expr {
         switch (typeof value) {
@@ -580,7 +580,7 @@ export class MatchExpr extends Expr {
     /**
      * Tests if the given JSON node is a valid label for the `"match"` operator.
      *
-     * @param node A JSON value.
+     * @param node - A JSON value.
      */
     static isValidMatchLabel(node: JsonValue): node is MatchLabel {
         switch (typeof node) {

@@ -53,8 +53,8 @@ export class PoiManager {
 
     /**
      * Warn about a missing POI table name, but only once.
-     * @param poiTableName POI mapping table name.
-     * @param poiTable POI table instance.
+     * @param poiTableName - POI mapping table name.
+     * @param poiTable - POI table instance.
      */
     private static notifyMissingPoiTable(
         poiTableName: string,
@@ -77,8 +77,8 @@ export class PoiManager {
 
     /**
      * Warn about a missing POI name, but only once.
-     * @param poiName name of POI.
-     * @param poiTableName POI mapping table name.
+     * @param poiName - name of POI.
+     * @param poiTableName - POI mapping table name.
      */
     private static notifyMissingPoi(poiName: string, poiTableName: string): void {
         if (poiName === undefined) {
@@ -100,7 +100,7 @@ export class PoiManager {
     /**
      * The constructor of the `PoiManager`.
      *
-     * @param mapView The [[MapView]] instance that should display the POIs.
+     * @param mapView - The [[MapView]] instance that should display the POIs.
      */
     constructor(readonly mapView: MapView) {}
 
@@ -109,8 +109,8 @@ export class PoiManager {
      *
      * Also handles LineMarkers, which is a recurring marker along a line (road).
      *
-     * @param tile Tile to add POIs to.
-     * @param decodedTile DecodedTile containing the raw [[PoiGeometry]] objects describing the
+     * @param tile - Tile to add POIs to.
+     * @param decodedTile - DecodedTile containing the raw [[PoiGeometry]] objects describing the
      *  POIs.
      */
     addPois(tile: Tile, decodedTile: DecodedTile): void {
@@ -153,8 +153,8 @@ export class PoiManager {
      * specific icons. Creates an [[ImageTexture]] for every element in the atlas, such that it can
      * be addressed in the theme file.
      *
-     * @param imageName Name of the image from the theme (NOT the url!).
-     * @param atlas URL of the JSON file defining the texture atlas.
+     * @param imageName - Name of the image from the theme (NOT the url!).
+     * @param atlas - URL of the JSON file defining the texture atlas.
      */
     addTextureAtlas(imageName: string, atlas: string) {
         fetch(atlas)
@@ -208,7 +208,7 @@ export class PoiManager {
      * Add an [[ImageTexture]] such that it is available as a named entity for techniques in theme
      * files.
      *
-     * @param imageTexture [[ImageTexture]] that should be available for POIs.
+     * @param imageTexture - [[ImageTexture]] that should be available for POIs.
      */
     addImageTexture(imageTexture: ImageTexture) {
         if (imageTexture.name === undefined) {
@@ -227,7 +227,7 @@ export class PoiManager {
     /**
      * Return the [[ImageTexture]] registered under the specified name.
      *
-     * @param name Name of the [[ImageTexture]].
+     * @param name - Name of the [[ImageTexture]].
      */
     getImageTexture(name: string): ImageTexture | undefined {
         return this.m_imageTextures.get(name);
@@ -244,7 +244,7 @@ export class PoiManager {
      * If the [[PoiTable]] has been processed, it returns `true`, indicating that this function
      * doesn't have to be called again.
      *
-     * @param pointLabel The [[TextElement]] to update.
+     * @param pointLabel - The [[TextElement]] to update.
      *
      * @returns `true` if the [[PoiTable]] has been processed, and the function does not have to be
      *          called again.

@@ -16,9 +16,9 @@ const logger = LoggerManager.instance.create("PropertyValue");
 /**
  * Get the value of the specified property in given `env`.
  *
- * @param property Property of a technique.
- * @param env The [[Env]] used to evaluate the property
- * @param cache An optional expression cache.
+ * @param property - Property of a technique.
+ * @param env - The [[Env]] used to evaluate the property
+ * @param cache - An optional expression cache.
  */
 export function getPropertyValue(
     property: Value | undefined,

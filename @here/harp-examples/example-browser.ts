@@ -168,7 +168,7 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
     /**
      * Shows an example.
      *
-     * @param pageUrl example page url, must exist in `examples` map
+     * @param pageUrl - example page url, must exist in `examples` map
      */
     function showExample(pageUrl: string) {
         const expandButton = document.getElementById("hamburgerMenu") as HTMLAnchorElement;

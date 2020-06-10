@@ -22,7 +22,7 @@ export class MapViewFog {
     /**
      * Constructs a `MapViewFog` instance.
      *
-     * @param m_scene The scene used in [[MapView]] that contains the map objects.
+     * @param m_scene - The scene used in [[MapView]] that contains the map objects.
      */
     constructor(private m_scene: THREE.Scene) {}
 
@@ -31,7 +31,7 @@ export class MapViewFog {
      * custom views like the demo app's debug camera. However, if the theme does not define a
      * fog, enabling this property here has no effect.
      *
-     * @param value A boolean that specifies whether the fog should be enabled or disabled.
+     * @param value - A boolean that specifies whether the fog should be enabled or disabled.
      */
     set enabled(enableFog: boolean) {
         this.m_enabled = enableFog;
@@ -56,7 +56,7 @@ export class MapViewFog {
      * - `startRatio` property, used to set the start distance of the fog as a ratio of the far
      * clipping plane distance.
      *
-     * @param theme A [[Theme]] instance.
+     * @param theme - A [[Theme]] instance.
      */
     reset(theme: Theme) {
         this.m_cachedTheme = theme;
@@ -82,7 +82,7 @@ export class MapViewFog {
     /**
      * Updates the fog at runtime, depending on the camera.
      *
-     * @param camera An instance of a `THREE.Camera` with a `far` property.
+     * @param camera - An instance of a `THREE.Camera` with a `far` property.
      */
     update(mapView: MapView, viewDistance?: number) {
         if (

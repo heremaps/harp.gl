@@ -119,9 +119,9 @@ export const getCurrentTime = getNowFunc();
  *
  *     #performance: Array/grow: min=1 med=2 avg=1.8 sum=72 (50 repeats)
  *
- * @param name name of performance test
- * @param repeats number of test repeats
- * @param test tested code
+ * @param name - name of performance test
+ * @param repeats - number of test repeats
+ * @param test - tested code
  */
 
 export async function measurePerformanceSync(name: string, repeats: number, test: () => void) {
@@ -177,9 +177,9 @@ export async function measurePerformanceSync(name: string, repeats: number, test
  *
  *     #performance: Array/grow: min=1 med=2 avg=1.8 sum=72 repeats=123 throughput=1242/s
  *
- * @param name name of performance test
- * @param repeats number of test repeats
- * @param test tested code
+ * @param name - name of performance test
+ * @param repeats - number of test repeats
+ * @param test - tested code
  */
 export async function measureThroughputSync(name: string, testDuration: number, test: () => void) {
     if (testDuration < 10) {

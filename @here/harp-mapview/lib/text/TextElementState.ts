@@ -107,7 +107,7 @@ export class TextElementState {
      *
      * This may be base text anchor placement as defined by style or alternative placement.
      *
-     * @param placement The new [[TextPlacement]] to be used.
+     * @param placement - The new [[TextPlacement]] to be used.
      */
     set textPlacement(placement: TextPlacement) {
         if (this.m_textLayoutState === undefined && this.isBaseTextPlacement(placement) === true) {
@@ -126,7 +126,7 @@ export class TextElementState {
     /**
      * Returns information if the text placement provided is the base one defined in style (theme).
      *
-     * @param placement The [[TextPlacement]] to check.
+     * @param placement - The [[TextPlacement]] to check.
      * @returns [[true]] if the placement provided is exactly the same as in theme base layout,
      * [[false]] if it differs from the basic layout provided in style or
      * [[undefined]] if the layout style is not yet defined so it is hard to say.
@@ -171,7 +171,7 @@ export class TextElementState {
     /**
      * Replaces given text element, inheriting its current state.
      * The predecessor text element state is erased.
-     * @param predecessor Text element state to be replaced.
+     * @param predecessor - Text element state to be replaced.
      */
     replace(predecessor: TextElementState) {
         this.m_textRenderState = predecessor.m_textRenderState;
@@ -200,7 +200,7 @@ export class TextElementState {
 
     /**
      * Updates the text element state.
-     * @param viewDistance The new view distance to set. If `undefined`, element is considered to
+     * @param viewDistance - The new view distance to set. If `undefined`, element is considered to
      * be out of view.
      */
     update(viewDistance: number | undefined) {
@@ -213,7 +213,7 @@ export class TextElementState {
 
     /**
      * Sets the distance of the element to the current view center.
-     * @param viewDistance The new view distance to set. If `undefined`, element is considered to
+     * @param viewDistance - The new view distance to set. If `undefined`, element is considered to
      * be out of view.
      */
     setViewDistance(viewDistance: number | undefined) {
@@ -270,8 +270,8 @@ export class TextElementState {
 
     /**
      * Updates the fading state to the specified time.
-     * @param time The current time.
-     * @param disableFading If `True` there will be no fading transitions, i.e., state will go
+     * @param time - The current time.
+     * @param disableFading - If `True` there will be no fading transitions, i.e., state will go
      * directly from FadedIn to FadedOut and viceversa.
      */
     updateFading(time: number, disableFading: boolean): void {

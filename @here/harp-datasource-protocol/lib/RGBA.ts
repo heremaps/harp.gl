@@ -18,7 +18,7 @@ export class RGBA {
     /**
      * Parses a string describing a color.
      *
-     * @param text The string color literal
+     * @param text - The string color literal
      */
     static parse(text: string) {
         const format = StringEncodedColorFormats.find(f => f.regExp.test(text));

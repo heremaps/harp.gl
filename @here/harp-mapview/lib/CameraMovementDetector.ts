@@ -32,10 +32,10 @@ export class CameraMovementDetector {
      * Initializes the detector with timeout value and callbacks. [[MapView]] also provides
      * events for client code to be notified when these cues occur.
      *
-     * @param m_throttlingTimeout The delay, in milliseconds, between the last user interaction
+     * @param m_throttlingTimeout - The delay, in milliseconds, between the last user interaction
      * detected and the call to `m_movementFinishedFunc`; the default is `300`.
-     * @param m_movementStartedFunc Callback function, called when the user starts interacting.
-     * @param m_movementFinishedFunc Callback function, called when the user stops interacting.
+     * @param m_movementStartedFunc - Callback function, called when the user starts interacting.
+     * @param m_movementFinishedFunc - Callback function, called when the user stops interacting.
      */
     constructor(
         private m_throttlingTimeout: number | undefined,
@@ -52,7 +52,7 @@ export class CameraMovementDetector {
      * `m_movementStartedFunc` is called when a movement starts. If no movement
      * is detected, a timer for `m_movementFinishedFunc` starts.
      *
-     * @param mapView [[Mapview]]'s position and camera are checked for modifications.
+     * @param mapView - [[Mapview]]'s position and camera are checked for modifications.
      */
     checkCameraMoved(mapView: MapView, now: number): boolean {
         const newAttitude = MapViewUtils.extractAttitude(mapView, mapView.camera);

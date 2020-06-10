@@ -115,8 +115,8 @@ export class ThemeLoader {
      * Custom URIs (of theme itself and of resources referenced by theme) may be resolved with by
      * providing [[UriResolver]] using [[ThemeLoadOptions.uriResolver]] option.
      *
-     * @param theme [[Theme]] instance or theme URL to the theme.
-     * @param options Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
+     * @param theme - [[Theme]] instance or theme URL to the theme.
+     * @param options - Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
      *    this load request.
      */
     static async load(
@@ -163,7 +163,7 @@ export class ThemeLoader {
     /**
      * Checks if `theme` instance is completely loaded, meaning that `extends` property is resolved.
      *
-     * @param theme
+     * @param theme -
      */
     static isThemeLoaded(theme: Theme | FlatTheme): boolean {
         return theme.extends === undefined;
@@ -175,7 +175,7 @@ export class ThemeLoader {
      * Loads a [[Theme]] from a remote resource, provided as a URL that points to a JSON-encoded
      * theme.
      *
-     * @param themeUrl The URL to the theme.
+     * @param themeUrl - The URL to the theme.
      *
      */
     static async loadAsync(themeUrl: string): Promise<Theme> {
@@ -188,7 +188,7 @@ export class ThemeLoader {
      *
      * This method mutates original `theme` instance.
      *
-     * @param theme The [[Theme]] to resolve.
+     * @param theme - The [[Theme]] to resolve.
      */
     private static resolveUrls(theme: Theme | FlatTheme, options?: ThemeLoadOptions): Theme {
         // Ensure that all resources referenced in theme by relative URIs are in fact relative to
@@ -465,8 +465,8 @@ export class ThemeLoader {
     /**
      * Realize `extends` clause by merging `theme` with its base [[Theme]].
      *
-     * @param theme [Theme] object
-     * @param options Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
+     * @param theme - [Theme] object
+     * @param options - Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
      *    this load request.
      */
     private static async resolveBaseThemes(

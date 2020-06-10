@@ -158,7 +158,7 @@ describe("VisibleTileSet", function() {
     class FakeCoveringTileWMTS extends DataSource {
         /**
          * Construct a fake [[DataSource]].
-         * @param isFullyCovering If this [[DataSource]] should be fully covering.
+         * @param isFullyCovering - If this [[DataSource]] should be fully covering.
          */
         constructor(isFullyCovering?: boolean) {
             super();

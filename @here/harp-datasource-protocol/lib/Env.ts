@@ -23,7 +23,7 @@ export class Env {
     /**
      * Returns `true` if the given object is an instance of [[Env]].
      *
-     * @param object The object to test.
+     * @param object - The object to test.
      */
     static isEnv(object: any): object is Env {
         return object instanceof Env;
@@ -32,7 +32,7 @@ export class Env {
     /**
      * Returns property in [[Env]] by name.
      *
-     * @param name Name of property.
+     * @param name - Name of property.
      */
     lookup(_name: string): Value | undefined {
         return undefined;
@@ -55,7 +55,7 @@ export class MapEnv extends Env {
     /**
      * Returns property in [[Env]] by name.
      *
-     * @param name Name of property.
+     * @param name - Name of property.
      * @override
      */
     lookup(name: string): Value | undefined {

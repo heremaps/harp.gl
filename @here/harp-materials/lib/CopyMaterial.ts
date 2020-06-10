@@ -37,7 +37,7 @@ export class CopyMaterial extends THREE.ShaderMaterial {
     /**
      * The constructor of `CopyMaterial`.
      *
-     * @param uniforms The [[CopyShader]]'s uniforms.
+     * @param uniforms - The [[CopyShader]]'s uniforms.
      */
     constructor(uniforms: { [uniformName: string]: THREE.IUniform }) {
         super({

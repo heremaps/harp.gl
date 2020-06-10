@@ -63,7 +63,7 @@ export class MapControlsUI {
     /**
      * Constructor of the UI.
      *
-     * @param controls Controls referencing a [[MapView]].
+     * @param controls - Controls referencing a [[MapView]].
      */
     constructor(readonly controls: MapControls, options: MapControlsUIOptions = {}) {
         this.m_onMapViewRenderEvent = () => {

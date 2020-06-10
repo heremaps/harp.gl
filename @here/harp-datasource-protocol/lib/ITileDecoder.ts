@@ -57,10 +57,10 @@ export interface ITileDecoder {
      *
      * Non-existing (`undefined`) options (including styleSet) are not changed.
      *
-     * @param styleSet optional, new style set.
-     * @param definitions optional, definitions used to resolve references in `styleSet`
-     * @param languages optional, language list
-     * @param options optional, new options - shape is specific for each decoder
+     * @param styleSet - optional, new style set.
+     * @param definitions - optional, definitions used to resolve references in `styleSet`
+     * @param languages - optional, language list
+     * @param options - optional, new options - shape is specific for each decoder
      */
     configure(
         styleSet?: StyleSet,

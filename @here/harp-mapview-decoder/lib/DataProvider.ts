@@ -28,8 +28,8 @@ export interface DataProvider {
     /**
      * Load the data of a [[Tile]] asynchronously in form of an [[ArrayBufferLike]].
      *
-     * @param tileKey Address of a tile.
-     * @param abortSignal Optional AbortSignal to cancel the request.
+     * @param tileKey - Address of a tile.
+     * @param abortSignal - Optional AbortSignal to cancel the request.
      * @returns A promise delivering the data as an [[ArrayBufferLike]], or any object.
      */
     getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}>;

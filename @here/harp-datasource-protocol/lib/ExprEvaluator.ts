@@ -224,7 +224,7 @@ export class ExprEvaluatorContext {
     /**
      * Evaluate the given expression.
      *
-     * @param expr The [[Expr]] to evaluate.
+     * @param expr - The [[Expr]] to evaluate.
      */
     evaluate(expr: Expr | undefined) {
         if (expr === undefined) {
@@ -245,7 +245,7 @@ export class ExprEvaluatorContext {
     /**
      * Wraps the given value in an [[Expr]] if needed.
      *
-     * @param value
+     * @param value -
      */
     wrapValue(value: Value | Expr): Expr {
         return Expr.isExpr(value) ? value : LiteralExpr.fromValue(value);

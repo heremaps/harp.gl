@@ -16,10 +16,10 @@ export const DEFINE_BOOL_FALSE = undefined;
 /**
  * Insert shader includes after another shader include.
  *
- * @param shaderContent Original string.
- * @param shaderName String to append to.
- * @param insertedShaderName String to append after string `shaderA`.
- * @param addTab If `true`, a tab character will be inserted before `shaderB`.
+ * @param shaderContent - Original string.
+ * @param shaderName - String to append to.
+ * @param insertedShaderName - String to append after string `shaderA`.
+ * @param addTab - If `true`, a tab character will be inserted before `shaderB`.
  */
 export function insertShaderInclude(
     shaderContent: string,
@@ -50,7 +50,7 @@ export interface ForcedBlending {
  * Since we don't want to set transparent to true and mess up the render order we set
  * `CustomBlending` with the same parameters as the `NormalBlending`.
 
- * @param material `Material` that should use blending
+ * @param material - `Material` that should use blending
  * @note This function should not be used in frame update after material has been passed to WebGL.
  * In such cases use [[enableBlending]] instead.
  */
@@ -76,7 +76,7 @@ export function enforceBlending(
  * for this material.
  * @note Blending mode change does not require material update.
  * @see THREE.Material.needsUpdate.
- * @param material The material or material parameters to modify.
+ * @param material - The material or material parameters to modify.
  */
 export function enableBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
@@ -106,7 +106,7 @@ export function enableBlending(
  * @note Blending mode change does not require material update.
  * @see THREE.Material.needsUpdate.
  * @see enableBlending.
- * @param material The material or material parameters to modify.
+ * @param material - The material or material parameters to modify.
  */
 export function disableBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
@@ -140,9 +140,9 @@ export function disableBlending(
  * ```
  * @note Setting _define_ with `false` value is not the same as setting is with number value of `0`.
  *
- * @param material The [[THREE.ShaderMaterial]] which shader _define_ will be set.
- * @param key Name of shader _define_ as used in shader, i.e. `USE_FOG`, `COLOR_ALPHA`, etc.
- * @param value The value to be set as number or boolean specifying if preprocessor define
+ * @param material - The [[THREE.ShaderMaterial]] which shader _define_ will be set.
+ * @param key - Name of shader _define_ as used in shader, i.e. `USE_FOG`, `COLOR_ALPHA`, etc.
+ * @param value - The value to be set as number or boolean specifying if preprocessor define
  * should be defined or not.
  * @returns [[true]] if material has been forced to update (re-compile) due to define changes,
  * return [[false]] whenever define has not been changed.
@@ -177,9 +177,9 @@ export function setShaderMaterialDefine(
  * not numerical value it returns [[true]], otherwise returns number.
  * @see setShaderMaterialDefine.
  *
- * @param material The material which shader defines are accessed.
- * @param key The _define_ name (identifier).
- * @param fallbackValue The value returned when material `defines` are not initialized yet,
+ * @param material - The material which shader defines are accessed.
+ * @param key - The _define_ name (identifier).
+ * @param fallbackValue - The value returned when material `defines` are not initialized yet,
  * specified by default as [[false]], provide your own default if you expect numeric value.
  */
 export function getShaderMaterialDefine(
@@ -200,9 +200,9 @@ export function getShaderMaterialDefine(
  * Helper function that may be used to setup [[THREE.ShaderMaterialParameters]] before
  * material is create (i.e. in c-tor).
  *
- * @param defines Shader `defines` stored in key-value map.
- * @param key The key used to identify _define_.
- * @param value The value to be stored.
+ * @param defines - Shader `defines` stored in key-value map.
+ * @param key - The key used to identify _define_.
+ * @param value - The value to be stored.
  * @returns [[true]] if define has actually changed, false is stayed the same.
  * @see setShaderMaterialDefine.
  */
@@ -231,8 +231,8 @@ export function setShaderDefine(
  *
  * If there is no value under [[key]] specified, function returns false, otherwise result is
  * true or numeric value if there is a number stored.
- * @param defines The `defines` map.
- * @param key The identifier of the _define_.
+ * @param defines - The `defines` map.
+ * @param key - The identifier of the _define_.
  */
 export function getShaderDefine(defines: { [key: string]: any }, key: string): boolean | number {
     const currentValue = defines[key];

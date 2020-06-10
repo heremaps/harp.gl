@@ -99,7 +99,7 @@ export namespace GeoJsonHeatmapExample {
     /**
      * A generator for a heatmap-like [[StyleSet]].
      *
-     * @param options Heatmap settings.
+     * @param options - Heatmap settings.
      */
     function generateHeatStyleSet(options: {
         thresholds: number[];

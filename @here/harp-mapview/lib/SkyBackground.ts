@@ -20,9 +20,9 @@ export class SkyBackground {
     /**
      * Constructs a new `SkyBackground`.
      *
-     * @param m_sky Sky configuration parameters.
-     * @param m_projectionType [[MapView]]'s projection type.
-     * @param camera [[MapView]]'s camera.
+     * @param m_sky - Sky configuration parameters.
+     * @param m_projectionType - [[MapView]]'s projection type.
+     * @param camera - [[MapView]]'s camera.
      */
     constructor(
         private m_sky: GradientSky | CubemapSky,
@@ -58,7 +58,7 @@ export class SkyBackground {
     /**
      * This method updates the skybox based on the camera position (needed for some types of sky).
      *
-     * @param camera The camera used in the map view.
+     * @param camera - The camera used in the map view.
      */
     updateCamera(camera: THREE.Camera) {
         if (this.m_sky.type === "gradient") {
@@ -69,8 +69,8 @@ export class SkyBackground {
     /**
      * Updates the sky texture with new parameters.
      *
-     * @param params New sky configuration parameters.
-     * @param projectionType Which projection is used, this may also change (in which case the
+     * @param params - New sky configuration parameters.
+     * @param projectionType - Which projection is used, this may also change (in which case the
      * textures should be recreated).
      */
     updateTexture(params: GradientSky | CubemapSky, projectionType: ProjectionType) {

@@ -20,8 +20,8 @@ export const testResourcesRoot =
  *
  * Calculates URL of test resource in same way as [[loadTestResource]].
  *
- * @param moduleName: module name, `@here/<module_name>` (e.g. @here/harp-omv-datasource)
- * @param fileName: file relative to module path (e.g. `test/resources/berlin.bin)`
+ * @param moduleName -: module name, `@here/<module_name>` (e.g. @here/harp-omv-datasource)
+ * @param fileName -: file relative to module path (e.g. `test/resources/berlin.bin)`
  */
 export function getTestResourceUrl(module: string, fileName: string) {
     return testResourcesRoot + module + "/" + fileName;
@@ -55,8 +55,8 @@ export function getTestResourceUrl(module: string, fileName: string) {
  *   * `fs` module when run in a node.js environment
  *   * `fetch` module when run in a browser environment
  *
- * @param module: module name, @here/<module_name> (e.g. @here/harp-omv-datasource)
- * @param fileName: the requested resource
+ * @param module -: module name, @here/<module_name> (e.g. @here/harp-omv-datasource)
+ * @param fileName -: the requested resource
  *                  (e.g. @here/harp-omv-datasource/test/resources/berlin.bin)
  */
 export const loadTestResource = loadTestResourceWeb;

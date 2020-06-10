@@ -26,9 +26,9 @@ export class FlatTileBoundingBoxGenerator {
      * Creates a new `FlatTileBoundingBoxGenerator` that can generate bounding boxes for the given
      * TilingScheme.
      *
-     * @param tilingScheme The [[TilingScheme]] used to compute bounding boxes.
-     * @param minElevation The minimum elevation in meters.
-     * @param maxElevation The maximum elevation in meters.
+     * @param tilingScheme - The [[TilingScheme]] used to compute bounding boxes.
+     * @param minElevation - The minimum elevation in meters.
+     * @param maxElevation - The maximum elevation in meters.
      */
     constructor(
         readonly tilingScheme: TilingScheme,
@@ -65,8 +65,8 @@ export class FlatTileBoundingBoxGenerator {
      * console.log(worldBounds.getCenter());
      * ```
      *
-     * @param tileKey The TileKey.
-     * @param result The optional object used to store the resulting bounding box in world
+     * @param tileKey - The TileKey.
+     * @param result - The optional object used to store the resulting bounding box in world
      * coordinates.
      */
     getWorldBox(tileKey: TileKey, result?: Box3Like): Box3Like {
@@ -100,7 +100,7 @@ export class FlatTileBoundingBoxGenerator {
      * console.log(geoBox.center);
      * ```
      *
-     * @param tileKey The [[TileKey]].
+     * @param tileKey - The [[TileKey]].
      */
     getGeoBox(tileKey: TileKey): GeoBox {
         const worldBox = this.getWorldBox(tileKey);

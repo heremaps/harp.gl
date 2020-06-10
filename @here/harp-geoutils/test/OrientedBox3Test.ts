@@ -22,9 +22,9 @@ import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 /**
  * Visits the tile tree.
  *
- * @param accept The accepting function. The function must return false to stop the visit.
- * @param tilingScheme The tiling scheme.
- * @param tileKey The root tile key.
+ * @param accept - The accepting function. The function must return false to stop the visit.
+ * @param tilingScheme - The tiling scheme.
+ * @param tileKey - The root tile key.
  */
 function visit(
     tilingScheme: TilingScheme,
@@ -54,7 +54,7 @@ class GlobeControls {
     /**
      * Place the camera at the given position.
      *
-     * @param geoPoint The position of the camera in geo coordinates.
+     * @param geoPoint - The position of the camera in geo coordinates.
      */
     set(geoPoint: GeoCoordinates) {
         if (geoPoint.altitude === undefined || geoPoint.altitude === 0) {
@@ -102,8 +102,8 @@ class GlobeControls {
     /**
      * Computes the list of the tiles interesting the view frustum.
      *
-     * @param tilingScheme The tiling scheme.
-     * @param level The storage level.
+     * @param tilingScheme - The tiling scheme.
+     * @param level - The storage level.
      */
     getVisibleTiles(tilingScheme: TilingScheme, level: number) {
         const visibleTiles: TileKey[] = [];

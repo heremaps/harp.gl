@@ -138,7 +138,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
     /**
      * Constructs a new `EdgeMaterial`.
      *
-     * @param params `EdgeMaterial` parameters.
+     * @param params - `EdgeMaterial` parameters.
      */
     constructor(params?: EdgeMaterialParameters) {
         const defines: { [key: string]: any } = {};

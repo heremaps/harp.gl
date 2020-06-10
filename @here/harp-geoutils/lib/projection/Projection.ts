@@ -41,7 +41,7 @@ export abstract class Projection {
     /**
      * Constructs the Projection
      *
-     * @param unitScale How to transform the projected coordinates to world units.
+     * @param unitScale - How to transform the projected coordinates to world units.
      */
     constructor(readonly unitScale: number) {
         //Prevent empty constructor error.
@@ -50,9 +50,9 @@ export abstract class Projection {
     /**
      * Returns the world extents in world coordinates.
      *
-     * @param minElevation The minimum elevation in meters.
-     * @param maxElevation The maximum elevation in meters.
-     * @param result The optional object that will be used to create the resulting bounding box.
+     * @param minElevation - The minimum elevation in meters.
+     * @param maxElevation - The maximum elevation in meters.
+     * @param result - The optional object that will be used to create the resulting bounding box.
      */
     abstract worldExtent<Bounds extends Box3Like>(
         minElevation: number,
@@ -70,8 +70,8 @@ export abstract class Projection {
      * projection.projectPoint(geoPos, worldPos);
      * ```
      *
-     * @param geoPoint The position in geo coordinates.
-     * @param result The optional object used to store the resulting world position, result must
+     * @param geoPoint - The position in geo coordinates.
+     * @param result - The optional object used to store the resulting world position, result must
      * implement [[Vector3Like]].
      */
     abstract projectPoint<WorldCoordinates extends Vector3Like>(
@@ -82,8 +82,8 @@ export abstract class Projection {
     /**
      * Gets the [[TransformLike]] of the local tangent space at the given point.
      *
-     * @param point The geo / world coordinates.
-     * @param result The [[TransformLike]].
+     * @param point - The geo / world coordinates.
+     * @param result - The [[TransformLike]].
      */
     localTangentSpace(
         point: GeoCoordinatesLike | Vector3Like,
@@ -110,14 +110,14 @@ export abstract class Projection {
      * console.log(geoPos.latitude, geoPos.longitude, geoPos.altitude);
      * ```
      *
-     * @param worldPoint The position in world coordinates.
+     * @param worldPoint - The position in world coordinates.
      */
     abstract unprojectPoint(worldPoint: Vector3Like): GeoCoordinates;
 
     /**
      * Returns the altitude at the given world position (x,y,z) in meters.
      *
-     * @param worldPoint The position in world coordinates.
+     * @param worldPoint - The position in world coordinates.
      */
     abstract unprojectAltitude(worldPoint: Vector3Like): number;
 
@@ -130,7 +130,7 @@ export abstract class Projection {
      * console.log(bounds.min, bounds.max);
      * ```
      *
-     * @param geoBox The bounding box in geo coordinates.
+     * @param geoBox - The bounding box in geo coordinates.
      */
     abstract projectBox(geoBox: GeoBox): Box3Like;
 
@@ -143,8 +143,8 @@ export abstract class Projection {
      * console.log(bounds.min, bounds.max);
      * ```
      *
-     * @param geoBox The bounding box in geo coordinates.
-     * @param result The resulting [[OrientedBox3Like]].
+     * @param geoBox - The bounding box in geo coordinates.
+     * @param result - The resulting [[OrientedBox3Like]].
      */
     abstract projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
@@ -160,7 +160,7 @@ export abstract class Projection {
      * console.log(geoPos.latitude, geoPos.longitude, geoPos.altitude);
      * ```
      *
-     * @param worldBox The bounding box in world coordinates.
+     * @param worldBox - The bounding box in world coordinates.
      */
     abstract unprojectBox(worldBox: Box3Like): GeoBox;
 
@@ -168,21 +168,21 @@ export abstract class Projection {
      * Returns the scaling factor that must be used to convert the units used by `worldPoint` to
      * meters.
      *
-     * @param worldPoint The position in world coordinates.
+     * @param worldPoint - The position in world coordinates.
      */
     abstract getScaleFactor(worldPoint: Vector3Like): number;
 
     /**
      * Returns the surface normal at the given world position.
      *
-     * @param worldPoint The position in world coordinates.
+     * @param worldPoint - The position in world coordinates.
      */
     abstract surfaceNormal(worldPoint: Vector3Like): Vector3Like;
 
     /**
      * Returns the surface normal at the given world position.
      *
-     * @param worldPoint The position in world coordinates.
+     * @param worldPoint - The position in world coordinates.
      * @returns The resulting normal vector.
      */
     abstract surfaceNormal<Normal extends Vector3Like>(
@@ -194,22 +194,22 @@ export abstract class Projection {
      * Returns the signed distance between the given coordinates and
      * the closest point on the surface.
      *
-     * @param worldPoint The position in world coordinates.
+     * @param worldPoint - The position in world coordinates.
      */
     abstract groundDistance(worldPoint: Vector3Like): number;
 
     /**
      * Scales the given world coordinates to the surface.
      *
-     * @param worldPoint The position in world coordinates.
+     * @param worldPoint - The position in world coordinates.
      */
     abstract scalePointToSurface(worldPoint: Vector3Like): Vector3Like;
 
     /**
      * Reproject a world position from the given source [[Projection]].
      *
-     * @param sourceProjection The source projection.
-     * @param worldPos A valid world position for the given source projection.
+     * @param sourceProjection - The source projection.
+     * @param worldPos - A valid world position for the given source projection.
      * @returns The world position reprojected using this [[Projection]].
      */
     reprojectPoint(sourceProjection: Projection, worldPos: Vector3Like): Vector3Like;
@@ -217,9 +217,9 @@ export abstract class Projection {
     /**
      * Reproject a world position from the given source [[Projection]].
      *
-     * @param sourceProjection The source projection.
-     * @param worldPos A valid position in the world space defined by the source projection.
-     * @param result The resulting position reprojected using this [[Projection]].
+     * @param sourceProjection - The source projection.
+     * @param worldPos - A valid position in the world space defined by the source projection.
+     * @param result - The resulting position reprojected using this [[Projection]].
      */
     reprojectPoint<WorldCoordinates extends Vector3Like>(
         sourceProjection: Projection,
@@ -231,9 +231,9 @@ export abstract class Projection {
      * Reproject a world position from the given source [[Projection]].
      * Implementations should be aware of worldPos and result may be one object
      *
-     * @param sourceProjection The source projection.
-     * @param worldPos A valid position in the world space defined by the source projection.
-     * @param result The resulting position reprojected using this [[Projection]].
+     * @param sourceProjection - The source projection.
+     * @param worldPos - A valid position in the world space defined by the source projection.
+     * @param result - The resulting position reprojected using this [[Projection]].
      * @hidden
      */
     reprojectPoint(

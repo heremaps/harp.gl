@@ -190,7 +190,7 @@ export interface PoiInfo {
 /**
  * Return 'true' if the POI has been successfully prepared for rendering.
  *
- * @param poiInfo PoiInfo containing information for rendering the POI icon.
+ * @param poiInfo - PoiInfo containing information for rendering the POI icon.
  */
 export function poiIsRenderable(poiInfo: PoiInfo): boolean {
     return poiInfo.poiRenderBatch !== undefined;
@@ -358,21 +358,21 @@ export class TextElement {
     /**
      * Creates a new `TextElement`.
      *
-     * @param text The text to display.
-     * @param points The position or a list of points for a curved text, both in world space.
-     * @param renderParams `TextElement` text rendering parameters.
-     * @param layoutParams `TextElement` text layout parameters.
-     * @param priority The priority of the `TextElement. Elements with the highest priority get
+     * @param text - The text to display.
+     * @param points - The position or a list of points for a curved text, both in world space.
+     * @param renderParams - `TextElement` text rendering parameters.
+     * @param layoutParams - `TextElement` text layout parameters.
+     * @param priority - The priority of the `TextElement. Elements with the highest priority get
      *              placed first, elements with priority of `0` are placed last, elements with a
      *              negative value are always rendered, ignoring priorities and allowing overrides.
-     * @param xOffset Optional X offset of this `TextElement` in screen coordinates.
-     * @param yOffset Optional Y offset of this `TextElement` in screen coordinates.
-     * @param featureId Optional number to identify feature (originated from `OmvDataSource`).
-     * @param fadeNear Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
+     * @param xOffset - Optional X offset of this `TextElement` in screen coordinates.
+     * @param yOffset - Optional Y offset of this `TextElement` in screen coordinates.
+     * @param featureId - Optional number to identify feature (originated from `OmvDataSource`).
+     * @param fadeNear - Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label starts fading out (opacity decreases).
-     * @param fadeFar Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
+     * @param fadeFar - Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label becomes transparent. A value of <= 0.0 disables fading.
-     * @param offsetDirection Direction represented as an angle in degrees clockwise from north to
+     * @param offsetDirection - Direction represented as an angle in degrees clockwise from north to
      * offset the icon in world space.
      */
     constructor(
@@ -477,7 +477,7 @@ export class TextElement {
 
     /**
      * Sets style used for text rendering.
-     * @param style The style to use.
+     * @param style - The style to use.
      */
     set renderStyle(style: TextRenderStyle | undefined) {
         this.m_renderStyle = style;
@@ -492,7 +492,7 @@ export class TextElement {
 
     /**
      * Sets the style used for text layout.
-     * @param style The style to use.
+     * @param style - The style to use.
      */
     set layoutStyle(style: TextLayoutStyle | undefined) {
         this.m_layoutStyle = style;

@@ -191,8 +191,8 @@ const tmpBuffer: number[] = new Array(StringEncodedNumeralFormatMaxSize);
 /**
  * Parse string encoded numeral values using all known [[StringEncodedNumeralFormats]].
  *
- * @param numeral The string representing numeric value.
- * @param pixelToMeters The ratio used to convert from meters to pixels (default 1.0).
+ * @param numeral - The string representing numeric value.
+ * @param pixelToMeters - The ratio used to convert from meters to pixels (default 1.0).
  * @returns Number parsed or __undefined__ if non of the numeral patterns matches the expression
  * provided in [[numeral]].
  */
@@ -238,7 +238,7 @@ export function parseStringEncodedNumeral(
 /**
  * Parse string encoded color value using all known [[StringEncodedColorFormats]].
  *
- * @param color The string encoded color expression (i.e. '#FFF', 'rgb(255, 0, 0)', etc.).
+ * @param color - The string encoded color expression (i.e. '#FFF', 'rgb(255, 0, 0)', etc.).
  * @returns The color parsed or __undefined__ if non of the known representations matches
  * the expression provided in [[color]].
  */

@@ -161,7 +161,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Constructs a new `DataSource`.
      *
-     * @param options The options to create the data source.
+     * @param options - The options to create the data source.
      */
     constructor(options: DataSourceOptions = {}) {
         super();
@@ -217,7 +217,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Gets the state of the given feature id.
      *
-     * @param featureId The id of the feature.
+     * @param featureId - The id of the feature.
      */
     getFeatureState(featureId: number): ValueMap | undefined {
         return this.m_featureStateMap.get(featureId);
@@ -237,8 +237,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * dataSource.setFeatureState(featureId, { enabled: true });
      * ```
      *
-     * @param featureId The id of the feature.
-     * @param state The new state of the feature.
+     * @param featureId - The id of the feature.
+     * @param state - The new state of the feature.
      */
     setFeatureState(featureId: number, state: ValueMap) {
         this.m_featureStateMap.set(featureId, state);
@@ -247,7 +247,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Removes the state associated to the given feature.
      *
-     * @param featureId The id of the feature.
+     * @param featureId - The id of the feature.
      */
     removeFeatureState(featureId: number) {
         this.m_featureStateMap.delete(featureId);
@@ -343,7 +343,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * Reimplementations of this method must invoke the definition of the super class.
      *
-     * @param mapView The instance of the [[MapView]].
+     * @param mapView - The instance of the [[MapView]].
      */
     attach(mapView: MapView): void {
         this.m_mapView = mapView;
@@ -354,7 +354,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * Reimplementations of this method must invoke the definition of the super class.
      *
-     * @param mapView The instance of the [[MapView]].
+     * @param mapView - The instance of the [[MapView]].
      */
     detach(mapView: MapView) {
         assert(this.m_mapView === mapView);
@@ -368,8 +368,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * @deprecated, Use [[setTheme]].
      *
-     * @param styleSet The new theme that [[MapView]] uses.
-     * @param languages An optional list of languages for the `DataSource`.
+     * @param styleSet - The new theme that [[MapView]] uses.
+     * @param languages - An optional list of languages for the `DataSource`.
      */
     // tslint:disable-next-line:no-unused-variable
     setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
@@ -382,7 +382,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * If `DataSource` depends on a `styleSet` defined by this theme or `languages`, it must update
      * its tiles' geometry.
      *
-     * @param languages
+     * @param languages -
      */
     setTheme(theme: Theme, languages?: string[]): void {
         // to be overwritten by subclasses
@@ -392,7 +392,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Used to configure the languages used by the `DataSource` according to priority;
      * the first language in the array has the highest priority.
      *
-     * @param languages An array of ISO 639-1 language codes.
+     * @param languages - An array of ISO 639-1 language codes.
      */
     setLanguages(languages?: string[]): void {
         // to be overloaded by subclasses
@@ -402,7 +402,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Used to express different country point of view (political view).
      *
      * @note Set to `undefined` (or empty string) if you want to reset to default point of view.
-     * @param pov The country code which point of view should be presented in lower-case
+     * @param pov - The country code which point of view should be presented in lower-case
      * ISO 3166-1 alpha-2 format.
      */
     setPoliticalView(pov?: string): void {
@@ -413,7 +413,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * This method is called when [[MapView]] needs to visualize or preload the content of a
      * [[TileKey]].
      *
-     * @param tileKey The unique identifier for a map tile.
+     * @param tileKey - The unique identifier for a map tile.
      */
     abstract getTile(tileKey: TileKey): Tile | undefined;
 
@@ -421,7 +421,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * This method is called by [[MapView]] before the tile needs to be updated, for example after
      * a theme change.
      *
-     * @param tile The [[Tile]] to update.
+     * @param tile - The [[Tile]] to update.
      */
     // tslint:disable-next-line:no-unused-variable
     updateTile(tile: Tile) {
@@ -506,7 +506,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Setup the relative offset between storage level and display level of tile.
      *
-     * @param levelOffset Difference between zoom level and display level.
+     * @param levelOffset - Difference between zoom level and display level.
      */
     set storageLevelOffset(levelOffset: number) {
         this.m_storageLevelOffset = levelOffset;
@@ -516,7 +516,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Enables or disables overlay of geometry on elevation. It must be overloaded by data sources
      * supporting this feature.
      *
-     * @param value True to enable, false to disable.
+     * @param value - True to enable, false to disable.
      */
     setEnableElevationOverlay(enable: boolean) {
         // to be overloaded by subclasses
@@ -525,7 +525,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Computes the data zoom level to use.
      *
-     * @param zoomLevel The zoom level of the [[MapView]].
+     * @param zoomLevel - The zoom level of the [[MapView]].
      * @returns The data zoom level to use.
      */
     getDataZoomLevel(zoomLevel: number): number {
@@ -538,7 +538,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
 
     /**
      * Returns `true` if [[DataSource]] should be displayed for the zoom level.
-     * @param zoomLevel The zoom level of the [[MapView]].
+     * @param zoomLevel - The zoom level of the [[MapView]].
      */
     isVisible(zoomLevel: number): boolean {
         return zoomLevel >= this.minDisplayLevel && zoomLevel <= this.maxDisplayLevel;
@@ -547,8 +547,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Returns `true` if [[DataSource]] can load tile with given [[TileKey]] and zoom level.
      *
-     * @param zoomLevel The zoom level of the [[MapView]].
-     * @param tileKey The unique identifier for a map tile.
+     * @param zoomLevel - The zoom level of the [[MapView]].
+     * @param tileKey - The unique identifier for a map tile.
      * @returns `true` if the tile for the given [[TileKey]] can be loaded.
      */
     canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
@@ -559,8 +559,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Returns `true` if [[MapView]] should traverse tiles further with given [[TileKey]] and
      * zoom level.
      *
-     * @param zoomLevel The zoom level of the [[MapView]].
-     * @param tileKey The unique identifier for a map tile.
+     * @param zoomLevel - The zoom level of the [[MapView]].
+     * @param tileKey - The unique identifier for a map tile.
      * @returns `true` if the subtiles of the given [[TileKey]] should be
      * checked for collisions.
      */
@@ -575,8 +575,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * This is an additional check for the tiles that are already selected for rendering so the
      * default implementation returns `true`.
      *
-     * @param zoomLevel The zoom level.
-     * @param tileKey The unique identifier for a map tile.
+     * @param zoomLevel - The zoom level.
+     * @param tileKey - The unique identifier for a map tile.
      * @returns `true` if the text elements created for the given [[TileKey]] should be rendered.
      */
     // tslint:disable-next-line:no-unused-variable

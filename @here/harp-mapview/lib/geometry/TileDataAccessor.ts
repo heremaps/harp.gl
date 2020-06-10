@@ -115,9 +115,9 @@ export class TileDataAccessor {
     /**
      * Constructs a `TileDataAccessor` instance.
      *
-     * @param tile The tile to access.
-     * @param visitor The visitor.
-     * @param options Options for the tile.
+     * @param tile - The tile to access.
+     * @param visitor - The visitor.
+     * @param options - Options for the tile.
      */
     constructor(
         public tile: Tile,
@@ -145,7 +145,7 @@ export class TileDataAccessor {
     /**
      * Visits a single object. This function should normally be called during visiting.
      *
-     * @param object The object to visit.
+     * @param object - The object to visit.
      */
     protected visitObject(object: THREE.Object3D): void {
         const featureData: TileFeatureData | undefined =
@@ -223,7 +223,7 @@ export class TileDataAccessor {
      * Gets the `BufferGeometry` from the specified object. This function requires the
      * attribute `position` in `BufferGeometry` to be set.
      *
-     * @param object The object from which to get the geometry.
+     * @param object - The object from which to get the geometry.
      * @returns the geometry of the object, or `undefined`.
      */
     protected getBufferGeometry(object: THREE.Mesh): THREE.BufferGeometry | undefined {
@@ -253,9 +253,9 @@ export class TileDataAccessor {
      * Obtains an accessor for the nonindexed geometry. This function may return `undefined`
      * if the accessor is not implemented.
      *
-     * @param geometryType The type of geometry.
-     * @param object The object for which to access the attributes and geometry.
-     * @param bufferGeometry The object's `BufferGeometry`.
+     * @param geometryType - The type of geometry.
+     * @param object - The object for which to access the attributes and geometry.
+     * @param bufferGeometry - The object's `BufferGeometry`.
      * @returns an accessor for a specified object, if available.
      */
     protected getGeometryAccessor(
@@ -288,9 +288,9 @@ export class TileDataAccessor {
      * Obtains an accessor for the indexed geometry. This function may return `undefined`
      * if the accessor is not implemented.
      *
-     * @param geometryType The type of geometry.
-     * @param object The object for which to access the attributes and geometry.
-     * @param bufferGeometry The object's `BufferGeometry`.
+     * @param geometryType - The type of geometry.
+     * @param object - The object for which to access the attributes and geometry.
+     * @param bufferGeometry - The object's `BufferGeometry`.
      * @returns an accessor for a specified object, if available.
      */
     protected getIndexedGeometryAccessor(
@@ -327,8 +327,8 @@ export class TileDataAccessor {
     /**
      * Visit the object.
      *
-     * @param meshObject Object of type `Mesh`.
-     * @param featureData Dataset stored along with the object.
+     * @param meshObject - Object of type `Mesh`.
+     * @param featureData - Dataset stored along with the object.
      */
     protected visitMesh(meshObject: THREE.Mesh, featureData: TileFeatureData): void {
         const { objInfos, starts } = featureData;

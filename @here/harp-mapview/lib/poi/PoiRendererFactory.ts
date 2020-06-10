@@ -11,13 +11,13 @@ import { PoiRenderer } from "./PoiRenderer";
 export class PoiRendererFactory {
     /**
      * Creates an instance of poi renderer factory.
-     * @param m_mapView
+     * @param m_mapView -
      */
     constructor(private readonly m_mapView: MapView) {}
 
     /**
      * Creates poi renderer
-     * @param textCanvas
+     * @param textCanvas -
      * @returns
      */
     createPoiRenderer(textCanvas: TextCanvas): PoiRenderer {

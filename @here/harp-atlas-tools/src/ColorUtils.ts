@@ -20,7 +20,7 @@ export class ColorUtils {
     /**
      * Retreive red component of 32-bit color value.
      *
-     * @param value color value encoded in 32-bit number.
+     * @param value - color value encoded in 32-bit number.
      * @returns color red component value in between 0 to 255.
      */
     static red(value: number): number {
@@ -31,7 +31,7 @@ export class ColorUtils {
     /**
      * Retreive green component from 32-bit RGBA color value.
      *
-     * @param value color value encoded in 32-bit number.
+     * @param value - color value encoded in 32-bit number.
      * @returns color green component value in between 0 to 255.
      */
     static green(value: number): number {
@@ -42,7 +42,7 @@ export class ColorUtils {
     /**
      * Retreive blue component from 32-bit RGBA color value.
      *
-     * @param value color value encoded in 32-bit number.
+     * @param value - color value encoded in 32-bit number.
      * @returns color blue component value in between 0 to 255.
      */
     static blue(value: number): number {
@@ -53,7 +53,7 @@ export class ColorUtils {
     /**
      * Retreive alpha (opacity) component from 32-bit RGBA color value.
      *
-     * @param value color value encoded in 32-bit number.
+     * @param value - color value encoded in 32-bit number.
      * @returns color alpha component value in between 0 to 255.
      */
     static alpha(value: number): number {
@@ -64,7 +64,7 @@ export class ColorUtils {
     /**
      * Convert RGBA color object into integer value.
      *
-     * @param c color stored as RGBA object.
+     * @param c - color stored as RGBA object.
      * @returns 32-bit coded integer color value.
      */
     static rgbaToInt(c: RGBA): number {
@@ -75,7 +75,7 @@ export class ColorUtils {
     /**
      * Convert integer coded RGBA color into RGBA interface object.
      *
-     * @param value 32-bit coded integer color value.
+     * @param value - 32-bit coded integer color value.
      * @returns color stored in RGBA object instance.
      */
     static intToRgba(value: number): RGBA {

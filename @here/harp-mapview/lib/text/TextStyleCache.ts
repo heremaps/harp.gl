@@ -329,8 +329,8 @@ export class TextStyleCache {
      * Create the appropriate [[TextLayoutStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
-     * @param tile The [[Tile]] to process.
-     * @param technique Label's technique.
+     * @param tile - The [[Tile]] to process.
+     * @param technique - Label's technique.
      */
     createLayoutStyle(
         tile: Tile,

@@ -184,7 +184,7 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
 /**
  * A helper function to retrieve the [[DataProvider]] from the [[OmvDataSource]]s parameters.
  *
- * @param params The parameters passed into the OmvDataSource.
+ * @param params - The parameters passed into the OmvDataSource.
  */
 function getDataProvider(params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
     if ((params as OmvWithCustomDataProvider).dataProvider) {
@@ -236,7 +236,7 @@ const defaultOptions = new Map<string, OmvWithRestClientParams>([
 
 /**
  * Tests if the given object has custom data provider.
- * @param object
+ * @param object -
  */
 function hasCustomDataProvider(
     object: Partial<OmvWithCustomDataProvider>
@@ -247,7 +247,7 @@ function hasCustomDataProvider(
 /**
  * Add service specific default values.
  *
- * @param params The configuration settings of the data source.
+ * @param params - The configuration settings of the data source.
  */
 function completeDataSourceParameters(
     params: OmvWithRestClientParams | OmvWithCustomDataProvider
@@ -344,7 +344,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
      * Set a new data filter. Can also be done during the creation of an [[OmvDataSource]].
      * Will be applied to the decoder, which might be shared with other omv datasources.
      *
-     * @param filterDescription Data filter description created with
+     * @param filterDescription - Data filter description created with
      * [[OmvFeatureFilterDescriptionBuilder]].
      */
     setDataFilter(filterDescription: OmvFeatureFilterDescription): void {

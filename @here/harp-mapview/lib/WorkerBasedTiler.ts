@@ -34,8 +34,8 @@ export class WorkerBasedTiler implements ITiler {
     /**
      * Creates a new `WorkerBasedTiler`.
      *
-     * @param workerSet [[ConcurrentWorkerSet]] this tiler will live in.
-     * @param tilerServiceType Service type identifier.
+     * @param workerSet - [[ConcurrentWorkerSet]] this tiler will live in.
+     * @param tilerServiceType - Service type identifier.
      */
     constructor(
         private readonly workerSet: ConcurrentWorkerSet,
@@ -88,8 +88,8 @@ export class WorkerBasedTiler implements ITiler {
      * Register index in the tiler. Indexes registered in the tiler can be later used to retrieved
      * tiled payloads using `getTile`.
      *
-     * @param indexId Index identifier.
-     * @param input Url to the index payload, or direct GeoJSON.
+     * @param indexId - Index identifier.
+     * @param input - Url to the index payload, or direct GeoJSON.
      */
     registerIndex(indexId: string, input: URL | GeoJson): Promise<void> {
         const message: WorkerTilerProtocol.RegisterIndexRequest = {
@@ -104,8 +104,8 @@ export class WorkerBasedTiler implements ITiler {
      * Update index in the tiler. Indexes registered in the tiler can be later used to retrieved
      * tiled payloads using `getTile`.
      *
-     * @param indexId Index identifier.
-     * @param input Url to the index payload, or direct GeoJSON.
+     * @param indexId - Index identifier.
+     * @param input - Url to the index payload, or direct GeoJSON.
      */
     updateIndex(indexId: string, input: URL | GeoJson): Promise<void> {
         const message: WorkerTilerProtocol.UpdateIndexRequest = {
@@ -119,8 +119,8 @@ export class WorkerBasedTiler implements ITiler {
     /**
      * Retrieves a tile for a previously registered index.
      *
-     * @param indexId Index identifier.
-     * @param tileKey The [[TileKey]] that identifies the tile.
+     * @param indexId - Index identifier.
+     * @param tileKey - The [[TileKey]] that identifies the tile.
      */
     getTile(indexId: string, tileKey: TileKey): Promise<{}> {
         const tileKeyCode = tileKey.mortonCode();

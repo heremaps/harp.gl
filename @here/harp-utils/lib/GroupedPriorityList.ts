@@ -35,7 +35,7 @@ export class PriorityListGroup<T extends PriorityListElement> {
 
     /**
      * Removes an element from the group.
-     * @param element The element to remove.
+     * @param element - The element to remove.
      * @returns true if the element was removed, false if it was not found in the group.
      */
     remove(element: T): boolean {
@@ -62,7 +62,7 @@ export class GroupedPriorityList<T extends PriorityListElement> {
     /**
      * Add an element to the `GroupedPriorityList`. Selects group based on the elements priority.
      *
-     * @param element Element to be added.
+     * @param element - Element to be added.
      */
     add(element: T): void {
         this.getGroup(element.priority).elements.push(element);
@@ -74,7 +74,7 @@ export class GroupedPriorityList<T extends PriorityListElement> {
      * Note: It is required that the priority is the same as it was when the element has been added.
      * Otherwise, the removal will fail.
      *
-     * @param element Element to be removed.
+     * @param element - Element to be removed.
      * @returns `True` if the element was removed, `false` otherwise.
      */
     remove(element: T): boolean {
@@ -99,7 +99,7 @@ export class GroupedPriorityList<T extends PriorityListElement> {
     /**
      * Merge another [[GroupedPriorityList]] into this one.
      *
-     * @param other Other group to merge.
+     * @param other - Other group to merge.
      */
     merge(other: GroupedPriorityList<T>): GroupedPriorityList<T> {
         for (const otherGroup of other.groups) {
@@ -146,7 +146,7 @@ export class GroupedPriorityList<T extends PriorityListElement> {
     /**
      * Get group of elements that have the same (integer) priority.
      *
-     * @param priority The priority to retrieve all elements from.
+     * @param priority - The priority to retrieve all elements from.
      */
     private findGroup(priority: number): PriorityListGroup<T> | undefined {
         const normalizedPriority = Math.floor(priority);
@@ -157,7 +157,7 @@ export class GroupedPriorityList<T extends PriorityListElement> {
     /**
      * Get group of elements that have the same (integer) priority.
      *
-     * @param priority The priority to retrieve all elements from.
+     * @param priority - The priority to retrieve all elements from.
      */
     private getGroup(priority: number): PriorityListGroup<T> {
         let group = this.findGroup(priority);

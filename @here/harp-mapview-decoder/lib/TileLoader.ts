@@ -75,11 +75,11 @@ export class TileLoader {
     /**
      * Set up loading of a single [[Tile]].
      *
-     * @param dataSource The [[DataSource]] the tile belongs to.
-     * @param tileKey The quadtree address of a [[Tile]].
-     * @param dataProvider The [[DataProvider]] that retrieves the binary tile data.
-     * @param tileDecoder The [[ITileDecoder]] that decodes the binary tile to a [[DecodeTile]].
-     * @param priority The priority given to the loading job. Highest number will be served first.
+     * @param dataSource - The [[DataSource]] the tile belongs to.
+     * @param tileKey - The quadtree address of a [[Tile]].
+     * @param dataProvider - The [[DataProvider]] that retrieves the binary tile data.
+     * @param tileDecoder - The [[ITileDecoder]] that decodes the binary tile to a [[DecodeTile]].
+     * @param priority - The priority given to the loading job. Highest number will be served first.
      */
     constructor(
         protected dataSource: DataSource,
@@ -205,7 +205,7 @@ export class TileLoader {
     /**
      * Called when binary data has been loaded. The loading state is now progressing to decoding.
      *
-     * @param payload Binary data in form of [[ArrayBufferLike]], or any object.
+     * @param payload - Binary data in form of [[ArrayBufferLike]], or any object.
      */
     protected onLoaded(payload: ArrayBufferLike | {}) {
         this.state = TileLoaderState.Loaded;
@@ -267,7 +267,7 @@ export class TileLoader {
     /**
      * Called when the decoding is finished, and the [[DecodedTile]] has been created.
      *
-     * @param decodedTile The [[DecodedTile]].
+     * @param decodedTile - The [[DecodedTile]].
      */
     protected onDecoded(decodedTile: DecodedTile) {
         this.decodedTile = decodedTile;
@@ -289,7 +289,7 @@ export class TileLoader {
      * Called when loading and decoding has finished successfully. Resolves loading promise if the
      * state is Ready, otherwise it rejects the promise with the supplied state.
      *
-     * @param doneState The latest state of loading.
+     * @param doneState - The latest state of loading.
      */
     protected onDone(doneState: TileLoaderState) {
         if (this.resolveDonePromise && doneState === TileLoaderState.Ready) {
@@ -306,7 +306,7 @@ export class TileLoader {
     /**
      * Called when loading or decoding has finished with an error.
      *
-     * @param error Error object describing the failing.
+     * @param error - Error object describing the failing.
      */
     protected onError(error: Error) {
         if (this.state === TileLoaderState.Canceled) {

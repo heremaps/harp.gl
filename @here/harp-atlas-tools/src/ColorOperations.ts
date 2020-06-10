@@ -11,7 +11,7 @@ export type ColorOperation = (src: RGBA) => RGBA;
 /**
  * Inverts color component wiselly without changing its alpha factor.
  *
- * @param src source color.
+ * @param src - source color.
  * @return inverted color.
  */
 export const ColorInvert: ColorOperation = (src: RGBA): RGBA => {
@@ -34,7 +34,7 @@ export const ColorInvert: ColorOperation = (src: RGBA): RGBA => {
  * (max(R, G, B) + min(R, G, B)) / 2.
  * This method tends to reduce overal contrast of the image.
  *
- * @param src source color.
+ * @param src - source color.
  * @return grayscale converted color.
  */
 export const ColorGrayscaleLightness: ColorOperation = (src: RGBA): RGBA => {
@@ -59,7 +59,7 @@ export const ColorGrayscaleLightness: ColorOperation = (src: RGBA): RGBA => {
  * different wavelength thus in rallity their contribution to the image formation is
  * different, in average approach their contribution is assumed to be the same.
  *
- * @param src source color.
+ * @param src - source color.
  * @return grayscale converted color.
  */
 export const ColorGrayscaleAverage: ColorOperation = (src: RGBA): RGBA => {
@@ -83,7 +83,7 @@ export const ColorGrayscaleAverage: ColorOperation = (src: RGBA): RGBA => {
  * luminosity is:
  * 0.21*R + 0.72*G + 0.07*B.
  *
- * @param src source color.
+ * @param src - source color.
  * @return grayscale converted color.
  */
 export const ColorGrayscaleLuminosity: ColorOperation = (src: RGBA): RGBA => {

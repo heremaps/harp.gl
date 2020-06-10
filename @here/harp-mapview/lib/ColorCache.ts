@@ -27,7 +27,7 @@ export class ColorCache {
      * Returns the color for the given `colorCode`. This function may reuse a previously generated
      * color, so you cannot modify the contents of the color.
      *
-     * @param colorCode ThreeJS color code or name. You must provide a valid color code or name,
+     * @param colorCode - ThreeJS color code or name. You must provide a valid color code or name,
      * as this function does not do any validation.
      */
     getColor(colorCode: string | number): THREE.Color {

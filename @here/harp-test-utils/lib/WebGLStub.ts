@@ -21,8 +21,8 @@ function getSize(): { width: number; height: number } {
 
 /**
  * Helper function to return options required for stub when mocking the WebGLRenderer
- * @param sandbox The sinon sandbox
- * @param clearColorStub The stub for clearing the color
+ * @param sandbox - The sinon sandbox
+ * @param clearColorStub - The stub for clearing the color
  */
 export function getWebGLRendererStub(sandbox: sinon.SinonSandbox, clearColorStub: sinon.SinonStub) {
     return {

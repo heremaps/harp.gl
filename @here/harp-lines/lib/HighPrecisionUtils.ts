@@ -33,7 +33,7 @@ export namespace HighPrecisionUtils {
      * Extract the `float` parts of all vector members, Making this a `Vector3` of `float`.
      * precision.
      *
-     * @param v
+     * @param v -
      */
     export function doubleToFloatVec(v: Vector3): Vector3 {
         return new Vector3(Math.fround(v.x), Math.fround(v.y), Math.fround(v.z));
@@ -43,7 +43,7 @@ export namespace HighPrecisionUtils {
      * Convert a `Vector3` to `float` (in place!) Returns the minor float vector, which is the
      * difference of the double elements and their float counterparts.
      *
-     * @param v Vector3 to convert to float IN-PLACE!
+     * @param v - Vector3 to convert to float IN-PLACE!
      */
     export function makeFloatVec(v: Vector3): Vector3 {
         const majorX = Math.fround(v.x);
@@ -114,8 +114,9 @@ export namespace HighPrecisionUtils {
     /**
      * Calculate high-precision camera position used in vertex shader of high-precision materials.
      *
-     * @param camera Camera used to get the high-precision position.
-     * @param objectInverseWorldMatrix Inverse World Matrix of the rendered [[HighPrecisionObject]].
+     * @param camera - Camera used to get the high-precision position.
+     * @param objectInverseWorldMatrix - Inverse World Matrix of the rendered
+     *                                   [[HighPrecisionObject]].
      */
     export function createHighPrecisionCameraPos(
         camera: Camera,
@@ -141,9 +142,9 @@ export namespace HighPrecisionUtils {
      * Updates the high-precision uniform data of a material used to render a
      * [[HighPrecisionObject]].
      *
-     * @param object [[HighPrecisionObject]] used for rendering.
-     * @param camera Camera used to get the high-precision position.
-     * @param shaderMaterial Material which uniforms will be updated.
+     * @param object - [[HighPrecisionObject]] used for rendering.
+     * @param camera - Camera used to get the high-precision position.
+     * @param shaderMaterial - Material which uniforms will be updated.
      */
     export function updateHpUniforms(
         object: HPL.HighPrecisionObject,
@@ -181,7 +182,7 @@ export namespace HighPrecisionUtils {
     /**
      * Assembles the necessary attribute buffers needed to render [[HighPrecisionObject]].
      *
-     * @param positions Array of positions.
+     * @param positions - Array of positions.
      */
     export function createAttributes(
         positions: ArrayLike<number> | ArrayLike<Vector3>
@@ -241,9 +242,9 @@ export namespace HighPrecisionUtils {
      * Assembles an interleaved buffer containing the position attribute data for a
      * [[HighPrecisionObject]].
      *
-     * @param positions Array of positions.
-     * @param stride Stride of the elements in the `positions` array.
-     * @param positionOffset Offset into the `positions` array.
+     * @param positions - Array of positions.
+     * @param stride - Stride of the elements in the `positions` array.
+     * @param positionOffset - Offset into the `positions` array.
      */
     export function addInterleavedAttributes3(
         positions: ArrayLike<number>,
@@ -283,8 +284,8 @@ export namespace HighPrecisionUtils {
     /**
      * Adds the high-precision position attribute data to a [[HighPrecisionObject]].
      *
-     * @param object [[HighPrecisionObject]] which position attribute will be set.
-     * @param positions Array of positions.
+     * @param object - [[HighPrecisionObject]] which position attribute will be set.
+     * @param positions - Array of positions.
      */
     export function setPositions(
         object: HPL.HighPrecisionObject,
@@ -301,7 +302,7 @@ export namespace HighPrecisionUtils {
     /**
      * Convert positions from `Array<Vector3>` to `Array<number>`.
      *
-     * @param positions Array of positions.
+     * @param positions - Array of positions.
      */
     export function convertPositions(
         positions: ArrayLike<number> | ArrayLike<Vector3>
@@ -332,8 +333,8 @@ export namespace HighPrecisionUtils {
     /**
      * Creates a [[HighPrecisionLine]] or [[HighPrecisionWireFrameLine]] object.
      *
-     * @param linePositions Array of 2D/3D positions.
-     * @param params Parameters used to configure the created [[HighPrecisionObject]].
+     * @param linePositions - Array of 2D/3D positions.
+     * @param params - Parameters used to configure the created [[HighPrecisionObject]].
      */
     export function createLine(
         linePositions: ArrayLike<number>,
@@ -373,8 +374,8 @@ export namespace HighPrecisionUtils {
     /**
      * Creates a group of [[HighPrecisionPoints]].
      *
-     * @param pointPositions Array of 2D/3D positions.
-     * @param materialParameters Parameters used to configure the material used to render the
+     * @param pointPositions - Array of 2D/3D positions.
+     * @param materialParameters - Parameters used to configure the material used to render the
      * created [[HighPrecisionPoints]].
      */
     export function createPoints(

@@ -24,9 +24,9 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
     /**
      * Default constructor.
      *
-     * @param m_fetchURL URL to fetch copyrights data from.
-     * @param m_baseScheme Scheme to get copyrights from.
-     * @param m_requestHeaders Optional request headers for requests(e.g. Authorization)
+     * @param m_fetchURL - URL to fetch copyrights data from.
+     * @param m_baseScheme - Scheme to get copyrights from.
+     * @param m_requestHeaders - Optional request headers for requests(e.g. Authorization)
      */
     constructor(
         private m_fetchURL: string,
@@ -39,7 +39,7 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
 
     /**
      * Sets request headers.
-     * @param headers
+     * @param headers -
      */
     setRequestHeaders(headers: RequestHeaders | undefined) {
         this.m_requestHeaders = headers;

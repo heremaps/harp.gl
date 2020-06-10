@@ -82,8 +82,8 @@ export class FontCatalog {
     /**
      * Loads a `FontCatalog`.
      *
-     * @param url Asset url.
-     * @param maxCodePointCount Maximum number of unique code points bitmaps this `FontCatalog`'s
+     * @param url - Asset url.
+     * @param maxCodePointCount - Maximum number of unique code points bitmaps this `FontCatalog`'s
      * internal texture can store simultaneously.
      *
      * @returns `FontCatalog` Promise.
@@ -165,18 +165,18 @@ export class FontCatalog {
      * @hidden
      * Creates a new FontCatalog.
      *
-     * @param url FontCatalog's URL.
-     * @param name FontCatalog's name.
-     * @param type FontCatalog's type (sdf or msdf).
-     * @param size FontCatalog's glyph size (pixels).
-     * @param maxWidth FontCatalog's maximum glyph width (pixels).
-     * @param maxHeight FontCatalog's maximum glyph height (pixels).
-     * @param distanceRange Distance range used to generate the SDF bitmaps.
-     * @param fonts Array of supported fonts.
-     * @param unicodeBlocks Array of supported Unicode blocks.
-     * @param maxCodePointCount Maximum number of unique code points bitmaps this `FontCatalog`'s
+     * @param url - FontCatalog's URL.
+     * @param name - FontCatalog's name.
+     * @param type - FontCatalog's type (sdf or msdf).
+     * @param size - FontCatalog's glyph size (pixels).
+     * @param maxWidth - FontCatalog's maximum glyph width (pixels).
+     * @param maxHeight - FontCatalog's maximum glyph height (pixels).
+     * @param distanceRange - Distance range used to generate the SDF bitmaps.
+     * @param fonts - Array of supported fonts.
+     * @param unicodeBlocks - Array of supported Unicode blocks.
+     * @param maxCodePointCount - Maximum number of unique code points bitmaps this `FontCatalog`'s
      * internal texture can store simultaneously.
-     * @param m_replacementGlyph [[GlyphData]] to be used whenever a Unicode code point is not
+     * @param m_replacementGlyph - [[GlyphData]] to be used whenever a Unicode code point is not
      * supported by this `FontCatalog`.
      *
      * @returns New FontCatalog.
@@ -240,7 +240,7 @@ export class FontCatalog {
      * Updates the internal WebGLRenderTarget.
      * The update will copy the newly introduced glyphs since the previous update.
      *
-     * @param renderer WebGLRenderer.
+     * @param renderer - WebGLRenderer.
      */
     update(renderer: THREE.WebGLRenderer): void {
         this.m_glyphTextureCache.update(renderer);
@@ -275,10 +275,10 @@ export class FontCatalog {
      * Loads the description file for a specific [[UnicodeBlock]]. This speeds up consequent calls
      * to `FontCatalog`.loadCharset() that require glyphs from this block to be loaded.
      *
-     * @param block Requested [[UnicodeBlock]].
-     * @param font [[Font]] to retrieve this Unicode block from.
-     * @param fontStyle [[FontStyle]] assets to load.
-     * @param loadPages If `true`, all pages in this Unicode block will also be loaded.
+     * @param block - Requested [[UnicodeBlock]].
+     * @param font - [[Font]] to retrieve this Unicode block from.
+     * @param fontStyle - [[FontStyle]] assets to load.
+     * @param loadPages - If `true`, all pages in this Unicode block will also be loaded.
      *
      * @returns Loaded Unicode Block json.
      */
@@ -325,9 +325,9 @@ export class FontCatalog {
      * Releases the description file for a specific [[UnicodeBlock]] (and all downloaded pages).
      * Safe to call when no assets for this block have been loaded.
      *
-     * @param block Requested [[UnicodeBlock]].
-     * @param font [[Font]] to remove this Unicode block from.
-     * @param fontStyle [[FontStyle]] assets to remove.
+     * @param block - Requested [[UnicodeBlock]].
+     * @param font - [[Font]] to remove this Unicode block from.
+     * @param fontStyle - [[FontStyle]] assets to remove.
      */
     removeBlock(block: UnicodeBlock, font: Font, fontStyle: FontStyle): void {
         const assetsPath = this.getAssetsPath(fontStyle, font);
@@ -349,8 +349,8 @@ export class FontCatalog {
      * be considered, and only styled assets (with applied font selection, style and variants) will
      * be loaded.
      *
-     * @param input Input text.
-     * @param style Specific [[TextRenderStyle]] for which glyphs will be loaded.
+     * @param input - Input text.
+     * @param style - Specific [[TextRenderStyle]] for which glyphs will be loaded.
      *
      * @returns Promise containing an array of all loaded [[GlyphData]] for the input text.
      */
@@ -421,9 +421,9 @@ export class FontCatalog {
      * Retrieves the loaded [[GlyphData]] for a specific character.
      * Returns `undefined` if the assets for this glyph haven't been loaded yet.
      *
-     * @param codePoint Character's Unicode code point.
-     * @param font [[Font]] to get this glyph from.
-     * @param fontStyle Specific [[FontStyle]] to get glyphs for.
+     * @param codePoint - Character's Unicode code point.
+     * @param font - [[Font]] to get this glyph from.
+     * @param fontStyle - Specific [[FontStyle]] to get glyphs for.
      *
      * @returns [[GlyphData]] for this code point.
      */
@@ -439,9 +439,9 @@ export class FontCatalog {
      * Retrieves the loaded [[GlyphData]] for the specified text.
      * Returns `undefined` if the assets for these glyphs haven't been loaded yet.
      *
-     * @param input Input text.
-     * @param style Specific [[TextRenderStyle]] to get glyphs for.
-     * @param letterCaseArray Array containing the original letter case for the requested glyphs.
+     * @param input - Input text.
+     * @param style - Specific [[TextRenderStyle]] to get glyphs for.
+     * @param letterCaseArray - Array containing the original letter case for the requested glyphs.
      *
      * @returns Array containing [[GlyphData]] for each character of the input text.
      */
@@ -478,8 +478,8 @@ export class FontCatalog {
     /**
      * Gets the best matched font for a specific character.
      *
-     * @param codePoint Character's Unicode code point.
-     * @param fontName Font name suggestion.
+     * @param codePoint - Character's Unicode code point.
+     * @param fontName - Font name suggestion.
      *
      * @returns Best matched font.
      */
@@ -506,7 +506,7 @@ export class FontCatalog {
     /**
      * Update the info with the memory footprint caused by objects owned by the `FontCatalog`.
      *
-     * @param info The info object to increment with the values from this `FontCatalog`.
+     * @param info - The info object to increment with the values from this `FontCatalog`.
      */
     updateMemoryUsage(info: MemoryUsage) {
         let numBytes = 0;

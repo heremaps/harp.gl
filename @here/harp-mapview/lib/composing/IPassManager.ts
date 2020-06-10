@@ -20,8 +20,8 @@ export interface IPassManager {
      * The resize method to extend in [[Pass]] implementations to resize the render targets to match
      * the size of the visible canvas. It should be called on resize events.
      *
-     * @param width Width to resize to.
-     * @param height Height to resize to.
+     * @param width - Width to resize to.
+     * @param height - Height to resize to.
      */
     setSize(width: number, height: number): void;
 }

@@ -415,7 +415,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     /**
      * Constructs a new `SolidLineMaterial`.
      *
-     * @param params `SolidLineMaterial` parameters.
+     * @param params - `SolidLineMaterial` parameters.
      */
     constructor(params?: SolidLineMaterialParameters) {
         Object.assign(THREE.ShaderChunk, linesShaderChunk);
@@ -569,7 +569,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     /**
      * Overrides THREE.Material.fog flag to add support for custom shader.
      *
-     * @param enable Whether we want to enable the fog.
+     * @param enable - Whether we want to enable the fog.
      */
     set fog(enable: boolean) {
         this.m_fog = enable;
@@ -605,7 +605,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     /**
      * The method to call to recompile a material to enable/disable outline effect
      *
-     * @param enable Whether we want to use outline.
+     * @param enable - Whether we want to use outline.
      */
     set outline(enable: boolean) {
         setShaderMaterialDefine(this, "USE_OUTLINE", enable);

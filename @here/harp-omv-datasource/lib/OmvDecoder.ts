@@ -55,9 +55,9 @@ export class Ring {
     /**
      * Constructs a new [[Ring]].
      *
-     * @param extents The extents of the enclosing layer.
-     * @param vertexStride The stride of this elements stored in 'contour'.
-     * @param contour The [[Array]] containing the projected world coordinates.
+     * @param extents - The extents of the enclosing layer.
+     * @param vertexStride - The stride of this elements stored in 'contour'.
+     * @param contour - The [[Array]] containing the projected world coordinates.
      */
     constructor(
         readonly extents: number,
@@ -125,15 +125,15 @@ export interface OmvDataAdapter {
     /**
      * Checks if the given data can be processed by this OmvDataAdapter.
      *
-     * @param data The raw data to adapt.
+     * @param data - The raw data to adapt.
      */
     canProcess(data: ArrayBufferLike | {}): boolean;
 
     /**
      * Process the given raw data.
      *
-     * @param data The raw data to process.
-     * @param decodeInfo The [[DecodeInfo]] of the tile to process.
+     * @param data - The raw data to process.
+     * @param decodeInfo - The [[DecodeInfo]] of the tile to process.
      */
     process(data: ArrayBufferLike | {}, decodeInfo: DecodeInfo): void;
 }
@@ -174,8 +174,8 @@ export class OmvDecoder implements IGeometryProcessor {
      * Given a tile and a protobuffer, it returns a decoded tile and it creates the geometries that
      * belong to it.
      *
-     * @param tileKey The tile to be decoded.
-     * @param data The protobuffer to decode from.
+     * @param tileKey - The tile to be decoded.
+     * @param data - The protobuffer to decode from.
      * @returns A [[DecodedTile]]
      */
     getDecodedTile(tileKey: TileKey, data: ArrayBufferLike | {}): DecodedTile {

@@ -9,7 +9,7 @@ import * as THREE from "three";
 
 /**
  * Determines whether a position in NDC (Normalized Device Coordinates) is inside the screen.
- * @param ndc The position to check.
+ * @param ndc - The position to check.
  */
 function isOnScreen(ndc: THREE.Vector3) {
     return ndc.z > -1 && ndc.z < 1 && ndc.x >= -1 && ndc.x <= 1 && ndc.y >= -1 && ndc.y <= 1;
@@ -29,7 +29,7 @@ export class ScreenProjector {
     /**
      * Constructs a new `ScreenProjector`.
      *
-     * @param m_camera Camera to project against.
+     * @param m_camera - Camera to project against.
      */
     constructor(private m_camera: THREE.Camera) {}
 

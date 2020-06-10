@@ -36,7 +36,7 @@ export interface InterpolatedPropertyDefinition<T> {
 
 /**
  * Checks if a property is interpolated.
- * @param p property to be checked
+ * @param p - property to be checked
  */
 export function isInterpolatedPropertyDefinition<T>(
     p: any
@@ -60,7 +60,7 @@ export function isInterpolatedPropertyDefinition<T>(
 /**
  * Converts an [[InterpolatedPropertyDefinition]] to a [[JsonExpr]].
  *
- * @param property A valid [[InterpolatedPropertyDefinition]]
+ * @param property - A valid [[InterpolatedPropertyDefinition]]
  */
 export function interpolatedPropertyDefinitionToJsonExpr(
     property: InterpolatedPropertyDefinition<any>

@@ -32,7 +32,7 @@ export class MapTileCuller {
     /**
      * Constructs a `MapTileCuller`.
      *
-     * @param m_camera A `THREE.Camera`.
+     * @param m_camera - A `THREE.Camera`.
      */
     constructor(private m_camera: THREE.Camera) {}
 
@@ -64,7 +64,7 @@ export class MapTileCuller {
     /**
      * Checks if the tile's bounding box intersects with the current view's frustum.
      *
-     * @param tileBounds The bounding box for the tile.
+     * @param tileBounds - The bounding box for the tile.
      */
     frustumIntersectsTileBox(tileBounds: THREE.Box3): boolean {
         const globalFrustumMin = this.m_globalFrustumMin;

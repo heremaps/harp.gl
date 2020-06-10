@@ -83,8 +83,8 @@ export interface MaterialOptions {
 /**
  * Create a material, depending on the rendering technique provided in the options.
  *
- * @param options The material options the subsequent functions need.
- * @param materialUpdateCallback Optional callback when the material gets updated,
+ * @param options - The material options the subsequent functions need.
+ * @param materialUpdateCallback - Optional callback when the material gets updated,
  *                               e.g. after texture loading.
  *
  * @returns new material instance that matches `technique.name`
@@ -232,7 +232,7 @@ export function createMaterial(
 /**
  * Returns a [[THREE.BufferAttribute]] created from a provided [[BufferAttribute]] object.
  *
- * @param attribute BufferAttribute a WebGL compliant buffer
+ * @param attribute - BufferAttribute a WebGL compliant buffer
  */
 export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttribute {
     switch (attribute.type) {
@@ -284,7 +284,7 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
 
 /**
  * Determines if a technique uses THREE.Object3D instances.
- * @param technique The technique to check.
+ * @param technique - The technique to check.
  * @returns true if technique uses THREE.Object3D, false otherwise.
  */
 export function usesObject3D(technique: Technique): boolean {
@@ -301,11 +301,11 @@ export function usesObject3D(technique: Technique): boolean {
 /**
  * Builds the object associated with the given technique.
  *
- * @param technique The technique.
- * @param geometry The object's geometry.
- * @param material The object's material.
- * @param tile The tile where the object is located.
- * @param elevationEnabled True if elevation is enabled, false otherwise.
+ * @param technique - The technique.
+ * @param geometry - The object's geometry.
+ * @param material - The object's material.
+ * @param tile - The tile where the object is located.
+ * @param elevationEnabled - True if elevation is enabled, false otherwise.
  */
 export function buildObject(
     technique: Technique,
@@ -387,8 +387,8 @@ export type MaterialConstructor = new (params?: {}) => THREE.Material;
 /**
  * Returns a [[MaterialConstructor]] basing on provided technique object.
  *
- * @param technique [[Technique]] object which the material will be based on.
- * @param shadowsEnabled Whether the material can accept shadows, this is required for some
+ * @param technique - [[Technique]] object which the material will be based on.
+ * @param shadowsEnabled - Whether the material can accept shadows, this is required for some
  * techniques to decide which material to create.
  */
 export function getMaterialConstructor(
@@ -582,8 +582,8 @@ export function buildMetricValueEvaluator(
  * Function takes care about property parsing, interpolation and encoding if neccessary.
  *
  * @see ColorUtils
- * @param technique the technique where we search for base (transparency) color value
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param technique - the technique where we search for base (transparency) color value
+ * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or `undefined` if
  * base color property is not defined in the technique passed.
  */
@@ -598,8 +598,8 @@ export function evaluateBaseColorProperty(technique: Technique, env: Env): numbe
 /**
  * Apply [[ShaderTechnique]] parameters to material.
  *
- * @param technique the [[ShaderTechnique]] which requires special handling
- * @param material material to which technique will be applied
+ * @param technique - the [[ShaderTechnique]] which requires special handling
+ * @param material - material to which technique will be applied
  */
 function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: THREE.Material) {
     if (technique.transparent) {
@@ -649,10 +649,10 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
  * @note Special handling for material attributes of [[THREE.Color]] type is provided thus it
  * does not provide constructor that would take [[string]] or [[number]] values.
  *
- * @param material target material
- * @param propertyName material and technique parameter name (or index) that is to be transferred
- * @param techniqueAttrValue technique property value which will be applied to material attribute
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param material - target material
+ * @param propertyName - material and technique parameter name (or index) that is to be transferred
+ * @param techniqueAttrValue - technique property value which will be applied to material attribute
+ * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function applyTechniquePropertyToMaterial(
     material: THREE.Material,
@@ -682,11 +682,11 @@ function applyTechniquePropertyToMaterial(
  * not the base ones that may contain transparency information. Such colors should be processed
  * with [[applyTechniqueBaseColorToMaterial]] function.
  *
- * @param technique an technique the applied color comes from
- * @param material the material to which color is applied
- * @param prop technique property (color) name
- * @param value color value
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param technique - an technique the applied color comes from
+ * @param material - the material to which color is applied
+ * @param prop - technique property (color) name
+ * @param value - color value
+ * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function applySecondaryColorToMaterial(
     materialColor: THREE.Color,
@@ -718,11 +718,11 @@ export function applySecondaryColorToMaterial(
  * since their effect on material properties like [[THREE.Material.opacity]] and
  * [[THREE.Material.transparent]] could be overridden by corresponding technique params.
  *
- * @param technique an technique the applied color comes from
- * @param material the material to which color is applied
- * @param prop technique property (color) name
- * @param value color value in custom number format
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param technique - an technique the applied color comes from
+ * @param material - the material to which color is applied
+ * @param prop - technique property (color) name
+ * @param value - color value in custom number format
+ * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function applyBaseColorToMaterial(
     material: THREE.Material,
@@ -764,8 +764,8 @@ export function applyBaseColorToMaterial(
  * string encoded numbers.
  *
  * @note Use with care, because function does not recognize property type.
- * @param value the value of color property defined in technique
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param value - the value of color property defined in technique
+ * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function evaluateProperty(value: any, env?: Env): any {
     if (env !== undefined && Expr.isExpr(value)) {
@@ -781,8 +781,8 @@ function evaluateProperty(value: any, env?: Env): any {
  * string encoded colors.
  *
  * @note Use with care, because function does not recognize property type.
- * @param value the value of color property defined in technique
- * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param value - the value of color property defined in technique
+ * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function evaluateColorProperty(value: Value, env?: Env): number | undefined {
     value = evaluateProperty(value, env);
@@ -812,7 +812,7 @@ export function evaluateColorProperty(value: Value, env?: Env): number | undefin
  * The color value may be encoded in [[number]], [[string]] or even as
  * [[InterpolateProperty]].
  *
- * @param technique The techniqe where we seach for base color property.
+ * @param technique - The techniqe where we seach for base color property.
  * @returns The value of technique color used to apply transparency.
  */
 function getBaseColorProp(technique: Technique): any {

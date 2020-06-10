@@ -375,9 +375,9 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     /**
      * Constructs a new [[OmvProtobufDataAdapter]].
      *
-     * @param processor The [[IGeometryProcessor]] used to process the data.
-     * @param dataFilter The [[OmvFeatureFilter]] used to filter features.
-     * @param logger The [[ILogger]] used to log diagnostic messages.
+     * @param processor - The [[IGeometryProcessor]] used to process the data.
+     * @param dataFilter - The [[OmvFeatureFilter]] used to filter features.
+     * @param logger - The [[ILogger]] used to log diagnostic messages.
      */
     constructor(processor: IGeometryProcessor, dataFilter?: OmvFeatureFilter, logger?: ILogger) {
         this.m_processor = processor;
@@ -409,8 +409,8 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     /**
      * Processes the given data payload using this adapter's [[IGeometryProcessor]].
      *
-     * @param data The data payload to process.
-     * @param decodeInfo The [[DecodedInfo]] of the tile to proceess.
+     * @param data - The data payload to process.
+     * @param decodeInfo - The [[DecodedInfo]] of the tile to proceess.
      */
     process(data: ArrayBufferLike, decodeInfo: DecodeInfo) {
         const { tileKey } = decodeInfo;
@@ -425,7 +425,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     /**
      * Visits the OMV layer.
      *
-     * @param layer The OMV layer to process.
+     * @param layer - The OMV layer to process.
      */
     visitLayer(layer: com.mapbox.pb.Tile.ILayer): boolean {
         this.m_layer = layer;
@@ -446,7 +446,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     /**
      * Visits point features.
      *
-     * @param feature The OMV point features to process.
+     * @param feature - The OMV point features to process.
      */
     visitPointFeature(feature: com.mapbox.pb.Tile.IFeature): void {
         if (feature.geometry === undefined) {
@@ -493,7 +493,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     /**
      * Visits the line features.
      *
-     * @param feature The line features to process.
+     * @param feature - The line features to process.
      */
     visitLineFeature(feature: com.mapbox.pb.Tile.IFeature): void {
         if (feature.geometry === undefined) {
@@ -544,7 +544,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     /**
      * Visits the polygon features.
      *
-     * @param feature The polygon features to process.
+     * @param feature - The polygon features to process.
      */
     visitPolygonFeature(feature: com.mapbox.pb.Tile.IFeature): void {
         if (feature.geometry === undefined) {

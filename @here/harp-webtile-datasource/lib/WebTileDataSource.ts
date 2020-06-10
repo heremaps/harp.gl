@@ -294,7 +294,7 @@ export class WebTileDataSource extends DataSource {
     /**
      * Constructs a new `WebTileDataSource`.
      *
-     * @param m_options Represents the [[WebTileDataSourceParameters]].
+     * @param m_options - Represents the [[WebTileDataSourceParameters]].
      */
     constructor(private readonly m_options: WebTileDataSourceParameters) {
         super({ name: "webtile", minDataLevel: 1, maxDataLevel: 20 });

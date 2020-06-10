@@ -110,8 +110,8 @@ export interface LimitedWorkerScope {
  * 'microtask' after construction (which indeed can happen in real environment, when worker code is
  * already available and computer is slow).
  *
- * @param workerConstructorStub worker constructor stub to be instrumented
- * @param workerScript  fake worker script to be executed
+ * @param workerConstructorStub - worker constructor stub to be instrumented
+ * @param workerScript -  fake worker script to be executed
  */
 export function willExecuteWorkerScript(
     workerConstructorStub: any,
@@ -201,7 +201,7 @@ class FakeWorkerSelf {
      *
      * Call to [[restoreSelf]] call is mandatory, otherwise strange things happen.
      *
-     * @param newSelf
+     * @param newSelf -
      */
     static fakeSelf(newSelf: LimitedWorkerScope) {
         if (!this.shouldRestoreSelf) {

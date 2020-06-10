@@ -48,7 +48,7 @@ class DebugOption extends THREE.EventDispatcher {
     /**
      * Constructs the `DebugOption`.
      *
-     * @param value The value of the option.
+     * @param value - The value of the option.
      */
     constructor(public value: any) {
         super();
@@ -57,8 +57,8 @@ class DebugOption extends THREE.EventDispatcher {
     /**
      * Updates the value of a given option.
      *
-     * @param value The new value for the option.
-     * @param name The name of the option to set.
+     * @param value - The new value for the option.
+     * @param name - The name of the option to set.
      */
     set(value: any, name: string) {
         this.value = value;
@@ -92,8 +92,8 @@ export class DebugContext {
      * not been changed. The change listeners provided here are not called during this set
      * operation.
      *
-     * @param name Name of the option.
-     * @param value Value of the option.
+     * @param name - Name of the option.
+     * @param value - Value of the option.
      */
     setValue(name: string, value: any): void {
         let opt = this.m_optionsMap.get(name);
@@ -108,7 +108,7 @@ export class DebugContext {
     /**
      * Gets the option value.
      *
-     * @param name Name of option.
+     * @param name - Name of option.
      */
     getValue(name: string): any {
         const opt = this.m_optionsMap.get(name);
@@ -118,7 +118,7 @@ export class DebugContext {
     /**
      * Determines if the option is registered.
      *
-     * @param name Name of option.
+     * @param name - Name of option.
      */
     hasOption(name: string): boolean {
         return this.m_optionsMap.get(name) !== undefined;
@@ -127,8 +127,8 @@ export class DebugContext {
     /**
      * Adds a listener to a debug option.
      *
-     * @param name Name of the option that requires a listener.
-     * @param listener The listener function to add.
+     * @param name - Name of the option that requires a listener.
+     * @param listener - The listener function to add.
      */
     addEventListener(name: string, listener: (event: THREE.Event) => void) {
         const opt = this.m_optionsMap.get(name);
@@ -142,8 +142,8 @@ export class DebugContext {
     /**
      * Checks for a listener in a debug option.
      *
-     * @param name Name of the option to check for.
-     * @param listener The listener function to check for.
+     * @param name - Name of the option to check for.
+     * @param listener - The listener function to check for.
      */
     hasEventListener(name: string, listener: (event: THREE.Event) => void) {
         const opt = this.m_optionsMap.get(name);
@@ -157,8 +157,8 @@ export class DebugContext {
     /**
      * Removes a listener from a debug option.
      *
-     * @param name Name of the option from which to remove a listener.
-     * @param listener The listener function to remove.
+     * @param name - Name of the option from which to remove a listener.
+     * @param listener - The listener function to remove.
      */
     removeEventListener(name: string, listener: (event: THREE.Event) => void) {
         const opt = this.m_optionsMap.get(name);

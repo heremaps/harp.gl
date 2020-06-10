@@ -23,7 +23,7 @@ export class TilerService extends WorkerService {
     /**
      * Start a [[TilerService]].
      *
-     * @param serviceId Service id. Must be unique.
+     * @param serviceId - Service id. Must be unique.
      */
     static start(serviceId: string) {
         return new TilerService(serviceId);
@@ -33,7 +33,7 @@ export class TilerService extends WorkerService {
     /**
      * Set up the `TilerService`. The name of the service must be unique
      *
-     * @param serviceId Service id. Must be unique.
+     * @param serviceId - Service id. Must be unique.
      */
     constructor(readonly serviceId: string) {
         super(serviceId);
@@ -42,7 +42,7 @@ export class TilerService extends WorkerService {
     /**
      * Handle incoming request messages. Identifies message type and processes the request.
      *
-     * @param request [[WorkerTilerProtocol]] request.
+     * @param request - [[WorkerTilerProtocol]] request.
      * @returns A promise which resolves to a [[WorkerServiceResponse]].
      * @override
      */

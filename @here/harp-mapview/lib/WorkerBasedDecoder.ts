@@ -40,8 +40,8 @@ export class WorkerBasedDecoder implements ITileDecoder {
     /**
      * Creates a new `WorkerBasedDecoder`.
      *
-     * @param workerSet [[ConcurrentWorkerSet]] this tiler will live in.
-     * @param decoderServiceType Service type identifier.
+     * @param workerSet - [[ConcurrentWorkerSet]] this tiler will live in.
+     * @param decoderServiceType - Service type identifier.
      */
     constructor(
         private readonly workerSet: ConcurrentWorkerSet,
@@ -153,9 +153,9 @@ export class WorkerBasedDecoder implements ITileDecoder {
      *
      * Broadcasts [[ConfigurationMessage]] to all [[TileDecoderService]]s running in worker pool.
      *
-     * @param styleSet  new [[StyleSet]], undefined means no change
-     * @param languages new list of languages
-     * @param options   new options, undefined options are not changed
+     * @param styleSet -  new [[StyleSet]], undefined means no change
+     * @param languages - new list of languages
+     * @param options -   new options, undefined options are not changed
      */
     configure(
         styleSet?: StyleSet,

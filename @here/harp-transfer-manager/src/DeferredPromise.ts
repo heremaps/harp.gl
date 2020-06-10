@@ -21,7 +21,7 @@ export class DeferredPromise<T> {
 
     /**
      * Constructs a new [[DeferredPromise]]
-     * @param executor Async function that should be executed at a later point in time.
+     * @param executor - Async function that should be executed at a later point in time.
      */
     constructor(private readonly executor: () => Promise<T>) {
         this.promise = new Promise<T>((resolve, reject) => {

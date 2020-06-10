@@ -14,20 +14,20 @@ export namespace Math2D {
          * Alternative 2D box object with less memory impact (four numbers instead of two min/max
          * objects with two numbers each). Should be faster.
          *
-         * @param x New X value.
-         * @param y New y value.
-         * @param w New w value.
-         * @param h New h value.
+         * @param x - New X value.
+         * @param y - New y value.
+         * @param w - New w value.
+         * @param h - New h value.
          */
         constructor(public x = 0, public y = 0, public w = 0, public h = 0) {}
 
         /**
          * Set new values to all properties of the box.
          *
-         * @param x New X value.
-         * @param y New y value.
-         * @param w New w value.
-         * @param h New h value.
+         * @param x - New X value.
+         * @param y - New y value.
+         * @param w - New w value.
+         * @param h - New h value.
          */
         set(x: number, y: number, w: number, h: number) {
             this.x = x;
@@ -39,8 +39,8 @@ export namespace Math2D {
         /**
          * Test box for inclusion of point.
          *
-         * @param x X coordinate of point.
-         * @param y Y coordinate of point.
+         * @param x - X coordinate of point.
+         * @param y - Y coordinate of point.
          */
         contains(x: number, y: number): boolean {
             return this.x <= x && this.x + this.w >= x && this.y <= y && this.y + this.h >= y;
@@ -49,7 +49,7 @@ export namespace Math2D {
         /**
          * Test box for inclusion of another box.
          *
-         * @param other Box 2 to test for inclusion.
+         * @param other - Box 2 to test for inclusion.
          */
         containsBox(other: Box): boolean {
             const xmax = other.x + other.w;
@@ -65,7 +65,7 @@ export namespace Math2D {
         /**
          * Test two boxes for intersection.
          *
-         * @param other Box 2 to test for intersection.
+         * @param other - Box 2 to test for intersection.
          */
         intersects(other: Box): boolean {
             return (
@@ -90,10 +90,10 @@ export namespace Math2D {
     /**
      * Compute squared distance between two 2D points `a` and `b`.
      *
-     * @param ax Point a.x
-     * @param ay Point a.y
-     * @param bx Point b.x
-     * @param by Point b.y
+     * @param ax - Point a.x
+     * @param ay - Point a.y
+     * @param bx - Point b.x
+     * @param by - Point b.y
      * @returns Squared distance between the two points
      */
     export function distSquared(ax: number, ay: number, bx: number, by: number): number {
@@ -103,7 +103,7 @@ export namespace Math2D {
     /**
      * Computes the squared length of a line.
      *
-     * @param line An array of that forms a line via [x,y,z,x,y,z,...] tuples.
+     * @param line - An array of that forms a line via [x,y,z,x,y,z,...] tuples.
      */
     export function computeSquaredLineLength(line: number[]): number {
         let squaredLineLength: number = 0;
@@ -120,12 +120,12 @@ export namespace Math2D {
     /**
      * Compute squared distance between a 2D point and a 2D line segment.
      *
-     * @param px Test point X
-     * @param py Test point y
-     * @param l0x Line segment start X
-     * @param l0y Line segment start Y
-     * @param l1x Line segment end X
-     * @param l1y Line segment end Y
+     * @param px - Test point X
+     * @param py - Test point y
+     * @param l0x - Line segment start X
+     * @param l0y - Line segment start Y
+     * @param l1x - Line segment end X
+     * @param l1y - Line segment end Y
      * @returns Squared distance between point and line segment
      */
     export function distToSegmentSquared(

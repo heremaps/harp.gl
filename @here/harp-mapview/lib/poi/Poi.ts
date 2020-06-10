@@ -105,7 +105,7 @@ export interface ImageOptions {
 //     /**
 //      * Setup a box with size and padding.
 //      *
-//      * @param box Target box to set up.
+//      * @param box - Target box to set up.
 //      */
 //     getBox(box: THREE.Box2) {}
 
@@ -238,7 +238,7 @@ export interface ImageOptions {
 //     /**
 //      * Select the level of detail that should be used.
 //      *
-//      * @param levelOfDetail Level of detail to render.
+//      * @param levelOfDetail - Level of detail to render.
 //      */
 //     selectIcon(levelOfDetail: number) {}
 // }

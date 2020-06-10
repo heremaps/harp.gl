@@ -61,9 +61,9 @@ document.body.appendChild(magnifier);
  * When user hover mouse over any of images, an popup with information given pixel will be shown.
  * If window has focus, one can also move focus point with keyboard.
  *
- * @param actual
- * @param expected
- * @param diff
+ * @param actual -
+ * @param expected -
+ * @param diff -
  */
 export function installMagnifier(
     actual: HTMLImageElement,

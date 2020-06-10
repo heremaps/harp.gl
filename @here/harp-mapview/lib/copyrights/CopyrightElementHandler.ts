@@ -25,8 +25,8 @@ export class CopyrightElementHandler {
      * Install [[CopyrightElementHandler]] on DOM element and - optionally - attach to a [[MapView]]
      * instance.
      *
-     * @param element HTML DOM element or a HTML DOM element id
-     * @param mapView, optional, [[attach]] to this [[MapView]]
+     * @param element - HTML DOM element or a HTML DOM element id
+     * @param mapView -, optional, [[attach]] to this [[MapView]]
      */
     static install(element: string | HTMLElement, mapView?: MapView): CopyrightElementHandler {
         return new CopyrightElementHandler(element, mapView);
@@ -50,8 +50,8 @@ export class CopyrightElementHandler {
      * Note: Generally, the static [[install]] method can be used to create and attach a new
      * `CopyrightElementHandler` to a [[MapView]]
      *
-     * @param element HTML DOM element or a HTML DOM element id
-     * @param mapView optional, [[attach]] to this [[MapView]] instance
+     * @param element - HTML DOM element or a HTML DOM element id
+     * @param mapView - optional, [[attach]] to this [[MapView]] instance
      */
     constructor(element: string | HTMLElement, mapView?: MapView) {
         if (typeof element === "string") {

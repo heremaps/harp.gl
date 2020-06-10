@@ -112,7 +112,7 @@ class ImageBitmapEncoder implements ImageEncoder {
      * or if no extension is provided the original image's MIME type which, if not available,
      * defaults to PNG).
      *
-     * @param filePath file storage path.
+     * @param filePath - file storage path.
      * @returns Promise.
      */
     write(filePath: string): Promise<void> {
