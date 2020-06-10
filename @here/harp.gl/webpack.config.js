@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Licensed under Apache 2.0, see full license in LICENSE
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//@ts-check
+
 const fs = require("fs");
 const webpack = require("webpack");
 const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
@@ -8,6 +16,7 @@ const merge = require("webpack-merge");
 const isProduction = process.env.NODE_ENV === "production";
 const bundleSuffix = isProduction ? ".min" : "";
 
+/** @type{webpack.Configuration} */
 const commonConfig = {
     devtool: "source-map",
     resolve: {
@@ -47,6 +56,7 @@ const commonConfig = {
     performance: {
         hints: false
     },
+    // @ts-ignore
     mode: process.env.NODE_ENV || "development"
 };
 
@@ -61,6 +71,7 @@ const mapComponentConfig = merge(commonConfig, {
             three: "THREE"
         },
         function(context, request, callback) {
+            // @ts-ignore
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
         }
     ]
@@ -76,6 +87,7 @@ const mapComponentDecoderConfig = merge(commonConfig, {
             three: "THREE"
         },
         function(context, request, callback) {
+            // @ts-ignore
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
         }
     ]
