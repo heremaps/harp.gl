@@ -1255,7 +1255,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
         const fillTechnique = technique as FillTechnique;
-        const boundaryWalls = extrudedPolygonTechnique.boundaryWalls !== false;
+        const boundaryWalls = extrudedPolygonTechnique.boundaryWalls === true;
 
         const isFilled = isFillTechnique(technique);
         const texCoordType = this.getTextureCoordinateType(technique);
