@@ -3,56 +3,109 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import {
+    EdgeMaterial,
+    ExtrusionFeatureDefs,
+    FadingFeature,
+    MixinShaderProperties,
+    UniformsType
+} from "@here/harp-materials";
 import { chainCallbacks } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { DepthPrePassProperties } from "../DepthPrePass";
+
 const vertexShaderChunk = `
-    uniform float outlineThickness;
+#ifdef USE_EXTRUSION
+  #ifndef HAS_EXTRUSION_PARS_VERTEX
+    #include <extrusion_pars_vertex>
+  #endif
+#endif
 
-    vec4 calculateOutline( vec4 pos, vec3 objectNormal, vec4 skinned ) {
+#ifdef USE_FADING
+  #include <fading_pars_vertex>
+#endif
 
-        float thickness = outlineThickness;
-        const float ratio = 1.0;
-        vec4 pos2 = projectionMatrix * modelViewMatrix * vec4( skinned.xyz + objectNormal, 1.0 );
-        vec4 norm = normalize( pos - pos2 );
-        return pos + norm * thickness * pos.w * ratio;
+uniform float outlineThickness;
 
-    }`;
+vec4 calculateOutline( vec4 pos, vec3 objectNormal, vec4 skinned ) {
+    float thickness = outlineThickness;
+    const float ratio = 1.0;
+    vec4 pos2 = projectionMatrix * modelViewMatrix * vec4( skinned.xyz + objectNormal, 1.0 );
+    vec4 norm = normalize( pos - pos2 );
+    return pos + norm * thickness * pos.w * ratio;
+}`;
 
 const vertexShaderChunk2 = `
-    #if ! defined( LAMBERT ) && ! defined( PHONG ) && ! defined( TOON ) && ! defined( STANDARD )
-        #ifndef USE_ENVMAP
-            vec3 objectNormal = normalize( normal );
-        #endif
+#if ! defined( LAMBERT ) && ! defined( PHONG ) && ! defined( TOON ) && ! defined( STANDARD )
+    #ifndef USE_ENVMAP
+        vec3 objectNormal = normalize( normal );
     #endif
+#endif
 
-    #ifdef FLIP_SIDED
-        objectNormal = -objectNormal;
-    #endif
+#ifdef FLIP_SIDED
+    objectNormal = -objectNormal;
+#endif
 
-    #ifdef DECLARE_TRANSFORMED
-        vec3 transformed = vec3( position );
-    #endif
+#ifdef DECLARE_TRANSFORMED
+    vec3 transformed = vec3( position );
+#endif
 
-    gl_Position = calculateOutline( gl_Position, objectNormal, vec4( transformed, 1.0 ) );
+#ifdef USE_EXTRUSION
+ #ifndef HAS_EXTRUSION_VERTEX
+  #include <extrusion_vertex>
+ #endif
+#endif
 
-    #include <fog_vertex>`;
+#ifdef USE_FADING
+  #include <fading_vertex>
+#endif
+
+#ifdef USE_EXTRUSION
+  gl_Position = calculateOutline( projectionMatrix * modelViewMatrix * vec4( transformed, 1.0 ),
+      objectNormal, vec4( transformed, 1.0 ) );
+#else
+  gl_Position = calculateOutline( gl_Position, objectNormal, vec4( transformed, 1.0 ) );
+#endif
+
+#include <fog_vertex>`;
 
 const fragmentShader = `
-    #include <common>
-    #include <fog_pars_fragment>
+#include <common>
+#include <fog_pars_fragment>
 
-    uniform vec3 outlineColor;
-    uniform float outlineAlpha;
+#ifdef USE_EXTRUSION
+  #include <extrusion_pars_fragment>
+#endif
 
-    void main() {
+#ifdef USE_FADING
+  #include <fading_pars_fragment>
+#endif
 
-        gl_FragColor = vec4( outlineColor, outlineAlpha );
+uniform vec3 outlineColor;
+uniform float outlineAlpha;
 
-        #include <fog_fragment>
+void main() {
 
-    }`;
+    gl_FragColor = vec4( outlineColor, outlineAlpha );
 
+    #include <fog_fragment>
+
+    #ifdef USE_EXTRUSION
+      #include <extrusion_fragment>
+    #endif
+
+    #ifdef USE_FADING
+      #include <fading_fragment>
+    #endif
+}`;
+
+/**
+ * Effect to render bold lines around extruded polygons.
+ *
+ * Implemented by rendering the mesh geometries with an outline material before rendering them
+ * again with their original.
+ */
 export class OutlineEffect {
     enabled: boolean = true;
 
@@ -193,16 +246,27 @@ export class OutlineEffect {
     }
 
     private createMaterial(originalMaterial: THREE.Material) {
+        // EdgeMaterial or depth prepass material should not be used for outlines.
+        if (
+            originalMaterial instanceof EdgeMaterial ||
+            (originalMaterial as DepthPrePassProperties).isDepthPrepassMaterial === true
+        ) {
+            return this.createInvisibleMaterial();
+        }
+
         const shaderID = this.m_shaderIDs[originalMaterial.type];
-        let originalUniforms;
         let originalVertexShader;
+
+        let originalUniforms: UniformsType | undefined =
+            (originalMaterial as MixinShaderProperties).shaderUniforms !== undefined
+                ? (originalMaterial as MixinShaderProperties).shaderUniforms
+                : (originalMaterial as THREE.ShaderMaterial).uniforms;
 
         if (shaderID !== undefined) {
             const shader = THREE.ShaderLib[shaderID];
             originalUniforms = shader.uniforms;
             originalVertexShader = shader.vertexShader;
         } else if ((originalMaterial as any).isRawShaderMaterial === true) {
-            originalUniforms = (originalMaterial as any).uniforms;
             originalVertexShader = (originalMaterial as any).vertexShader;
 
             if (
@@ -212,13 +276,18 @@ export class OutlineEffect {
                 return this.createInvisibleMaterial();
             }
         } else if ((originalMaterial as any).isShaderMaterial === true) {
-            originalUniforms = (originalMaterial as any).uniforms;
             originalVertexShader = (originalMaterial as any).vertexShader;
         } else {
             return this.createInvisibleMaterial();
         }
 
-        const uniforms = { ...originalUniforms, ...this.m_uniformsChunk };
+        const isExtrusionMaterial =
+            (originalMaterial as MixinShaderProperties).shaderUniforms !== undefined &&
+            (originalMaterial as any).shaderUniforms.extrusionRatio !== undefined;
+
+        const isFadingMaterial = FadingFeature.isDefined(originalMaterial as FadingFeature);
+
+        const uniforms: UniformsType = { ...originalUniforms, ...this.m_uniformsChunk };
 
         const vertexShader = originalVertexShader
             // put vertexShaderChunk right before "void main() {...}"
@@ -231,7 +300,7 @@ export class OutlineEffect {
             // TODO: consider safer way
             .replace(/#include\s+<[\w_]*light[\w_]*>/g, "");
 
-        const defines = {};
+        const defines: any = {};
 
         if (
             !/vec3\s+transformed\s*=/.test(originalVertexShader) &&
@@ -240,7 +309,30 @@ export class OutlineEffect {
             (defines as any).DECLARE_TRANSFORMED = true;
         }
 
-        return new THREE.ShaderMaterial({
+        if (isExtrusionMaterial) {
+            // If the original material is setup for animated extrusion (like buildings), add the
+            // uniform describing the extrusion to the outline material.
+            uniforms.extrusionRatio = { value: ExtrusionFeatureDefs.DEFAULT_RATIO_MIN };
+            defines.USE_EXTRUSION = 1;
+        }
+
+        if (isFadingMaterial) {
+            uniforms.fadeNear = {
+                value:
+                    originalUniforms!.fadeNear !== undefined
+                        ? originalUniforms!.fadeNear.value
+                        : FadingFeature.DEFAULT_FADE_NEAR
+            };
+            uniforms.fadeFar = {
+                value:
+                    originalUniforms!.fadeFar !== undefined
+                        ? originalUniforms!.fadeFar.value
+                        : FadingFeature.DEFAULT_FADE_FAR
+            };
+            defines.USE_FADING = 1;
+        }
+
+        const outlineMaterial = new THREE.ShaderMaterial({
             defines,
             uniforms,
             vertexShader,
@@ -251,11 +343,19 @@ export class OutlineEffect {
             morphTargets: false,
             morphNormals: false,
             fog: false,
+            blending: THREE.CustomBlending,
+            blendSrc: THREE.SrcAlphaFactor,
+            blendDst: THREE.OneMinusSrcAlphaFactor,
+            blendSrcAlpha: THREE.OneFactor,
+            blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
             transparent: true,
             polygonOffset: true,
-            polygonOffsetFactor: 3.0,
-            polygonOffsetUnits: 1.0
+            // Extreme values used here to reduce artifacts, especially at tile borders.
+            polygonOffsetFactor: 10.0,
+            polygonOffsetUnits: 30.0
         });
+
+        return outlineMaterial;
     }
 
     private getOutlineMaterialFromCache(originalMaterial: THREE.Material) {
@@ -360,18 +460,44 @@ export class OutlineEffect {
     private updateUniforms(material: THREE.Material, originalMaterial: THREE.Material) {
         const outlineParameters = originalMaterial.userData.outlineParameters;
 
-        (material as any).uniforms.outlineAlpha.value = originalMaterial.opacity;
+        const outlineUniforms = (material as THREE.ShaderMaterial).uniforms;
+        outlineUniforms.outlineAlpha.value = originalMaterial.opacity;
+
+        const originalUniforms =
+            (originalMaterial as any).shaderUniforms !== undefined
+                ? (originalMaterial as any).shaderUniforms
+                : (originalMaterial as any).uniforms;
 
         if (outlineParameters !== undefined) {
             if (outlineParameters.thickness !== undefined) {
-                (material as any).uniforms.outlineThickness.value = outlineParameters.thickness;
+                outlineUniforms.outlineThickness.value = outlineParameters.thickness;
             }
             if (outlineParameters.color !== undefined) {
-                (material as any).uniforms.outlineColor.value.fromArray(outlineParameters.color);
+                outlineUniforms.outlineColor.value.fromArray(outlineParameters.color);
             }
             if (outlineParameters.alpha !== undefined) {
-                (material as any).uniforms.outlineAlpha.value = outlineParameters.alpha;
+                outlineUniforms.outlineAlpha.value = outlineParameters.alpha;
             }
+        }
+
+        // If the original material is setup for animated extrusion (like buildings), update the
+        // uniforms in the outline material.
+        if (originalUniforms !== undefined && originalUniforms.extrusionRatio !== undefined) {
+            const value = (originalMaterial as any).shaderUniforms.extrusionRatio.value;
+            (material as any).extrusionRatio = value;
+            (material as any).uniforms.extrusionRatio.value =
+                value !== undefined ? value : ExtrusionFeatureDefs.DEFAULT_RATIO_MIN;
+        }
+
+        // Copy available fading params to the outline material.
+        if (
+            material.defines.USE_FADING !== undefined &&
+            originalUniforms.fadeNear !== undefined &&
+            originalUniforms.fadeFar !== undefined &&
+            originalUniforms.fadeFar.value >= 0.0
+        ) {
+            outlineUniforms.fadeNear.value = originalUniforms.fadeNear.value;
+            outlineUniforms.fadeFar.value = originalUniforms.fadeFar.value;
         }
     }
 
@@ -395,16 +521,10 @@ export class OutlineEffect {
                     ? outlineParameters.visible
                     : true;
 
-            material.transparent =
-                outlineParameters.alpha !== undefined && outlineParameters.alpha < 1.0
-                    ? true
-                    : originalMaterial.transparent;
-
             if (outlineParameters.keepAlive !== undefined) {
                 this.m_cache[originalMaterial.uuid].keepAlive = outlineParameters.keepAlive;
             }
         } else {
-            material.transparent = originalMaterial.transparent;
             material.visible = originalMaterial.visible;
         }
 

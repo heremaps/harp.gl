@@ -78,7 +78,7 @@ export interface ExtrusionFeatureParameters {
  *
  * @hidden
  */
-interface UniformsType {
+export interface UniformsType {
     [index: string]: THREE.IUniform;
 }
 
@@ -124,7 +124,12 @@ export interface HiddenThreeJSMaterialProperties {
     onBeforeCompile?: CompileCallback;
 }
 
-interface MixinShaderProperties {
+/**
+ * Used internally.
+ *
+ * @hidden
+ */
+export interface MixinShaderProperties {
     /**
      * Used internally for material shader defines.
      */
@@ -437,6 +442,18 @@ export namespace FadingFeature {
             fadingMaterial.fadeFar !== undefined &&
             fadingMaterial.fadeFar > 0
         );
+    }
+
+    /**
+     * Checks if feature is defined based on feature params.
+     *
+     * Fading feature will be defined if fadeNear and fadeFar are defined, their values
+     * are not checked for reasonable values.
+     *
+     * @param fadingMaterial FadingFeature.
+     */
+    export function isDefined(fadingMaterial: FadingFeature) {
+        return fadingMaterial.fadeNear !== undefined && fadingMaterial.fadeFar !== undefined;
     }
 
     /**
