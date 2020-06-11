@@ -11,6 +11,8 @@ const MIN_BUILDING_HEIGHT_SQUARED =
 
 export default {
     extrusion_pars_vertex: `
+// Add define so we can check for it in the outline effect (see Outline.ts).
+#define HAS_EXTRUSION_PARS_VERTEX
 // Extrusion axis (xyz: vector, w: factor).
 attribute vec4 extrusionAxis;
 uniform float extrusionRatio;
@@ -22,6 +24,7 @@ varying float vExtrusionRatio;
 #endif
 `,
     extrusion_vertex: `
+#define HAS_EXTRUSION_VERTEX
 #ifdef ZFIGHTING_WORKAROUND
 // Cancel extrusionRatio (meaning, force to 1) if extrusionAxisLen < MIN_BUILDING_HEIGHT.
 const float MIN_BUILDING_HEIGHT_SQUARED = ${MIN_BUILDING_HEIGHT_SQUARED};

@@ -54,6 +54,16 @@ export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique,
 }
 
 /**
+ * Property identifying a material that is being used as a DepthPrePass material.
+ */
+export interface DepthPrePassProperties {
+    /**
+     * This material is a special depth prepass material.
+     */
+    isDepthPrepassMaterial?: true;
+}
+
+/**
  * Creates material for depth prepass.
  *
  * Creates material that writes only to the z-buffer. Updates the original material instance, to
@@ -69,7 +79,8 @@ export function createDepthPrePassMaterial(baseMaterial: THREE.Material): THREE.
     baseMaterial.colorWrite = true;
     enforceBlending(baseMaterial);
 
-    const depthPassMaterial = baseMaterial.clone();
+    const depthPassMaterial: THREE.Material & DepthPrePassProperties = baseMaterial.clone();
+    depthPassMaterial.isDepthPrepassMaterial = true;
     depthPassMaterial.depthWrite = true;
     depthPassMaterial.depthTest = true;
     depthPassMaterial.depthFunc = THREE.LessDepth;
