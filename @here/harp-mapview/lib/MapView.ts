@@ -101,7 +101,6 @@ if (isProduction) {
  * mesh.geoPosition = new GeoCoordinates(latitude, longitude, altitude);
  * mapView.mapAnchors.add(mesh);
  * ```
- *
  */
 export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
     /**
@@ -114,6 +113,24 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
      * @note By default all objects are pickable even if this flag is undefined.
      */
     pickable?: boolean;
+
+    /**
+     * The styleSet that owns this anchor.
+     *
+     * @remarks
+     * This property is used together with [[Theme.priorities]] to compute the render
+     * order of this anchor.
+     */
+    styleSet?: string;
+
+    /**
+     * The category of this style.
+     *
+     * @remarks
+     * This property is used together with [[Theme.priorities]] to compute the render
+     * order of this anchor.
+     */
+    category?: string;
 };
 
 /**
@@ -142,6 +159,24 @@ export type WorldAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
      * @note By default all objects are pickable even if this flag is undefined.
      */
     pickable?: boolean;
+
+    /**
+     * The styleSet that owns this anchor.
+     *
+     * @remarks
+     * This property is used together with [[Theme.priorities]] to compute the render
+     * order of this anchor.
+     */
+    styleSet?: string;
+
+    /**
+     * The category of this anchor.
+     *
+     * @remarks
+     * This property is used together with [[Theme.priorities]] to compute the render
+     * order of this anchor.
+     */
+    category?: string;
 };
 
 export enum MapViewEventNames {
@@ -3386,10 +3421,25 @@ export class MapView extends THREE.EventDispatcher {
             this.m_initialTextPlacementDone = true;
         }
 
+        const updateAnchorRenderOrder = (anchor: MapAnchor | WorldAnchor) => {
+            if (anchor.styleSet === undefined) {
+                return;
+            }
+
+            const priority = this.m_theme.priorities?.findIndex(
+                entry => entry.group === anchor.styleSet && entry.category === anchor.category
+            );
+
+            if (priority !== undefined && priority !== -1) {
+                anchor.renderOrder = (priority + 1) * 10;
+            }
+        };
+
         this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
             if (childObject.geoPosition !== undefined) {
                 this.projection.projectPoint(childObject.geoPosition, childObject.position);
                 childObject.position.sub(this.camera.position);
+                updateAnchorRenderOrder(childObject);
             }
         });
         this.m_worldAnchors.children.forEach((childObject: WorldAnchor) => {
@@ -3397,12 +3447,14 @@ export class MapView extends THREE.EventDispatcher {
                 const wp = childObject.worldPosition;
                 childObject.position.set(wp.x, wp.y, wp.z);
                 childObject.position.sub(this.camera.position);
+                updateAnchorRenderOrder(childObject);
             }
         });
         this.m_mapAnchorsOverlay.children.forEach((childObject: MapAnchor) => {
             if (childObject.geoPosition !== undefined) {
                 this.projection.projectPoint(childObject.geoPosition, childObject.position);
                 childObject.position.sub(this.camera.position);
+                updateAnchorRenderOrder(childObject);
             }
         });
 
