@@ -221,7 +221,8 @@ export namespace PickingExample {
 
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            authenticationCode: apikey
+            authenticationCode: apikey,
+            gatherFeatureAttributes: true
         });
 
         mapView.setDynamicProperty("selection", []);
