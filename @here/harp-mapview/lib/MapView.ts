@@ -798,6 +798,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_skyBackground?: SkyBackground;
     private m_createdLights?: THREE.Light[];
+    private m_overlayCreatedLights?: THREE.Light[];
 
     private readonly m_screenProjector: ScreenProjector;
     private readonly m_screenCollisions:
@@ -851,10 +852,12 @@ export class MapView extends THREE.EventDispatcher {
     private m_pixelRatio?: number;
 
     private readonly m_scene: THREE.Scene = new THREE.Scene();
+    private readonly m_overlayScene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
     private readonly m_mapTilesRoot = new THREE.Object3D();
     private readonly m_mapAnchors = new THREE.Object3D();
     private readonly m_worldAnchors = new THREE.Object3D();
+    private readonly m_mapAnchorsOverlay = new THREE.Object3D();
 
     private m_animationCount: number = 0;
     private m_animationFrameHandle: number | undefined;
@@ -1804,12 +1807,28 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The node in this MapView's scene containing the user [[MapAnchor]]s.
+     *
+     * @remarks
      * All (first level) children of this node will be positioned in world space according to the
      * [[MapAnchor.geoPosition]].
      * Deeper level children can be used to position custom objects relative to the anchor node.
      */
     get mapAnchors(): THREE.Object3D {
         return this.m_mapAnchors;
+    }
+
+    /**
+     * The node in this MapView's scene containing the overlayed user [[MapAnchor]]s.
+     *
+     * @remarks
+     * The `MapAnchor`s added to `mapAnchorsOverlay` are rendered on top of the MapView scene.
+     *
+     * All (first level) children of this node will be positioned in world space according to the
+     * [[MapAnchor.geoPosition]].
+     * Deeper level children can be used to position custom objects relative to the anchor node.
+     */
+    get mapAnchorsOverlay(): THREE.Object3D {
+        return this.m_mapAnchorsOverlay;
     }
 
     /**
@@ -3380,6 +3399,12 @@ export class MapView extends THREE.EventDispatcher {
                 childObject.position.sub(this.camera.position);
             }
         });
+        this.m_mapAnchorsOverlay.children.forEach((childObject: MapAnchor) => {
+            if (childObject.geoPosition !== undefined) {
+                this.projection.projectPoint(childObject.geoPosition, childObject.position);
+                childObject.position.sub(this.camera.position);
+            }
+        });
 
         this.m_animatedExtrusionHandler.zoom = this.m_zoomLevel;
 
@@ -3442,6 +3467,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.renderLabels) {
             this.finishRenderTextElements();
+        }
+
+        if (this.m_mapAnchorsOverlay.children.length > 0) {
+            this.m_renderer.render(this.m_overlayScene, camera);
         }
 
         if (gatherStatistics) {
@@ -3828,8 +3857,18 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_scene.remove(light);
             });
         }
+
+        this.m_overlayCreatedLights?.forEach(light => {
+            this.m_overlayScene.remove(light);
+            if (light instanceof THREE.DirectionalLight) {
+                this.m_overlayScene.remove(light.target);
+            }
+        });
+
         if (theme.lights !== undefined) {
             this.m_createdLights = [];
+            this.m_overlayCreatedLights = [];
+
             theme.lights.forEach((lightDescription: Light) => {
                 const light = createLight(lightDescription);
                 if (!light) {
@@ -3840,6 +3879,7 @@ export class MapView extends THREE.EventDispatcher {
                     return;
                 }
                 this.m_scene.add(light);
+
                 if ((light as any).isDirectionalLight) {
                     const directionalLight = light as THREE.DirectionalLight;
                     // This is needed so that the target is updated automatically, see:
@@ -3847,6 +3887,12 @@ export class MapView extends THREE.EventDispatcher {
                     this.m_scene.add(directionalLight.target);
                 }
                 this.m_createdLights!.push(light);
+
+                const clonedLight: THREE.Light = light.clone();
+                this.m_overlayScene.add(clonedLight);
+                if (clonedLight instanceof THREE.DirectionalLight) {
+                    this.m_overlayScene.add(clonedLight.target.clone());
+                }
             });
         }
     }
@@ -4006,6 +4052,8 @@ export class MapView extends THREE.EventDispatcher {
         this.m_scene.add(this.m_mapTilesRoot);
         this.m_scene.add(this.m_mapAnchors);
         this.m_scene.add(this.m_worldAnchors);
+
+        this.m_overlayScene.add(this.m_mapAnchorsOverlay);
 
         this.shadowsEnabled = this.m_options.enableShadows ?? false;
     }
