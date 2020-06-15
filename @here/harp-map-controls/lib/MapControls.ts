@@ -123,6 +123,10 @@ export class MapControls extends THREE.EventDispatcher {
      */
     enabled = true;
 
+    zoomEnabled = true;
+
+    panEnabled = true;
+
     /**
      * Set to `true` to enable orbiting and tilting through these controls, `false` otherwise.
      */
@@ -351,6 +355,7 @@ export class MapControls extends THREE.EventDispatcher {
      * @param amount - Amount to move along the view direction in meters.
      */
     moveAlongTheViewDirection(amount: number) {
+        // TODO: What about zoom disabled?
         if (amount === 0) {
             return;
         }
@@ -475,7 +480,7 @@ export class MapControls extends THREE.EventDispatcher {
         zoomLevel: number,
         screenTarget: { x: number; y: number } | THREE.Vector2 = { x: 0, y: 0 }
     ) {
-        if (this.enabled === false) {
+        if (!this.enabled || !this.zoomEnabled) {
             return;
         }
 
@@ -501,6 +506,10 @@ export class MapControls extends THREE.EventDispatcher {
      * Toggles the camera tilt between 0 (looking down) and the value at `this.tiltAngle`.
      */
     toggleTilt(): void {
+        if (!this.tiltEnabled) {
+            return;
+        }
+
         this.stopExistingAnimations();
         this.m_startTilt = this.currentTilt;
         const aimTilt = this.m_startTilt < EPSILON;
@@ -906,7 +915,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private mouseDoubleClick(event: MouseEvent) {
-        if (this.enabled === false) {
+        if (!this.enabled || !this.zoomEnabled) {
             return;
         }
         const mousePos = this.getPointerPosition(event);
@@ -967,7 +976,7 @@ export class MapControls extends THREE.EventDispatcher {
             mousePos.y - this.m_lastMousePosition.y
         );
 
-        if (this.m_state === State.PAN) {
+        if (this.m_state === State.PAN && this.panEnabled) {
             const vectors = this.getWorldPositionWithElevation(
                 this.m_lastMousePosition.x,
                 this.m_lastMousePosition.y,
@@ -1025,6 +1034,10 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private mouseWheel(event: WheelEvent) {
+        if (!this.enabled || !this.zoomEnabled) {
+            return;
+        }
+
         const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
         const screenTarget = utils.calculateNormalizedDeviceCoordinates(
             event.offsetX,
@@ -1241,14 +1254,18 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_fingerMoved = true;
         this.updateTouches(event.touches);
 
-        if (this.m_touchState.touches.length <= 2 && this.m_touchState.touches[0] !== undefined) {
+        if (
+            this.panEnabled &&
+            this.m_touchState.touches.length <= 2 &&
+            this.m_touchState.touches[0] !== undefined
+        ) {
             this.panFromTo(
                 this.m_touchState.touches[0].initialWorldPosition,
                 this.m_touchState.touches[0].currentWorldPosition
             );
         }
 
-        if (this.m_touchState.touches.length === 2) {
+        if (this.zoomEnabled && this.m_touchState.touches.length === 2) {
             const pinchDistance = this.calculatePinchDistanceInWorldSpace();
             if (Math.abs(pinchDistance) < EPSILON) {
                 return;
@@ -1302,8 +1319,8 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private handleDoubleTap() {
-        // Continue only if no touchmove happened.
-        if (this.m_fingerMoved) {
+        // Continue only if no touchmove happened and zoom's enabled.
+        if (this.m_fingerMoved || !this.zoomEnabled) {
             return;
         }
 
