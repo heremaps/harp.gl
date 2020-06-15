@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { DecodedTile } from "@here/harp-datasource-protocol";
 import {
     mercatorProjection,
     Projection,
@@ -12,8 +13,34 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { DataSource, DataSourceOptions } from "../lib/DataSource";
-import { Tile } from "../lib/Tile";
+import { ITileLoader, Tile, TileLoaderState } from "../lib/Tile";
 
+export class FakeTileLoader implements ITileLoader {
+    state: TileLoaderState = TileLoaderState.Initialized;
+    payload?: ArrayBufferLike | {};
+    decodedTile?: DecodedTile = {
+        techniques: [],
+        geometries: []
+    };
+
+    isFinished: boolean = false;
+
+    loadAndDecode(): Promise<TileLoaderState> {
+        return Promise.resolve(TileLoaderState.Ready);
+    }
+
+    waitSettled(): Promise<TileLoaderState> {
+        return Promise.resolve(TileLoaderState.Ready);
+    }
+
+    updatePriority(area: number): void {
+        // Not covered with tests yet
+    }
+
+    cancel(): void {
+        // Not covered with tests yet
+    }
+}
 export class FakeOmvDataSource extends DataSource {
     constructor(options: DataSourceOptions) {
         super(options);
@@ -32,6 +59,8 @@ export class FakeOmvDataSource extends DataSource {
     /** @override */
     getTile(tileKey: TileKey): Tile {
         const tile = new Tile(this, tileKey);
+        tile.tileLoader = new FakeTileLoader();
+        tile.load();
         return tile;
     }
     /** @override */

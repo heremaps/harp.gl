@@ -80,7 +80,9 @@ describe("MapView", function() {
             const theGlobal: any = global;
             theGlobal.window = { window: { devicePixelRatio: 10 } };
             theGlobal.navigator = {};
-            theGlobal.requestAnimationFrame = () => {};
+            theGlobal.requestAnimationFrame = (callback: (time: DOMHighResTimeStamp) => void) => {
+                setTimeout(callback, 0);
+            };
         }
         addEventListenerSpy = sinon.stub();
         removeEventListenerSpy = sinon.stub();
@@ -1006,6 +1008,23 @@ describe("MapView", function() {
                 styles: {},
                 textStyles: undefined
             });
+        });
+    });
+
+    describe("frame complete", function() {
+        it("MapView emits frame complete for empty map", async function() {
+            this.timeout(100);
+            mapView = new MapView({ canvas });
+            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
+        });
+        it("MapView emits frame complete after map initialized", async function() {
+            this.timeout(100);
+            mapView = new MapView({ canvas });
+
+            const dataSource = new FakeOmvDataSource({ name: "omv" });
+            mapView.addDataSource(dataSource);
+
+            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
     });
 });
