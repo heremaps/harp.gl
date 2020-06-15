@@ -993,7 +993,8 @@ export class TileGeometryCreator {
                         color: fadingParams.color,
                         colorMix: fadingParams.colorMix,
                         fadeNear: fadingParams.lineFadeNear,
-                        fadeFar: fadingParams.lineFadeFar
+                        fadeFar: fadingParams.lineFadeFar,
+                        extrusionRatio: extrusionAnimationEnabled ? 0 : undefined
                     };
                     const edgeMaterial = new EdgeMaterial(materialParams);
                     const edgeObj = new THREE.LineSegments(edgeGeometry, edgeMaterial);
