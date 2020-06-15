@@ -3293,6 +3293,7 @@ export class MapView extends THREE.EventDispatcher {
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources(),
+                this.m_frameNumber,
                 this.m_elevationRangeSource
             );
             // View ranges has changed due to features (with elevation) that affects clip planes
