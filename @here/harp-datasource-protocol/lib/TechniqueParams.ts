@@ -1188,8 +1188,9 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
     constantHeight?: boolean;
 
     /**
-     * If `false`, wall geometry will not be added along the tile boundaries.
-     * @default `true`
+     * If `true`, wall geometry will is added along the tile boundaries. Note, this causes artifacts
+     * when used with shadows, so it should be known in advance that shadows won't be enabled.
+     * @default `false`
      */
     boundaryWalls?: boolean;
 
