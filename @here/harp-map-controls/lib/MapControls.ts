@@ -123,8 +123,14 @@ export class MapControls extends THREE.EventDispatcher {
      */
     enabled = true;
 
+    /**
+     * Set to `true` to enable zooming through these controls, `false` otherwise.
+     */
     zoomEnabled = true;
 
+    /**
+     * Set to `true` to enable panning through these controls, `false` otherwise.
+     */
     panEnabled = true;
 
     /**
@@ -506,7 +512,7 @@ export class MapControls extends THREE.EventDispatcher {
      * Toggles the camera tilt between 0 (looking down) and the value at `this.tiltAngle`.
      */
     toggleTilt(): void {
-        if (!this.tiltEnabled) {
+        if (!this.enabled || !this.tiltEnabled) {
             return;
         }
 
@@ -937,7 +943,7 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
-        if (event.button === 0) {
+        if (event.button === 0 && this.panEnabled) {
             this.m_state = State.PAN;
         } else if (event.button === 1) {
             this.m_state = State.ROTATE;
@@ -976,7 +982,7 @@ export class MapControls extends THREE.EventDispatcher {
             mousePos.y - this.m_lastMousePosition.y
         );
 
-        if (this.m_state === State.PAN && this.panEnabled) {
+        if (this.m_state === State.PAN) {
             const vectors = this.getWorldPositionWithElevation(
                 this.m_lastMousePosition.x,
                 this.m_lastMousePosition.y,
