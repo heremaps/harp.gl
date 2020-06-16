@@ -1026,5 +1026,17 @@ describe("MapView", function() {
 
             return waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
+        it("MapView emits frame complete again after map update", async function() {
+            this.timeout(100);
+            mapView = new MapView({ canvas });
+
+            const dataSource = new FakeOmvDataSource({ name: "omv" });
+            mapView.addDataSource(dataSource);
+
+            await waitForEvent(mapView, MapViewEventNames.FrameComplete);
+
+            mapView.update();
+            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
+        });
     });
 });
