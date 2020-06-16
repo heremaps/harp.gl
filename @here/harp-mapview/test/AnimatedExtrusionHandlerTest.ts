@@ -76,6 +76,25 @@ describe("AnimatedExtrusionHandler", function() {
             expect(enabled).to.be.false;
         });
 
+        it("returns forced enable value if technique does not define animateExtrusion", function() {
+            {
+                const enabled = handler.setAnimationProperties(
+                    { name: "extruded-polygon" } as any,
+                    env
+                );
+                expect(enabled).to.be.true;
+            }
+
+            {
+                handler.enabled = false;
+                const enabled = handler.setAnimationProperties(
+                    { name: "extruded-polygon" } as any,
+                    env
+                );
+                expect(enabled).to.be.false;
+            }
+        });
+
         it("gets minZoomLevel from technique", function() {
             handler.setAnimationProperties(technique, env);
             expect(handler.minZoomLevel).equals(minZoomLevel);

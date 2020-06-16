@@ -112,6 +112,10 @@ export class AnimatedExtrusionHandler {
 
         const animateExtrusionValue = getPropertyValue(technique.animateExtrusion, env);
 
+        if (animateExtrusionValue === null) {
+            return this.enabled;
+        }
+
         return typeof animateExtrusionValue === "boolean"
             ? animateExtrusionValue
             : typeof animateExtrusionValue === "number"
