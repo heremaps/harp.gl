@@ -24,13 +24,141 @@ declare const global: any;
 const inNodeContext = typeof window === "undefined";
 
 describe("MapControls", function() {
+    const DEFAULT_CANVAS_WIDTH = 800;
+    const DEFAULT_CANVAS_HEIGHT = 600;
     let sandbox: sinon.SinonSandbox;
     let domElement: any;
     let mapView: MapView;
     let mapControls: MapControls;
     let camera: THREE.Camera;
+    let updateStub: sinon.SinonStub<any>;
+    let lookAtStub: sinon.SinonStub<any>;
 
-    beforeEach(function() {
+    const eventMap: Map<string, EventListener> = new Map();
+
+    function wheel(delta: number) {
+        const mouseWheelHandler = eventMap.get("wheel")!;
+        mouseWheelHandler({
+            offsetX: 0,
+            offsetY: 0,
+            delta,
+            preventDefault: () => {
+                /*noop*/
+            },
+            stopPropagation: () => {
+                /*noop*/
+            }
+        } as any);
+    }
+
+    function dblClick() {
+        const mouseDblClickHandler = eventMap.get("dblclick")!;
+        mouseDblClickHandler({ clientX: 0, clientY: 0 } as any);
+    }
+
+    function dblTap() {
+        const touchStartHandler = eventMap.get("touchstart")!;
+        const touchEndHandler = eventMap.get("touchend")!;
+        const fakeTouchEvent = {
+            touches: [],
+            preventDefault: () => {
+                /*noop*/
+            },
+            stopPropagation: () => {
+                /*noop*/
+            }
+        } as any;
+        touchStartHandler(fakeTouchEvent);
+        touchEndHandler(fakeTouchEvent);
+    }
+
+    function mouseMove(button: number, x: number, y: number) {
+        eventMap.get("mousedown")!({
+            clientX: 0,
+            clientY: 0,
+            button,
+            preventDefault: () => {
+                /*noop*/
+            },
+            stopPropagation: () => {
+                /*noop*/
+            }
+        } as any);
+
+        if (inNodeContext) {
+            const moveHandler = eventMap.get("mousemove");
+            // If interaction is disabled, move handler may not even be installed.
+            if (!moveHandler) {
+                return;
+            }
+
+            moveHandler({
+                clientX: x,
+                clientY: y,
+                preventDefault: () => {
+                    /*noop*/
+                },
+                stopPropagation: () => {
+                    /*noop*/
+                }
+            } as any);
+
+            eventMap.get("mouseup")!({
+                clientX: x,
+                clientY: y,
+                button,
+                preventDefault: () => {
+                    /*noop*/
+                },
+                stopPropagation: () => {
+                    /*noop*/
+                }
+            } as any);
+        } else {
+            window.dispatchEvent(new MouseEvent("mousemove", { clientX: x, clientY: y }));
+            window.dispatchEvent(new MouseEvent("mouseup", { clientX: x, clientY: y, button }));
+        }
+    }
+
+    function touchMove(touchCount: number, x: number, y: number) {
+        const initTouches = new Array();
+        initTouches.length = touchCount;
+        initTouches.fill({ clientX: 0, clientY: 0 });
+
+        const endTouches = new Array();
+        endTouches.length = touchCount;
+        endTouches.fill({ clientX: x, clientY: y });
+
+        eventMap.get("touchstart")!({
+            touches: initTouches,
+            preventDefault: () => {
+                /*noop*/
+            },
+            stopPropagation: () => {
+                /*noop*/
+            }
+        } as any);
+        eventMap.get("touchmove")!({
+            touches: endTouches,
+            preventDefault: () => {
+                /*noop*/
+            },
+            stopPropagation: () => {
+                /*noop*/
+            }
+        } as any);
+        eventMap.get("touchend")!({
+            touches: endTouches,
+            preventDefault: () => {
+                /*noop*/
+            },
+            stopPropagation: () => {
+                /*noop*/
+            }
+        } as any);
+    }
+
+    before(function() {
         if (inNodeContext) {
             const theGlobal: any = global;
             // tslint:disable-next-line:no-empty
@@ -39,21 +167,64 @@ describe("MapControls", function() {
                 // tslint:disable-next-line:no-empty
                 now: () => {}
             };
+            (global as any).window = {
+                addEventListener: (eventName: string, func: EventListener) => {
+                    eventMap.set(eventName, func);
+                },
+                removeEventListener: () => {
+                    /* noop */
+                }
+            };
         }
+    });
 
+    beforeEach(function() {
         sandbox = sinon.createSandbox();
-        domElement = { addEventListener: sandbox.stub() } as any;
+        domElement = {
+            addEventListener: (eventName: string, func: EventListener) => {
+                eventMap.set(eventName, func);
+            },
+            getBoundingClientRect: sandbox.stub().callsFake(() => {
+                return {
+                    left: 0,
+                    top: 0,
+                    width: DEFAULT_CANVAS_WIDTH,
+                    height: DEFAULT_CANVAS_HEIGHT
+                };
+            }),
+            style: { width: `${DEFAULT_CANVAS_WIDTH}`, height: `${DEFAULT_CANVAS_HEIGHT}` },
+            clientWidth: DEFAULT_CANVAS_WIDTH,
+            clientHeight: DEFAULT_CANVAS_HEIGHT
+        } as any;
         mapView = sandbox.createStubInstance(MapView) as any;
         sandbox.stub(mapView, "renderer").get(() => ({ domElement }));
+        updateStub = mapView.update as any;
+        // tslint:disable-next-line: deprecation
+        lookAtStub = mapView.lookAt as any;
+
+        sandbox.stub(mapView, "projection").get(() => {
+            return mercatorProjection;
+        });
+        sandbox.stub(mapView, "target").get(() => {
+            return GeoCoordinates.fromDegrees(0, 0);
+        });
+        mapView.minZoomLevel = 0;
+        mapView.maxZoomLevel = 20;
         camera = new THREE.PerspectiveCamera(40);
         sandbox.stub(mapView, "camera").get(() => camera);
+        updateStub.resetHistory();
     });
 
     afterEach(function() {
         sandbox.restore();
+        eventMap.clear();
+    });
+
+    after(function() {
         if (inNodeContext) {
             delete global.requestAnimationFrame;
             delete global.performance;
+            delete global.window;
         }
     });
 
@@ -96,12 +267,7 @@ describe("MapControls", function() {
     });
 
     it("correctly updates mapView on mouse move", function() {
-        const updateStub = sandbox.stub();
-        //@ts-ignore
-        const controls = new MapControls({
-            renderer: { domElement: { addEventListener: sandbox.stub() } } as any,
-            update: updateStub
-        });
+        const controls = new MapControls(mapView);
         sandbox.stub(controls, "dispatchEvent");
         sandbox.stub(controls as any, "getPointerPosition").returns({ x: 0, y: 0 });
 
@@ -114,12 +280,7 @@ describe("MapControls", function() {
     });
 
     it("correctly updates mapView on touch move", function() {
-        const updateStub = sandbox.stub();
-        //@ts-ignore
-        const controls = new MapControls({
-            renderer: { domElement: { addEventListener: sandbox.stub() } as any } as any,
-            update: updateStub
-        });
+        const controls = new MapControls(mapView);
         (controls as any).m_touchState.touches = { length: 5 };
         sandbox.stub(controls as any, "updateTouches");
         sandbox.stub(controls, "dispatchEvent");
@@ -226,6 +387,87 @@ describe("MapControls", function() {
                         }
                     });
                 }
+            });
+        }
+    });
+
+    describe("enable/disable interactions", function() {
+        const initialZoomLevel = 15;
+
+        beforeEach(function() {
+            const cameraPosition = new THREE.Vector3(0, 0, 10);
+            camera.position.set(0, 0, 10);
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+            camera.updateMatrixWorld(true);
+            (camera as THREE.PerspectiveCamera).far = cameraPosition.length();
+            (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+            mapControls = new MapControls(mapView);
+            mapControls.inertiaEnabled = false;
+            sandbox.stub(mapView, "zoomLevel").get(() => {
+                return initialZoomLevel;
+            });
+            // needed to get the initial zoom level from MapView.
+            (mapControls as any).assignZoomAfterTouchZoomRender();
+            expect(mapControls.zoomLevelTargeted).to.equal(initialZoomLevel);
+        });
+
+        for (const { enabled, allEnabled, suffix } of [
+            { enabled: true, allEnabled: true, suffix: "enabled" },
+            { enabled: false, allEnabled: true, suffix: "disabled with specific flag" },
+            { enabled: true, allEnabled: false, suffix: "disabled with general flag" }
+        ]) {
+            it(`zoom interactions can be ${suffix}`, function() {
+                mapControls.zoomEnabled = enabled;
+                mapControls.enabled = allEnabled;
+                const isEnabled = allEnabled && enabled;
+
+                mapControls.setZoomLevel(initialZoomLevel + 1);
+                expect(mapControls.zoomLevelTargeted - initialZoomLevel !== 0).to.equal(isEnabled);
+                mapControls.setZoomLevel(initialZoomLevel - 1);
+                expect(mapControls.zoomLevelTargeted - initialZoomLevel !== 0).to.equal(isEnabled);
+
+                wheel(1);
+                expect(mapControls.zoomLevelTargeted - initialZoomLevel !== 0).to.equal(isEnabled);
+                wheel(-1);
+                expect(mapControls.zoomLevelTargeted - initialZoomLevel !== 0).to.equal(isEnabled);
+
+                dblClick();
+                expect(mapControls.zoomLevelTargeted - initialZoomLevel !== 0).to.equal(isEnabled);
+
+                dblTap();
+                expect(mapControls.zoomLevelTargeted - initialZoomLevel !== 0).to.equal(isEnabled);
+            });
+
+            it(`pan interactions can be ${suffix}`, function() {
+                const initX = camera.position.x;
+                const initY = camera.position.y;
+                mapControls.panEnabled = enabled;
+                mapControls.enabled = allEnabled;
+                const isEnabled = allEnabled && enabled;
+
+                mouseMove(0, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                expect(camera.position.x - initX !== 0).equals(isEnabled);
+                expect(camera.position.y - initY !== 0).equals(isEnabled);
+
+                touchMove(1, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                expect(camera.position.x - initX !== 0).equals(isEnabled);
+                expect(camera.position.y - initY !== 0).equals(isEnabled);
+            });
+
+            it(`tilt interactions can be ${suffix}`, function() {
+                lookAtStub.resetHistory();
+                mapControls.tiltEnabled = enabled;
+                mapControls.enabled = allEnabled;
+                const isEnabled = allEnabled && enabled;
+
+                mapControls.toggleTilt();
+                expect(lookAtStub.called).to.equal(isEnabled);
+
+                mouseMove(2, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                expect(lookAtStub.called).to.equal(isEnabled);
+
+                touchMove(3, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                expect(lookAtStub.called).to.equal(isEnabled);
             });
         }
     });
