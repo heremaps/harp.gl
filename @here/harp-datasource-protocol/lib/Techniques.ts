@@ -34,6 +34,7 @@ import {
 } from "./TechniqueDescriptor";
 /**
  * Names of the supported texture properties.
+ * @internal
  */
 export const TEXTURE_PROPERTY_KEYS = [
     "map",
@@ -48,6 +49,7 @@ export const TEXTURE_PROPERTY_KEYS = [
 
 /**
  * Names of the properties controlling transparency.
+ * @internal
  */
 export const TRANSPARENCY_PROPERTY_KEYS = ["opacity", "transparent"];
 
@@ -70,8 +72,10 @@ export type MakeTechniqueAttrs<T> = {
         : T[P];
 };
 
+/** @internal  */
 export const techniqueDescriptors: TechniqueDescriptorRegistry = {};
 
+/** @internal  */
 export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = {
     // TODO: Choose which techniques should support color with transparency.
     // For now we chosen all, but it maybe not suitable for text or line marker techniques.
@@ -86,6 +90,7 @@ export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniquePar
     }
 };
 
+/** @internal  */
 export const pointTechniquePropTypes = mergeTechniqueDescriptor<PointTechniqueParams>(
     baseTechniqueParamsDescriptor,
     {
@@ -107,6 +112,7 @@ export interface SquaresTechnique extends MakeTechniqueAttrs<PointTechniqueParam
     name: "squares";
 }
 
+/** @internal  */
 export const squaresTechniquePropTypes = mergeTechniqueDescriptor<SquaresTechnique>(
     baseTechniqueParamsDescriptor,
     pointTechniquePropTypes
@@ -121,6 +127,7 @@ export interface CirclesTechnique extends MakeTechniqueAttrs<PointTechniqueParam
     name: "circles";
 }
 
+/** @internal  */
 export const circlesTechniquePropTypes = mergeTechniqueDescriptor<CirclesTechnique>(
     baseTechniqueParamsDescriptor,
     pointTechniquePropTypes
@@ -257,6 +264,7 @@ export interface SolidLineTechnique extends MakeTechniqueAttrs<SolidLineTechniqu
     name: "solid-line" | "dashed-line";
 }
 
+/** @internal  */
 export const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTechnique>(
     baseTechniqueParamsDescriptor,
     polygonalTechniqueDescriptor,
@@ -287,6 +295,7 @@ export interface LineTechnique extends MakeTechniqueAttrs<LineTechniqueParams> {
     name: "line";
 }
 
+/** @internal  */
 export const lineTechniqueDescriptor = mergeTechniqueDescriptor<LineTechnique>(
     baseTechniqueParamsDescriptor,
     {

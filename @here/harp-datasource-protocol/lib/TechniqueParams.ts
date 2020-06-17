@@ -100,6 +100,10 @@ export enum StandardGeometryKind {
  * disabled.
  */
 export type GeometryKind = string | StandardGeometryKind;
+
+/**
+ * @internal
+ */
 export const GeometryKind = StandardGeometryKind;
 
 /**

@@ -21,6 +21,7 @@ export enum StringEncodedNumeralType {
 /**
  * Interface containing information about a [[StringEncodedNumeral]] format, component size and
  * evaluation.
+ * @internal
  */
 export interface StringEncodedNumeralFormat {
     readonly type: StringEncodedNumeralType;
@@ -86,6 +87,7 @@ const StringEncodedHex: StringEncodedNumeralFormat = {
 
 /**
  * Array of all supported [[StringEncodedNumeralFormat]]s describing sizes, lengths and distances.
+ * @internal
  */
 export const StringEncodedMetricFormats: StringEncodedNumeralFormat[] = [
     StringEncodedMeters,
@@ -99,6 +101,7 @@ const StringEncodedMetricFormatMaxSize = StringEncodedMetricFormats.reduce(
 
 /**
  * Array of all supported [[StringEncodedNumeralFormat]]s describing color data.
+ * @internal
  */
 export const StringEncodedColorFormats: StringEncodedNumeralFormat[] = [StringEncodedHex];
 
@@ -110,12 +113,16 @@ const StringEncodedColorFormatMaxSize = StringEncodedColorFormats.reduce(
 /**
  * Array of supported [[StringEncodedNumeralFormat]]s (intended to be indexed with
  * [[StringEncodedNumeralType]] enum).
+ * @internal
  */
 export const StringEncodedNumeralFormats: StringEncodedNumeralFormat[] = [
     ...StringEncodedMetricFormats,
     ...StringEncodedColorFormats
 ];
 
+/**
+ * @internal
+ */
 export const StringEncodedNumeralFormatMaxSize = Math.max(
     StringEncodedColorFormatMaxSize,
     StringEncodedMetricFormatMaxSize
