@@ -62,6 +62,12 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
      * order of this mao object.
      */
     category?: string;
+
+    /**
+     * Whether to draw the anchor on top of labels.
+     * @defaultValue false
+     */
+    overlay?: boolean;
 };
 
 /**
@@ -110,7 +116,8 @@ export class MapAnchors {
      * Update the map anchors.
      * @param projection - Current projection
      * @param cameraPosition - Current camera position
-     * @param rootNode - Node where the objects will be inserted
+     * @param rootNode - Node where normal anchors will be inserted.
+     * @param overlayRootNode - Node where overlay anchors will be insterted.
      * @param priorities - Optional theme priority list
      *
      * @internal
@@ -120,6 +127,7 @@ export class MapAnchors {
         projection: Projection,
         cameraPosition: THREE.Vector3,
         rootNode: THREE.Object3D,
+        overlayRootNode: THREE.Object3D,
         priorities?: StylePriority[]
     ) {
         const worldPosition = new THREE.Vector3();
@@ -148,7 +156,11 @@ export class MapAnchors {
                 mapAnchor.position.copy(worldPosition).sub(cameraPosition);
             }
 
-            rootNode.add(mapAnchor);
+            if (mapAnchor.overlay === true) {
+                overlayRootNode.add(mapAnchor);
+            } else {
+                rootNode.add(mapAnchor);
+            }
         });
     }
 }
