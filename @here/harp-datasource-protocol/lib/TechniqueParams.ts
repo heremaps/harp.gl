@@ -509,7 +509,7 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Field name of object containing the text to be rendered.
      *
-     * @deprecated, Use `["get", "FIELD"]`.
+     * @deprecated Use `["get", "FIELD"]`.
      */
     label?: string;
     /**
@@ -1292,7 +1292,7 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
     /**
      * Field name of object containing the text to be rendered.
      *
-     * @deprecated, Use `["get", "FIELD"]`.
+     * @deprecated Use `["get", "FIELD"]`.
      */
     label?: string;
     /**
