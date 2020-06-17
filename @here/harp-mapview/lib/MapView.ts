@@ -41,9 +41,11 @@ import {
     LoggerManager,
     LogLevel,
     PerformanceTimer,
+    TaskQueue,
     UriResolver
 } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
@@ -61,6 +63,7 @@ import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapAnchors } from "./MapAnchors";
 import { MapObjectAdapter } from "./MapObjectAdapter";
 import { MapViewFog } from "./MapViewFog";
+import { MapViewTaskScheduler } from "./MapViewTaskScheduler";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
@@ -93,6 +96,12 @@ if (isProduction) {
 } else {
     // In dev: silence logging below log (silences "debug" and "trace" levels).
     LoggerManager.instance.setLogLevelForAll(LogLevel.Log);
+}
+export enum TileTaskGroups {
+    FETCH_AND_DECODE = "fetch",
+    //DECODE = "decode",
+    CREATE = "create"
+    //UPLOAD = "upload"
 }
 
 export enum MapViewEventNames {
@@ -633,6 +642,13 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      * @default false
      */
     enableShadows?: boolean;
+
+    /**
+     * Enable throttling for the TaskScheduler
+     * @default false
+     * @beta
+     */
+    throttlingEnabled?: boolean;
 }
 
 /**
@@ -742,17 +758,6 @@ export interface LookAtParams {
  */
 export class MapView extends THREE.EventDispatcher {
     /**
-     * Maximum FPS (Frames Per Second). If VSync in enabled, the specified number may not be
-     * reached, but instead the next smaller number than `maxFps` that is equal to the refresh rate
-     * divided by an integer number.
-     *
-     * E.g.: If the monitors refresh rate is set to 60hz, and if `maxFps` is set to a value of `40`
-     * (60hz/1.5), the actual used FPS may be 30 (60hz/2). For displays that have a refresh rate of
-     * 60hz, good values for `maxFps` are 30, 20, 15, 12, 10, 6, 3 and 1. A value of `0` is ignored.
-     */
-    maxFps: number;
-
-    /**
      * The instance of {@link MapRenderingManager} managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
      * runtime.
@@ -842,6 +847,9 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_forceCameraAspect: number | undefined = undefined;
 
+    // type any as it returns different types depending on the environment
+    private m_taskSchedulerTimeout: any = undefined;
+
     //
     // sources
     //
@@ -898,6 +906,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_renderOrderStencilValues = new Map<number, number>();
     // Valid values start at 1, because the screen is cleared to zero
     private m_stencilValue: number = DEFAULT_STENCIL_VALUE;
+    private m_taskScheduler: MapViewTaskScheduler;
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -978,7 +987,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.m_pixelRatio = options.pixelRatio;
-        this.maxFps = options.maxFps === undefined ? 0 : options.maxFps;
+        this.m_options.maxFps = this.m_options.maxFps ?? 0;
 
         this.m_options.enableStatistics = this.m_options.enableStatistics === true;
 
@@ -1109,6 +1118,15 @@ export class MapView extends THREE.EventDispatcher {
             this.m_backgroundDataSource.setTilingScheme(this.m_options.backgroundTilingScheme);
         }
 
+        this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
+        this.m_taskScheduler.addEventListener(MapViewEventNames.Update, () => {
+            this.update();
+        });
+
+        if (options.throttlingEnabled !== undefined) {
+            this.m_taskScheduler.throttlingEnabled = options.throttlingEnabled;
+        }
+
         this.initTheme();
 
         this.m_textElementsRenderer = this.createTextRenderer();
@@ -1122,6 +1140,10 @@ export class MapView extends THREE.EventDispatcher {
      */
     get lights(): THREE.Light[] {
         return this.m_createdLights ?? [];
+    }
+
+    get taskQueue(): TaskQueue {
+        return this.m_taskScheduler.taskQueue;
     }
 
     /**
@@ -2398,6 +2420,25 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Maximum FPS (Frames Per Second). If VSync in enabled, the specified number may not be
+     * reached, but instead the next smaller number than `maxFps` that is equal to the refresh rate
+     * divided by an integer number.
+     *
+     * E.g.: If the monitors refresh rate is set to 60hz, and if `maxFps` is set to a value of `40`
+     * (60hz/1.5), the actual used FPS may be 30 (60hz/2). For displays that have a refresh rate of
+     * 60hz, good values for `maxFps` are 30, 20, 15, 12, 10, 6, 3 and 1. A value of `0` is ignored.
+     */
+    set maxFps(value: number) {
+        this.m_options.maxFps = value;
+        this.m_taskScheduler.maxFps = value;
+    }
+
+    get maxFps(): number {
+        //this cannot be undefined, as it is defaulting to 0 in the constructor
+        return this.m_options.maxFps as number;
+    }
+
+    /**
      * PixelRatio ratio for rendering when the camera is moving or an animation is running. Useful
      * when rendering on high resolution displays with low performance GPUs that may be
      * fill-rate-limited.
@@ -2786,6 +2827,20 @@ export class MapView extends THREE.EventDispatcher {
      */
     get elevationProvider(): ElevationProvider | undefined {
         return this.m_elevationProvider;
+    }
+
+    /**
+     * @beta
+     */
+    get throttlingEnabled(): boolean {
+        return this.m_taskScheduler.throttlingEnabled === true;
+    }
+
+    /**
+     * @beta
+     */
+    set throttlingEnabled(enabled: boolean) {
+        this.m_taskScheduler.throttlingEnabled = enabled;
     }
 
     get shadowsEnabled(): boolean {
@@ -3469,6 +3524,16 @@ export class MapView extends THREE.EventDispatcher {
         this.m_drawing = false;
 
         this.checkCopyrightUpdates();
+
+        // do this post paint therefore use a Timeout, if it has not been executed cancel and
+        // create a new one
+        if (this.m_taskSchedulerTimeout !== undefined) {
+            clearTimeout(this.m_taskSchedulerTimeout);
+        }
+        this.m_taskSchedulerTimeout = setTimeout(() => {
+            this.m_taskSchedulerTimeout = undefined;
+            this.m_taskScheduler.processPending(frameStartTime);
+        }, 0);
 
         if (currentFrameEvent !== undefined) {
             endTime = PerformanceTimer.now();

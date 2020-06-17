@@ -424,8 +424,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * {@link @here/harp-geoutils#TileKey}.
      *
      * @param tileKey - The unique identifier for a map tile.
+     * @param delayLoad - If true, the Tile will be created, but Tile.load will not be called
+     * @default false.
      */
-    abstract getTile(tileKey: TileKey): Tile | undefined;
+    abstract getTile(tileKey: TileKey, delayLoad?: boolean): Tile | undefined;
 
     /**
      * This method is called by {@link MapView} before the

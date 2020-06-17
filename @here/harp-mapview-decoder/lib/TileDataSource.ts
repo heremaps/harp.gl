@@ -224,9 +224,11 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      * this data source.
      *
      * @param tileKey - Quadtree address of the requested tile.
+     * @param delayLoad - If true, the Tile will be created, but Tile.load will not be called.
+     * @default false.
      * @override
      */
-    getTile(tileKey: TileKey): TileType | undefined {
+    getTile(tileKey: TileKey, delayLoad: boolean = false): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);
         tile.tileLoader = new TileLoader(
             this,
@@ -247,7 +249,9 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                     this.requestUpdate();
                 });
         }
-        tile.load();
+        if (!delayLoad) {
+            tile.load();
+        }
 
         return tile;
     }
