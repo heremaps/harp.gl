@@ -16,7 +16,13 @@ import {
     UrlCopyrightProvider
 } from "@here/harp-mapview";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
-import { getOptionValue, LoggerManager } from "@here/harp-utils";
+import {
+    ApiKeyAuthentication,
+    AppIdAuthentication,
+    getOptionValue,
+    LoggerManager,
+    TokenAuthentication
+} from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("MapView");
 const textureLoader = new TextureLoader();
@@ -30,52 +36,6 @@ export interface WebTileRenderingOptions {
      * @default 1.0
      */
     opacity?: number;
-}
-
-/**
- * Authentification token/code provider.
- */
-export type AuthenticationProvider = () => Promise<string>;
-
-/**
- * Options for authentication with [[apikey]].
- */
-interface ApiKeyAuthentication {
-    /**
-     * The `apikey` for the access of the Web Tile Data.
-     * @note Will not be used if [[authenticationCode]] is defined as well.
-     */
-    apikey: string;
-}
-
-/**
- * Options for authentication with [[appId]] and [[appCode]].
- */
-interface AppIdAuthentication {
-    /**
-     * The `appId` for the access of the Web Tile Data.
-     * @note Will not be used if [[apiKey]] or [[authenticationCode]] is defined as well.
-     */
-    appId: string;
-
-    /**
-     * The `appCode` for the access of the Web Tile Data.
-     * @note Will not be used if [[apiKey]] or [[authenticationCode]] is defined as well.
-     */
-    appCode: string;
-}
-
-/**
- * Options for authentication with [[authenticationCode]].
- */
-interface TokenAuthentication {
-    /**
-     * Authentication code used for the different APIs.
-     *
-     * When [[AuthenticationProvider]] is is used as value, the provider is called before each
-     * to get currently valid authentication code/token.
-     */
-    authenticationCode: string | AuthenticationProvider;
 }
 
 /**
