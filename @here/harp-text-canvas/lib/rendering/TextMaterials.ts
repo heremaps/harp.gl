@@ -262,7 +262,7 @@ export class SdfTextMaterial extends THREE.RawShaderMaterial {
                 BG_TEXT: params.isBackground ? 1.0 : 0.0
             },
             depthTest: true,
-            depthWrite: true,
+            depthWrite: false,
             side: THREE.DoubleSide,
             transparent: true
         };

@@ -72,7 +72,7 @@ export class IconMaterial extends THREE.RawShaderMaterial {
                 map: new THREE.Uniform(params.map)
             },
             depthTest: true,
-            depthWrite: true,
+            depthWrite: false,
             transparent: true,
 
             vertexColors: true,
