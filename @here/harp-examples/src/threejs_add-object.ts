@@ -89,7 +89,7 @@ export namespace ThreejsAddSimpleObject {
 
             // snippet:harp_gl_threejs_add_simple_object_2.ts
             const cube = createPinkCube();
-            cube.geoPosition = geoPosition;
+            cube.anchor = geoPosition;
             mapView.mapAnchors.add(cube);
             // end:harp_gl_threejs_add_simple_object_2.ts
 
