@@ -24,7 +24,7 @@ import {
 import { Value } from "./Env";
 
 /**
- * [[ExprPool]] maintains a set of unique interned [[Expr]] objects.
+ * [[ExprPool]] maintains a set of unique interned {@link Expr} objects.
  *
  * @hidden
  */
@@ -43,11 +43,11 @@ export class ExprPool implements ExprVisitor<Expr, void> {
     private readonly m_callExprs = new Map<string, CallExpr[]>();
 
     /**
-     * Add `expr` to this [[ExprPool]] and return a unique [[Expr]]
+     * Add `expr` to this [[ExprPool]] and return a unique {@link Expr}
      * object that is structurally equivalent to `expr`.
      *
-     * @param expr - The [[Expr]] to add to this [[ExprPool]].
-     * @returns A unique [[Expr]] that is structurally equivalent to `expr`.
+     * @param expr - The {@link Expr} to add to this [[ExprPool]].
+     * @returns A unique {@link Expr} that is structurally equivalent to `expr`.
      */
     add(expr: Expr): Expr {
         return expr.accept(this, undefined);

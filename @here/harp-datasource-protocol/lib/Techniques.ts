@@ -53,7 +53,7 @@ export const TEXTURE_PROPERTY_KEYS = [
  */
 export const TRANSPARENCY_PROPERTY_KEYS = ["opacity", "transparent"];
 
-// TODO: Can be removed, when all when interpolators are implemented as [[Expr]]s
+// TODO: Can be removed, when all when interpolators are implemented as {@link Expr}s
 export type RemoveInterpolatedPropDef<T> = T | InterpolatedPropertyDefinition<any> extends T
     ? Exclude<T, InterpolatedPropertyDefinition<any>>
     : T;

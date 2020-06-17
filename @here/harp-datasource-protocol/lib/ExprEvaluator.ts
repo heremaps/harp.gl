@@ -224,7 +224,7 @@ export class ExprEvaluatorContext {
     /**
      * Evaluate the given expression.
      *
-     * @param expr - The [[Expr]] to evaluate.
+     * @param expr - The {@link Expr} to evaluate.
      */
     evaluate(expr: Expr | undefined) {
         if (expr === undefined) {
@@ -243,7 +243,7 @@ export class ExprEvaluatorContext {
     }
 
     /**
-     * Wraps the given value in an [[Expr]] if needed.
+     * Wraps the given value in an {@link Expr} if needed.
      *
      * @param value -
      */
@@ -253,7 +253,7 @@ export class ExprEvaluatorContext {
 }
 
 /**
- * [[ExprEvaluator]] is used to evaluate [[Expr]] in a given environment.
+ * [[ExprEvaluator]] is used to evaluate {@link Expr} in a given environment.
  *
  * @hidden
  */
