@@ -748,6 +748,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_skyBackground?: SkyBackground;
     private m_createdLights?: THREE.Light[];
+    private m_overlayCreatedLights?: THREE.Light[];
 
     private readonly m_screenProjector: ScreenProjector;
     private readonly m_screenCollisions:
@@ -800,9 +801,16 @@ export class MapView extends THREE.EventDispatcher {
     private m_pixelToWorld?: number;
     private m_pixelRatio?: number;
 
+    /** Default scene for map objects and map anchors */
     private readonly m_scene: THREE.Scene = new THREE.Scene();
+    /** Separate scene for overlay map anchors */
+    private readonly m_overlayScene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
-    private readonly m_mapTilesRoot = new THREE.Object3D();
+    /** Root node of [[m_scene]] that get's cleared every frame. */
+    private readonly m_sceneRoot = new THREE.Object3D();
+    /** Root node of [[m_overlayScene]] that get's cleared every frame. */
+    private readonly m_overlaySceneRoot = new THREE.Object3D();
+
     private readonly m_mapAnchors: MapAnchors = new MapAnchors();
 
     private m_animationCount: number = 0;
@@ -3243,8 +3251,9 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_renderer.clear();
 
-        // clear the scene
-        this.m_mapTilesRoot.children.length = 0;
+        // clear the scenes
+        this.m_sceneRoot.children.length = 0;
+        this.m_overlaySceneRoot.children.length = 0;
 
         if (gatherStatistics) {
             setupTime = PerformanceTimer.now();
@@ -3305,7 +3314,8 @@ export class MapView extends THREE.EventDispatcher {
         this.m_mapAnchors.update(
             this.projection,
             this.camera.position,
-            this.m_mapTilesRoot,
+            this.m_sceneRoot,
+            this.m_overlaySceneRoot,
             this.m_theme.priorities
         );
 
@@ -3370,6 +3380,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.renderLabels) {
             this.finishRenderTextElements();
+        }
+
+        if (this.m_overlaySceneRoot.children.length > 0) {
+            this.m_renderer.render(this.m_overlayScene, camera);
         }
 
         if (gatherStatistics) {
@@ -3487,7 +3501,7 @@ export class MapView extends THREE.EventDispatcher {
                         ? FALLBACK_RENDER_ORDER_OFFSET * tile.levelOffset
                         : 0);
 
-                this.m_mapTilesRoot.add(object);
+                this.m_sceneRoot.add(object);
             }
             tile.didRender();
         }
@@ -3756,8 +3770,18 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_scene.remove(light);
             });
         }
+
+        this.m_overlayCreatedLights?.forEach(light => {
+            this.m_overlayScene.remove(light);
+            if (light instanceof THREE.DirectionalLight) {
+                this.m_overlayScene.remove(light.target);
+            }
+        });
+
         if (theme.lights !== undefined) {
             this.m_createdLights = [];
+            this.m_overlayCreatedLights = [];
+
             theme.lights.forEach((lightDescription: Light) => {
                 const light = createLight(lightDescription);
                 if (!light) {
@@ -3768,6 +3792,7 @@ export class MapView extends THREE.EventDispatcher {
                     return;
                 }
                 this.m_scene.add(light);
+
                 if ((light as any).isDirectionalLight) {
                     const directionalLight = light as THREE.DirectionalLight;
                     // This is needed so that the target is updated automatically, see:
@@ -3775,6 +3800,12 @@ export class MapView extends THREE.EventDispatcher {
                     this.m_scene.add(directionalLight.target);
                 }
                 this.m_createdLights!.push(light);
+
+                const clonedLight: THREE.Light = light.clone();
+                this.m_overlayScene.add(clonedLight);
+                if (clonedLight instanceof THREE.DirectionalLight) {
+                    this.m_overlayScene.add(clonedLight.target.clone());
+                }
             });
         }
     }
@@ -3931,7 +3962,8 @@ export class MapView extends THREE.EventDispatcher {
     private setupRenderer() {
         this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
 
-        this.m_scene.add(this.m_mapTilesRoot);
+        this.m_scene.add(this.m_sceneRoot);
+        this.m_overlayScene.add(this.m_overlaySceneRoot);
 
         this.shadowsEnabled = this.m_options.enableShadows ?? false;
     }

@@ -74,7 +74,9 @@ export namespace ThreejsAddAnimatedObject {
         figure.name = "guy";
 
         // snippet:harp_gl_threejs_add_animated-object_add_to_scene.ts
-        figure.geoPosition = figureGeoPosition;
+        figure.anchor = figureGeoPosition;
+        // Make sure the object is rendered on top of labels
+        figure.overlay = true;
         mapView.mapAnchors.add(figure);
         // end:harp_gl_threejs_add_animated-object_add_to_scene.ts
     };
