@@ -25,6 +25,9 @@ const exprEvaluator = new ExprEvaluator();
 
 const exprInstantiator = new ExprInstantiator();
 
+/**
+ * A visitor for {@link Expr} nodes.
+ */
 export interface ExprVisitor<Result, Context> {
     visitNullLiteralExpr(expr: NullLiteralExpr, context: Context): Result;
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: Context): Result;
@@ -41,11 +44,11 @@ export interface ExprVisitor<Result, Context> {
 }
 
 /**
- * The dependencies of an [[Expr]].
+ * The dependencies of an {@link Expr}.
  */
 export class ExprDependencies {
     /**
-     * The properties needed to evaluate the [[Expr]].
+     * The properties needed to evaluate the {@link Expr}.
      */
     readonly properties = new Set<string>();
 
@@ -64,9 +67,9 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
     static instance = new ComputeExprDependencies();
 
     /**
-     * Gets the dependencies of an [[Expr]].
+     * Gets the dependencies of an {@link Expr}.
      *
-     * @param expr - The [[Expr]] to process.
+     * @param expr - The {@link Expr} to process.
      * @param scope - The evaluation scope. Defaults to [[ExprScope.Value]].
      * @param dependencies - The output [[Set]] of dependency names.
      */
@@ -176,7 +179,7 @@ export interface JsonObject {
 }
 
 /**
- * The JSON representation of an [[Expr]] object.
+ * The JSON representation of an {@link Expr} object.
  */
 export type JsonExpr = JsonArray;
 
@@ -185,8 +188,7 @@ export function isJsonExpr(v: any): v is JsonExpr {
 }
 
 /**
- * Internal state needed by [[Expr.fromJSON]] to resolve `"ref"` expressions.
- * @hidden
+ * Internal state needed by {@link Expr.fromJSON} to resolve `"ref"` expressions.
  */
 interface ReferenceResolverState {
     definitions: Definitions;
@@ -195,31 +197,35 @@ interface ReferenceResolverState {
 }
 
 /**
- * The evaluation scope of an [[Expr]].
+ * The evaluation scope of an {@link Expr}.
  */
 export enum ExprScope {
     /**
-     * The scope of an [[Expr]] used as value of an attribute.
+     * The scope of an {@link Expr} used as value of an attribute.
      */
     Value,
 
     /**
-     * The scope of an [[Expr]] used in a [[Technique]] `when` condition.
+     * The scope of an {@link Expr} used in a [[Technique]] `when` condition.
      */
     Condition,
 
     /**
-     * The scope of an [[Expr]] used as dynamic property attribute value.
+     * The scope of an {@link Expr} used as dynamic property attribute value.
      */
     Dynamic
 }
 
+// tslint:disable:max-line-length
 /**
- * Abstract class defining a shape of a [[Theme]]'s expression
+ * Abstract class representing the
+ * {@link https://github.com/heremaps/harp.gl/blob/master/%40here/harp-datasource-protocol/StyleExpressions.md | style expressions}
+ * used in {@link Theme}.
  */
+// tslint:enable:max-line-length
 export abstract class Expr {
     /**
-     * Tests of given value is an [[Expr]].
+     * Tests of given value is an {@link Expr}.
      *
      * @param value - The object to test.
      */
@@ -231,7 +237,7 @@ export abstract class Expr {
      * Creates an expression from the given `code`.
      *
      * @param code - The code to parse.
-     * @returns The parsed [[Expr]].
+     * @returns The parsed {@link Expr}.
      * @deprecated `string` encoded expression are deprecated. Use {@link Expr.fromJSON} instead.
      */
     static parse(code: string): Expr | never {
@@ -240,20 +246,29 @@ export abstract class Expr {
         return expr;
     }
 
+    // tslint:disable:max-line-length
     /**
-     * Parse expression in JSON form.
+     * Creates a style expression from JSON.
      *
-     * If `definitions` are defined, then references (`['ref', name]`) are resolved.
+     * @remarks
+     * The optional set of {@link Theme.definitions | definitions} is used
+     * to resolve the {@link https://github.com/heremaps/harp.gl/blob/master/%40here/harp-datasource-protocol/StyleExpressions.md#ref | ref expressions}.
      *
-     * Pass `definitionExprCache` to reuse `Expr` instances created from definitions across
-     * many `fromJSON` calls.
+     * @param json - JSON object representing the expression to parse.
+     * @param definitions - Optional set of definitions used to expand references.
+     * @param definitionExprCache - Optional cache of `Expr` instances
      *
-     * @param node - expression in JSON format to parse
-     * @param definitions - optional set of definitions needed definition resolved by `ref` operator
-     * @param definitionExprCache - optional cache of `Expr` instances derived from `definitions`
+     * @example
+     * ```typescript
+     * const expr = Expr.fromJSON(["all",
+     *     ["==", ["geometry-type"], "LineString"],
+     *     ["has", "text"]
+     * ]);
+     * ```
      */
+    // tslint:enable:max-line-length
     static fromJSON(
-        node: JsonValue,
+        json: JsonValue,
         definitions?: Definitions,
         definitionExprCache?: Map<string, Expr>
     ) {
@@ -266,16 +281,16 @@ export abstract class Expr {
                   }
                 : undefined;
 
-        return parseNode(node, referenceResolverState);
+        return parseNode(json, referenceResolverState);
     }
 
     private m_dependencies?: ExprDependencies;
     private m_isDynamic?: boolean;
 
     /**
-     * Evaluate an expression returning a [[Value]] object.
+     * Evaluate an expression returning a {@link Value} object.
      *
-     * @param env - The [[Env]] used to lookup symbols.
+     * @param env - The {@link Env} used to lookup symbols.
      * @param scope - The evaluation scope. Defaults to [[ExprScope.Value]].
      * @param cache - A cache of previously computed results.
      */
@@ -291,8 +306,10 @@ export abstract class Expr {
     }
 
     /**
-     * Instantiates this [[Expr]] by resolving references to the `get` and
-     * `has` operator using the given instantiation context.
+     * Instantiates this {@link Expr}.
+     *
+     * @remarks
+     * references to the `get` and `has` operator using the given instantiation context.
      *
      * @param context - The [[InstantationContext]] used to resolve names.
      */
@@ -301,7 +318,7 @@ export abstract class Expr {
     }
 
     /**
-     * Gets the dependencies of this [[Expr]].
+     * Gets the dependencies of this {@link Expr}.
      */
     dependencies(): ExprDependencies {
         if (!this.m_dependencies) {
@@ -311,10 +328,10 @@ export abstract class Expr {
     }
 
     /**
-     * Create a unique object that is structurally equivalent to this [[Expr]].
+     * Create a unique object that is structurally equivalent to this {@link Expr}.
      *
      * @param pool - The [[ExprPool]] used to create a unique
-     * equivalent object of this [[Expr]].
+     * equivalent object of this {@link Expr}.
      */
     intern(pool: ExprPool): Expr {
         return pool.add(this);
@@ -325,7 +342,7 @@ export abstract class Expr {
     }
 
     /**
-     * Returns `true` if a dynamic execution context is required to evaluate this [[Expr]].
+     * Returns `true` if a dynamic execution context is required to evaluate this {@link Expr}.
      */
     isDynamic(): boolean {
         if (this.m_isDynamic === undefined) {
@@ -334,39 +351,43 @@ export abstract class Expr {
         return this.m_isDynamic;
     }
 
+    /**
+     * Visits this expression.
+     *
+     * @param visitor The visitor used to visit the expression.
+     * @param context The context passed to the vistor.
+     */
     abstract accept<Result, Context>(
         visitor: ExprVisitor<Result, Context>,
         context: Context
     ): Result;
 
     /**
-     * Update the dynamic state of this [[Expr]].
+     * Update the dynamic state of this {@link Expr}.
      *
-     * [[exprIsDynamic]] must never be called directly.
-     *
-     * @hidden
+     * `exprIsDynamic` must never be called directly.
+     * @internal
      */
     protected abstract exprIsDynamic(): boolean;
 }
 
 /**
- * @hidden
+ * @internal
  */
 export type RelationalOp = "<" | ">" | "<=" | ">=";
 
 /**
- * @hidden
+ * @internal
  */
 export type EqualityOp = "~=" | "^=" | "$=" | "==" | "!=";
 
 /**
- * @hidden
+ * @internal
  */
 export type BinaryOp = RelationalOp | EqualityOp;
 
 /**
- * Var expression.
- * @hidden
+ * A node representing a `get` expression.
  */
 export class VarExpr extends Expr {
     constructor(readonly name: string) {
@@ -384,6 +405,9 @@ export class VarExpr extends Expr {
     }
 }
 
+/**
+ * A node representing a `literal` expression.
+ */
 export abstract class LiteralExpr extends Expr {
     /**
      * Create a [[LiteralExpr]] from the given value.
@@ -415,7 +439,6 @@ export abstract class LiteralExpr extends Expr {
 
 /**
  * Null literal expression.
- * @hidden
  */
 export class NullLiteralExpr extends LiteralExpr {
     static instance = new NullLiteralExpr();
@@ -439,7 +462,6 @@ export class NullLiteralExpr extends LiteralExpr {
 
 /**
  * Boolean literal expression.
- * @hidden
  */
 export class BooleanLiteralExpr extends LiteralExpr {
     constructor(readonly value: boolean) {
@@ -454,7 +476,6 @@ export class BooleanLiteralExpr extends LiteralExpr {
 
 /**
  * Number literal expression.
- * @hidden
  */
 export class NumberLiteralExpr extends LiteralExpr {
     constructor(readonly value: number) {
@@ -469,7 +490,6 @@ export class NumberLiteralExpr extends LiteralExpr {
 
 /**
  * String literal expression.
- * @hidden
  */
 export class StringLiteralExpr extends LiteralExpr {
     private m_promotedValue?: RGBA | Pixels | null;
@@ -496,7 +516,6 @@ export class StringLiteralExpr extends LiteralExpr {
 
 /**
  * Object literal expression.
- * @hidden
  */
 export class ObjectLiteralExpr extends LiteralExpr {
     constructor(readonly value: object) {
@@ -514,8 +533,7 @@ export class ObjectLiteralExpr extends LiteralExpr {
 }
 
 /**
- * A has expression with an attribute, for example `has(ref)`.
- * @hidden
+ * A node reperesenting a `has` expression.
  */
 export class HasAttributeExpr extends Expr {
     constructor(readonly name: string) {
@@ -534,7 +552,7 @@ export class HasAttributeExpr extends Expr {
 }
 
 /**
- * @hidden
+ * A node representing a `call` expression.
  */
 export class CallExpr extends Expr {
     descriptor?: OperatorDescriptor;
@@ -544,7 +562,7 @@ export class CallExpr extends Expr {
     }
 
     /**
-     * Returns the child nodes of this [[Expr]].
+     * Returns the child nodes of this {@link Expr}.
      *
      * @deprecated Use {@link CallExpr.args} instead.
      */
@@ -570,12 +588,12 @@ export class CallExpr extends Expr {
 }
 
 /**
- * @hidden
+ * The labels of a {@link MatchExpr} expression.
  */
 export type MatchLabel = number | string | number[] | string[];
 
 /**
- * @hidden
+ * A node representing a `match` expression.
  */
 export class MatchExpr extends Expr {
     /**
@@ -626,7 +644,7 @@ export class MatchExpr extends Expr {
 }
 
 /**
- * @hidden
+ * A node representing a `case` expression.
  */
 export class CaseExpr extends Expr {
     constructor(readonly branches: Array<[Expr, Expr]>, readonly fallback: Expr) {
@@ -648,7 +666,7 @@ export class CaseExpr extends Expr {
 }
 
 /**
- * @hidden
+ * A node representing a `step` expression.
  */
 export class StepExpr extends Expr {
     constructor(
@@ -676,12 +694,11 @@ export class StepExpr extends Expr {
 
 /**
  * The type of the interpolation mode.
- * @hidden
  */
 export type InterpolateMode = ["discrete"] | ["linear"] | ["cubic"] | ["exponential", number];
 
 /**
- * @hidden
+ * A node representing an `interpolate` expression.
  */
 export class InterpolateExpr extends Expr {
     constructor(
@@ -704,7 +721,9 @@ export class InterpolateExpr extends Expr {
 }
 
 /**
- * @hidden
+ * Serializes the Expr to JSON.
+ *
+ * @internal
  */
 class ExprSerializer implements ExprVisitor<JsonValue, void> {
     serialize(expr: Expr): JsonValue {

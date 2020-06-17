@@ -954,7 +954,7 @@ function resolveStyleReferences(
 /**
  * Create transferable representation of dynamic technique.
  *
- * Converts  non-transferable [[Expr]]instances back to JSON form.
+ * Converts  non-transferable {@link Expr}instances back to JSON form.
  */
 export function makeDecodedTechnique(technique: IndexedTechnique): IndexedTechnique {
     const result: Partial<IndexedTechnique> = {};

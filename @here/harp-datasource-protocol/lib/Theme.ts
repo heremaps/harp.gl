@@ -127,12 +127,12 @@ export interface Theme {
 
     /**
      * Optional list of symbolic priorities for the object
-     * created using this [[Theme]].
+     * created using this {@link Theme}.
      *
      * @remarks
      * The attribute `styleSet` and `category` of the [[Technique]]
      * are used together with [[Theme.priorities]] to sort
-     * the objects created using this [[Theme]], for example:
+     * the objects created using this {@link Theme}, for example:
      *
      * ```json
      * {
@@ -198,7 +198,7 @@ export interface StylePriority {
  * A type representing HARP themes with all the styleset declarations
  * grouped in one [[Array]].
  *
- * @internal This type will merge with [[Theme]].
+ * @internal This type will merge with {@link Theme}.
  */
 export type FlatTheme = Omit<Theme, "styles"> & {
     /**
@@ -856,7 +856,7 @@ export interface ImageTexture {
 }
 
 /**
- * Definition for a [[PoiTable]] reference as part of the [[Theme]] object.
+ * Definition for a [[PoiTable]] reference as part of the {@link Theme} object.
  */
 export interface PoiTableRef {
     /** Required name of the [[PoiTable]] for later reference. */

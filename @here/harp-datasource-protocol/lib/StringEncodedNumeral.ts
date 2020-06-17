@@ -11,6 +11,7 @@ import { parseCSSColor } from "csscolorparser";
 
 /**
  * Enumeration of supported string encoded numerals.
+ * @internal
  */
 export enum StringEncodedNumeralType {
     Meters,

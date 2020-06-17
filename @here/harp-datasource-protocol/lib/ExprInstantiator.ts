@@ -28,7 +28,7 @@ import { Env } from "./Env";
 
 export interface InstantiationContext {
     /**
-     * The [[Env]] used to lookup for names.
+     * The {@link Env} used to lookup for names.
      */
     env: Env;
 

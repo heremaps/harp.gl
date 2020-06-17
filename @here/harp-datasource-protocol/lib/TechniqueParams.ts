@@ -463,6 +463,7 @@ export enum PoiStackMode {
 /**
  * Defines options (tokens) supported for text placements defined via [[placements]] attribute.
  *
+ * @remarks
  * Possible values are defined as vertical placement letter and horizontal letter, where
  * one of the axis may be ignored and then assumed centered. Moving clock-wise, we have:
  * `TL` (top-left), `T` (top-center), `TR` (top-right), `R` (center-right), `BR` (bottom-right),

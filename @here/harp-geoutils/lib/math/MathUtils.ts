@@ -13,7 +13,7 @@ export namespace MathUtils {
     /**
      * Creates a new empty bounding box.
      *
-     * @deprecated Uee {@link https://threejs.org/docs/#api/en/math/Box3 | THREE.Box3} instead.
+     * @deprecated Use {@link https://threejs.org/docs/#api/en/math/Box3 | THREE.Box3} instead.
      */
     export function newEmptyBox3(): Box3Like {
         return {

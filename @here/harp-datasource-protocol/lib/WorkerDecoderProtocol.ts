@@ -15,8 +15,10 @@ export interface OptionsMap {
 }
 
 /**
- * Allows to cancel and prioritize requests inside the requestQueue. Useful to optimize the order of
- * decoding tiles during animations and camera movements.
+ * Allows to cancel and prioritize requests inside the requestQueue.
+ *
+ * @remarks
+ * Useful to optimize the order of decoding tiles during animations and camera movements.
  *
  * `RequestController` is not extending [[AbortController]], because this is not supported in ES5.
  */
