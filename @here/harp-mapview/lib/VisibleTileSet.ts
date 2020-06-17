@@ -377,7 +377,6 @@ export interface DataSourceTileList {
 export class VisibleTileSet {
     dataSourceTileList: DataSourceTileList[] = [];
     allVisibleTilesLoaded: boolean = false;
-    options: VisibleTileSetOptions;
 
     private readonly m_cameraOverride = new THREE.PerspectiveCamera();
     private m_dataSourceCache: DataSourceCache;
@@ -392,9 +391,8 @@ export class VisibleTileSet {
     constructor(
         private readonly m_frustumIntersection: FrustumIntersection,
         private readonly m_tileGeometryManager: TileGeometryManager,
-        options: VisibleTileSetOptions
+        public options: VisibleTileSetOptions
     ) {
-        this.options = options;
         this.m_resourceComputationType =
             options.resourceComputationType === undefined
                 ? ResourceComputationType.EstimationInMb
