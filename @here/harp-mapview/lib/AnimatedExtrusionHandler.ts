@@ -10,8 +10,9 @@ import {
     MapEnv,
     Technique
 } from "@here/harp-datasource-protocol";
+import { TileKey } from "@here/harp-geoutils";
 import { ExtrusionFeature, ExtrusionFeatureDefs } from "@here/harp-materials";
-import { assert, MathUtils } from "@here/harp-utils";
+import { MathUtils } from "@here/harp-utils";
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
@@ -26,6 +27,11 @@ export enum AnimatedExtrusionState {
 
 const DEFAULT_EXTRUSION_DURATION = 750; // milliseconds
 const DEFAULT_MIN_ZOOM_LEVEL = 16;
+
+interface TileExtrusionState {
+    materials: ExtrusionFeature[];
+    animated: boolean;
+}
 
 /**
  * Handles animated extrusion effect of the buildings in [[MapView]].
@@ -42,15 +48,9 @@ export class AnimatedExtrusionHandler {
 
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_forceEnabled: boolean = false;
-    private m_tileMap: Map<Tile, ExtrusionFeature[]> = new Map();
-    /**
-     * Number of tiles added for each tile tree. A tile tree has as root a tile in the data level
-     * corresponding to this.m_minZoomLevel and contains all its descendant tiles. Each tile tree
-     * is animated only once, i.e., if a tile in the tree was already animated and the camera zooms
-     * in/out, all tiles in the same tree will be rendered as fully extruded.
-     * Key is tree root's morton code, value is the number of tiles in the tree already added.
-     */
-    private m_tileTreeSizeMap: Map<number, number> = new Map();
+
+    // key is tile's morton code.
+    private m_tileMap: Map<number, TileExtrusionState> = new Map();
     private m_state: AnimatedExtrusionState = AnimatedExtrusionState.None;
     private m_startTime: number = -1;
 
@@ -133,9 +133,7 @@ export class AnimatedExtrusionHandler {
         if (this.m_state === AnimatedExtrusionState.None && extrusionVisible) {
             this.m_state = AnimatedExtrusionState.Started;
         } else if (this.m_state !== AnimatedExtrusionState.None && !extrusionVisible) {
-            this.m_state = AnimatedExtrusionState.None;
-            this.m_startTime = -1;
-            this.setExtrusionRatio(0, true);
+            this.resetAnimation(true);
         }
 
         this.animateExtrusion();
@@ -149,21 +147,20 @@ export class AnimatedExtrusionHandler {
      */
     add(tile: Tile, materials: ExtrusionFeature[]): void {
         tile.addDisposeCallback(this.removeTile.bind(this));
-        this.m_tileMap.set(tile, materials);
+        let animated = false;
 
-        if (this.m_state === AnimatedExtrusionState.Finished) {
-            if (this.isTileTreeAdded(tile)) {
-                // If the animation is finished and the new tile belongs to an already animated tile
-                // subtree, set the tile to fully extruded.
-                this.setTileExtrusionRatio(materials, 1.0);
-            } else {
-                // If the tile subtree is not yet animated, restart the animation.
-                this.m_state = AnimatedExtrusionState.None;
-                this.m_startTime = -1;
+        if (this.m_state !== AnimatedExtrusionState.None) {
+            animated = this.skipAnimation(tile);
+            if (animated) {
+                // Set extrusion ratio to 1 if the tile skips the animation.
+                this.setTileExtrusionRatio(materials, 1);
+            } else if (this.m_state === AnimatedExtrusionState.Finished) {
+                // Otherwise, if animation was finished, restart animation but leave already
+                //  animated tiles untouched.
+                this.resetAnimation(false);
             }
         }
-
-        this.addToTileTree(tile);
+        this.m_tileMap.set(tile.tileKey.mortonCode(), { materials, animated });
     }
 
     /**
@@ -176,38 +173,57 @@ export class AnimatedExtrusionHandler {
         );
     }
 
-    private removeTile(tile: Tile): void {
-        this.m_tileMap.delete(tile);
-        this.removeFromTileTree(tile);
+    private skipAnimation(tile: Tile): boolean {
+        return this.wasAnyAncestorAnimated(tile) || this.wasAnyDescendantAnimated(tile);
     }
 
-    private addToTileTree(tile: Tile) {
-        const rootTileCode = this.getTreeRootMortonCode(tile);
-        const oldSize = this.m_tileTreeSizeMap.get(rootTileCode);
-        const newSize = oldSize === undefined ? 1 : oldSize + 1;
-        this.m_tileTreeSizeMap.set(rootTileCode, newSize);
-    }
+    private wasAnyAncestorAnimated(tile: Tile): boolean {
+        const minLevel = tile.dataSource.getDataZoomLevel(this.m_minZoomLevel);
+        const distanceToMinLevel = Math.max(0, tile.tileKey.level - minLevel);
+        const levelsUp = Math.min(
+            distanceToMinLevel,
+            this.m_mapView.visibleTileSet.options.quadTreeSearchDistanceUp
+        );
 
-    private removeFromTileTree(tile: Tile) {
-        const rootTileCode = this.getTreeRootMortonCode(tile);
-        const oldSize = this.m_tileTreeSizeMap.get(rootTileCode);
-        assert(oldSize !== undefined);
-        assert(oldSize! > 0);
-        const newSize = oldSize! - 1;
-        if (newSize > 0) {
-            this.m_tileTreeSizeMap.set(rootTileCode, newSize);
-        } else {
-            this.m_tileTreeSizeMap.delete(rootTileCode);
+        let lastTileKey = tile.tileKey;
+        for (let deltaUp = 1; deltaUp <= levelsUp; ++deltaUp) {
+            lastTileKey = lastTileKey.parent();
+            if (this.m_tileMap.get(lastTileKey.mortonCode())?.animated ?? false) {
+                return true;
+            }
         }
+        return false;
     }
 
-    private getTreeRootMortonCode(tile: Tile): number {
-        const rootLevel = tile.dataSource.getDataZoomLevel(this.minZoomLevel);
-        return tile.tileKey.changedLevelTo(rootLevel).mortonCode();
+    private wasAnyDescendantAnimated(tile: Tile): boolean {
+        const distanceToMaxLevel = tile.dataSource.maxDataLevel - tile.tileKey.level;
+        const levelsDown = Math.min(
+            distanceToMaxLevel,
+            this.m_mapView.visibleTileSet.options.quadTreeSearchDistanceDown
+        );
+
+        const tilingScheme = tile.dataSource.getTilingScheme();
+        let nextTileKeys = [tile.tileKey];
+        let childTileKeys: TileKey[] = [];
+        for (let deltaDown = 1; deltaDown <= levelsDown; ++deltaDown) {
+            childTileKeys.length = 0;
+            for (const tileKey of nextTileKeys) {
+                for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
+                    if (this.m_tileMap.get(childTileKey.mortonCode())?.animated ?? false) {
+                        return true;
+                    }
+                    childTileKeys.push(childTileKey);
+                }
+            }
+            // swap
+            [nextTileKeys, childTileKeys] = [childTileKeys, nextTileKeys];
+        }
+
+        return false;
     }
 
-    private isTileTreeAdded(tile: Tile): boolean {
-        return this.m_tileTreeSizeMap.has(this.getTreeRootMortonCode(tile));
+    private removeTile(tile: Tile): void {
+        this.m_tileMap.delete(tile.tileKey.mortonCode());
     }
 
     private animateExtrusion() {
@@ -237,21 +253,29 @@ export class AnimatedExtrusionHandler {
         this.m_mapView.update();
     }
 
-    private setExtrusionRatio(value: number, force: boolean = false) {
-        this.m_tileMap.forEach(materials => {
-            this.setTileExtrusionRatio(materials, value, force);
+    private resetAnimation(resetTiles: boolean) {
+        this.m_state = AnimatedExtrusionState.None;
+        this.m_startTime = -1;
+        if (resetTiles) {
+            this.m_tileMap.forEach(state => {
+                state.animated = false;
+            });
+        }
+    }
+    private setExtrusionRatio(value: number) {
+        this.m_tileMap.forEach(state => {
+            if (!state.animated) {
+                this.setTileExtrusionRatio(state.materials, value);
+                if (value >= 1) {
+                    state.animated = true;
+                }
+            }
         });
     }
 
-    private setTileExtrusionRatio(
-        materials: ExtrusionFeature[],
-        value: number,
-        force: boolean = false
-    ) {
+    private setTileExtrusionRatio(materials: ExtrusionFeature[], value: number) {
         materials.forEach(material => {
-            if ((material.extrusionRatio ?? 0) < 1 || force) {
-                material.extrusionRatio = value;
-            }
+            material.extrusionRatio = value;
         });
     }
 }

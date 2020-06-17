@@ -10,7 +10,7 @@
 //    Chai uses properties instead of functions for some expect checks.
 
 import { MapEnv, Technique } from "@here/harp-datasource-protocol";
-import { TileKey } from "@here/harp-geoutils";
+import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { ExtrusionFeature } from "@here/harp-materials";
 import { expect } from "chai";
 import * as sinon from "sinon";
@@ -19,14 +19,21 @@ import { MapView } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 
 class FakeMapView {
+    visibleTileSet = { options: { quadTreeSearchDistanceDown: 2, quadTreeSearchDistanceUp: 3 } };
     update() {
         // noop
     }
 }
 
 class FakeDataSource {
+    maxDataLevel = 19;
+
     getDataZoomLevel(zoomLevel: number) {
         return zoomLevel;
+    }
+
+    getTilingScheme() {
+        return webMercatorTilingScheme;
     }
 }
 
@@ -168,15 +175,27 @@ describe("AnimatedExtrusionHandler", function() {
 
         it("stops animation if zoom level is less than minimum", function() {
             const tile = new FakeTile(new TileKey(1, 2, minZoomLevel));
+            const material = { extrusionRatio: 0 };
 
             handler.setAnimationProperties(technique, env);
 
-            handler.add(tile as any, [{ extrusionRatio: 0 }]);
+            handler.add(tile as any, [material]);
             handler.update(minZoomLevel);
             expect(handler.isAnimating).to.be.true;
 
+            clock.tick(handler.duration);
+            handler.update(minZoomLevel);
+            expect(material.extrusionRatio).to.equal(1);
+
             handler.update(minZoomLevel - 1);
             expect(handler.isAnimating).to.be.false;
+
+            handler.update(minZoomLevel);
+            clock.tick(handler.duration / 2);
+            handler.update(minZoomLevel);
+            expect(material.extrusionRatio)
+                .to.be.greaterThan(0)
+                .and.lessThan(1);
         });
 
         it("updates mapview during animation", function() {
@@ -227,11 +246,35 @@ describe("AnimatedExtrusionHandler", function() {
             expect(material.extrusionRatio).to.equal(0);
         });
 
-        it("sets extrusion ratio to 1 for tiles in already animated trees", function() {
+        it("sets extrusion ratio to 1 for tiles with already animated ancestors", function() {
             const duration = handler.duration;
             const material = { extrusionRatio: 0 };
             const firstTile = new FakeTile(new TileKey(1, 2, minZoomLevel));
-            const secondTile = new FakeTile(firstTile.tileKey.changedLevelTo(minZoomLevel + 1));
+            const secondZoomLevel =
+                minZoomLevel + mapView.visibleTileSet.options.quadTreeSearchDistanceUp;
+            const secondTile = new FakeTile(firstTile.tileKey.changedLevelTo(secondZoomLevel));
+
+            handler.setAnimationProperties(technique, env);
+            handler.add(firstTile as any, [{ extrusionRatio: 0 }]);
+            handler.update(minZoomLevel);
+            clock.tick(duration);
+            handler.update(secondZoomLevel);
+
+            handler.add(secondTile as any, [material]);
+            expect(material.extrusionRatio).to.equal(1);
+        });
+
+        it("sets extrusion ratio to 1 for tiles with already animated descendants", function() {
+            const duration = handler.duration;
+            const material = { extrusionRatio: 0 };
+            const firstTile = new FakeTile(
+                new TileKey(
+                    1,
+                    2,
+                    minZoomLevel + mapView.visibleTileSet.options.quadTreeSearchDistanceDown
+                )
+            );
+            const secondTile = new FakeTile(firstTile.tileKey.changedLevelTo(minZoomLevel));
 
             handler.setAnimationProperties(technique, env);
             handler.add(firstTile as any, [{ extrusionRatio: 0 }]);
@@ -245,23 +288,26 @@ describe("AnimatedExtrusionHandler", function() {
 
         it("restarts animation if tile does not belong to an already animated tree", function() {
             const duration = handler.duration;
-            const material = { extrusionRatio: 0 };
+            const firstMaterial = { extrusionRatio: 0 };
             const firstTile = new FakeTile(new TileKey(1, 2, minZoomLevel));
+            const secondMaterial = { extrusionRatio: 0 };
             const secondTile = new FakeTile(new TileKey(3, 4, minZoomLevel));
 
             handler.setAnimationProperties(technique, env);
-            handler.add(firstTile as any, [{ extrusionRatio: 0 }]);
+            handler.add(firstTile as any, [firstMaterial]);
             handler.update(minZoomLevel);
             clock.tick(duration);
             handler.update(minZoomLevel);
 
-            handler.add(secondTile as any, [material]);
+            handler.add(secondTile as any, [secondMaterial]);
             handler.update(minZoomLevel);
-            expect(material.extrusionRatio).to.equal(0);
+            expect(firstMaterial.extrusionRatio).to.equal(1);
+            expect(secondMaterial.extrusionRatio).to.equal(0);
 
             clock.tick(duration);
             handler.update(minZoomLevel);
-            expect(material.extrusionRatio).to.equal(1);
+            expect(firstMaterial.extrusionRatio).to.equal(1);
+            expect(secondMaterial.extrusionRatio).to.equal(1);
         });
     });
 });
