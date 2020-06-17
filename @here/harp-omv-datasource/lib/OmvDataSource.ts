@@ -91,7 +91,7 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
 
     /**
      * Gather feature IDs from `OmvData`. Defaults to `false`.
-     * @deprecated, FeatureIds are always gathered, use [[gatherFeatureAttributes]] to gather
+     * @deprecated FeatureIds are always gathered, use [[gatherFeatureAttributes]] to gather
      * all feature attributes.
      */
     gatherFeatureIds?: boolean;

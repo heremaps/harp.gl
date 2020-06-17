@@ -366,7 +366,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * If `DataSource` depends on a `styleSet` or `languages`, it must update its tiles' geometry.
      *
-     * @deprecated, Use [[setTheme]].
+     * @deprecated Use [[setTheme]].
      *
      * @param styleSet - The new theme that [[MapView]] uses.
      * @param languages - An optional list of languages for the `DataSource`.
