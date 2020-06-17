@@ -12,7 +12,8 @@ import * as THREE from "three";
 export namespace MathUtils {
     /**
      * Creates a new empty bounding box.
-     * @deprecated
+     *
+     * @deprecated Uee {@link https://threejs.org/docs/#api/en/math/Box3 | THREE.Box3} instead.
      */
     export function newEmptyBox3(): Box3Like {
         return {
@@ -90,7 +91,8 @@ export namespace MathUtils {
      *
      * @param degrees - Value in radians.
      * @returns Value in degrees.
-     * @deprecated
+     * @deprecated Use {@link https://threejs.org/docs/#api/en/math/MathUtils.radToDeg
+     *                | THREE.MathUtils.radToDeg}.
      */
     export const radToDeg = THREE.MathUtils.radToDeg;
 
@@ -101,7 +103,8 @@ export namespace MathUtils {
      * @param min - Minimum value.
      * @param max - Maximum value.
      * @returns Clamped value.
-     * @deprecated
+     * @deprecated Use {@link https://threejs.org/docs/#api/en/math/MathUtils.clamp
+     *                | THREE.MathUtils.clamp}.
      */
     export const clamp = THREE.MathUtils.clamp;
 

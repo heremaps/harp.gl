@@ -232,7 +232,7 @@ export abstract class Expr {
      *
      * @param code - The code to parse.
      * @returns The parsed [[Expr]].
-     * @deprecated
+     * @deprecated `string` encoded expression are deprecated. Use {@link Expr.fromJSON} instead.
      */
     static parse(code: string): Expr | never {
         const parser = new ExprParser(code);
@@ -545,7 +545,8 @@ export class CallExpr extends Expr {
 
     /**
      * Returns the child nodes of this [[Expr]].
-     * @deprecated
+     *
+     * @deprecated Use {@link CallExpr.args} instead.
      */
     get children() {
         return this.args;

@@ -6,6 +6,7 @@
 
 /**
  * Alias to [[OrientedBox3]] of [[@here/harp-geoutils]].
- * @deprecated
+ *
+ * @deprecated Use {@link @here/harp-geoutils#OrientedBox3} instead.
  */
 export { OrientedBox3 } from "@here/harp-geoutils";

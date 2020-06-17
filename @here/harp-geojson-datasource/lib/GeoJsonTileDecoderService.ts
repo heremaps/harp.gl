@@ -9,11 +9,13 @@ import { LoggerManager } from "@here/harp-utils";
 const logger = LoggerManager.instance.create("WorkerService", { enabled: false });
 
 /**
- * @deprecated
+ * @deprecated GeoJsonTileDecoderService Use {@link @here/harp-omv-datasource#OmvTileDecoderService}
+ *             instead.
  */
 export class GeoJsonTileDecoderService {
     /**
-     * @deprecated
+     * @deprecated GeoJsonTileDecoderService Use
+     *             {@link @here/harp-omv-datasource#OmvTileDecoderService} instead.
      */
     start() {
         logger.warn(

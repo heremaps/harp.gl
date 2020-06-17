@@ -452,7 +452,7 @@ export class Tile implements CachedResource {
 
     /**
      * @internal
-     * @deprecated
+     * @deprecated User text elements are deprecated.
      *
      * Gets the list of developer-defined [[TextElement]] in this `Tile`. This list is always
      * rendered first.

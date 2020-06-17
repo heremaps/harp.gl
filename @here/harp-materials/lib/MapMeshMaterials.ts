@@ -102,7 +102,7 @@ export interface HiddenThreeJSMaterialProperties {
      * Hidden ThreeJS value that is made public here. Required to add new uniforms to subclasses of
      * [[THREE.MeshBasicMaterial]]/[[THREE.MeshStandardMaterial]], basically all materials that are
      * not THREE.ShaderMaterial.
-     * @deprecated
+     * @deprecated Changes to this property are ignored.
      */
     uniformsNeedUpdate?: boolean;
 
