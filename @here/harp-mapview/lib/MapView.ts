@@ -975,7 +975,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_politicalView = this.m_options.politicalView;
 
         if (
-            !isProduction &&
             this.m_options.collisionDebugCanvas !== undefined &&
             this.m_options.collisionDebugCanvas !== null
         ) {
