@@ -384,7 +384,7 @@ const extrudedPolygonTechniqueDescriptor = mergeTechniqueDescriptor<ExtrudedPoly
         attrScopes: {
             height: AttrScope.FeatureGeometry,
             floorHeight: AttrScope.FeatureGeometry,
-            color: AttrScope.FeatureGeometry,
+            color: AttrScope.TechniqueRendering,
             defaultColor: AttrScope.FeatureGeometry,
             defaultHeight: AttrScope.FeatureGeometry,
             constantHeight: AttrScope.FeatureGeometry,
