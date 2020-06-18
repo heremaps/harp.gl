@@ -75,12 +75,12 @@ export class TileGeometryManager {
     private m_visibilityCounter: number = 1;
 
     /**
-     * Creates an instance of `TileGeometryManager` with a reference to the [[MapView]].
+     * Creates an instance of `TileGeometryManager` with a reference to the {@link MapView}.
      */
     constructor(protected mapView: MapView) {}
 
     /**
-     * Initialize the [[Tile]] with the TileGeometryManager.
+     * Initialize the {@link Tile} with the TileGeometryManager.
      */
     initTile(tile: Tile): void {
         if (tile.dataSource.useGeometryLoader) {
@@ -89,7 +89,7 @@ export class TileGeometryManager {
     }
 
     /**
-     * Process the [[Tile]]s for rendering. May alter the content of the tile per frame.
+     * Process the {@link Tile}s for rendering. May alter the content of the tile per frame.
      */
     updateTiles(tiles: Tile[]): void {
         for (const tile of tiles) {

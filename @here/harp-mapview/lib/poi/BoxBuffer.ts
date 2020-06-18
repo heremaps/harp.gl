@@ -102,28 +102,29 @@ export class BoxBufferMesh extends THREE.Mesh {
  */
 export class BoxBuffer {
     /**
-     * [[BufferAttribute]] holding the `BoxBuffer` position data.
+     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` position data.
      */
     protected positionAttribute?: THREE.BufferAttribute;
 
     /**
-     * [[BufferAttribute]] holding the `BoxBuffer` color data.
+     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` color data.
      */
     protected colorAttribute?: THREE.BufferAttribute;
 
     /**
-     * [[BufferAttribute]] holding the `BoxBuffer` uv data.
+     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` uv data.
      */
     protected uvAttribute?: THREE.BufferAttribute;
 
     /**
-     * [[BufferAttribute]] holding the `BoxBuffer` index data.
+     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` index data.
      */
     protected indexAttribute?: THREE.BufferAttribute;
     protected pickInfos: Array<any | undefined>;
 
     /**
-     * [[BufferGeometry]] holding all the different [[BufferAttribute]]s.
+     * [[BufferGeometry]] holding all the different
+     * {@link @here/harp-datasource-protocol#BufferAttribute}s.
      */
     protected geometry: THREE.BufferGeometry | undefined;
 
@@ -451,7 +452,10 @@ export class BoxBuffer {
     }
 
     /**
-     * Creates a new [[Geometry]] object from all the attribute data stored in this `BoxBuffer`.
+     * Creates a new {@link @here/harp-datasource-protocol#Geometry} object
+     * from all the attribute data stored in this `BoxBuffer`.
+     *
+     * @remarks
      * The [[Mesh]] object may be created if it is not initialized already.
      *
      * @param newSize - Optional number of elements to resize the buffer to.

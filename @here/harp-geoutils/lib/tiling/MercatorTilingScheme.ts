@@ -9,7 +9,7 @@ import { quadTreeSubdivisionScheme } from "./QuadTreeSubdivisionScheme";
 import { TilingScheme } from "./TilingScheme";
 
 /**
- * The [[TilingScheme]] used by the HERE web tiles.
+ * The {@link TilingScheme} used by the HERE web tiles.
  *
  * The `mercatorTilingScheme` features a quadtree subdivision scheme and a Mercator projection.
  */

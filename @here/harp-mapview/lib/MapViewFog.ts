@@ -11,7 +11,7 @@ import * as THREE from "three";
 import { MapView } from "./MapView";
 
 /**
- * Manages the fog display in [[MapView]].
+ * Manages the fog display in {@link MapView}.
  */
 export class MapViewFog {
     private m_enabled: boolean = true;
@@ -22,7 +22,7 @@ export class MapViewFog {
     /**
      * Constructs a `MapViewFog` instance.
      *
-     * @param m_scene - The scene used in [[MapView]] that contains the map objects.
+     * @param m_scene - The scene used in {@link MapView} that contains the map objects.
      */
     constructor(private m_scene: THREE.Scene) {}
 
@@ -50,13 +50,14 @@ export class MapViewFog {
     }
 
     /**
-     * Sets the fog depending on the [[Theme]] instance provided. This function is called when a
+     * Sets the fog depending on the {@link @here/harp-datasource-protocol#Theme}
+     * instance provided. This function is called when a
      * theme is loaded. Fog is added only if the theme contains a fog definition with a:
      * - `color` property, used to set the fog color.
      * - `startRatio` property, used to set the start distance of the fog as a ratio of the far
      * clipping plane distance.
      *
-     * @param theme - A [[Theme]] instance.
+     * @param theme - A {@link @here/harp-datasource-protocol#Theme} instance.
      */
     reset(theme: Theme) {
         this.m_cachedTheme = theme;

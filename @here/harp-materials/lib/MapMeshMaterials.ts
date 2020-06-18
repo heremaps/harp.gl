@@ -23,13 +23,13 @@ const emptyTexture = new THREE.Texture();
  * [[THREE.MeshBasicMaterial]] and [[THREE.MeshStandardMaterial]], with the addition functionality
  * of fading out the geometry between a fadeNear and fadeFar value.
  *
- * The implementation is designed around a mixin class [[FadingFeatureMixin]], which requires
+ * The implementation is designed around a mixin class {@link FadingFeatureMixin}, which requires
  * a bit of care when adding the FadingFeature to the existing mesh classes, but it is safe to use
  * and also reduces code duplication.
  */
 
 /**
- * Parameters used when constructing a new implementor of [[FadingFeature]].
+ * Parameters used when constructing a new implementor of {@link FadingFeature}.
  */
 export interface FadingFeatureParameters {
     /**
@@ -56,7 +56,7 @@ export interface ShadowFeatureParameters {
 }
 
 /**
- * Parameters used when constructing a new implementor of [[ExtrusionFeature]].
+ * Parameters used when constructing a new implementor of {@link ExtrusionFeature}.
  */
 export interface ExtrusionFeatureParameters {
     /**
@@ -211,7 +211,7 @@ function linkMixinWithShader(mixin: MixinShaderProperties, shader: THREE.Shader)
 
 /**
  * Base interface for all objects that should fade in the distance. The implementation of the actual
- * FadingFeature is done with the help of the mixin class [[FadingFeatureMixin]] and a set of
+ * FadingFeature is done with the help of the mixin class {@link FadingFeatureMixin} and a set of
  * supporting functions in the namespace of the same name.
  */
 export interface FadingFeature extends HiddenThreeJSMaterialProperties, MixinShaderProperties {
@@ -228,8 +228,11 @@ export interface FadingFeature extends HiddenThreeJSMaterialProperties, MixinSha
 }
 
 /**
- * Base interface for all objects that should have animated extrusion effect. The implementation of
- * the actual ExtrusionFeature is done with the help of the mixin class [[ExtrusionFeatureMixin]]
+ * Base interface for all objects that should have animated extrusion effect.
+ *
+ * @remarks
+ * The implementation of the actual ExtrusionFeature is done with
+ * the help of the mixin class {@link ExtrusionFeatureMixin}
  * and a set of supporting functions in the namespace of the same name.
  */
 export interface ExtrusionFeature extends HiddenThreeJSMaterialProperties, MixinShaderProperties {
@@ -756,7 +759,7 @@ export class FadingFeatureMixin implements FadingFeature {
 
 export namespace ExtrusionFeature {
     /**
-     * Checks if feature is enabled based on [[ExtrusionFeature]] properties.
+     * Checks if feature is enabled based on {@link ExtrusionFeature} properties.
      *
      * @param extrusionMaterial -
      */
@@ -867,8 +870,10 @@ export namespace ExtrusionFeature {
 /**
  * Mixin class for extended THREE materials. Adds new properties required for `extrusionRatio`.
  *
+ * @remarks
  * There is some special handling for the extrusionRatio property, which is animated via
- * [[AnimatedExtrusionHandler]] that is using [[extrusionRatio]] setter and getter to update
+ * {@link @here/harp-mapview#AnimatedExtrusionHandler} that is
+ * using [[extrusionRatio]] setter and getter to update
  * extrusion in a way that works well with the mixin and EdgeMaterial.
  */
 export class ExtrusionFeatureMixin implements ExtrusionFeature {
@@ -1013,7 +1018,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual
-    // implementations are those in [[FadingFeatureMixin]] and [[ExtrusionFeatureMixin]], see below:
+    // implementations are those in FadingFeatureMixin and ExtrusionFeatureMixin, see below:
     //
     // applyMixinsWithoutProperties(FadingMeshBasicMaterial, [FadingFeatureMixin]);
     // applyMixinsWithoutProperties(ExtrudionMeshBasicMaterial, [ExtrusionFeatureMixin]);
@@ -1118,7 +1123,7 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual
-    // implementations are those in[[ExtrusionFeatureMixin]], see below:
+    // implementations are those in{@link ExtrusionFeatureMixin}, see below:
     //
     // applyMixinsWithoutProperties(...);
     //
@@ -1231,7 +1236,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual
-    // implementations are those in [[FadingFeatureMixin]] and [[ExtrusionFeatureMixin]], see below:
+    // implementations are those in FadingFeatureMixin and ExtrusionFeatureMixin, see below:
     //
     // applyMixinsWithoutProperties(FadingMeshBasicMaterial, [FadingFeatureMixin]);
     // applyMixinsWithoutProperties(ExtrudionMeshBasicMaterial, [ExtrusionFeatureMixin]);

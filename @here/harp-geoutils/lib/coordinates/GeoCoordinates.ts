@@ -46,19 +46,19 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     }
 
     /**
-     * Creates a [[GeoCoordinates]] from a [[LatLngLike]] literal.
+     * Creates a {@link GeoCoordinates} from a {@link LatLngLike} literal.
      * ```typescript
      * const center = { lat: 53.3, lng: 13.4 };
      * mapView.geoCenter = GeoCoordinates.fromLatLng(center);
      * ```
-     * @param latLng - A [[LatLngLike]] object literal.
+     * @param latLng - A {@link LatLngLike} object literal.
      */
     static fromLatLng(latLng: LatLngLike) {
         return new GeoCoordinates(latLng.lat, latLng.lng);
     }
 
     /**
-     * Creates a [[GeoCoordinates]] from a [[GeoPointLike]] tuple.
+     * Creates a {@link GeoCoordinates} from a [[GeoPointLike]] tuple.
      *
      * Example:
      * ```typescript
@@ -78,7 +78,7 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     }
 
     /**
-     * Creates a [[GeoCoordinates]] from different types of geo coordinate objects.
+     * Creates a {@link GeoCoordinates} from different types of geo coordinate objects.
      *
      * Example:
      * ```typescript
@@ -88,8 +88,8 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      * const fromLatLngLike = GeoCoordinates.fromObject({ lat: latitude , lng: longitude });
      * ```
      *
-     * @param geoPoint - Either [[GeoPointLike]], [[GeoCoordinatesLike]]
-     * or [[LatLngLike]] object literal.
+     * @param geoPoint - Either [[GeoPointLike]], {@link GeoCoordinatesLike}
+     * or {@link LatLngLike} object literal.
      */
     static fromObject(geoPoint: GeoCoordLike): GeoCoordinates {
         if (isGeoPointLike(geoPoint)) {
@@ -242,14 +242,14 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     }
 
     /**
-     * Returns this [[GeoCoordinates]] as [[LatLngLike]] literal.
+     * Returns this {@link GeoCoordinates} as {@link LatLngLike} literal.
      */
     toLatLng(): LatLngLike {
         return { lat: this.latitude, lng: this.longitude };
     }
 
     /**
-     * Converts this [[GeoCoordinates]] to a [[GeoPointLike]].
+     * Converts this {@link GeoCoordinates} to a [[GeoPointLike]].
      */
     toGeoPoint(): GeoPointLike {
         return this.altitude !== undefined

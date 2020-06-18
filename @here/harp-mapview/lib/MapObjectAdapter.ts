@@ -25,7 +25,7 @@ export interface MapObjectAdapterParams {
 /**
  * @hidden
  *
- * [[MapView]] specific data assigned to `THREE.Object3D` instance in installed in `userData`.
+ * {@link MapView} specific data assigned to `THREE.Object3D` instance in installed in `userData`.
  *
  * [[MapObjectAdapter]] is registered in `usedData.mapAdapter` property of `THREE.Object3D`.
  */
@@ -92,7 +92,7 @@ export class MapObjectAdapter {
     }
 
     /**
-     * Ensure that underlying object is updated to current state of [[MapView]].
+     * Ensure that underlying object is updated to current state of {@link MapView}.
      *
      * Updates object and attachments like materials to current state by evaluating scene dependent
      * expressions.

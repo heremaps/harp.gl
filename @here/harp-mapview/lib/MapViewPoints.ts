@@ -9,9 +9,10 @@ import { PickingRaycaster } from "./PickingRaycaster";
 
 /**
  * `MapViewPoints` is a class to extend for the `"circles"` and `"squares"` [[Technique]]s to
- * implement raycasting of [[THREE.Points]] as expected in [[MapView]], that are in screen space. It
- * copies the behaviour of the `raycast` method in [[THREE.Points]] and dispatches it to its
- * children classes, [[Circles]] and [[Squares]], who hold the intersection testing in the
+ * implement raycasting of [[THREE.Points]] as expected in
+ * {@link MapView}, that are in screen space.
+ * It copies the behaviour of the `raycast` method in [[THREE.Points]] and dispatches it to its
+ * children classes, {@link Circles} and {@link Squares}, who hold the intersection testing in the
  * `testPoint` method. This class also has the ability to dismiss the testing via the
  * `enableRayTesting` flag.
  *
@@ -26,9 +27,10 @@ export abstract class MapViewPoints extends THREE.Points {
     enableRayTesting: boolean = true;
 
     /**
-     * Implements the intersection testing in screen space between the drawn points and the ray. The
-     * drawing of the points being different between [[Circles]] and [[Squares]], this method is
-     * implemented in these child classes.
+     * Implements the intersection testing in screen space between the drawn points and the ray.
+     *
+     * @remarks The drawing of the points being different between {@link Circles}
+     * and {@link Squares}, this method is implemented in these child classes.
      *
      * @param point - The point to test.
      * @param screenPosition - The point position on screen.

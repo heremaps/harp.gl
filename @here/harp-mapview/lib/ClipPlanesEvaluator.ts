@@ -280,8 +280,8 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * anyway.
      * @note You may treat [[minElevation]] and [[maxElevation]] parameters as the maximum and
      * minimum renderable elevation respectively along the surface normal, when camera is
-     * constantly looking downwards (top-down view). If you need [[ClipPlanesEvaluator]] for
-     * cameras that support tilt or yaw please use [[TiltViewClipPlanesEvaluator]].
+     * constantly looking downwards (top-down view). If you need {@link ClipPlanesEvaluator} for
+     * cameras that support tilt or yaw please use {@link TiltViewClipPlanesEvaluator}.
      * @note [[nearFarMaxRatio]] does not limit far plane when spherical projection is in use,
      * the algorithm used there estimates distance to point on tangent where line from camera
      * touches the sphere horizon and there is no reason to clamp it.
@@ -1049,9 +1049,10 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
 }
 
 /**
- * Factory function that creates default [[ClipPlanesEvaluator]] that calculates near plane based
+ * Factory function that creates default {@link ClipPlanesEvaluator}
+ * that calculates near plane based
  * on ground distance and camera orientation.
  *
- * Creates [[TiltViewClipPlanesEvaluator]].
+ * Creates {@link TiltViewClipPlanesEvaluator}.
  */
 export const createDefaultClipPlanesEvaluator = () => new TiltViewClipPlanesEvaluator();

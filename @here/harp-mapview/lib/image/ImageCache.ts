@@ -26,19 +26,20 @@ declare function createImageBitmap(
 ): Promise<ImageBitmap>;
 
 /**
- * Combines an [[ImageItem]] with a list of [[MapViews]] that reference it.
+ * Combines an {@link ImageItem} with a list of [[MapViews]] that reference it.
  */
 class ImageCacheItem {
     /**
-     * The list of [[MapView]]s referencing the [[ImageItem]].
+     * The list of {@link MapView}s referencing the {@link ImageItem}.
      */
     mapViews: MapView[] = [];
 
     /**
      * Instantiates `ImageCacheItem`.
      *
-     * @param imageItem - The [[ImageItem]] referenced by the associated [[MapView]]s instances.
-     * @param mapView - An optional first [[MapView]] referencing the [[ImageItem]].
+     * @param imageItem - The {@link ImageItem} referenced by
+     *                    the associated {@link MapView}s instances.
+     * @param mapView - An optional first {@link MapView} referencing the {@link ImageItem}.
      */
     constructor(public imageItem: ImageItem, mapView?: MapView) {
         if (mapView !== undefined) {
@@ -84,7 +85,7 @@ export class ImageCache {
     /**
      * Add an image definition to the global cache. Useful when the image data is already loaded.
      *
-     * @param mapView - Specifiy which [[MapView]] requests the image.
+     * @param mapView - Specifiy which {@link MapView} requests the image.
      * @param url - URL of image.
      * @param imageData - Optional [ImageData]] containing the image content.
      */
@@ -123,7 +124,7 @@ export class ImageCache {
     /**
      * Add an image definition, and optionally start loading the content.
      *
-     * @param mapView - [[MapView]] requesting the image.
+     * @param mapView - {@link MapView} requesting the image.
      * @param url - URL of image.
      * @param startLoading - Optional flag. If `true` the image will be loaded in the background.
      */
@@ -141,7 +142,7 @@ export class ImageCache {
     }
 
     /**
-     * Find [[ImageItem]] for the specified URL.
+     * Find {@link ImageItem} for the specified URL.
      *
      * @param url - URL of image.
      * @returns `ImageItem` for the URL if the URL is registered, `undefined` otherwise.
@@ -155,10 +156,10 @@ export class ImageCache {
     }
 
     /**
-     * Clear all [[ImageItem]]s belonging to a [[MapView]]. May remove cached items if no
-     * [[MapView]] are registered anymore.
+     * Clear all {@link ImageItem}s belonging to a {@link MapView}. May remove cached items if no
+     * {@link MapView} are registered anymore.
      *
-     * @param mapView - MapView to remove all [[ImageItem]]s from.
+     * @param mapView - MapView to remove all {@link ImageItem}s from.
      */
     clear(mapView: MapView) {
         const itemsToRemove: string[] = [];
@@ -179,25 +180,25 @@ export class ImageCache {
     }
 
     /**
-     * Clear all [[ImageItem]]s from all [[MapView]]s.
+     * Clear all {@link ImageItem}s from all {@link MapView}s.
      */
     clearAll() {
         this.m_images = new Map();
     }
 
     /**
-     * Returns the number of all cached [[ImageItem]]s.
+     * Returns the number of all cached {@link ImageItem}s.
      */
     get size(): number {
         return this.m_images.size;
     }
 
     /**
-     * Load an [[ImageItem]]. If the loading process is already running, it returns the current
+     * Load an {@link ImageItem}. If the loading process is already running, it returns the current
      * promise.
      *
      * @param imageItem - `ImageItem` containing the URL to load image from.
-     * @returns An [[ImageItem]] if the image has already been loaded, a promise otherwise.
+     * @returns An {@link ImageItem} if the image has already been loaded, a promise otherwise.
      */
     loadImage(imageItem: ImageItem): ImageItem | Promise<ImageItem | undefined> {
         if (imageItem.imageData !== undefined) {
@@ -243,7 +244,7 @@ export class ImageCache {
     }
 
     /**
-     * Find the cached [[ImageItem]] by URL.
+     * Find the cached {@link ImageItem} by URL.
      *
      * @param url - URL of image.
      */
@@ -255,7 +256,7 @@ export class ImageCache {
      * Render the `ImageItem` by using `createImageBitmap()` or by rendering the image into a
      * [[HTMLCanvasElement]].
      *
-     * @param imageItem - [[ImageItem]] to assign image data to.
+     * @param imageItem - {@link ImageItem} to assign image data to.
      * @param image - [[HTMLImageElement]] to
      */
     private renderImage(

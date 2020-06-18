@@ -32,7 +32,8 @@ import { PoiTable } from "./PoiTableManager";
 const logger = LoggerManager.instance.create("PoiManager");
 
 /**
- * Interface for the [[ImageTexture]]s that are defined in the atlas.
+ * Interface for the {@link @here/harp-datasource-protocol#ImageTexture}s
+ * that are defined in the atlas.
  */
 interface ImageTextureDef {
     x: number;
@@ -43,8 +44,13 @@ interface ImageTextureDef {
 }
 
 /**
- * POI manager class, responsible for loading the [[PoiGeometry]] objects from the [[DecodedTile]],
- * and preparing them for rendering. Also loads and manages the texture atlases for the icons.
+ * POI manager class, responsible for loading the
+ * {@link @here/harp-datasource-protocol#PoiGeometry} objects
+ * from the {@link @here/harp-datasource-protocol#DecodedTile},
+ * and preparing them for rendering.
+ *
+ * @remarks
+ * Also loads and manages the texture atlases for the icons.
  */
 export class PoiManager {
     // Keep track of the missing POI table names, but only warn once.
@@ -100,18 +106,19 @@ export class PoiManager {
     /**
      * The constructor of the `PoiManager`.
      *
-     * @param mapView - The [[MapView]] instance that should display the POIs.
+     * @param mapView - The {@link MapView} instance that should display the POIs.
      */
     constructor(readonly mapView: MapView) {}
 
     /**
-     * Add all POIs from a decoded tile and store them as [[TextElement]]s in the [[Tile]].
+     * Add all POIs from a decoded tile and store them as {@link TextElement}s in the {@link Tile}.
      *
      * Also handles LineMarkers, which is a recurring marker along a line (road).
      *
      * @param tile - Tile to add POIs to.
-     * @param decodedTile - DecodedTile containing the raw [[PoiGeometry]] objects describing the
-     *  POIs.
+     * @param decodedTile - DecodedTile containing the raw
+     *                      {@link @here/harp-datasource-protocol#PoiGeometry}
+     *                      objects describing the POIs.
      */
     addPois(tile: Tile, decodedTile: DecodedTile): void {
         const poiGeometries = assertExists(decodedTile.poiGeometries);
@@ -150,7 +157,11 @@ export class PoiManager {
 
     /**
      * Load the texture atlas that defines the segments of the texture that should be used for
-     * specific icons. Creates an [[ImageTexture]] for every element in the atlas, such that it can
+     * specific icons.
+     *
+     * @remarks
+     * Creates an {@link @here/harp-datasource-protocol#ImageTexture}
+     * for every element in the atlas, such that it can
      * be addressed in the theme file.
      *
      * @param imageName - Name of the image from the theme (NOT the url!).
@@ -205,10 +216,11 @@ export class PoiManager {
     }
 
     /**
-     * Add an [[ImageTexture]] such that it is available as a named entity for techniques in theme
-     * files.
+     * Add an {@link @here/harp-datasource-protocol#ImageTexture} such that it
+     * is available as a named entity for techniques in theme files.
      *
-     * @param imageTexture - [[ImageTexture]] that should be available for POIs.
+     * @param imageTexture - {@link @here/harp-datasource-protocol#ImageTexture}
+     *                       that should be available for POIs.
      */
     addImageTexture(imageTexture: ImageTexture) {
         if (imageTexture.name === undefined) {
@@ -225,29 +237,30 @@ export class PoiManager {
     }
 
     /**
-     * Return the [[ImageTexture]] registered under the specified name.
+     * Return the {@link @here/harp-datasource-protocol#ImageTexture}
+     * registered under the specified name.
      *
-     * @param name - Name of the [[ImageTexture]].
+     * @param name - Name of the {@link @here/harp-datasource-protocol#ImageTexture}.
      */
     getImageTexture(name: string): ImageTexture | undefined {
         return this.m_imageTextures.get(name);
     }
 
     /**
-     * Update the [[TextElement]] with the information taken from the [[PoiTable]] which is
-     * referenced in the [[PoiInfo]] of the pointLabel.
+     * Update the {@link TextElement} with the information taken from the {@link PoiTable} which is
+     * referenced in the {@link PoiInfo} of the pointLabel.
      *
-     * If the requested [[PoiTable]] is not available yet, the function returns `false`.
-     * If the [[PoiTable]] is not defined, or if the references POI has no entry in
-     * the [[PoiTable]], no action is taken, and the function returns `false`.
+     * If the requested {@link PoiTable} is not available yet, the function returns `false`.
+     * If the {@link PoiTable} is not defined, or if the references POI has no entry in
+     * the {@link PoiTable}, no action is taken, and the function returns `false`.
      *
-     * If the [[PoiTable]] has been processed, it returns `true`, indicating that this function
+     * If the {@link PoiTable} has been processed, it returns `true`, indicating that this function
      * doesn't have to be called again.
      *
-     * @param pointLabel - The [[TextElement]] to update.
+     * @param pointLabel - The {@link TextElement} to update.
      *
-     * @returns `true` if the [[PoiTable]] has been processed, and the function does not have to be
-     *          called again.
+     * @returns `true` if the {@link PoiTable} has been processed, and the
+     *          function does not have to be called again.
      */
     updatePoiFromPoiTable(pointLabel: TextElement): boolean {
         const poiInfo = pointLabel.poiInfo;
@@ -412,7 +425,7 @@ export class PoiManager {
     }
 
     /**
-     * Create and add POI [[TextElement]]s to tile with a series of positions.
+     * Create and add POI {@link TextElement}s to tile with a series of positions.
      */
     private addPoi(
         tile: Tile,
@@ -489,9 +502,12 @@ export class PoiManager {
     }
 
     /**
-     * Create the [[TextElement]] for a POI. Even if the POI has no text, it is required that there
-     * is a [[TextElement]], since POIs are hooked onto [[TextElement]]s for sorting.(Sorted by
-     * priority attribute).
+     * Create the {@link TextElement} for a POI.
+     *
+     * @remarks
+     * Even if the POI has no text, it is required that there
+     * is a {@link TextElement}, since POIs are hooked onto {@link TextElement}s
+     * for sorting.(Sorted by priority attribute).
      */
     private checkCreateTextElement(
         tile: Tile,

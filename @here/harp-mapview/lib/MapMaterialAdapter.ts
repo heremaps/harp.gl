@@ -14,7 +14,7 @@ import { MapView } from "./MapView";
 /**
  * @hidden
  *
- * Pick of [[MapView]] properties required to update materials used [[MapMaterialAdapter]].
+ * Pick of {@link MapView} properties required to update materials used [[MapMaterialAdapter]].
  */
 export type MapAdapterUpdateEnv = Pick<MapView, "env" | "frameNumber">;
 
@@ -38,7 +38,7 @@ export interface StyledProperties {
 /**
  * @hidden
  *
- * [[MapView]] specific data assigned to `THREE.Material` instance in installed in `userData`.
+ * {@link MapView} specific data assigned to `THREE.Material` instance in installed in `userData`.
  *
  * [[MapMaterialAdapter]] is registered in `usedData.mapAdapter` property of `THREE.Material`.
  */
@@ -131,7 +131,7 @@ export class MapMaterialAdapter {
     }
 
     /**
-     * Ensure that underlying object is updated to current state of [[MapView]].
+     * Ensure that underlying object is updated to current state of {@link MapView}.
      *
      * Updates dynamically styled properties of material by evaluating scene dependent expressions.
      *

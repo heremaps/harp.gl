@@ -120,7 +120,7 @@ export class WorkerBasedTiler implements ITiler {
      * Retrieves a tile for a previously registered index.
      *
      * @param indexId - Index identifier.
-     * @param tileKey - The [[TileKey]] that identifies the tile.
+     * @param tileKey - The {@link @here/harp-geoutils#TileKey} that identifies the tile.
      */
     getTile(indexId: string, tileKey: TileKey): Promise<{}> {
         const tileKeyCode = tileKey.mortonCode();

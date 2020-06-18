@@ -19,7 +19,7 @@ export interface GeoCoordinatesLike {
 }
 
 /**
- * Type guard to assert that `object` conforms to [[GeoCoordinatesLike]] data interface.
+ * Type guard to assert that `object` conforms to {@link GeoCoordinatesLike} data interface.
  */
 export function isGeoCoordinatesLike(object: any): object is GeoCoordinatesLike {
     return (

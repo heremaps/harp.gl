@@ -90,9 +90,11 @@ export class WorkerBasedDecoder implements ITileDecoder {
     }
 
     /**
-     * Get [[Tile]] from tile decoder service in worker.
+     * Get {@link Tile} from tile decoder service in worker.
      *
-     * Invokes [[DecodeTileRequest]] on [[TileDecoderService]] running in worker pool.
+     * @remarks
+     * Invokes {@link @here/harp-datasource-protocol#DecodeTileRequest} on
+     * [[TileDecoderService]] running in worker pool.
      */
     decodeTile(
         data: ArrayBufferLike,
@@ -120,9 +122,11 @@ export class WorkerBasedDecoder implements ITileDecoder {
     }
 
     /**
-     * Get [[TileInfo]] from tile decoder service in worker.
+     * Get {@link @here/harp-datasource-protocol#TileInfo} from tile decoder service in worker.
      *
-     * Invokes [[TileInfoRequest]] on [[TileDecoderService]] running in worker pool.
+     * @remarks
+     * Invokes {@link @here/harp-datasource-protocol#TileInfoRequest}
+     * on [[TileDecoderService]] running in worker pool.
      */
     getTileInfo(
         data: ArrayBufferLike,
@@ -151,7 +155,9 @@ export class WorkerBasedDecoder implements ITileDecoder {
     /**
      * Configure tile decoder service in workers.
      *
-     * Broadcasts [[ConfigurationMessage]] to all [[TileDecoderService]]s running in worker pool.
+     * @remarks
+     * Broadcasts {@link @here/harp-datasource-protocol#ConfigurationMessage}
+     * to all [[TileDecoderService]]s running in worker pool.
      *
      * @param styleSet -  new [[StyleSet]], undefined means no change
      * @param languages - new list of languages

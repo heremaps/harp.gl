@@ -7,7 +7,7 @@
 import { Vector3Like } from "./Vector3Like";
 
 /**
- * The interface [[TransformLike]] is used to represent transforms with
+ * The interface {@link TransformLike} is used to represent transforms with
  * only translation and rotation.
  */
 export interface TransformLike {
@@ -33,7 +33,7 @@ export interface TransformLike {
 }
 
 /**
- * Returns true if the given object implements the interface [[TransformLike]].
+ * Returns true if the given object implements the interface {@link TransformLike}.
  *
  * @param object - The object.
  */

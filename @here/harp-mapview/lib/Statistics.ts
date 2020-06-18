@@ -821,7 +821,7 @@ export class FrameStats {
  * Only exported for testing.
  *
  * Instead of passing around an array of objects, we store the frame statistics as an object of
- * arrays. This allows convenient computations from [[RingBuffer]],
+ * arrays. This allows convenient computations from {@link RingBuffer},
  */
 export class FrameStatsArray {
     readonly frameEntries: Map<string, RingBuffer<number>> = new Map();
@@ -915,7 +915,8 @@ export interface SimpleFrameStatistics {
 }
 
 /**
- * Performance measurement central. Maintains the current [[FrameStats]], which holds all individual
+ * Performance measurement central. Maintains the current
+ * {@link FrameStats}, which holds all individual
  * performance numbers.
  *
  * Implemented as an instance for easy access.

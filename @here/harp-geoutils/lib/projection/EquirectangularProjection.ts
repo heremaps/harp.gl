@@ -165,13 +165,13 @@ class EquirectangularProjection extends Projection {
 }
 
 /**
- * Equirectangular [[Projection]] used to convert geo coordinates to unit coordinates and vice
+ * Equirectangular {@link Projection} used to convert geo coordinates to unit coordinates and vice
  * versa.
  */
 export const normalizedEquirectangularProjection: Projection = new EquirectangularProjection(1);
 
 /**
- * Equirectangular [[Projection]] used to convert geo coordinates to world coordinates and vice
+ * Equirectangular {@link Projection} used to convert geo coordinates to world coordinates and vice
  * versa.
  */
 export const equirectangularProjection: Projection = new EquirectangularProjection(

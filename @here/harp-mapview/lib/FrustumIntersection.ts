@@ -343,7 +343,7 @@ export class FrustumIntersection {
 
     /**
      * Create a list of root nodes to test against the frustum. The root nodes each start at level 0
-     * and have an offset (see [[Tile]]) based on:
+     * and have an offset (see {@link Tile}) based on:
      * - the current position [[worldCenter]].
      * - the height of the camera above the world.
      * - the field of view of the camera (the maximum value between the horizontal / vertical
@@ -423,7 +423,7 @@ export class FrustumIntersection {
             ),
             0,
             // We can store currently up to 16 unique keys(2^4, where 4 is the default bit-shift
-            // value which is used currently in the [[VisibleTileSet]] methods) hence we can have a
+            // value which is used currently in the VisibleTileSet methods) hence we can have a
             // maximum range of 7 (because 2*7+1 = 15).
             7
         );

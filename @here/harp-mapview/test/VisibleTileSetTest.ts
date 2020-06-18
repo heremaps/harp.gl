@@ -153,12 +153,12 @@ describe("VisibleTileSet", function() {
     }
 
     /**
-     * Fake [[DataSource]] which provides tiles with the ground plane geometry.
+     * Fake {@link DataSource} which provides tiles with the ground plane geometry.
      */
     class FakeCoveringTileWMTS extends DataSource {
         /**
-         * Construct a fake [[DataSource]].
-         * @param isFullyCovering - If this [[DataSource]] should be fully covering.
+         * Construct a fake {@link DataSource}.
+         * @param isFullyCovering - If this {@link DataSource} should be fully covering.
          */
         constructor(isFullyCovering?: boolean) {
             super();
@@ -184,8 +184,8 @@ describe("VisibleTileSet", function() {
     }
 
     /**
-     * Fake [[DataSource]] with no backgroundPlane geometry, but which registers
-     * that it is fully covering, because its geometry fully covers the [[Tile]], an example
+     * Fake {@link DataSource} with no backgroundPlane geometry, but which registers
+     * that it is fully covering, because its geometry fully covers the {@link Tile}, an example
      * is satellite data or terrain.
      */
     class FakeWebTile extends DataSource {

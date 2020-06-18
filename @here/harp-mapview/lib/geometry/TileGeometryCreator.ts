@@ -216,7 +216,7 @@ export interface PolygonFadingParameters extends FadingParameters {
 }
 
 /**
- * Support class to create geometry for a [[Tile]] from a [[DecodedTile]].
+ * Support class to create geometry for a {@link Tile} from a {@link @here/harp-datasource-protocol#DecodedTile}.
  */
 export class TileGeometryCreator {
     private static m_instance: TileGeometryCreator;
@@ -282,7 +282,7 @@ export class TileGeometryCreator {
      *
      * @see [[TileGeometryCreator#initDecodedTile]]
      *
-     * @param tile - The [[Tile]] to process.
+     * @param tile - The {@link Tile} to process.
      * @param decodedTile - The decodedTile containing the actual tile map data.
      */
     createAllGeometries(tile: Tile, decodedTile: DecodedTile) {
@@ -389,7 +389,7 @@ export class TileGeometryCreator {
      * Sets the owning tiles datasource.name and the `tileKey` in the `userData` property of the
      * object, such that the tile it belongs to can be identified during picking.
      *
-     * @param tile - The [[Tile]] to add the object to.
+     * @param tile - The {@link Tile} to add the object to.
      * @param object - The object to add to the root of the tile.
      * @param geometryKind - The kind of object. Can be used for filtering.
      * @param custom - additional parameters for [[MapObjectAdapter]]
@@ -430,7 +430,7 @@ export class TileGeometryCreator {
     /**
      * Splits the text paths that contain sharp corners.
      *
-     * @param tile - The [[Tile]] to process paths on.
+     * @param tile - The {@link Tile} to process paths on.
      * @param textPathGeometries - The original path geometries that may have defects.
      * @param textFilter -: Optional filter. Should return true for any text technique that is
      *      applicable.
@@ -464,11 +464,11 @@ export class TileGeometryCreator {
     }
 
     /**
-     * Creates [[TextElement]] objects from the decoded tile and list of materials specified. The
-     * priorities of the [[TextElement]]s are updated to simplify label placement.
+     * Creates {@link TextElement} objects from the decoded tile and list of materials specified. The
+     * priorities of the {@link TextElement}s are updated to simplify label placement.
      *
-     * @param tile - The [[Tile]] to create the testElements on.
-     * @param decodedTile - The [[DecodedTile]].
+     * @param tile - The {@link Tile} to create the testElements on.
+     * @param decodedTile - The {@link @here/harp-datasource-protocol#DecodedTile}.
      * @param textFilter -: Optional filter. Should return true for any text technique that is
      *      applicable.
      */
@@ -662,8 +662,8 @@ export class TileGeometryCreator {
     /**
      * Creates `Tile` objects from the decoded tile and list of materials specified.
      *
-     * @param tile - The [[Tile]] to create the geometry on.
-     * @param decodedTile - The [[DecodedTile]].
+     * @param tile - The {@link Tile} to create the geometry on.
+     * @param decodedTile - The {@link @here/harp-datasource-protocol#DecodedTile}.
      * @param techniqueFilter -: Optional filter. Should return true for any technique that is
      *      applicable.
      */
@@ -1174,7 +1174,7 @@ export class TileGeometryCreator {
     }
 
     /**
-     * Prepare the [[Tile]]s pois. Uses the [[PoiManager]] in [[MapView]].
+     * Prepare the {@link Tile}s pois. Uses the {@link PoiManager} in {@link MapView}.
      */
     preparePois(tile: Tile, decodedTile: DecodedTile) {
         if (decodedTile.poiGeometries !== undefined) {
@@ -1341,9 +1341,9 @@ export class TileGeometryCreator {
     }
 
     /**
-     * Gets the attachments of the given [[DecodedTile]].
+     * Gets the attachments of the given {@link @here/harp-datasource-protocol#DecodedTile}.
      *
-     * @param decodedTile - The [[DecodedTile]].
+     * @param decodedTile - The {@link @here/harp-datasource-protocol#DecodedTile}.
      */
     private *getAttachments(decodedTile: DecodedTile): Generator<AttachmentInfo> {
         const cache = new AttachmentCache();
@@ -1370,10 +1370,10 @@ export class TileGeometryCreator {
     }
 
     /**
-     * Process the given [[Tile]] and assign default values to render orders
+     * Process the given {@link Tile} and assign default values to render orders
      * and label priorities.
      *
-     * @param tile - The [[Tile]] to process.
+     * @param tile - The {@link Tile} to process.
      */
     private processPriorities(tile: Tile) {
         const decodedTile = tile.decodedTile;

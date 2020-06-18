@@ -16,7 +16,7 @@ const DEFAULT_THROTTLING_TIMEOUT = 300;
 
 /**
  * The `CameraMovementDetector` class checks for changes in camera position and orientation, to
- * detect continuous movements without the animation mode activated in [[MapView]]. If the
+ * detect continuous movements without the animation mode activated in {@link MapView}. If the
  * interaction is not continuous enough, you can use a throttling timer to reduce the number of
  * callbacks.
  */
@@ -29,7 +29,7 @@ export class CameraMovementDetector {
     private m_movementDetectorDeadline: number = 0;
 
     /**
-     * Initializes the detector with timeout value and callbacks. [[MapView]] also provides
+     * Initializes the detector with timeout value and callbacks. {@link MapView} also provides
      * events for client code to be notified when these cues occur.
      *
      * @param m_throttlingTimeout - The delay, in milliseconds, between the last user interaction
@@ -109,7 +109,7 @@ export class CameraMovementDetector {
     }
 
     /**
-     * Returns `true` if the camera of this [[MapView]] is currently moving. In this case the
+     * Returns `true` if the camera of this {@link MapView} is currently moving. In this case the
      * `m_movementFinishedFunc` is waiting to be called after the throttling timer runs out.
      */
     get cameraIsMoving() {

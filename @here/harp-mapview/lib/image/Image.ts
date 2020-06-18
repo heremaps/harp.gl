@@ -5,7 +5,7 @@
  */
 
 /**
- * `ImageItem` is used to identify an image in the [[ImageCache]].
+ * `ImageItem` is used to identify an image in the {@link ImageCache}.
  */
 export interface ImageItem {
     /** URL of the image, or unique identifier. */

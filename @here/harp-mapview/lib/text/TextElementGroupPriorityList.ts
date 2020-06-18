@@ -8,6 +8,6 @@ import { GroupedPriorityList } from "@here/harp-utils";
 import { TextElement } from "./TextElement";
 
 /**
- * List of [[TextElement]] groups sorted by priority.
+ * List of {@link TextElement} groups sorted by priority.
  */
 export class TextElementGroupPriorityList extends GroupedPriorityList<TextElement> {}

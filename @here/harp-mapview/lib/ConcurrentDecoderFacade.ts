@@ -12,7 +12,7 @@ import { WorkerBasedDecoder } from "./WorkerBasedDecoder";
  * Default concurrent decoder helper.
  *
  * A convenient singleton that maintains a separate [[ConcurrentWorkerSet]] for each bundle
- * requested. Provides easy access to [[WorkerBasedDecoder]]s for data sources.
+ * requested. Provides easy access to {@link WorkerBasedDecoder}s for data sources.
  */
 export class ConcurrentDecoderFacade {
     /**
@@ -27,7 +27,7 @@ export class ConcurrentDecoderFacade {
     static defaultWorkerCount?: number = undefined;
 
     /**
-     * Returns a [[WorkerBasedDecoder]] instance.
+     * Returns a {@link WorkerBasedDecoder} instance.
      *
      * @param decoderServiceType - The name of the decoder service type.
      * @param scriptUrl - The optional URL with the workers' script.

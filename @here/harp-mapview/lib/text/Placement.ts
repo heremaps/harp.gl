@@ -235,7 +235,8 @@ export function checkReadyForPlacement(
  * label with [[layoutStyle]] and [[bounds]] already computed.
  * @param placement - The relative anchor placement (may be different then original alignment).
  * @param scale - The scaling factor (due to distance, etc.).
- * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param env - The {@link @here/harp-datasource-protocol#Env} used
+ *                  to evaluate technique attributes.
  * @param offset - The offset result.
  */
 function computePointTextOffset(
@@ -405,7 +406,8 @@ export function placeIcon(
  * @param screenPosition - Position of the label in screen coordinates.
  * @param scale - Scale factor to be applied to label dimensions.
  * @param textCanvas - The text canvas where the label will be placed.
- * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param env - The {@link @here/harp-datasource-protocol#Env} used
+ *              to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
  * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
  * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
@@ -480,7 +482,8 @@ export function placePointLabel(
  * @param screenPosition - Position of the label in screen coordinates.
  * @param scale - Scale factor to be applied to label dimensions.
  * @param textCanvas - The text canvas where the label will be placed.
- * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param env - The {@link @here/harp-datasource-protocol#Env}
+ *              used to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
  * @param outScreenPosition - The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if label can be placed at the base or optional anchor point,
@@ -586,7 +589,8 @@ function placePointLabelChoosingAnchor(
  * @param screenPosition - Position of the label in screen coordinates.
  * @param scale - Scale factor to be applied to label dimensions.
  * @param textCanvas - The text canvas where the label will be placed.
- * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param env - The {@link @here/harp-datasource-protocol#Env}
+ *              used to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
  * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
  * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
@@ -636,7 +640,8 @@ function placePointLabelAtCurrentAnchor(
  * @param placement - Text placement relative to the label position.
  * @param scale - Scale factor to be applied to label dimensions.
  * @param textCanvas - The text canvas where the label will be placed.
- * @param env - The [[Env]] used to evaluate technique attributes.
+ * @param env - The {@link @here/harp-datasource-protocol#Env}
+ *              used to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
  * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
  * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`

@@ -34,7 +34,7 @@ interface TileExtrusionState {
 }
 
 /**
- * Handles animated extrusion effect of the buildings in [[MapView]].
+ * Handles animated extrusion effect of the buildings in {@link MapView}.
  */
 export class AnimatedExtrusionHandler {
     /**
@@ -55,9 +55,9 @@ export class AnimatedExtrusionHandler {
     private m_startTime: number = -1;
 
     /**
-     * Creates an [[AnimatedExtrusionHandler]] in [[MapView]].
+     * Creates an {@link AnimatedExtrusionHandler} in {@link MapView}.
      *
-     * @param m_mapView - Instance of [[MapView]] on which the animation will run.
+     * @param m_mapView - Instance of {@link MapView} on which the animation will run.
      */
     constructor(private m_mapView: MapView) {}
 

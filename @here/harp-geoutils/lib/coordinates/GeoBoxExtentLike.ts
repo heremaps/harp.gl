@@ -5,7 +5,7 @@
  */
 
 /**
- * Represents an object that carry [[GeoBox]] extents like interface.
+ * Represents an object that carry {@link GeoBox} extents like interface.
  */
 export interface GeoBoxExtentLike {
     /**
@@ -20,7 +20,7 @@ export interface GeoBoxExtentLike {
 }
 
 /**
- * Type guard to assert that `object` conforms to [[GeoBoxExtentLike]] interface.
+ * Type guard to assert that `object` conforms to {@link GeoBoxExtentLike} interface.
  */
 export function isGeoBoxExtentLike(obj: any): obj is GeoBoxExtentLike {
     return (

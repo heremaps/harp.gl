@@ -17,7 +17,7 @@ import { MapView } from "../MapView";
 const logger = LoggerManager.instance.create("PoiTable");
 
 /**
- * Class to store and maintain individual POI information for the [[PoiTable]].
+ * Class to store and maintain individual POI information for the {@link PoiTable}.
  */
 class PoiTableEntry implements PoiTableEntryDef {
     /**
@@ -114,15 +114,15 @@ class PoiTableEntry implements PoiTableEntryDef {
 }
 
 /**
- * The `PoiTable` stores individual information for each POI type. If a [[TextElement]] has a
+ * The `PoiTable` stores individual information for each POI type. If a {@link TextElement} has a
  * reference to a PoiTable (if TextElement.poiInfo.poiTableName is set), information for the
  * TextElement and its icon are read from the PoiTable.
  *
  * The key to look up the POI is taken from the data, in case of OSM data with TileZen data, the
  * `poiNameField` is set to `kind`, which makes the content of the field `kind` in the data the key
- * to look up the POIs in the [[PoiTable]].
+ * to look up the POIs in the {@link PoiTable}.
  *
- * On the side of the [[PoiTable]], the key to look up the PoiTableEntry is either the property
+ * On the side of the {@link PoiTable}, the key to look up the PoiTableEntry is either the property
  * "name" of the [[PoiTableEntry]] (which should be unique), or the alternative list of names
  * `altNames`, where each value should also be unique. If the property `useAltNamesForKey` is set to
  * `true`, the `altNames` will be used.
@@ -289,8 +289,8 @@ export class PoiTable {
 }
 
 /**
- * The `PoiTableManager` manages the list of [[PoiTables]] that can be defined in the [[Theme]]
- * file.
+ * The `PoiTableManager` manages the list of [[PoiTables]] that
+ * can be defined in the {@link @here/harp-datasource-protocol#Theme} sfile.
  */
 export class PoiTableManager {
     private m_isLoading = false;
@@ -298,18 +298,23 @@ export class PoiTableManager {
 
     /**
      * Creates an instance of PoiTableManager.
-     * @param {MapView} mapView Owning [[MapView]].
+     * @param {MapView} mapView Owning {@link MapView}.
      */
     constructor(readonly mapView: MapView) {}
 
     /**
-     * Load the [[PoiTable]]s that are stored in the [[MapView]]s [[Theme]]. Note that duplicate
-     * names of [[PoiTable]]s in the [[Theme]] will lead to inaccessible [[PoiTable]]s.
+     * Load the {@link PoiTable}s that are stored in the {@link MapView}s
+     * {@link @here/harp-datasource-protocol#Theme}.
      *
-     * @param {Theme} theme [[Theme]] containing all [[PoiTable]]s to load.
+     * @remarks
+     * Note that duplicate names of {@link PoiTable}s in the
+     * {@link @here/harp-datasource-protocol#Theme} will lead to inaccessible {@link PoiTable}s.
      *
-     * @returns {Promise<void>} Resolved once all the [[PoiTable]]s in the [[Theme]] have been
-     *          loaded.
+     * @param theme - {@link @here/harp-datasource-protocol#Theme}
+     *                containing all {@link PoiTable}s to load.
+     *
+     * @returns Resolved once all the {@link PoiTable}s in
+     *          the {@link @here/harp-datasource-protocol#Theme} have been loaded.
      */
     async loadPoiTables(theme: Theme): Promise<void> {
         const finished = new Promise<void>(resolve => {
@@ -362,21 +367,24 @@ export class PoiTableManager {
     }
 
     /**
-     * Clear the list of [[PoiTable]]s.
+     * Clear the list of {@link PoiTable}s.
      */
     clear() {
         this.m_poiTables = new Map();
     }
 
     /**
-     * Return the map of [[PoiTable]]s.
+     * Return the map of {@link PoiTable}s.
      */
     get poiTables(): Map<string, PoiTable> {
         return this.m_poiTables;
     }
 
     /**
-     * Manually add a [[PoiTable]]. Normally, the [[PoiTables]]s are specified in the [[Theme]].
+     * Manually add a {@link PoiTable}. Normally, the [[PoiTables]]s
+     * are specified in the {@link @here/harp-datasource-protocol#Theme}.
+     *
+     * @remarks
      * Ensure that the name is unique.
      */
     addTable(poiTable: PoiTable) {
@@ -384,9 +392,9 @@ export class PoiTableManager {
     }
 
     /**
-     * Retrieve a [[PoiTable]] by name.
+     * Retrieve a {@link PoiTable} by name.
      *
-     * @param {(string | undefined)} poiTableName Name of the [[PoiTable]].
+     * @param {(string | undefined)} poiTableName Name of the {@link PoiTable}.
      *
      * @returns {(PoiTable | undefined)} The found [[poiTable]] if it could be found, `undefined`
      *          otherwise.
@@ -396,7 +404,7 @@ export class PoiTableManager {
     }
 
     /**
-     * Return `true` if the [[PoiTable]]s have finished loading.
+     * Return `true` if the {@link PoiTable}s have finished loading.
      *
      * @readonly
      */

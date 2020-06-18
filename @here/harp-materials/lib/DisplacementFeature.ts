@@ -7,7 +7,7 @@
 import { HiddenThreeJSMaterialProperties } from "./MapMeshMaterials";
 
 /**
- * Parameters used when constructing a new implementor of [[DisplacementFeature]].
+ * Parameters used when constructing a new implementor of {@link DisplacementFeature}.
  */
 export interface DisplacementFeatureParameters {
     /**

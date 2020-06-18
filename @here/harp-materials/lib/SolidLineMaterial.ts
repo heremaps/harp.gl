@@ -299,7 +299,7 @@ void main() {
 }`;
 
 /**
- * Parameters used when constructing a new [[SolidLineMaterial]].
+ * Parameters used when constructing a new {@link SolidLineMaterial}.
  */
 export interface SolidLineMaterialParameters
     extends FadingFeatureParameters,

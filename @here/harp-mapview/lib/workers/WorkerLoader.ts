@@ -13,8 +13,8 @@ const logger = LoggerManager.instance.create("WorkerLoader");
 
 /**
  * Set of `Worker` loading and initialization helpers:
- *  - starting Worker from URL with fallback to XHR+blob [[WorkerLoader.startWorker]]
- *  - waiting for proper worker initialization, see [[WorkerLoader.waitWorkerInitialized]]
+ *  - starting Worker from URL with fallback to XHR+blob {@link WorkerLoader.startWorker}
+ *  - waiting for proper worker initialization, see {@link WorkerLoader.waitWorkerInitialized}
  */
 export class WorkerLoader {
     static directlyFallbackToBlobBasedLoading: boolean = false;

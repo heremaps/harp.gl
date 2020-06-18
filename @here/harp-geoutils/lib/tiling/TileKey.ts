@@ -135,7 +135,7 @@ export class TileKey {
      * You can convert a tile key into a numeric Morton code with [[mortonCode]].
      *
      * @param quadKey64 - The Morton code to be converted.
-     * @returns A new instance of [[TileKey]].
+     * @returns A new instance of {@link TileKey}.
      */
     static fromMortonCode(quadKey64: number): TileKey {
         let level = 0;
@@ -242,7 +242,7 @@ export class TileKey {
     /**
      * Constructs a new immutable instance of a `TileKey`.
      *
-     * For the better readability, [[TileKey.fromRowColumnLevel]] should be preferred.
+     * For the better readability, {@link TileKey.fromRowColumnLevel} should be preferred.
      *
      * Note - row and column must not be greater than the maximum rows/columns for the given level.
      *

@@ -343,14 +343,15 @@ export class MercatorConstants {
 }
 
 /**
- * Mercator [[Projection]] used to convert geo coordinates to world coordinates and vice versa.
+ * Mercator {@link Projection} used to convert geo coordinates to world coordinates and vice versa.
  */
 export const mercatorProjection: Projection = new MercatorProjection(
     EarthConstants.EQUATORIAL_CIRCUMFERENCE
 );
 
 /**
- * Web Mercator [[Projection]] used to convert geo coordinates to world coordinates and vice versa.
+ * Web Mercator {@link Projection} used to convert geo coordinates to world coordinates
+ * and vice versa.
  */
 export const webMercatorProjection: Projection = new WebMercatorProjection(
     EarthConstants.EQUATORIAL_CIRCUMFERENCE

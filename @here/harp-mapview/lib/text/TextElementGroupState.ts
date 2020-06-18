@@ -55,8 +55,8 @@ export class TextElementGroupState {
     }
 
     /**
-     * Indicates whether the group has been submitted to the [[TextElementsRenderer]] in the current
-     * frame.
+     * Indicates whether the group has been submitted to the
+     * {@link TextElementsRenderer} in the current frame.
      */
     get visited(): boolean {
         return this.m_visited;

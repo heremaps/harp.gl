@@ -37,12 +37,12 @@ export enum PickObjectType {
     Area,
 
     /**
-     * The text part of a [[TextElement]]
+     * The text part of a {@link TextElement}
      */
     Text,
 
     /**
-     * The Icon of a [[TextElement]].
+     * The Icon of a {@link TextElement}.
      */
     Icon,
 
@@ -90,8 +90,12 @@ export interface PickResult {
     technique?: Technique;
 
     /**
-     * Optional user data that has been defined in the picked object. This object points directly to
-     * information contained in the original [[TileFeatureData]] stored in [[MapView]], and should
+     * Optional user data that has been defined in the picked object.
+     *
+     * @remarks
+     * This object points directly to
+     * information contained in the original {@link TileFeatureData}
+     * stored in {@link MapView}, and should
      * not be modified.
      */
     userData?: any;

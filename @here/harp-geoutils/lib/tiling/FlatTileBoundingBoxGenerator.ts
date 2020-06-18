@@ -26,7 +26,7 @@ export class FlatTileBoundingBoxGenerator {
      * Creates a new `FlatTileBoundingBoxGenerator` that can generate bounding boxes for the given
      * TilingScheme.
      *
-     * @param tilingScheme - The [[TilingScheme]] used to compute bounding boxes.
+     * @param tilingScheme - The {@link TilingScheme} used to compute bounding boxes.
      * @param minElevation - The minimum elevation in meters.
      * @param maxElevation - The maximum elevation in meters.
      */
@@ -42,21 +42,21 @@ export class FlatTileBoundingBoxGenerator {
     }
 
     /**
-     * Returns the [[Projection]] of the [[TilingScheme]].
+     * Returns the {@link Projection} of the {@link TilingScheme}.
      */
     get projection(): Projection {
         return this.m_tilingScheme.projection;
     }
 
     /**
-     * Returns the [[SubdivisionScheme]] of the [[TilingScheme]].
+     * Returns the {@link SubdivisionScheme} of the {@link TilingScheme}.
      */
     get subdivisionScheme(): SubdivisionScheme {
         return this.m_tilingScheme.subdivisionScheme;
     }
 
     /**
-     * Returns the bounding box in world coordinates of the given [[TileKey]].
+     * Returns the bounding box in world coordinates of the given {@link TileKey}.
      *
      * Example:
      * ```typescript
@@ -92,7 +92,7 @@ export class FlatTileBoundingBoxGenerator {
     }
 
     /**
-     * Returns the bounding box in geo coordinates for the given [[TileKey]].
+     * Returns the bounding box in geo coordinates for the given {@link TileKey}.
      *
      * Example:
      * ```typescript
@@ -100,7 +100,7 @@ export class FlatTileBoundingBoxGenerator {
      * console.log(geoBox.center);
      * ```
      *
-     * @param tileKey - The [[TileKey]].
+     * @param tileKey - The {@link TileKey}.
      */
     getGeoBox(tileKey: TileKey): GeoBox {
         const worldBox = this.getWorldBox(tileKey);

@@ -63,7 +63,7 @@ export class SkyGradientTexture {
      * Constructs a new `SkyGradientTexture`.
      *
      * @param sky - Initial [[GradientSky]] configuration.
-     * @param m_projectionType - [[MapView]]'s projection type.
+     * @param m_projectionType - {@link MapView}'s projection type.
      * @param m_height - Optional height parameter.
      */
     constructor(
@@ -120,7 +120,7 @@ export class SkyGradientTexture {
 
     /**
      * `SkyGradientTexture`'s texture resource (simple texture or cubemap depending on
-     * [[MapView]]'s projection).
+     * {@link MapView}'s projection).
      */
     get texture(): Texture {
         return this.m_projectionType === ProjectionType.Planar ? this.m_faces[0] : this.m_skybox!;

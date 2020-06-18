@@ -12,7 +12,7 @@ import { WorkerBasedTiler } from "./WorkerBasedTiler";
  * Default concurrent tiler helper.
  *
  * A convenient singleton that maintains a separate [[ConcurrentWorkerSet]] for each bundle
- * requested. Provides easy access to [[WorkerBasedTiler]]s for data sources.
+ * requested. Provides easy access to {@link WorkerBasedTiler}s for data sources.
  */
 export class ConcurrentTilerFacade {
     /**
@@ -27,7 +27,7 @@ export class ConcurrentTilerFacade {
     static defaultWorkerCount: number = 1;
 
     /**
-     * Returns a [[WorkerBasedTiler]] instance.
+     * Returns a {@link WorkerBasedTiler} instance.
      *
      * @param tilerServiceType - The name of the tiler service type.
      * @param scriptUrl - The optional URL with the workers' script.

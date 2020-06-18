@@ -27,7 +27,7 @@ export interface PrefixUriResolverDefinition {
 }
 
 /**
- * Basic, import-map like [[UriResolver]].
+ * Basic, import-map like {@link UriResolver}.
  *
  * Resolves `uris` basing on exact or prefix match of `key` from `definitions`.
  *
@@ -78,7 +78,7 @@ export class RelativeUriResolver implements UriResolver {
 /**
  * Compose URI resolvers.
  *
- * Creates new [[UriResolver]] that applies resolvers in orders or arguments.
+ * Creates new {@link UriResolver} that applies resolvers in orders or arguments.
  *
  * Example:
  *

@@ -58,7 +58,7 @@ const cache = {
 };
 
 /**
- * Class that provides [[MapView]]'s atmospheric scattering effect.
+ * Class that provides {@link MapView}'s atmospheric scattering effect.
  */
 export class MapViewAtmosphere {
     /**
@@ -112,7 +112,7 @@ export class MapViewAtmosphere {
      *
      * @note Currently works only with globe projection.
      *
-     * @param m_mapAnchors - The [[MapAnchors]] instance where the effect will be added.
+     * @param m_mapAnchors - The {@link MapAnchors} instance where the effect will be added.
      * @param m_sceneCamera - The camera used to render entire scene.
      * @param m_projection - The geo-projection used to transform geo coordinates to
      *                       cartesian space.
@@ -226,13 +226,14 @@ export class MapViewAtmosphere {
     }
 
     /**
-     * Sets the atmosphere depending on the [[Theme]] instance provided.
+     * Sets the atmosphere depending on the
+     * {@link @here/harp-datasource-protocol#Theme} instance provided.
      *
      * This function is called when a theme is loaded. Atmosphere is added only if the theme
      * contains a atmosphere definition with a:
      * - `color` property, used to set the atmosphere color.
      *
-     * @param theme - A [[Theme]] instance.
+     * @param theme - A {@link @here/harp-datasource-protocol#Theme} instance.
      */
     reset(theme: Theme) {
         //this.m_cachedTheme = theme;
@@ -254,7 +255,7 @@ export class MapViewAtmosphere {
             mapAnchors.add(createMapAnchor(this.m_groundMesh, Number.MAX_SAFE_INTEGER));
         }
 
-        // Request an update once the anchor is added to [[MapView]].
+        // Request an update once the anchor is added to {@link MapView}.
         if (this.m_updateCallback) {
             this.m_updateCallback();
         }

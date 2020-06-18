@@ -48,7 +48,7 @@ interface TechniqueEntry {
 }
 
 /**
- * [[DataSource]] providing geometry for poles
+ * {@link DataSource} providing geometry for poles
  */
 export class PolarTileDataSource extends DataSource {
     private m_tilingScheme: TilingScheme = polarTilingScheme;
