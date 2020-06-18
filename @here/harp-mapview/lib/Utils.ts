@@ -137,14 +137,17 @@ export namespace MapViewUtils {
      * @param targetNDCy - Target y position in NDC space.
      * @param zoomLevel - The desired zoom level.
      * @param maxTiltAngle - The maximum tilt angle to comply by, in globe projection, in radian.
+     * @param bounds - If defined, final camera position may be only within the given GeoBox.
+     * @returns `true` if camera position after zoom is within bounds (if given), false `otherwise`.
      */
     export function zoomOnTargetPosition(
         mapView: MapView,
         targetNDCx: number,
         targetNDCy: number,
         zoomLevel: number,
-        maxTiltAngle: number = MAX_TILT_RAD
-    ): void {
+        maxTiltAngle: number = MAX_TILT_RAD,
+        bounds?: GeoBox
+    ): boolean {
         const { elevationProvider, camera } = mapView;
 
         // Use for now elevation at camera position. See getTargetAndDistance.
@@ -159,6 +162,7 @@ export namespace MapViewUtils {
         const worldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
         const groundDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
         const cameraHeight = groundDistance + (elevation ?? 0);
+        const oldCameraPos = cache.vector3[2].copy(camera.position);
 
         // Set the cameras height according to the given zoom level.
         if (mapView.projection.type === ProjectionType.Planar) {
@@ -177,24 +181,33 @@ export namespace MapViewUtils {
             const tilt = extractCameraTilt(camera, mapView.projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
-                orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
+                if (!orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle)) {
+                    camera.position.copy(oldCameraPos);
+                    return false;
+                }
             }
         }
 
         // Get new target position after the zoom
         const newWorldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
         if (!worldTarget || !newWorldTarget) {
-            return;
+            return true;
         }
 
+        let success = true;
         if (mapView.projection.type === ProjectionType.Planar) {
             // Calculate the difference and pan the map to maintain the map relative to the target
             // position.
             worldTarget.sub(newWorldTarget);
-            panCameraAboveFlatMap(mapView, worldTarget.x, worldTarget.y);
+            success = panCameraAboveFlatMap(mapView, worldTarget.x, worldTarget.y, bounds);
         } else if (mapView.projection.type === ProjectionType.Spherical) {
-            panCameraAroundGlobe(mapView, worldTarget, newWorldTarget);
+            success = panCameraAroundGlobe(mapView, worldTarget, newWorldTarget, bounds);
         }
+
+        if (!success) {
+            camera.position.copy(oldCameraPos);
+        }
+        return success;
     }
 
     /**
@@ -204,13 +217,17 @@ export namespace MapViewUtils {
      * @param deltaAzimuthDeg - Delta azimuth in degrees.
      * @param deltaTiltDeg - Delta tilt in degrees.
      * @param maxTiltAngleRad - The maximum tilt between the camera and its target in radian.
+     * @param bounds - If defined, final camera position may be only within the given GeoBox.
+     * @returns `true` if camera position after orbit is within bounds (if given), false
+     * `otherwise`.
      */
     export function orbitFocusPoint(
         mapView: MapView,
         deltaAzimuthDeg: number,
         deltaTiltDeg: number,
-        maxTiltAngleRad = MAX_TILT_RAD
-    ) {
+        maxTiltAngleRad: number,
+        bounds?: GeoBox
+    ): boolean {
         const target = mapView.target;
         const sphericalCoordinates = extractSphericalCoordinatesFromLocation(
             mapView,
@@ -226,12 +243,30 @@ export namespace MapViewUtils {
         );
         const heading =
             THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg;
+
+        if (bounds) {
+            const cameraWorldPos = MapViewUtils.getCameraPositionFromTargetCoordinates(
+                target,
+                mapView.targetDistance,
+                -heading,
+                tilt,
+                mapView.projection,
+                cache.vector3[0]
+            );
+            const cameraGeoPos = mapView.projection.unprojectPoint(cameraWorldPos);
+            cameraGeoPos.altitude = undefined;
+            if (!bounds.contains(cameraGeoPos)) {
+                return false;
+            }
+        }
+
         mapView.lookAt({
             target,
             distance: mapView.targetDistance,
             tilt,
             heading
         });
+        return true;
     }
 
     /**
@@ -785,6 +820,45 @@ export namespace MapViewUtils {
     }
 
     /**
+     * @hidden
+     * @internal
+     *
+     * Ensures a given world position is inside the specified geo bounds. If it's not inside the
+     * bounds, the position is updated to the coordinates in the bounds' margin closest to the
+     * original position.
+     * @param projection - The projection used by the given world coordinates.
+     * @param worldPos - The world position to be fitted.
+     * @param bounds - GeoBox representing the bounds to be applied.
+     * @returns `true` if given world position was inside the given bounds (or no bounds given),
+     * `false` otherwise.
+     */
+    export function fitToBounds(
+        projection: Projection,
+        worldPos: THREE.Vector3,
+        bounds?: GeoBox
+    ): boolean {
+        if (!bounds) {
+            return true;
+        }
+
+        const geoPos = projection.unprojectPoint(worldPos);
+
+        if (bounds.contains(geoPos)) {
+            return true;
+        }
+
+        geoPos.latitude = Math.min(bounds.north, Math.max(bounds.south, geoPos.latitude));
+        geoPos.longitude =
+            bounds.west < bounds.east
+                ? Math.min(bounds.east, Math.max(bounds.west, geoPos.longitude))
+                : Math.min(bounds.west, Math.max(bounds.east, geoPos.longitude));
+
+        projection.projectPoint(geoPos, worldPos);
+
+        return false;
+    }
+
+    /**
      * Pans the camera according to the projection.
      *
      * @param mapView - Instance of MapView.
@@ -792,14 +866,19 @@ export namespace MapViewUtils {
      *                  the map to the left in default camera orientation.
      * @param yOffset - In world space. Value > 0 will pan the map upwards, value < 0 will pan the
      *                  map downwards in default camera orientation.
+     * @param bounds - If defined, final camera position will be fitted to the given GeoBox.
+     * @returns `true` if final camera position had to be fitted to bounds (if given), false
+     * `otherwise`.
      */
     export function panCameraAboveFlatMap(
         mapView: MapView,
         offsetX: number,
-        offsetY: number
-    ): void {
+        offsetY: number,
+        bounds?: GeoBox
+    ): boolean {
         mapView.camera.position.x += offsetX;
         mapView.camera.position.y += offsetY;
+        return fitToBounds(mapView.projection, mapView.camera.position, bounds);
     }
 
     /**
@@ -810,18 +889,30 @@ export namespace MapViewUtils {
      * @param mapView - MapView instance.
      * @param fromWorld - Start vector representing the scene position of a geolocation.
      * @param toWorld - End vector representing the scene position of a geolocation.
+     * @param bounds - If defined, final camera position may be only within the given GeoBox.
+     * @returns `true` if camera position after pan is within bounds (if given), false `otherwise`.
      */
     export function panCameraAroundGlobe(
         mapView: MapView,
         fromWorld: THREE.Vector3,
-        toWorld: THREE.Vector3
-    ) {
+        toWorld: THREE.Vector3,
+        bounds?: GeoBox
+    ): boolean {
         cache.quaternions[0]
             .setFromUnitVectors(fromWorld.normalize(), toWorld.normalize())
             .inverse();
-        cache.matrix4[0].makeRotationFromQuaternion(cache.quaternions[0]);
-        mapView.camera.applyMatrix4(cache.matrix4[0]);
+        const rotationMatrix = cache.matrix4[0].makeRotationFromQuaternion(cache.quaternions[0]);
+
+        if (bounds) {
+            const cameraPos = cache.vector3[0].copy(mapView.camera.position);
+            cameraPos.applyMatrix4(rotationMatrix);
+            if (!fitToBounds(mapView.projection, cameraPos, bounds)) {
+                return false;
+            }
+        }
+        mapView.camera.applyMatrix4(rotationMatrix);
         mapView.camera.updateMatrixWorld();
+        return true;
     }
 
     /**

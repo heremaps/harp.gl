@@ -144,6 +144,12 @@ export class MapControls extends THREE.EventDispatcher {
     rotateEnabled = true;
 
     /**
+     * If defined, restricts all camera movements (pan, zoom, orbit) triggered from these map
+     * controls to the specified bounding box.
+     */
+    bounds?: geoUtils.GeoBox;
+
+    /**
      * Set to `true` to enable an inertia dampening on zooming and panning. `false` cancels inertia.
      */
     inertiaEnabled = true;
@@ -361,7 +367,6 @@ export class MapControls extends THREE.EventDispatcher {
      * @param amount - Amount to move along the view direction in meters.
      */
     moveAlongTheViewDirection(amount: number) {
-        // TODO: What about zoom disabled?
         if (amount === 0) {
             return;
         }
@@ -395,6 +400,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
             this.camera.position.setLength(distance);
         }
+        MapViewUtils.fitToBounds(this.mapView.projection, this.camera.position, this.bounds);
 
         // In sphere, we may have to also orbit the camera around the position located at the
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
@@ -414,7 +420,13 @@ export class MapControls extends THREE.EventDispatcher {
             ).tilt;
             const deltaTilt = tilt - this.m_maxTiltAngle;
             if (deltaTilt > 0) {
-                MapViewUtils.orbitFocusPoint(this.mapView, 0, deltaTilt, this.m_maxTiltAngle);
+                MapViewUtils.orbitFocusPoint(
+                    this.mapView,
+                    0,
+                    deltaTilt,
+                    this.m_maxTiltAngle,
+                    this.bounds
+                );
             }
         }
 
@@ -472,7 +484,8 @@ export class MapControls extends THREE.EventDispatcher {
             targetPositionOnScreenXinNDC,
             targetPositionOnScreenYinNDC,
             zoomLevel,
-            this.m_maxTiltAngle
+            this.m_maxTiltAngle,
+            this.bounds
         );
     }
 
@@ -654,7 +667,8 @@ export class MapControls extends THREE.EventDispatcher {
             this.mapView,
             THREE.MathUtils.radToDeg(deltaAzimuth),
             0,
-            this.m_maxTiltAngle
+            this.m_maxTiltAngle,
+            this.bounds
         );
         this.updateMapView();
     }
@@ -706,7 +720,8 @@ export class MapControls extends THREE.EventDispatcher {
             this.mapView,
             newHeight - this.camera.position.z,
             THREE.MathUtils.radToDeg(deltaAngle),
-            this.m_maxTiltAngle
+            this.m_maxTiltAngle,
+            this.bounds
         );
         this.updateMapView();
     }
@@ -760,13 +775,20 @@ export class MapControls extends THREE.EventDispatcher {
                       Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
                   );
 
-        MapViewUtils.zoomOnTargetPosition(
-            this.mapView,
-            this.m_zoomTargetNormalizedCoordinates.x,
-            this.m_zoomTargetNormalizedCoordinates.y,
-            this.currentZoom,
-            this.m_maxTiltAngle
-        );
+        if (
+            !MapViewUtils.zoomOnTargetPosition(
+                this.mapView,
+                this.m_zoomTargetNormalizedCoordinates.x,
+                this.m_zoomTargetNormalizedCoordinates.y,
+                this.currentZoom,
+                this.m_maxTiltAngle,
+                this.bounds
+            ) &&
+            this.inertiaEnabled
+        ) {
+            resetZoomState = true;
+            this.stopZoom();
+        }
 
         if (resetZoomState) {
             this.m_targetedZoom = undefined;
@@ -863,7 +885,8 @@ export class MapControls extends THREE.EventDispatcher {
             MapViewUtils.panCameraAboveFlatMap(
                 this.mapView,
                 this.m_panDistanceFrameDelta.x,
-                this.m_panDistanceFrameDelta.y
+                this.m_panDistanceFrameDelta.y,
+                this.bounds
             );
         } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
             MapViewUtils.panCameraAroundGlobe(
@@ -871,7 +894,8 @@ export class MapControls extends THREE.EventDispatcher {
                 this.m_lastRotateGlobeFromVector,
                 this.m_tmpVector3
                     .copy(this.m_lastRotateGlobeFromVector)
-                    .applyQuaternion(this.m_rotateGlobeQuaternion)
+                    .applyQuaternion(this.m_rotateGlobeQuaternion),
+                this.bounds
             );
         }
         if (!applyInertia) {
@@ -1008,7 +1032,8 @@ export class MapControls extends THREE.EventDispatcher {
                 this.mapView,
                 this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
                 -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y,
-                this.m_maxTiltAngle
+                this.m_maxTiltAngle,
+                this.bounds
             );
         }
 
@@ -1296,7 +1321,8 @@ export class MapControls extends THREE.EventDispatcher {
                 this.mapView,
                 this.orbitingTouchDeltaFactor * diff.x,
                 -this.orbitingTouchDeltaFactor * diff.y,
-                this.m_maxTiltAngle
+                this.m_maxTiltAngle,
+                this.bounds
             );
         }
 
