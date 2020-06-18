@@ -390,7 +390,7 @@ export class TransverseMercatorUtils {
 }
 
 /**
- * Transverse Mercator [[Projection]] used to convert geo coordinates to world coordinates
+ * Transverse Mercator {@link Projection} used to convert geo coordinates to world coordinates
  * and vice versa.
  */
 export const transverseMercatorProjection: Projection = new TransverseMercatorProjection(

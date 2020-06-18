@@ -43,7 +43,7 @@ void main() {
 }`;
 
 /**
- * Parameters used when constructing a new [[IconMaterial]].
+ * Parameters used when constructing a new {@link IconMaterial}.
  */
 export interface IconMaterialParameters {
     /**

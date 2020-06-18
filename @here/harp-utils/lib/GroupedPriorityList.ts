@@ -18,7 +18,7 @@ export interface PriorityListElement {
 }
 
 /**
- * The `PriorityListGroup` contains a list of [[PriorityListElement]]s that all have the same
+ * The `PriorityListGroup` contains a list of {@link PriorityListElement}s that all have the same
  * (integer) priority.
  */
 export class PriorityListGroup<T extends PriorityListElement> {
@@ -49,7 +49,7 @@ export class PriorityListGroup<T extends PriorityListElement> {
 }
 
 /**
- * The `PriorityListGroupMap` is a map to map the (integer) priority to a [[PriorityListGroup]].
+ * The `PriorityListGroupMap` is a map to map the (integer) priority to a {@link PriorityListGroup}.
  */
 export type PriorityListGroupMap<T extends PriorityListElement> = Map<number, PriorityListGroup<T>>;
 
@@ -90,14 +90,14 @@ export class GroupedPriorityList<T extends PriorityListElement> {
     }
 
     /**
-     * Remove all internal [[PriorityListGroup]]s.
+     * Remove all internal {@link PriorityListGroup}s.
      */
     clear(): void {
         this.groups.clear();
     }
 
     /**
-     * Merge another [[GroupedPriorityList]] into this one.
+     * Merge another {@link GroupedPriorityList} into this one.
      *
      * @param other - Other group to merge.
      */

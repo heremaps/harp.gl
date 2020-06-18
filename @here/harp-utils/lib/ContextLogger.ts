@@ -14,7 +14,7 @@ export interface ISimpleChannel {
 }
 
 /**
- * Extension of [[ISimpleChannel]] to support contextual logging by adding stack of prefixes.
+ * Extension of {@link ISimpleChannel} to support contextual logging by adding stack of prefixes.
  */
 export interface IContextLogger extends ISimpleChannel {
     /**

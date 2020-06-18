@@ -35,7 +35,7 @@ export class TilingScheme {
     /**
      * Returns the sub tile keys of the given tile.
      *
-     * @param tileKey - The [[TileKey]].
+     * @param tileKey - The {@link TileKey}.
      * @returns The list of the sub tile keys.
      */
     getSubTileKeys(tileKey: TileKey): Iterable<TileKey> {
@@ -43,7 +43,7 @@ export class TilingScheme {
     }
 
     /**
-     * Gets the [[TileKey]] from the given geo position and level.
+     * Gets the {@link TileKey} from the given geo position and level.
      *
      * @param geoPoint - The position in geo coordinates.
      * @param level - The level of the resulting `TileKey`.
@@ -53,7 +53,7 @@ export class TilingScheme {
     }
 
     /**
-     * Gets the list of [[TileKey]]s contained in the given [[GeoBox]].
+     * Gets the list of {@link TileKey}s contained in the given {@link GeoBox}.
      *
      * @param geoBox - The bounding box in geo coordinates.
      * @param level - The level of the resulting `TileKey`.
@@ -63,7 +63,7 @@ export class TilingScheme {
     }
 
     /**
-     * Returns the bounding box in geo coordinates for the given [[TileKey]].
+     * Returns the bounding box in geo coordinates for the given {@link TileKey}.
      *
      * @param tileKey - The `TileKey`.
      */

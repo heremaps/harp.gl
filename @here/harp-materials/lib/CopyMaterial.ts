@@ -6,9 +6,9 @@
 import * as THREE from "three";
 
 /**
- * The base shader to use for [[MapView]]'s composing passes, like [[MSAAMaterial]].
+ * The base shader to use for {@link @here/harp-mapview#MapView}'s
+ * composing passes, like {@link MSAAMaterial}.
  */
-
 export const CopyShader: THREE.Shader = {
     uniforms: {
         tDiffuse: { value: null },

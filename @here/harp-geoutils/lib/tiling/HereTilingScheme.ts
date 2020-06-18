@@ -9,7 +9,7 @@ import { halfQuadTreeSubdivisionScheme } from "./HalfQuadTreeSubdivisionScheme";
 import { TilingScheme } from "./TilingScheme";
 
 /**
- * [[TilingScheme]] used by most of the data published by HERE.
+ * {@link TilingScheme} used by most of the data published by HERE.
  *
  * The `hereTilingScheme` features a half quadtree subdivision scheme and an equirectangular
  * projection.

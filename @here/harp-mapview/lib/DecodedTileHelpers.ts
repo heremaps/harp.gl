@@ -57,7 +57,7 @@ export interface MaterialOptions {
     /**
      * Environment used to evaluate dynamic technique attributes.
      *
-     * Usually [[MapView.mapEnv]].
+     * Usually {@link MapView.env}.
      */
     env: Env;
 
@@ -230,7 +230,8 @@ export function createMaterial(
 }
 
 /**
- * Returns a [[THREE.BufferAttribute]] created from a provided [[BufferAttribute]] object.
+ * Returns a [[THREE.BufferAttribute]] created from a provided
+ * {@link @here/harp-datasource-protocol#BufferAttribute} object.
  *
  * @param attribute - BufferAttribute a WebGL compliant buffer
  */
@@ -547,7 +548,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
 }
 
 /**
- * Convert metric style property to expression that accounts [[MapView.pixelToWorld]] if
+ * Convert metric style property to expression that accounts {@link MapView.pixelToWorld} if
  * `metricUnit === 'Pixel'`.
  */
 export function buildMetricValueEvaluator(
@@ -583,7 +584,9 @@ export function buildMetricValueEvaluator(
  *
  * @see ColorUtils
  * @param technique - the technique where we search for base (transparency) color value
- * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param env - {@link @here/harp-datasource-protocol#Env} instance
+ *              used to evaluate {@link @here/harp-datasource-protocol#Expr}
+ *              based properties of [[Technique]]
  * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or `undefined` if
  * base color property is not defined in the technique passed.
  */
@@ -652,7 +655,9 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
  * @param material - target material
  * @param propertyName - material and technique parameter name (or index) that is to be transferred
  * @param techniqueAttrValue - technique property value which will be applied to material attribute
- * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param env - {@link @here/harp-datasource-protocol#Env} instance used
+ *              to evaluate {@link @here/harp-datasource-protocol#Expr}
+ *              based properties of [[Technique]]
  */
 function applyTechniquePropertyToMaterial(
     material: THREE.Material,
@@ -686,7 +691,9 @@ function applyTechniquePropertyToMaterial(
  * @param material - the material to which color is applied
  * @param prop - technique property (color) name
  * @param value - color value
- * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param env - {@link @here/harp-datasource-protocol#Env} instance used
+ *              to evaluate {@link @here/harp-datasource-protocol#Expr}
+ *              based properties of [[Technique]]
  */
 export function applySecondaryColorToMaterial(
     materialColor: THREE.Color,
@@ -722,7 +729,8 @@ export function applySecondaryColorToMaterial(
  * @param material - the material to which color is applied
  * @param prop - technique property (color) name
  * @param value - color value in custom number format
- * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param env - {@link @here/harp-datasource-protocol#Env} instance used to evaluate
+ *              {@link @here/harp-datasource-protocol#Expr} based properties of [[Technique]]
  */
 export function applyBaseColorToMaterial(
     material: THREE.Material,
@@ -765,7 +773,8 @@ export function applyBaseColorToMaterial(
  *
  * @note Use with care, because function does not recognize property type.
  * @param value - the value of color property defined in technique
- * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param env - {@link @here/harp-datasource-protocol#Env} instance used to evaluate
+ *              {@link @here/harp-datasource-protocol#Expr} based properties of [[Technique]]
  */
 function evaluateProperty(value: any, env?: Env): any {
     if (env !== undefined && Expr.isExpr(value)) {
@@ -782,7 +791,8 @@ function evaluateProperty(value: any, env?: Env): any {
  *
  * @note Use with care, because function does not recognize property type.
  * @param value - the value of color property defined in technique
- * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param env - {@link @here/harp-datasource-protocol#Env} instance used to evaluate
+ *              {@link @here/harp-datasource-protocol#Expr} based properties of [[Technique]]
  */
 export function evaluateColorProperty(value: Value, env?: Env): number | undefined {
     value = evaluateProperty(value, env);

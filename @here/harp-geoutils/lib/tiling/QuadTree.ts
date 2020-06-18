@@ -13,7 +13,7 @@ import { TilingScheme } from "./TilingScheme";
  */
 export class QuadTree {
     /**
-     * Constructs a new `QuadTree` for the given [[TilingScheme]].
+     * Constructs a new `QuadTree` for the given {@link TilingScheme}.
      *
      * Example:
      * ```typescript
@@ -27,7 +27,8 @@ export class QuadTree {
     constructor(readonly tilingScheme: TilingScheme) {}
 
     /**
-     * Visits this `QuadTree` and invoke the given accept method with the current [[TileKey]] and
+     * Visits this `QuadTree` and invoke the given accept method
+     * with the current {@link TileKey} and
      * its bounding box in geo coordinates.
      *
      * Example:
@@ -44,8 +45,10 @@ export class QuadTree {
      * });
      * ```
      *
-     * @param accept - A function that takes a [[TileKey]] and its bounding box in geo coordinates
-     * and returns `true` if the visit of the `QuadTree` should continue; otherwise `false`.
+     * @param accept - A function that takes a {@link TileKey}
+     * and its bounding box in geo coordinates
+     * and returns `true` if the visit of the `QuadTree`
+     * should continue; otherwise `false`.
      */
     visit(accept: (tileKey: TileKey, geoBox: GeoBox) => boolean) {
         this.visitTileKey(TileKey.fromRowColumnLevel(0, 0, 0), accept);
@@ -55,8 +58,10 @@ export class QuadTree {
      * Visits the subtree starting from the given tile.
      *
      * @param tileKey - The root of the subtree that should be visited.
-     * @param accept - A function that takes a [[TileKey]] and its bounding box in geo coordinates
-     * and returns `true` if the visit of the `QuadTree` should continue; otherwise `false`.
+     * @param accept - A function that takes a {@link TileKey}
+     *                 and its bounding box in geo coordinates
+     *                 and returns `true` if the visit of the
+     *                 `QuadTree` should continue; otherwise `false`.
      */
     visitTileKey(tileKey: TileKey, accept: (tileKey: TileKey, geoBox: GeoBox) => boolean) {
         const geoBox = this.tilingScheme.getGeoBox(tileKey);

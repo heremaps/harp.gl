@@ -16,7 +16,7 @@ export interface LatLngLike {
 }
 
 /**
- * Type guard to assert that `object` conforms to [[LatLngLike]] interface.
+ * Type guard to assert that `object` conforms to {@link LatLngLike} interface.
  */
 export function isLatLngLike(object: any): object is LatLngLike {
     return object && typeof object.lat === "number" && typeof object.lng === "number";

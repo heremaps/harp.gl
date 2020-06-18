@@ -84,7 +84,7 @@ export interface ITileDataVisitor {
 }
 
 /**
- * An interface that provides options for [[TileDataAccessor]].
+ * An interface that provides options for {@link TileDataAccessor}.
  */
 export interface TileDataAccessorOptions {
     /** Limit to objects that have `featureID`s. */
@@ -102,8 +102,12 @@ export interface TileDataAccessorOptions {
 }
 
 /**
- * An accessor for all geometries in a tile. This class uses a client-provided [[ITileDataVisitor]]
- * to visit all objects, based on filtering options specified by both, the `TileDataAccessor` and
+ * An accessor for all geometries in a tile.
+ *
+ * @remarks
+ * This class uses a client-provided {@link ITileDataVisitor}
+ * to visit all objects, based on filtering options specified
+ * by both, the `TileDataAccessor` and
  * the visitor itself.
  */
 export class TileDataAccessor {

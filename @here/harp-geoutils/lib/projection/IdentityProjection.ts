@@ -135,6 +135,6 @@ class IdentityProjection extends Projection {
 }
 
 /**
- * Identity [[Projection]] used to convert geo coordinates to unit coordinates and vice versa.
+ * Identity {@link Projection} used to convert geo coordinates to unit coordinates and vice versa.
  */
 export const identityProjection: Projection = new IdentityProjection(1);

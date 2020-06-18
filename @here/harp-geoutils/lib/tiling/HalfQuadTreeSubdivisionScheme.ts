@@ -24,7 +24,8 @@ class HalfQuadTreeSubdivisionScheme implements SubdivisionScheme {
 }
 
 /**
- * A [[SubdivisionScheme]] used to represent half quadtrees. This particular subdivision scheme is
+ * A {@link SubdivisionScheme} used to represent half quadtrees.
+ * This particular subdivision scheme is
  * used by the HERE tiling scheme.
  */
 export const halfQuadTreeSubdivisionScheme: SubdivisionScheme = new HalfQuadTreeSubdivisionScheme();

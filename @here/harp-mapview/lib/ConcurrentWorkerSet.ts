@@ -82,7 +82,7 @@ const DEFAULT_WORKER_COUNT = 2;
 /**
  * The default timeout for first message from worker.
  *
- * @see [[WorkerLoader.startWorker]]
+ * @see {@link WorkerLoader.startWorker}
  */
 export const DEFAULT_WORKER_INITIALIZATION_TIMEOUT = 10000;
 

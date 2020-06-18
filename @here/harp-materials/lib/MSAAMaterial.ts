@@ -8,7 +8,8 @@ import * as THREE from "three";
 import { CopyShader } from "./CopyMaterial";
 
 /**
- * The material to use for the quad of the [[MSAARenderPass]] in the composing.
+ * The material to use for the quad of the {@link @here/harp-mapview#MSAARenderPass}
+ * in the composing.
  */
 export class MSAAMaterial extends THREE.ShaderMaterial {
     /**

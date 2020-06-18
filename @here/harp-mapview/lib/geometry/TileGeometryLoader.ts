@@ -25,7 +25,7 @@ import { Tile } from "../Tile";
 import { TileGeometryCreator } from "./TileGeometryCreator";
 
 /**
- * Loads the geometry for its [[Tile]]. Loads all geometry in a single step.
+ * Loads the geometry for its {@link Tile}. Loads all geometry in a single step.
  */
 export class TileGeometryLoader {
     /**
@@ -107,7 +107,7 @@ export class TileGeometryLoader {
     constructor(private m_tile: Tile) {}
 
     /**
-     * The [[Tile]] this `TileGeometryLoader` is managing.
+     * The {@link Tile} this `TileGeometryLoader` is managing.
      */
     get tile(): Tile {
         return this.m_tile;
@@ -145,7 +145,10 @@ export class TileGeometryLoader {
     }
 
     /**
-     * Set the [[DecodedTile]] of the tile. Is called after the decoded tile has been loaded, and
+     * Set the {@link @here/harp-datasource-protocol#DecodedTile} of the tile.
+     *
+     * @remarks
+     * Is called after the decoded tile has been loaded, and
      * prepares its content for later processing in the 'updateXXX' methods.
      *
      * @param {DecodedTile} decodedTile The decoded tile with the flat geometry data belonging to
@@ -164,7 +167,7 @@ export class TileGeometryLoader {
     }
 
     /**
-     * The kinds of geometry stored in this [[Tile]].
+     * The kinds of geometry stored in this {@link Tile}.
      */
     get availableGeometryKinds(): GeometryKindSet | undefined {
         return this.m_availableGeometryKinds;
@@ -256,7 +259,8 @@ export class TileGeometryLoader {
     }
 
     /**
-     * Called by [[VisibleTileSet]] to mark that [[Tile]] is visible and it should prepare geometry.
+     * Called by {@link VisibleTileSet} to mark that {@link Tile} is
+     * visible and it should prepare geometry.
      */
     private prepareForRender(
         enabledKinds: GeometryKindSet | undefined,

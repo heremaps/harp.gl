@@ -66,7 +66,8 @@ const defaultTextLayoutStyle = new TextLayoutStyle({
 const DEFAULT_STYLE_NAME = "default";
 
 /**
- * [[TextElementsRenderer]] representation of a [[Theme]]'s TextStyle.
+ * {@link TextElementsRenderer} representation of a
+ * {@link @here/harp-datasource-protocol#Theme}'s TextStyle.
  */
 export interface TextElementStyle {
     name: string;
@@ -181,7 +182,8 @@ export class TextStyleCache {
     }
 
     /**
-     * Retrieves a [[TextElementStyle]] for [[Theme]]'s [[TextStyle]] id.
+     * Retrieves a {@link TextElementStyle} for {@link @here/harp-datasource-protocol#Theme}'s
+     * [[TextStyle]] id.
      */
     getTextElementStyle(styleId?: string): TextElementStyle {
         let result;
@@ -197,7 +199,8 @@ export class TextStyleCache {
     }
 
     /**
-     * Gets the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
+     * Gets the appropriate {@link @here/harp-text-canvas#TextRenderStyle}
+     * to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      */
     createRenderStyle(
@@ -326,10 +329,11 @@ export class TextStyleCache {
     }
 
     /**
-     * Create the appropriate [[TextLayoutStyle]] to use for a label. Depends heavily on the label's
+     * Create the appropriate {@link @here/harp-text-canvas#TextLayoutStyle}
+     * to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
-     * @param tile - The [[Tile]] to process.
+     * @param tile - The {@link Tile} to process.
      * @param technique - Label's technique.
      */
     createLayoutStyle(

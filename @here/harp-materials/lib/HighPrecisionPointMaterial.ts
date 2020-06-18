@@ -37,7 +37,7 @@ void main() {
 }`;
 
 /**
- * Parameters used when constructing a new [[HighPrecisionPointMaterial]].
+ * Parameters used when constructing a new {@link HighPrecisionPointMaterial}.
  */
 export interface HighPrecisionPointMaterialParameters extends THREE.PointsMaterialParameters {
     /**

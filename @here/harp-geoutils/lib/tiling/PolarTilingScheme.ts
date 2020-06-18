@@ -9,7 +9,7 @@ import { quadTreeSubdivisionScheme } from "./QuadTreeSubdivisionScheme";
 import { TilingScheme } from "./TilingScheme";
 
 /**
- * A [[TilingScheme]] featuring quadtree subdivision scheme and
+ * A {@link TilingScheme} featuring quadtree subdivision scheme and
  * transverse Mercator projection.
  */
 export const polarTilingScheme = new TilingScheme(

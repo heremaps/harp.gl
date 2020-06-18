@@ -72,7 +72,7 @@ export abstract class Projection {
      *
      * @param geoPoint - The position in geo coordinates.
      * @param result - The optional object used to store the resulting world position, result must
-     * implement [[Vector3Like]].
+     * implement {@link Vector3Like}.
      */
     abstract projectPoint<WorldCoordinates extends Vector3Like>(
         geoPoint: GeoCoordinatesLike,
@@ -80,10 +80,10 @@ export abstract class Projection {
     ): WorldCoordinates;
 
     /**
-     * Gets the [[TransformLike]] of the local tangent space at the given point.
+     * Gets the {@link TransformLike} of the local tangent space at the given point.
      *
      * @param point - The geo / world coordinates.
-     * @param result - The [[TransformLike]].
+     * @param result - The {@link TransformLike}.
      */
     localTangentSpace(
         point: GeoCoordinatesLike | Vector3Like,
@@ -144,7 +144,7 @@ export abstract class Projection {
      * ```
      *
      * @param geoBox - The bounding box in geo coordinates.
-     * @param result - The resulting [[OrientedBox3Like]].
+     * @param result - The resulting {@link OrientedBox3Like}.
      */
     abstract projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
@@ -206,20 +206,20 @@ export abstract class Projection {
     abstract scalePointToSurface(worldPoint: Vector3Like): Vector3Like;
 
     /**
-     * Reproject a world position from the given source [[Projection]].
+     * Reproject a world position from the given source {@link Projection}.
      *
      * @param sourceProjection - The source projection.
      * @param worldPos - A valid world position for the given source projection.
-     * @returns The world position reprojected using this [[Projection]].
+     * @returns The world position reprojected using this {@link Projection}.
      */
     reprojectPoint(sourceProjection: Projection, worldPos: Vector3Like): Vector3Like;
 
     /**
-     * Reproject a world position from the given source [[Projection]].
+     * Reproject a world position from the given source {@link Projection}.
      *
      * @param sourceProjection - The source projection.
      * @param worldPos - A valid position in the world space defined by the source projection.
-     * @param result - The resulting position reprojected using this [[Projection]].
+     * @param result - The resulting position reprojected using this {@link Projection}.
      */
     reprojectPoint<WorldCoordinates extends Vector3Like>(
         sourceProjection: Projection,
@@ -228,12 +228,12 @@ export abstract class Projection {
     ): WorldCoordinates;
 
     /**
-     * Reproject a world position from the given source [[Projection]].
+     * Reproject a world position from the given source {@link Projection}.
      * Implementations should be aware of worldPos and result may be one object
      *
      * @param sourceProjection - The source projection.
      * @param worldPos - A valid position in the world space defined by the source projection.
-     * @param result - The resulting position reprojected using this [[Projection]].
+     * @param result - The resulting position reprojected using this {@link Projection}.
      * @hidden
      */
     reprojectPoint(

@@ -9,11 +9,15 @@ import { ImageItem } from "./Image";
 import { ImageCache } from "./ImageCache";
 
 /**
- * Cache images wrapped into [[ImageItem]]s for a [[MapView]]. An image may have multiple names in
- * a theme, the `MapViewImageCache` will take care of that. Registering multiple images with the
+ * Cache images wrapped into {@link ImageItem}s for a {@link MapView}.
+ *
+ * @remarks
+ * An image may have multiple names in
+ * a theme, the `MapViewImageCache` will take care of that.
+ * Registering multiple images with the
  * same name is invalid.
  *
- * The `MapViewImageCache` uses a global [[ImageCache]] to actually store (and generate) the
+ * The `MapViewImageCache` uses a global {@link ImageCache} to actually store (and generate) the
  * image data.
  */
 export class MapViewImageCache {
@@ -23,14 +27,14 @@ export class MapViewImageCache {
     /**
      * The constructor for `MapViewImageCache`.
      *
-     * @param mapView - a [[MapView]] instance.
+     * @param mapView - a {@link MapView} instance.
      */
     constructor(public mapView: MapView) {}
 
     /**
      * Register an existing image by name.
      *
-     * @param name - Name of the image from [[Theme]].
+     * @param name - Name of the image from {@link @here/harp-datasource-protocol#Theme}.
      * @param url - URL of image.
      * @param image - Optional [[ImageData]] of image.
      */
@@ -64,9 +68,9 @@ export class MapViewImageCache {
 
     /**
      * Add an image and optionally start loading it. Once done, the [[ImageData]] or [[ImageBitmap]]
-     * will be stored in the [[ImageItem]].
+     * will be stored in the {@link ImageItem}.
      *
-     * @param name - Name of image from [[Theme]].
+     * @param name - Name of image from {@link @here/harp-datasource-protocol#Theme}.
      * @param url - URL of image.
      * @param startLoading - Optional. Pass `true` to start loading the image in the background.
      */
@@ -84,7 +88,7 @@ export class MapViewImageCache {
     }
 
     /**
-     * Find [[ImageItem]] by its name.
+     * Find {@link ImageItem} by its name.
      *
      * @param name - Name of image.
      */
@@ -97,7 +101,7 @@ export class MapViewImageCache {
     }
 
     /**
-     * Find [[ImageItem]] by URL.
+     * Find {@link ImageItem} by URL.
      *
      * @param url - Url of image.
      */
@@ -106,7 +110,7 @@ export class MapViewImageCache {
     }
 
     /**
-     * Load an [[ImageItem]]. Returns a promise or a loaded [[ImageItem]].
+     * Load an {@link ImageItem}. Returns a promise or a loaded {@link ImageItem}.
      *
      * @param imageItem - ImageItem to load.
      */
@@ -115,8 +119,11 @@ export class MapViewImageCache {
     }
 
     /**
-     * Remove all [[ImageItem]]s from the cache. Also removes all [[ImageItem]]s that belong to this
-     * [[MapView]] from the global [[ImageCache]].
+     * Remove all {@link ImageItem}s from the cache.
+     *
+     * @remarks
+     * Also removes all {@link ImageItem}s that belong to this
+     * {@link MapView} from the global {@link ImageCache}.
      */
     clear() {
         ImageCache.instance.clear(this.mapView);

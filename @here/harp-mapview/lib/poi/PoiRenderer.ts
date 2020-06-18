@@ -35,7 +35,10 @@ const tmpIconColor = new THREE.Color();
 
 /**
  * The `PoiRenderBufferBatch` contains the geometry and the material for all POIs that share the
- * same icon image ([[ImageTexture]]). If the image is the same, all the objects in this batch can
+ * same icon image ({@link @here/harp-datasource-protocol#ImageTexture}).
+ *
+ * @remarks
+ * If the image is the same, all the objects in this batch can
  * share the same material, which makes them renderable in the same draw call, whatever the number
  * of actual objects (WebGL limits apply!).
  *
@@ -53,7 +56,7 @@ class PoiRenderBufferBatch {
     /**
      * Create the `PoiRenderBufferBatch`.
      *
-     * @param mapView - The [[MapView]] instance.
+     * @param mapView - The {@link MapView} instance.
      * @param scene - The three.js scene to add the POIs to.
      * @param imageItem - The icon that will have his material shared.
      * @param renderOrder - RenderOrder of the batch geometry's [[Mesh]].
@@ -66,7 +69,10 @@ class PoiRenderBufferBatch {
     ) {}
 
     /**
-     * Initialize with the [[ImageTexture]]. Loads the image and sets up the icon size, the texture
+     * Initialize with the {@link @here/harp-datasource-protocol#ImageTexture}.
+     *
+     * @remarks
+     * Loads the image and sets up the icon size, the texture
      * coordinates and material of the batch. Since image loading is done asynchronously, this
      * batch cannot be rendered right away. MapView#update is being triggered if it loaded
      * successfully.
@@ -160,11 +166,11 @@ class PoiRenderBuffer {
     /**
      * Create the `PoiRenderBuffer`.
      *
-     * @param mapView - The [[MapView]] to be rendered to.
+     * @param mapView - The {@link MapView} to be rendered to.
      * @param textCanvas - The [[TextCanvas]] to which scenes this `PoiRenderBuffer`
      *                     adds geometry to.
-     * The actual scene a [[TextElement]] is added to is specified by the renderOrder of the
-     * [[TextElement]].
+     * The actual scene a {@link TextElement} is added to is specified by the renderOrder of the
+     * {@link TextElement}.
      */
     constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {}
 
@@ -305,7 +311,7 @@ class PoiRenderBuffer {
 
     /**
      * Fill the picking results for the pixel with the given screen coordinate. If multiple
-     * [[PoiInfo]]s are found, the order of the results is unspecified.
+     * {@link PoiInfo}s are found, the order of the results is unspecified.
      *
      * @param screenPosition - Screen coordinate of picking position.
      * @param pickCallback - Callback to be called for every picked element.
@@ -396,7 +402,7 @@ export class PoiRenderer {
     private m_tempScreenBox = new Math2D.Box();
 
     /**
-     * Create the `PoiRenderer` for the specified [[MapView]].
+     * Create the `PoiRenderer` for the specified {@link MapView}.
      *
      * @param mapView - The MapView to be rendered to.
      * @param textCanvas - The [[TextCanvas]] this `PoiRenderer` is associated to. POIs are added to
@@ -411,7 +417,7 @@ export class PoiRenderer {
      * `poiRenderBatch` is assigned, the POI is ready to be rendered.
      *
      * @param pointLabel - TextElement with PoiInfo for rendering the POI icon.
-     * @param env - TODO! The current zoomLevel level of [[MapView]]
+     * @param env - TODO! The current zoomLevel level of {@link MapView}
      *
      * @returns `True` if the space is not already allocated by another object (text label or POI)
      */
@@ -475,7 +481,7 @@ export class PoiRenderer {
 
     /**
      * Fill the picking results for the pixel with the given screen coordinate. If multiple
-     * [[PoiInfo]]s are found, the order of the results is unspecified.
+     * {@link PoiInfo}s are found, the order of the results is unspecified.
      *
      * @param screenPosition - Screen coordinate of picking position.
      * @param pickCallback - Callback to be called for every picked element.
@@ -577,10 +583,11 @@ export class PoiRenderer {
     /**
      * Setup texture and material for the batch.
      *
-     * @param poiInfo - [[PoiInfo]] to initialize.
-     * @param imageTexture - Shared [[ImageTexture]], defines used area in atlas.
-     * @param imageItem - Shared [[ImageItem]], contains cached image for texture.
-     * @param env - The current zoom level of [[MapView]]
+     * @param poiInfo - {@link PoiInfo} to initialize.
+     * @param imageTexture - Shared {@link @here/harp-datasource-protocol#ImageTexture},
+     *                       defines used area in atlas.
+     * @param imageItem - Shared {@link ImageItem}, contains cached image for texture.
+     * @param env - The current zoom level of {@link MapView}
      */
     private setupPoiInfo(
         poiInfo: PoiInfo,

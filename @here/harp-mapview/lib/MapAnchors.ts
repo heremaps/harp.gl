@@ -17,8 +17,11 @@ import {
 import * as THREE from "three";
 
 /**
- * An interface describing [[THREE.Object3D]]s anchored on given [[GeoCoordinates]].
+ * An interface describing [[THREE.Object3D]]s anchored on
+ * given {@link @here/harp-geoutils#GeoCoordinates}.
  *
+ * @remarkks
+ * @example
  * Example:
  * ```typescript
  * const mesh: MapAnchor<THREE.Mesh> = new THREE.Mesh(geometry, material);
@@ -28,13 +31,14 @@ import * as THREE from "three";
  */
 export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
     /**
-     * The position of this [[MapAnchor]] in [[GeoCoordinates]].
+     * The position of this [[MapAnchor]] in {@link @here/harp-geoutils#GeoCoordinates}.
      * @deprecated Use [[anchor]] instead.
      */
     geoPosition?: GeoCoordinates;
 
     /**
-     * The anchor of this Object3D in [[GeoCoordinates]] or world coordinates.
+     * The anchor of this Object3D in {@link @here/harp-geoutils#GeoCoordinates}
+     * or world coordinates.
      */
     anchor?: GeoCoordLike | Vector3Like;
 

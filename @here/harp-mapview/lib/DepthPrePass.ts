@@ -29,7 +29,9 @@ const DEPTH_PRE_PASS_RENDER_ORDER_OFFSET = 1e-6;
  * disabled by `enableDepthPrePass` option.
  *
  * @param technique - [[BaseStandardTechnique]] instance to be checked
- * @param env - [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @param env - {@link @here/harp-datasource-protocol#Env} instance used
+ *              to evaluate {@link @here/harp-datasource-protocol#Expr}
+ *              based properties of [[Technique]]
  */
 export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique, env: Env) {
     // Depth pass explicitly disabled

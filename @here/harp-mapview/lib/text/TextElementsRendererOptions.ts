@@ -58,40 +58,40 @@ export interface TextElementsRendererOptions {
      */
     maxNumGlyphs?: number;
     /**
-     * Limits the number of [[DataSource]] labels visible, such as road names and POIs.
+     * Limits the number of {@link DataSource} labels visible, such as road names and POIs.
      * On small devices, you can reduce this number to to increase performance.
      * @default [[DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS]].
      */
     maxNumVisibleLabels?: number;
     /**
-     * The number of [[TextElement]]s that the [[TextElementsRenderer]] tries to render even
-     * if they were not visible during placement. This property only applies to [[TextElement]]s
+     * The number of {@link TextElement}s that the {@link TextElementsRenderer} tries to render even
+     * if they were not visible during placement. This property only applies to {@link TextElement}s
      * that were culled by the frustum; useful for map movements and animations.
      * @default [[DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS]].
      */
     numSecondChanceLabels?: number;
     /**
-     * The maximum distance for [[TextElement]] to be rendered, expressed as a fraction of
+     * The maximum distance for {@link TextElement} to be rendered, expressed as a fraction of
      * the distance between the near and far plane [0, 1.0].
      * @default [[DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS]].
      */
     maxDistanceRatioForTextLabels?: number;
     /**
-     * The maximum distance for [[TextElement]] with icons to be rendered,
+     * The maximum distance for {@link TextElement} with icons to be rendered,
      * expressed as a fraction of the distance
      * between the near and far plane [0, 1.0].
      * @default [[DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS]].
      */
     maxDistanceRatioForPoiLabels?: number;
     /**
-     * The minimum scaling factor that may be applied to [[TextElement]]s due to their distance.
-     * If not defined the default value specified in [[TextElementsRenderer]] will be used.
+     * The minimum scaling factor that may be applied to {@link TextElement}s due to their distance.
+     * If not defined the default value specified in {@link TextElementsRenderer} will be used.
      * @default [[DEFAULT_LABEL_DISTANCE_SCALE_MIN]].
      */
     labelDistanceScaleMin?: number;
     /**
-     * The maximum scaling factor that may be applied to [[TextElement]]s due to their distance.
-     * If not defined the default value specified in [[TextElementsRenderer]] will be used.
+     * The maximum scaling factor that may be applied to {@link TextElement}s due to their distance.
+     * If not defined the default value specified in {@link TextElementsRenderer} will be used.
      * @default [[DEFAULT_LABEL_DISTANCE_SCALE_MAX]].
      */
     labelDistanceScaleMax?: number;

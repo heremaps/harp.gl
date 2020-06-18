@@ -118,8 +118,8 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
-     * Copies the values of `other` to this [[OrientedBox3]].
-     * @param other - The other [[OrientedBox3]] to copy.
+     * Copies the values of `other` to this {@link OrientedBox3}.
+     * @param other - The other {@link OrientedBox3} to copy.
      */
     copy(other: OrientedBox3) {
         this.position.copy(other.position);
@@ -130,7 +130,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
-     * Gets the center position of this [[OrientedBox3]].
+     * Gets the center position of this {@link OrientedBox3}.
      *
      * @param center - The returned center position.
      */
@@ -139,7 +139,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
-     * Gets the size of this [[OrientedBox3]].
+     * Gets the size of this {@link OrientedBox3}.
      *
      * @param size - The returned size.
      */
@@ -206,7 +206,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
-     * Returns true if this [[OrientedBox3]] contains the given point.
+     * Returns true if this {@link OrientedBox3} contains the given point.
      *
      * @param point - A valid point.
      */
@@ -224,7 +224,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
-     * Returns the distance from this [[OrientedBox3]] and the given `point`.
+     * Returns the distance from this {@link OrientedBox3} and the given `point`.
      *
      * @param point - A point.
      */
@@ -233,7 +233,7 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
-     * Returns the squared distance from this [[OrientedBox3]] and the given `point`.
+     * Returns the squared distance from this {@link OrientedBox3} and the given `point`.
      *
      * @param point - A point.
      */

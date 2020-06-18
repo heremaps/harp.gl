@@ -24,6 +24,6 @@ class QuadTreeSubdivisionScheme implements SubdivisionScheme {
 }
 
 /**
- * [[SubdivisionScheme]] representing a quadtree.
+ * {@link SubdivisionScheme} representing a quadtree.
  */
 export const quadTreeSubdivisionScheme: SubdivisionScheme = new QuadTreeSubdivisionScheme();

@@ -7,11 +7,11 @@
 import * as THREE from "three";
 
 /**
- * The interface for the [[Pass]] class.
+ * The interface for the {@link Pass} class.
  */
 export interface IPass {
     /**
-     * Whether the [[Pass]] instance is active or not.
+     * Whether the {@link Pass} instance is active or not.
      * @default `true`.
      */
     enabled: boolean;
@@ -23,8 +23,10 @@ export interface IPass {
     renderToScreen: boolean;
 
     /**
-     * The resize method to extend in [[Pass]] implementations. It resizes the render targets. Call
-     * on resize events.
+     * The resize method to extend in {@link Pass} implementations.
+     *
+     * @remarks
+     * It resizes the render targets. Call on resize events.
      *
      * @param width - Width to resize to.
      * @param height - Height to resize to.
@@ -32,7 +34,10 @@ export interface IPass {
     setSize(width: number, height: number): void;
 
     /**
-     * The render method to extend in [[Pass]] implementations. This is the place where the desired
+     * The render method to extend in {@link Pass} implementations.
+     *
+     * @remarks
+     * This is the place where the desired
      * effects or render operations are executed.
      *
      * @param renderer - The WebGLRenderer instance in use.
@@ -53,8 +58,11 @@ export interface IPass {
 }
 
 /**
- * The base class to extend for further passes in [[MapView]], like the [[MSAARenderPass]], possibly
- * a text pass, an AO effect etc. `Pass` provides the core logic for both :
+ * The base class to extend for further passes in {@link MapView},
+ * like the {@link MSAARenderPass},
+ *
+ * @remarks
+ * `Pass` provides the core logic for both :
  * - render passes (proper scene renders),
  * - and shader passes (quad renders, i.e. effects added on top of the render output as a
  * postprocess).

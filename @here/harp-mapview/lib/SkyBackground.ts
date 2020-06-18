@@ -12,7 +12,7 @@ import { SkyGradientTexture } from "./SkyGradientTexture";
 import * as THREE from "three";
 
 /**
- * Class that handles [[MapView]]'s sky background.
+ * Class that handles {@link MapView}'s sky background.
  */
 export class SkyBackground {
     private m_skyTexture?: SkyGradientTexture | SkyCubemapTexture;
@@ -21,8 +21,8 @@ export class SkyBackground {
      * Constructs a new `SkyBackground`.
      *
      * @param m_sky - Sky configuration parameters.
-     * @param m_projectionType - [[MapView]]'s projection type.
-     * @param camera - [[MapView]]'s camera.
+     * @param m_projectionType - {@link MapView}'s projection type.
+     * @param camera - {@link MapView}'s camera.
      */
     constructor(
         private m_sky: GradientSky | CubemapSky,

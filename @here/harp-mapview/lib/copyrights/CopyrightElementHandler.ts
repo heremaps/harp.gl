@@ -9,7 +9,7 @@ import { MapView, MapViewEventNames } from "../MapView";
 import { CopyrightInfo } from "./CopyrightInfo";
 
 /**
- * Helper class that maintains up-to-date [[MapView]] copyright information in DOM element.
+ * Helper class that maintains up-to-date {@link MapView} copyright information in DOM element.
  *
  * @example
  *
@@ -22,11 +22,11 @@ import { CopyrightInfo } from "./CopyrightInfo";
  */
 export class CopyrightElementHandler {
     /**
-     * Install [[CopyrightElementHandler]] on DOM element and - optionally - attach to a [[MapView]]
-     * instance.
+     * Install {@link CopyrightElementHandler} on DOM element and - optionally -
+     * attach to a {@link MapView} instance.
      *
      * @param element - HTML DOM element or a HTML DOM element id
-     * @param mapView -, optional, [[attach]] to this [[MapView]]
+     * @param mapView -, optional, [[attach]] to this {@link MapView}
      */
     static install(element: string | HTMLElement, mapView?: MapView): CopyrightElementHandler {
         return new CopyrightElementHandler(element, mapView);
@@ -35,7 +35,7 @@ export class CopyrightElementHandler {
     /**
      * Static copyright info.
      *
-     * Use when [[MapView]]'s [[DataSource]]'s do not provide proper copyright information.
+     * Use when {@link MapView}'s {@link DataSource}'s do not provide proper copyright information.
      */
     staticInfo: CopyrightInfo[] | undefined;
 
@@ -48,10 +48,10 @@ export class CopyrightElementHandler {
      * of the given `mapView`.
      *
      * Note: Generally, the static [[install]] method can be used to create and attach a new
-     * `CopyrightElementHandler` to a [[MapView]]
+     * `CopyrightElementHandler` to a {@link MapView}
      *
      * @param element - HTML DOM element or a HTML DOM element id
-     * @param mapView - optional, [[attach]] to this [[MapView]] instance
+     * @param mapView - optional, [[attach]] to this {@link MapView} instance
      */
     constructor(element: string | HTMLElement, mapView?: MapView) {
         if (typeof element === "string") {
@@ -70,7 +70,7 @@ export class CopyrightElementHandler {
     }
 
     /**
-     * Destroys this object by removing all event listeners from the attached [[MapView]]s.
+     * Destroys this object by removing all event listeners from the attached {@link MapView}s.
      */
     destroy() {
         for (const mapView of this.m_mapViews) {
@@ -79,7 +79,7 @@ export class CopyrightElementHandler {
     }
 
     /**
-     * Attaches this [[CopyrightInfo]] updates from [[MapView]] instance.
+     * Attaches this {@link CopyrightInfo} updates from {@link MapView} instance.
      */
     attach(mapView: MapView): this {
         this.m_mapViews.push(mapView);
@@ -91,7 +91,7 @@ export class CopyrightElementHandler {
     }
 
     /**
-     * Stop following [[CopyrightInfo]] updates from [[MapView]] instance.
+     * Stop following {@link CopyrightInfo} updates from {@link MapView} instance.
      */
     detach(mapView: MapView): this {
         mapView.removeEventListener(MapViewEventNames.CopyrightChanged, this.update);
@@ -103,11 +103,13 @@ export class CopyrightElementHandler {
     }
 
     /**
-     * Set [[CopyrightInfo]] defaults to be used in case [[DataSource]] does not provide deatailed
+     * Set {@link CopyrightInfo} defaults to be used in case
+     * {@link DataSource} does not provide deatailed
      * copyright information.
      *
+     * @remarks
      * The defaults will applied to all undefined `year`, `label` and `link` values in the copyright
-     * information retrieved from [[MapView]].
+     * information retrieved from {@link MapView}.
      */
     setDefaults(defaults: CopyrightInfo[] | undefined): this {
         this.m_defaults.clear();
@@ -124,9 +126,10 @@ export class CopyrightElementHandler {
      * Sets the [[staticInfo]] property.
      *
      * A `CopyrightElementHandler` always displays a deduplicated sum of static copyright info and
-     * copyright information obtained from attached [[MapView]]s.
+     * copyright information obtained from attached {@link MapView}s.
      *
-     * This information is used when [[DataSource]] instances of given [[MapView]] do not provide
+     * This information is used when {@link DataSource}
+     * instances of given {@link MapView} do not provide
      * copyright information.
      */
     setStaticCopyightInfo(staticInfo: CopyrightInfo[] | undefined): this {

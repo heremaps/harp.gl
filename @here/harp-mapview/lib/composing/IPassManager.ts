@@ -7,7 +7,8 @@
 import * as THREE from "three";
 
 /**
- * `IPassManager` provides a base interface for [[Pass]] managers like [[MapRenderingManager]].
+ * `IPassManager` provides a base interface for {@link Pass}
+ * managers like {@link MapRenderingManager}.
  */
 export interface IPassManager {
     /**
@@ -17,7 +18,8 @@ export interface IPassManager {
     render(renderer: THREE.WebGLRenderer, ...args: any[]): void;
 
     /**
-     * The resize method to extend in [[Pass]] implementations to resize the render targets to match
+     * The resize method to extend in {@link Pass} implementations
+     * to resize the render targets to match
      * the size of the visible canvas. It should be called on resize events.
      *
      * @param width - Width to resize to.

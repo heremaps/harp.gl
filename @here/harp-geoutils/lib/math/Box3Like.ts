@@ -22,7 +22,7 @@ export interface Box3Like {
 }
 
 /**
- * Returns true if the given object implements the [[Box3Like]] interface.
+ * Returns true if the given object implements the {@link Box3Like} interface.
  *
  * @param object - A valid object.
  */

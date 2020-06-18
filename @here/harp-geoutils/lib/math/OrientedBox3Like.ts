@@ -8,7 +8,7 @@ import { TransformLike } from "./TransformLike";
 import { Vector3Like } from "./Vector3Like";
 
 /**
- * The interface [[OrientedBox3Like]] is used to represent oriented bounding box.
+ * The interface {@link OrientedBox3Like} is used to represent oriented bounding box.
  */
 export interface OrientedBox3Like extends TransformLike {
     /**
@@ -18,7 +18,7 @@ export interface OrientedBox3Like extends TransformLike {
 }
 
 /**
- * Returns true if the given object implements the interface [[OrientedBox3Like]].
+ * Returns true if the given object implements the interface {@link OrientedBox3Like}.
  *
  * @param object - The object.
  */

@@ -29,7 +29,7 @@ import { PickResult } from "../PickHandler";
 import { TextElementType } from "./TextElementType";
 
 /**
- * Additional information for an icon that is to be rendered along with a [[TextElement]].
+ * Additional information for an icon that is to be rendered along with a {@link TextElement}.
  */
 export interface PoiInfo {
     /**
@@ -38,31 +38,31 @@ export interface PoiInfo {
     technique: PoiTechnique | LineMarkerTechnique;
 
     /**
-     * Name of the [[ImageTexture]].
+     * Name of the {@link @here/harp-datasource-protocol#ImageTexture}.
      */
     imageTextureName: string;
 
     /**
      * Icon color override
      *
-     * @see [[MarkerTechniqueParams.iconColor]];
+     * @see {@link @here/harp-datasource-protocol#MarkerTechniqueParams.iconColor};
      */
     iconColor?: THREE.Color;
 
     /**
      * Icon brightness.
      *
-     * @see [[MarkerTechniqueParams.iconBrightness]];
+     * @see {@link @here/harp-datasource-protocol#MarkerTechniqueParams.iconBrightness};
      */
     iconBrightness?: number;
 
     /**
-     * Name of the POI table [[PoiTable]].
+     * Name of the POI table {@link PoiTable}.
      */
     poiTableName?: string;
 
     /**
-     * Name of the POI description in the [[PoiTable]].
+     * Name of the POI description in the {@link PoiTable}.
      */
     poiName?: string;
 
@@ -126,7 +126,7 @@ export interface PoiInfo {
     featureId?: number;
 
     /**
-     * Reference back to owning [[TextElement]].
+     * Reference back to owning {@link TextElement}.
      */
     textElement: TextElement;
 
@@ -138,13 +138,13 @@ export interface PoiInfo {
 
     /**
      * @hidden
-     * Direct access to [[ImageItem]] once it is resolved.
+     * Direct access to {@link ImageItem} once it is resolved.
      */
     imageItem?: ImageItem;
 
     /**
      * @hidden
-     * Direct access to [[ImageTexture]] once it is resolved.
+     * Direct access to {@link @here/harp-datasource-protocol#ImageTexture} once it is resolved.
      */
     imageTexture?: ImageTexture;
 
@@ -181,8 +181,8 @@ export interface PoiInfo {
 
     /**
      * @hidden
-     * Computed from owning [[TextElement]]. Value is set when `PoiInfo` is assigned to
-     * [[TextElement]].
+     * Computed from owning {@link TextElement}. Value is set when `PoiInfo` is assigned to
+     * {@link TextElement}.
      */
     renderOrder?: number;
 }
@@ -198,7 +198,7 @@ export function poiIsRenderable(poiInfo: PoiInfo): boolean {
 
 export interface TextPickResult extends PickResult {
     /**
-     * Text of the picked [[TextElement]]
+     * Text of the picked {@link TextElement}
      */
     text?: string;
 }
@@ -306,28 +306,34 @@ export class TextElement {
 
     /**
      * @hidden
-     * Array storing the style [[GlyphData]] for this `TextElement` to speed up label placement in
-     * [[TextElementsRenderer]]. Valid after `loadingState` is `Initialized`.
+     * Array storing the style {@link @here/harp-text-canvas#GlyphData} for
+     * this `TextElement` to speed up label placement in
+     * {@link TextElementsRenderer}. Valid after `loadingState` is `Initialized`.
      */
     glyphs?: GlyphData[];
 
     /**
      * @hidden
-     * Array storing the casing (`true`: uppercase, `false`: lowercase) for this `TextElement`.
-     * Used by labels in [[TextElementsRenderer]] to support `SmallCaps`. Valid after `loadingState`
+     * Array storing the casing (`true`: uppercase, `false`: lowercase)
+     * for this `TextElement`.
+     * Used by labels in {@link TextElementsRenderer} to support
+     * `SmallCaps`. Valid after `loadingState`
      * is `Initialized`.
      */
     glyphCaseArray?: boolean[];
 
     /**
-     * Screen space bounds for this `TextElement`. Used by point labels in [[TextElementsRenderer]].
+     * Screen space bounds for this `TextElement`.
+     *
+     * @remarks
+     * Used by point labels in {@link TextElementsRenderer}.
      * Valid after `loadingState` is `Initialized`.
      */
     bounds?: THREE.Box2;
 
     /**
      * @hidden
-     * Pre-computed text vertex buffer. Used by point labels in [[TextElementsRenderer]]. Valid
+     * Pre-computed text vertex buffer. Used by point labels in {@link TextElementsRenderer}. Valid
      * after label becomes visible for the first time.
      */
     textBufferObject?: TextBufferObject;
@@ -503,7 +509,7 @@ export class TextElement {
     }
 
     /**
-     * Update the minZoomLevel and maxZoomLevel from the values set in [[PoiInfo]].
+     * Update the minZoomLevel and maxZoomLevel from the values set in {@link PoiInfo}.
      * Selects the smaller/larger one of the two min/max values for icon and text, because the
      * TextElement is a container for both.
      */
