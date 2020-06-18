@@ -59,7 +59,9 @@ import { EarthConstants, GeoCoordinates, ProjectionType } from "@here/harp-geout
 import {
     EdgeMaterial,
     EdgeMaterialParameters,
+    ExtrusionFeature,
     FadingFeature,
+    hasExtrusionFeature,
     isHighPrecisionLineMaterial,
     MapMeshBasicMaterial,
     MapMeshDepthMaterial,
@@ -70,7 +72,6 @@ import {
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import {
     applyBaseColorToMaterial,
     buildMetricValueEvaluator,
@@ -181,6 +182,18 @@ class AttachmentInfo {
 
         this.cache.interleavedAttributes.set(description, attrs);
         return attrs;
+    }
+}
+
+function addToExtrudedMaterials(
+    material: THREE.Material | THREE.Material[],
+    extrudedMaterials: ExtrusionFeature[]
+) {
+    if (Array.isArray(material)) {
+        const materials = material as ExtrusionFeature[];
+        extrudedMaterials.push(...materials);
+    } else {
+        extrudedMaterials.push(material as ExtrusionFeature);
     }
 }
 
@@ -659,8 +672,10 @@ export class TileGeometryCreator {
         decodedTile: DecodedTile,
         techniqueFilter?: (technique: IndexedTechnique) => boolean
     ) {
-        const materials: THREE.Material[] = [];
         const mapView = tile.mapView;
+        const materials: THREE.Material[] = [];
+        const extrudedMaterials: THREE.Material[] = [];
+        const animatedExtrusionHandler = mapView.animatedExtrusionHandler;
         const dataSource = tile.dataSource;
         const discreteZoomLevel = Math.floor(mapView.zoomLevel);
         const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
@@ -713,6 +728,9 @@ export class TileGeometryCreator {
                 if (!usesObject3D(technique)) {
                     continue;
                 }
+                const extrusionAnimationEnabled: boolean =
+                    animatedExtrusionHandler?.setAnimationProperties(technique, discreteZoomEnv) ??
+                    false;
 
                 let material: THREE.Material | undefined = materials[techniqueIndex];
 
@@ -734,6 +752,9 @@ export class TileGeometryCreator {
                     );
                     if (material === undefined) {
                         continue;
+                    }
+                    if (extrusionAnimationEnabled && hasExtrusionFeature(material)) {
+                        addToExtrudedMaterials(material, extrudedMaterials);
                     }
                     materials[techniqueIndex] = material;
                 }
@@ -904,43 +925,6 @@ export class TileGeometryCreator {
                     }
                 }
 
-                const extrudedObjects: Array<{
-                    object: THREE.Object3D;
-                    /**
-                     * If set to `true`, an [[ExtrusionFeature]] that injects extrusion shader
-                     * chunk will be applied to the material. Otherwise, extrusion should
-                     * be added in the material's shader manually.
-                     */
-                    materialFeature: boolean;
-                }> = [];
-
-                const animatedExtrusionHandler = mapView.animatedExtrusionHandler;
-
-                let extrusionAnimationEnabled: boolean | undefined = false;
-
-                if (
-                    isExtrudedPolygonTechnique(technique) &&
-                    animatedExtrusionHandler !== undefined
-                ) {
-                    let animateExtrusionValue = getPropertyValue(
-                        technique.animateExtrusion,
-                        discreteZoomEnv
-                    );
-                    if (animateExtrusionValue !== null) {
-                        animateExtrusionValue =
-                            typeof animateExtrusionValue === "boolean"
-                                ? animateExtrusionValue
-                                : typeof animateExtrusionValue === "number"
-                                ? animateExtrusionValue !== 0
-                                : false;
-                    }
-                    extrusionAnimationEnabled =
-                        animateExtrusionValue !== null &&
-                        animatedExtrusionHandler.forceEnabled === false
-                            ? animateExtrusionValue
-                            : animatedExtrusionHandler.enabled;
-                }
-
                 const renderDepthPrePass =
                     isExtrudedPolygonTechnique(technique) &&
                     isRenderDepthPrePassEnabled(technique, discreteZoomEnv);
@@ -955,10 +939,7 @@ export class TileGeometryCreator {
                     objects.push(depthPassMesh);
 
                     if (extrusionAnimationEnabled) {
-                        extrudedObjects.push({
-                            object: depthPassMesh,
-                            materialFeature: true
-                        });
+                        addToExtrudedMaterials(depthPassMesh.material, extrudedMaterials);
                     }
 
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
@@ -1012,7 +993,8 @@ export class TileGeometryCreator {
                         color: fadingParams.color,
                         colorMix: fadingParams.colorMix,
                         fadeNear: fadingParams.lineFadeNear,
-                        fadeFar: fadingParams.lineFadeFar
+                        fadeFar: fadingParams.lineFadeFar,
+                        extrusionRatio: extrusionAnimationEnabled ? 0 : undefined
                     };
                     const edgeMaterial = new EdgeMaterial(materialParams);
                     const edgeObj = new THREE.LineSegments(edgeGeometry, edgeMaterial);
@@ -1029,10 +1011,7 @@ export class TileGeometryCreator {
                     );
 
                     if (extrusionAnimationEnabled) {
-                        extrudedObjects.push({
-                            object: edgeObj,
-                            materialFeature: false
-                        });
+                        addToExtrudedMaterials(edgeObj.material, extrudedMaterials);
                     }
 
                     this.registerTileObject(tile, edgeObj, techniqueKind, {
@@ -1047,26 +1026,10 @@ export class TileGeometryCreator {
 
                 // animate the extrusion of buildings
                 if (isExtrudedPolygonTechnique(technique) && extrusionAnimationEnabled) {
-                    extrudedObjects.push({
-                        object,
-                        materialFeature: true
-                    });
                     object.customDepthMaterial = new MapMeshDepthMaterial({
                         depthPacking: THREE.RGBADepthPacking
                     });
-
-                    const extrusionAnimationDuration =
-                        technique.animateExtrusionDuration !== undefined &&
-                        animatedExtrusionHandler.forceEnabled === false
-                            ? technique.animateExtrusionDuration
-                            : animatedExtrusionHandler.duration;
-
-                    tile.animatedExtrusionTileHandler = new AnimatedExtrusionTileHandler(
-                        tile,
-                        extrudedObjects,
-                        extrusionAnimationDuration
-                    );
-                    mapView.animatedExtrusionHandler.add(tile.animatedExtrusionTileHandler);
+                    addToExtrudedMaterials(object.customDepthMaterial, extrudedMaterials);
                 }
 
                 // Add the fill area edges as a separate geometry.
@@ -1204,6 +1167,9 @@ export class TileGeometryCreator {
                     objects.push(outlineObj);
                 }
             }
+        }
+        if (extrudedMaterials.length > 0) {
+            mapView.animatedExtrusionHandler.add(tile, extrudedMaterials);
         }
     }
 

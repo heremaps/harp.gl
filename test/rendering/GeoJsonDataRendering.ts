@@ -64,6 +64,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             preserveDrawingBuffer: true,
             pixelRatio: 1
         });
+        mapView.animatedExtrusionHandler.enabled = false;
 
         const defaultLookAt: Partial<LookAtParams> = {
             target: { lat: 53.3, lng: 14.6 },

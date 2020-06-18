@@ -240,6 +240,15 @@ export interface ExtrusionFeature extends HiddenThreeJSMaterialProperties, Mixin
     extrusionRatio?: number;
 }
 
+/**
+ * Determines whether a given material supports extrusion.
+ * @param material The material to check.
+ * @returns Whether the given material supports extrusion.
+ */
+export function hasExtrusionFeature(material: any): material is ExtrusionFeature {
+    return "extrusionRatio" in material;
+}
+
 namespace DisplacementFeature {
     /**
      * Checks if feature is enabled (displacement map defined).
@@ -987,10 +996,14 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         this.applyDisplacementParameters(params);
     }
 
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
     clone(): this {
         return new MapMeshBasicMaterial().copy(this);
     }
 
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
     copy(source: this): any {
         super.copy(source);
         this.copyFadingParameters(source);
@@ -1181,10 +1194,14 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         }
     }
 
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
     clone(): this {
         return new MapMeshStandardMaterial().copy(this);
     }
 
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
     copy(source: this): any {
         super.copy(source);
         this.copyFadingParameters(source);
