@@ -75,11 +75,11 @@ const cache = {
  * Rounds a given zoom level up to the nearest integer value if it's close enough.
  *
  * The zoom level set in {@link MapView} after a zoom level
- * target is given to {@link MapView.lookAt} or
+ * target is given to {@link (MapView.lookAt:WITH_PARAMS)} or
  * {@link @here/harp-map-controls#MapControls} never matches
  * exactly the target due to the precision loss caused by the
  * conversion from zoom level to camera distance (done in
- * {@link MapView.lookAt} and {@link @here/harp-map-controls#MapControls})
+ * {@link (MapView.lookAt:WITH_PARAMS)} and {@link @here/harp-map-controls#MapControls})
  * and from distance back to zoom level (done at every frame on camera update).
  * As a result, given a fixed integer zoom level input, the final zoom level computed at every frame
  * may fall sometimes below the integer value and others above. This causes flickering since each
@@ -561,7 +561,7 @@ export namespace MapViewUtils {
      *
      * @param worldTarget - readonly, world target of {@link MapView}
      * @param camera - readonly, camera with proper `position` and rotation set
-     * @returns new distance to camera to be used with {@link MapView.lookAt}
+     * @returns new distance to camera to be used with {@link (MapView.lookAt:WITH_PARAMS)}
      */
     export function getFitBoundsDistance(
         points: THREE.Vector3[],

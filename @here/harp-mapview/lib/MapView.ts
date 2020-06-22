@@ -657,7 +657,7 @@ const MapViewDefaults = {
 };
 
 /**
- * Parameters for {@link MapView.lookAt}.
+ * Parameters for {@link (MapView.lookAt:WITH_PARAMS)}.
  */
 export interface LookAtParams {
     /**
@@ -668,9 +668,9 @@ export interface LookAtParams {
      *
      * As a consequence {@link MapView.target} and {@link MapView.zoomLevel}
      * will not match the values
-     * that were passed into the {@link MapView.lookAt} method.
+     * that were passed into the {@link (MapView.lookAt:WITH_PARAMS)} method.
      * @default `new GeoCoordinates(25, 0)` in {@link MapView.constructor} context.
-     * @default {@link MapView.target} in {@link MapView.lookAt} context.
+     * @default {@link MapView.target} in {@link (MapView.lookAt:WITH_PARAMS)} context.
      */
     target: GeoCoordLike;
 
@@ -695,7 +695,8 @@ export interface LookAtParams {
      * Note in sphere projection some points are not visible if you specify bounds that span more
      * than 180 degreess in any direction.
      *
-     * @see {@link MapView.lookAt} for defails how `bounds` interact with `target` parameter
+     * @see {@link (MapView.lookAt:WITH_PARAMS)} for defails how `bounds`
+     *      interact with `target` parameter
      */
     bounds: GeoBox | GeoBoxExtentLike | GeoCoordLike[];
 
@@ -709,14 +710,14 @@ export interface LookAtParams {
      * Zoomlevel of the MapView.
      * @note Takes precedence over distance.
      * @default 5 in {@link MapView.constructor} context.
-     * @default {@link MapView.zoomLevel} in {@link MapView.lookAt} context.
+     * @default {@link MapView.zoomLevel} in {@link (MapView.lookAt:WITH_PARAMS)} context.
      */
     zoomLevel: number;
 
     /**
      * Tilt angle in degrees. 0 is top down view.
      * @default 0 in {@link MapView.constructor} context.
-     * @default {@link MapView.tilt} in {@link MapView.lookAt} context.
+     * @default {@link MapView.tilt} in {@link (MapView.lookAt:WITH_PARAMS)} context.
      * @note Maximum supported tilt is 89°
      */
     tilt: number;
@@ -724,7 +725,7 @@ export interface LookAtParams {
     /**
      * Heading angle in degrees and clockwise. 0 is north-up.
      * @default 0 in {@link MapView.constructor} context.
-     * @default {@link MapView.heading} in {@link MapView.lookAt} context.
+     * @default {@link MapView.heading} in {@link (MapView.lookAt:WITH_PARAMS)} context.
      */
     heading: number;
 }
@@ -2150,6 +2151,8 @@ export class MapView extends THREE.EventDispatcher {
      * @see More examples in [[LookAtExample]].
      *
      * @param params - {@link LookAtParams}
+     *
+     * {@labels WITH_PARAMS}
      */
     lookAt(params: Partial<LookAtParams>): void;
     // tslint:enable: max-line-length
@@ -2207,7 +2210,7 @@ export class MapView extends THREE.EventDispatcher {
      * @param yawDeg - Camera yaw in degrees, counter-clockwise (as opposed to heading), starting
      * north.
      * @param pitchDeg - Camera pitch in degrees.
-     * @deprecated Use {@link MapView.lookAt} instead.
+     * @deprecated Use {@link (MapView.lookAt:WITH_PARAMS)} instead.
      */
     setCameraGeolocationAndZoom(
         geoPos: GeoCoordinates,
