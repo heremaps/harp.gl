@@ -72,13 +72,7 @@ const map = new harp.MapView({
 const controls = new harp.MapControls(map);
 const omvDataSource = new harp.OmvDataSource({
     baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-    apiFormat: harp.APIFormat.XYZOMV,
-    styleSetName: "tilezen",
-    authenticationCode: "YOUR-APIKEY",
-    authenticationMethod: {
-        method: harp.AuthenticationMethod.QueryString,
-        name: "apikey"
-    }
+    authenticationCode: "YOUR-APIKEY"
 });
 map.addDataSource(omvDataSource);
 ```
