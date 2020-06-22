@@ -410,7 +410,6 @@ export class TextCanvas {
         }
         for (const layer of this.m_layers) {
             layer.storage.update();
-            this.m_renderer.clear(false, true);
             this.m_renderer.render(layer.storage.scene, camera);
         }
         if (target !== undefined) {
