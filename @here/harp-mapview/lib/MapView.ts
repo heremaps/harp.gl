@@ -3475,6 +3475,7 @@ export class MapView extends THREE.EventDispatcher {
         // frame, with no more tiles, geometry and labels waiting to be added, and no animation
         // running. The initial placement of text in this render call may have changed the loading
         // state of the TextElementsRenderer, so this has to be checked again.
+        // HARP-10919: Fading is currently ignored by the frame complete event.
         if (
             !this.textElementsRenderer.loading &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
