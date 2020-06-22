@@ -229,7 +229,6 @@ void main() {
     // of distToChange increases (i.e. the line is further away).
     float width = fwidth(distToEdge);
 
-#ifndef USE_DASHED_LINE
     float s = opacity < 0.98
         ? clamp((distToEdge + width) / (2.0 * width), 0.0, 1.0) // prefer a boxstep
         : smoothstep(-width, width, distToEdge);
@@ -238,9 +237,6 @@ void main() {
         // drop the fragment when the line is using opacity.
         discard;
     }
-#else
-    float s = smoothstep(-width, width, distToEdge);
-#endif
 
     alpha *= 1.0 - s;
 
@@ -652,9 +648,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             this.uniforms.opacity.value = value;
         }
 
-        if (this.uniforms?.gapSize?.value === 0) {
-            this.stencilWrite = this.m_opacity < 0.98;
-        }
+        this.stencilWrite = this.m_opacity < 0.98;
     }
 
     /**

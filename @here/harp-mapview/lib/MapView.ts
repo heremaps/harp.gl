@@ -160,6 +160,8 @@ const DEFAULT_MIN_CAMERA_HEIGHT = 20;
  */
 const DEFAULT_POLAR_STYLE_SET_NAME = "polar";
 
+const DEFAULT_STENCIL_VALUE = 1;
+
 /**
  * The type of `RenderEvent`.
  */
@@ -894,7 +896,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_enableMixedLod: boolean | undefined;
 
     private readonly m_renderOrderStencilValues = new Map<number, number>();
-    private m_stencilValue: number = 0;
+    // Valid values start at 1, because the screen is cleared to zero
+    private m_stencilValue: number = DEFAULT_STENCIL_VALUE;
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -3257,7 +3260,7 @@ export class MapView extends THREE.EventDispatcher {
         RENDER_EVENT.time = frameStartTime;
         this.dispatchEvent(RENDER_EVENT);
 
-        this.m_stencilValue = 0;
+        this.m_stencilValue = DEFAULT_STENCIL_VALUE;
         this.m_renderOrderStencilValues.clear();
 
         ++this.m_frameNumber;

@@ -86,6 +86,10 @@ describe("Rendering lines: ", function() {
         {
             name: "line at obtuse angle - right",
             points: [-50, 0, 10, 0, 0, 10, 50, -50, 10]
+        },
+        {
+            name: "lines that cross",
+            points: [-50, 0, 0, 50, 0, 0, 0, 50, 0, 0, -50, 0]
         }
     ];
 
@@ -193,6 +197,10 @@ describe("Rendering lines: ", function() {
         {
             name: "line 3 points - right: -3",
             points: [-50, 0, 0, 0, 0, 0, 0, -3, 0]
+        },
+        {
+            name: "lines that cross",
+            points: [-50, 0, 0, 50, 0, 0, 0, 50, 0, 0, -50, 0]
         }
     ];
 
