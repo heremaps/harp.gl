@@ -13,7 +13,6 @@ import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
-import { mergeWithOptions } from "@here/harp-utils";
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
     let mapView: MapView;
@@ -73,7 +72,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             heading: 0
         };
 
-        const lookAt = mergeWithOptions(defaultLookAt, options.lookAt);
+        const lookAt: LookAtParams = { ...defaultLookAt, ...options.lookAt } as any;
 
         mapView.lookAt(lookAt);
         // Shutdown errors cause by firefox bug
@@ -212,6 +211,30 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             lookAt: {
                 tilt: 45,
                 heading: 30
+            }
+        });
+    });
+
+    it("renders multi line strings", async function() {
+        this.timeout(5000);
+
+        const ourStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "LineString"],
+                technique: "solid-line",
+                color: "red",
+                lineWidth: "4px"
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-multilinestring",
+            theme: { lights, styles: { geojson: ourStyle } },
+            geoJson: "../dist/resources/MatchedLinksShape.json",
+            lookAt: {
+                target: [-0.13603, 51.508],
+                zoomLevel: 15
             }
         });
     });
