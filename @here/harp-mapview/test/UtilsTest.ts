@@ -9,9 +9,9 @@
 
 import {
     EarthConstants,
+    GeoBox,
     GeoCoordinates,
     mercatorProjection,
-    Projection,
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
@@ -24,23 +24,45 @@ import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
 
 describe("map-view#Utils", function() {
     describe("Camera related functions", function() {
-        const cameraMock = {
-            fov: 40,
-            rotation: {
-                z: 0
-            },
-            quaternion: new THREE.Quaternion(),
-            matrixWorld: new THREE.Matrix4()
-        };
-        const mapViewMock = {
-            maxZoomLevel: 20,
-            minZoomLevel: 1,
-            camera: cameraMock,
-            projection: mercatorProjection,
-            focalLength: 256,
-            pixelRatio: 1.0
-        };
-        const mapView = (mapViewMock as any) as MapView;
+        const geoTarget = GeoCoordinates.fromDegrees(0, 0);
+        let camera: THREE.Camera;
+        let mapView: MapView;
+        const elevationProvider = ({} as any) as ElevationProvider;
+        let sandbox: sinon.SinonSandbox;
+
+        function getCameraOffsetToCoords(geoCoords: GeoCoordinates): THREE.Vector3 {
+            const worldPos = mapView.projection.projectPoint(geoCoords);
+            return new THREE.Vector3(worldPos.x, worldPos.y, worldPos.z).sub(
+                mapView.camera.position
+            );
+        }
+
+        function checkCameraPositionCloseTo(geoCoords: GeoCoordinates) {
+            const eps = 1e-5;
+            const actualGeoPos = mapView.projection.unprojectPoint(mapView.camera.position);
+            expect(actualGeoPos.latitude).to.be.closeTo(geoCoords.latitude, eps);
+            expect(actualGeoPos.longitude).to.be.closeTo(geoCoords.longitude, eps);
+        }
+
+        before(function() {
+            sandbox = sinon.createSandbox();
+        });
+        beforeEach(function() {
+            camera = new THREE.PerspectiveCamera(40);
+            mapView = ({
+                maxZoomLevel: 20,
+                minZoomLevel: 1,
+                camera,
+                projection: mercatorProjection,
+                focalLength: 256,
+                pixelRatio: 1.0,
+                target: new GeoCoordinates(0, 0)
+            } as any) as MapView;
+            elevationProvider.getHeight = sandbox.stub().returns(0);
+        });
+        afterEach(function() {
+            sandbox.restore();
+        });
 
         describe("calculateZoomLevelFromDistance", function() {
             it("calculates zoom level", function() {
@@ -91,15 +113,15 @@ describe("map-view#Utils", function() {
 
         describe("converts zoom level to distance and distance to zoom level", function() {
             it("ensures that both functions are inverse", function() {
-                mapViewMock.camera.matrixWorld.makeRotationX(THREE.MathUtils.degToRad(30));
+                mapView.camera.matrixWorld.makeRotationX(THREE.MathUtils.degToRad(30));
 
                 for (let zoomLevel = 1; zoomLevel <= 20; zoomLevel += 0.1) {
                     const distance = MapViewUtils.calculateDistanceFromZoomLevel(
-                        mapViewMock,
+                        mapView,
                         zoomLevel
                     );
                     const calculatedZoomLevel = MapViewUtils.calculateZoomLevelFromDistance(
-                        mapViewMock,
+                        mapView,
                         distance
                     );
                     // Expect accuracy till 10-th fractional digit (10-th place after comma).
@@ -125,46 +147,39 @@ describe("map-view#Utils", function() {
             expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
         });
 
-        describe("getTargetAndDistance", function() {
-            const elevationProvider = ({} as any) as ElevationProvider;
-            let sandbox: sinon.SinonSandbox;
-            let camera: THREE.Camera;
-            const geoTarget = GeoCoordinates.fromDegrees(0, 0);
+        for (const { projName, projection } of [
+            { projName: "mercator", projection: mercatorProjection },
+            { projName: "sphere", projection: sphereProjection }
+        ]) {
+            describe(`${projName} projection`, function() {
+                function resetCamera(tilt: number = 0, distance: number = 1e6) {
+                    const heading = 0;
+                    MapViewUtils.getCameraRotationAtTarget(
+                        mapView.projection,
+                        geoTarget,
+                        -heading,
+                        tilt,
+                        camera.quaternion
+                    );
+                    MapViewUtils.getCameraPositionFromTargetCoordinates(
+                        geoTarget,
+                        distance,
+                        -heading,
+                        tilt,
+                        mapView.projection,
+                        camera.position
+                    );
+                    camera.updateMatrixWorld(true);
+                    (mapView as any).targetDistance = distance;
+                }
 
-            function resetCamera(projection: Projection) {
-                const heading = 0;
-                const tilt = 0;
-                const distance = 1e6;
-                MapViewUtils.getCameraRotationAtTarget(
-                    projection,
-                    geoTarget,
-                    -heading,
-                    tilt,
-                    camera.quaternion
-                );
-                MapViewUtils.getCameraPositionFromTargetCoordinates(
-                    geoTarget,
-                    distance,
-                    -heading,
-                    tilt,
-                    projection,
-                    camera.position
-                );
-                camera.updateMatrixWorld(true);
-            }
+                beforeEach(function() {
+                    mapView.projection = projection;
+                });
 
-            for (const { projName, projection } of [
-                { projName: "mercator", projection: mercatorProjection },
-                { projName: "sphere", projection: sphereProjection }
-            ]) {
-                describe(`${projName} projection`, function() {
-                    beforeEach(function() {
-                        sandbox = sinon.createSandbox();
-                        camera = new THREE.PerspectiveCamera();
-                        resetCamera(projection);
-                    });
-
+                describe("getTargetAndDistance", function() {
                     it("camera target and distance are offset by elevation", function() {
+                        resetCamera();
                         elevationProvider.getHeight = sandbox.stub().returns(0);
 
                         // tslint:disable-next-line: deprecation
@@ -201,7 +216,116 @@ describe("map-view#Utils", function() {
                         );
                     });
                 });
-            }
+
+                describe("orbitFocusPoint", function() {
+                    it("Applies camera changes if final position is within bounds", function() {
+                        resetCamera(0, 1000);
+                        const lookAtStub = sandbox.stub();
+                        // tslint:disable-next-line: deprecation
+                        mapView.lookAt = lookAtStub as any;
+
+                        const bounds = new GeoBox(
+                            new GeoCoordinates(-10, -10),
+                            new GeoCoordinates(10, 10)
+                        );
+                        const success = MapViewUtils.orbitFocusPoint(mapView, 0, 10, 90, bounds);
+                        expect(success).to.equal(true);
+                        expect(lookAtStub.calledOnce).to.equal(true);
+                    });
+
+                    it("Skips camera changes if final position is not within bounds", function() {
+                        resetCamera(0, 1e6);
+                        const lookAtStub = sandbox.stub();
+                        // tslint:disable-next-line: deprecation
+                        mapView.lookAt = lookAtStub as any;
+
+                        const bounds = new GeoBox(
+                            new GeoCoordinates(50, 50),
+                            new GeoCoordinates(50.1, 50.1)
+                        );
+                        const success = MapViewUtils.orbitFocusPoint(mapView, 0, 10, 90, bounds);
+                        expect(success).to.equal(false);
+                        expect(lookAtStub.called).to.equal(false);
+                    });
+                });
+            });
+        }
+
+        describe("panCameraAboveFlatMap", function() {
+            it("Pans camera to final position if it's within bounds", function() {
+                const requestedGeoPos = new GeoCoordinates(5, 5);
+                const offsetWorld = getCameraOffsetToCoords(requestedGeoPos);
+                const bounds = new GeoBox(new GeoCoordinates(-10, -10), new GeoCoordinates(10, 10));
+                const wasInsideBounds = MapViewUtils.panCameraAboveFlatMap(
+                    mapView,
+                    offsetWorld.x,
+                    offsetWorld.y,
+                    bounds
+                );
+                expect(wasInsideBounds).to.equal(true);
+                checkCameraPositionCloseTo(requestedGeoPos);
+            });
+
+            it("Fits final camera position is not within bounds", function() {
+                const offsetWorld = getCameraOffsetToCoords(new GeoCoordinates(10, 10));
+                const bounds = new GeoBox(new GeoCoordinates(-1, -1), new GeoCoordinates(1, 1));
+                const wasInsideBounds = MapViewUtils.panCameraAboveFlatMap(
+                    mapView,
+                    offsetWorld.x,
+                    offsetWorld.y,
+                    bounds
+                );
+                expect(wasInsideBounds).to.equal(false);
+                checkCameraPositionCloseTo(bounds.northEast);
+            });
+        });
+
+        describe("panCameraAroundGlobe", function() {
+            beforeEach(function() {
+                mapView.projection = sphereProjection;
+            });
+            it("Pans camera to final position if it's within bounds", function() {
+                const initCameraWorldPos = mapView.projection.projectPoint(
+                    new GeoCoordinates(0, 0),
+                    new THREE.Vector3()
+                );
+                mapView.camera.position.copy(initCameraWorldPos);
+                const requestedGeoPos = new GeoCoordinates(5, 5);
+                const requestedWorldPos = mapView.projection.projectPoint(
+                    requestedGeoPos,
+                    new THREE.Vector3()
+                );
+                const bounds = new GeoBox(new GeoCoordinates(-10, -10), new GeoCoordinates(10, 10));
+                const wasInsideBounds = MapViewUtils.panCameraAroundGlobe(
+                    mapView,
+                    requestedWorldPos,
+                    mapView.camera.position.clone(),
+                    bounds
+                );
+                expect(wasInsideBounds).to.equal(true);
+                checkCameraPositionCloseTo(requestedGeoPos);
+            });
+
+            it("Skips camera changes if final position is not within bounds", function() {
+                const initCameraWorldPos = mapView.projection.projectPoint(
+                    new GeoCoordinates(0, 0),
+                    new THREE.Vector3()
+                );
+                mapView.camera.position.copy(initCameraWorldPos);
+                const requestedWorldPos = mapView.projection.projectPoint(
+                    new GeoCoordinates(10, 10),
+                    new THREE.Vector3()
+                );
+                const bounds = new GeoBox(new GeoCoordinates(-1, -1), new GeoCoordinates(1, 1));
+                const wasInsideBounds = MapViewUtils.panCameraAroundGlobe(
+                    mapView,
+                    requestedWorldPos,
+                    initCameraWorldPos.clone(),
+                    bounds
+                );
+                expect(wasInsideBounds).to.equal(false);
+                expect(mapView.camera.position).deep.equals(initCameraWorldPos);
+            });
         });
     });
 

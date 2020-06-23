@@ -8,6 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import {
+    GeoBox,
     GeoCoordinates,
     mercatorProjection,
     Projection,
@@ -387,6 +388,38 @@ describe("MapControls", function() {
                         }
                     });
                 }
+
+                it("Applies zoom if final camera position is within bounds", function() {
+                    const eps = 1e-5;
+                    const expectedZl = 11;
+
+                    resetCamera(0, 10);
+
+                    mapControls.bounds = new GeoBox(
+                        new GeoCoordinates(-10, -10),
+                        new GeoCoordinates(10, 10)
+                    );
+                    mapControls.zoomOnTargetPosition(0, 0, expectedZl);
+                    const actualZl = computeZoomLevel(projection);
+                    expect(actualZl).closeTo(expectedZl, eps);
+                });
+
+                it("Skips zoom if final camera position is not within bounds", function() {
+                    const eps = 1e-5;
+                    const expectedZl = 11;
+
+                    resetCamera(0, 10);
+                    const oldCameraPos = camera.position.clone();
+
+                    mapControls.bounds = new GeoBox(
+                        new GeoCoordinates(50, 50),
+                        new GeoCoordinates(50.1, 50.1)
+                    );
+                    mapControls.zoomOnTargetPosition(0, 0, expectedZl);
+                    const actualZl = computeZoomLevel(projection);
+                    expect(actualZl).not.closeTo(expectedZl, eps);
+                    expect(camera.position).to.deep.equal(oldCameraPos);
+                });
             });
         }
     });
