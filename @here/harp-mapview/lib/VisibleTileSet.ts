@@ -495,6 +495,7 @@ export class VisibleTileSet {
         storageLevel: number,
         zoomLevel: number,
         dataSources: DataSource[],
+        frameNumber: number,
         elevationRangeSource?: ElevationRangeSource
     ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
         let allVisibleTilesLoaded: boolean = true;
@@ -537,7 +538,12 @@ export class VisibleTileSet {
             ) {
                 const tileEntry = visibleTileKeys[i];
 
-                const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset);
+                const tile = this.getTile(
+                    dataSource,
+                    tileEntry.tileKey,
+                    tileEntry.offset,
+                    frameNumber
+                );
                 if (tile === undefined) {
                     continue;
                 }
@@ -553,7 +559,7 @@ export class VisibleTileSet {
 
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
-                        tile.frameNumVisible = dataSource.mapView.frameNumber;
+                        tile.frameNumVisible = frameNumber;
                     }
                 }
                 // Update the visible area of the tile. This is used for those tiles that are
@@ -635,11 +641,17 @@ export class VisibleTileSet {
      * @param dataSource - The data source the tile belongs to.
      * @param tileKey - The key identifying the tile.
      * @param offset - Tile offset.
+     * @param frameNumber - Frame in which the tile was requested
      * @return The tile if it was found or created, undefined otherwise.
      */
-    getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
+    getTile(
+        dataSource: DataSource,
+        tileKey: TileKey,
+        offset: number,
+        frameNumber: number
+    ): Tile | undefined {
         const cacheOnly = false;
-        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly);
+        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly, frameNumber);
     }
 
     /**
@@ -648,12 +660,18 @@ export class VisibleTileSet {
      * @param dataSource - The data source the tile belongs to.
      * @param tileKey - The key identifying the tile.
      * @param offset - Tile offset.
+     * @param frameNumber - Frame in which the tile was requested
      * @return The tile if found in cache, undefined otherwise.
      */
-    getCachedTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
+    getCachedTile(
+        dataSource: DataSource,
+        tileKey: TileKey,
+        offset: number,
+        frameNumber: number
+    ): Tile | undefined {
         assert(dataSource.cacheable);
         const cacheOnly = true;
-        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly);
+        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly, frameNumber);
     }
 
     /**
@@ -1086,19 +1104,20 @@ export class VisibleTileSet {
         dataSource: DataSource,
         tileKey: TileKey,
         offset: number,
-        cacheOnly: boolean
+        cacheOnly: boolean,
+        frameNumber: number
     ): Tile | undefined {
-        function updateTile(tileToUpdate?: Tile) {
+        function touchTile(tileToUpdate?: Tile) {
             if (tileToUpdate === undefined) {
                 return;
             }
             // Keep the tile from being removed from the cache.
-            tileToUpdate.frameNumLastRequested = dataSource.mapView.frameNumber;
+            tileToUpdate.frameNumLastRequested = frameNumber;
         }
 
         if (!dataSource.cacheable && !cacheOnly) {
             const resultTile = dataSource.getTile(tileKey);
-            updateTile(resultTile);
+            touchTile(resultTile);
             return resultTile;
         }
 
@@ -1106,7 +1125,7 @@ export class VisibleTileSet {
         let tile = tileCache.get(tileKey.mortonCode(), offset, dataSource);
 
         if (tile !== undefined && tile.offset === offset) {
-            updateTile(tile);
+            touchTile(tile);
             return tile;
         }
 
@@ -1118,7 +1137,7 @@ export class VisibleTileSet {
         // TODO: Update all tile information including area, min/max elevation from TileKeyEntry
         if (tile !== undefined) {
             tile.offset = offset;
-            updateTile(tile);
+            touchTile(tile);
             tileCache.set(tileKey.mortonCode(), offset, dataSource, tile);
             this.m_tileGeometryManager.initTile(tile);
         }

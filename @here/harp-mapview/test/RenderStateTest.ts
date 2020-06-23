@@ -170,6 +170,16 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
+        it("fade in transitions to final state if fading disabled", function() {
+            const renderState = new RenderState();
+            renderState.startFadeIn(100, true);
+
+            expect(renderState.isFadedIn()).to.be.true;
+            expect(renderState.startTime).to.equal(100);
+            expect(renderState.value).to.equal(1.0);
+            expect(renderState.opacity).to.equal(1.0);
+        });
+
         it("does not change an already fading in state", function() {
             const renderState = new RenderState();
             renderState.startFadeIn(100);
