@@ -270,9 +270,10 @@ export class BoxBuffer {
         const { s0, t0, s1, t1 } = uvBox;
         const { x, y, w, h } = screenBox;
 
-        const r = Math.round(color.r * 255);
-        const g = Math.round(color.g * 255);
-        const b = Math.round(color.b * 255);
+        // Premultiply alpha into vertex colors
+        const r = Math.round(color.r * opacity * 255);
+        const g = Math.round(color.g * opacity * 255);
+        const b = Math.round(color.b * opacity * 255);
         const a = Math.round(opacity * 255);
 
         const positionAttribute = this.positionAttribute!;
