@@ -183,7 +183,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     /** @override */
     setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
         this.m_decoder.configure(styleSet, definitions, languages);
-        this.mapView.markTilesDirty(this);
+        this.mapView.clearTileCache(this.name);
     }
 
     /**
@@ -199,9 +199,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                 ? theme.styles[this.styleSetName]
                 : undefined;
 
-        if (styleSet !== undefined) {
-            this.setStyleSet(styleSet, theme.definitions, languages);
-        }
+        this.setStyleSet(styleSet, theme.definitions, languages);
     }
 
     /**
