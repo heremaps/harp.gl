@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { FeatureCollection, GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
@@ -235,6 +235,55 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             lookAt: {
                 target: [-0.13603, 51.508],
                 zoomLevel: 15
+            }
+        });
+    });
+
+    it("renders geometry touching the tile border", async function() {
+        this.timeout(5000);
+
+        const geoJson: FeatureCollection = {
+            type: "FeatureCollection",
+            features: [
+                {
+                    type: "Feature",
+                    properties: {
+                        "fill-color": "rgb(255,255,0)",
+                        "stroke-color": "#000"
+                    },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [
+                            [
+                                [0, 51.5],
+                                [0.01, 51.5],
+                                [0, 51.49],
+                                [0, 51.5]
+                            ]
+                        ]
+                    }
+                }
+            ]
+        };
+
+        const ourStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Polygon"],
+                technique: "fill",
+                color: ["get", "fill-color"],
+                lineColor: ["get", "stroke-color"],
+                lineWidth: 1
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-stroke-polygons-at-tile-border",
+            theme: { lights, styles: { geojson: ourStyle } },
+            geoJson,
+            lookAt: {
+                target: [0, 51.5],
+                zoomLevel: 13.4
             }
         });
     });
