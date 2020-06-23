@@ -101,9 +101,6 @@ export enum StandardGeometryKind {
  */
 export type GeometryKind = string | StandardGeometryKind;
 
-/**
- * @internal
- */
 export const GeometryKind = StandardGeometryKind;
 
 /**
