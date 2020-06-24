@@ -81,7 +81,7 @@ export function enforceBlending(
 export function enableBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
 ) {
-    if (material.transparent || material.forcedBlending) {
+    if (material.transparent === true || material.forcedBlending === true) {
         // Nothing to do
         return;
     }
@@ -111,7 +111,7 @@ export function enableBlending(
 export function disableBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
 ) {
-    if (material.transparent || material.forcedBlending) {
+    if (material.transparent === true || material.forcedBlending === true) {
         // Nothing to do
         return;
     }

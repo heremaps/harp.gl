@@ -182,7 +182,7 @@ export class TiledGeoJsonDataAdapter implements OmvDataAdapter {
         const { tileKey } = decodeInfo;
 
         const $level = tileKey.level;
-        const $zoom = Math.max(0, tileKey.level - (this.m_processor.storageLevelOffset || 0));
+        const $zoom = Math.max(0, tileKey.level - (this.m_processor.storageLevelOffset ?? 0));
         const $layer = "geojson";
 
         for (const feature of featureCollection.features) {

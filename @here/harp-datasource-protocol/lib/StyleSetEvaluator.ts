@@ -739,7 +739,7 @@ export class StyleSetEvaluator {
         const targetStaticAttributes = style._staticAttributes;
 
         const techniqueDescriptor =
-            techniqueDescriptors[style.technique] || emptyTechniqueDescriptor;
+            techniqueDescriptors[style.technique] ?? emptyTechniqueDescriptor;
 
         const processAttribute = (attrName: string, attrValue: Value | JsonExpr | undefined) => {
             if (attrValue === undefined) {

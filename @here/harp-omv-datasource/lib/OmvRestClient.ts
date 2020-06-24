@@ -395,7 +395,7 @@ export class OmvRestClient implements DataProvider {
         if (authenticationCode === undefined) {
             return url;
         }
-        const authMethod = this.params.authenticationMethod || this.getDefaultAuthMethod();
+        const authMethod = this.params.authenticationMethod ?? this.getDefaultAuthMethod();
         if (authMethod === undefined) {
             return url;
         }
@@ -404,10 +404,10 @@ export class OmvRestClient implements DataProvider {
             if (init.headers === undefined) {
                 init.headers = new Headers();
             }
-            const authType = authMethod.name || "Bearer";
+            const authType = authMethod.name ?? "Bearer";
             (init.headers as Headers).append("Authorization", `${authType} ${authenticationCode}`);
         } else if (authMethod.method === AuthenticationMethod.QueryString) {
-            const attrName: string = authMethod.name || "access_token";
+            const attrName: string = authMethod.name ?? "access_token";
             const authParams: { [key: string]: string } = {};
             authParams[attrName] = authenticationCode;
             url = this.addQueryParams(url, authParams);

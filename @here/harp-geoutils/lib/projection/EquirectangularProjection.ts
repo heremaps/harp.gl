@@ -73,7 +73,7 @@ class EquirectangularProjection extends Projection {
             (THREE.MathUtils.degToRad(geoPoint.latitude) + Math.PI * 0.5) *
             EquirectangularProjection.geoToWorldScale *
             this.unitScale;
-        result.z = geoPoint.altitude || 0;
+        result.z = geoPoint.altitude ?? 0;
         return result;
     }
 
@@ -128,7 +128,7 @@ class EquirectangularProjection extends Projection {
             result.position.z = worldCenter.z;
             result.extents.x = sizeX * 0.5 * this.unitScale;
             result.extents.y = sizeY * 0.5 * this.unitScale;
-            result.extents.z = Math.max(Number.EPSILON, (altitudeSpan || 0) * 0.5);
+            result.extents.z = Math.max(Number.EPSILON, (altitudeSpan ?? 0) * 0.5);
         }
         return result;
     }

@@ -372,7 +372,7 @@ export function getFeatureName(
     }
     if (languages !== undefined) {
         for (const lang of languages) {
-            name = env.lookup(`${basePropName}:${lang}`) || env.lookup(`${basePropName}_${lang}`);
+            name = env.lookup(`${basePropName}:${lang}`) ?? env.lookup(`${basePropName}_${lang}`);
             if (typeof name === "string" && name.length > 0) {
                 return name;
             }

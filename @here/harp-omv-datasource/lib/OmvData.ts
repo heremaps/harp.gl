@@ -323,7 +323,7 @@ function createFeatureEnv(
     const attributes: ValueMap = {
         $layer: layer.name,
         $level: storageLevel,
-        $zoom: Math.max(0, storageLevel - (storageLevelOffset || 0)),
+        $zoom: Math.max(0, storageLevel - (storageLevelOffset ?? 0)),
         $geometryType: geometryType
     };
 
@@ -455,7 +455,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
 
         const storageLevel = this.m_tileKey.level;
         const layerName = this.m_layer.name;
-        const layerExtents = this.m_layer.extent || 4096;
+        const layerExtents = this.m_layer.extent ?? 4096;
 
         if (
             this.m_dataFilter !== undefined &&
@@ -502,7 +502,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
 
         const storageLevel = this.m_tileKey.level;
         const layerName = this.m_layer.name;
-        const layerExtents = this.m_layer.extent || 4096;
+        const layerExtents = this.m_layer.extent ?? 4096;
 
         if (
             this.m_dataFilter !== undefined &&
@@ -553,7 +553,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
 
         const storageLevel = this.m_tileKey.level;
         const layerName = this.m_layer.name;
-        const layerExtents = this.m_layer.extent || 4096;
+        const layerExtents = this.m_layer.extent ?? 4096;
 
         if (
             this.m_dataFilter !== undefined &&

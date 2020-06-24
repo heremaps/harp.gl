@@ -268,7 +268,7 @@ export class WebTileDataSource extends DataSource {
             this.maxDataLevel = 19; // 512x512 tiles do not have z19
         }
         this.m_ppi = getOptionValue(m_options.ppi, WebTileDataSource.ppiValue.ppi72);
-        this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;
+        this.m_tileBaseAddress = m_options.tileBaseAddress ?? WebTileDataSource.TILE_BASE_NORMAL;
         if (
             this.m_tileBaseAddress === WebTileDataSource.TILE_AERIAL_SATELLITE &&
             this.m_ppi !== WebTileDataSource.ppiValue.ppi72
@@ -279,7 +279,7 @@ export class WebTileDataSource extends DataSource {
         const mapTileParams = this.parseBaseUrl(this.m_tileBaseAddress);
         const baseHostName = mapTileParams.baseUrl;
         const mapId = getOptionValue(mapTileParams.mapVersion, "newest");
-        const scheme = mapTileParams.scheme || "normal.day";
+        const scheme = mapTileParams.scheme ?? "normal.day";
         const baseScheme = scheme.split(".")[0] || "normal";
 
         const url =

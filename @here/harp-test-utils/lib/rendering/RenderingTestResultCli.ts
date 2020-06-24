@@ -32,7 +32,7 @@ async function genConsoleReport(results: ImageTestResultLocal[]): Promise<boolea
             logger.log(`${referencePath}: establishing reference image`);
             fs.copyFileSync(info.actualImagePath, referencePath);
         } else if (info.mismatchedPixels) {
-            if ((info.approveDifference || forceApprovals) && info.actualImagePath) {
+            if ((info.approveDifference === true || forceApprovals) && info.actualImagePath) {
                 logger.log(
                     `${referencePath}: difference explicitly approved, establishing reference image`
                 );

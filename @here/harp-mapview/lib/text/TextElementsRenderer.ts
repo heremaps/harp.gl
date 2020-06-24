@@ -868,7 +868,7 @@ export class TextElementsRenderer {
                 continue;
             }
 
-            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
+            const layer = textCanvas.getLayer(textElement.renderOrder ?? DEFAULT_TEXT_CANVAS_LAYER);
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
@@ -1444,7 +1444,7 @@ export class TextElementsRenderer {
                 continue;
             }
 
-            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
+            const layer = textCanvas.getLayer(textElement.renderOrder ?? DEFAULT_TEXT_CANVAS_LAYER);
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {

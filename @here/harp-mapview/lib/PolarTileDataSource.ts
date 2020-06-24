@@ -139,11 +139,13 @@ export class PolarTileDataSource extends DataSource {
 
     /** @override */
     setTheme(theme: Theme, languages?: string[]): void {
-        const styleSet =
-            (this.styleSetName !== undefined && theme.styles && theme.styles[this.styleSetName]) ||
-            [];
+        let styleSet: StyleSet | undefined;
 
-        this.setStyleSet(styleSet, theme.definitions, languages);
+        if (this.styleSetName !== undefined && theme.styles !== undefined) {
+            styleSet = theme.styles[this.styleSetName];
+        }
+
+        this.setStyleSet(styleSet ?? [], theme.definitions, languages);
     }
 
     /** @override */

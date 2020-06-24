@@ -370,7 +370,7 @@ export class PoiManager {
 
         if (poiGeometry.stringCatalog !== undefined) {
             assert(poiGeometry.texts.length > 0);
-            text = poiGeometry.stringCatalog[poiGeometry.texts[0]] || "";
+            text = poiGeometry.stringCatalog[poiGeometry.texts[0]] ?? "";
             if (poiGeometry.objInfos !== undefined) {
                 userData = poiGeometry.objInfos[0];
                 featureId = getFeatureId(userData);
@@ -459,7 +459,7 @@ export class PoiManager {
 
             assert(poiGeometry.texts.length > i);
             let imageTextureName = techniqueTextureName;
-            const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] || "";
+            const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] ?? "";
             const userData =
                 poiGeometry.objInfos !== undefined ? poiGeometry.objInfos[i] : undefined;
             const featureId = getFeatureId(userData);

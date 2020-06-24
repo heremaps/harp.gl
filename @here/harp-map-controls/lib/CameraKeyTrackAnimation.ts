@@ -140,7 +140,7 @@ export class CameraKeyTrackAnimation {
 
         this.m_options.rotateOnlyClockwise = this.m_options.rotateOnlyClockwise ?? true;
 
-        this.m_name = this.m_options.name || "CameraKeyTrackAnimation" + Date.now();
+        this.m_name = (this.m_options.name ?? "CameraKeyTrackAnimation") + Date.now();
 
         const timestamps = this.m_options.controlPoints.map(point => {
             return point.timestamp;

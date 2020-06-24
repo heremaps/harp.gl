@@ -143,7 +143,7 @@ export class CopyrightElementHandler {
     update = () => {
         const mergedCopyrightInfo = this.m_mapViews
             .map(mapView => mapView.copyrightInfo)
-            .reduce(CopyrightInfo.mergeArrays, this.staticInfo || []);
+            .reduce(CopyrightInfo.mergeArrays, this.staticInfo ?? []);
 
         // Conditionally hiding of element with copyright information.
         // If nothing to show we schould to avoid empty white rectangle in right bottom corner.
