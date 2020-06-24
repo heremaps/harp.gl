@@ -215,7 +215,7 @@ export class GeoBox implements GeoBoxExtentLike {
      * Clones this `GeoBox` instance.
      */
     clone(): GeoBox {
-        return new GeoBox(this.southWest, this.northEast);
+        return new GeoBox(this.southWest.clone(), this.northEast.clone());
     }
 
     /**

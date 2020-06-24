@@ -183,12 +183,12 @@ describe("Tile", function() {
 
     it("elevationRange setter does not elevate bbox if maxGeometryHeight is not set", function() {
         const tile = new Tile(stubDataSource, tileKey);
-        const oldGeoBox = tile.geoBox.clone();
         const oldBBox = tile.boundingBox.clone();
 
         tile.elevationRange = { minElevation: 5, maxElevation: 10 };
 
-        expect(tile.geoBox).deep.equals(oldGeoBox);
+        expect(tile.geoBox.minAltitude).equals(tile.elevationRange.minElevation);
+        expect(tile.geoBox.maxAltitude).equals(tile.elevationRange.maxElevation);
         expect(tile.boundingBox).deep.equals(oldBBox);
 
         tile.decodedTile = { techniques: [], geometries: [], boundingBox: new OrientedBox3() };
