@@ -49,10 +49,10 @@ export class BackgroundDataSource extends DataSource {
         }
     }
 
-    /** @override */	
-    setTheme(theme: Theme, languages?: string[]) {	
-        this.mapView.clearTileCache(this.name);	
-    }	
+    /** @override */
+    setTheme(theme: Theme, languages?: string[]) {
+        this.mapView.clearTileCache(this.name);
+    }
 
     setTilingScheme(tilingScheme?: TilingScheme) {
         const newScheme = tilingScheme || BackgroundDataSource.DEFAULT_TILING_SCHEME;
