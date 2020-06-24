@@ -62,6 +62,7 @@ import { FrustumIntersection } from "./FrustumIntersection";
 import { overlayOnElevation } from "./geometry/overlayOnElevation";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
+import { IntersectParams } from "./IntersectParams";
 import { MapAnchors } from "./MapAnchors";
 import { MapObjectAdapter } from "./MapObjectAdapter";
 import { MapViewFog } from "./MapViewFog";
@@ -2677,10 +2678,12 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
+     * @param parameters - The intersection test behaviour may be adjusted by providing an instance
+     * of {@link IntersectParams}.
      * @returns The list of intersection results.
      */
-    intersectMapObjects(x: number, y: number): PickResult[] {
-        return this.m_pickHandler.intersectMapObjects(x, y);
+    intersectMapObjects(x: number, y: number, parameters?: IntersectParams): PickResult[] {
+        return this.m_pickHandler.intersectMapObjects(x, y, parameters);
     }
 
     /**
