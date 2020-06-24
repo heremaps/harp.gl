@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { MathUtils } from "../lib/math/MathUtils";
@@ -64,5 +64,12 @@ describe("GeoBox", function() {
             MathUtils.interpolateAnglesDeg(auckland.latitude, sanfrancisco.latitude, 0.5),
             GEOCOORDS_EPSILON
         );
+    });
+
+    it("clone is not affected by changes in original", function() {
+        const original = new GeoBox(new GeoCoordinates(0, 0), new GeoCoordinates(1, 1));
+        const clone = original.clone();
+        expect(clone.southWest).not.equals(original.southWest);
+        expect(clone.northEast).not.equals(original.northEast);
     });
 });
