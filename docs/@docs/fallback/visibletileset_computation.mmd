@@ -1,0 +1,50 @@
+sequenceDiagram
+    participant MV as MapView
+    participant VTS as VisibleTileSet
+    participant FI as FrustumIntersection
+    participant DSC as DataSourceCache
+    participant DS as DataSource
+    Note over MV,VTS: Calculates new set of visible tiles
+    MV ->>+VTS: updateRenderList(zoomLevel, dataSources)
+    VTS ->> FI: updateFrustum()
+    loop For each DataSource
+        Note over VTS,FI: Computes intersected tiles
+        VTS ->> +FI: compute(DataSource)
+        FI ->> -VTS: return visible tile keys
+        VTS ->> VTS: Sort tile keys based on distance
+        loop For each TileKey
+            VTS ->> VTS: getTile
+            VTS ->> +DSC: get(MortonCode, Offset, DataSource)
+            DSC ->> -VTS: return tile or undefined
+            alt Tile is in cache
+                VTS ->> VTS: updateTile()
+                VTS ->> VTS: skipOverlappedTiles()
+            else
+                VTS ->>+DS: getTile(TileKey)
+                DS ->>-VTS: return tile
+                Note over VTS,DSC: Add tile to cache.
+                VTS ->>+DSC: set(MortonCode, Offset, DataSource, Tile)
+            end
+            VTS ->> VTS: Add Tile to list of visible Tiles
+        end
+    end
+    loop For each DataSource
+        loop For each Tile
+            alt Tile has geometry
+                VTS ->>VTS: addTileToRenderedList
+            else
+                VTS ->>VTS: addTileToIncompleteList
+            end
+        end
+        loop For each incomplete Tile
+            Note over VTS, DSC: Searches for a tile in the cache above recursively
+            VTS ->> VTS: findUp()
+            alt Tile is found
+                Note over VTS, FI: continue
+            else
+                Note over VTS, DSC: Searches for all tiles with a higher level recursively
+                VTS ->> VTS: findDown()
+            end
+        end
+    end
+    VTS ->>-MV: return dataSourceTileList
