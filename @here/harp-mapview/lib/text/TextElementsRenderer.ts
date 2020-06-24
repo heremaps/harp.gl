@@ -1684,7 +1684,7 @@ export class TextElementsRenderer {
 
             if (textNeedsDraw) {
                 if (!textRejected) {
-                    textRenderState!.startFadeIn(renderParams.time);
+                    textRenderState!.startFadeIn(renderParams.time, this.m_options.disableFading);
                 }
                 renderParams.fadeAnimationRunning =
                     renderParams.fadeAnimationRunning || textRenderState!.isFading();
@@ -1707,7 +1707,7 @@ export class TextElementsRenderer {
             if (iconRejected) {
                 iconRenderState!.startFadeOut(renderParams.time);
             } else {
-                iconRenderState!.startFadeIn(renderParams.time);
+                iconRenderState!.startFadeIn(renderParams.time, this.m_options.disableFading);
             }
 
             renderParams.fadeAnimationRunning =
@@ -1952,7 +1952,7 @@ export class TextElementsRenderer {
             return false;
         }
 
-        labelState.textRenderState!.startFadeIn(renderParams.time);
+        labelState.textRenderState!.startFadeIn(renderParams.time, this.m_options.disableFading);
 
         let opacity = pathLabel.renderStyle!.opacity;
 

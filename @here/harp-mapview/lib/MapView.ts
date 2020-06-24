@@ -105,7 +105,10 @@ export enum MapViewEventNames {
     AfterRender = "didrender",
     /** Called after the first frame has been rendered. */
     FirstFrame = "first-render",
-    /** Called when the first view has all the necessary tiles loaded and rendered. */
+    /**
+     * Called when the rendered frame was complete, i.e. all the necessary tiles and resources
+     * are loaded and rendered.
+     */
     FrameComplete = "frame-complete",
     /** Called when the theme has been loaded with the internal {@link ThemeLoader}. */
     ThemeLoaded = "theme-loaded",
@@ -3293,6 +3296,7 @@ export class MapView extends THREE.EventDispatcher {
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources(),
+                this.m_frameNumber,
                 this.m_elevationRangeSource
             );
             // View ranges has changed due to features (with elevation) that affects clip planes
@@ -3471,16 +3475,18 @@ export class MapView extends THREE.EventDispatcher {
         // frame, with no more tiles, geometry and labels waiting to be added, and no animation
         // running. The initial placement of text in this render call may have changed the loading
         // state of the TextElementsRenderer, so this has to be checked again.
+        // HARP-10919: Fading is currently ignored by the frame complete event.
         if (
-            !this.m_firstFrameComplete &&
+            !this.textElementsRenderer.loading &&
+            this.m_visibleTiles.allVisibleTilesLoaded &&
             this.m_initialTextPlacementDone &&
-            !this.isDynamicFrame &&
-            !this.textElementsRenderer.loading
+            !this.m_animatedExtrusionHandler.isAnimating
         ) {
-            this.m_firstFrameComplete = true;
-
-            if (gatherStatistics) {
-                stats.appResults.set("firstFrameComplete", frameStartTime);
+            if (this.m_firstFrameComplete === false) {
+                this.m_firstFrameComplete = true;
+                if (gatherStatistics) {
+                    stats.appResults.set("firstFrameComplete", frameStartTime);
+                }
             }
 
             FRAME_COMPLETE_EVENT.time = frameStartTime;

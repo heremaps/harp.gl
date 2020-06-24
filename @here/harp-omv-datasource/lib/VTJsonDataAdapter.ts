@@ -10,14 +10,14 @@ import {
     MapEnv,
     ValueMap
 } from "@here/harp-datasource-protocol/index-decoder";
-import { GeoCoordinates } from "@here/harp-geoutils";
+import { webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
-import { Vector2 } from "three";
+import { Vector2, Vector3 } from "three";
 import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
-import { isArrayBufferLike } from "./OmvUtils";
+import { isArrayBufferLike, tile2world } from "./OmvUtils";
 
 const VT_JSON_EXTENTS = 4096;
 
@@ -67,14 +67,17 @@ interface VTJsonTileInterface {
     layer: string;
 }
 
+const tmpPos = new Vector2();
+const worldPos = new Vector3();
+
 /**
- * [[OmvDataAdapter]] id for [[VTJsonDataAdapter]].
+ * Unique ID of {@link VTJsonDataAdapter}.
  */
 export const VTJsonDataAdapterId: string = "vt-json";
 
 /**
- * The class [[VTJsonDataAdapter]] converts VT-json data to geometries for the given
- * [[IGeometryProcessor]].
+ * The class `VTJsonDataAdapter` converts VT-json data to geometries for the given
+ * {@link IGeometryProcessor}.
  */
 export class VTJsonDataAdapter implements OmvDataAdapter {
     id = VTJsonDataAdapterId;
@@ -143,37 +146,45 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                     break;
                 }
                 case VTJsonGeometryType.LineString: {
-                    let untiledPositions: GeoCoordinates[] | undefined;
-                    if (feature.originalGeometry.type === "LineString") {
-                        untiledPositions = [];
-                        for (const [x, y] of feature.originalGeometry.coordinates) {
-                            untiledPositions.push(new GeoCoordinates(y, x));
-                        }
-                    } else if (feature.originalGeometry.type === "MultiLineString") {
-                        untiledPositions = [];
-                        for (const lineGeometry of feature.originalGeometry
-                            .coordinates as VTJsonPosition[][]) {
-                            for (const [x, y] of lineGeometry) {
-                                untiledPositions.push(new GeoCoordinates(y, x));
+                    const lineGeometries = feature.geometry as VTJsonPosition[][];
+
+                    let lastLine: ILineGeometry | undefined;
+                    const lines: ILineGeometry[] = [];
+
+                    lineGeometries.forEach(lineGeometry => {
+                        const lastPos = lastLine?.positions[lastLine.positions.length - 1];
+                        const [startx, starty] = lineGeometry[0];
+                        if (lastPos?.x === startx && lastPos?.y === starty) {
+                            // continue the last line
+                            for (let i = 1; i < lineGeometry.length; ++i) {
+                                const [x, y] = lineGeometry[i];
+                                lastLine?.positions.push(new Vector2(x, y));
                             }
-                        }
-                    }
+                        } else {
+                            // start a new line
+                            const positions = lineGeometry.map(([x, y]) => new Vector2(x, y));
+                            lines.push({ positions });
 
-                    for (const lineGeometry of feature.geometry as VTJsonPosition[][]) {
-                        const line: ILineGeometry = { positions: [], untiledPositions };
-                        for (const [x, y] of lineGeometry) {
-                            const position = new Vector2(x, y);
-                            line.positions.push(position);
+                            lastLine = lines[lines.length - 1];
                         }
+                    });
 
-                        this.m_processor.processLineFeature(
-                            tile.layer,
-                            VT_JSON_EXTENTS,
-                            [line],
-                            env,
-                            tileKey.level
-                        );
-                    }
+                    lines.forEach(line => {
+                        (line as any).untiledPositions = line.positions.map(tilePos => {
+                            tile2world(VT_JSON_EXTENTS, decodeInfo, tilePos, false, tmpPos);
+                            worldPos.set(tmpPos.x, tmpPos.y, 0);
+                            return webMercatorProjection.unprojectPoint(worldPos);
+                        });
+                    });
+
+                    this.m_processor.processLineFeature(
+                        tile.layer,
+                        VT_JSON_EXTENTS,
+                        lines,
+                        env,
+                        tileKey.level
+                    );
+
                     break;
                 }
                 case VTJsonGeometryType.Polygon: {

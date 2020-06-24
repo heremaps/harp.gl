@@ -143,6 +143,7 @@ function mapViewFeaturesRenderingTest(
                 canvas,
                 theme: options.theme ?? {},
                 preserveDrawingBuffer: true,
+                disableFading: true,
                 pixelRatio: 1
             });
             mapView.animatedExtrusionHandler.enabled = false;

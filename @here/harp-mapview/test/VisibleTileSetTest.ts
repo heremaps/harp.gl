@@ -145,7 +145,13 @@ describe("VisibleTileSet", function() {
 
     // TODO: Update for new interface of updateRenderList
     function updateRenderList(zoomLevel: number, storageLevel: number) {
-        const intersectionCount = fixture.vts.updateRenderList(zoomLevel, storageLevel, fixture.ds);
+        const frameNumber = 42;
+        const intersectionCount = fixture.vts.updateRenderList(
+            zoomLevel,
+            storageLevel,
+            fixture.ds,
+            frameNumber
+        );
         return {
             tileList: fixture.vts.dataSourceTileList,
             intersectionCount
@@ -313,6 +319,8 @@ describe("VisibleTileSet", function() {
 
         const zoomLevel = 15;
         const storageLevel = 14;
+        const offset = 0;
+        const frameNumber = 42;
 
         // same as first found code few lines below
         const parentCode = TileKey.parentMortonCode(371506851);
@@ -321,7 +329,12 @@ describe("VisibleTileSet", function() {
 
         // fake MapView to think that it has already loaded
         // parent of both found tiles
-        const parentTile = fixture.vts.getTile(fixture.ds[0], parentTileKey) as Tile;
+        const parentTile = fixture.vts.getTile(
+            fixture.ds[0],
+            parentTileKey,
+            offset,
+            frameNumber
+        ) as Tile;
         assert.exists(parentTile);
         parentTile.forceHasGeometry(true);
 
@@ -365,6 +378,8 @@ describe("VisibleTileSet", function() {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
+        const offset = 0;
+        const frameNumber = 42;
 
         const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
 
@@ -373,7 +388,9 @@ describe("VisibleTileSet", function() {
         const parentTileKey = TileKey.parentMortonCode(371506851);
         const parentTile = fixture.vts.getTile(
             fixture.ds[0],
-            TileKey.fromMortonCode(parentTileKey)
+            TileKey.fromMortonCode(parentTileKey),
+            offset,
+            frameNumber
         ) as Tile;
         const parentDisposeSpy = sinon.spy(parentTile, "dispose");
         const parentReloadSpy = sinon.spy(parentTile, "load");
