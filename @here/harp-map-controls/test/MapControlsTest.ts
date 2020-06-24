@@ -7,15 +7,9 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import {
-    GeoBox,
-    GeoCoordinates,
-    mercatorProjection,
-    Projection,
-    sphereProjection
-} from "@here/harp-geoutils";
+import { GeoBox, GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
 import { ElevationProvider, MapView, MapViewUtils } from "@here/harp-mapview";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { MapControls } from "../lib/MapControls";
@@ -121,14 +115,19 @@ describe("MapControls", function() {
         }
     }
 
-    function touchMove(touchCount: number, x: number, y: number) {
-        const initTouches = new Array();
-        initTouches.length = touchCount;
-        initTouches.fill({ clientX: 0, clientY: 0 });
+    function touchMove(
+        touchCount: number,
+        initTouches: Array<{ clientX: number; clientY: number }>,
+        endTouches: Array<{ clientX: number; clientY: number }>
+    ) {
+        assert(initTouches.length === endTouches.length);
 
-        const endTouches = new Array();
-        endTouches.length = touchCount;
-        endTouches.fill({ clientX: x, clientY: y });
+        if (touchCount > initTouches.length) {
+            initTouches.length = touchCount;
+            initTouches.fill(initTouches[0]);
+            endTouches.length = touchCount;
+            endTouches.fill(endTouches[0]);
+        }
 
         eventMap.get("touchstart")!({
             touches: initTouches,
@@ -296,9 +295,10 @@ describe("MapControls", function() {
         expect(updateStub.callCount).to.be.equal(1);
     });
 
-    describe("zoomOnTargetPosition", function() {
-        const elevationProvider = ({} as any) as ElevationProvider;
-
+    for (const { projName, projection } of [
+        { projName: "mercator", projection: mercatorProjection },
+        { projName: "sphere", projection: sphereProjection }
+    ]) {
         function resetCamera(pitch: number, zoomLevel?: number) {
             const target = GeoCoordinates.fromDegrees(0, 0);
             const heading = 0;
@@ -323,25 +323,75 @@ describe("MapControls", function() {
             camera.updateMatrixWorld(true);
         }
 
-        function computeZoomLevel(projection: Projection) {
+        function computeZoomLevel() {
             const distance =
                 projection.unprojectAltitude(camera.position) /
                 Math.cos(MapViewUtils.extractAttitude(mapView, camera).pitch);
             return MapViewUtils.calculateZoomLevelFromDistance(mapView, distance);
         }
 
-        for (const { projName, projection } of [
-            { projName: "mercator", projection: mercatorProjection },
-            { projName: "sphere", projection: sphereProjection }
-        ]) {
-            describe(`${projName} projection`, function() {
-                beforeEach(function() {
-                    sandbox.stub(mapView, "projection").get(() => projection);
-                    sandbox.stub(mapView, "focalLength").get(() => 2000);
-                    sandbox.stub(mapView, "minZoomLevel").get(() => 1);
-                    sandbox.stub(mapView, "maxZoomLevel").get(() => 20);
-                    mapControls = new MapControls(mapView);
+        describe(`${projName} projection`, function() {
+            const elevationProvider = ({} as any) as ElevationProvider;
+
+            beforeEach(function() {
+                sandbox.stub(mapView, "projection").get(() => projection);
+                sandbox.stub(mapView, "focalLength").get(() => 2000);
+                sandbox.stub(mapView, "minZoomLevel").get(() => 1);
+                sandbox.stub(mapView, "maxZoomLevel").get(() => 20);
+                mapControls = new MapControls(mapView);
+            });
+
+            describe("pinch zoom", function() {
+                it("Applies zoom if final camera position is within bounds", function() {
+                    resetCamera(0, 10);
+                    const oldZoom = computeZoomLevel();
+
+                    mapControls.bounds = new GeoBox(
+                        new GeoCoordinates(-10, -10),
+                        new GeoCoordinates(10, 10)
+                    );
+
+                    touchMove(
+                        2,
+                        [
+                            { clientX: 0, clientY: 0 },
+                            { clientX: 100, clientY: 100 }
+                        ],
+                        [
+                            { clientX: 49, clientY: 49 },
+                            { clientX: 50, clientY: 50 }
+                        ]
+                    );
+                    const newZoom = computeZoomLevel();
+                    expect(newZoom).to.be.lessThan(oldZoom);
                 });
+
+                it("Skips zoom if final camera position is not within bounds", function() {
+                    resetCamera(0, 19);
+                    const oldZoom = computeZoomLevel();
+
+                    mapControls.bounds = new GeoBox(
+                        new GeoCoordinates(50, 50),
+                        new GeoCoordinates(50.1, 50.1)
+                    );
+
+                    touchMove(
+                        2,
+                        [
+                            { clientX: 0, clientY: 0 },
+                            { clientX: 10, clientY: 10 }
+                        ],
+                        [
+                            { clientX: 5, clientY: 5 },
+                            { clientX: 6, clientY: 6 }
+                        ]
+                    );
+                    const newZoom = computeZoomLevel();
+                    expect(newZoom).to.be.closeTo(oldZoom, 1e-3);
+                });
+            });
+
+            describe("zoomOnTargetPosition", function() {
                 for (const pitch of [0, 45]) {
                     it(`camera distance is offset by elevation (pitch ${pitch})`, function() {
                         resetCamera(pitch);
@@ -376,14 +426,14 @@ describe("MapControls", function() {
                         {
                             const expectedZl = 2;
                             mapControls.zoomOnTargetPosition(1, 1, expectedZl);
-                            const actualZl = computeZoomLevel(projection);
+                            const actualZl = computeZoomLevel();
                             expect(actualZl).closeTo(expectedZl, eps);
                         }
                         resetCamera(pitch, 3);
                         {
                             const expectedZl = 4;
                             mapControls.zoomOnTargetPosition(1, 1, expectedZl);
-                            const actualZl = computeZoomLevel(projection);
+                            const actualZl = computeZoomLevel();
                             expect(actualZl).closeTo(expectedZl, eps);
                         }
                     });
@@ -400,7 +450,7 @@ describe("MapControls", function() {
                         new GeoCoordinates(10, 10)
                     );
                     mapControls.zoomOnTargetPosition(0, 0, expectedZl);
-                    const actualZl = computeZoomLevel(projection);
+                    const actualZl = computeZoomLevel();
                     expect(actualZl).closeTo(expectedZl, eps);
                 });
 
@@ -416,14 +466,13 @@ describe("MapControls", function() {
                         new GeoCoordinates(50.1, 50.1)
                     );
                     mapControls.zoomOnTargetPosition(0, 0, expectedZl);
-                    const actualZl = computeZoomLevel(projection);
+                    const actualZl = computeZoomLevel();
                     expect(actualZl).not.closeTo(expectedZl, eps);
                     expect(camera.position).to.deep.equal(oldCameraPos);
                 });
             });
-        }
-    });
-
+        });
+    }
     describe("enable/disable interactions", function() {
         const initialZoomLevel = 15;
 
@@ -478,11 +527,16 @@ describe("MapControls", function() {
                 mapControls.enabled = allEnabled;
                 const isEnabled = allEnabled && enabled;
 
-                mouseMove(0, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                const initCoords = { clientX: 0, clientY: 0 };
+                const finalCoords = {
+                    clientX: domElement.clientWidth / 3,
+                    clientY: domElement.clientWidth / 3
+                };
+                mouseMove(0, finalCoords.clientX, finalCoords.clientY);
                 expect(camera.position.x - initX !== 0).equals(isEnabled);
                 expect(camera.position.y - initY !== 0).equals(isEnabled);
 
-                touchMove(1, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                touchMove(1, [initCoords], [finalCoords]);
                 expect(camera.position.x - initX !== 0).equals(isEnabled);
                 expect(camera.position.y - initY !== 0).equals(isEnabled);
             });
@@ -496,10 +550,16 @@ describe("MapControls", function() {
                 mapControls.toggleTilt();
                 expect(lookAtStub.called).to.equal(isEnabled);
 
-                mouseMove(2, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                const initCoords = { clientX: 0, clientY: 0 };
+                const finalCoords = {
+                    clientX: domElement.clientWidth / 3,
+                    clientY: domElement.clientWidth / 3
+                };
+
+                mouseMove(2, finalCoords.clientX, finalCoords.clientY);
                 expect(lookAtStub.called).to.equal(isEnabled);
 
-                touchMove(3, domElement.clientWidth / 3, domElement.clientHeight / 3);
+                touchMove(3, [initCoords], [finalCoords]);
                 expect(lookAtStub.called).to.equal(isEnabled);
             });
         }

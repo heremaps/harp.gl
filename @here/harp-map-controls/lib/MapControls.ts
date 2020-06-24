@@ -805,9 +805,9 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Method to flip crêpes.
      */
-    private handlePan() {
+    private handlePan(): boolean {
         if (this.m_state === State.NONE && this.m_lastAveragedPanDistanceOrAngle === 0) {
-            return;
+            return false;
         }
 
         if (this.inertiaEnabled && !this.m_panIsAnimated) {
@@ -881,15 +881,16 @@ export class MapControls extends THREE.EventDispatcher {
                 this.m_recentPanDistancesOrAngles.reduce((a, b) => a + b) / USER_INPUTS_TO_CONSIDER;
         }
 
+        let success = true;
         if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            MapViewUtils.panCameraAboveFlatMap(
+            success = MapViewUtils.panCameraAboveFlatMap(
                 this.mapView,
                 this.m_panDistanceFrameDelta.x,
                 this.m_panDistanceFrameDelta.y,
                 this.bounds
             );
         } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            MapViewUtils.panCameraAroundGlobe(
+            success = MapViewUtils.panCameraAroundGlobe(
                 this.mapView,
                 this.m_lastRotateGlobeFromVector,
                 this.m_tmpVector3
@@ -904,6 +905,7 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         this.updateMapView();
+        return success;
     }
 
     private stopPan() {
@@ -1284,13 +1286,14 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.m_fingerMoved = true;
         this.updateTouches(event.touches);
+        let panOk = true;
 
         if (
             this.panEnabled &&
             this.m_touchState.touches.length <= 2 &&
             this.m_touchState.touches[0] !== undefined
         ) {
-            this.panFromTo(
+            panOk = this.panFromTo(
                 this.m_touchState.touches[0].initialWorldPosition,
                 this.m_touchState.touches[0].currentWorldPosition
             );
@@ -1306,7 +1309,9 @@ export class MapControls extends THREE.EventDispatcher {
                 this.m_touchState.currentRotation - this.m_touchState.initialRotation;
             this.stopExistingAnimations();
             MapViewUtils.rotate(this.mapView, THREE.MathUtils.radToDeg(deltaRotation));
-            this.moveAlongTheViewDirection(pinchDistance);
+            if (panOk) {
+                this.moveAlongTheViewDirection(pinchDistance);
+            }
         }
 
         // Tilting
@@ -1433,7 +1438,7 @@ export class MapControls extends THREE.EventDispatcher {
         return { fromWorld, toWorld };
     }
 
-    private panFromTo(fromWorld: THREE.Vector3, toWorld: THREE.Vector3): void {
+    private panFromTo(fromWorld: THREE.Vector3, toWorld: THREE.Vector3): boolean {
         this.stopExistingAnimations();
 
         // Assign the new animation start time.
@@ -1452,7 +1457,7 @@ export class MapControls extends THREE.EventDispatcher {
             }
         }
 
-        this.handlePan();
+        return this.handlePan();
     }
 
     /**
