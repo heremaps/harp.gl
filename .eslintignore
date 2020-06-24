@@ -1,0 +1,5 @@
+**/*.d.ts
+**/*.json
+@here/generator-harp.gl/**/*.ts
+dist/**
+**/*.js
