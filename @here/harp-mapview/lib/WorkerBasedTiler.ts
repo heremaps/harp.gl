@@ -28,7 +28,7 @@ let nextUniqueServiceId = 0;
  * - configuration.
  */
 export class WorkerBasedTiler implements ITiler {
-    private serviceId: string;
+    private readonly serviceId: string;
     private m_serviceCreated: boolean = false;
 
     /**

@@ -28,10 +28,10 @@ export class MipMapGenerator {
         };
     }
 
-    private m_paddingCanvas?: HTMLCanvasElement;
-    private m_paddingContext?: CanvasRenderingContext2D;
-    private m_resizeCanvas?: HTMLCanvasElement;
-    private m_resizeContext?: CanvasRenderingContext2D;
+    private readonly m_paddingCanvas?: HTMLCanvasElement;
+    private readonly m_paddingContext?: CanvasRenderingContext2D;
+    private readonly m_resizeCanvas?: HTMLCanvasElement;
+    private readonly m_resizeContext?: CanvasRenderingContext2D;
 
     constructor() {
         if (!isNode) {

@@ -51,10 +51,10 @@ interface TechniqueEntry {
  * {@link DataSource} providing geometry for poles
  */
 export class PolarTileDataSource extends DataSource {
-    private m_tilingScheme: TilingScheme = polarTilingScheme;
-    private m_maxLatitude = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
+    private readonly m_tilingScheme: TilingScheme = polarTilingScheme;
+    private readonly m_maxLatitude = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
     private m_geometryLevelOffset: number;
-    private m_debugTiles: boolean;
+    private readonly m_debugTiles: boolean;
 
     private m_styleSetEvaluator?: StyleSetEvaluator;
     private m_northPoleEntry?: TechniqueEntry;

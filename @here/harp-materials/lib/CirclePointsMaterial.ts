@@ -59,7 +59,7 @@ export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialPara
 export class CirclePointsMaterial extends THREE.ShaderMaterial {
     static readonly DEFAULT_CIRCLE_SIZE = 1;
 
-    private m_color: THREE.Color;
+    private readonly m_color: THREE.Color;
     private m_opacity: number;
 
     /**

@@ -122,7 +122,7 @@ export class ShaderPass extends Pass {
     uniforms: { [uniform: string]: THREE.IUniform };
     material: THREE.Material;
     fsQuad: FullScreenQuad;
-    constructor(shader: THREE.Shader, private textureID: string = "tDiffuse") {
+    constructor(shader: THREE.Shader, private readonly textureID: string = "tDiffuse") {
         super();
         if (shader instanceof THREE.ShaderMaterial) {
             this.uniforms = shader.uniforms;
@@ -158,7 +158,7 @@ export class ShaderPass extends Pass {
 
 class FullScreenQuad {
     private m_mesh: THREE.Mesh;
-    private m_camera: THREE.Camera;
+    private readonly m_camera: THREE.Camera;
     constructor(material: THREE.Material) {
         this.m_camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         const geometry = new THREE.PlaneBufferGeometry(2, 2);

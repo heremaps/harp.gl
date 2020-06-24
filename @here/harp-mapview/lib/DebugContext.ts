@@ -71,7 +71,7 @@ class DebugOption extends THREE.EventDispatcher {
  * names.
  */
 export class DebugContext {
-    private m_optionsMap: Map<string, DebugOption>;
+    private readonly m_optionsMap: Map<string, DebugOption>;
 
     /**
      * Builds a `DebugContext`.

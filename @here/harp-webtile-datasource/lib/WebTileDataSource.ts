@@ -235,13 +235,13 @@ export class WebTileDataSource extends DataSource {
     static readonly TILE_TRAFFIC_NORMAL =
         "traffic.maps.ls.hereapi.com/maptile/2.1/traffictile/newest/normal.day";
 
-    private m_resolution: WebTileDataSource.resolutionValue;
-    private m_ppi: WebTileDataSource.ppiValue;
-    private m_tileBaseAddress: string;
+    private readonly m_resolution: WebTileDataSource.resolutionValue;
+    private readonly m_ppi: WebTileDataSource.ppiValue;
+    private readonly m_tileBaseAddress: string;
     private m_languages?: string[];
 
     /** Copyright provider instance. */
-    private m_copyrightProvider: UrlCopyrightProvider;
+    private readonly m_copyrightProvider: UrlCopyrightProvider;
 
     /** Predefined fixed HERE copyright info. */
     private readonly HERE_COPYRIGHT_INFO: CopyrightInfo = {

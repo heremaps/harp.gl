@@ -277,7 +277,7 @@ function completeDataSourceParameters(
 export class OmvDataSource extends TileDataSource<OmvTile> {
     private readonly m_decoderOptions: OmvDecoderOptions;
 
-    constructor(private m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
+    constructor(private readonly m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory ?? new TileFactory(OmvTile), {
             styleSetName: m_params.styleSetName ?? "omv",
             concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,

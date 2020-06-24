@@ -124,10 +124,10 @@ export interface OmvFeatureModifier {
  *
  */
 export class OmvFeatureFilterDescriptionBuilder {
-    private m_processLayersDefault: boolean = true;
-    private m_processPointsDefault: boolean = true;
-    private m_processLinesDefault: boolean = true;
-    private m_processPolygonsDefault: boolean = true;
+    private readonly m_processLayersDefault: boolean = true;
+    private readonly m_processPointsDefault: boolean = true;
+    private readonly m_processLinesDefault: boolean = true;
+    private readonly m_processPolygonsDefault: boolean = true;
 
     private readonly m_layersToProcess = new Array<OmvLayerFilterDescription>();
     private readonly m_layersToIgnore = new Array<OmvLayerFilterDescription>();
@@ -563,10 +563,10 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         return false;
     }
 
-    private disabledKinds: GeometryKindSet | undefined;
-    private enabledKinds: GeometryKindSet | undefined;
+    private readonly disabledKinds: GeometryKindSet | undefined;
+    private readonly enabledKinds: GeometryKindSet | undefined;
 
-    constructor(private description: OmvFeatureFilterDescription) {
+    constructor(private readonly description: OmvFeatureFilterDescription) {
         if (this.description.kindsToProcess.length > 0) {
             this.enabledKinds = new GeometryKindSet(
                 this.description.kindsToProcess as GeometryKind[]
@@ -768,7 +768,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         return false;
     }
 
-    constructor(private description: OmvFeatureFilterDescription) {}
+    constructor(private readonly description: OmvFeatureFilterDescription) {}
 
     doProcessPointFeature(layer: string, env: MapEnv): boolean {
         return this.doProcessFeature(

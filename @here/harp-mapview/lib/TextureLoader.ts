@@ -13,7 +13,7 @@ export interface RequestHeaders {
  * A texture loader that supports request headers(e.g. for Authorization)
  */
 export class TextureLoader {
-    private m_textureLoader = new THREE.TextureLoader();
+    private readonly m_textureLoader = new THREE.TextureLoader();
 
     /**
      * Load an image from url and create a texture

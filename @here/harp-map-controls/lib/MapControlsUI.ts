@@ -38,27 +38,27 @@ export class MapControlsUI {
      */
     readonly domElement = document.createElement("div");
 
-    private m_buttonsElement: HTMLDivElement = document.createElement("div");
+    private readonly m_buttonsElement: HTMLDivElement = document.createElement("div");
 
     /**
      * Displays zoom level if [[MapControlsUIOptions.zoomLevel]] is defined.
      */
-    private m_zoomLevelElement: HTMLDivElement | HTMLInputElement | null = null;
+    private readonly m_zoomLevelElement: HTMLDivElement | HTMLInputElement | null = null;
 
     /**
      * Displays zoom level if [[MapControlsUIOptions.projectionSwitch]] is defined.
      */
-    private m_projectionSwitchElement: HTMLButtonElement | null = null;
+    private readonly m_projectionSwitchElement: HTMLButtonElement | null = null;
 
     /**
      * Removes focus from input element.
      */
-    private m_onWindowClick: (event: MouseEvent) => void;
+    private readonly m_onWindowClick: (event: MouseEvent) => void;
 
     /**
      * Updates the display of the zoom level.
      */
-    private m_onMapViewRenderEvent: () => void;
+    private readonly m_onMapViewRenderEvent: () => void;
 
     /**
      * Constructor of the UI.

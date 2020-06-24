@@ -152,14 +152,14 @@ export class FontCatalog {
         return JSON.parse(rawJSON);
     }
 
-    private m_glyphTextureCache: GlyphTextureCache;
+    private readonly m_glyphTextureCache: GlyphTextureCache;
 
-    private m_loadingJson: Map<string, Promise<any>>;
-    private m_loadingPages: Map<string, Promise<THREE.Texture>>;
-    private m_loadingGlyphs: Map<string, Promise<GlyphData>>;
-    private m_loadedJson: Map<string, any>;
-    private m_loadedPages: Map<string, THREE.Texture>;
-    private m_loadedGlyphs: Map<string, Map<number, GlyphData>>;
+    private readonly m_loadingJson: Map<string, Promise<any>>;
+    private readonly m_loadingPages: Map<string, Promise<THREE.Texture>>;
+    private readonly m_loadingGlyphs: Map<string, Promise<GlyphData>>;
+    private readonly m_loadedJson: Map<string, any>;
+    private readonly m_loadedPages: Map<string, THREE.Texture>;
+    private readonly m_loadedGlyphs: Map<string, Map<number, GlyphData>>;
 
     /**
      * @hidden
@@ -192,7 +192,7 @@ export class FontCatalog {
         readonly fonts: Font[],
         readonly unicodeBlocks: UnicodeBlock[],
         readonly maxCodePointCount: number,
-        private m_replacementGlyph: GlyphData
+        private readonly m_replacementGlyph: GlyphData
     ) {
         this.m_glyphTextureCache = new GlyphTextureCache(
             maxCodePointCount,

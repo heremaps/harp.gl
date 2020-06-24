@@ -114,17 +114,17 @@ export class OutlineEffect {
     shadowMap: THREE.WebGLShadowMap;
 
     private m_defaultThickness: number = 0.02;
-    private m_defaultColor: THREE.Color = new THREE.Color(0, 0, 0);
-    private m_defaultAlpha: number = 1;
-    private m_defaultKeepAlive: boolean = false;
+    private readonly m_defaultColor: THREE.Color = new THREE.Color(0, 0, 0);
+    private readonly m_defaultAlpha: number = 1;
+    private readonly m_defaultKeepAlive: boolean = false;
     private m_ghostExtrudedPolygons: boolean = false;
 
     private m_cache: any = {};
-    private m_removeThresholdCount: number = 60;
+    private readonly m_removeThresholdCount: number = 60;
     private m_originalMaterials: any = {};
     private m_originalOnBeforeRenders: any = {};
 
-    private m_shaderIDs: { [key: string]: string } = {
+    private readonly m_shaderIDs: { [key: string]: string } = {
         MeshBasicMaterial: "basic",
         MeshLambertMaterial: "lambert",
         MeshPhongMaterial: "phong",
@@ -132,7 +132,7 @@ export class OutlineEffect {
         MeshStandardMaterial: "physical",
         MeshPhysicalMaterial: "physical"
     };
-    private m_uniformsChunk = {
+    private readonly m_uniformsChunk = {
         outlineThickness: { value: this.m_defaultThickness },
         outlineColor: { value: this.m_defaultColor },
         outlineAlpha: { value: this.m_defaultAlpha }

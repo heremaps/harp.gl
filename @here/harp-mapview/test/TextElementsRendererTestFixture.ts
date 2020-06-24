@@ -115,7 +115,7 @@ export class TestFixture {
     private m_textRenderer: TextElementsRenderer | undefined;
     private m_defaultTile: Tile | undefined;
     private m_allTiles: Tile[] = [];
-    private m_allTextElements: TextElement[][] = [];
+    private readonly m_allTextElements: TextElement[][] = [];
 
     constructor(readonly sandbox: sinon.SinonSandbox) {
         this.m_screenCollisions = new ScreenCollisions();

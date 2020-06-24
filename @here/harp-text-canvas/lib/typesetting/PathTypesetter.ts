@@ -32,8 +32,8 @@ export interface PathTypesettingParameters extends TypesettingParameters {
  * [[Typesetter]] implementation that arranges glyphs alongside a specified path.
  */
 export class PathTypesetter implements Typesetter {
-    private m_tempTransform: THREE.Matrix3;
-    private m_tempCorners: THREE.Vector3[];
+    private readonly m_tempTransform: THREE.Matrix3;
+    private readonly m_tempCorners: THREE.Vector3[];
     private m_tempLineDirection: UnicodeUtils.Direction;
     private m_tempRunDirection: UnicodeUtils.Direction;
     private m_tempPixelSize: number;
@@ -41,7 +41,7 @@ export class PathTypesetter implements Typesetter {
     private m_tempScale: number;
     private m_tempSmallCaps: boolean;
 
-    private m_tempPathPosition: THREE.Vector3;
+    private readonly m_tempPathPosition: THREE.Vector3;
     private m_tempPathLength: number;
     private m_tempPathOffset: number;
 

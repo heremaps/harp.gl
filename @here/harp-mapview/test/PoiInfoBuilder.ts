@@ -27,18 +27,18 @@ export class PoiInfoBuilder {
     };
     static readonly DEF_TECHNIQUE = PoiInfoBuilder.POI_TECHNIQUE;
 
-    private m_iconMinZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MIN_ZL;
-    private m_iconMaxZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MAX_ZL;
-    private m_textMinZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MIN_ZL;
-    private m_textMaxZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MAX_ZL;
-    private m_textOpt: boolean = PoiInfoBuilder.DEF_TEXT_OPT;
-    private m_iconOpt: boolean = PoiInfoBuilder.DEF_ICON_OPT;
+    private readonly m_iconMinZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MIN_ZL;
+    private readonly m_iconMaxZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MAX_ZL;
+    private readonly m_textMinZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MIN_ZL;
+    private readonly m_textMaxZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MAX_ZL;
+    private readonly m_textOpt: boolean = PoiInfoBuilder.DEF_TEXT_OPT;
+    private readonly m_iconOpt: boolean = PoiInfoBuilder.DEF_ICON_OPT;
     private m_mayOverlap: boolean = PoiInfoBuilder.DEF_MAY_OVERLAP;
-    private m_reserveSpace: boolean = PoiInfoBuilder.DEF_RESERVE_SPACE;
-    private m_valid: boolean = PoiInfoBuilder.DEF_VALID;
-    private m_renderOnMove: boolean = PoiInfoBuilder.DEF_RENDER_ON_MOVE;
-    private m_width: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
-    private m_height: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
+    private readonly m_reserveSpace: boolean = PoiInfoBuilder.DEF_RESERVE_SPACE;
+    private readonly m_valid: boolean = PoiInfoBuilder.DEF_VALID;
+    private readonly m_renderOnMove: boolean = PoiInfoBuilder.DEF_RENDER_ON_MOVE;
+    private readonly m_width: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
+    private readonly m_height: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
     private m_technique: PoiTechnique | LineMarkerTechnique = PoiInfoBuilder.DEF_TECHNIQUE;
 
     withPoiTechnique(): PoiInfoBuilder {

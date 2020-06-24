@@ -254,7 +254,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * Helper object for reducing performance impact.
      */
     protected m_tmpQuaternion: THREE.Quaternion = new THREE.Quaternion();
-    private m_minimumViewRange: ViewRanges;
+    private readonly m_minimumViewRange: ViewRanges;
 
     /**
      * Allows to setup near/far offsets (margins), rendered geometry elevation relative to sea

@@ -195,7 +195,7 @@ describe("VisibleTileSet", function() {
      * is satellite data or terrain.
      */
     class FakeWebTile extends DataSource {
-        constructor(private tilingScheme?: TilingScheme) {
+        constructor(private readonly tilingScheme?: TilingScheme) {
             super();
         }
         /** @override */

@@ -46,18 +46,18 @@ const cameraUp = [
  *  hemisphere..
  */
 export class SkyGradientTexture {
-    private m_width: number;
-    private m_faceCount: number;
-    private m_faces: DataTexture[];
-    private m_skybox?: CubeTexture;
+    private readonly m_width: number;
+    private readonly m_faceCount: number;
+    private readonly m_faces: DataTexture[];
+    private readonly m_skybox?: CubeTexture;
 
     // Used only in the planar case.
-    private m_farClipPlaneDividedVertically?: THREE.Line3;
-    private m_groundPlane?: THREE.Plane;
-    private m_bottomMidFarPoint?: THREE.Vector3;
-    private m_topMidFarPoint?: THREE.Vector3;
-    private m_horizonPosition?: THREE.Vector3;
-    private m_farClipPlaneCorners?: THREE.Vector3[];
+    private readonly m_farClipPlaneDividedVertically?: THREE.Line3;
+    private readonly m_groundPlane?: THREE.Plane;
+    private readonly m_bottomMidFarPoint?: THREE.Vector3;
+    private readonly m_topMidFarPoint?: THREE.Vector3;
+    private readonly m_horizonPosition?: THREE.Vector3;
+    private readonly m_farClipPlaneCorners?: THREE.Vector3[];
 
     /**
      * Constructs a new `SkyGradientTexture`.
@@ -68,8 +68,8 @@ export class SkyGradientTexture {
      */
     constructor(
         sky: GradientSky,
-        private m_projectionType: ProjectionType,
-        private m_height: number = DEFAULT_TEXTURE_SIZE
+        private readonly m_projectionType: ProjectionType,
+        private readonly m_height: number = DEFAULT_TEXTURE_SIZE
     ) {
         const topColor = new Color(sky.topColor);
         const bottomColor = new Color(sky.bottomColor);

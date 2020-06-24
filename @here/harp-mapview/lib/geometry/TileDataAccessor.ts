@@ -111,10 +111,10 @@ export interface TileDataAccessorOptions {
  * the visitor itself.
  */
 export class TileDataAccessor {
-    private m_wantsPoints = true;
-    private m_wantsLines = true;
-    private m_wantsAreas = true;
-    private m_wantsObject3D = true;
+    private readonly m_wantsPoints: boolean;
+    private readonly m_wantsLines: boolean;
+    private readonly m_wantsAreas: boolean;
+    private readonly m_wantsObject3D: boolean;
 
     /**
      * Constructs a `TileDataAccessor` instance.
@@ -125,7 +125,7 @@ export class TileDataAccessor {
      */
     constructor(
         public tile: Tile,
-        private visitor: ITileDataVisitor,
+        private readonly visitor: ITileDataVisitor,
         options: TileDataAccessorOptions
     ) {
         const wantsAll = options.wantsAll === true;

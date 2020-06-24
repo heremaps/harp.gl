@@ -19,22 +19,29 @@ export class BloomPass extends Pass {
     radius: number;
     threshold: number;
     resolution: THREE.Vector2 = new THREE.Vector2(256, 256);
-    private m_renderTargetsHorizontal: THREE.WebGLRenderTarget[] = [];
-    private m_renderTargetsVertical: THREE.WebGLRenderTarget[] = [];
-    private m_nMips: number = 5;
-    private m_highPassUniforms: any;
-    private m_materialHighPassFilter: THREE.ShaderMaterial;
-    private m_separableBlurMaterials: THREE.ShaderMaterial[] = [];
-    private m_materialCopy: THREE.ShaderMaterial;
-    private m_copyUniforms: any;
-    private m_compositeMaterial: THREE.ShaderMaterial;
+    private readonly m_renderTargetsHorizontal: THREE.WebGLRenderTarget[] = [];
+    private readonly m_renderTargetsVertical: THREE.WebGLRenderTarget[] = [];
+    private readonly m_nMips: number = 5;
+    private readonly m_highPassUniforms: any;
+    private readonly m_materialHighPassFilter: THREE.ShaderMaterial;
+    private readonly m_separableBlurMaterials: THREE.ShaderMaterial[] = [];
+    private readonly m_materialCopy: THREE.ShaderMaterial;
+    private readonly m_copyUniforms: any;
+    private readonly m_compositeMaterial: THREE.ShaderMaterial;
 
-    private m_camera: THREE.OrthographicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    private m_scene: THREE.Scene = new THREE.Scene();
+    private readonly m_camera: THREE.OrthographicCamera = new THREE.OrthographicCamera(
+        -1,
+        1,
+        1,
+        -1,
+        0,
+        1
+    );
+    private readonly m_scene: THREE.Scene = new THREE.Scene();
     private m_basic = new THREE.MeshBasicMaterial();
     private m_quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2));
 
-    private m_bloomTintColors: THREE.Vector3[] = [
+    private readonly m_bloomTintColors: THREE.Vector3[] = [
         new THREE.Vector3(1, 1, 1),
         new THREE.Vector3(1, 1, 1),
         new THREE.Vector3(1, 1, 1),
@@ -42,7 +49,7 @@ export class BloomPass extends Pass {
         new THREE.Vector3(1, 1, 1)
     ];
 
-    private m_renderTargetBright: THREE.WebGLRenderTarget;
+    private readonly m_renderTargetBright: THREE.WebGLRenderTarget;
 
     constructor(resolution: THREE.Vector2, strength: number, radius: number, threshold: number) {
         super();

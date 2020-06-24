@@ -379,11 +379,11 @@ export class VisibleTileSet {
     allVisibleTilesLoaded: boolean = false;
 
     private readonly m_cameraOverride = new THREE.PerspectiveCamera();
-    private m_dataSourceCache: DataSourceCache;
+    private readonly m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
     // Maps morton codes to a given Tile, used to find overlapping Tiles. We only need to have this
     // for a single TilingScheme, i.e. that of the BackgroundDataSource.
-    private m_coveringMap = new Map<number, Tile>();
+    private readonly m_coveringMap = new Map<number, Tile>();
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
