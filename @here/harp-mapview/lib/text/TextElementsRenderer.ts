@@ -28,7 +28,8 @@ import { TileKey } from "@here/harp-geoutils";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { overlayTextElement } from "../geometry/overlayOnElevation";
-import { PickObjectType, PickResult } from "../PickHandler";
+import { PickObjectType } from "../PickHandler";
+import { PickListener } from "../PickListener";
 import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { PoiRendererFactory } from "../poi/PoiRendererFactory";
@@ -544,41 +545,23 @@ export class TextElementsRenderer {
      * @param screenPosition - Screen coordinate of picking position.
      * @param pickResults - Array filled with pick results.
      */
-    pickTextElements(screenPosition: THREE.Vector2, pickResults: PickResult[]) {
+    pickTextElements(screenPosition: THREE.Vector2, pickListener: PickListener) {
         const pickHandler = (pickData: any | undefined, pickObjectType: PickObjectType) => {
-            const textElement = pickData as TextElement;
-
-            if (textElement === undefined) {
+            if (pickData === undefined) {
                 return;
             }
+            const textElement = pickData as TextElement;
+            const pickResult: TextPickResult = {
+                type: pickObjectType,
+                point: screenPosition,
+                distance: 0,
+                renderOrder: textElement.renderOrder,
+                featureId: textElement.featureId,
+                userData: textElement.userData,
+                text: textElement.text
+            };
 
-            let isDuplicate = false;
-
-            if (textElement.featureId !== undefined) {
-                isDuplicate = pickResults.some(pickResult => {
-                    return (
-                        pickResult !== undefined &&
-                        pickObjectType === pickResult.type &&
-                        ((pickResult.featureId !== undefined &&
-                            pickResult.featureId === textElement.featureId) ||
-                            (pickResult.userData !== undefined &&
-                                pickResult.userData === textElement.userData))
-                    );
-                });
-
-                if (!isDuplicate) {
-                    const pickResult: TextPickResult = {
-                        type: pickObjectType,
-                        point: screenPosition,
-                        distance: 0,
-                        featureId: textElement.featureId,
-                        userData: textElement.userData,
-                        text: textElement.text
-                    };
-
-                    pickResults.push(pickResult);
-                }
-            }
+            pickListener.addResult(pickResult);
         };
 
         for (const textRenderer of this.m_textRenderers) {
