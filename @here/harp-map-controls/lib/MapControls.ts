@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as geoUtils from "@here/harp-geoutils";
+import { EarthConstants, GeoBox, ProjectionType } from "@here/harp-geoutils";
 import { MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import * as THREE from "three";
 import * as utils from "./Utils";
@@ -147,7 +147,7 @@ export class MapControls extends THREE.EventDispatcher {
      * If defined, restricts all camera movements (pan, zoom, orbit) triggered from these map
      * controls so that camera position remains within the specified bounding box.
      */
-    bounds?: geoUtils.GeoBox;
+    bounds?: GeoBox;
 
     /**
      * Set to `true` to enable an inertia dampening on zooming and panning. `false` cancels inertia.
@@ -380,19 +380,19 @@ export class MapControls extends THREE.EventDispatcher {
             this.mapView.maxZoomLevel
         );
         this.m_currentViewDirection.multiplyScalar(amount);
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+        if (this.mapView.projection.type === ProjectionType.Planar) {
             const distance = THREE.MathUtils.clamp(
                 this.camera.position.z + this.m_currentViewDirection.z,
                 minDistance,
                 maxDistance
             );
             this.camera.position.z = distance;
-        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        } else if (this.mapView.projection.type === ProjectionType.Spherical) {
             const zOnVertical =
                 Math.cos(this.camera.position.angleTo(this.m_currentViewDirection)) *
                 this.m_currentViewDirection.length();
-            minDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
-            maxDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
+            minDistance += EarthConstants.EQUATORIAL_RADIUS;
+            maxDistance += EarthConstants.EQUATORIAL_RADIUS;
             const distance = THREE.MathUtils.clamp(
                 this.camera.position.length() + zOnVertical,
                 minDistance,
@@ -406,7 +406,7 @@ export class MapControls extends THREE.EventDispatcher {
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
         if (
-            this.mapView.projection.type === geoUtils.ProjectionType.Spherical &&
+            this.mapView.projection.type === ProjectionType.Spherical &&
             this.m_maxTiltAngle !== undefined
         ) {
             // Use pre-calculated camera target, otherwise we could get it via:
@@ -846,11 +846,11 @@ export class MapControls extends THREE.EventDispatcher {
             if (this.m_currentInertialPanningSpeed === 0) {
                 this.m_lastAveragedPanDistanceOrAngle = 0;
             }
-            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            if (this.mapView.projection.type === ProjectionType.Planar) {
                 this.m_panDistanceFrameDelta
                     .copy(this.m_lastPanVector)
                     .setLength(this.m_currentInertialPanningSpeed);
-            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            } else if (this.mapView.projection.type === ProjectionType.Spherical) {
                 this.m_rotateGlobeQuaternion
                     .setFromAxisAngle(
                         this.m_lastRotateGlobeAxis,
@@ -860,11 +860,11 @@ export class MapControls extends THREE.EventDispatcher {
             }
         } else {
             let panDistanceOrAngle: number = 0;
-            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            if (this.mapView.projection.type === ProjectionType.Planar) {
                 panDistanceOrAngle = this.m_lastPanVector
                     .copy(this.m_panDistanceFrameDelta)
                     .length();
-            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            } else if (this.mapView.projection.type === ProjectionType.Spherical) {
                 panDistanceOrAngle = this.m_lastRotateGlobeAngle;
                 this.m_rotateGlobeQuaternion.setFromAxisAngle(
                     this.m_lastRotateGlobeAxis,
@@ -882,14 +882,14 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         let success = true;
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+        if (this.mapView.projection.type === ProjectionType.Planar) {
             success = MapViewUtils.panCameraAboveFlatMap(
                 this.mapView,
                 this.m_panDistanceFrameDelta.x,
                 this.m_panDistanceFrameDelta.y,
                 this.bounds
             );
-        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        } else if (this.mapView.projection.type === ProjectionType.Spherical) {
             success = MapViewUtils.panCameraAroundGlobe(
                 this.mapView,
                 this.m_lastRotateGlobeFromVector,
@@ -1103,7 +1103,7 @@ export class MapControls extends THREE.EventDispatcher {
         }
         let x = 0;
         let y = 0;
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+        if (this.mapView.projection.type === ProjectionType.Planar) {
             // Planar uses world space coordinates to return the angle of the vector between the two
             // fingers' locations from the north direction.
             x =
@@ -1112,7 +1112,7 @@ export class MapControls extends THREE.EventDispatcher {
             y =
                 this.m_touchState.touches[1].currentWorldPosition.y -
                 this.m_touchState.touches[0].currentWorldPosition.y;
-        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        } else if (this.mapView.projection.type === ProjectionType.Spherical) {
             // Globe uses screen space coordinates, as the 3d coordinate system cannot define a
             // reference rotation scalar for the vector between the two fingers' locations.
             x =
@@ -1444,9 +1444,9 @@ export class MapControls extends THREE.EventDispatcher {
         // Assign the new animation start time.
         this.m_panAnimationStartTime = performance.now();
 
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+        if (this.mapView.projection.type === ProjectionType.Planar) {
             this.m_panDistanceFrameDelta.subVectors(fromWorld, toWorld);
-        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        } else if (this.mapView.projection.type === ProjectionType.Spherical) {
             this.m_lastRotateGlobeFromVector.copy(fromWorld);
             this.m_lastRotateGlobeAxis.crossVectors(fromWorld, toWorld).normalize();
             this.m_lastRotateGlobeAngle = fromWorld.angleTo(toWorld);
