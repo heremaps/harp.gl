@@ -145,7 +145,7 @@ export class MapControls extends THREE.EventDispatcher {
 
     /**
      * If defined, restricts all camera movements (pan, zoom, orbit) triggered from these map
-     * controls to the specified bounding box.
+     * controls so that camera position remains within the specified bounding box.
      */
     bounds?: geoUtils.GeoBox;
 
