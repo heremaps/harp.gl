@@ -53,7 +53,7 @@ class IdentityProjection extends Projection {
         }
         result.x = THREE.MathUtils.degToRad(geoPoint.longitude);
         result.y = THREE.MathUtils.degToRad(geoPoint.latitude);
-        result.z = geoPoint.altitude || 0;
+        result.z = geoPoint.altitude ?? 0;
         return result;
     }
 

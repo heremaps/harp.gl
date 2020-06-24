@@ -190,7 +190,7 @@ function getDataProvider(params: OmvWithRestClientParams | OmvWithCustomDataProv
     if ((params as OmvWithCustomDataProvider).dataProvider) {
         return (params as OmvWithCustomDataProvider).dataProvider;
     } else if (
-        (params as OmvWithRestClientParams).baseUrl ||
+        (params as OmvWithRestClientParams).baseUrl ??
         (params as OmvWithRestClientParams).url
     ) {
         return new OmvRestClient(params as OmvRestClientParameters);
@@ -278,7 +278,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     private readonly m_decoderOptions: OmvDecoderOptions;
 
     constructor(private m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
-        super(m_params.tileFactory || new TileFactory(OmvTile), {
+        super(m_params.tileFactory ?? new TileFactory(OmvTile), {
             styleSetName: m_params.styleSetName ?? "omv",
             concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,
             minDataLevel: m_params.minDataLevel ?? 1,

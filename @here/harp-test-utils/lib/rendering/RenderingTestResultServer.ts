@@ -233,7 +233,7 @@ export function startStandaloneServer(host: string, port: number) {
  */
 
 if (require.main === module) {
-    const host = process.env.HOST || "localhost";
+    const host = process.env.HOST ?? "localhost";
     const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8081;
 
     if (process.argv.length > 2) {

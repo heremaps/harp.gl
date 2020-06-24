@@ -1317,7 +1317,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const edgeWidth = isExtruded
             ? extrudedPolygonTechnique.lineWidth || 0.0
             : isFilled
-            ? fillTechnique.lineWidth || 0.0
+            ? fillTechnique.lineWidth ?? 0.0
             : 0.0;
         const hasEdges = edgeWidth > 0.0;
 

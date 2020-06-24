@@ -331,8 +331,8 @@ export class TextGeometry {
             this.resizeBuffers(newSize);
         }
 
-        const s = scale || 1.0;
-        const r = rotation || 0.0;
+        const s = scale ?? 1.0;
+        const r = rotation ?? 0.0;
         const cosR = Math.cos(r);
         const sinR = Math.sin(r);
         const offsetX = position !== undefined ? position.x : 0.0;

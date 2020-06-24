@@ -274,7 +274,7 @@ export class SimpleTimer implements Timer {
             throw new Error("Timer '" + this.name + "' has not been started");
         } else {
             // this.currentValue is a number now!
-            const t = PerformanceTimer.now() - (this.m_currentValue || 0);
+            const t = PerformanceTimer.now() - (this.m_currentValue ?? 0);
             this.m_currentValue = t;
             this.setValue(t);
             this.running = false;
@@ -294,7 +294,7 @@ export class SimpleTimer implements Timer {
         if (!this.running) {
             throw new Error("Timer '" + this.name + "' has not been started");
         } else {
-            const t = PerformanceTimer.now() - (this.m_currentValue || 0);
+            const t = PerformanceTimer.now() - (this.m_currentValue ?? 0);
             return t;
         }
     }
@@ -581,7 +581,7 @@ export class MultiStageTimer {
     start(): number {
         this.stage = this.stages[0];
 
-        return this.statistics.getTimer(this.stages[0]).value || -1;
+        return this.statistics.getTimer(this.stages[0]).value ?? -1;
     }
 
     /**

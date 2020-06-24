@@ -263,11 +263,11 @@ describe("mapview-statistics", function() {
                     assert.equal(stagedTimer.stage, undefined);
 
                     assert.isNumber(stats.getTimer("init").value);
-                    assert.isAbove(stats.getTimer("init").value || 0, 0);
+                    assert.isAbove(stats.getTimer("init").value ?? 0, 0);
                     assert.isNumber(stats.getTimer("draw").value);
-                    assert.isAbove(stats.getTimer("draw").value || 0, 0);
+                    assert.isAbove(stats.getTimer("draw").value ?? 0, 0);
                     assert.isNumber(stats.getTimer("post").value);
-                    assert.isAbove(stats.getTimer("post").value || 0, 0);
+                    assert.isAbove(stats.getTimer("post").value ?? 0, 0);
 
                     stats.log();
 

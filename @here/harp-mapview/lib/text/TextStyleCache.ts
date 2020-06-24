@@ -420,7 +420,7 @@ export class TextStyleCache {
                 fontSize: {
                     unit: FontUnit.Pixel,
                     size: 32,
-                    backgroundSize: style.backgroundSize || 8
+                    backgroundSize: style.backgroundSize ?? 8
                 },
                 fontStyle:
                     style.fontStyle === "Regular" ||

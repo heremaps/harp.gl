@@ -51,7 +51,7 @@ export class GeoJsonDataProvider implements DataProvider {
         options?: GeoJsonDataProviderOptions
     ) {
         this.m_tiler =
-            (options && options.tiler) ||
+            options?.tiler ??
             ConcurrentTilerFacade.getTiler("omv-tiler", options && options.workerTilerUrl);
     }
 

@@ -104,7 +104,7 @@ export class CameraAnimationBuilder {
         const startWorldTarget: THREE.Vector3 = new THREE.Vector3();
         mapView.projection.projectPoint(startControlPoint.target, startWorldTarget);
         let maxAltitude =
-            altitude ||
+            altitude ??
             2 *
                 startWorldTarget.distanceTo(
                     mapView.projection.projectPoint(targetControlPoint.target)

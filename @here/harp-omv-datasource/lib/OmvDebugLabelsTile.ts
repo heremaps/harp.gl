@@ -301,9 +301,9 @@ export class OmvDebugLabelsTile extends OmvTile {
                                     ),
                                     textRenderStyle,
                                     textLayoutStyle,
-                                    getPropertyValue(technique.priority || 0, env),
-                                    technique.xOffset || 0.0,
-                                    technique.yOffset || 0.0
+                                    getPropertyValue(technique.priority ?? 0, env),
+                                    technique.xOffset ?? 0.0,
+                                    technique.yOffset ?? 0.0
                                 );
                                 labelElement.minZoomLevel = technique.minZoomLevel;
                                 labelElement.mayOverlap = true;

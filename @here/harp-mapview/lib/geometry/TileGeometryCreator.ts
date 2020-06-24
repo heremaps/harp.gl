@@ -625,8 +625,8 @@ export class TileGeometryCreator {
                         textStyleCache.getRenderStyle(technique),
                         textStyleCache.getLayoutStyle(technique),
                         priority,
-                        technique.xOffset || 0.0,
-                        technique.yOffset || 0.0,
+                        technique.xOffset ?? 0.0,
+                        technique.yOffset ?? 0.0,
                         featureId,
                         technique.style,
                         undefined,
@@ -1265,7 +1265,7 @@ export class TileGeometryCreator {
                 THREE.MathUtils.degToRad(10),
                 sourceProjection
             );
-            const enableMixedLod = mapView.enableMixedLod || mapView.enableMixedLod === undefined;
+            const enableMixedLod = mapView.enableMixedLod ?? mapView.enableMixedLod === undefined;
 
             if (enableMixedLod) {
                 // Use a [[LodMesh]] to adapt tesselation of tile depending on zoom level

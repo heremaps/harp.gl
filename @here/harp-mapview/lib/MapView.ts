@@ -1410,7 +1410,7 @@ export class MapView extends THREE.EventDispatcher {
         if (this.m_backgroundDataSource) {
             this.m_backgroundDataSource.setTheme(this.m_theme);
         }
-        this.m_theme.styles = theme.styles || {};
+        this.m_theme.styles = theme.styles ?? {};
         this.m_theme.definitions = theme.definitions;
 
         for (const dataSource of this.m_tileDataSources) {
