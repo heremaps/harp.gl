@@ -87,7 +87,6 @@ export function loadImageData(url: string): Promise<ImageData> {
         new THREE.ImageLoader().load(
             url,
             image => {
-                logger.info(`#loadImageData loaded: ${url}, size=${image.width},${image.height}`);
                 const canvas = document.createElement("canvas");
                 canvas.width = image.width;
                 canvas.height = image.height;

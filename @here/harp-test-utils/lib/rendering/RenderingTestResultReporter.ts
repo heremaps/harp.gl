@@ -24,8 +24,6 @@ export class RenderingTestResultReporter {
         _referenceImage?: ImageData, // server already has reference image
         comparisonResult?: ImageComparisonResult
     ) {
-        logger.log("reporting test result", imageProps);
-
         const url = `${this.backendUrl}/ibct-feedback`;
         const payload: ImageTestResultRequest = {
             imageProps,
