@@ -259,7 +259,7 @@ export class ImageCache {
      * @param imageItem - {@link ImageItem} to assign image data to.
      * @param image - [[HTMLImageElement]] to
      */
-    private renderImage(
+    private async renderImage(
         imageItem: ImageItem,
         image: HTMLImageElement
     ): Promise<ImageData | ImageBitmap | undefined> {

@@ -188,7 +188,7 @@ export class FileSystem {
      * protocol.
      * @returns Promise with file contents in Buffer object.
      */
-    static readFile(filePath: string): Promise<Buffer> {
+    static async readFile(filePath: string): Promise<Buffer> {
         const promise = new Promise<Buffer>((resolve, reject) => {
             fileSystem.readFile(
                 filePath,
@@ -222,7 +222,7 @@ export class FileSystem {
      * @param data - buffer to be stored.
      * @returns Promise.
      */
-    static writeFile(filePath: string, data: Buffer | string): Promise<void> {
+    static async writeFile(filePath: string, data: Buffer | string): Promise<void> {
         return new Promise((resolve, reject) => {
             fileSystem.writeFile(filePath, data, (error: NodeJS.ErrnoException | null) => {
                 if (error) {

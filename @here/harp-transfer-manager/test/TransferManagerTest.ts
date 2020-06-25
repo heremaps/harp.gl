@@ -101,8 +101,8 @@ describe("TransferManager", function() {
         }
 
         await Promise.all(
-            downloadResponses.map(downloadRespPromise => {
-                return downloadRespPromise.then(downloadResp => {
+            downloadResponses.map(async downloadRespPromise => {
+                downloadRespPromise.then(async downloadResp => {
                     return downloadResp.arrayBuffer();
                 });
             })
@@ -119,7 +119,7 @@ describe("TransferManager", function() {
         let numberOfArrayBufferDownloads = 0;
 
         // dummy fetch function
-        const fetchFunction = () => {
+        const fetchFunction = async () => {
             ++numberOfFetches;
             return new Promise(resolve => {
                 const response = {

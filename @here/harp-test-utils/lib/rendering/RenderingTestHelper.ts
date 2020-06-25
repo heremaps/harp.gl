@@ -123,7 +123,7 @@ export class RenderingTestHelper {
     /**
      * Load image data using cache.
      */
-    static cachedLoadImageData(url: string): Promise<ImageData> {
+    static async cachedLoadImageData(url: string): Promise<ImageData> {
         let p = this.preloadedImageCache.get(url);
         if (p !== undefined) {
             return p;

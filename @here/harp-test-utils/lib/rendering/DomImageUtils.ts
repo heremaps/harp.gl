@@ -82,7 +82,7 @@ export function imageDataToDataUrl(image: ImageData) {
 /**
  * Load image from URL as `ImageData` so it can be easily compared by image comparision libraries.
  */
-export function loadImageData(url: string): Promise<ImageData> {
+export async function loadImageData(url: string): Promise<ImageData> {
     return new Promise<ImageData>((resolve, reject) => {
         new THREE.ImageLoader().load(
             url,

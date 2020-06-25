@@ -30,7 +30,7 @@ function createMockDownloadResponse(tileUrl: string) {
 
 class MockTransferManager extends TransferManager {
     /** @override */
-    download(tileUrl: string): Promise<Response> {
+    async download(tileUrl: string): Promise<Response> {
         return Promise.resolve((createMockDownloadResponse(tileUrl) as any) as Response);
     }
 }

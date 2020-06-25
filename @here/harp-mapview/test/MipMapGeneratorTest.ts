@@ -35,7 +35,7 @@ describe("MipMapGenerator", function() {
                 image.onerror = reject;
                 image.src = imageUrl;
             })
-                .then(() => {
+                .then(async () => {
                     // create image data
                     const canvas = document.createElement("canvas");
                     canvas.width = image.width;

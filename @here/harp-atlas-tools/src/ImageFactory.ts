@@ -52,7 +52,7 @@ export class ImageFactory {
         this.m_decodersMap = new Map<ImageFormat, ImageDecoderConstructor>();
     }
 
-    loadImage(filePath: string): Promise<ImageDecoder> {
+    async loadImage(filePath: string): Promise<ImageDecoder> {
         const imageFormat: ImageFormat = FileSystem.getImageFormat(filePath);
         const decoderCtor = this.m_decodersMap.get(imageFormat);
         if (decoderCtor !== undefined) {
@@ -64,7 +64,11 @@ export class ImageFactory {
         }
     }
 
-    createImage(imageFormat: ImageFormat, width: number, height: number): Promise<ImageEncoder> {
+    async createImage(
+        imageFormat: ImageFormat,
+        width: number,
+        height: number
+    ): Promise<ImageEncoder> {
         const encoderCtor = this.m_encodersMap.get(imageFormat);
         if (encoderCtor !== undefined) {
             return encoderCtor.create(width, height);

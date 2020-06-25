@@ -96,7 +96,7 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * Invokes {@link @here/harp-datasource-protocol#DecodeTileRequest} on
      * [[TileDecoderService]] running in worker pool.
      */
-    decodeTile(
+    async decodeTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection,
@@ -128,7 +128,7 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * Invokes {@link @here/harp-datasource-protocol#TileInfoRequest}
      * on [[TileDecoderService]] running in worker pool.
      */
-    getTileInfo(
+    async getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection,

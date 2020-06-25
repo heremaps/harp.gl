@@ -79,26 +79,25 @@ export function loadTestResourceWeb(
 export function loadTestResourceWeb(module: string, fileName: string, type: "json"): Promise<any>;
 
 /** @hidden */
-export function loadTestResourceWeb(
+export async function loadTestResourceWeb(
     module: string,
     fileName: string,
     type: "arraybuffer" | "text" | "json"
 ): Promise<any> {
     const url = getTestResourceUrl(module, fileName);
 
-    return fetch(url).then(response => {
-        if (!response.ok) {
-            throw new Error(`failed to load ${url}: ${response.status} ${response.statusText}`);
-        }
-        switch (type) {
-            case "arraybuffer":
-                return response.arrayBuffer();
-            case "json":
-                return response.json();
-            case "text":
-                return response.text();
-            default:
-                throw new Error(`Unrecognized response type: ${type}`);
-        }
-    });
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`failed to load ${url}: ${response.status} ${response.statusText}`);
+    }
+    switch (type) {
+        case "arraybuffer":
+            return response.arrayBuffer();
+        case "json":
+            return response.json();
+        case "text":
+            return response.text();
+        default:
+            throw new Error(`Unrecognized response type: ${type}`);
+    }
 }

@@ -34,11 +34,11 @@ class FakeTileLoader implements ITileLoader {
     state: TileLoaderState = TileLoaderState.Ready;
     isFinished: boolean = false;
 
-    loadAndDecode(): Promise<TileLoaderState> {
+    async loadAndDecode(): Promise<TileLoaderState> {
         return new Promise(() => this.state);
     }
 
-    waitSettled(): Promise<TileLoaderState> {
+    async waitSettled(): Promise<TileLoaderState> {
         return new Promise(() => this.state);
     }
 
@@ -85,7 +85,7 @@ function createFakeDecodedTile(): DecodedTile {
     };
 }
 
-const wait = (ms: number = 0) => new Promise(res => setTimeout(res, ms));
+const wait = async (ms: number = 0) => new Promise(res => setTimeout(res, ms));
 
 describe("TileGeometryLoader", function() {
     let tileKey: TileKey;

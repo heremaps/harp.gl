@@ -33,7 +33,7 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         // implemented in subclasses
     }
 
-    decodeTile(
+    async decodeTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection
@@ -46,7 +46,7 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     }
 
     // tslint:disable:no-unused-variable
-    getTileInfo(
+    async getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection

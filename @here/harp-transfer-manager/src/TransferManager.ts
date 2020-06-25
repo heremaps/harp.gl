@@ -96,11 +96,11 @@ export class TransferManager implements ITransferManager {
                 throw err;
             }
         }
-        return TransferManager.waitFor(TransferManager.retryTimeout * retryCount).then(() =>
+        return TransferManager.waitFor(TransferManager.retryTimeout * retryCount).then(async () =>
             TransferManager.fetchRepeatedly(fetchFunction, maxRetries, retryCount + 1, url, init)
         );
     }
-    private static waitFor(milliseconds: number): Promise<void> {
+    private static async waitFor(milliseconds: number): Promise<void> {
         return new Promise<void>(resolve => setTimeout(resolve, milliseconds));
     }
     private activeDownloadCount = 0;
@@ -123,8 +123,8 @@ export class TransferManager implements ITransferManager {
      * @param url - The URL or RequestInfo to download
      * @param init - Optional extra parameters for the download.
      */
-    downloadJson<T>(url: RequestInfo, init?: RequestInit): Promise<T> {
-        return this.downloadAs<T>(response => response.json(), url, init);
+    async downloadJson<T>(url: RequestInfo, init?: RequestInit): Promise<T> {
+        return this.downloadAs<T>(async response => response.json(), url, init);
     }
     /**
      * Downloads a binary object. Merges downloads of string URLS if requested multiple times.
@@ -136,8 +136,8 @@ export class TransferManager implements ITransferManager {
      * @param url - The URL or RequestInfo to download
      * @param init - Optional extra parameters for the download
      */
-    downloadArrayBuffer(url: RequestInfo, init?: RequestInit): Promise<ArrayBuffer> {
-        return this.download(url, init).then(response => response.arrayBuffer());
+    async downloadArrayBuffer(url: RequestInfo, init?: RequestInit): Promise<ArrayBuffer> {
+        return this.download(url, init).then(async response => response.arrayBuffer());
     }
     /**
      * Downloads a URL and returns the response.
@@ -147,9 +147,9 @@ export class TransferManager implements ITransferManager {
      * @param url - The URL or RequestInfo to download.
      * @param init - Optional extra parameters for the download.
      */
-    download(url: RequestInfo, init?: RequestInit): Promise<Response> {
+    async download(url: RequestInfo, init?: RequestInit): Promise<Response> {
         if (this.activeDownloadCount >= TransferManager.maxParallelDownloads) {
-            const deferred = new DeferredPromise<Response>(() => this.doDownload(url, init));
+            const deferred = new DeferredPromise<Response>(async () => this.doDownload(url, init));
             this.downloadQueue.push(deferred);
             return deferred.promise;
         }
@@ -184,7 +184,7 @@ export class TransferManager implements ITransferManager {
         }
         future.exec();
     }
-    private downloadAs<T>(
+    private async downloadAs<T>(
         converter: (response: Response) => Promise<T>,
         url: RequestInfo,
         init?: RequestInit
@@ -195,7 +195,7 @@ export class TransferManager implements ITransferManager {
             return Promise.resolve(pendingFetch);
         }
         const newFetch = this.download(url, init)
-            .then(response => {
+            .then(async response => {
                 this.activeDownloads.delete(cacheKey);
                 if (response.ok) {
                     return converter(response);

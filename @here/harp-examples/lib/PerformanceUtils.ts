@@ -170,7 +170,7 @@ export namespace PerformanceUtils {
         });
     }
 
-    function connectDataSources(
+    async function connectDataSources(
         mapViewApp: MapViewApp,
         dataSourceTypes: string[],
         storageLevelOffsetModifier: number
@@ -198,7 +198,7 @@ export namespace PerformanceUtils {
         };
 
         return Promise.all(
-            dataSourceTypes.map(dataSourceType => {
+            dataSourceTypes.map(async dataSourceType => {
                 const dataSource = createDataSource(dataSourceType);
 
                 if (storageLevelOffsetModifier !== undefined && storageLevelOffsetModifier !== 0) {
@@ -216,7 +216,7 @@ export namespace PerformanceUtils {
         );
     }
 
-    export function delay(ms: number) {
+    export async function delay(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
@@ -339,7 +339,7 @@ export namespace PerformanceUtils {
         });
     }
 
-    function recordRendering(mapViewApp: MapViewApp): Promise<SimpleFrameStatistics> {
+    async function recordRendering(mapViewApp: MapViewApp): Promise<SimpleFrameStatistics> {
         return new Promise<SimpleFrameStatistics>((resolve, reject) => {
             ensureRenderFinished(mapViewApp).then(() => {
                 const decodingStatistics: any = {};

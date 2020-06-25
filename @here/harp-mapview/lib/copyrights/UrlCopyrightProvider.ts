@@ -49,7 +49,7 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
      * @inheritdoc
      * @override
      */
-    getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]> {
+    async getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]> {
         if (this.m_cachedCopyrightResponse !== undefined) {
             return this.m_cachedCopyrightResponse;
         }

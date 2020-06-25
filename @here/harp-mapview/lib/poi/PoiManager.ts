@@ -169,7 +169,7 @@ export class PoiManager {
      */
     addTextureAtlas(imageName: string, atlas: string) {
         fetch(atlas)
-            .then(response => {
+            .then(async response => {
                 if (!response.ok) {
                     throw new Error(
                         `addTextureAtlas: Cannot load textureAtlas: ${response.statusText}`

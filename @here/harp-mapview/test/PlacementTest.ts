@@ -120,7 +120,7 @@ async function createPointTextElements(
     renderParams: TextRenderParameters | TextRenderStyle = {},
     layoutParams: TextLayoutParameters | TextLayoutStyle = {}
 ): Promise<TextElement[]> {
-    const promises = texts.map(text => {
+    const promises = texts.map(async text => {
         return createTextElement(textCanvas, text, new THREE.Vector3(), renderParams, layoutParams);
     });
     return Promise.all(promises);

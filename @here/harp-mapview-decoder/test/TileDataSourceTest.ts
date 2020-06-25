@@ -33,7 +33,7 @@ function createMockDataProvider() {
         }
     };
     const mock = sinon.stub(mockTemplate);
-    mock.getTile.callsFake(() => {
+    mock.getTile.callsFake(async () => {
         return Promise.resolve(new ArrayBuffer(5));
     });
     return mock;
@@ -123,7 +123,7 @@ describe("TileDataSource", function() {
 
         const abortController = new AbortController();
         let getTileToken = abortController.signal;
-        mockDataProvider.getTile.callsFake((_tileKey: any, cancellationToken: any) => {
+        mockDataProvider.getTile.callsFake(async (_tileKey: any, cancellationToken: any) => {
             assert(cancellationToken !== undefined);
             assert(cancellationToken instanceof AbortSignal);
             getTileToken = cancellationToken;

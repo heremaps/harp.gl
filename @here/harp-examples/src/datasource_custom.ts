@@ -101,7 +101,7 @@ export namespace CustomDatasourceExample {
     class CustomDataProvider implements DataProvider
     // end:custom_datasource_example_custom_data_provider.ts
     {
-        connect() {
+        async connect() {
             // Here you could connect to the service.
             return Promise.resolve();
         }
@@ -111,7 +111,7 @@ export namespace CustomDatasourceExample {
             return true;
         }
 
-        getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}> {
+        async getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}> {
             // Generate some artifical data. Normally you would do a fetch here.
             // In this example we create some geometry in geo space that will be converted to
             // local world space by [[CustomDecoder.convertToLocalWorldCoordinates]]

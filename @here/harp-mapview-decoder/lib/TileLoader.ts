@@ -94,7 +94,7 @@ export class TileLoader implements ITileLoader {
      *
      * @returns A promise which resolves the [[TileLoaderState]].
      */
-    loadAndDecode(): Promise<TileLoaderState> {
+    async loadAndDecode(): Promise<TileLoaderState> {
         switch (this.state) {
             case TileLoaderState.Loading:
             case TileLoaderState.Loaded:
@@ -118,7 +118,7 @@ export class TileLoader implements ITileLoader {
      *
      * @returns A promise which resolves the current [[TileLoaderState]].
      */
-    waitSettled(): Promise<TileLoaderState> {
+    async waitSettled(): Promise<TileLoaderState> {
         if (!this.donePromise) {
             return Promise.resolve(this.state);
         }

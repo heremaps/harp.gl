@@ -52,7 +52,7 @@ export class TextureLoader {
         return texture;
     }
 
-    private loadWithThreeLoader(url: string): Promise<THREE.Texture> {
+    private async loadWithThreeLoader(url: string): Promise<THREE.Texture> {
         return new Promise<THREE.Texture>((resolve, reject) => {
             this.m_textureLoader.setCrossOrigin("");
             this.m_textureLoader.load(

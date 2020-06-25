@@ -17,7 +17,7 @@ declare let self: Worker & {
  * Resolves, when all the dependencies are loaded.
  * Rejects after timeout (1000ms) and in case error while loading dependencies.
  */
-function asyncWorkerBootstrap(dependencies: string[]): Promise<void> {
+async function asyncWorkerBootstrap(dependencies: string[]): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         self.postMessage({
             type: "worker-bootstrap-request",

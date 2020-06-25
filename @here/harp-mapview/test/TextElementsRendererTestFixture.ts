@@ -134,7 +134,7 @@ export class TestFixture {
      * @returns A promise that resolves to true once the setup is finished, to false if there was an
      * error.
      */
-    setUp(): Promise<boolean> {
+    async setUp(): Promise<boolean> {
         this.m_defaultTile = this.m_dataSource.getTile(new TileKey(0, 0, TILE_LEVEL));
         this.m_defaultTile.textElementsChanged = true;
         this.m_allTiles = [];

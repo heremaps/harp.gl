@@ -322,7 +322,7 @@ export class WebTileDataSource extends DataSource {
             `${this.getImageRequestParams()}`;
 
         this.getRequestHeaders()
-            .then(headers => {
+            .then(async headers => {
                 return Promise.all([
                     textureLoader.load(url, headers),
                     this.getTileCopyright(tile, headers)

@@ -18,7 +18,7 @@ import * as path from "path";
 // tslint:disable-next-line: no-var-requires
 const tmp = require("tmp");
 
-function downloadMakiIcons(targetDir: string): Promise<string> {
+async function downloadMakiIcons(targetDir: string): Promise<string> {
     const ghdownload = require("github-download");
     const makiPath: string = path.join(__dirname, "..");
     return new Promise((resolve, reject) => {

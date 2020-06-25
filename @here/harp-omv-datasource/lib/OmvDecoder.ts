@@ -390,12 +390,12 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_enableElevationOverlay: boolean = false;
 
     /** @override */
-    connect(): Promise<void> {
+    async connect(): Promise<void> {
         return Promise.resolve();
     }
 
     /** @override */
-    decodeThemedTile(
+    async decodeThemedTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,

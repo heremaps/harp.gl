@@ -58,7 +58,7 @@ export class TileDecoderService extends WorkerService {
      * @returns A promise which resolves to a [[WorkerServiceResponse]].
      * @override
      */
-    protected handleRequest(request: any): Promise<WorkerServiceResponse> {
+    protected async handleRequest(request: any): Promise<WorkerServiceResponse> {
         if (WorkerDecoderProtocol.isDecodeTileRequest(request)) {
             return this.handleDecodeTileRequest(request);
         } else if (WorkerDecoderProtocol.isTileInfoRequest(request)) {
@@ -138,7 +138,7 @@ export class TileDecoderService extends WorkerService {
         };
     }
 
-    private handleTileInfoRequest(
+    private async handleTileInfoRequest(
         request: WorkerDecoderProtocol.TileInfoRequest
     ): Promise<WorkerServiceResponse> {
         const tileKey = TileKey.fromMortonCode(request.tileKey);

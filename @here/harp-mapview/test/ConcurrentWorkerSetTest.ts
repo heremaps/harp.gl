@@ -379,7 +379,7 @@ describe("ConcurrentWorkerSet", function() {
         }
 
         const responses = await Promise.all(
-            promises.map(p => {
+            promises.map(async p => {
                 return p
                     .then(() => {
                         assert(false, "this path shouldn't be reached");

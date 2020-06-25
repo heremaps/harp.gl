@@ -30,12 +30,12 @@ class CustomDecoder extends ThemedTileDecoder
 // end:custom_datasource_example_custom_decoder.ts
 {
     /** @override */
-    connect() {
+    async connect() {
         return Promise.resolve();
     }
 
     /** @override */
-    decodeThemedTile(
+    async decodeThemedTile(
         data: ArrayBufferLike | {},
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,

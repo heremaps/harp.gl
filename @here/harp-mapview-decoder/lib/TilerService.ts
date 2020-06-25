@@ -46,7 +46,7 @@ export class TilerService extends WorkerService {
      * @returns A promise which resolves to a [[WorkerServiceResponse]].
      * @override
      */
-    protected handleRequest(request: any): Promise<WorkerServiceResponse> {
+    protected async handleRequest(request: any): Promise<WorkerServiceResponse> {
         if (WorkerTilerProtocol.isRegisterIndexRequest(request)) {
             return this.handleRegisterIndexRequest(request);
         } else if (WorkerTilerProtocol.isUpdateIndexRequest(request)) {

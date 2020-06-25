@@ -70,7 +70,7 @@ export class WorkerServiceManager extends WorkerService {
     }
 
     /** @override */
-    protected handleRequest(request: any): Promise<WorkerServiceResponse> {
+    protected async handleRequest(request: any): Promise<WorkerServiceResponse> {
         if (request.type === WorkerServiceProtocol.Requests.CreateService) {
             const existingService = this.m_services.get(request.targetServiceId);
             if (existingService !== undefined) {

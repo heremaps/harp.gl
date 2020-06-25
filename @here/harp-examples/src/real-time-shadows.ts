@@ -249,7 +249,7 @@ function initializeMapView(id: string, theme: Theme): MapView {
     return map;
 }
 
-const addOmvDataSource = (): Promise<void> => {
+const addOmvDataSource = async (): Promise<void> => {
     const omvDataSource = new OmvDataSource({
         baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         authenticationCode: apikey

@@ -74,7 +74,7 @@ export namespace EffectsExample {
     selector
         .onChange((value: string) => {
             fetch(value)
-                .then(response => {
+                .then(async response => {
                     return response.json();
                 })
                 .then((theme: any) => {

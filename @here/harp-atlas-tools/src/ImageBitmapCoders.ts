@@ -16,10 +16,9 @@ import {
 } from "./ImageFactory";
 
 export class ImageBitmapDecoderConstructor implements ImageDecoderConstructor {
-    load(filePath: string): Promise<ImageDecoder> {
-        return Jimp.read(filePath).then((loadedImage: Jimp) => {
-            return new ImageBitmapDecoder(loadedImage);
-        });
+    async load(filePath: string): Promise<ImageDecoder> {
+        const loadedImage = await Jimp.read(filePath);
+        return new ImageBitmapDecoder(loadedImage);
     }
 }
 
@@ -34,7 +33,7 @@ export class ImageBitmapEncoderConstructor implements ImageEncoderConstructor {
         return new ImageBitmapEncoder(image);
     }
 
-    create(width: number, height: number): Promise<ImageEncoder> {
+    async create(width: number, height: number): Promise<ImageEncoder> {
         return new Promise((resolve, reject) => {
             Jimp(width, height, (error, image) => {
                 if (error) {
@@ -115,7 +114,7 @@ class ImageBitmapEncoder implements ImageEncoder {
      * @param filePath - file storage path.
      * @returns Promise.
      */
-    write(filePath: string): Promise<void> {
+    async write(filePath: string): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!checkExportPath(filePath)) {
                 reject(

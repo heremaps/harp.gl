@@ -101,7 +101,7 @@ export abstract class WorkerService {
      *
      * @param request - [[RequestMessage.request]] as received by `WorkerService`.
      */
-    protected handleRequest(request: any): Promise<WorkerServiceResponse> {
+    protected async handleRequest(request: any): Promise<WorkerServiceResponse> {
         throw new Error(`ServiceAdapter[${this.serviceId}]: Invalid request '${request.type}'`);
     }
 
@@ -170,7 +170,7 @@ export abstract class WorkerService {
     /**
      * Safety belt over [[handleRequest]] for correct exception handling in promise chain.
      */
-    private tryHandleRequest(request: any): Promise<WorkerServiceResponse> {
+    private async tryHandleRequest(request: any): Promise<WorkerServiceResponse> {
         try {
             return this.handleRequest(request);
         } catch (error) {

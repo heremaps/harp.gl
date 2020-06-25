@@ -126,7 +126,7 @@ describe("TextCanvas", () => {
     beforeEach(() => {
         sandbox = sinon.createSandbox();
         sandbox.stub(THREE, "TextureLoader").returns({
-            load: (
+            load: async (
                 url: string,
                 onLoad?: (texture: THREE.Texture) => void,
                 onProgress?: (event: ProgressEvent) => void,

@@ -207,7 +207,7 @@ async function prepareSprites(
     return storeImages(inputFiles, images, outputDir, outputFormat);
 }
 
-function processImages(
+async function processImages(
     inputFiles: string[],
     imageFactory: ImageFactory,
     operations: ImageProcessor[],
@@ -235,7 +235,7 @@ function processImages(
                 path.basename(inputFile, path.extname(inputFile)) + outputExt
             );
         }
-        const readPromise: Promise<ImageEncoder> = jobLimit(() => {
+        const readPromise: Promise<ImageEncoder> = jobLimit(async () => {
             return readAndProcessImage(inputFile, imageFactory, operations, logger, outFile);
         });
         readPromises.push(readPromise);
@@ -270,7 +270,7 @@ async function storeImages(
     return outputFiles;
 }
 
-function mergeSpritesIntoAtlas(
+async function mergeSpritesIntoAtlas(
     inputFiles: string[],
     outputPath: string,
     paddingSize: number,

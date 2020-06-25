@@ -62,7 +62,7 @@ export type FetchFunction = typeof fetch;
  *
  * @see [fetch documentation](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
  */
-function fetchWithFileSupport(input: RequestInfo, init?: RequestInit): Promise<Response> {
+async function fetchWithFileSupport(input: RequestInfo, init?: RequestInit): Promise<Response> {
     const url = typeof input === "object" ? input.url : input;
     const parentUrl = `file://${process.cwd()}/`;
     const actualUrl = new URL(url, parentUrl);
@@ -84,18 +84,10 @@ function fetchWithFileSupport(input: RequestInfo, init?: RequestInit): Promise<R
                     timeout: 0,
                     body: null as any,
                     bodyUsed: false,
-                    buffer() {
-                        return Promise.resolve(buffer);
-                    },
-                    arrayBuffer() {
-                        return Promise.resolve(buffer.buffer as ArrayBuffer);
-                    },
-                    json() {
-                        return Promise.resolve(JSON.parse(buffer.toString("utf-8")));
-                    },
-                    text() {
-                        return Promise.resolve(buffer.toString("utf-8"));
-                    },
+                    buffer: async () => Promise.resolve(buffer),
+                    arrayBuffer: async () => Promise.resolve(buffer.buffer as ArrayBuffer),
+                    json: async () => Promise.resolve(JSON.parse(buffer.toString("utf-8"))),
+                    text: async () => Promise.resolve(buffer.toString("utf-8")),
                     clone() {
                         return Object.assign({}, this);
                     }

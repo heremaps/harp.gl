@@ -42,7 +42,7 @@ export class ImageVectorDecoderConstructor implements ImageDecoderConstructor {
 }
 
 export class ImageVectorEncoderConstructor implements ImageEncoderConstructor {
-    create(width: number, height: number): Promise<ImageEncoder> {
+    async create(width: number, height: number): Promise<ImageEncoder> {
         // We do not support writing to blank vector file so use bitmap encoder
         // instead as fallback support.
         // tslint:disable-next-line: max-line-length
@@ -140,7 +140,7 @@ class ImageVectorEncoder implements ImageEncoder {
      *
      * @param filePath - file storage path.
      */
-    write(filePath: string): Promise<any> {
+    async write(filePath: string): Promise<any> {
         if (!this.m_pixelModified && FileSystem.getImageFormat(filePath) === ImageFormat.SVG) {
             return FileSystem.writeFile(filePath, this.m_vectorData);
         } else {

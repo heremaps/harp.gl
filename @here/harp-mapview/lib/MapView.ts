@@ -1329,7 +1329,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     loadPostEffects(postEffectsFile: string) {
         fetch(postEffectsFile)
-            .then(response => response.json())
+            .then(async response => response.json())
             .then((postEffects: PostEffects) => {
                 this.m_postEffects = postEffects;
                 this.setPostEffects();
@@ -1999,7 +1999,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param dataSource - The data source.
      */
-    addDataSource(dataSource: DataSource): Promise<void> {
+    async addDataSource(dataSource: DataSource): Promise<void> {
         const twinDataSource = this.getDataSourceByName(dataSource.name);
         if (twinDataSource !== undefined) {
             throw new Error(
@@ -2017,7 +2017,7 @@ export class MapView extends THREE.EventDispatcher {
 
         return dataSource
             .connect()
-            .then(() => {
+            .then(async () => {
                 return new Promise(resolve => {
                     if (this.theme !== undefined && this.theme.styles !== undefined) {
                         resolve();
@@ -3722,7 +3722,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_themeIsLoading = true;
         Promise.resolve<string | Theme>(theme)
             // tslint:disable-next-line: no-shadowed-variable
-            .then(theme => ThemeLoader.load(theme, { uriResolver: this.m_uriResolver }))
+            .then(async theme => ThemeLoader.load(theme, { uriResolver: this.m_uriResolver }))
             // tslint:disable-next-line: no-shadowed-variable
             .then(theme => {
                 this.m_themeIsLoading = false;

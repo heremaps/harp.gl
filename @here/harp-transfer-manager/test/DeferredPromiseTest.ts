@@ -15,7 +15,7 @@ const { expect } = chai;
 
 import { DeferredPromise } from "../src/DeferredPromise";
 
-function delay(timeout: number) {
+async function delay(timeout: number) {
     return new Promise(resolve => {
         setTimeout(resolve, timeout);
     });
@@ -24,7 +24,7 @@ function delay(timeout: number) {
 describe("DeferredPromise", function() {
     it("does not settle Promise unless exec() was called.", async function() {
         let isSettled = false;
-        const deferred = new DeferredPromise(() => {
+        const deferred = new DeferredPromise(async () => {
             isSettled = true;
             return Promise.resolve();
         });
@@ -40,7 +40,7 @@ describe("DeferredPromise", function() {
 
     it("settles a Promise when exec() is called.", async function() {
         let isSettled = false;
-        const deferred = new DeferredPromise(() => {
+        const deferred = new DeferredPromise(async () => {
             isSettled = true;
             return Promise.resolve();
         });
@@ -54,7 +54,7 @@ describe("DeferredPromise", function() {
 
     it("handles a rejected Promise.", async function() {
         let isSettled = false;
-        const deferred = new DeferredPromise(() => {
+        const deferred = new DeferredPromise(async () => {
             isSettled = true;
             return Promise.reject("Some error happened.");
         });

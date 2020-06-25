@@ -91,7 +91,7 @@ export function loadTestResourceNode(
 export function loadTestResourceNode(module: string, fileName: string, type: "json"): Promise<any>;
 
 /** @hidden */
-export function loadTestResourceNode(
+export async function loadTestResourceNode(
     module: string,
     fileName: string,
     type: "arraybuffer" | "text" | "json"

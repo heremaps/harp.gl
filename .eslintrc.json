@@ -31,7 +31,6 @@
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/prefer-optional-chain": "off",
         "@typescript-eslint/no-floating-promises": "off",
-        "@typescript-eslint/promise-function-async": "off",
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/no-unnecessary-type-assertion": "off",
         "@typescript-eslint/method-signature-style": "off",

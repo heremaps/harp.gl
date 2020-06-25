@@ -315,7 +315,7 @@ export class ConcurrentWorkerSet {
      *
      * @returns A `Promise` that resolves with a response from the service.
      */
-    invokeRequest<Res>(
+    async invokeRequest<Res>(
         serviceId: string,
         request: WorkerServiceProtocol.ServiceRequest,
         transferList?: ArrayBuffer[],
@@ -366,7 +366,7 @@ export class ConcurrentWorkerSet {
      * @returns Array of `Promise`s that resolves with a response from each worker (unspecified
      * order).
      */
-    broadcastRequest<Res>(
+    async broadcastRequest<Res>(
         serviceId: string,
         request:
             | WorkerServiceProtocol.WorkerServiceManagerRequest

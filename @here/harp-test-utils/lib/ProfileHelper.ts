@@ -518,7 +518,7 @@ function loadBaseLineIfAvailable() {
     }
 }
 
-function sleepPromised(time: number = 1): Promise<void> {
+async function sleepPromised(time: number = 1): Promise<void> {
     return new Promise(resolve => {
         setTimeout(resolve, time);
     });

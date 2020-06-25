@@ -813,7 +813,7 @@ describe("MapView", function() {
                     this.mapView = undefined;
                 },
                 dispose() {},
-                connect() {
+                async connect() {
                     return Promise.resolve();
                 },
                 setEnableElevationOverlay() {},
@@ -825,7 +825,7 @@ describe("MapView", function() {
                 mapView: undefined
             } as any;
             fakeElevationRangeSource = {
-                connect: () => Promise.resolve(),
+                connect: async () => Promise.resolve(),
                 ready: () => true,
                 getTilingScheme: () => webMercatorTilingScheme,
                 getElevationRange: () => ({

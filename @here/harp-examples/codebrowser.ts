@@ -23,7 +23,7 @@ import "style-loader!css-loader!highlight.js/styles/default.css";
     const importRe = /(import.*(?:'|"))(\..*?)('|")/g;
 
     fetch(src, { credentials: "same-origin" })
-        .then(response => {
+        .then(async response => {
             if (!response.ok) {
                 throw new Error(response.statusText);
             }

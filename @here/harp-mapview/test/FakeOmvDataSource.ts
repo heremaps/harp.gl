@@ -25,11 +25,11 @@ export class FakeTileLoader implements ITileLoader {
 
     isFinished: boolean = false;
 
-    loadAndDecode(): Promise<TileLoaderState> {
+    async loadAndDecode(): Promise<TileLoaderState> {
         return Promise.resolve(TileLoaderState.Ready);
     }
 
-    waitSettled(): Promise<TileLoaderState> {
+    async waitSettled(): Promise<TileLoaderState> {
         return Promise.resolve(TileLoaderState.Ready);
     }
 

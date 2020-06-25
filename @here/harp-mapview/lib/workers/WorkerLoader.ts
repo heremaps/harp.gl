@@ -74,7 +74,7 @@ export class WorkerLoader {
      * @param timeout - timeout in milliseconds, in which worker should set initial message
      *    (default 10 seconds)
      */
-    static startWorker(scriptUrl: string, timeout: number = 10000): Promise<Worker> {
+    static async startWorker(scriptUrl: string, timeout: number = 10000): Promise<Worker> {
         if (scriptUrl.startsWith("blob:")) {
             return this.startWorkerImmediately(scriptUrl, timeout);
         }
@@ -82,7 +82,7 @@ export class WorkerLoader {
         if (this.directlyFallbackToBlobBasedLoading) {
             return this.startWorkerBlob(scriptUrl, timeout);
         }
-        return this.startWorkerImmediately(scriptUrl, timeout).catch(error => {
+        return this.startWorkerImmediately(scriptUrl, timeout).catch(async error => {
             if (typeof window !== "undefined") {
                 const pageUrl = window.location.href;
                 const fullScriptUrl = new URL(scriptUrl, pageUrl).href;
@@ -106,7 +106,7 @@ export class WorkerLoader {
      *
      * @param scriptUrl - web worker script URL
      */
-    static startWorkerImmediately(scriptUrl: string, timeout: number): Promise<Worker> {
+    static async startWorkerImmediately(scriptUrl: string, timeout: number): Promise<Worker> {
         try {
             const worker = new Worker(scriptUrl);
             return this.waitWorkerInitialized(worker, timeout);
@@ -122,8 +122,8 @@ export class WorkerLoader {
      *
      * @param scriptUrl - web worker script URL
      */
-    static startWorkerBlob(scriptUrl: string, timeout: number): Promise<Worker> {
-        return this.fetchScriptSourceToBlobUrl(scriptUrl).then(blobUrl => {
+    static async startWorkerBlob(scriptUrl: string, timeout: number): Promise<Worker> {
+        return this.fetchScriptSourceToBlobUrl(scriptUrl).then(async blobUrl => {
             return this.startWorkerImmediately(blobUrl, timeout);
         });
     }
@@ -136,13 +136,13 @@ export class WorkerLoader {
      * @param scriptUrl - web worker script URL
      * @return promise that resolves to url of a `Blob` with script source code
      */
-    static fetchScriptSourceToBlobUrl(scriptUrl: string): Promise<string> {
+    static async fetchScriptSourceToBlobUrl(scriptUrl: string): Promise<string> {
         let loadingPromise = this.sourceLoaderCache.get(scriptUrl);
         if (loadingPromise !== undefined) {
             return loadingPromise;
         }
         loadingPromise = fetch(scriptUrl)
-            .then(response => response.text())
+            .then(async response => response.text())
             .catch(error => {
                 throw new Error(
                     `WorkerLoader#fetchScriptSourceToBlob: failed to load worker script: ${error}`
@@ -179,7 +179,7 @@ export class WorkerLoader {
      * @param timeout - timeout in milliseconds, in which worker should set initial message
      * @returns `Promise` that resolves to `worker` on success
      */
-    static waitWorkerInitialized(worker: Worker, timeout: number): Promise<Worker> {
+    static async waitWorkerInitialized(worker: Worker, timeout: number): Promise<Worker> {
         return new Promise<Worker>((resolve, reject) => {
             const firstMessageCallback = (event: MessageEvent) => {
                 const message = event.data;

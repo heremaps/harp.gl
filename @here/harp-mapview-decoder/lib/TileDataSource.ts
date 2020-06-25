@@ -258,7 +258,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      * @param tileKey - Quadtree address of the requested tile.
      * @returns A promise which will contain the [[TileInfo]] when resolved.
      */
-    getTileInfo(tileKey: TileKey): Promise<TileInfo | undefined> {
+    async getTileInfo(tileKey: TileKey): Promise<TileInfo | undefined> {
         const promise = new Promise<TileInfo | undefined>((resolve, reject) => {
             const tileLoader = new TileInfoLoader(
                 this,

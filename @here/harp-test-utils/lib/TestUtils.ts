@@ -105,7 +105,7 @@ let mochaCurrentTest: any; // any is used to skip import of whole 'Mocha' for on
  * @param test - closure with assertions that must pass
  * @returns promise that resolves when `test` passes without any error
  */
-export function willEventually<T = void>(test: () => T): Promise<T> {
+export async function willEventually<T = void>(test: () => T): Promise<T> {
     lastWaitedError = undefined;
     const currentTest = mochaCurrentTest;
 
@@ -241,7 +241,7 @@ export interface EventSource<T> {
  * @param eventType - type of event
  * @returns promise that resolves to first event that is received
  */
-export function waitForEvent<T>(source: EventSource<T>, eventType: string): Promise<T> {
+export async function waitForEvent<T>(source: EventSource<T>, eventType: string): Promise<T> {
     const currentTest = mochaCurrentTest;
 
     waitEventWaitedEvent = eventType;

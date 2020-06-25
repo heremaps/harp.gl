@@ -24,7 +24,7 @@ export class TestSingleFileDataProvider implements DataProvider {
         return true;
     }
 
-    connect() {
+    async connect() {
         return Promise.resolve();
     }
 
@@ -52,7 +52,7 @@ export class TestTilesDataProvider implements DataProvider {
         return true;
     }
 
-    connect() {
+    async connect() {
         return Promise.resolve();
     }
 

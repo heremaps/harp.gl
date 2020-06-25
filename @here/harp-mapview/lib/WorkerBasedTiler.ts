@@ -91,7 +91,7 @@ export class WorkerBasedTiler implements ITiler {
      * @param indexId - Index identifier.
      * @param input - Url to the index payload, or direct GeoJSON.
      */
-    registerIndex(indexId: string, input: URL | GeoJson): Promise<void> {
+    async registerIndex(indexId: string, input: URL | GeoJson): Promise<void> {
         const message: WorkerTilerProtocol.RegisterIndexRequest = {
             type: WorkerTilerProtocol.Requests.RegisterIndex,
             id: indexId,
@@ -107,7 +107,7 @@ export class WorkerBasedTiler implements ITiler {
      * @param indexId - Index identifier.
      * @param input - Url to the index payload, or direct GeoJSON.
      */
-    updateIndex(indexId: string, input: URL | GeoJson): Promise<void> {
+    async updateIndex(indexId: string, input: URL | GeoJson): Promise<void> {
         const message: WorkerTilerProtocol.UpdateIndexRequest = {
             type: WorkerTilerProtocol.Requests.UpdateIndex,
             id: indexId,

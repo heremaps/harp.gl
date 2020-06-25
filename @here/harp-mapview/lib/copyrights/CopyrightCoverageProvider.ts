@@ -72,7 +72,7 @@ export abstract class CopyrightCoverageProvider implements CopyrightProvider {
     abstract async getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]>;
 
     /** @inheritdoc */
-    getTree(): Promise<any> {
+    async getTree(): Promise<any> {
         if (this.m_cachedTreePromise !== undefined) {
             return this.m_cachedTreePromise;
         }
