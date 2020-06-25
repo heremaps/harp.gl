@@ -18,6 +18,7 @@ import { ITileLoader, Tile, TileLoaderState } from "../lib/Tile";
 export class FakeTileLoader implements ITileLoader {
     state: TileLoaderState = TileLoaderState.Initialized;
     payload?: ArrayBufferLike | {};
+    priority: number = 1;
     decodedTile?: DecodedTile = {
         techniques: [],
         geometries: []

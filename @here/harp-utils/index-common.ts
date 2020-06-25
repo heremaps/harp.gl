@@ -15,6 +15,7 @@ export * from "./lib/ContextLogger";
 export * from "./lib/PerformanceTimer";
 export * from "./lib/ObjectUtils";
 export * from "./lib/OptionsUtils";
+export * from "./lib/TaskQueue";
 export * from "./lib/UriResolver";
 export * from "./lib/UrlUtils";
 export * from "./lib/Functions";

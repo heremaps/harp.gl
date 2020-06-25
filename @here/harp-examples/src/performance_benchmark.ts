@@ -648,6 +648,7 @@ export namespace PerformanceBenchmark {
                 "6": 6,
                 "8": 8
             },
+            throttlingEnabled: mapViewApp.mapView.throttlingEnabled,
             PhasedLoading: false,
             Berlin: () => {
                 openMapBerlin();
@@ -798,6 +799,13 @@ export namespace PerformanceBenchmark {
                 updateUrlOptions();
             })
             .setValue(decoderCount === undefined ? undefined : decoderCount.toFixed(0));
+
+        benchmarksFolder
+            .add(guiOptions, "throttlingEnabled")
+            .onFinishChange(value => {
+                mapViewApp.mapView.throttlingEnabled = value;
+            })
+            .listen();
 
         benchmarksFolder
             .add(guiOptions, "PixelRatio", guiOptions.PixelRatio)

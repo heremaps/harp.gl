@@ -112,6 +112,8 @@ export interface ITileLoader {
 
     isFinished: boolean;
 
+    priority: number;
+
     loadAndDecode(): Promise<TileLoaderState>;
     waitSettled(): Promise<TileLoaderState>;
 

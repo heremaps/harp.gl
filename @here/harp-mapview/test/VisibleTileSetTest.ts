@@ -14,17 +14,18 @@ import {
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { getOptionValue } from "@here/harp-utils";
+import { getOptionValue, TaskQueue } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource, DataSourceOptions } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { TileGeometryManager } from "../lib/geometry/TileGeometryManager";
-import { MapView } from "../lib/MapView";
+import { MapView, TileTaskGroups } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
 import {
@@ -39,6 +40,10 @@ import { FakeOmvDataSource } from "./FakeOmvDataSource";
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 class FakeMapView {
+    taskQueue = new TaskQueue({
+        groups: [TileTaskGroups.CREATE, TileTaskGroups.FETCH_AND_DECODE]
+    });
+
     constructor(readonly projection: Projection) {}
 
     get frameNumber(): number {
