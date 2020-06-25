@@ -675,7 +675,8 @@ const MapViewDefaults = {
     zoomLevel: 5,
     tilt: 0,
     heading: 0,
-    theme: {}
+    theme: {},
+    maxTilesPerFrame: 0
 };
 
 /**
