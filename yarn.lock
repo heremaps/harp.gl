@@ -200,10 +200,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@here/harp-fontcatalog@^0.1.4":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@here/harp-fontcatalog/-/harp-fontcatalog-0.1.4.tgz#629b4e0318e931a4c785e7b3ee0a5ceb02ddbe84"
-  integrity sha512-HAQTVDX7iPVWxFYnO1AkfEEWbCqExWDaTWd3FemnRDUhq6qi3yv9ckp5kK8mg/WBwNlULVH9jcNTHV64PMCGbg==
+"@here/harp-fontcatalog@^0.1.6":
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/@here/harp-fontcatalog/-/harp-fontcatalog-0.1.6.tgz#e06a6088d0b6f60321f034ee1278bfa72ee1bf6e"
+  integrity sha512-CdtsKtkX3paYBN5K7gJXLNDdekFLxcPHDjgFL1arz4IHN+9apVbWfW1Gq6oYLGPYLt1N0uzg/LU0G0hEffLV3w==
 
 "@here/olp-sdk-dataservice-api@1.4.0":
   version "1.4.0"

@@ -184,7 +184,7 @@ describe("FontCatalog", () => {
         assert.strictEqual(fontCatalog.name, "Default");
         assert.strictEqual(fontCatalog.type, "msdf");
         assert.strictEqual(fontCatalog.size, 32);
-        assert.strictEqual(fontCatalog.maxWidth, 59);
+        assert.strictEqual(fontCatalog.maxWidth, 83);
         assert.strictEqual(fontCatalog.maxHeight, 68);
         assert.strictEqual(fontCatalog.distanceRange, 8);
         assert.strictEqual(fontCatalog.maxCodePointCount, 256);
