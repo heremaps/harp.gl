@@ -114,7 +114,8 @@ class Fixture {
         this.vts = new VisibleTileSet(
             this.frustumIntersection,
             this.tileGeometryManager,
-            vtsOptions
+            vtsOptions,
+            this.mapView.taskQueue
         );
     }
 

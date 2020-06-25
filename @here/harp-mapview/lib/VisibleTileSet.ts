@@ -13,7 +13,7 @@ import {
     TilingScheme
 } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
-import { assert, MathUtils } from "@here/harp-utils";
+import { assert, MathUtils, TaskQueue } from "@here/harp-utils";
 import * as THREE from "three";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
@@ -401,7 +401,8 @@ export class VisibleTileSet {
     constructor(
         private readonly m_frustumIntersection: FrustumIntersection,
         private readonly m_tileGeometryManager: TileGeometryManager,
-        public options: VisibleTileSetOptions
+        public options: VisibleTileSetOptions,
+        private readonly m_taskQueue: TaskQueue
     ) {
         this.options = options;
         this.options.maxTilesPerFrame = Math.floor(this.options.maxTilesPerFrame ?? 0);
@@ -1169,7 +1170,7 @@ export class VisibleTileSet {
         if (!dataSource.cacheable && !cacheOnly) {
             const resultTile = dataSource.getTile(tileKey, true);
             if (resultTile) {
-                dataSource.mapView.taskQueue.add({
+                this.m_taskQueue.add({
                     execute: resultTile.load.bind(resultTile),
                     group: TileTaskGroups.FETCH_AND_DECODE,
                     getPriority: () => {
@@ -1201,7 +1202,7 @@ export class VisibleTileSet {
 
         tile = dataSource.getTile(tileKey, true);
         if (tile) {
-            tile.dataSource.mapView.taskQueue.add({
+            this.m_taskQueue.add({
                 execute: tile.load.bind(tile),
                 group: TileTaskGroups.FETCH_AND_DECODE,
                 getPriority: () => {
