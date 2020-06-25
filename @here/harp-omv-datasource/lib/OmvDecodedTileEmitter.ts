@@ -794,7 +794,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                     let coords = outline;
 
-                    if (isFilled || isStandard) {
+                    // disable clipping for the polygon geometries
+                    // rendered using the extruded-polygon technique.
+                    // We can't clip these polygons for now because
+                    // otherwise we could break the current assumptions
+                    // used to add oultines around the extruded geometries.
+                    if (isPolygon && !isExtruded) {
                         const shouldClipPolygon = coords.some(
                             p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
                         );
