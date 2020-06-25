@@ -1064,8 +1064,12 @@ export class MapView extends THREE.EventDispatcher {
         this.projection.projectPoint(this.m_targetGeoPos, this.m_targetWorldPos);
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
-        // setup camera with initial position
 
+        // Must be initialized before setupCamera, because the VisibleTileSet is created as part
+        // of the setupCamera method and it needs the TaskQueue instance.
+        this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
+
+        // setup camera with initial position
         this.setupCamera();
 
         this.m_raycaster = new PickingRaycaster(width, height);
@@ -1119,7 +1123,6 @@ export class MapView extends THREE.EventDispatcher {
             this.m_backgroundDataSource.setTilingScheme(this.m_options.backgroundTilingScheme);
         }
 
-        this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
         this.m_taskScheduler.addEventListener(MapViewEventNames.Update, () => {
             this.update();
         });
@@ -3846,7 +3849,8 @@ export class MapView extends THREE.EventDispatcher {
                 enableMixedLod
             ),
             this.m_tileGeometryManager,
-            this.m_visibleTileSetOptions
+            this.m_visibleTileSetOptions,
+            this.taskQueue
         );
     }
 
