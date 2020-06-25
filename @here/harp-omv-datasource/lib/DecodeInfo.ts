@@ -53,6 +53,16 @@ export class DecodeInfo {
     readonly tileSizeOnScreen: number;
 
     /**
+     * The maximum number of columns.
+     */
+    readonly columnCount: number;
+
+    /**
+     * The maximum number of rows.
+     */
+    readonly rowCount: number;
+
+    /**
      * Constructs a new [[DecodeInfo]].
      *
      * @param adapterId - The id of the [[OmvDataAdapter]] used for decoding.
@@ -72,6 +82,14 @@ export class DecodeInfo {
         this.tilingScheme.getWorldBox(tileKey, this.tileBounds);
         this.tileBounds.getSize(this.tileSize);
         this.tileSizeOnScreen = 256 * Math.pow(2, -this.storageLevelOffset);
+
+        this.columnCount = webMercatorTilingScheme.subdivisionScheme.getLevelDimensionX(
+            this.tileKey.level
+        );
+
+        this.rowCount = webMercatorTilingScheme.subdivisionScheme.getLevelDimensionY(
+            this.tileKey.level
+        );
     }
 
     /**

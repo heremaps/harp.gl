@@ -261,6 +261,23 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const env = context.env;
         this.processFeatureCommon(env);
 
+        const { tileKey, columnCount, rowCount } = this.m_decodeInfo;
+
+        // adjust the extents to ensure that points on the right and bottom edges
+        // of the tile are discarded.
+        const xextent = tileKey.column + 1 < columnCount ? extents - 1 : extents;
+        const yextent = tileKey.row + 1 < rowCount ? extents - 1 : extents;
+
+        // get the point positions (in tile space) that are inside the tile bounds.
+        const tilePositions = geometry.filter(p => {
+            return p.x >= 0 && p.x <= xextent && p.y >= 0 && p.y <= yextent;
+        });
+
+        if (tilePositions.length === 0) {
+            // nothing to do, no geometry within the tile bound.
+            return;
+        }
+
         for (const technique of techniques) {
             if (technique === undefined) {
                 continue;
@@ -298,7 +315,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             const featureId = getFeatureId(env.entries);
-            for (const pos of geometry) {
+            for (const pos of tilePositions) {
                 if (shouldCreateTextGeometries) {
                     const textTechnique = technique as TextTechnique;
                     const text = getFeatureText(context, textTechnique, this.m_languages);
