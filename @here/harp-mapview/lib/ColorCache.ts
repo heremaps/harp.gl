@@ -20,8 +20,8 @@ export class ColorCache {
         return this.m_instance;
     }
 
-    private static m_instance: ColorCache = new ColorCache();
-    private m_map: Map<string, THREE.Color> = new Map();
+    private static readonly m_instance: ColorCache = new ColorCache();
+    private readonly m_map: Map<string, THREE.Color> = new Map();
 
     /**
      * Returns the color for the given `colorCode`. This function may reuse a previously generated

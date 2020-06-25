@@ -116,20 +116,23 @@ class AnimationDummy extends THREE.Object3D {
  * @beta
  */
 export class CameraKeyTrackAnimation {
-    private m_animationClip: THREE.AnimationClip;
-    private m_animationMixer: THREE.AnimationMixer;
-    private m_animationAction: THREE.AnimationAction;
-    private m_dummy: AnimationDummy = new AnimationDummy("dummy");
-    private m_azimuthAxis = new THREE.Vector3(0, 0, 1);
-    private m_altitudeAxis = new THREE.Vector3(1, 0, 0);
+    private readonly m_animationClip: THREE.AnimationClip;
+    private readonly m_animationMixer: THREE.AnimationMixer;
+    private readonly m_animationAction: THREE.AnimationAction;
+    private readonly m_dummy: AnimationDummy = new AnimationDummy("dummy");
+    private readonly m_azimuthAxis = new THREE.Vector3(0, 0, 1);
+    private readonly m_altitudeAxis = new THREE.Vector3(1, 0, 0);
     private m_running: boolean = false;
     private m_onFinished: (() => void) | undefined;
-    private m_name?: string;
+    private readonly m_name?: string;
 
     private m_lastFrameTime: number = 0;
-    private m_animateCb: (event: RenderEvent) => void;
+    private readonly m_animateCb: (event: RenderEvent) => void;
 
-    constructor(private m_mapView: MapView, private m_options: CameraKeyTrackAnimationOptions) {
+    constructor(
+        private readonly m_mapView: MapView,
+        private m_options: CameraKeyTrackAnimationOptions
+    ) {
         const interpolation =
             this.m_options.interpolation !== undefined
                 ? this.m_options.interpolation

@@ -85,7 +85,10 @@ export class TileFactory<TileType extends Tile> {
      * @param m_modelConstructor - Constructor of (subclass of) [[Tile]].
      */
     constructor(
-        private m_modelConstructor: new (dataSource: DataSource, tileKey: TileKey) => TileType
+        private readonly m_modelConstructor: new (
+            dataSource: DataSource,
+            tileKey: TileKey
+        ) => TileType
     ) {}
 
     /**

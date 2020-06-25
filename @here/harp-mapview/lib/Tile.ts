@@ -260,7 +260,7 @@ export class Tile implements CachedResource {
      * impact. Setting this value directly affects the [[willRender]] method, unless
      * overriden by deriving classes.
      */
-    skipRendering = false;
+    skipRendering: boolean = false;
 
     /**
      * @hidden
@@ -276,7 +276,7 @@ export class Tile implements CachedResource {
 
     private m_disposed: boolean = false;
     private m_disposeCallback?: TileCallback;
-    private m_localTangentSpace = false;
+    private readonly m_localTangentSpace: boolean;
 
     private m_forceHasGeometry: boolean | undefined = undefined;
 
@@ -306,9 +306,9 @@ export class Tile implements CachedResource {
     private m_resourceInfo: TileResourceInfo | undefined;
 
     // List of owned textures for disposal
-    private m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
+    private readonly m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
 
-    private m_textStyleCache: TileTextStyleCache;
+    private readonly m_textStyleCache: TileTextStyleCache;
     private m_uniqueKey: number;
     private m_offset: number;
     /**
@@ -331,7 +331,7 @@ export class Tile implements CachedResource {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.updateBoundingBox();
         this.m_worldCenter.copy(this.boundingBox.position);
-        this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
+        this.m_localTangentSpace = localTangentSpace ?? false;
         this.m_textStyleCache = new TileTextStyleCache(this);
         this.m_offset = offset;
         this.m_uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(this.tileKey, this.offset);

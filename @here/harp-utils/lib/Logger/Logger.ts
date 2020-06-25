@@ -14,7 +14,11 @@ export class Logger implements ILogger {
     enabled: boolean = true;
     level: LogLevel = LogLevel.Trace;
 
-    constructor(readonly name: string, private m_channel: IChannel, options?: LoggerOptions) {
+    constructor(
+        readonly name: string,
+        private readonly m_channel: IChannel,
+        options?: LoggerOptions
+    ) {
         if (options !== undefined) {
             this.update(options);
         }

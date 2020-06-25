@@ -92,7 +92,7 @@ export class ScreenCollisions {
 
     /** Tree of allocated bounds. */
 
-    private rtree = new RBush();
+    private readonly rtree = new RBush();
 
     /**
      * Constructs a new ScreenCollisions object.

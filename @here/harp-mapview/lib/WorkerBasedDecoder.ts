@@ -34,7 +34,7 @@ let nextUniqueServiceId = 0;
  * - configuration.
  */
 export class WorkerBasedDecoder implements ITileDecoder {
-    private serviceId: string;
+    private readonly serviceId: string;
     private m_serviceCreated: boolean = false;
 
     /**

@@ -29,10 +29,10 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
      * @param m_requestHeaders - Optional request headers for requests(e.g. Authorization)
      */
     constructor(
-        private m_fetchURL: string,
-        private m_baseScheme: string,
+        private readonly m_fetchURL: string,
+        private readonly m_baseScheme: string,
         private m_requestHeaders?: RequestHeaders,
-        private m_transferManager: ITransferManager = TransferManager.instance()
+        private readonly m_transferManager: ITransferManager = TransferManager.instance()
     ) {
         super();
     }

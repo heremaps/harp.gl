@@ -28,12 +28,15 @@ export class ContextualArabicConverter {
         return this.m_instance;
     }
 
-    private m_singleCharactersMap: Map<number, ReadonlyArray<number | undefined>> = new Map();
-    private m_combinedCharactersMap: Map<
+    private readonly m_singleCharactersMap: Map<
+        number,
+        ReadonlyArray<number | undefined>
+    > = new Map();
+    private readonly m_combinedCharactersMap: Map<
         number,
         Map<number, ReadonlyArray<number | undefined>>
     > = new Map();
-    private m_neutralCharacters: number[];
+    private readonly m_neutralCharacters: number[];
 
     private constructor() {
         // Single characters.

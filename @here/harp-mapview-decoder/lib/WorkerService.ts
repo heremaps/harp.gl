@@ -60,7 +60,7 @@ interface RequestEntry {
  * Communication peer for [[ConcurrentWorkerSet]].
  */
 export abstract class WorkerService {
-    private m_pendingRequests: Map<number, RequestEntry> = new Map();
+    private readonly m_pendingRequests: Map<number, RequestEntry> = new Map();
 
     /**
      * Sets up the `WorkerService` with the specified name, and starts processing messages.
@@ -112,7 +112,7 @@ export abstract class WorkerService {
      *
      * @param message - Message to be dispatched.
      */
-    private onMessage = (message: MessageEvent) => {
+    private readonly onMessage = (message: MessageEvent) => {
         if (typeof message.data.service !== "string" || message.data.service !== this.serviceId) {
             return;
         }

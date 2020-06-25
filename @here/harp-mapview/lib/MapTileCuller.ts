@@ -18,7 +18,7 @@ export class MapTileCuller {
     private m_globalFrustumMin = new THREE.Vector3();
     private m_globalFrustumMax = new THREE.Vector3();
 
-    private m_frustumCorners = [
+    private readonly m_frustumCorners = [
         new THREE.Vector3(),
         new THREE.Vector3(),
         new THREE.Vector3(),
@@ -34,7 +34,7 @@ export class MapTileCuller {
      *
      * @param m_camera - A `THREE.Camera`.
      */
-    constructor(private m_camera: THREE.Camera) {}
+    constructor(private readonly m_camera: THREE.Camera) {}
 
     /**
      * Sets up culling and computes frustum corners. You mus call this function before the culling

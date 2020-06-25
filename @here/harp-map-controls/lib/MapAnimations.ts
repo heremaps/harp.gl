@@ -280,13 +280,13 @@ export class CameraRotationAnimation extends CameraAnimation {
         }
     }
 
-    private beginInteractionListener = (): void => {
+    private readonly beginInteractionListener = (): void => {
         if (!this.stopped) {
             this.stopTween();
         }
     };
 
-    private endInteractionListener = (): void => {
+    private readonly endInteractionListener = (): void => {
         if (!this.stopped) {
             this.startTween();
         }
@@ -368,7 +368,7 @@ export class CameraPanAnimation extends CameraAnimation {
      */
     readonly interpolation = TWEEN.Interpolation.CatmullRom;
 
-    private m_geoCoordinates: GeoCoordinatesLike[];
+    private readonly m_geoCoordinates: GeoCoordinatesLike[];
 
     /**
      * Creates a new `CameraPanAnimation` object.

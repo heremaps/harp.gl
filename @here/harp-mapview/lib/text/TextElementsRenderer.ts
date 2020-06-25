@@ -309,7 +309,7 @@ export class TextElementsRenderer {
     private readonly m_options: TextElementsRendererOptions;
 
     private readonly m_textStyleCache: TextStyleCache;
-    private m_textRenderers: TextCanvasRenderer[] = [];
+    private readonly m_textRenderers: TextCanvasRenderer[] = [];
 
     private m_overlayTextElements?: TextElement[];
 
@@ -317,9 +317,9 @@ export class TextElementsRenderer {
     private m_debugGlyphTextureCacheMesh?: THREE.Mesh;
     private m_debugGlyphTextureCacheWireMesh?: THREE.LineSegments;
 
-    private m_tmpVector = new THREE.Vector2();
-    private m_tmpVector3 = new THREE.Vector3();
-    private m_cameraLookAt = new THREE.Vector3();
+    private readonly m_tmpVector = new THREE.Vector2();
+    private readonly m_tmpVector3 = new THREE.Vector3();
+    private readonly m_cameraLookAt = new THREE.Vector3();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_forceNewLabelsPass: boolean = false;
@@ -347,16 +347,16 @@ export class TextElementsRenderer {
      * [[TextElementsRendererOptions]].
      */
     constructor(
-        private m_viewState: ViewState,
-        private m_viewCamera: THREE.Camera,
-        private m_viewUpdateCallback: ViewUpdateCallback,
-        private m_screenCollisions: ScreenCollisions,
-        private m_screenProjector: ScreenProjector,
-        private m_textCanvasFactory: TextCanvasFactory,
-        private m_poiManager: PoiManager,
-        private m_poiRendererFactory: PoiRendererFactory,
-        private m_fontCatalogLoader: FontCatalogLoader,
-        private m_theme: Theme,
+        private readonly m_viewState: ViewState,
+        private readonly m_viewCamera: THREE.Camera,
+        private readonly m_viewUpdateCallback: ViewUpdateCallback,
+        private readonly m_screenCollisions: ScreenCollisions,
+        private readonly m_screenProjector: ScreenProjector,
+        private readonly m_textCanvasFactory: TextCanvasFactory,
+        private readonly m_poiManager: PoiManager,
+        private readonly m_poiRendererFactory: PoiRendererFactory,
+        private readonly m_fontCatalogLoader: FontCatalogLoader,
+        private readonly m_theme: Theme,
         options: TextElementsRendererOptions
     ) {
         this.m_textStyleCache = new TextStyleCache(this.m_theme);

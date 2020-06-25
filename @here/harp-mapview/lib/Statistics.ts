@@ -149,7 +149,7 @@ export namespace RingBuffer {
          * @param m_buffer - `Ringbuffer` to iterate over.
          * @param m_index - Start index.
          */
-        constructor(private m_buffer: RingBuffer<T>, private m_index: number = 0) {}
+        constructor(private readonly m_buffer: RingBuffer<T>, private m_index: number = 0) {}
 
         /**
          * Gets the iterator's current value. This function does not fail even if an overrun occurs.
@@ -543,7 +543,11 @@ export class MultiStageTimer {
      * @param name - Name of this `MultiStageTimer`.
      * @param stages - List of timer names.
      */
-    constructor(private statistics: Statistics, readonly name: string, public stages: string[]) {
+    constructor(
+        private readonly statistics: Statistics,
+        readonly name: string,
+        public stages: string[]
+    ) {
         if (stages.length < 1) {
             throw new Error("MultiStageTimer needs stages");
         }
@@ -629,9 +633,9 @@ export class MultiStageTimer {
  * disable statistics to minimize their impact on performance.
  */
 export class Statistics {
-    private timers: Map<string, Timer>;
+    private readonly timers: Map<string, Timer>;
 
-    private nullTimer: Timer;
+    private readonly nullTimer: Timer;
 
     /**
      * Sets up a group of timers.
@@ -982,7 +986,7 @@ export class PerformanceStatistics {
     readonly configs: Map<string, string> = new Map();
 
     // Current array of frame events.
-    private m_frameEvents: FrameStatsArray;
+    private readonly m_frameEvents: FrameStatsArray;
 
     /**
      * Creates an instance of PerformanceStatistics. Overrides the current `instance`.

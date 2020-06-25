@@ -39,7 +39,7 @@ export class CopyrightElementHandler {
      */
     staticInfo: CopyrightInfo[] | undefined;
 
-    private m_defaults: Map<string, CopyrightInfo> = new Map();
+    private readonly m_defaults: Map<string, CopyrightInfo> = new Map();
     private m_element: HTMLElement;
     private m_mapViews: MapView[] = [];
 

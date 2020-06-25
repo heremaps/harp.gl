@@ -16,7 +16,7 @@ import { Tile } from "../Tile";
 export class TileTextStyleCache {
     private textRenderStyles: TextRenderStyle[] = [];
     private textLayoutStyles: TextLayoutStyle[] = [];
-    private tile: Tile;
+    private readonly tile: Tile;
 
     constructor(tile: Tile) {
         this.tile = tile;

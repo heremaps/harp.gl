@@ -68,8 +68,8 @@ class TransverseMercatorProjection extends Projection {
     /** @override */
     readonly type: ProjectionType = ProjectionType.Planar;
 
-    private m_phi0: number = 0;
-    private m_lambda0: number = 0;
+    private readonly m_phi0: number = 0;
+    private readonly m_lambda0: number = 0;
 
     constructor(readonly unitScale: number) {
         super(unitScale);

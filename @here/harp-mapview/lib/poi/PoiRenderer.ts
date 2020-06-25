@@ -393,13 +393,13 @@ export class PoiRenderer {
         return screenBox;
     }
     // keep track of the missing textures, but only warn once
-    private static m_missingTextureName: Map<string, boolean> = new Map();
+    private static readonly m_missingTextureName: Map<string, boolean> = new Map();
 
     // the render buffer containing all batches, one batch per texture/material.
-    private m_renderBuffer: PoiRenderBuffer;
+    private readonly m_renderBuffer: PoiRenderBuffer;
 
     // temporary variable to save allocations
-    private m_tempScreenBox = new Math2D.Box();
+    private readonly m_tempScreenBox = new Math2D.Box();
 
     /**
      * Create the `PoiRenderer` for the specified {@link MapView}.

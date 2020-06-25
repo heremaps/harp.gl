@@ -40,29 +40,29 @@ export interface GlyphCacheEntry {
  * Implemented as an abstraction layer on top of an LRUCache and WebGLRenderTarget.
  */
 export class GlyphTextureCache {
-    private m_cacheWidth: number;
-    private m_cacheHeight: number;
-    private m_textureSize: THREE.Vector2;
-    private m_entryCache: LRUCache<string, GlyphCacheEntry>;
+    private readonly m_cacheWidth: number;
+    private readonly m_cacheHeight: number;
+    private readonly m_textureSize: THREE.Vector2;
+    private readonly m_entryCache: LRUCache<string, GlyphCacheEntry>;
 
-    private m_scene: THREE.Scene;
-    private m_camera: THREE.OrthographicCamera;
-    private m_rt: THREE.WebGLRenderTarget;
+    private readonly m_scene: THREE.Scene;
+    private readonly m_camera: THREE.OrthographicCamera;
+    private readonly m_rt: THREE.WebGLRenderTarget;
 
-    private m_copyTextureSet: Set<THREE.Texture>;
-    private m_copyTransform: THREE.Matrix3;
-    private m_copyPositions: THREE.Vector2[];
-    private m_copyMaterial: GlyphCopyMaterial;
+    private readonly m_copyTextureSet: Set<THREE.Texture>;
+    private readonly m_copyTransform: THREE.Matrix3;
+    private readonly m_copyPositions: THREE.Vector2[];
+    private readonly m_copyMaterial: GlyphCopyMaterial;
     private m_copyVertexBuffer: THREE.InterleavedBuffer;
-    private m_copyPositionAttribute: THREE.InterleavedBufferAttribute;
-    private m_copyUVAttribute: THREE.InterleavedBufferAttribute;
-    private m_copyGeometry: THREE.BufferGeometry;
+    private readonly m_copyPositionAttribute: THREE.InterleavedBufferAttribute;
+    private readonly m_copyUVAttribute: THREE.InterleavedBufferAttribute;
+    private readonly m_copyGeometry: THREE.BufferGeometry;
     private m_copyMesh: THREE.Mesh;
     private m_copyGeometryDrawCount: number;
 
-    private m_clearMaterial: GlyphClearMaterial;
+    private readonly m_clearMaterial: GlyphClearMaterial;
     private m_clearPositionAttribute: THREE.BufferAttribute;
-    private m_clearGeometry: THREE.BufferGeometry;
+    private readonly m_clearGeometry: THREE.BufferGeometry;
     private m_clearMesh: THREE.Mesh;
     private m_clearGeometryDrawCount: number;
 

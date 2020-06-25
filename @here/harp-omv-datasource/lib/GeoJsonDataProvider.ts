@@ -34,7 +34,7 @@ let missingTilerServiceInfoEmitted: boolean = false;
  * GeoJson [[DataProvider]]. Automatically handles tiling and simplification of static GeoJson.
  */
 export class GeoJsonDataProvider implements DataProvider {
-    private m_tiler: ITiler;
+    private readonly m_tiler: ITiler;
     private m_registered = false;
 
     /**

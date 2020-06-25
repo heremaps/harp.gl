@@ -9,7 +9,7 @@ import { SubTiles } from "./SubTiles";
 import { TileKey } from "./TileKey";
 
 export class TileTreeTraverse {
-    private m_subdivisionScheme: SubdivisionScheme;
+    private readonly m_subdivisionScheme: SubdivisionScheme;
 
     constructor(subdivisionScheme: SubdivisionScheme) {
         this.m_subdivisionScheme = subdivisionScheme;

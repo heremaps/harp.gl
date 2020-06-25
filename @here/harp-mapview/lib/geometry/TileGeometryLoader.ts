@@ -104,7 +104,7 @@ export class TileGeometryLoader {
     private m_disabledKinds: GeometryKindSet | undefined;
     private m_timeout: any;
 
-    constructor(private m_tile: Tile) {}
+    constructor(private readonly m_tile: Tile) {}
 
     /**
      * The {@link Tile} this `TileGeometryLoader` is managing.

@@ -776,14 +776,14 @@ export class MapView extends THREE.EventDispatcher {
     private m_elevationRangeSource?: ElevationRangeSource;
     private m_elevationProvider?: ElevationProvider;
     private m_visibleTileSetLock: boolean = false;
-    private m_tileGeometryManager: TileGeometryManager;
+    private readonly m_tileGeometryManager: TileGeometryManager;
 
-    private m_tileWrappingEnabled: boolean = true;
+    private readonly m_tileWrappingEnabled: boolean = true;
 
     private m_zoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_maxZoomLevel: number = DEFAULT_MAX_ZOOM_LEVEL;
-    private m_minCameraHeight: number = DEFAULT_MIN_CAMERA_HEIGHT;
+    private readonly m_minCameraHeight: number = DEFAULT_MIN_CAMERA_HEIGHT;
 
     private readonly m_screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1);
 
@@ -804,7 +804,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_targetDistance = 0;
     private m_targetGeoPos = GeoCoordinates.fromObject(MapViewDefaults.target!);
     // Focus point world coords may be calculated after setting projection, use dummy value here.
-    private m_targetWorldPos = new THREE.Vector3();
+    private readonly m_targetWorldPos = new THREE.Vector3();
     private readonly m_viewRanges: ViewRanges = {
         near: DEFAULT_CAM_NEAR_PLANE,
         far: DEFAULT_CAM_FAR_PLANE,
@@ -832,7 +832,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_animationFrameHandle: number | undefined;
     private m_drawing: boolean = false;
     private m_updatePending: boolean = false;
-    private m_renderer: THREE.WebGLRenderer;
+    private readonly m_renderer: THREE.WebGLRenderer;
     private m_frameNumber = 0;
 
     private m_textElementsRenderer: TextElementsRenderer;
@@ -845,9 +845,9 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_tileDataSources: DataSource[] = [];
     private readonly m_connectedDataSources = new Set<string>();
     private readonly m_failedDataSources = new Set<string>();
-    private m_backgroundDataSource?: BackgroundDataSource;
-    private m_polarDataSource?: PolarTileDataSource;
-    private m_enablePolarDataSource: boolean = true;
+    private readonly m_backgroundDataSource?: BackgroundDataSource;
+    private readonly m_polarDataSource?: PolarTileDataSource;
+    private readonly m_enablePolarDataSource: boolean = true;
 
     // gestures
     private readonly m_raycaster: PickingRaycaster;
@@ -858,7 +858,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
 
     private m_theme: Theme = {};
-    private m_uriResolver?: UriResolver;
+    private readonly m_uriResolver?: UriResolver;
     private m_themeIsLoading: boolean = false;
 
     private m_previousFrameTimeStamp?: number;
@@ -866,29 +866,29 @@ export class MapView extends THREE.EventDispatcher {
     private m_firstFrameComplete = false;
     private m_initialTextPlacementDone = false;
 
-    private handleRequestAnimationFrame: (frameStartTime: number) => void;
+    private readonly handleRequestAnimationFrame: (frameStartTime: number) => void;
 
-    private m_pickHandler: PickHandler;
+    private readonly m_pickHandler: PickHandler;
 
-    private m_imageCache: MapViewImageCache = new MapViewImageCache(this);
+    private readonly m_imageCache: MapViewImageCache = new MapViewImageCache(this);
 
-    private m_poiManager: PoiManager = new PoiManager(this);
+    private readonly m_poiManager: PoiManager = new PoiManager(this);
 
-    private m_poiTableManager: PoiTableManager = new PoiTableManager(this);
+    private readonly m_poiTableManager: PoiTableManager = new PoiTableManager(this);
 
-    private m_collisionDebugCanvas: HTMLCanvasElement | undefined;
+    private readonly m_collisionDebugCanvas: HTMLCanvasElement | undefined;
 
     // Detection of camera movement and scene change:
-    private m_movementDetector: CameraMovementDetector;
+    private readonly m_movementDetector: CameraMovementDetector;
 
     private m_thisFrameTilesChanged: boolean | undefined;
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
     private m_politicalView: string | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
-    private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
+    private readonly m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
-    private m_env: MapEnv = new MapEnv({});
+    private readonly m_env: MapEnv = new MapEnv({});
 
     private m_enableMixedLod: boolean | undefined;
 
@@ -4035,7 +4035,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
-    private onWebGLContextLost = (event: Event) => {
+    private readonly onWebGLContextLost = (event: Event) => {
         this.dispatchEvent(CONTEXT_LOST_EVENT);
         logger.warn("WebGL context lost", event);
     };
@@ -4045,7 +4045,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
-    private onWebGLContextRestored = (event: Event) => {
+    private readonly onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
             if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {

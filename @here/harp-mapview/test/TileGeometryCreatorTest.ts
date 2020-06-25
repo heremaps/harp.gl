@@ -30,7 +30,7 @@ import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { Tile } from "../lib/Tile";
 
 class FakeMapView {
-    private m_scene = new THREE.Scene();
+    private readonly m_scene = new THREE.Scene();
 
     get zoomLevel(): number {
         return 0;
