@@ -675,4 +675,113 @@ describe("VisibleTileSet", function() {
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
         assert.equal(result[0].visibleTiles.length, 100);
     });
+
+    it("#updateRenderList get tiles from cache", function() {
+        const vts = fixture.vts;
+        const dataSource = fixture.ds[0];
+
+        const tileKey0 = TileKey.fromMortonCode(371506850);
+        const tileKey1 = TileKey.fromMortonCode(371506851);
+
+        // Pre-populate cache.
+        const tile0 = vts.getTile(dataSource, tileKey0, 0, 0);
+        const tile1 = vts.getTile(dataSource, tileKey1, 0, 0);
+
+        const cachedTile0 = fixture.vts.getCachedTile(dataSource, tileKey0, 0, 0);
+        const cachedTile1 = fixture.vts.getCachedTile(dataSource, tileKey1, 0, 0);
+
+        // Test that the cached tiles are returned.
+        assert.equal(tile0, cachedTile0);
+        assert.equal(tile1, cachedTile1);
+    });
+
+    it("#updateRenderList clear all tiles from cache", function() {
+        const vts = fixture.vts;
+        const dataSource = fixture.ds[0];
+
+        const secondDataSource = new FakeOmvDataSource({ name: "omv2" });
+        fixture.addDataSource(secondDataSource);
+
+        const tileKey0 = TileKey.fromMortonCode(371506850);
+        const tileKey1 = TileKey.fromMortonCode(371506851);
+
+        // Pre-populate cache.
+        assert.notEqual(vts.getTile(dataSource, tileKey0, 0, 0), undefined);
+        assert.notEqual(vts.getTile(secondDataSource, tileKey1, 0, 0), undefined);
+
+        fixture.vts.clearTileCache();
+
+        const cachedTile0 = fixture.vts.getCachedTile(dataSource, tileKey0, 0, 0);
+        const cachedTile1 = fixture.vts.getCachedTile(secondDataSource, tileKey1, 0, 0);
+
+        // Test that the cached tiles are gone.
+        assert.isUndefined(cachedTile0);
+        assert.isUndefined(cachedTile1);
+    });
+
+    it("#updateRenderList clear tiles from cache by datasource", function() {
+        const vts = fixture.vts;
+        const dataSource = fixture.ds[0];
+
+        const secondDataSource = new FakeOmvDataSource({ name: "omv2" });
+        fixture.addDataSource(secondDataSource);
+
+        const tileKey0 = TileKey.fromMortonCode(371506850);
+        const tileKey1 = TileKey.fromMortonCode(371506851);
+
+        // Pre-populate cache.
+        assert.notEqual(vts.getTile(dataSource, tileKey0, 0, 0), undefined);
+        assert.notEqual(vts.getTile(secondDataSource, tileKey1, 0, 0), undefined);
+
+        fixture.vts.clearTileCache(dataSource);
+
+        const cachedTile0 = fixture.vts.getCachedTile(dataSource, tileKey0, 0, 0);
+        const cachedTile1 = fixture.vts.getCachedTile(secondDataSource, tileKey1, 0, 0);
+
+        // Test that the dataSource's cached tiles are gone.
+        assert.isUndefined(cachedTile0);
+        assert.notEqual(cachedTile1, undefined);
+    });
+
+    it("#updateRenderList clear tiles from cache by datasource and predicate", function() {
+        const vts = fixture.vts;
+        const dataSource = fixture.ds[0];
+
+        const tileKey0 = TileKey.fromMortonCode(371506850);
+        const tileKey1 = TileKey.fromMortonCode(371506851);
+
+        // Pre-populate cache.
+        assert.notEqual(vts.getTile(dataSource, tileKey0, 0, 0), undefined);
+        assert.notEqual(vts.getTile(dataSource, tileKey1, 0, 0), undefined);
+
+        fixture.vts.clearTileCache(dataSource, tile => tile.tileKey === tileKey0);
+
+        const cachedTile0 = fixture.vts.getCachedTile(dataSource, tileKey0, 0, 0);
+        const cachedTile1 = fixture.vts.getCachedTile(dataSource, tileKey1, 0, 0);
+
+        // Test that the dataSource's cached tiles that match the tileKey0 are gone.
+        assert.isUndefined(cachedTile0);
+        assert.notEqual(cachedTile1, undefined);
+    });
+
+    it("#updateRenderList clear tiles from cache by predicate", function() {
+        const vts = fixture.vts;
+        const dataSource = fixture.ds[0];
+
+        const tileKey0 = TileKey.fromMortonCode(371506850);
+        const tileKey1 = TileKey.fromMortonCode(371506851);
+
+        // Pre-populate cache.
+        assert.notEqual(vts.getTile(dataSource, tileKey0, 0, 0), undefined);
+        assert.notEqual(vts.getTile(dataSource, tileKey1, 0, 0), undefined);
+
+        fixture.vts.clearTileCache(undefined, tile => tile.tileKey === tileKey1);
+
+        const cachedTile0 = fixture.vts.getCachedTile(dataSource, tileKey0, 0, 0);
+        const cachedTile1 = fixture.vts.getCachedTile(dataSource, tileKey1, 0, 0);
+
+        //Test that the cached tiles which have tileKey equal to tileKey1 are gone.
+        assert.isUndefined(cachedTile1);
+        assert.notEqual(cachedTile0, undefined);
+    });
 });
