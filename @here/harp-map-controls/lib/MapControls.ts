@@ -760,7 +760,7 @@ export class MapControls extends THREE.EventDispatcher {
                       Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
                   );
 
-        MapViewUtils.zoomOnTargetPosition(
+        const success = MapViewUtils.zoomOnTargetPosition(
             this.mapView,
             this.m_zoomTargetNormalizedCoordinates.x,
             this.m_zoomTargetNormalizedCoordinates.y,
@@ -768,7 +768,7 @@ export class MapControls extends THREE.EventDispatcher {
             this.m_maxTiltAngle
         );
 
-        if (resetZoomState) {
+        if (resetZoomState || !success) {
             this.m_targetedZoom = undefined;
             this.m_currentZoom = undefined;
         }
