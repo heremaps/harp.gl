@@ -29,6 +29,7 @@ import {
     isGeoBoxExtentLike,
     isGeoCoordinatesLike,
     mercatorProjection,
+    OrientedBox3,
     Projection,
     ProjectionType,
     TilingScheme,
@@ -649,6 +650,11 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      * @beta
      */
     throttlingEnabled?: boolean;
+
+    /**
+     * If set, the view will constrained within the given bounds in geo coordinates.
+     */
+    maxBounds?: GeoBox;
 }
 
 /**
@@ -793,6 +799,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_maxZoomLevel: number = DEFAULT_MAX_ZOOM_LEVEL;
     private readonly m_minCameraHeight: number = DEFAULT_MIN_CAMERA_HEIGHT;
+    private m_geoMaxBounds?: GeoBox;
+    private m_worldMaxBounds?: THREE.Box3;
 
     private readonly m_screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1);
 
@@ -932,6 +940,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.m_options.minCameraHeight !== undefined) {
             this.m_minCameraHeight = this.m_options.minCameraHeight;
+        }
+
+        if (this.m_options.maxBounds !== undefined) {
+            this.m_geoMaxBounds = this.m_options.maxBounds;
         }
 
         if (this.m_options.decoderUrl !== undefined) {
@@ -1703,6 +1715,8 @@ export class MapView extends THREE.EventDispatcher {
         this.clearTileCache();
         this.textElementsRenderer.clearRenderStates();
         this.m_visibleTiles = this.createVisibleTileSet();
+        // Set geo max bounds to compute world bounds with new projection.
+        this.geoMaxBounds = this.geoMaxBounds;
 
         this.lookAtImpl({ tilt, heading });
     }
@@ -1892,6 +1906,33 @@ export class MapView extends THREE.EventDispatcher {
     set maxZoomLevel(zoomLevel: number) {
         this.m_maxZoomLevel = zoomLevel;
         this.update();
+    }
+
+    /**
+     * The view's maximum bounds in geo coordinates if any.
+     */
+    get geoMaxBounds(): GeoBox | undefined {
+        return this.m_geoMaxBounds;
+    }
+
+    /**
+     * Sets or clears the view's maximum bounds in geo coordinates. If set, the view will be
+     * constrained to the given geo bounds.
+     */
+    set geoMaxBounds(bounds: GeoBox | undefined) {
+        this.m_geoMaxBounds = bounds;
+        this.m_worldMaxBounds = this.m_geoMaxBounds
+            ? this.projection.projectBox(this.m_geoMaxBounds, new THREE.Box3())
+            : undefined;
+    }
+
+    /**
+     * @hidden
+     * @internal
+     * The view's maximum bounds in world coordinates if any.
+     */
+    get worldMaxBounds(): THREE.Box3 | OrientedBox3 | undefined {
+        return this.m_worldMaxBounds;
     }
 
     /**
@@ -3106,11 +3147,18 @@ export class MapView extends THREE.EventDispatcher {
      */
     private updateLookAtSettings() {
         // tslint:disable-next-line: deprecation
-        const { target, distance } = MapViewUtils.getTargetAndDistance(
+        let { target, distance } = MapViewUtils.getTargetAndDistance(
             this.projection,
             this.camera,
             this.elevationProvider
         );
+        if (this.geoMaxBounds) {
+            ({ target, distance } = MapViewUtils.constrainTargetAndDistanceToViewBounds(
+                target,
+                distance,
+                this
+            ));
+        }
 
         this.m_targetWorldPos.copy(target);
         this.m_targetGeoPos = this.projection.unprojectPoint(this.m_targetWorldPos);
