@@ -1159,32 +1159,17 @@ export class VisibleTileSet {
         cacheOnly: boolean,
         frameNumber: number
     ): Tile | undefined {
-        function touchTile(tileToUpdate?: Tile) {
-            if (tileToUpdate === undefined) {
-                return;
-            }
+        function touchTile(tileToUpdate: Tile) {
             // Keep the tile from being removed from the cache.
             tileToUpdate.frameNumLastRequested = frameNumber;
         }
 
         if (!dataSource.cacheable && !cacheOnly) {
             const resultTile = dataSource.getTile(tileKey, true);
-            if (resultTile) {
-                this.m_taskQueue.add({
-                    execute: resultTile.load.bind(resultTile),
-                    group: TileTaskGroups.FETCH_AND_DECODE,
-                    getPriority: () => {
-                        return resultTile?.tileLoader?.priority || 0;
-                    },
-                    isExpired: () => {
-                        return !resultTile?.isVisible;
-                    },
-                    estimatedProcessTime: () => {
-                        return 1;
-                    }
-                });
+            if (resultTile !== undefined) {
+                this.addToTaskQueue(resultTile);
+                touchTile(resultTile);
             }
-            touchTile(resultTile);
             return resultTile;
         }
 
@@ -1201,29 +1186,31 @@ export class VisibleTileSet {
         }
 
         tile = dataSource.getTile(tileKey, true);
-        if (tile) {
-            this.m_taskQueue.add({
-                execute: tile.load.bind(tile),
-                group: TileTaskGroups.FETCH_AND_DECODE,
-                getPriority: () => {
-                    return tile?.tileLoader?.priority || 0;
-                },
-                isExpired: () => {
-                    return !tile?.isVisible;
-                },
-                estimatedProcessTime: () => {
-                    return 1;
-                }
-            });
-        }
         // TODO: Update all tile information including area, min/max elevation from TileKeyEntry
         if (tile !== undefined) {
+            this.addToTaskQueue(tile);
             tile.offset = offset;
             touchTile(tile);
             tileCache.set(tileKey.mortonCode(), offset, dataSource, tile);
             this.m_tileGeometryManager.initTile(tile);
         }
         return tile;
+    }
+
+    private addToTaskQueue(tile: Tile) {
+        this.m_taskQueue.add({
+            execute: tile.load.bind(tile),
+            group: TileTaskGroups.FETCH_AND_DECODE,
+            getPriority: () => {
+                return tile?.tileLoader?.priority || 0;
+            },
+            isExpired: () => {
+                return !tile?.isVisible;
+            },
+            estimatedProcessTime: () => {
+                return 1;
+            }
+        });
     }
 
     private markDataSourceTilesDirty(renderListEntry: DataSourceTileList) {
