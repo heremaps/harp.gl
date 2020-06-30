@@ -281,7 +281,8 @@ describe("Rendering lines: ", function() {
         }
 
         scene.position.set(-canvas.width / 2, -canvas.height / 2, 0);
-        webglRenderer = new THREE.WebGLRenderer({ canvas });
+        // Enable backward compatibility with three.js <= 0.117
+        webglRenderer = new ((THREE as any).WebGL1Renderer ?? THREE.WebGLRenderer)({ canvas });
         webglRenderer.setClearColor(0x000000, 0.0);
 
         webglRenderer.render(scene, camera);

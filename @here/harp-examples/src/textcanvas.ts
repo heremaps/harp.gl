@@ -334,8 +334,8 @@ export namespace TextCanvasDynamicExample {
     }
 
     function main() {
-        // Init Three.JS
-        webglRenderer = new THREE.WebGLRenderer({
+        // Init Three.JS, enable backward compatibility with three.js <= 0.117
+        webglRenderer = new ((THREE as any).WebGL1Renderer ?? THREE.WebGLRenderer)({
             canvas: document.getElementById("mapCanvas") as HTMLCanvasElement
         });
         webglRenderer.domElement.addEventListener("contextmenu", e => e.preventDefault());

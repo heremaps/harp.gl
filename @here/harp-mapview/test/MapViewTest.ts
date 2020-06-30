@@ -70,9 +70,11 @@ describe("MapView", function() {
     beforeEach(function() {
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
-        // tslint:disable-next-line:no-unused-variable
-        const webGlStub = sandbox
+        sandbox
             .stub(THREE, "WebGLRenderer")
+            .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
+        sandbox
+            .stub(THREE, "WebGL1Renderer")
             .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
         // tslint:disable-next-line:no-unused-variable
         const fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
