@@ -8,25 +8,25 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { WebTileDataSource } from "../index";
+import { HereTileProvider, HereWebTileDataSource, WebTileDataSource } from "../index";
 
 describe("WebTileDataSource", function() {
     it("#createWebTileDataSource has default values", async function() {
         const apikey = "123";
-        const webTileDataSource = new WebTileDataSource({
+        const webTileDataSource = new HereWebTileDataSource({
             apikey
         });
         assert(webTileDataSource.maxDataLevel === 19);
     });
     it("#createWebTileDataSource with token authentication", async function() {
-        const webTileDataSource = new WebTileDataSource({
+        const webTileDataSource = new HereWebTileDataSource({
             authenticationCode: "foo123"
         });
         assert(webTileDataSource.maxDataLevel === 19);
     });
     it("#createWebTileDataSource with 256px and ppi320", async function() {
         const apikey = "123";
-        const webTileDataSource = new WebTileDataSource({
+        const webTileDataSource = new HereWebTileDataSource({
             apikey,
             resolution: WebTileDataSource.resolutionValue.resolution256,
             ppi: WebTileDataSource.ppiValue.ppi320
@@ -35,17 +35,17 @@ describe("WebTileDataSource", function() {
     });
     it("#createWebTileDataSource with satellite.day", async function() {
         const apikey = "123";
-        const webTileDataSource = new WebTileDataSource({
+        const webTileDataSource = new HereWebTileDataSource({
             apikey,
-            tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE
+            tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE
         });
         assert(webTileDataSource.maxDataLevel === 19);
     });
     it("#createWebTileDataSource with satellite.day and 256px", async function() {
         const apikey = "123";
-        const webTileDataSource = new WebTileDataSource({
+        const webTileDataSource = new HereWebTileDataSource({
             apikey,
-            tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE,
+            tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE,
             resolution: WebTileDataSource.resolutionValue.resolution256
         });
         assert(webTileDataSource.maxDataLevel === 20);
@@ -54,20 +54,20 @@ describe("WebTileDataSource", function() {
         const apikey = "123";
         assert.throw(
             () =>
-                new WebTileDataSource({
+                new HereWebTileDataSource({
                     apikey,
-                    tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE,
+                    tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE,
                     ppi: WebTileDataSource.ppiValue.ppi320
                 })
         );
     });
     it("#createWebTileDataSource throws w/o auth.", async function() {
-        assert.throw(() => new WebTileDataSource({} as any));
+        assert.throw(() => new HereWebTileDataSource({} as any));
     });
     it("#createWebTileDataSource throws w/ missing appCode", async function() {
-        assert.throw(() => new WebTileDataSource({ appId: "42" } as any));
+        assert.throw(() => new HereWebTileDataSource({ appId: "42" } as any));
     });
     it("#createWebTileDataSource throws w/ missing appId", async function() {
-        assert.throw(() => new WebTileDataSource({ appCode: "42" } as any));
+        assert.throw(() => new HereWebTileDataSource({ appCode: "42" } as any));
     });
 });

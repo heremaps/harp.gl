@@ -5,28 +5,28 @@
  */
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { HereTileProvider, HereWebTileDataSource } from "@here/harp-webtile-datasource";
+import { HereWebTileDataSource, WebTileDataSource } from "@here/harp-webtile-datasource";
 
 import { apikey } from "../config";
 
 // tslint:disable:max-line-length
 /**
- * A simple example using the webtile data source. Tiles are retrieved from
+ * A simple example using the herewebtile data source. Tiles are retrieved from
  * ```
- * https://1.aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/satellite.day/${level}/${column}/${row}/512/png8?apikey=${apikey}
+ * https://1.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day/${level}/${column}/${row}/512/png8?apikey=${apikey}
  * ```
  *
- * A [[WebTileDataSource]] is created with specified applications' apikey passed
+ * A [[HereWebTileDataSource]] is created with specified applications' apikey passed
  * as [[WebTileDataSourceOptions]]
  * ```typescript
- * [[include:harp_gl_datasource_satellitetile_1.ts]]
+ * [[include:harp_gl_datasource_herewebtile_1.ts]]
  * ```
  * Then added to the [[MapView]]
  * ```typescript
- * [[include:harp_gl_datasource_satellitetile_2.ts]]
+ * [[include:harp_gl_datasource_herewebtile_2.ts]]
  * ```
  */
-export namespace SatelliteDataSourceExample {
+export namespace HereWebTileDataSourceExample {
     // creates a new MapView for the HTMLCanvasElement of the given id
     export function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
@@ -58,14 +58,14 @@ export namespace SatelliteDataSourceExample {
 
     const mapView = initializeMapView("mapCanvas");
 
-    // snippet:harp_gl_datasource_satellitetile_1.ts
-    const webTileDataSource = new HereWebTileDataSource({
+    // snippet:harp_gl_datasource_herewebtile_1.ts
+    const hereWebTileDataSource = new HereWebTileDataSource({
         apikey,
-        tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE
+        ppi: WebTileDataSource.ppiValue.ppi320
     });
-    // end:harp_gl_datasource_satellitetile_1.ts
+    // end:harp_gl_datasource_herewebtile_1.ts
 
-    // snippet:harp_gl_datasource_satellitetile_2.ts
-    mapView.addDataSource(webTileDataSource);
-    // end:harp_gl_datasource_satellitetile_2.ts
+    // snippet:harp_gl_datasource_herewebtile_2.ts
+    mapView.addDataSource(hereWebTileDataSource);
+    // end:harp_gl_datasource_herewebtile_2.ts
 }
