@@ -896,6 +896,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_pickHandler: PickHandler;
 
     private readonly m_imageCache: MapViewImageCache = new MapViewImageCache(this);
+    private readonly m_userImageCache: MapViewImageCache = new MapViewImageCache(this);
 
     private readonly m_poiManager: PoiManager = new PoiManager(this);
 
@@ -1867,9 +1868,25 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Get the {@link ImageCache} that belongs to this `MapView`.
+     *
+     * Images stored in this cache are primarily used for POIs (icons) and they are used with the
+     * current theme. Although images can be explicitely added and removed from the cache, it is
+     * adviced not to remove images from this cache. If an image that is part of client code
+     * should be removed at any point other than changing the theme, the {@link useImageCache}
+     * should be used instead.
      */
     get imageCache(): MapViewImageCache {
         return this.m_imageCache;
+    }
+
+    /**
+     * Get the {@link ImageCache} for user images that belongs to this `MapView`.
+     *
+     * Images added to this cache can be removed if no longer required. If images with identical
+     * names are stored in imageCache and userImageCache, the userImageCache will take precedence.
+     */
+    get userImageCache(): MapViewImageCache {
+        return this.m_userImageCache;
     }
 
     /**

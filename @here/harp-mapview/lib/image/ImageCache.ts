@@ -26,7 +26,7 @@ declare function createImageBitmap(
 ): Promise<ImageBitmap>;
 
 /**
- * Combines an {@link ImageItem} with a list of [[MapViews]] that reference it.
+ * Combines an {@link ImageItem} with a list of {@link MapView}s that reference it.
  */
 class ImageCacheItem {
     /**
@@ -94,11 +94,7 @@ export class ImageCache {
      * @param url - URL of image.
      * @param imageData - Optional [ImageData]] containing the image content.
      */
-    registerImage(
-        mapView: MapView,
-        url: string,
-        imageData: ImageData | ImageBitmap | undefined
-    ): ImageItem {
+    registerImage(mapView: MapView, url: string, imageData?: ImageData | ImageBitmap): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
         if (imageCacheItem !== undefined) {
             if (mapView !== undefined && imageCacheItem.mapViews.indexOf(mapView) < 0) {
@@ -147,15 +143,64 @@ export class ImageCache {
     }
 
     /**
+     * Remove an image from the cache..
+     *
+     * @param url - URL of the image.
+     * @returns `true` if image has been removed.
+     */
+    removeImage(url: string): boolean {
+        const cacheItem = this.m_images.get(url);
+        if (cacheItem !== undefined) {
+            this.m_images.delete(url);
+            this.cancelLoading(cacheItem.imageItem);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Remove an image from the cache.
+     *
+     * @param imageItem - Item identifying the image.
+     * @returns `true` if image has been removed.
+     */
+    removeImageItem(imageItem: ImageItem): boolean {
+        if (this.m_images.has(imageItem.url) !== undefined) {
+            this.m_images.delete(imageItem.url);
+            this.cancelLoading(imageItem);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Remove images from the cache using a filter function.
+     *
+     * @param itemFilter - Filter to identify images to remove. Should return `true` if item
+     * should be removed.
+     * @returns Number of images removed.
+     */
+    removeImageItems(itemFilter: (item: ImageItem) => boolean): number {
+        const oldSize = this.m_images.size;
+        [...this.m_images.values()].filter((cacheItem: ImageCacheItem) => {
+            if (itemFilter(cacheItem.imageItem)) {
+                this.m_images.delete(cacheItem.imageItem.url);
+                this.cancelLoading(cacheItem.imageItem);
+            }
+        });
+        return oldSize - this.m_images.size;
+    }
+
+    /**
      * Find {@link ImageItem} for the specified URL.
      *
      * @param url - URL of image.
      * @returns `ImageItem` for the URL if the URL is registered, `undefined` otherwise.
      */
     findImage(url: string): ImageItem | undefined {
-        const imageItem = this.m_images.get(url);
-        if (imageItem !== undefined) {
-            return imageItem.imageItem;
+        const cacheItem = this.m_images.get(url);
+        if (cacheItem !== undefined) {
+            return cacheItem.imageItem;
         }
         return undefined;
     }
@@ -168,29 +213,36 @@ export class ImageCache {
      * {@link MapView} are registered anymore.
      *
      * @param mapView - MapView to remove all {@link ImageItem}s from.
+     * @returns Number of images removed.
      */
-    clear(mapView: MapView) {
+    clear(mapView: MapView): number {
+        const oldSize = this.m_images.size;
         const itemsToRemove: string[] = [];
 
-        this.m_images.forEach(imageItem => {
-            const mapViewIndex = imageItem.mapViews.indexOf(mapView);
+        this.m_images.forEach(cacheItem => {
+            const mapViewIndex = cacheItem.mapViews.indexOf(mapView);
             if (mapViewIndex >= 0) {
-                imageItem.mapViews.splice(mapViewIndex, 1);
+                cacheItem.mapViews.splice(mapViewIndex, 1);
             }
-            if (imageItem.mapViews.length === 0) {
-                itemsToRemove.push(imageItem.imageItem.url);
+            if (cacheItem.mapViews.length === 0) {
+                itemsToRemove.push(cacheItem.imageItem.url);
+                this.cancelLoading(cacheItem.imageItem);
             }
         });
 
         for (const keyToDelete of itemsToRemove) {
             this.m_images.delete(keyToDelete);
         }
+        return oldSize - this.m_images.size;
     }
 
     /**
      * Clear all {@link ImageItem}s from all {@link MapView}s.
      */
     clearAll() {
+        this.m_images.forEach(cacheItem => {
+            this.cancelLoading(cacheItem.imageItem);
+        });
         this.m_images = new Map();
     }
 
@@ -223,34 +275,54 @@ export class ImageCache {
 
         imageItem.loadingPromise = new Promise(resolve => {
             logger.debug(`Loading image: ${imageItem.url}`);
-            imageLoader.load(
-                imageItem.url,
-                image => {
-                    logger.debug(`... finished loading image: ${imageItem.url}`);
-                    this.renderImage(imageItem, image)
-                        .then(() => {
-                            imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
-                                imageItem
-                            );
-                            imageItem.loadingPromise = undefined;
-                            resolve(imageItem);
-                        })
-                        .catch(ex => {
-                            logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
+            if (imageItem.cancelled === true) {
+                logger.debug(`Cancelled loading image: ${imageItem.url}`);
+                resolve(undefined);
+            } else {
+                imageLoader.load(
+                    imageItem.url,
+                    image => {
+                        logger.debug(`... finished loading image: ${imageItem.url}`);
+                        if (imageItem.cancelled === true) {
+                            logger.debug(`Cancelled loading image: ${imageItem.url}`);
                             resolve(undefined);
-                        });
-                },
-                // Loading events no longer supported
-                undefined,
-                errorEvent => {
-                    logger.error(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
+                        }
+                        this.renderImage(imageItem, image)
+                            .then(() => {
+                                imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                                    imageItem
+                                );
+                                imageItem.loadingPromise = undefined;
+                                resolve(imageItem);
+                            })
+                            .catch(ex => {
+                                logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
+                                resolve(undefined);
+                            });
+                    },
+                    // Loading events no longer supported
+                    undefined,
+                    errorEvent => {
+                        logger.error(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
 
-                    imageItem.loadingPromise = undefined;
-                    resolve(undefined);
-                }
-            );
+                        imageItem.loadingPromise = undefined;
+                        resolve(undefined);
+                    }
+                );
+            }
         });
         return imageItem.loadingPromise;
+    }
+
+    /**
+     * Apply a function to every `ImageItem` in the cache.
+     *
+     * @param func - Function to apply to every `ImageItem`.
+     */
+    apply(func: (imageItem: ImageItem) => void) {
+        this.m_images.forEach(cacheItem => {
+            func(cacheItem.imageItem);
+        });
     }
 
     /**
@@ -274,6 +346,9 @@ export class ImageCache {
         image: HTMLImageElement
     ): Promise<ImageData | ImageBitmap | undefined> {
         return new Promise((resolve, reject) => {
+            if (imageItem.cancelled) {
+                resolve(undefined);
+            }
             // use createImageBitmap if it is available. It should be available in webworkers as
             // well
             if (typeof createImageBitmap === "function") {
@@ -284,6 +359,9 @@ export class ImageCache {
                 logger.debug(`Creating bitmap image: ${imageItem.url}`);
                 createImageBitmap(image, 0, 0, image.width, image.height, options)
                     .then(imageBitmap => {
+                        if (imageItem.cancelled) {
+                            resolve(undefined);
+                        }
                         logger.debug(`... finished creating bitmap image: ${imageItem.url}`);
 
                         imageItem.loadingPromise = undefined;
@@ -348,5 +426,17 @@ export class ImageCache {
                 }
             }
         });
+    }
+
+    /**
+     * Cancel loading an image.
+     *
+     * @param imageItem - Item to cancel loading.
+     */
+    private cancelLoading(imageItem: ImageItem) {
+        if (imageItem.loadingPromise !== undefined) {
+            // Notify that we are cancelling.
+            imageItem.cancelled = true;
+        }
     }
 }

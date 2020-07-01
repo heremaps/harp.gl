@@ -3,16 +3,16 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-// tslint:disable:only-arrow-functions
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import { assert } from "chai";
 
-import { getTestResourceUrl } from "@here/harp-test-utils";
+import { ImageItem } from "../lib/image/Image";
 import { ImageCache } from "../lib/image/ImageCache";
 import { MapViewImageCache } from "../lib/image/MapViewImageCache";
 import { MapView } from "../lib/MapView";
+
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 class ImageData {
     constructor(public width: number, public height: number) {}
@@ -24,6 +24,10 @@ class ImageData {
 describe("MapViewImageCache", function() {
     // tslint:disable-next-line:no-object-literal-type-assertion
     const mapView: MapView = {} as MapView;
+
+    beforeEach(function() {
+        ImageCache.instance.clearAll();
+    });
 
     it("#empty", function() {
         const cache = new MapViewImageCache(mapView);
@@ -52,8 +56,25 @@ describe("MapViewImageCache", function() {
         assert.equal(imageData, testImage2!.imageData);
     });
 
+    it("#addImage", function() {
+        const cache = new MapViewImageCache(mapView);
+        cache.clear();
+
+        const imageName = "headshot.png";
+        const imageUrl = getTestResourceUrl("@here/harp-mapview", "test/resources/headshot.png");
+
+        const imageItem = cache.addImage(imageName, imageUrl, false);
+        assert.isDefined(imageItem);
+        assert.isFalse(imageItem instanceof Promise);
+
+        const testImage = cache.findImageByName(imageName);
+        assert.exists(testImage);
+        assert.isUndefined(testImage!.imageData);
+        assert.isFalse(testImage!.loaded);
+    });
+
     if (typeof document !== "undefined") {
-        it("#addImage", async function() {
+        it("#addImage with load", async function() {
             const cache = new MapViewImageCache(mapView);
             cache.clear();
 
@@ -83,6 +104,72 @@ describe("MapViewImageCache", function() {
                 assert.equal(image.height, 32);
             }
         });
+
+        it("#addImage (load cancelled)", async function() {
+            const cache = new MapViewImageCache(mapView);
+            cache.clear();
+
+            const imageName = "headshot.png";
+            const imageUrl = getTestResourceUrl(
+                "@here/harp-mapview",
+                "test/resources/headshot.png"
+            );
+
+            const promise = cache.addImage(imageName, imageUrl, true);
+
+            const testImage = cache.findImageByName(imageName);
+            assert.exists(testImage);
+            assert.isUndefined(testImage!.imageData);
+            assert.isFalse(testImage!.loaded);
+
+            assert.isTrue(promise instanceof Promise);
+
+            // removal leads to cancel
+            assert.isTrue(cache.removeImage(imageName), "remove failed");
+
+            if (promise instanceof Promise) {
+                const imageItem = cache.findImageByName(imageName);
+                assert.notExists(imageItem, "image is still in cache");
+                assert.isTrue(testImage!.cancelled);
+                // result of promise ignored, it depends on timing of load and image generation:
+                await promise;
+                // only assured that cancelled is set to `true`, loaded may also be set to true if
+                // cancelled after/during image generation.
+                assert.isTrue(testImage!.cancelled);
+            }
+        });
+
+        it("#loadImage", async function() {
+            const cache = new MapViewImageCache(mapView);
+            cache.clear();
+
+            const imageName = "headshot.png";
+            const imageUrl = getTestResourceUrl(
+                "@here/harp-mapview",
+                "test/resources/headshot.png"
+            );
+
+            const imageItem: ImageItem = cache.addImage(imageName, imageUrl, false) as ImageItem;
+            assert.isDefined(imageItem);
+            assert.isFalse(imageItem instanceof Promise);
+
+            assert.isUndefined(imageItem.imageData);
+            assert.isFalse(imageItem!.loaded);
+
+            const promise = cache.loadImage(imageItem);
+            assert.isTrue(promise instanceof Promise);
+
+            if (promise instanceof Promise) {
+                await promise;
+                const loadedImageItem = cache.findImageByName(imageName);
+                assert.exists(loadedImageItem);
+                assert.isDefined(loadedImageItem!.imageData);
+                assert.isTrue(loadedImageItem!.loaded);
+                const image = loadedImageItem!.imageData!;
+                assert.equal(image.width, 37);
+                assert.equal(image.height, 32);
+            }
+        });
     }
 
     it("#clear", function() {
@@ -91,12 +178,16 @@ describe("MapViewImageCache", function() {
         const imageData = new ImageData(16, 16);
 
         cache.registerImage("testImage", "httpx://naxos.de", imageData);
-        assert.equal(cache.numberOfNames, 1);
+        cache.registerImage("testImage2", "httpx://naxos.de", imageData);
+        assert.equal(cache.numberOfNames, 2);
         assert.equal(cache.numberOfUrls, 1);
 
-        cache.clear();
+        const numImagesRemoved = cache.clear();
 
-        assert.equal(cache.numberOfNames, 0);
+        assert.equal(ImageCache.instance.size, 0, "wrong cache size");
+        assert.equal(cache.numberOfNames, 0, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 0, "wrong number of urls");
+        assert.equal(numImagesRemoved, 1, "wrong number of removed images");
     });
 
     it("#add images", function() {
@@ -161,38 +252,222 @@ describe("MapViewImageCache", function() {
             cache.registerImage("testImage", "httpx://naxos.de-2", undefined);
         });
     });
+
+    it("#remove image", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+
+        assert.exists(cache.findImageByName("testImage1"));
+
+        assert.equal(ImageCache.instance.size, 1);
+        assert.equal(cache.numberOfNames, 1, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+
+        const imageRemoved = cache.removeImage("testImage1");
+        assert.equal(imageRemoved, true);
+        assert.equal(cache.numberOfNames, 0, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 0, "wrong number of urls");
+    });
+
+    it("#remove image 2", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+        cache.registerImage("testImage2", "httpx://naxos.de", imageData1);
+
+        assert.exists(cache.findImageByName("testImage1"));
+        assert.exists(cache.findImageByName("testImage2"));
+
+        assert.equal(ImageCache.instance.size, 1, "wrong cache size");
+        assert.equal(cache.numberOfNames, 2, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+
+        const imageRemoved = cache.removeImage("testImage2");
+        assert.equal(imageRemoved, true);
+        assert.equal(ImageCache.instance.size, 1, "wrong cache size");
+        assert.equal(cache.numberOfNames, 1, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+        assert.exists(cache.findImageByName("testImage1"));
+    });
+
+    it("#remove image by URL", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+        cache.registerImage("testImage2", "httpx://naxos.de-2", imageData2);
+        assert.equal(ImageCache.instance.size, 2);
+        assert.equal(cache.numberOfNames, 2);
+        assert.equal(cache.numberOfUrls, 2);
+
+        const imageRemoved = cache.removeImageByUrl("httpx://naxos.de"!);
+        assert.equal(imageRemoved, true);
+        assert.equal(cache.numberOfNames, 1, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+
+        assert.equal(ImageCache.instance.size, 1);
+        const testImage2 = cache.findImageByUrl("httpx://naxos.de-2");
+        assert.exists(testImage2);
+    });
+
+    it("#remove image by name", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+        cache.registerImage("testImage2", "httpx://naxos.de-2", imageData2);
+        assert.equal(ImageCache.instance.size, 2);
+
+        const imageRemoved = cache.removeImage("testImage1");
+        assert.equal(imageRemoved, true);
+        assert.equal(cache.numberOfNames, 1, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+
+        assert.equal(ImageCache.instance.size, 1);
+        const testImage2 = cache.findImageByUrl("httpx://naxos.de-2");
+        assert.exists(testImage2);
+    });
+
+    it("#remove image by filter", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+        cache.registerImage("testImage2", "httpx://naxos.de-2", imageData2);
+        cache.registerImage("testImage3", "httpx://naxos.de-3", imageData2);
+        assert.equal(ImageCache.instance.size, 3);
+
+        const imagesRemoved = cache.removeImages((name: string, url: string) => {
+            return url === "httpx://naxos.de-2";
+        });
+        assert.equal(imagesRemoved, 1);
+        assert.equal(cache.numberOfNames, 2, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 2, "wrong number of urls");
+
+        assert.equal(ImageCache.instance.size, 2);
+        assert.exists(cache.findImageByUrl("httpx://naxos.de"));
+        assert.exists(cache.findImageByUrl("httpx://naxos.de-3"));
+        assert.notExists(cache.findImageByUrl("httpx://naxos.de-2"));
+    });
+
+    it("#remove image by filter 2", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+        cache.registerImage("testImage2", "httpx://naxos.de", imageData2);
+        cache.registerImage("testImage3", "httpx://naxos.de", imageData2);
+        assert.equal(ImageCache.instance.size, 1, "wrong cache size");
+        assert.equal(cache.numberOfNames, 3, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+
+        const imagesRemoved = cache.removeImages((name: string, url: string) => {
+            return name === "testImage3";
+        });
+
+        assert.equal(imagesRemoved, 1, "wrong number of removed images");
+        assert.equal(cache.numberOfNames, 2, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+
+        assert.equal(ImageCache.instance.size, 1, "wrong cache size");
+        assert.exists(cache.findImageByName("testImage1"));
+        assert.exists(cache.findImageByName("testImage2"));
+        assert.notExists(cache.findImageByName("testImage3"));
+    });
+
+    it("#remove image with name by filter", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+        cache.registerImage("testImage2", "httpx://naxos.de-2", imageData2);
+        cache.registerImage("undefined", "httpx://naxos.de-3", imageData2);
+        assert.equal(cache.numberOfNames, 3, "wrong number of names");
+        assert.equal(ImageCache.instance.size, 3, "wrong cache size");
+
+        const imagesRemoved = cache.removeImages((name: string, url: string) => {
+            return url === "httpx://naxos.de-2";
+        });
+        assert.equal(imagesRemoved, 1);
+        assert.equal(cache.numberOfNames, 2, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 2, "wrong number of urls");
+
+        assert.equal(ImageCache.instance.size, 2);
+        assert.exists(cache.findImageByUrl("httpx://naxos.de"));
+        assert.exists(cache.findImageByUrl("httpx://naxos.de-3"));
+        assert.notExists(cache.findImageByUrl("httpx://naxos.de-2"));
+    });
+
+    it("#remove all images by filter", function() {
+        const cache = new MapViewImageCache(mapView);
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+        cache.registerImage("testImage2", "httpx://naxos.de-2", imageData2);
+        cache.registerImage("testImage3", "httpx://naxos.de-3", imageData2);
+
+        const imagesRemoved = cache.removeImages((name: string, url: string) => {
+            return true;
+        });
+        assert.equal(imagesRemoved, 3);
+        assert.equal(cache.numberOfNames, 0, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 0);
+
+        assert.equal(ImageCache.instance.size, 0, "cache is not empty");
+    });
 });
 
 describe("ImageCache", function() {
+    beforeEach(function() {
+        ImageCache.instance.clearAll();
+    });
+
     it("#instance", function() {
-        const instance = ImageCache.instance;
+        const cache = ImageCache.instance;
         const instance2 = ImageCache.instance;
-        assert.exists(instance);
-        assert.equal(instance, instance2);
-        instance.clearAll();
+        assert.exists(cache);
+        assert.equal(cache, instance2);
+        cache.clearAll();
     });
 
     it("#empty", function() {
-        const instance = ImageCache.instance;
-        assert.equal(instance.size, 0);
-        const found = instance.findImage("xxx");
+        const cache = ImageCache.instance;
+        assert.equal(cache.size, 0);
+        const found = cache.findImage("xxx");
         assert.notExists(found);
     });
 
     it("#registerImage", function() {
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
-        const instance = ImageCache.instance;
-        instance.clearAll();
+        const cache = ImageCache.instance;
+        cache.clearAll();
 
         const imageData = new ImageData(16, 16);
 
-        instance.registerImage(mapView, "httpx://naxos.de", imageData);
+        cache.registerImage(mapView, "httpx://naxos.de", imageData);
 
-        const testImage = instance.findImage("httpx://naxos.de");
+        const testImage = cache.findImage("httpx://naxos.de");
 
-        assert.equal(instance.size, 1);
-        assert.notExists(instance.findImage("xxx"));
+        assert.equal(cache.size, 1);
+        assert.notExists(cache.findImage("xxx"));
         assert.exists(testImage);
         assert.equal(imageData, testImage!.imageData);
     });
@@ -201,17 +476,17 @@ describe("ImageCache", function() {
         it("#addImage", async function() {
             // tslint:disable-next-line:no-object-literal-type-assertion
             const mapView: MapView = {} as MapView;
-            const instance = ImageCache.instance;
-            instance.clearAll();
+            const cache = ImageCache.instance;
+            cache.clearAll();
 
             const imageUrl = getTestResourceUrl(
                 "@here/harp-mapview",
                 "test/resources/headshot.png"
             );
 
-            const promise = instance.addImage(mapView, imageUrl, true);
+            const promise = cache.addImage(mapView, imageUrl, true);
 
-            const testImage = instance.findImage(imageUrl);
+            const testImage = cache.findImage(imageUrl);
             assert.exists(testImage);
             assert.isUndefined(testImage!.imageData);
             assert.isFalse(testImage!.loaded);
@@ -220,7 +495,41 @@ describe("ImageCache", function() {
 
             if (promise instanceof Promise) {
                 await promise;
-                const loadedImageItem = instance.findImage(imageUrl);
+                const loadedImageItem = cache.findImage(imageUrl);
+                assert.exists(loadedImageItem);
+                assert.isDefined(loadedImageItem!.imageData);
+                assert.isTrue(loadedImageItem!.loaded);
+                const image = loadedImageItem!.imageData!;
+                assert.equal(image.width, 37);
+                assert.equal(image.height, 32);
+            }
+        });
+
+        it("#loadImage", async function() {
+            // tslint:disable-next-line:no-object-literal-type-assertion
+            const mapView: MapView = {} as MapView;
+            const cache = ImageCache.instance;
+            cache.clearAll();
+
+            const imageUrl = getTestResourceUrl(
+                "@here/harp-mapview",
+                "test/resources/headshot.png"
+            );
+
+            const cacheItem = cache.registerImage(mapView, imageUrl, undefined);
+
+            const testImage = cache.findImage(imageUrl);
+            assert.exists(testImage);
+            assert.isUndefined(testImage!.imageData);
+            assert.isFalse(testImage!.loaded);
+
+            const promise = cache.loadImage(cacheItem);
+
+            assert.isTrue(promise instanceof Promise);
+
+            if (promise instanceof Promise) {
+                await promise;
+                const loadedImageItem = cache.findImage(imageUrl);
                 assert.exists(loadedImageItem);
                 assert.isDefined(loadedImageItem!.imageData);
                 assert.isTrue(loadedImageItem!.loaded);
@@ -234,22 +543,21 @@ describe("ImageCache", function() {
     it("#clearAll", function() {
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
-        const instance = ImageCache.instance;
+        const cache = ImageCache.instance;
         const imageData = new ImageData(16, 16);
-        instance.registerImage(mapView, "httpx://naxos.de", imageData);
+        cache.registerImage(mapView, "httpx://naxos.de", imageData);
 
-        instance.clearAll();
+        cache.clearAll();
 
-        assert.equal(instance.size, 0);
-        assert.notExists(instance.findImage("testImage"));
+        assert.equal(cache.size, 0);
+        assert.notExists(cache.findImage("testImage"));
     });
 
     it("#dispose", function() {
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
-        const instance = ImageCache.instance;
         const imageData = new ImageData(16, 16);
-        instance.registerImage(mapView, "httpx://naxos.de", imageData);
+        ImageCache.instance.registerImage(mapView, "httpx://naxos.de", imageData);
 
         ImageCache.dispose();
 
@@ -257,8 +565,8 @@ describe("ImageCache", function() {
     });
 
     it("#register same image in multiple MapViews", function() {
-        const instance = ImageCache.instance;
-        instance.clearAll();
+        const cache = ImageCache.instance;
+        cache.clearAll();
 
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
@@ -267,20 +575,20 @@ describe("ImageCache", function() {
 
         const imageData1 = new ImageData(16, 16);
 
-        instance.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        instance.registerImage(mapView2, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView2, "httpx://naxos.de", imageData1);
 
-        const testImage = instance.findImage("httpx://naxos.de");
+        const testImage = cache.findImage("httpx://naxos.de");
 
-        assert.equal(instance.size, 1);
-        assert.notExists(instance.findImage("xxx"));
+        assert.equal(cache.size, 1);
+        assert.notExists(cache.findImage("xxx"));
         assert.exists(testImage);
         assert.equal(imageData1, testImage!.imageData);
     });
 
     it("#register different images in multiple MapViews", function() {
-        const instance = ImageCache.instance;
-        instance.clearAll();
+        const cache = ImageCache.instance;
+        cache.clearAll();
 
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
@@ -290,14 +598,14 @@ describe("ImageCache", function() {
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        instance.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        instance.registerImage(mapView2, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView2, "httpx://naxos.de-2", imageData2);
 
-        const testImage1 = instance.findImage("httpx://naxos.de");
-        const testImage2 = instance.findImage("httpx://naxos.de-2");
+        const testImage1 = cache.findImage("httpx://naxos.de");
+        const testImage2 = cache.findImage("httpx://naxos.de-2");
 
-        assert.equal(instance.size, 2);
-        assert.notExists(instance.findImage("xxx"));
+        assert.equal(cache.size, 2);
+        assert.notExists(cache.findImage("xxx"));
         assert.exists(testImage1);
         assert.equal(imageData1, testImage1!.imageData);
         assert.exists(testImage2);
@@ -305,8 +613,8 @@ describe("ImageCache", function() {
     });
 
     it("#clear images in multiple MapViews", function() {
-        const instance = ImageCache.instance;
-        instance.clearAll();
+        const cache = ImageCache.instance;
+        cache.clearAll();
 
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
@@ -316,14 +624,137 @@ describe("ImageCache", function() {
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        instance.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        instance.registerImage(mapView2, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView2, "httpx://naxos.de-2", imageData2);
 
-        instance.clear(mapView1);
+        cache.clear(mapView1);
 
-        assert.equal(instance.size, 1);
+        assert.equal(cache.size, 1);
 
-        assert.notExists(instance.findImage("httpx://naxos.de"));
-        assert.exists(instance.findImage("httpx://naxos.de-2"));
+        assert.notExists(cache.findImage("httpx://naxos.de"));
+        assert.exists(cache.findImage("httpx://naxos.de-2"));
+    });
+
+    it("#remove image item", function() {
+        const cache = ImageCache.instance;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+        const mapView1: MapView = {} as MapView;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+
+        const imageData1 = new ImageData(16, 16);
+
+        const item = cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+
+        assert.equal(cache.size, 1, "wrong cache size");
+
+        const imageRemoved = cache.removeImageItem(item);
+        assert.equal(imageRemoved, true);
+        assert.equal(cache.size, 0, "wrong cache size");
+    });
+
+    it("#remove image", function() {
+        const cache = ImageCache.instance;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+        const mapView1: MapView = {} as MapView;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+
+        const imageData1 = new ImageData(16, 16);
+
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+
+        assert.equal(cache.size, 1, "wrong cache size");
+
+        const imageRemoved = cache.removeImage("httpx://naxos.de");
+        assert.equal(imageRemoved, true);
+        assert.equal(cache.size, 0, "wrong cache size");
+    });
+
+    it("#remove image by filter", function() {
+        const cache = ImageCache.instance;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+        const mapView1: MapView = {} as MapView;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(mapView1, "httpx://naxos.de-3", imageData2);
+        assert.equal(ImageCache.instance.size, 3, "wrong cache size");
+
+        const imagesRemoved = cache.removeImageItems((imageItem: ImageItem) => {
+            return imageItem.url === "httpx://naxos.de-2";
+        });
+        assert.equal(imagesRemoved, 1, "wrong number of images removed");
+        assert.equal(cache.size, 2, "wrong cache size");
+        assert.exists(cache.findImage("httpx://naxos.de"));
+        assert.notExists(cache.findImage("httpx://naxos.de-2"));
+        assert.exists(cache.findImage("httpx://naxos.de-3"));
+    });
+
+    it("#remove image by filter 2", function() {
+        const cache = ImageCache.instance;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+        const mapView1: MapView = {} as MapView;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(mapView1, "httpx://XXX", imageData2);
+        assert.equal(ImageCache.instance.size, 3, "wrong cache size");
+
+        const imagesRemoved = cache.removeImageItems((imageItem: ImageItem) => {
+            return imageItem.url.startsWith("httpx://naxos.de");
+        });
+        assert.equal(imagesRemoved, 2, "wrong number of images removed");
+        assert.equal(cache.size, 1, "wrong cache size");
+        assert.exists(cache.findImage("httpx://XXX"));
+    });
+
+    it("#remove all images by filter", function() {
+        const cache = ImageCache.instance;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+        const mapView1: MapView = {} as MapView;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(mapView1, "httpx://naxos.de-3", imageData2);
+
+        const imagesRemoved = cache.removeImageItems((imageItem: ImageItem) => {
+            return true;
+        });
+        assert.equal(imagesRemoved, 3, "wrong number of images removed");
+        assert.equal(cache.size, 0, "cache is not empty");
+    });
+
+    it("#apply", function() {
+        const cache = ImageCache.instance;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+        const mapView1: MapView = {} as MapView;
+        // tslint:disable-next-line:no-object-literal-type-assertion
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(mapView1, "httpx://naxos.de-3", imageData2);
+
+        let numImagesInCache = 0;
+        cache.apply(imageItem => {
+            assert.equal(imageItem.url.split("-")[0], "httpx://naxos.de");
+            numImagesInCache++;
+        });
+
+        assert.equal(numImagesInCache, 3, "wrong count");
+        assert.equal(cache.size, 3, "wrong cache size");
     });
 });
