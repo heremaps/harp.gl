@@ -5,6 +5,7 @@
  */
 
 import { assert } from "chai";
+import earcut from "earcut";
 import { ShapeUtils, Vector2 } from "three";
 import { clipPolygon } from "../lib/ClipPolygon";
 
@@ -20,7 +21,7 @@ describe("ClipPolygon", () => {
 
     it("Full quad convering the tile (outer ring)", () => {
         const polygon = [...tileBounds];
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
         assert.strictEqual(ShapeUtils.area(clippedPolygon), ShapeUtils.area(polygon));
@@ -28,7 +29,7 @@ describe("ClipPolygon", () => {
 
     it("Full quad convering the tile (inter ring)", () => {
         const polygon = [...tileBounds].reverse();
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
         assert.strictEqual(ShapeUtils.area(clippedPolygon), ShapeUtils.area(polygon));
@@ -41,7 +42,7 @@ describe("ClipPolygon", () => {
             new Vector2(extents + 20, extents + 20),
             new Vector2(-20, extents + 20)
         ];
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
         assert.strictEqual(ShapeUtils.area(clippedPolygon), ShapeUtils.area(tileBounds));
@@ -54,7 +55,7 @@ describe("ClipPolygon", () => {
             new Vector2(extents + 20, extents + 20),
             new Vector2(-20, extents + 20)
         ].reverse();
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
         assert.strictEqual(ShapeUtils.area(clippedPolygon), -ShapeUtils.area(tileBounds));
@@ -69,8 +70,9 @@ describe("ClipPolygon", () => {
             new Vector2(extents * 4, extents * 10)
         ];
 
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
+
         assert.strictEqual(clippedPolygon.length, 4);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
         assert.strictEqual(ShapeUtils.area(clippedPolygon), ShapeUtils.area(tileBounds));
@@ -83,7 +85,7 @@ describe("ClipPolygon", () => {
             new Vector2(extents * 4, extents * 10)
         ].reverse();
 
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(clippedPolygon.length, 4);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
@@ -98,7 +100,7 @@ describe("ClipPolygon", () => {
             new Vector2(-1000, 1000)
         ];
 
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(clippedPolygon.length, 0);
     });
@@ -111,7 +113,7 @@ describe("ClipPolygon", () => {
             new Vector2(-1000, 1000)
         ].reverse();
 
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(clippedPolygon.length, 0);
     });
@@ -131,7 +133,7 @@ describe("ClipPolygon", () => {
             new Vector2(0, 1000)
         ];
 
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(clippedPolygon.length, 4);
         assert.strictEqual(JSON.stringify(clippedPolygon), JSON.stringify(expectedClippedPolygon));
@@ -145,7 +147,7 @@ describe("ClipPolygon", () => {
             new Vector2(-1000, 1000)
         ].reverse();
 
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(clippedPolygon.length, 4);
         assert.strictEqual(ShapeUtils.area(clippedPolygon), -(20 * 1000));
@@ -178,7 +180,7 @@ describe("ClipPolygon", () => {
         assert.isTrue(polygon.some(vert => vert.y < 0));
         assert.isTrue(polygon.some(vert => vert.y > extents));
 
-        const clippedPolygon = clipPolygon(polygon, tileBounds);
+        const clippedPolygon = clipPolygon(polygon, extents);
 
         assert.isNotEmpty(clippedPolygon);
 
@@ -201,5 +203,27 @@ describe("ClipPolygon", () => {
         verticesInsideTile.forEach(v => {
             assert.isDefined(clippedPolygon.find(p => p.equals(v)));
         });
+    });
+
+    it("Concave polygon resulting into 2 parts after clipping", () => {
+        const polygon: Vector2[] = [
+            new Vector2(-100, 0),
+            new Vector2(4096, 0),
+            new Vector2(-50, 2048),
+            new Vector2(4096, 4096),
+            new Vector2(-100, 4096)
+        ];
+
+        const clippedPolygon = clipPolygon(polygon, extents);
+
+        const expectedPolygon = clippedPolygon.reduce((points, { x, y }) => {
+            // tslint:disable-next-line: no-bitwise
+            points.push(x | 0, y | 0);
+            return points;
+        }, [] as number[]);
+
+        assert.deepEqual(expectedPolygon, [0, 0, 4096, 0, 0, 2023, 0, 2073, 4096, 4096, 0, 4096]);
+
+        assert.deepEqual(earcut(expectedPolygon), [0, 1, 2, 3, 4, 5]);
     });
 });

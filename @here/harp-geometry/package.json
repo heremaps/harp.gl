@@ -27,13 +27,15 @@
         "@types/mocha": "^7.0.2",
         "@types/node": "^14.0.5",
         "@types/sinon": "^9.0.4",
+        "@types/earcut": "^2.1.1",
         "chai": "^4.0.2",
         "cross-env": "^7.0.2",
         "mocha": "^7.2.0",
         "sinon": "^9.0.2",
         "source-map-support": "^0.5.19",
         "three": "^0.118",
-        "typescript": "^3.9.3"
+        "typescript": "^3.9.3",
+        "earcut": "^2.2.2"
     },
     "peerDependencies": {
         "three": "^0.118"
