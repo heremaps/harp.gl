@@ -801,8 +801,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const computeTexCoords = this.getComputeTexCoordsFunc(technique, objectBounds);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
 
-            let clipRing: THREE.Vector2[] | undefined;
-
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
 
@@ -822,16 +820,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         );
 
                         if (shouldClipPolygon) {
-                            if (!clipRing) {
-                                clipRing = [
-                                    new THREE.Vector2(0, 0),
-                                    new THREE.Vector2(extents, 0),
-                                    new THREE.Vector2(extents, extents),
-                                    new THREE.Vector2(0, extents)
-                                ];
-                            }
-
-                            coords = clipPolygon(coords, clipRing);
+                            coords = clipPolygon(coords, extents);
                         }
                     }
 
