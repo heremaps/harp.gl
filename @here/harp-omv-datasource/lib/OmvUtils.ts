@@ -7,7 +7,6 @@ import { EarthConstants, webMercatorProjection } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 import { DecodeInfo } from "./DecodeInfo";
-import { VTJsonDataAdapterId } from "./VTJsonDataAdapter";
 
 /**
  * @hidden
@@ -23,12 +22,8 @@ export function isArrayBufferLike(data: any): data is ArrayBufferLike {
 /**
  * @hidden
  */
-export function lat2tile(
-    lat: number,
-    zoom: number,
-    func: (x: number) => number = Math.floor
-): number {
-    return func(
+export function lat2tile(lat: number, zoom: number): number {
+    return Math.round(
         ((1 -
             Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) /
                 Math.PI) /
@@ -59,12 +54,8 @@ export function createWorldTileTransformationCookie(extents: number, decodeInfo:
     return {
         extents,
         scale,
-        top: lat2tile(
-            north,
-            decodeInfo.tileKey.level + N,
-            decodeInfo.adapterId === VTJsonDataAdapterId ? Math.round : Math.floor
-        ),
-        left: ((west + 180) / 360) * scale
+        top: lat2tile(north, decodeInfo.tileKey.level + N),
+        left: Math.round(((west + 180) / 360) * scale)
     };
 }
 
