@@ -222,7 +222,8 @@ interface WebGlInfo {
 }
 
 export function getWebGlInfo() {
-    const renderer = new THREE.WebGLRenderer();
+    //Enable backward compatibility with three.js <= 0.117
+    const renderer = new ((THREE as any).WebGL1Renderer ?? THREE.WebGLRenderer)();
     const context = renderer.getContext();
     const result: WebGlInfo = {};
     const availableExtensions = context.getSupportedExtensions();

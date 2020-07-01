@@ -1000,8 +1000,8 @@ export class MapView extends THREE.EventDispatcher {
         this.canvas.addEventListener("webglcontextlost", this.onWebGLContextLost);
         this.canvas.addEventListener("webglcontextrestored", this.onWebGLContextRestored);
 
-        // Initialization of the renderer
-        this.m_renderer = new THREE.WebGLRenderer({
+        // Initialization of the renderer, enable backward compatibility with three.js <= 0.117
+        this.m_renderer = new ((THREE as any).WebGL1Renderer ?? THREE.WebGLRenderer)({
             canvas: this.canvas,
             context: this.m_options.context,
             antialias: this.nativeWebglAntialiasEnabled,
