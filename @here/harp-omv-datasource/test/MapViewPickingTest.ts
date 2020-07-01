@@ -116,6 +116,10 @@ describe("MapView Picking", async function() {
             .stub(THREE, "WebGLRenderer")
             .returns(TestUtils.getWebGLRendererStub(sandbox, sandbox.stub()));
 
+        sandbox
+            .stub(THREE, "WebGL1Renderer")
+            .returns(TestUtils.getWebGLRendererStub(sandbox, sandbox.stub()));
+
         fakeElevationSource = {
             name: "terrain",
             attach(view: MapView) {

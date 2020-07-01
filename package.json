@@ -40,7 +40,7 @@
         "node-fetch": "^2.2.0",
         "nyc": "^15.0.1",
         "prettier": "^1.19.1",
-        "three": "^0.117.1",
+        "three": "^0.118",
         "ts-mocha": "^7.0.0",
         "tslint": "^6.1.2",
         "tslint-config-prettier": "^1.18.0",

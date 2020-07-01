@@ -41,7 +41,8 @@ describe("TextCanvas", function() {
         canvas.width = 100;
         canvas.height = 100;
 
-        renderer = new THREE.WebGLRenderer({ canvas });
+        // Enable backward compatibility with three.js <= 0.117
+        renderer = new ((THREE as any).WebGL1Renderer ?? THREE.WebGLRenderer)({ canvas });
         renderer.autoClear = false;
         renderer.setClearColor(0xffffff);
         renderer.setSize(canvas.width, canvas.height);
