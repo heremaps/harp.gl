@@ -806,7 +806,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_maxZoomLevel: number = DEFAULT_MAX_ZOOM_LEVEL;
     private readonly m_minCameraHeight: number = DEFAULT_MIN_CAMERA_HEIGHT;
     private m_geoMaxBounds?: GeoBox;
-    private m_worldMaxBounds?: THREE.Box3;
+    private m_worldMaxBounds?: THREE.Box3 | OrientedBox3;
 
     private readonly m_screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1);
 
@@ -1960,7 +1960,12 @@ export class MapView extends THREE.EventDispatcher {
     set geoMaxBounds(bounds: GeoBox | undefined) {
         this.m_geoMaxBounds = bounds;
         this.m_worldMaxBounds = this.m_geoMaxBounds
-            ? this.projection.projectBox(this.m_geoMaxBounds, new THREE.Box3())
+            ? this.projection.projectBox(
+                  this.m_geoMaxBounds,
+                  this.projection.type === ProjectionType.Planar
+                      ? new THREE.Box3()
+                      : new OrientedBox3()
+              )
             : undefined;
     }
 
