@@ -1582,7 +1582,8 @@ export namespace MapViewUtils {
             estimateTextureSize(standardMaterial.envMap, objectSize, visitedObjects);
         } else if (
             material instanceof THREE.LineBasicMaterial ||
-            material instanceof THREE.LineDashedMaterial
+            material instanceof THREE.LineDashedMaterial ||
+            material instanceof THREE.PointsMaterial
         ) {
             // Nothing to be done here
         } else {
