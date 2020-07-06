@@ -221,11 +221,11 @@ describe("Ring", function() {
 
         it("outlines", () => {
             const ring = new Ring(points, texCoords);
-            assert.strictEqual(ring.isOutline(0), false);
-            assert.strictEqual(ring.isOutline(1), true);
-            assert.strictEqual(ring.isOutline(2), true);
-            assert.strictEqual(ring.isOutline(3), false);
-            assert.strictEqual(ring.isOutline(4), false);
+            assert.strictEqual(ring.isProperEdge(0), false);
+            assert.strictEqual(ring.isProperEdge(1), true);
+            assert.strictEqual(ring.isProperEdge(2), true);
+            assert.strictEqual(ring.isProperEdge(3), false);
+            assert.strictEqual(ring.isProperEdge(4), false);
         });
     });
 
@@ -243,7 +243,7 @@ describe("Ring", function() {
         it("edge outlines", () => {
             const ring = new Ring(clippedPolygon, undefined, DEFAULT_EXTENTS);
             assert.strictEqual(ring.winding, false);
-            const outlines = ring.points.map((_, i) => ring.isOutline(i));
+            const outlines = ring.points.map((_, i) => ring.isProperEdge(i));
 
             assert.deepEqual(
                 // tslint:disable-next-line: no-bitwise
