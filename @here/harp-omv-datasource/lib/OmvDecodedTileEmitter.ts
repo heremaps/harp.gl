@@ -861,7 +861,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         ? []
                         : undefined;
                     rings.forEach(ring => {
-                        const length = ring.contour.length / ring.vertexStride;
+                        const length = ring.points.length;
                         let line: number[] = [];
 
                         // Compute length of whole line and offsets of individual segments.
@@ -879,17 +879,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             }
 
                             const nextIdx = (i + 1) % length;
-                            const currX = ring.contour[i * ring.vertexStride];
-                            const currY = ring.contour[i * ring.vertexStride + 1];
-                            const nextX = ring.contour[nextIdx * ring.vertexStride];
-                            const nextY = ring.contour[nextIdx * ring.vertexStride + 1];
+                            const curr = ring.points[i];
+                            const next = ring.points[nextIdx];
 
-                            const isOutline = !(
-                                (currX <= 0 && nextX <= 0) ||
-                                (currX >= ring.extents && nextX >= ring.extents) ||
-                                (currY <= 0 && nextY <= 0) ||
-                                (currY >= ring.extents && nextY >= ring.extents)
-                            );
+                            const isOutline = ring.isOutline(i);
 
                             if (!isOutline && line.length !== 0) {
                                 lines.push(line);
@@ -898,7 +891,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 webMercatorTile2TargetTile(
                                     extents,
                                     this.m_decodeInfo,
-                                    tmpV2.set(currX, currY),
+                                    tmpV2.copy(curr),
                                     tmpV3
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
@@ -908,7 +901,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                     webMercatorTile2TargetTile(
                                         extents,
                                         this.m_decodeInfo,
-                                        tmpV2.set(nextX, nextY),
+                                        tmpV2.copy(next),
                                         tmpV4
                                     );
                                     line.push(tmpV4.x, tmpV4.y, tmpV4.z);
@@ -926,7 +919,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 webMercatorTile2TargetTile(
                                     extents,
                                     this.m_decodeInfo,
-                                    tmpV2.set(nextX, nextY),
+                                    tmpV2.copy(next),
                                     tmpV3
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
@@ -1245,6 +1238,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         context: AttrEvaluationContext,
         extents: number
     ): void {
+        if (polygons.length === 0) {
+            return;
+        }
+
         const isExtruded = isExtrudedPolygonTechnique(technique);
 
         const geometryType = isExtruded ? GeometryType.ExtrudedPolygon : GeometryType.Polygon;
@@ -1311,8 +1308,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             groups
         } = meshBuffers;
 
-        const featureStride = texCoordType !== undefined ? 4 : 2;
-        const vertexStride = featureStride + 2;
         const isSpherical = this.m_decodeInfo.targetProjection.type === ProjectionType.Spherical;
 
         const edgeWidth = isExtruded
@@ -1356,30 +1351,31 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 const vertices: number[] = [];
                 const polygonBaseVertex = positions.length / 3;
 
-                const { contour, winding } = polygon[ringIndex++];
-                for (let i = 0; i < contour.length / featureStride; ++i) {
+                const ring = polygon[ringIndex++];
+
+                const featureStride = ring.vertexStride;
+                const vertexStride = featureStride + 2;
+                const winding = ring.winding;
+
+                for (let i = 0; i < ring.points.length; ++i) {
+                    const point = ring.points[i];
+
                     // Invert the Y component to preserve the correct winding without transforming
                     // from webMercator's local to global space.
-                    for (let j = 0; j < featureStride; ++j) {
-                        vertices.push((j === 1 ? -1 : 1) * contour[i * featureStride + j]);
+                    vertices.push(point.x, -point.y);
+
+                    if (ring.textureCoords !== undefined) {
+                        vertices.push(ring.textureCoords[i].x, ring.textureCoords[i].y);
                     }
 
-                    // Calculate nextEdge and nextWall.
-                    const nextIdx = (i + 1) % (contour.length / featureStride);
-                    const currX = contour[i * featureStride];
-                    const currY = contour[i * featureStride + 1];
-                    const nextX = contour[nextIdx * featureStride];
-                    const nextY = contour[nextIdx * featureStride + 1];
-                    const insideExtents = !(
-                        (currX <= 0 && nextX <= 0) ||
-                        (currX >= extents && nextX >= extents) ||
-                        (currY <= 0 && nextY <= 0) ||
-                        (currY >= extents && nextY >= extents)
-                    );
+                    const nextIdx = (i + 1) % ring.points.length;
 
+                    const isOutline = ring.isOutline(i);
+
+                    // Calculate nextEdge and nextWall.
                     vertices.push(
-                        insideExtents ? nextIdx : -1,
-                        boundaryWalls || insideExtents ? nextIdx : -1
+                        isOutline ? nextIdx : -1,
+                        boundaryWalls || isOutline ? nextIdx : -1
                     );
                 }
 
@@ -1390,26 +1386,21 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     const vertexOffset = vertices.length / vertexStride;
                     holes.push(vertexOffset);
 
-                    const hole = polygon[ringIndex++].contour;
-                    for (let i = 0; i < hole.length / featureStride; ++i) {
+                    const hole = polygon[ringIndex++];
+                    for (let i = 0; i < hole.points.length; ++i) {
+                        const nextIdx = (i + 1) % hole.points.length;
+                        const point = hole.points[i];
+
                         // Invert the Y component to preserve the correct winding without
                         // transforming from webMercator's local to global space.
-                        for (let j = 0; j < featureStride; ++j) {
-                            vertices.push((j === 1 ? -1 : 1) * hole[i * featureStride + j]);
+                        vertices.push(point.x, -point.y);
+
+                        if (hole.textureCoords !== undefined) {
+                            vertices.push(hole.textureCoords[i].x, hole.textureCoords[i].y);
                         }
 
                         // Calculate nextEdge and nextWall.
-                        const nextIdx = (i + 1) % (hole.length / featureStride);
-                        const currX = hole[i * featureStride];
-                        const currY = hole[i * featureStride + 1];
-                        const nextX = hole[nextIdx * featureStride];
-                        const nextY = hole[nextIdx * featureStride + 1];
-                        const insideExtents = !(
-                            (currX <= 0 && nextX <= 0) ||
-                            (currX >= extents && nextX >= extents) ||
-                            (currY <= 0 && nextY <= 0) ||
-                            (currY >= extents && nextY >= extents)
-                        );
+                        const insideExtents = hole.isOutline(i);
 
                         vertices.push(
                             insideExtents ? vertexOffset + nextIdx : -1,

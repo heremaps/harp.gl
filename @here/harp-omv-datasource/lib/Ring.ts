@@ -25,8 +25,6 @@ export class Ring {
      */
     readonly vertexStride: number;
 
-    private m_contour?: number[];
-
     constructor(
         readonly points: Vector2[],
         readonly textureCoords?: Vector2[],
@@ -61,12 +59,23 @@ export class Ring {
     }
 
     /**
-     * Returns a flattened `Array` containing the position and texture coordinates of this `Ring`.
+     * Tests if the edge connecting the vertex at `index` with
+     * the vertex at `index+1` should be connected by an outline
+     * when stroking the polygon.
+     *
+     * @param index The index of the first vertex of the outline edge.
      */
-    get contour(): number[] {
-        if (this.m_contour === undefined) {
-            this.m_contour = this.toArray();
-        }
-        return this.m_contour;
+    isOutline(index: number): boolean {
+        const extents = this.extents;
+        const nextIdx = (index + 1) % this.points.length;
+        const curr = this.points[index];
+        const next = this.points[nextIdx];
+
+        return !(
+            (curr.x <= 0 && next.x <= 0) ||
+            (curr.x >= extents && next.x >= extents) ||
+            (curr.y <= 0 && next.y <= 0) ||
+            (curr.y >= extents && next.y >= extents)
+        );
     }
 }
