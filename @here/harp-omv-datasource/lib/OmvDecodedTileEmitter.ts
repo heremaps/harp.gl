@@ -65,13 +65,14 @@ import {
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { LinesGeometry } from "./OmvDataSource";
-import { IOmvEmitter, Ring } from "./OmvDecoder";
+import { IOmvEmitter } from "./OmvDecoder";
 import {
     tile2world,
     webMercatorTile2TargetTile,
     webMercatorTile2TargetWorld,
     world2tile
 } from "./OmvUtils";
+import { Ring } from "./Ring";
 
 import {
     AttrEvaluationContext,
@@ -207,7 +208,7 @@ export enum LineType {
     Complex
 }
 
-type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => { u: number; v: number };
+type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => THREE.Vector2;
 const tmpColor = new THREE.Color();
 
 export class OmvDecodedTileEmitter implements IOmvEmitter {
@@ -460,14 +461,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         worldLine.push(tmpV4.x, tmpV4.y, tmpV4.z);
 
                         if (computeTexCoords) {
-                            {
-                                const { u, v } = computeTexCoords(pos1, extents);
-                                lineUvs.push(u, v);
-                            }
-                            {
-                                const { u, v } = computeTexCoords(pos2, extents);
-                                lineUvs.push(u, v);
-                            }
+                            computeTexCoords(pos1, extents).toArray(lineUvs, lineUvs.length);
+                            computeTexCoords(pos2, extents).toArray(lineUvs, lineUvs.length);
                         }
                         if (hasUntiledLines) {
                             // Find where in the [0...1] range relative to the line our current
@@ -520,8 +515,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
 
                     if (computeTexCoords) {
-                        const { u, v } = computeTexCoords(pos, extents);
-                        lineUvs.push(u, v);
+                        computeTexCoords(pos, extents).toArray(lineUvs, lineUvs.length);
                     }
                     if (hasUntiledLines) {
                         // Find where in the [0...1] range relative to the line our current vertex
@@ -799,14 +793,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 isStandard ||
                 (isShaderTechnique(technique) && technique.primitive === "mesh");
             const computeTexCoords = this.getComputeTexCoordsFunc(technique, objectBounds);
-            const vertexStride = computeTexCoords !== undefined ? 4 : 2;
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
 
                 for (const outline of polygon.rings) {
-                    const ringContour: number[] = [];
-
                     let coords = outline;
 
                     // disable clipping for the polygon geometries
@@ -828,15 +819,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         continue;
                     }
 
-                    for (const coord of coords) {
-                        ringContour.push(coord.x, coord.y);
-                        if (computeTexCoords !== undefined) {
-                            const { u, v } = computeTexCoords(coord, extents);
-                            ringContour.push(u, v);
-                        }
+                    let textureCoords: THREE.Vector2[] | undefined;
+
+                    if (computeTexCoords !== undefined) {
+                        textureCoords = coords.map(coord => computeTexCoords(coord, extents));
                     }
 
-                    rings.push(new Ring(extents, vertexStride, ringContour));
+                    rings.push(new Ring(coords, textureCoords, extents));
                 }
 
                 if (rings.length === 0) {
@@ -1149,36 +1138,37 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         switch (texCoordType) {
             case TextureCoordinateType.TileSpace:
-                return (tilePos: THREE.Vector2, tileExtents: number) => {
-                    const { x: u, y: v } = new THREE.Vector2()
-                        .copy(tilePos)
-                        .divideScalar(tileExtents);
-                    return { u, v: 1 - v };
+                return (tilePos: THREE.Vector2, tileExtents: number): THREE.Vector2 => {
+                    const uv = tilePos.clone().divideScalar(tileExtents);
+                    uv.y = 1 - uv.y;
+                    return uv;
                 };
 
             case TextureCoordinateType.EquirectangularSpace:
-                return (tilePos: THREE.Vector2, extents: number) => {
+                return (tilePos: THREE.Vector2, extents: number): THREE.Vector2 => {
                     const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
-                    const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
+                    const uv = normalizedEquirectangularProjection.reprojectPoint(
                         webMercatorProjection,
                         new THREE.Vector3(worldPos.x, worldPos.y, 0)
                     );
-                    return { u, v };
+                    return new THREE.Vector2(uv.x, uv.y);
                 };
 
             case TextureCoordinateType.FeatureSpace:
                 if (!objectBounds) {
                     return undefined;
                 }
-                return (tilePos: THREE.Vector2, extents: number) => {
-                    const uv = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
+                return (tilePos: THREE.Vector2, extents: number): THREE.Vector2 => {
+                    const uv = new THREE.Vector2();
+                    tile2world(extents, this.m_decodeInfo, tilePos, false, uv);
                     if (objectBounds) {
                         uv.x -= objectBounds.min.x;
                         uv.y -= objectBounds.min.y;
                         uv.x /= objectBounds.max.x - objectBounds.min.x;
                         uv.y /= objectBounds.max.y - objectBounds.min.y;
                     }
-                    return { u: uv.x, v: 1 - uv.y };
+                    uv.y = 1 - uv.y;
+                    return uv;
                 };
 
             default:
