@@ -799,6 +799,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 for (const outline of polygon.rings) {
                     let coords = outline;
+                    let clippedPointIndices: Set<number> | undefined;
 
                     // disable clipping for the polygon geometries
                     // rendered using the extruded-polygon technique.
@@ -812,6 +813,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                         if (shouldClipPolygon) {
                             coords = clipPolygon(coords, extents);
+                            clippedPointIndices = Ring.computeClippedPointIndices(coords, outline);
+                        } else {
+                            clippedPointIndices = new Set();
                         }
                     }
 
@@ -825,7 +829,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         textureCoords = coords.map(coord => computeTexCoords(coord, extents));
                     }
 
-                    rings.push(new Ring(coords, textureCoords, extents));
+                    rings.push(new Ring(coords, textureCoords, extents, clippedPointIndices));
                 }
 
                 if (rings.length === 0) {
@@ -882,12 +886,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             const curr = ring.points[i];
                             const next = ring.points[nextIdx];
 
-                            const isOutline = ring.isOutline(i);
+                            const properEdge = ring.isProperEdge(i);
 
-                            if (!isOutline && line.length !== 0) {
+                            if (!properEdge && line.length !== 0) {
                                 lines.push(line);
                                 line = [];
-                            } else if (isOutline && line.length === 0) {
+                            } else if (properEdge && line.length === 0) {
                                 webMercatorTile2TargetTile(
                                     extents,
                                     this.m_decodeInfo,
@@ -915,7 +919,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                     segmentOffsets!.push(lastSegmentOffset);
                                 }
                             }
-                            if (isOutline && !needIndividualLineSegments) {
+                            if (properEdge && !needIndividualLineSegments) {
                                 webMercatorTile2TargetTile(
                                     extents,
                                     this.m_decodeInfo,
@@ -1370,12 +1374,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                     const nextIdx = (i + 1) % ring.points.length;
 
-                    const isOutline = ring.isOutline(i);
+                    const properEdge = ring.isProperEdge(i);
 
                     // Calculate nextEdge and nextWall.
                     vertices.push(
-                        isOutline ? nextIdx : -1,
-                        boundaryWalls || isOutline ? nextIdx : -1
+                        properEdge ? nextIdx : -1,
+                        boundaryWalls || properEdge ? nextIdx : -1
                     );
                 }
 
@@ -1400,7 +1404,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         }
 
                         // Calculate nextEdge and nextWall.
-                        const insideExtents = hole.isOutline(i);
+                        const insideExtents = hole.isProperEdge(i);
 
                         vertices.push(
                             insideExtents ? vertexOffset + nextIdx : -1,
