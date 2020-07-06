@@ -11,6 +11,7 @@ import {
     GeoCoordinates,
     GeoCoordLike,
     MathUtils,
+    OrientedBox3,
     Projection,
     ProjectionType,
     TileKey
@@ -59,9 +60,10 @@ const tangentSpace = {
 };
 const cache = {
     box3: [new THREE.Box3()],
+    obox3: [new OrientedBox3()],
     quaternions: [new THREE.Quaternion(), new THREE.Quaternion()],
     vector2: [new THREE.Vector2()],
-    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
     transforms: [
         {
@@ -95,6 +97,19 @@ function snapToCeilingZoomLevel(zoomLevel: number) {
     const eps = 1e-6;
     const ceiling = Math.ceil(zoomLevel);
     return ceiling - zoomLevel < eps ? ceiling : zoomLevel;
+}
+
+function setWorldPosHeight(
+    worldPos: THREE.Vector3,
+    height: number,
+    projection: Projection
+): THREE.Vector3 {
+    if (projection.type === ProjectionType.Planar) {
+        worldPos.setZ(height);
+    } else if (projection.type === ProjectionType.Spherical) {
+        worldPos.setLength(EarthConstants.EQUATORIAL_RADIUS + height);
+    }
+    return worldPos;
 }
 
 export namespace MapViewUtils {
@@ -139,6 +154,8 @@ export namespace MapViewUtils {
      * @param targetNDCy - Target y position in NDC space.
      * @param zoomLevel - The desired zoom level.
      * @param maxTiltAngle - The maximum tilt angle to comply by, in globe projection, in radian.
+     * @returns `false` if requested zoom cannot be achieved due to the map view's maximum bounds
+     * {@link MapView.geoMaxBounds},`true` otherwise.
      */
     export function zoomOnTargetPosition(
         mapView: MapView,
@@ -147,12 +164,12 @@ export namespace MapViewUtils {
         zoomLevel: number,
         maxTiltAngle: number = MAX_TILT_RAD
     ): boolean {
-        const { elevationProvider, camera } = mapView;
+        const { elevationProvider, camera, projection } = mapView;
 
         // Use for now elevation at camera position. See getTargetAndDistance.
         const elevation = elevationProvider
             ? elevationProvider.getHeight(
-                  mapView.projection.unprojectPoint(camera.position),
+                  projection.unprojectPoint(camera.position),
                   TERRAIN_ZOOM_LEVEL
               )
             : undefined;
@@ -162,32 +179,42 @@ export namespace MapViewUtils {
         const groundDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
         const cameraHeight = groundDistance + (elevation ?? 0);
 
-        if (mapView.geoMaxBounds && worldTarget) {
-            const { distance } = constrainTargetAndDistanceToViewBounds(
-                worldTarget,
+        if (mapView.geoMaxBounds) {
+            // If map view has maximum bounds set, constrain camera target and distance to ensure
+            // they remain within bounds.
+
+            // tslint:disable-next-line: deprecation
+            const oldTarget = getTargetAndDistance(projection, camera, elevationProvider).target;
+            const newCamPos = setWorldPosHeight(
+                cache.vector3[0].copy(camera.position),
                 cameraHeight,
+                projection
+            );
+            const distance = oldTarget.distanceTo(newCamPos);
+            const constrained = constrainTargetAndDistanceToViewBounds(
+                oldTarget,
+                distance,
                 mapView
             );
-            if (distance !== cameraHeight) {
-                return false;
+            if (constrained.distance !== distance) {
+                // Only indicate failure when zooming out. This avoids zoom in cancellations when
+                // camera is already at the maximum distance allowed by the view bounds.
+                return zoomLevel >= mapView.zoomLevel;
             }
-        }
-
-        // Set the cameras height according to the given zoom level.
-        if (mapView.projection.type === ProjectionType.Planar) {
-            camera.position.setZ(cameraHeight);
-        } else if (mapView.projection.type === ProjectionType.Spherical) {
-            camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + cameraHeight);
+            camera.position.copy(newCamPos);
+        } else {
+            // Set the cameras height according to the given zoom level.
+            setWorldPosHeight(camera.position, cameraHeight, projection);
         }
 
         // In sphere, we may have to also orbit the camera around the position located at the
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
-        if (mapView.projection.type === ProjectionType.Spherical) {
+        if (projection.type === ProjectionType.Spherical) {
             // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
             // changes.
             // tslint:disable-next-line: deprecation
-            const tilt = extractCameraTilt(camera, mapView.projection);
+            const tilt = extractCameraTilt(camera, projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
                 orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
@@ -200,12 +227,12 @@ export namespace MapViewUtils {
             return true;
         }
 
-        if (mapView.projection.type === ProjectionType.Planar) {
+        if (projection.type === ProjectionType.Planar) {
             // Calculate the difference and pan the map to maintain the map relative to the target
             // position.
             worldTarget.sub(newWorldTarget);
             panCameraAboveFlatMap(mapView, worldTarget.x, worldTarget.y);
-        } else if (mapView.projection.type === ProjectionType.Spherical) {
+        } else if (projection.type === ProjectionType.Spherical) {
             panCameraAroundGlobe(mapView, worldTarget, newWorldTarget);
         }
         return true;
@@ -353,15 +380,15 @@ export namespace MapViewUtils {
         mapView: MapView
     ): { target: THREE.Vector3; distance: number } {
         const unconstrained = { target, distance };
-        const worldMaxBounds = mapView.worldMaxBounds as THREE.Box3;
+        const worldMaxBounds = mapView.worldMaxBounds;
         const camera = mapView.camera;
         const projection = mapView.projection;
 
-        if (!worldMaxBounds || projection.type === ProjectionType.Spherical) {
+        if (!worldMaxBounds) {
             return unconstrained;
         }
 
-        const boundsSize = worldMaxBounds.getSize(cache.vector3[0]);
+        const boundsSize = worldMaxBounds.getSize(cache.vector3[1]);
         const screenSize = mapView.renderer.getSize(cache.vector2[0]);
         const viewHeight = calculateWorldSizeByFocalLength(
             mapView.focalLength,
@@ -377,24 +404,90 @@ export namespace MapViewUtils {
             distance: unconstrained.distance
         };
 
+        if (projection.type === ProjectionType.Planar) {
+            if (scale > 1) {
+                constrained.distance /= scale;
+                camera
+                    .getWorldDirection(camera.position)
+                    .multiplyScalar(-constrained.distance)
+                    .add(worldMaxBounds.getCenter(constrained.target));
+            } else {
+                const targetBounds = cache.box3[0]
+                    .copy(worldMaxBounds as THREE.Box3)
+                    .expandByVector(viewHalfSize.multiplyScalar(-1));
+                targetBounds
+                    .clampPoint(unconstrained.target, constrained.target)
+                    .setZ(unconstrained.target.z);
+                if (constrained.target.equals(unconstrained.target)) {
+                    return unconstrained;
+                }
+
+                camera.position.x += constrained.target.x - unconstrained.target.x;
+                camera.position.y += constrained.target.y - unconstrained.target.y;
+            }
+            return constrained;
+        }
+
+        // Spherical projection
         if (scale > 1) {
+            // Set target to center of max bounds but keeping same height as unconstrained target.
+            worldMaxBounds.getCenter(constrained.target);
+            constrained.target.setLength(unconstrained.target.length());
             constrained.distance /= scale;
-            camera
-                .getWorldDirection(camera.position)
-                .multiplyScalar(-constrained.distance)
-                .add(worldMaxBounds.getCenter(constrained.target));
         } else {
-            const targetBounds = cache.box3[0]
-                .copy(worldMaxBounds)
-                .expandByVector(viewHalfSize.multiplyScalar(-1));
-            targetBounds.clampPoint(unconstrained.target, constrained.target);
-            if (constrained.target.equals(unconstrained.target)) {
+            // Compute the bounds where the target must be to ensure a top down view remains within
+            // the maximum bounds.
+            const targetMaxBounds = cache.obox3[0];
+            targetMaxBounds.copy(worldMaxBounds as OrientedBox3);
+            targetMaxBounds.position.setLength(unconstrained.target.length());
+            targetMaxBounds.extents.sub(viewHalfSize);
+
+            // Project unconstrained target to local tangent plane at the max bounds center.
+            const rotMatrix = targetMaxBounds.getRotationMatrix(cache.matrix4[0]);
+            const localTarget = cache.vector3[1]
+                .copy(constrained.target)
+                .sub(targetMaxBounds.position)
+                .applyMatrix4(cache.matrix4[1].copy(rotMatrix).transpose())
+                .setZ(0);
+
+            // Clamp the projected target with the target bounds and check if it changes.
+            const constrainedLocalTarget = cache.vector3[2]
+                .copy(localTarget)
+                .clamp(
+                    cache.vector3[3].copy(targetMaxBounds.extents).multiplyScalar(-1),
+                    targetMaxBounds.extents
+                );
+            if (constrainedLocalTarget.equals(localTarget)) {
                 return unconstrained;
             }
-            camera.position.x += constrained.target.x - unconstrained.target.x;
-            camera.position.y += constrained.target.y - unconstrained.target.y;
+
+            // Project the local constrained target back into the sphere.
+            constrained.target
+                .copy(constrainedLocalTarget)
+                .applyMatrix4(rotMatrix)
+                .add(targetMaxBounds.position);
+            const targetHeightSq = targetMaxBounds.position.lengthSq();
+            const constTargetDistSq = constrained.target.distanceToSquared(
+                targetMaxBounds.position
+            );
+            const constTargetDistToGround =
+                Math.sqrt(targetHeightSq) - Math.sqrt(targetHeightSq - constTargetDistSq);
+            constrained.target.addScaledVector(targetMaxBounds.zAxis, -constTargetDistToGround);
+
+            // Set the constrained target to the same height as the unconstrained one.
+            constrained.target.setLength(unconstrained.target.length());
         }
-        camera.updateMatrixWorld(true);
+
+        // Pan camera to constrained target and set constrained distance.
+        MapViewUtils.panCameraAroundGlobe(
+            mapView,
+            cache.vector3[1].copy(constrained.target),
+            cache.vector3[2].copy(unconstrained.target)
+        );
+        camera
+            .getWorldDirection(camera.position)
+            .multiplyScalar(-constrained.distance)
+            .add(constrained.target);
         return constrained;
     }
     /**
