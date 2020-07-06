@@ -13,6 +13,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { clipPolygon } from "@here/harp-geometry/lib/ClipPolygon";
 import { assert } from "chai";
 import { Vector2 } from "three";
 import { Ring } from "../lib/Ring";
@@ -27,7 +28,6 @@ describe("Ring", function() {
             assert.strictEqual(ring.winding, false);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), []);
-            assert.deepEqual(ring.contour, []);
         });
 
         it("with texture coordinates", () => {
@@ -36,7 +36,6 @@ describe("Ring", function() {
             assert.strictEqual(ring.winding, false);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), []);
-            assert.deepEqual(ring.contour, []);
         });
 
         it("with texture coordinates and extents", () => {
@@ -46,7 +45,6 @@ describe("Ring", function() {
             assert.strictEqual(ring.winding, false);
             assert.strictEqual(ring.extents, extent);
             assert.deepEqual(ring.toArray(), []);
-            assert.deepEqual(ring.contour, []);
         });
 
         it("throws exception", () => {
@@ -85,7 +83,6 @@ describe("Ring", function() {
             assert.strictEqual(ring.winding, false);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), [0, 0, 100, 0, 100, 100, 0, 100, 0, 0]);
-            assert.deepEqual(ring.contour, [0, 0, 100, 0, 100, 100, 0, 100, 0, 0]);
         });
 
         it("with texture coordinates", () => {
@@ -94,28 +91,6 @@ describe("Ring", function() {
             assert.strictEqual(ring.winding, false);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), [
-                0,
-                0,
-                0,
-                0,
-                100,
-                0,
-                1,
-                0,
-                100,
-                100,
-                1,
-                1,
-                0,
-                100,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0
-            ]);
-            assert.deepEqual(ring.contour, [
                 0,
                 0,
                 0,
@@ -157,7 +132,7 @@ describe("Ring", function() {
             new Vector2(0, 0)
         ];
 
-        it("no texture coordinates", () => {
+        it("without texture coordinates", () => {
             const ring = new Ring(points, undefined, DEFAULT_EXTENTS);
             assert.strictEqual(ring.area, -(100 * 100));
             assert.strictEqual(ring.winding, true);
@@ -242,6 +217,41 @@ describe("Ring", function() {
                 0,
                 0
             ]);
+        });
+
+        it("outlines", () => {
+            const ring = new Ring(points, texCoords);
+            assert.strictEqual(ring.isOutline(0), false);
+            assert.strictEqual(ring.isOutline(1), true);
+            assert.strictEqual(ring.isOutline(2), true);
+            assert.strictEqual(ring.isOutline(3), false);
+            assert.strictEqual(ring.isOutline(4), false);
+        });
+    });
+
+    describe("Concave polygon resulting into 2 parts after clipping", () => {
+        const polygon: Vector2[] = [
+            new Vector2(-100, 0),
+            new Vector2(4096, 0),
+            new Vector2(-50, 2048),
+            new Vector2(4096, 4096),
+            new Vector2(-100, 4096)
+        ];
+
+        const clippedPolygon = clipPolygon(polygon, DEFAULT_EXTENTS);
+
+        it("edge outlines", () => {
+            const ring = new Ring(clippedPolygon, undefined, DEFAULT_EXTENTS);
+            assert.strictEqual(ring.winding, false);
+            const outlines = ring.points.map((_, i) => ring.isOutline(i));
+
+            assert.deepEqual(
+                // tslint:disable-next-line: no-bitwise
+                ring.toArray().map(x => x | 0),
+                [0, 0, 4096, 0, 0, 2023, 0, 2073, 4096, 4096, 0, 4096]
+            );
+
+            assert.deepEqual(outlines, [false, true, false, true, false, false]);
         });
     });
 });
