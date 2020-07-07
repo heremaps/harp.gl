@@ -216,6 +216,36 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
+    it("renders extruded polygons with height and color - no batching", async function() {
+        this.timeout(5000);
+
+        const ourStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Polygon"],
+                technique: "extruded-polygon",
+                attr: {
+                    color: ["string", ["get", "color"], "#5050f0"],
+                    lineWidth: 1,
+                    lineColor: "#172023",
+                    lineColorMix: 0.6,
+                    metalness: 0.5,
+                    roughness: 0.5
+                }
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-extruded-polygon-with-height-color-no-batching",
+            theme: { lights, styles: { geojson: ourStyle } },
+            geoJson: "../dist/resources/basic_polygon.json",
+            lookAt: {
+                tilt: 45,
+                heading: 30
+            }
+        });
+    });
+
     it("renders multi line strings", async function() {
         this.timeout(5000);
 
