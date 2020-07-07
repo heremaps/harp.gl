@@ -80,7 +80,7 @@ describe("MapViewImageCache", function() {
                 assert.isTrue(loadedImageItem!.loaded);
                 const image = loadedImageItem!.imageData!;
                 assert.equal(image.width, 37);
-                assert.equal(image.height, 36);
+                assert.equal(image.height, 32);
             }
         });
     }
@@ -226,7 +226,7 @@ describe("ImageCache", function() {
                 assert.isTrue(loadedImageItem!.loaded);
                 const image = loadedImageItem!.imageData!;
                 assert.equal(image.width, 37);
-                assert.equal(image.height, 36);
+                assert.equal(image.height, 32);
             }
         });
     }

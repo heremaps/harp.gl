@@ -73,7 +73,10 @@ describe("MipMapGenerator", function() {
                     const size = Math.pow(2, 6 - level);
                     const image = mipMaps[level];
                     expect(image.width).to.equal(size);
-                    expect(image.height).to.equal(size);
+                    // The image's height is 32, and not padded to 64 as the width is, hence we
+                    // ensure the correct height of the mipmap, note we need to ensure we clamp to 1
+                    // hence the `ceil`.
+                    expect(image.height).to.equal(Math.ceil(size / 2));
                 }
             });
 
@@ -89,7 +92,8 @@ describe("MipMapGenerator", function() {
                     const size = Math.pow(2, 6 - level);
                     const image = mipMaps[level];
                     expect(image.width).to.equal(size);
-                    expect(image.height).to.equal(size);
+                    // See comment above.
+                    expect(image.height).to.equal(Math.ceil(size / 2));
                 }
             });
         }
