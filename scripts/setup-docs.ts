@@ -123,6 +123,33 @@ function copyLandingPageFiles() {
     fse.copySync(path.join(sdkDir, "docs"), distDocsOutDir);
 }
 
+function copyImages() {
+    // tslint:disable-next-line:no-console
+    console.log("Copy across images...");
+
+    const inputExts = [".svg", ".gif", ".png"];
+    const mediaOutDir = path.resolve(sdkDir, "dist/media");
+
+    for (const inputExt of inputExts) {
+        const sourceFiles = glob.sync(sdkDir + `/{docs,coresdk/docs}/@docs/**/*${inputExt}`);
+        // tslint:disable-next-line:no-console
+        console.log("source files with ext: " + inputExt);
+        // tslint:disable-next-line:no-console
+        console.log(sourceFiles);
+
+        for (const sourceFile of sourceFiles) {
+            const outSubDir = path.join(mediaOutDir, path.basename(path.dirname(sourceFile)));
+            mkpath.sync(outSubDir);
+            const outFile = path.resolve(outSubDir, path.basename(sourceFile));
+            const cmd = `cp ${sourceFile} ${outFile}`;
+            // tslint:disable-next-line:no-console
+            console.log(cmd);
+            execSync(cmd);
+        }
+    }
+}
+
 extractCodeSnippets();
 renderDiagrams();
 copyLandingPageFiles();
+copyImages();
