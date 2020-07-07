@@ -66,7 +66,7 @@
         "build-www": "cd www && yarn build",
         "start-www": "cd www && yarn start",
         "start-tests": "webpack-dev-server -d --config webpack.tests.config.js",
-        "test-browser": "ts-node -- ./scripts/with-http-server.ts -C dist/test -p 8079 -- mocha-webdriver-runner http://localhost:8079/index.html",
+        "test-browser": "ts-node -- ./scripts/with-http-server.ts -C dist/test -p 8079 -- mocha-webdriver-runner http://localhost:8079/index.html --chrome",
         "build-tests": "webpack -d --config webpack.tests.config.js",
         "run-rendering-tests": "./scripts/rendering-tests-reference-platform.sh",
         "save-reference-rendering-tests": "npx ts-node @here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts save-reference",
