@@ -35,6 +35,9 @@ import { SkyCubemapFaceId, SKY_CUBEMAP_FACE_COUNT } from "./SkyCubemapTexture";
 
 import "@here/harp-fetch";
 
+/**
+ * @internal
+ */
 export const DEFAULT_MAX_THEME_INTHERITANCE_DEPTH = 4;
 
 /**

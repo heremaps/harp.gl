@@ -191,6 +191,7 @@ export interface PoiInfo {
  * Return 'true' if the POI has been successfully prepared for rendering.
  *
  * @param poiInfo - PoiInfo containing information for rendering the POI icon.
+ * @internal
  */
 export function poiIsRenderable(poiInfo: PoiInfo): boolean {
     return poiInfo.poiRenderBatch !== undefined;

@@ -114,7 +114,10 @@ class PoiTableEntry implements PoiTableEntryDef {
 }
 
 /**
- * The `PoiTable` stores individual information for each POI type. If a {@link TextElement} has a
+ * The `PoiTable` stores individual information for each POI type.
+ *
+ * @remarks
+ * If a {@link TextElement} has a
  * reference to a PoiTable (if TextElement.poiInfo.poiTableName is set), information for the
  * TextElement and its icon are read from the PoiTable.
  *

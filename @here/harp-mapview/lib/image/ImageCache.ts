@@ -49,8 +49,11 @@ class ImageCacheItem {
 }
 
 /**
- * `ImageCache` is a singleton, so it can be used with multiple MapViews on a single page. This
- * allows to have an image loaded only once for multiple views. THREE is doing something similar,
+ * `ImageCache` is a singleton, so it can be used with multiple MapViews on a single page.
+ *
+ * @remarks
+ * This allows to have an image loaded only once for multiple views.
+ * THREE is doing something similar,
  * but does not allow to share images that have been loaded from a canvas (which we may need to do
  * if we use SVG images for textures).
  *
@@ -71,8 +74,10 @@ export class ImageCache {
     }
 
     /**
-     * Dispose the singleton object. Not normally implemented for singletons, but good for
-     * debugging.
+     * Dispose the singleton object.
+     *
+     * @remarks
+     * Not normally implemented for singletons, but good for debugging.
      */
     static dispose(): void {
         ImageCache.m_instance = undefined;
@@ -156,7 +161,10 @@ export class ImageCache {
     }
 
     /**
-     * Clear all {@link ImageItem}s belonging to a {@link MapView}. May remove cached items if no
+     * Clear all {@link ImageItem}s belonging to a {@link MapView}.
+     *
+     * @remarks
+     * May remove cached items if no
      * {@link MapView} are registered anymore.
      *
      * @param mapView - MapView to remove all {@link ImageItem}s from.
@@ -194,8 +202,10 @@ export class ImageCache {
     }
 
     /**
-     * Load an {@link ImageItem}. If the loading process is already running, it returns the current
-     * promise.
+     * Load an {@link ImageItem}.
+     *
+     * @remarks
+     * If the loading process is already running, it returns the current promise.
      *
      * @param imageItem - `ImageItem` containing the URL to load image from.
      * @returns An {@link ImageItem} if the image has already been loaded, a promise otherwise.
@@ -254,10 +264,10 @@ export class ImageCache {
 
     /**
      * Render the `ImageItem` by using `createImageBitmap()` or by rendering the image into a
-     * [[HTMLCanvasElement]].
+     * `HTMLCanvasElement`.
      *
      * @param imageItem - {@link ImageItem} to assign image data to.
-     * @param image - [[HTMLImageElement]] to
+     * @param image - `HTMLImageElement`
      */
     private renderImage(
         imageItem: ImageItem,
