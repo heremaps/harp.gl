@@ -137,32 +137,30 @@ export namespace PickingExample {
             styles: {
                 tilezen: [
                     {
+                        transient: true,
                         layer: "roads",
                         when: ["==", ["geometry-type"], "LineString"],
                         technique: "solid-line",
                         renderOrder: Number.MAX_SAFE_INTEGER,
-                        attr: {
-                            enabled: [
-                                "in",
-                                ["get", "name"],
-                                ["get", "selection", ["dynamic-properties"]]
-                            ],
-                            lineWidth: "2px"
-                        }
+                        enabled: [
+                            "in",
+                            ["get", "name"],
+                            ["get", "selection", ["dynamic-properties"]]
+                        ],
+                        lineWidth: "2px"
                     },
                     {
+                        transient: true,
                         layer: "landuse",
                         when: ["==", ["geometry-type"], "Polygon"],
                         technique: "solid-line",
                         renderOrder: Number.MAX_SAFE_INTEGER,
-                        attr: {
-                            enabled: [
-                                "in",
-                                ["get", "name"],
-                                ["get", "selection", ["dynamic-properties"]]
-                            ],
-                            lineWidth: "2px"
-                        }
+                        enabled: [
+                            "in",
+                            ["get", "name"],
+                            ["get", "selection", ["dynamic-properties"]]
+                        ],
+                        lineWidth: "2px"
                     }
                 ]
             }
