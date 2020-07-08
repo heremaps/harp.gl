@@ -49,6 +49,34 @@ const logger = LoggerManager.instance.create("StyleSetEvaluator");
 
 const emptyTechniqueDescriptor = mergeTechniqueDescriptor<Technique>({});
 
+const DEFAULT_TECHNIQUE_ATTR_SCOPE = AttrScope.TechniqueGeometry;
+
+/**
+ * Get the attribute scope of the given style property.
+ *
+ * @remarks
+ * Certain Style properties change their dynamic scope behavior
+ * based on other properties. For example, the `color` property
+ * of `extruded-polygon` change behavior based on the usage
+ * of `vertexColors`.
+ *
+ * @param style A valid Style.
+ * @param attrName The name of the attribute of the {@link style}.
+ */
+function getStyleAttributeScope(style: InternalStyle, attrName: string): AttrScope {
+    if (style.technique === "extruded-polygon") {
+        if (attrName === "color" && style.vertexColors !== false) {
+            return DEFAULT_TECHNIQUE_ATTR_SCOPE;
+        }
+    }
+
+    const descriptions = techniqueDescriptors as any;
+
+    const techniqueDescriptor = descriptions[style.technique] ?? emptyTechniqueDescriptor;
+
+    return techniqueDescriptor.attrScopes[attrName] ?? DEFAULT_TECHNIQUE_ATTR_SCOPE;
+}
+
 interface StyleInternalParams {
     /**
      * Optimization: Lazy creation and storage of expression in a style object.
@@ -738,9 +766,6 @@ export class StyleSetEvaluator {
         const dynamicForwardedAttributes = style._dynamicForwardedAttributes;
         const targetStaticAttributes = style._staticAttributes;
 
-        const techniqueDescriptor =
-            techniqueDescriptors[style.technique] ?? emptyTechniqueDescriptor;
-
         const processAttribute = (attrName: string, attrValue: Value | JsonExpr | undefined) => {
             if (attrValue === undefined) {
                 return;
@@ -777,14 +802,7 @@ export class StyleSetEvaluator {
             }
 
             if (Expr.isExpr(attrValue)) {
-                let attrScope: AttrScope | undefined = (techniqueDescriptor.attrScopes as any)[
-                    attrName as any
-                ];
-
-                if (attrScope === undefined) {
-                    // Use [[AttrScope.TechniqueGeometry]] as default scope for the attribute.
-                    attrScope = AttrScope.TechniqueGeometry;
-                }
+                const attrScope = getStyleAttributeScope(style, attrName);
 
                 const deps = attrValue.dependencies();
 
