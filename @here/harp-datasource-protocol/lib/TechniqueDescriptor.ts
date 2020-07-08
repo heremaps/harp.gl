@@ -52,7 +52,7 @@ export type TechniquePropScopes<T> = {
     [P in TechniquePropNames<T>]?: AttrScope;
 };
 
-export interface TechniqueDescriptor<T> {
+export interface TechniqueDescriptor<T = Technique> {
     attrTransparencyColor?: string;
     attrScopes: TechniquePropScopes<T>;
 }
