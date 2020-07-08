@@ -3,13 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { StyleDeclaration, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
+
 import { apikey } from "../config";
 
 /**
@@ -85,6 +85,8 @@ export namespace GeoJsonHeatmapExample {
         window.addEventListener("resize", () => {
             mapView.resize(window.innerWidth, window.innerHeight);
         });
+
+        CopyrightElementHandler.install("copyrightNotice", mapView);
 
         const baseMapDataSource = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",

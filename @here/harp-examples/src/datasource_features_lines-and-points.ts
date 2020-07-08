@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { StyleSet, Theme } from "@here/harp-datasource-protocol";
 import {
     FeaturesDataSource,
@@ -13,8 +12,9 @@ import {
 } from "@here/harp-features-datasource";
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { OmvDataSource } from "@here/harp-omv-datasource";
+
 import { apikey } from "../config";
 import { faults, hotspots } from "../resources/geology";
 
@@ -222,6 +222,8 @@ export namespace LinesPointsFeaturesExample {
         canvas.parentElement!.appendChild(ui.domElement);
 
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
+
+        CopyrightElementHandler.install("copyrightNotice", mapView);
 
         const baseMap = new OmvDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
