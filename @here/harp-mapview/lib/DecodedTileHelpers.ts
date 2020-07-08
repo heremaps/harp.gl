@@ -88,6 +88,8 @@ export interface MaterialOptions {
  *                               e.g. after texture loading.
  *
  * @returns new material instance that matches `technique.name`
+ *
+ * @internal
  */
 export function createMaterial(
     options: MaterialOptions,
@@ -234,6 +236,7 @@ export function createMaterial(
  * {@link @here/harp-datasource-protocol#BufferAttribute} object.
  *
  * @param attribute - BufferAttribute a WebGL compliant buffer
+ * @internal
  */
 export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttribute {
     switch (attribute.type) {
@@ -287,6 +290,7 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
  * Determines if a technique uses THREE.Object3D instances.
  * @param technique - The technique to check.
  * @returns true if technique uses THREE.Object3D, false otherwise.
+ * @internal
  */
 export function usesObject3D(technique: Technique): boolean {
     const name = technique.name;
@@ -307,6 +311,8 @@ export function usesObject3D(technique: Technique): boolean {
  * @param material - The object's material.
  * @param tile - The tile where the object is located.
  * @param elevationEnabled - True if elevation is enabled, false otherwise.
+ *
+ * @internal
  */
 export function buildObject(
     technique: Technique,
@@ -376,21 +382,25 @@ export function buildObject(
 }
 
 /**
- * Non material properties of [[BaseTechnique]]
+ * Non material properties of `BaseTechnique`.
+ * @internal
  */
 export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = ["name", "id", "renderOrder", "transient"];
 
 /**
  * Generic material type constructor.
+ * @internal
  */
 export type MaterialConstructor = new (params?: {}) => THREE.Material;
 
 /**
- * Returns a [[MaterialConstructor]] basing on provided technique object.
+ * Returns a `MaterialConstructor` basing on provided technique object.
  *
- * @param technique - [[Technique]] object which the material will be based on.
+ * @param technique - `Technique` object which the material will be based on.
  * @param shadowsEnabled - Whether the material can accept shadows, this is required for some
- * techniques to decide which material to create.
+ *                         techniques to decide which material to create.
+ *
+ * @internal
  */
 export function getMaterialConstructor(
     technique: Technique,
@@ -550,6 +560,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
 /**
  * Convert metric style property to expression that accounts {@link MapView.pixelToWorld} if
  * `metricUnit === 'Pixel'`.
+ * @internal
  */
 export function buildMetricValueEvaluator(
     value: Expr | Value | undefined,
@@ -580,15 +591,18 @@ export function buildMetricValueEvaluator(
 /**
  * Allows to easy parse/encode technique's base color property value as number coded color.
  *
+ * @remarks
  * Function takes care about property parsing, interpolation and encoding if neccessary.
  *
  * @see ColorUtils
  * @param technique - the technique where we search for base (transparency) color value
  * @param env - {@link @here/harp-datasource-protocol#Env} instance
  *              used to evaluate {@link @here/harp-datasource-protocol#Expr}
- *              based properties of [[Technique]]
- * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or `undefined` if
+ *              based properties of `Technique`
+ * @returns `number` encoded color value (in custom #TTRRGGBB) format or `undefined` if
  * base color property is not defined in the technique passed.
+ *
+ * @internal
  */
 export function evaluateBaseColorProperty(technique: Technique, env: Env): number | undefined {
     const baseColorProp = getBaseColorProp(technique);
@@ -599,10 +613,12 @@ export function evaluateBaseColorProperty(technique: Technique, env: Env): numbe
 }
 
 /**
- * Apply [[ShaderTechnique]] parameters to material.
+ * Apply `ShaderTechnique` parameters to material.
  *
- * @param technique - the [[ShaderTechnique]] which requires special handling
+ * @param technique - the `ShaderTechnique` which requires special handling
  * @param material - material to which technique will be applied
+ *
+ * @internal
  */
 function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: THREE.Material) {
     if (technique.transparent) {
@@ -683,6 +699,7 @@ function applyTechniquePropertyToMaterial(
 /**
  * Apply technique color to material taking special care with transparent (RGBA) colors.
  *
+ * @remarks
  * @note This function is intended to be used with secondary, triary etc. technique colors,
  * not the base ones that may contain transparency information. Such colors should be processed
  * with [[applyTechniqueBaseColorToMaterial]] function.
@@ -693,7 +710,9 @@ function applyTechniquePropertyToMaterial(
  * @param value - color value
  * @param env - {@link @here/harp-datasource-protocol#Env} instance used
  *              to evaluate {@link @here/harp-datasource-protocol#Expr}
- *              based properties of [[Technique]]
+ *              based properties of `Technique`.
+ *
+ * @internal
  */
 export function applySecondaryColorToMaterial(
     materialColor: THREE.Color,
@@ -717,6 +736,7 @@ export function applySecondaryColorToMaterial(
 /**
  * Apply technique base color (transparency support) to material with modifying material opacity.
  *
+ * @remarks
  * This method applies main (or base) technique color with transparency support to the corresponding
  * material color, with an effect on entire [[THREE.Material]] __opacity__ and __transparent__
  * attributes.
@@ -731,6 +751,8 @@ export function applySecondaryColorToMaterial(
  * @param value - color value in custom number format
  * @param env - {@link @here/harp-datasource-protocol#Env} instance used to evaluate
  *              {@link @here/harp-datasource-protocol#Expr} based properties of [[Technique]]
+ *
+ * @internal
  */
 export function applyBaseColorToMaterial(
     material: THREE.Material,
@@ -786,6 +808,7 @@ function evaluateProperty(value: any, env?: Env): any {
 /**
  * Calculates the numerical value of the technique defined color property.
  *
+ * @remarks
  * Function takes care about color interpolation (when @param `env is set) as also parsing
  * string encoded colors.
  *
@@ -793,6 +816,7 @@ function evaluateProperty(value: any, env?: Env): any {
  * @param value - the value of color property defined in technique
  * @param env - {@link @here/harp-datasource-protocol#Env} instance used to evaluate
  *              {@link @here/harp-datasource-protocol#Expr} based properties of [[Technique]]
+ * @internal
  */
 export function evaluateColorProperty(value: Value, env?: Env): number | undefined {
     value = evaluateProperty(value, env);

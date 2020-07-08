@@ -85,6 +85,7 @@ enum Pass {
 /**
  * Default distance scale. Will be applied if distanceScale is not defined in the technique.
  * Defines the scale that will be applied to labeled icons (icon and text) in the distance.
+ * @internal
  */
 export const DEFAULT_TEXT_DISTANCE_SCALE = 0.5;
 

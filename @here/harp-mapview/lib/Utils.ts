@@ -310,6 +310,7 @@ export namespace MapViewUtils {
     /**
      * Returns the height of the camera above the earths surface.
      *
+     * @remarks
      * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
      * how high the camera is above the surface.
      *
@@ -334,7 +335,10 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Constrains given camera target and distance to {@link MapView.maxBounds}. The resulting
+     * Constrains given camera target and distance to {@link MapView.maxBounds}.
+     *
+     * @remarks
+     * The resulting
      * target and distance will keep the view within the maximum bounds for a camera with tilt and
      * yaw set to 0.
      * @param target - The camera target.
@@ -528,6 +532,7 @@ export namespace MapViewUtils {
      *
      * Add offset to geo points for minimal view box in flat projection with tile wrapping.
      *
+     * @remarks
      * In flat projection, with wrap around enabled, we should detect clusters of points around that
      * wrap antimeridian.
      *
@@ -584,6 +589,7 @@ export namespace MapViewUtils {
      * Given `cameraPos`, force all points that lie on non-visible sphere half to be "near" max
      * possible viewable circle from given camera position.
      *
+     * @remarks
      * Assumes that shpere projection with world center is in `(0, 0, 0)`.
      */
     export function wrapWorldPointsToView(points: THREE.Vector3[], cameraPos: THREE.Vector3) {
@@ -604,8 +610,8 @@ export namespace MapViewUtils {
      * @hidden
      * @internal
      *
-     * Return [[GeoPoints]] bounding {@link @here/harp-geoutils#GeoBox}
-     * applicable for [[getFitBoundsDistance]].
+     * Return `GeoPoints` bounding {@link @here/harp-geoutils#GeoBox}
+     * applicable for {@link getFitBoundsDistance}.
      *
      * @returns {@link @here/harp-geoutils#GeoCoordinates} set that covers `box`
      */

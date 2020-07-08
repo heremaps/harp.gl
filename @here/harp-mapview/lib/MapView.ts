@@ -150,7 +150,12 @@ const DEFAULT_CAM_NEAR_PLANE = 0.1;
 const DEFAULT_CAM_FAR_PLANE = 4000000;
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
-// All objects in fallback tiles are reduced by this amount.
+
+/**
+ * All objects in fallback tiles are reduced by this amount.
+ *
+ * @internal
+ */
 export const FALLBACK_RENDER_ORDER_OFFSET = 20000;
 
 const DEFAULT_MIN_ZOOM_LEVEL = 1;
@@ -1245,6 +1250,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Disposes this `MapView`.
      *
+     * @remarks
      * This function cleans the resources that are managed manually including those that exist in
      * shared caches.
      *
@@ -1642,7 +1648,9 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The THREE.js camera used by this `MapView` to render the main scene.
-     * @note When modifying the camera all derived properties like:
+     *
+     * @remarks
+     * When modifying the camera all derived properties like:
      * - {@link MapView.target}
      * - {@link MapView.zoomLevel}
      * - {@link MapView.tilt}
@@ -1744,8 +1752,10 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Get geo coordinates of camera focus (target) point.
+     *
+     * @remarks
      * This point is not necessarily on the ground, i.e.:
-     *  - if the tilt is high and projection is [[sphereProjection]]
+     *  - if the tilt is high and projection is {@link @here/harp-geoutils#sphereProjection}`
      *  - if the camera was modified directly and is not pointing to the ground.
      * In any case the projection of the target point will be in the center of the screen.
      *
@@ -1758,6 +1768,7 @@ export class MapView extends THREE.EventDispatcher {
     /** @internal
      * Get world coordinates of camera focus point.
      *
+     * @remarks
      * @note The focus point coordinates are updated with each camera update so you don't need
      * to re-calculate it, although if the camera started looking to the void, the last focus
      * point is stored.
@@ -1783,6 +1794,8 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Get object describing frustum planes distances and min/max visibility range for actual
      * camera setup.
+     *
+     * @remarks
      * Near and far plane distance are self explanatory while minimum and maximum visibility range
      * describes the extreme near/far planes distances that may be achieved with current camera
      * settings, meaning at current zoom level (ground distance) and any possible orientation.
@@ -1806,6 +1819,8 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The position in geo coordinates of the center of the scene.
+     *
+     * @remarks
      * Longitude values outside of -180 and +180 are acceptable.
      */
     set geoCenter(geoCenter: GeoCoordinates) {
@@ -1825,7 +1840,9 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * The node in this MapView's scene containing the user [[MapAnchor]]s.
+     * The node in this MapView's scene containing the user {@link MapAnchor}s.
+     *
+     * @remarks
      * All (first level) children of this node will be positioned in world space according to the
      * [[MapAnchor.geoPosition]].
      * Deeper level children can be used to position custom objects relative to the anchor node.
@@ -1916,7 +1933,10 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Sets or clears the view's maximum bounds in geo coordinates. If set, the view will be
+     * Sets or clears the view's maximum bounds in geo coordinates.
+     *
+     * @remarks
+     * If set, the view will be
      * constrained to the given geo bounds.
      */
     set geoMaxBounds(bounds: GeoBox | undefined) {
@@ -1985,6 +2005,7 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Returns the storage level for the given camera setup.
+     * @remarks
      * Actual storage level of the rendered data also depends
      * on {@link DataSource.storageLevelOffset}.
      */
@@ -2022,9 +2043,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Set's the way in which the fov is calculated on the map view. Note, for
-     * this to take visual effect, the map should be rendered after calling this
-     * function.
+     * Set's the way in which the fov is calculated on the map view.
+     *
+     * @remarks
+     * Note, for this to take visual effect, the map should be rendered
+     * after calling this function.
      * @param fovCalculation - How the FOV is calculated.
      */
     setFovCalculation(fovCalculation: FovCalculation) {
@@ -2061,9 +2084,9 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Adds a new {@link DataSource} to this `MapView`.
-     * `MapView` needs at least one {@link DataSource} to
-     * display something.
      *
+     * @remarks
+     * `MapView` needs at least one {@link DataSource} to display something.
      * @param dataSource - The data source.
      */
     addDataSource(dataSource: DataSource): Promise<void> {
@@ -2187,6 +2210,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Adjusts the camera to look at a given geo coordinate with tilt and heading angles.
      *
+     * @remarks
      * #### Note on `target` and `bounds`
      *
      * If `bounds` are specified, `zoomLevel` and `distance` parameters are ignored and `lookAt`
@@ -2214,7 +2238,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * #### Examples
      *
-     * ```
+     * ```typescript
      * mapView.lookAt({heading: 90})
      *     // look east retaining current `target`, `zoomLevel` and `tilt`
      *
@@ -2238,6 +2262,7 @@ export class MapView extends THREE.EventDispatcher {
      * The method that sets the camera to the desired angle (`tiltDeg`) and `distance` (in meters)
      * to the `target` location, from a certain heading (`headingAngle`).
      *
+     * @remarks
      * @param target - The location to look at.
      * @param distance - The distance of the camera to the target in meters.
      * @param tiltDeg - The camera tilt angle in degrees (0 is vertical), curbed below 89deg
@@ -2276,7 +2301,10 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Moves the camera to the specified {@link @here/harp-geoutils#GeoCoordinates},
      * sets the desired `zoomLevel` and
-     * adjusts the yaw and pitch. The pitch of the camera is
+     * adjusts the yaw and pitch.
+     *
+     * @remarks
+     * The pitch of the camera is
      * always curbed so that the camera cannot
      * look above the horizon. This paradigm is necessary
      * in {@link @here/harp-map-controls#MapControls}, where the center of
@@ -2314,6 +2342,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Updates the value of a dynamic property.
      *
+     * @remarks
      * Property names starting with a `$`-sign are reserved and any attempt to change their value
      * will result in an error.
      *
@@ -2336,6 +2365,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Removes the given dynamic property from this {@link MapView}.
      *
+     * @remarks
      * Property names starting with a `$`-sign are reserved and any attempt to change their value
      * will result in an error.
      *
@@ -2448,6 +2478,7 @@ export class MapView extends THREE.EventDispatcher {
      * PixelRatio in the WebGlRenderer. May contain values > 1.0 for high resolution screens
      * (HiDPI).
      *
+     * @remarks
      * A value of `undefined` will make the getter return `window.devicePixelRatio`, setting a value
      * of `1.0` will disable the use of HiDPI on all devices.
      *
@@ -2465,7 +2496,10 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Maximum FPS (Frames Per Second). If VSync in enabled, the specified number may not be
+     * Maximum FPS (Frames Per Second).
+     *
+     * @remarks
+     * If VSync in enabled, the specified number may not be
      * reached, but instead the next smaller number than `maxFps` that is equal to the refresh rate
      * divided by an integer number.
      *
@@ -2484,9 +2518,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * PixelRatio ratio for rendering when the camera is moving or an animation is running. Useful
-     * when rendering on high resolution displays with low performance GPUs that may be
-     * fill-rate-limited.
+     * PixelRatio ratio for rendering when the camera is moving or an animation is running.
+     *
+     * @remarks
+     * Useful when rendering on high resolution displays with low performance GPUs
+     * that may be fill-rate-limited.
      *
      * If a value is specified, a low resolution render pass is used to render the scene into a
      * low resolution render target, before it is copied to the screen.
@@ -2545,9 +2581,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns the world space position from the given screen position. The return value can be
-     * `null`, in case the camera is facing the horizon and the given `(x, y)` value is not
-     * intersecting the ground plane.
+     * Returns the world space position from the given screen position.
+     *
+     * @remarks
+     * The return value can be `null`, in case the camera is facing the horizon
+     * and the given `(x, y)` value is not intersecting the ground plane.
      *
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
@@ -2561,7 +2599,10 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Returns the {@link @here/harp-geoutils#GeoCoordinates} from the
-     * given screen position. The return value can be
+     * given screen position.
+     *
+     * @remarks
+     * The return value can be
      * `null`, in case the camera is facing the horizon and
      * the given `(x, y)` value is not
      * intersecting the ground plane.
@@ -2591,8 +2632,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Do a raycast on all objects in the scene. Useful for picking. Limited to objects that
-     * THREE.js can raycast, the solid lines that get their geometry in the shader cannot be tested
+     * Do a raycast on all objects in the scene. Useful for picking.
+     *
+     * @remarks
+     * Limited to objects that THREE.js can raycast, the solid lines
+     * that get their geometry in the shader cannot be tested
      * for intersection.
      *
      * Note, if a {@link DataSource} adds an [[Object3D]]
@@ -2647,6 +2691,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Redraws scene immediately
      *
+     * @remarks
      * @note Before using this method, set `synchronousRendering` to `true`
      * in the {@link MapViewOptions}
      *
@@ -2696,6 +2741,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Clear the tile cache.
      *
+     * @remarks
      * Remove the {@link Tile} objects created by cacheable
      * {@link DataSource}s. If a {@link DataSource} name is
      * provided, this method restricts the eviction the {@link DataSource} with the given name.
@@ -2746,6 +2792,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Visit each tile in visible, rendered, and cached sets.
      *
+     * @remarks
      *  * Visible and temporarily rendered tiles will be marked for update and retained.
      *  * Cached but not rendered/visible will be evicted.
      *
@@ -2758,8 +2805,10 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Sets the DataSource which contains the elevations, the elevation range source, and the
-     * elevation provider. Only a single elevation source is possible per {@link MapView}
+     * elevation provider.
      *
+     * @remarks
+     * Only a single elevation source is possible per {@link MapView}.
      * If the terrain-datasource is merged with this repository, we could internally construct
      * the {@link ElevationRangeSource} and the {@link ElevationProvider}
      * and access would be granted to
@@ -3084,6 +3133,8 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Updates the camera and the projections and resets the screen collisions,
      * note, setupCamera must be called before this is called.
+     *
+     * @remarks
      * @param viewRanges - optional parameter that supplies new view ranges, most importantly
      * near/far clipping planes distance. If parameter is not provided view ranges will be
      * calculated from [[ClipPlaneEvaluator]] used in {@link VisibleTileSet}.

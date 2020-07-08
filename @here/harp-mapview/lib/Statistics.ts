@@ -174,8 +174,12 @@ export namespace RingBuffer {
 }
 
 /**
- * An interface for a Timer class, that abstracts the basic functions of a Timer. Implemented
- * by SimpleTimer, SampledTimer, and MultiStageTimer.
+ * An interface for a Timer class, that abstracts the basic functions of a Timer.
+ *
+ * @remarks
+ * Implemented by SimpleTimer, SampledTimer, and MultiStageTimer.
+ *
+ * @internal
  */
 export interface Timer {
     readonly name: string;
@@ -215,6 +219,8 @@ export interface Timer {
 
 /**
  * A simple timer that stores only the latest measurement.
+ *
+ * @internal
  */
 export class SimpleTimer implements Timer {
     /** `true` if timer has been started. */
@@ -302,6 +308,8 @@ export class SimpleTimer implements Timer {
 
 /**
  * Simple statistics about the values in an array.
+ *
+ * @internal
  */
 export interface Stats {
     /**
@@ -362,6 +370,8 @@ export interface Stats {
 
 /**
  * A timer that stores the last `n` samples in a ring buffer.
+ *
+ * @internal
  */
 export class SampledTimer extends SimpleTimer {
     /**
@@ -428,11 +438,14 @@ export class SampledTimer extends SimpleTimer {
  * Only exported for testing
  * @ignore
  *
+ * @remarks
  * Compute the [[ArrayStats]] for the passed in array of numbers.
  *
  * @param {number[]} samples Array containing sampled values. Will be modified (!) by sorting the
  *      entries.
  * @returns {(Stats | undefined)}
+ *
+ * @internal
  */
 export function computeArrayStats(samples: number[]): Stats | undefined {
     if (samples.length === 0) {
@@ -504,10 +517,13 @@ export function computeArrayStats(samples: number[]): Stats | undefined {
  * Only exported for testing
  * @ignore
  *
+ * @remarks
  * Compute the averages for the passed in array of numbers.
  *
  * @param {number[]} samples Array containing sampled values.
  * @returns {(Stats | undefined)}
+ *
+ * @internal
  */
 export function computeArrayAverage(samples: number[]): number | undefined {
     if (samples.length === 0) {
@@ -527,11 +543,15 @@ export function computeArrayAverage(samples: number[]): number | undefined {
 
 /**
  * Measures a sequence of connected events, such as multiple processing stages in a function.
+ *
+ * @remarks
  * Each stage is identified with a timer name, that must be a valid timer in the statistics
  * object. Additionally, all timers within a `MultiStageTimer` must be unique.
  *
  * Internally, the `MultiStageTimer` manages a list of timers where at the end of each stage,
  * one timer stops and the next timer starts.
+ *
+ * @internal
  */
 export class MultiStageTimer {
     private currentStage: string | undefined;
@@ -629,8 +649,13 @@ export class MultiStageTimer {
 }
 
 /**
- * Manages a set of timers. The main objective of `Statistics` is to log these timers. You can
+ * Manages a set of timers.
+ *
+ * @remarks
+ * The main objective of `Statistics` is to log these timers. You can
  * disable statistics to minimize their impact on performance.
+ *
+ * @internal
  */
 export class Statistics {
     private readonly timers: Map<string, Timer>;
@@ -758,6 +783,8 @@ export class Statistics {
 
 /**
  * Class containing all counters, timers and events of the current frame.
+ *
+ * @internal
  */
 export class FrameStats {
     readonly entries: Map<string, number> = new Map();
@@ -824,6 +851,7 @@ export class FrameStats {
  * @ignore
  * Only exported for testing.
  *
+ * @remarks
  * Instead of passing around an array of objects, we store the frame statistics as an object of
  * arrays. This allows convenient computations from {@link RingBuffer},
  */
@@ -908,6 +936,9 @@ interface ChromeMemoryInfo {
     jsHeapSizeLimit: number;
 }
 
+/**
+ * @internal
+ */
 export interface SimpleFrameStatistics {
     configs: Map<string, string>;
     appResults: Map<string, number>;
@@ -919,11 +950,14 @@ export interface SimpleFrameStatistics {
 }
 
 /**
- * Performance measurement central. Maintains the current
- * {@link FrameStats}, which holds all individual
- * performance numbers.
+ * Performance measurement central.
  *
- * Implemented as an instance for easy access.
+ * @remarks
+ * Maintains the current. Implemented as an instance for easy access.
+ *
+ * {@link FrameStats}, which holds all individual performance numbers.
+ *
+ * @internal
  */
 export class PerformanceStatistics {
     /**

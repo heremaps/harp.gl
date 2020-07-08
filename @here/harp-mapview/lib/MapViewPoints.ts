@@ -8,9 +8,11 @@ import * as THREE from "three";
 import { PickingRaycaster } from "./PickingRaycaster";
 
 /**
- * `MapViewPoints` is a class to extend for the `"circles"` and `"squares"` [[Technique]]s to
- * implement raycasting of [[THREE.Points]] as expected in
- * {@link MapView}, that are in screen space.
+ * `MapViewPoints` is a class to extend for the `"circles"` and `"squares"` techniques to
+ * implement raycasting of `THREE.Points` as expected in {@link MapView},
+ * that are in screen space.
+ *
+ * @remarks
  * It copies the behaviour of the `raycast` method in [[THREE.Points]] and dispatches it to its
  * children classes, {@link Circles} and {@link Squares}, who hold the intersection testing in the
  * `testPoint` method. This class also has the ability to dismiss the testing via the
@@ -19,6 +21,8 @@ import { PickingRaycaster } from "./PickingRaycaster";
  * Its main motivation is to handle the point styles of XYZ projects.
  *
  * @see https://github.com/mrdoob/three.js/blob/master/src/objects/Points.js
+ *
+ * @internal
  */
 export abstract class MapViewPoints extends THREE.Points {
     /**
@@ -166,6 +170,7 @@ function getPointInfo(
 
 /**
  * Point object that implements the raycasting of circles in screen space.
+ * @internal
  */
 export class Circles extends MapViewPoints {
     /** @override */
@@ -195,6 +200,7 @@ export class Circles extends MapViewPoints {
 
 /**
  * Point object that implements the raycasting of squares in screen space.
+ * @internal
  */
 export class Squares extends MapViewPoints {
     /** @override */
