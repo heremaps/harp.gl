@@ -1,6 +1,7 @@
 node_modules/
 dist/
 doc/
+coverage/
 test-npm-packages-app/
 .vscode/
 .DS_Store
