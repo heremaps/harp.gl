@@ -367,7 +367,15 @@ export class Tile implements CachedResource {
         // This happens in order to prevent that, during VisibleTileSet visibility evaluation,
         // visible tiles that haven't yet been evaluated for the current frame are preemptively
         // removed from [[DataSourceCache]].
-        return this.frameNumLastRequested >= this.dataSource.mapView.frameNumber - 1;
+        // There is cases when a tile was already removed from the MapView, i.e. the PolaCaps
+        // Datasource might get remove on a change of projection, in this case
+        // this.dataSource.mapView will throw an error
+        try {
+            return this.frameNumLastRequested >= this.dataSource.mapView.frameNumber - 1;
+        } catch (error) {
+            logger.debug(error);
+            return false;
+        }
     }
 
     set isVisible(visible: boolean) {
