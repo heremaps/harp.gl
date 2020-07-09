@@ -41,7 +41,10 @@ function createFakeTextElement(): TextElement {
 describe("Tile", function() {
     const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
     const stubDataSource = new TileTestStubDataSource({ name: "test-data-source" });
-    const mapView = { projection: mercatorProjection };
+    const mapView = {
+        projection: mercatorProjection,
+        frameNumber: 0
+    };
     stubDataSource.attach(mapView as MapView);
 
     it("set empty decoded tile forces hasGeometry to be true", function() {
@@ -255,5 +258,16 @@ describe("Tile", function() {
 
         expect(tile.geoBox).deep.equals(expectedGeoBox);
         expect(tile.boundingBox).deep.equals(expectedBBox);
+    });
+
+    it("doesnt throw on isVisble if not attached to a MapView", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        mapView.frameNumber = 2;
+        tile.frameNumLastRequested = 2;
+        expect(tile.isVisible).not.throw;
+        expect(tile.isVisible).is.true;
+        stubDataSource.detach(mapView as MapView);
+        expect(tile.isVisible).not.throw;
+        expect(tile.isVisible).is.false;
     });
 });
