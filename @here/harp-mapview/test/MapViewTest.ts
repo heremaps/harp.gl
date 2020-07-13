@@ -149,7 +149,7 @@ describe("MapView", function() {
             epsilon: 1e-13
         }
     ]) {
-        describe.only(`camera positioning - ${projectionName} projection`, function() {
+        describe(`camera positioning - ${projectionName} projection`, function() {
             for (const { testName, lookAtParams } of [
                 {
                     testName: "berlin/18 topView",
