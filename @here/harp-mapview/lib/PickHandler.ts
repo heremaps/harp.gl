@@ -175,13 +175,8 @@ export class PickHandler {
             }
 
             this.addObjInfo(featureData, intersect, pickResult);
-
-            if (featureData.objInfos !== undefined) {
-                const featureId =
-                    featureData.objInfos.length === 1
-                        ? getFeatureId(featureData.objInfos[0])
-                        : undefined;
-                pickResult.featureId = featureId;
+            if (pickResult.userData) {
+                pickResult.featureId = getFeatureId(pickResult.userData);
             }
 
             let pickObjectType: PickObjectType;
@@ -238,6 +233,9 @@ export class PickHandler {
             featureData.starts.length === 0 ||
             (intersect.faceIndex === undefined && intersect.index === undefined)
         ) {
+            if (featureData.objInfos.length === 1) {
+                pickResult.userData = featureData.objInfos[0];
+            }
             return;
         }
 
