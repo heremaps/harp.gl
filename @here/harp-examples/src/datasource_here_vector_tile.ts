@@ -72,7 +72,7 @@ export namespace DatasourceHEREVectorTileExample {
 
         // snippet:harp_gl_datasource_here_vector_tile_example_2.ts
 
-        CopyrightElementHandler.install("copyrightNotice", mapView);
+        CopyrightElementHandler.install("copyrightNotice", map);
 
         const mapControls = new MapControls(map);
         mapControls.maxTiltAngle = 50;
@@ -93,23 +93,27 @@ export namespace DatasourceHEREVectorTileExample {
         return map;
     }
 
-    const mapView = initializeMapView("mapCanvas");
+    function main() {
+        const mapView = initializeMapView("mapCanvas");
 
-    // snippet:harp_gl_datasource_here_vector_tile_example_4.ts
-    const omvDataSource = new OmvDataSource({
-        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-        apiFormat: APIFormat.XYZOMV,
-        styleSetName: "tilezen",
-        authenticationCode: apikey,
-        authenticationMethod: {
-            method: AuthenticationMethod.QueryString,
-            name: "apikey"
-        },
-        copyrightInfo
-    });
-    // end:harp_gl_datasource_here_vector_tile_example_4.ts
+        // snippet:harp_gl_datasource_here_vector_tile_example_4.ts
+        const omvDataSource = new OmvDataSource({
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+            apiFormat: APIFormat.XYZOMV,
+            styleSetName: "tilezen",
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
+            copyrightInfo
+        });
+        // end:harp_gl_datasource_here_vector_tile_example_4.ts
 
-    // snippet:harp_gl_datasource_here_vector_tile_example_5.ts
-    mapView.addDataSource(omvDataSource);
-    // end:harp_gl_datasource_here_vector_tile_example_5.ts
+        // snippet:harp_gl_datasource_here_vector_tile_example_5.ts
+        mapView.addDataSource(omvDataSource);
+        // end:harp_gl_datasource_here_vector_tile_example_5.ts
+    }
+
+    main();
 }
