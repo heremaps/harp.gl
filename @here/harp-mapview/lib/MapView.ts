@@ -28,6 +28,7 @@ import {
     GeoCoordLike,
     isGeoBoxExtentLike,
     isGeoCoordinatesLike,
+    isVector3Like,
     mercatorProjection,
     OrientedBox3,
     Projection,
@@ -2547,18 +2548,18 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns the screen position of the given position.
+     * Returns the screen position of the given geo or world position.
      *
-     * @param geoPos - The position as a {@link @here/harp-geoutils#GeoCoordinates} or
+     * @param pos - The position as a {@link @here/harp-geoutils#GeoCoordLike} or
      * {@link https://threejs.org/docs/#api/en/math/Vector3 | THREE.Vector3} world position.
      * @returns The screen position in CSS/client coordinates (no pixel ratio applied) or
      * `undefined`.
      */
-    getScreenPosition(pos: GeoCoordinates | THREE.Vector3): THREE.Vector2 | undefined {
-        if (isGeoCoordinatesLike(pos)) {
-            this.projection.projectPoint(pos, cache.vector3[0]);
-        } else {
+    getScreenPosition(pos: GeoCoordLike | THREE.Vector3): THREE.Vector2 | undefined {
+        if (isVector3Like(pos)) {
             cache.vector3[0].copy(pos);
+        } else {
+            this.projection.projectPoint(GeoCoordinates.fromObject(pos), cache.vector3[0]);
         }
         const p = this.m_screenProjector.project(cache.vector3[0]);
         if (p !== undefined) {
