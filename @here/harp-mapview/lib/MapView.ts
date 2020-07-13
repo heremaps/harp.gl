@@ -3097,7 +3097,7 @@ export class MapView extends THREE.EventDispatcher {
                     heading,
                     distance,
                     target
-                })
+                });
             }
 
             return this.lookAtImpl(
@@ -3115,7 +3115,6 @@ export class MapView extends THREE.EventDispatcher {
         }
         target =
             params.target !== undefined ? GeoCoordinates.fromObject(params.target) : this.target;
-
 
         // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
         // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put

@@ -21,11 +21,11 @@ import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 import {
+    GeoBox,
     GeoCoordinates,
     mercatorProjection,
     sphereProjection,
-    webMercatorTilingScheme,
-    GeoBox
+    webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { MapView, MapViewEventNames } from "../lib/MapView";
@@ -295,15 +295,27 @@ describe("MapView", function() {
                         expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
                     }
                     if (lookAtParams.bounds !== undefined) {
-                        expect(mapView.target.latitude).to.be.closeTo(lookAtParams.bounds.center.latitude, epsilon);
-                        expect(mapView.target.longitude).to.be.closeTo(lookAtParams.bounds.center.longitude, epsilon);
+                        expect(mapView.target.latitude).to.be.closeTo(
+                            lookAtParams.bounds.center.latitude,
+                            epsilon
+                        );
+                        expect(mapView.target.longitude).to.be.closeTo(
+                            lookAtParams.bounds.center.longitude,
+                            epsilon
+                        );
 
                         if (lookAtParams.zoomLevel) {
-                            expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, epsilon);
+                            expect(mapView.zoomLevel).to.be.closeTo(
+                                lookAtParams.zoomLevel,
+                                epsilon
+                            );
                         }
 
                         if (lookAtParams.distance) {
-                            expect(mapView.targetDistance).to.be.closeTo(lookAtParams.distance, 1e-8);
+                            expect(mapView.targetDistance).to.be.closeTo(
+                                lookAtParams.distance,
+                                1e-8
+                            );
                         }
                     }
                 });
