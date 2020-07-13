@@ -678,6 +678,35 @@ describe("MapView", function() {
             }
         }
     });
+    it("converts screen coords to world to screen", function() {
+        const customCanvas = {
+            clientWidth: 1920,
+            clientHeight: 1080,
+            pixelRatio: 1,
+            addEventListener: sinon.stub(),
+            removeEventListener: sinon.stub()
+        };
+
+        for (let x = -100; x <= 100; x += 100) {
+            for (let y = -100; y <= 100; y += 100) {
+                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                const resultA = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
+                mapView.dispose();
+
+                customCanvas.pixelRatio = 2;
+                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                const resultB = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
+
+                expect(resultA!.x).to.be.closeTo(resultB!.x, 0.00000001);
+                expect(resultA!.y).to.be.closeTo(resultB!.y, 0.00000001);
+                expect(resultA!.x).to.be.closeTo(x, 0.00000001);
+                expect(resultA!.y).to.be.closeTo(y, 0.00000001);
+                mapView.dispose();
+                mapView = undefined;
+            }
+        }
+    });
+
     it("updates scene materials, objects & skips transparent ones", async function() {
         if (inNodeContext) {
             let time = 0;
