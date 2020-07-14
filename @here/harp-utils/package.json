@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-utils",
-    "version": "0.17.0",
+    "version": "0.17.1",
     "description": "Provides utilities: logging, debugging.",
     "main": "index.js",
     "browser": "index.web.js",
