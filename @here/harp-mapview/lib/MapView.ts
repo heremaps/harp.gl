@@ -3036,6 +3036,19 @@ export class MapView extends THREE.EventDispatcher {
     private lookAtImpl(params: Partial<LookAtParams>): void {
         const tilt = Math.min(getOptionValue(params.tilt, this.tilt), MapViewUtils.MAX_TILT_DEG);
         const heading = getOptionValue(params.heading, this.heading);
+        const distance =
+            params.zoomLevel !== undefined
+                ? MapViewUtils.calculateDistanceFromZoomLevel(
+                      this,
+                      THREE.MathUtils.clamp(
+                          params.zoomLevel,
+                          this.m_minZoomLevel,
+                          this.m_maxZoomLevel
+                      )
+                  )
+                : params.distance !== undefined
+                ? params.distance
+                : this.m_targetDistance;
 
         let target: GeoCoordinates | undefined;
         if (params.bounds !== undefined) {
@@ -3077,6 +3090,16 @@ export class MapView extends THREE.EventDispatcher {
             } else {
                 this.projection.projectPoint(target, worldTarget);
             }
+
+            if (params.zoomLevel !== undefined || params.distance !== undefined) {
+                return this.lookAtImpl({
+                    tilt,
+                    heading,
+                    distance,
+                    target
+                });
+            }
+
             return this.lookAtImpl(
                 MapViewUtils.getFitBoundsLookAtParams(target, worldTarget, worldPoints, {
                     tilt,
@@ -3092,20 +3115,6 @@ export class MapView extends THREE.EventDispatcher {
         }
         target =
             params.target !== undefined ? GeoCoordinates.fromObject(params.target) : this.target;
-
-        const distance =
-            params.zoomLevel !== undefined
-                ? MapViewUtils.calculateDistanceFromZoomLevel(
-                      this,
-                      THREE.MathUtils.clamp(
-                          params.zoomLevel,
-                          this.m_minZoomLevel,
-                          this.m_maxZoomLevel
-                      )
-                  )
-                : params.distance !== undefined
-                ? params.distance
-                : this.m_targetDistance;
 
         // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
         // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put

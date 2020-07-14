@@ -21,6 +21,7 @@ import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 import {
+    GeoBox,
     GeoCoordinates,
     mercatorProjection,
     sphereProjection,
@@ -197,6 +198,46 @@ describe("MapView", function() {
                         tilt: 30,
                         heading: -160
                     }
+                },
+                {
+                    testName: "berlin bounds only",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        )
+                    }
+                },
+                {
+                    testName: "berlin bounds + zoomLevel",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        ),
+                        zoomLevel: 10
+                    }
+                },
+                {
+                    testName: "berlin bounds + distance",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        ),
+                        distance: 38200
+                    }
+                },
+                {
+                    testName: "berlin bounds + distance + angles",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        ),
+                        tilt: 45,
+                        heading: 45
+                    }
                 }
             ]) {
                 it(`obeys constructor params - ${testName}`, function() {
@@ -252,6 +293,30 @@ describe("MapView", function() {
                     }
                     if (lookAtParams.heading !== undefined) {
                         expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
+                    }
+                    if (lookAtParams.bounds !== undefined) {
+                        expect(mapView.target.latitude).to.be.closeTo(
+                            lookAtParams.bounds.center.latitude,
+                            epsilon
+                        );
+                        expect(mapView.target.longitude).to.be.closeTo(
+                            lookAtParams.bounds.center.longitude,
+                            epsilon
+                        );
+
+                        if (lookAtParams.zoomLevel) {
+                            expect(mapView.zoomLevel).to.be.closeTo(
+                                lookAtParams.zoomLevel,
+                                epsilon
+                            );
+                        }
+
+                        if (lookAtParams.distance) {
+                            expect(mapView.targetDistance).to.be.closeTo(
+                                lookAtParams.distance,
+                                1e-8
+                            );
+                        }
                     }
                 });
             }
