@@ -1,6 +1,6 @@
 {
     "name": "@here/create-harp.gl-app",
-    "version": "0.17.1",
+    "version": "0.17.2",
     "description": "Create harp.gl projects",
     "main": "src/index.js",
     "bin": {
