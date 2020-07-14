@@ -9,8 +9,7 @@ const importFrom = require("import-from");
 const inquirer = require("inquirer");
 const path = require("path");
 const symbols = require("log-symbols");
-
-const npx = importFrom(path.join(globalDirs.npm.packages, "npm"), "libnpx");
+const npx = require("libnpx");
 
 async function create(
     argv = process.argv.slice(),
