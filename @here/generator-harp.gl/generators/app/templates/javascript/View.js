@@ -5,8 +5,8 @@
  */
 
 import { MapControls } from "@here/harp-map-controls";
-import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { MapView } from "@here/harp-mapview";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 
 const defaultTheme = "resources/berlin_tilezen_base.json";
 
@@ -23,25 +23,8 @@ export class View {
             theme: this.theme,
             decoderUrl: "decoder.bundle.js"
         });
-        CopyrightElementHandler.install("copyrightNotice")
-            .attach(mapView)
-            .setDefaults([
-                {
-                    id: "here.com",
-                    label: "HERE",
-                    link: "https://legal.here.com/terms",
-                    year: 2019
-                }
-            ]);
         const omvDataSource = new OmvDataSource({
-            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            authenticationCode: "<%= apikey %>",
-            authenticationMethod: {
-                  method: AuthenticationMethod.QueryString,
-                  name: "apikey"
-            }
+            authenticationCode: "<%= apikey %>"
         });
         mapView.addDataSource(omvDataSource);
         MapControls.create(mapView);
