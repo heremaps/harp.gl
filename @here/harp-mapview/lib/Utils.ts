@@ -99,19 +99,6 @@ function snapToCeilingZoomLevel(zoomLevel: number) {
     return ceiling - zoomLevel < eps ? ceiling : zoomLevel;
 }
 
-function setWorldPosHeight(
-    worldPos: THREE.Vector3,
-    height: number,
-    projection: Projection
-): THREE.Vector3 {
-    if (projection.type === ProjectionType.Planar) {
-        worldPos.setZ(height);
-    } else if (projection.type === ProjectionType.Spherical) {
-        worldPos.setLength(EarthConstants.EQUATORIAL_RADIUS + height);
-    }
-    return worldPos;
-}
-
 export namespace MapViewUtils {
     export const MAX_TILT_DEG = 89;
     export const MAX_TILT_RAD = MAX_TILT_DEG * THREE.MathUtils.DEG2RAD;
@@ -175,37 +162,29 @@ export namespace MapViewUtils {
             : undefined;
 
         // Get current target position in world space before we zoom.
-        const worldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
-        const groundDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
-        const cameraHeight = groundDistance + (elevation ?? 0);
+        const zoomTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
+        const cameraTarget = mapView.worldTarget;
+        const newCameraDistance = calculateDistanceFromZoomLevel(mapView, zoomLevel);
 
         if (mapView.geoMaxBounds) {
             // If map view has maximum bounds set, constrain camera target and distance to ensure
             // they remain within bounds.
-
-            // tslint:disable-next-line: deprecation
-            const newCamPos = setWorldPosHeight(
-                cache.vector3[0].copy(camera.position),
-                cameraHeight,
-                projection
-            );
-            const oldTarget = mapView.worldTarget;
-            const distance = oldTarget.distanceTo(newCamPos);
             const constrained = constrainTargetAndDistanceToViewBounds(
-                oldTarget,
-                distance,
+                cameraTarget,
+                newCameraDistance,
                 mapView
             );
-            if (constrained.distance !== distance) {
+            if (constrained.distance !== newCameraDistance) {
                 // Only indicate failure when zooming out. This avoids zoom in cancellations when
                 // camera is already at the maximum distance allowed by the view bounds.
                 return zoomLevel >= mapView.zoomLevel;
             }
-            camera.position.copy(newCamPos);
-        } else {
-            // Set the cameras height according to the given zoom level.
-            setWorldPosHeight(camera.position, cameraHeight, projection);
         }
+        // Set the camera distance according to the given zoom level.
+        camera
+            .getWorldDirection(camera.position)
+            .multiplyScalar(-newCameraDistance)
+            .add(cameraTarget);
 
         // In sphere, we may have to also orbit the camera around the position located at the
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
@@ -222,18 +201,18 @@ export namespace MapViewUtils {
         }
 
         // Get new target position after the zoom
-        const newWorldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
-        if (!worldTarget || !newWorldTarget) {
+        const newZoomTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
+        if (!zoomTarget || !newZoomTarget) {
             return true;
         }
 
         if (projection.type === ProjectionType.Planar) {
             // Calculate the difference and pan the map to maintain the map relative to the target
             // position.
-            worldTarget.sub(newWorldTarget);
-            panCameraAboveFlatMap(mapView, worldTarget.x, worldTarget.y);
+            zoomTarget.sub(newZoomTarget);
+            panCameraAboveFlatMap(mapView, zoomTarget.x, zoomTarget.y);
         } else if (projection.type === ProjectionType.Spherical) {
-            panCameraAroundGlobe(mapView, worldTarget, newWorldTarget);
+            panCameraAroundGlobe(mapView, zoomTarget, newZoomTarget);
         }
         return true;
     }
