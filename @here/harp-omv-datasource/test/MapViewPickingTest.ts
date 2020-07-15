@@ -180,7 +180,8 @@ describe("MapView Picking", async function() {
             fontCatalog: getTestResourceUrl(
                 "@here/harp-fontcatalog",
                 "resources/Default_FontCatalog.json"
-            )
+            ),
+            addBackgroundDatasource: false
         });
 
         await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
@@ -295,6 +296,7 @@ describe("MapView Picking", async function() {
             lookAt?: number[];
             // Whether to test a shift of 360.0 degrees
             shiftLongitude: boolean;
+            addDependency?: boolean;
         }
 
         const testCases: TestCase[] = [];
@@ -358,6 +360,17 @@ describe("MapView Picking", async function() {
             }
         }
 
+        testCases.push({
+            name: `Pick polygon in planar projection with dependency`,
+            rayOrigGeo: pickPolygonAt,
+            featureIdx: 0,
+            projection: mercatorProjection,
+            elevation: false,
+            shiftLongitude: false,
+            addDependency: true,
+            lookAt: offCenterLabelLookAt
+        });
+
         for (const testCase of testCases) {
             it(testCase.name, async () => {
                 mapView.projection = testCase.projection;
@@ -391,8 +404,42 @@ describe("MapView Picking", async function() {
                           testCase.lookAt.length > 2 ? testCase.lookAt[2] : undefined
                       )
                     : rayOrigin;
+                // typeof required because the bind returns any
+                const getTile: typeof geoJsonDataSource.getTile = geoJsonDataSource.getTile.bind(
+                    geoJsonDataSource
+                );
+                let stub: sinon.SinonStub | undefined;
+                if (testCase.addDependency === true) {
+                    stub = sinon
+                        .stub(geoJsonDataSource, "getTile")
+                        .callsFake((_tileKey: TileKey, delayLoad?: boolean) => {
+                            const tile = getTile(_tileKey, delayLoad);
+                            if (tile !== undefined) {
+                                tile.dependencies.push(
+                                    TileKey.fromRowColumnLevel(
+                                        (_tileKey.row + 1) % _tileKey.rowCount(),
+                                        _tileKey.column,
+                                        _tileKey.level
+                                    )
+                                );
+                                tile.dependencies.push(
+                                    TileKey.fromRowColumnLevel(
+                                        _tileKey.row,
+                                        (_tileKey.column + 1) % _tileKey.columnCount(),
+                                        _tileKey.level
+                                    )
+                                );
+                            }
+                            return tile;
+                        });
+                }
+
                 mapView.lookAt({ target, tilt: 60, zoomLevel: 2 });
                 await waitForEvent(mapView, MapViewEventNames.FrameComplete);
+                // Reset back to the original function
+                if (stub !== undefined) {
+                    stub.restore();
+                }
 
                 const screenPointLocation = mapView.getScreenPosition(rayOrigin) as THREE.Vector2;
                 assert.isDefined(screenPointLocation);

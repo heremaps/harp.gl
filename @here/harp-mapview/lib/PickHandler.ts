@@ -149,21 +149,78 @@ export class PickHandler {
         const intersects: THREE.Intersection[] = [];
         const intersectedTiles = this.getIntersectedTiles(rayCaster);
 
+        // This ensures that we check a given dependency only once (because multiple tiles could
+        // have the same dependency).
+        const checkedDependencies = new Set<number>();
+
         for (const { tile, distance } of intersectedTiles) {
             if (pickListener.done && pickListener.furthestResult!.distance < distance) {
                 // Stop when the listener has all results it needs and remaining tiles are further
                 // away than then furthest pick result found so far.
                 break;
             }
-            intersects.length = 0;
-            rayCaster.intersectObjects(tile.objects, true, intersects);
-            for (const intersect of intersects) {
-                pickListener.addResult(this.createResult(intersect));
-            }
+            this.intersectObjects(tile, intersects, pickListener, rayCaster);
+            this.intersectDependentObjects(
+                tile,
+                intersects,
+                pickListener,
+                rayCaster,
+                checkedDependencies
+            );
         }
 
         pickListener.finish();
         return pickListener.results;
+    }
+
+    // Adds the list of intersection results to the pick listener. The intersection results are
+    // cleared after being added.
+    private addIntersectResults(intersects: THREE.Intersection[], pickListener: PickListener) {
+        for (const intersect of intersects) {
+            pickListener.addResult(this.createResult(intersect));
+        }
+        intersects.length = 0;
+    }
+
+    // Intersects the tiles objects using the supplied raycaster and adds the intersection results
+    // to the PickListener
+    private intersectObjects(
+        tile: Tile,
+        intersects: THREE.Intersection[],
+        pickListener: PickListener,
+        rayCaster: THREE.Raycaster
+    ) {
+        rayCaster.intersectObjects(tile.objects, true, intersects);
+        this.addIntersectResults(intersects, pickListener);
+    }
+
+    // Intersects the dependent tile objects using the supplied raycaster and adds the intersection
+    // results to the PickListener. Note, because multiple tiles can point to the same dependency
+    // we need to store which results we have already raycasted, see checkedDependencies.
+    private intersectDependentObjects(
+        tile: Tile,
+        intersects: THREE.Intersection[],
+        pickListener: PickListener,
+        rayCaster: THREE.Raycaster,
+        checkedDependencies: Set<number>
+    ) {
+        for (const tileKey of tile.dependencies) {
+            const mortonCode = tileKey.mortonCode();
+            if (checkedDependencies.has(mortonCode)) {
+                continue;
+            }
+            checkedDependencies.add(mortonCode);
+            const otherTile = this.mapView.visibleTileSet.getCachedTile(
+                tile.dataSource,
+                tileKey,
+                tile.offset,
+                this.mapView.frameNumber
+            );
+            if (otherTile !== undefined) {
+                rayCaster.intersectObjects(otherTile.objects, true, intersects);
+            }
+        }
+        this.addIntersectResults(intersects, pickListener);
     }
 
     private createResult(intersection: THREE.Intersection): PickResult {
@@ -224,8 +281,10 @@ export class PickHandler {
     private getIntersectedTiles(
         rayCaster: THREE.Raycaster
     ): Array<{ tile: Tile; distance: number }> {
-        const tiles = new Array<{ tile: Tile; distance: number }>();
-
+        const tiles = new Array<{
+            tile: Tile;
+            distance: number;
+        }>();
         const tileList = this.mapView.visibleTileSet.dataSourceTileList;
         tileList.forEach(dataSourceTileList => {
             if (!dataSourceTileList.dataSource.enablePicking) {
