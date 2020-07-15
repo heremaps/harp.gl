@@ -7,13 +7,8 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import {
-    GeoCoordinates,
-    mercatorProjection,
-    Projection,
-    sphereProjection
-} from "@here/harp-geoutils";
-import { ElevationProvider, MapView, MapViewUtils } from "@here/harp-mapview";
+import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
+import { MapView, MapViewUtils } from "@here/harp-mapview";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -296,8 +291,6 @@ describe("MapControls", function() {
     });
 
     describe("zoomOnTargetPosition", function() {
-        const elevationProvider = ({} as any) as ElevationProvider;
-
         function resetCamera(pitch: number, zoomLevel?: number) {
             const target = GeoCoordinates.fromDegrees(0, 0);
             const heading = 0;
@@ -322,10 +315,9 @@ describe("MapControls", function() {
             camera.updateMatrixWorld(true);
         }
 
-        function computeZoomLevel(projection: Projection) {
-            const distance =
-                projection.unprojectAltitude(camera.position) /
-                Math.cos(MapViewUtils.extractAttitude(mapView, camera).pitch);
+        function computeZoomLevel() {
+            // tslint:disable-next-line: deprecation
+            const distance = MapViewUtils.getTargetAndDistance(mapView.projection, camera).distance;
             return MapViewUtils.calculateZoomLevelFromDistance(mapView, distance);
         }
 
@@ -335,35 +327,58 @@ describe("MapControls", function() {
         ]) {
             describe(`${projName} projection`, function() {
                 beforeEach(function() {
+                    const worldTarget = projection.projectPoint(
+                        GeoCoordinates.fromDegrees(0, 0),
+                        new THREE.Vector3()
+                    );
                     sandbox.stub(mapView, "projection").get(() => projection);
                     sandbox.stub(mapView, "focalLength").get(() => 2000);
                     sandbox.stub(mapView, "minZoomLevel").get(() => 1);
                     sandbox.stub(mapView, "maxZoomLevel").get(() => 20);
+                    sandbox.stub(mapView, "worldTarget").get(() => {
+                        return worldTarget;
+                    });
                     mapControls = new MapControls(mapView);
                 });
                 for (const pitch of [0, 45]) {
-                    it(`camera distance is offset by elevation (pitch ${pitch})`, function() {
+                    it(`camera is moved along view direction (pitch ${pitch})`, function() {
                         resetCamera(pitch);
 
-                        elevationProvider.getHeight = sandbox.stub().returns(0);
-                        sandbox.stub(mapView, "elevationProvider").get(() => elevationProvider);
-
                         mapControls.zoomOnTargetPosition(0, 0, 10);
-                        const altitudeWithoutElevation = projection.unprojectAltitude(
-                            camera.position
-                        );
+                        const initWorldDir = mapView.worldTarget
+                            .clone()
+                            .sub(camera.position)
+                            .normalize();
 
+                        mapControls.zoomOnTargetPosition(0, 0, 11);
+                        const endWorldDir = mapView.worldTarget
+                            .clone()
+                            .sub(camera.position)
+                            .normalize();
+
+                        expect(initWorldDir.dot(endWorldDir)).closeTo(1, 1e-5);
+                    });
+
+                    it(`zoom target stays at the same screen coords (pitch ${pitch})`, function() {
                         resetCamera(pitch);
-                        const elevation = 333;
-                        elevationProvider.getHeight = sandbox.stub().returns(elevation);
-                        mapControls.zoomOnTargetPosition(0, 0, 10);
-                        const altitudeWithElevation = projection.unprojectAltitude(camera.position);
 
-                        const eps = 1e-5;
-                        expect(altitudeWithElevation).closeTo(
-                            altitudeWithoutElevation + elevation,
-                            eps
+                        const initZoomTarget = MapViewUtils.rayCastWorldCoordinates(
+                            mapView,
+                            0.5,
+                            0.5
                         );
+
+                        mapControls.zoomOnTargetPosition(0.5, 0.5, 10);
+                        const endZoomTarget = MapViewUtils.rayCastWorldCoordinates(
+                            mapView,
+                            0.5,
+                            0.5
+                        );
+
+                        expect(initZoomTarget).to.not.equal(undefined);
+                        expect(endZoomTarget).to.not.equal(undefined);
+
+                        expect(initZoomTarget!.distanceTo(endZoomTarget!)).to.be.closeTo(0, 1);
                     });
 
                     it(`zl is applied even if target is not valid (pitch ${pitch})`, function() {
@@ -375,14 +390,14 @@ describe("MapControls", function() {
                         {
                             const expectedZl = 2;
                             mapControls.zoomOnTargetPosition(1, 1, expectedZl);
-                            const actualZl = computeZoomLevel(projection);
+                            const actualZl = computeZoomLevel();
                             expect(actualZl).closeTo(expectedZl, eps);
                         }
                         resetCamera(pitch, 3);
                         {
                             const expectedZl = 4;
                             mapControls.zoomOnTargetPosition(1, 1, expectedZl);
-                            const actualZl = computeZoomLevel(projection);
+                            const actualZl = computeZoomLevel();
                             expect(actualZl).closeTo(expectedZl, eps);
                         }
                     });
@@ -405,6 +420,13 @@ describe("MapControls", function() {
             mapControls.inertiaEnabled = false;
             sandbox.stub(mapView, "zoomLevel").get(() => {
                 return initialZoomLevel;
+            });
+            const worldTarget = mapView.projection.projectPoint(
+                GeoCoordinates.fromDegrees(0, 0),
+                new THREE.Vector3()
+            );
+            sandbox.stub(mapView, "worldTarget").get(() => {
+                return worldTarget;
             });
             // needed to get the initial zoom level from MapView.
             (mapControls as any).assignZoomAfterTouchZoomRender();
