@@ -91,6 +91,7 @@ export class WebTileDataSource extends DataSource {
 
         this.dataProvider = this.m_options.dataProvider;
         this.cacheable = true;
+        this.enablePicking = false;
         this.storageLevelOffset = -1;
         this.m_resolution = getOptionValue(
             m_options.resolution,

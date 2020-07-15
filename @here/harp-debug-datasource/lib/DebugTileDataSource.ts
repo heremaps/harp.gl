@@ -125,6 +125,7 @@ export class DebugTileDataSource extends DataSource {
         super({ name, minDataLevel: 1, maxDataLevel: 20, storageLevelOffset: -1 });
 
         this.cacheable = true;
+        this.enablePicking = false;
     }
 
     /** @override */

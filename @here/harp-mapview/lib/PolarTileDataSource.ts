@@ -84,6 +84,7 @@ export class PolarTileDataSource extends DataSource {
         this.m_geometryLevelOffset = geometryLevelOffset;
         this.m_debugTiles = debugTiles;
         this.cacheable = false;
+        this.enablePicking = false;
     }
 
     /** @override */
