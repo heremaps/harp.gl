@@ -21,6 +21,7 @@ export class BackgroundDataSource extends DataSource {
         super({ name: "background" });
         this.cacheable = true;
         this.addGroundPlane = true;
+        this.enablePicking = false;
     }
 
     updateStorageLevelOffset() {

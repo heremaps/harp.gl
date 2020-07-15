@@ -227,6 +227,10 @@ export class PickHandler {
 
         const tileList = this.mapView.visibleTileSet.dataSourceTileList;
         tileList.forEach(dataSourceTileList => {
+            if (!dataSourceTileList.dataSource.enablePicking) {
+                return;
+            }
+
             dataSourceTileList.renderedTiles.forEach(tile => {
                 tmpOBB.copy(tile.boundingBox);
                 tmpOBB.position.sub(this.mapView.worldCenter);
