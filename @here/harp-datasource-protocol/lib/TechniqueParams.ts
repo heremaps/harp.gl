@@ -1081,6 +1081,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Size in world units how far to offset the line perpendicular to its direction.
      */
     offset?: DynamicProperty<number>;
+    /**
+     * Skip rendering clobbered pixels.
+     * See https://threejs.org/docs/#api/en/materials/Material.depthTest.
+     * @default `false`
+     */
+    depthTest?: boolean;
 }
 
 /**

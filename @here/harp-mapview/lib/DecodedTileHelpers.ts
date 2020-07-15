@@ -472,7 +472,8 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
                 "dashColor",
                 "polygonOffset",
                 "polygonOffsetFactor",
-                "polygonOffsetUnits"
+                "polygonOffsetUnits",
+                "depthTest"
             ]);
             baseProps.lineWidth = buildMetricValueEvaluator(
                 technique.lineWidth ?? 0, // Compatibility: `undefined` lineWidth means hidden.
