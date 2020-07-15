@@ -184,12 +184,12 @@ export namespace MapViewUtils {
             // they remain within bounds.
 
             // tslint:disable-next-line: deprecation
-            const oldTarget = getTargetAndDistance(projection, camera, elevationProvider).target;
             const newCamPos = setWorldPosHeight(
                 cache.vector3[0].copy(camera.position),
                 cameraHeight,
                 projection
             );
+            const oldTarget = mapView.worldTarget;
             const distance = oldTarget.distanceTo(newCamPos);
             const constrained = constrainTargetAndDistanceToViewBounds(
                 oldTarget,
@@ -387,6 +387,16 @@ export namespace MapViewUtils {
         if (!worldMaxBounds) {
             return unconstrained;
         }
+
+        /**
+         * Constraints are checked similarly for planar and sphere. The extents of a top down view
+         * (even if camera isn't top down) using the given camera distance are compared with those
+         * of the maximum bounds to compute a scale. There are two options:
+         * a) scale > 1. The view covers a larger area than the maximum bounds. The distance is
+         * is reduced to match the bounds extents and the target is set at the bounds center.
+         * b) scale <= 1. The view may fit within the bounds without changing the distance, only the
+         * target is moved to fit the whole view within the bounds.
+         **/
 
         const boundsSize = worldMaxBounds.getSize(cache.vector3[1]);
         const screenSize = mapView.renderer.getSize(cache.vector2[0]);
