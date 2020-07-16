@@ -11,19 +11,25 @@ import { ConcurrentTilerFacade } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { LoggerManager } from "@here/harp-utils";
 
+import { EventDispatcher } from "three";
+
 const logger = LoggerManager.instance.create("GeoJsonDataProvider");
+
+const INVALIDATED = "invalidated";
 
 export interface GeoJsonDataProviderOptions {
     /**
-     * Worker script hosting [[Tiler Service]]
+     * Worker script hosting `Tiler` service.
      * @default `./decoder.bundle.ts`
      */
     workerTilerUrl?: string;
 
     /**
      * Custom tiler instance.
-     * If not provided, [[GeoJsonDataProvider]] will obtain [[WorkerBasedTiler]]
-     * from [[ConcurrentTilerFacade]].
+     *
+     * @remarks
+     * If not provided, {@link GeoJsonDataProvider} will obtain `WorkerBasedTiler`
+     * from `ConcurrentTilerFacade`.
      */
     tiler?: ITiler;
 }
@@ -31,9 +37,12 @@ export interface GeoJsonDataProviderOptions {
 let missingTilerServiceInfoEmitted: boolean = false;
 
 /**
- * GeoJson [[DataProvider]]. Automatically handles tiling and simplification of static GeoJson.
+ * GeoJson {@link @here/harp-mapview-decoder@DataProvider}.
+ *
+ * @remarks
+ * Automatically handles tiling and simplification of static GeoJson.
  */
-export class GeoJsonDataProvider implements DataProvider {
+export class GeoJsonDataProvider extends EventDispatcher implements DataProvider {
     private readonly m_tiler: ITiler;
     private m_registered = false;
 
@@ -50,6 +59,8 @@ export class GeoJsonDataProvider implements DataProvider {
         public input: URL | GeoJson,
         options?: GeoJsonDataProviderOptions
     ) {
+        super();
+
         this.m_tiler =
             options?.tiler ??
             ConcurrentTilerFacade.getTiler("omv-tiler", options && options.workerTilerUrl);
@@ -79,6 +90,7 @@ export class GeoJsonDataProvider implements DataProvider {
     updateInput(input: URL | GeoJson) {
         this.input = input;
         this.m_tiler.updateIndex(this.name, this.input);
+        this.dispatchEvent({ type: INVALIDATED });
     }
 
     ready(): boolean {
@@ -87,5 +99,10 @@ export class GeoJsonDataProvider implements DataProvider {
 
     async getTile(tileKey: TileKey): Promise<{}> {
         return this.m_tiler.getTile(this.name, tileKey);
+    }
+
+    onDidInvalidate(listener: () => void) {
+        this.addEventListener(INVALIDATED, listener);
+        return () => this.removeEventListener(INVALIDATED, listener);
     }
 }
