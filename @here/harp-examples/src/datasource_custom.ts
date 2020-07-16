@@ -126,7 +126,7 @@ export namespace CustomDatasourceExample {
                 const y = Math.sin(t) * t * scale;
                 data.push(x, y);
             }
-            return Promise.resolve(new Float32Array(data));
+            return Promise.resolve(new Float32Array([data.length, ...data]));
         }
     }
 
