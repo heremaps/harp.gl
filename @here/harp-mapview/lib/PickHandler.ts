@@ -162,6 +162,7 @@ export class PickHandler {
             }
         }
 
+        pickListener.finish();
         return pickListener.results;
     }
 

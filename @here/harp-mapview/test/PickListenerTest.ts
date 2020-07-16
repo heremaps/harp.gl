@@ -74,7 +74,7 @@ describe("PickListener", function() {
                 userData: {},
                 intersection
             });
-
+            listener.finish();
             expect(listener.results).to.have.lengthOf(5);
         });
 
@@ -102,6 +102,7 @@ describe("PickListener", function() {
                     featureId: 1,
                     intersection
                 });
+                listener.finish();
 
                 expect(listener.results).to.have.lengthOf(1);
                 expect(listener.results[0]).equals(firstResult);
@@ -126,6 +127,7 @@ describe("PickListener", function() {
                     userData,
                     intersection
                 });
+                listener.finish();
 
                 expect(listener.results).to.have.lengthOf(1);
                 expect(listener.results[0]).equals(firstResult);
@@ -153,14 +155,15 @@ describe("PickListener", function() {
                 intersection
             };
             listener.addResult(closerResult);
+            listener.finish();
 
             expect(listener.results).to.have.lengthOf(1);
             expect(listener.results[0]).equals(closerResult);
         });
     });
 
-    describe("results", function() {
-        it("returns results ordered", function() {
+    describe("finish", function() {
+        it("orders the results", function() {
             const listener = new PickListener();
             const expectedResults: PickResult[] = [
                 {
@@ -185,11 +188,12 @@ describe("PickListener", function() {
             listener.addResult(expectedResults[2]);
             listener.addResult(expectedResults[1]);
             listener.addResult(expectedResults[0]);
+            listener.finish();
 
             expect(listener.results).to.have.ordered.members(expectedResults);
         });
 
-        it("returns only the closest maximum result count if specified", function() {
+        it("keeps only the closest maximum result count if specified", function() {
             const maxResultCount = 1;
             const listener = new PickListener({ maxResultCount });
             const results: PickResult[] = [
@@ -208,6 +212,7 @@ describe("PickListener", function() {
             ];
             listener.addResult(results[1]);
             listener.addResult(results[0]);
+            listener.finish();
 
             expect(listener.results).to.have.lengthOf(maxResultCount);
             expect(listener.results[0]).equals(results[0]);
@@ -238,6 +243,7 @@ describe("PickListener", function() {
             ];
             listener.addResult(results[1]);
             listener.addResult(results[0]);
+            listener.finish();
 
             expect(listener.closestResult).to.equal(results[0]);
         });
@@ -267,6 +273,7 @@ describe("PickListener", function() {
             ];
             listener.addResult(results[1]);
             listener.addResult(results[0]);
+            listener.finish();
 
             expect(listener.furthestResult).to.equal(results[1]);
         });
