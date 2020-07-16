@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "@here/harp-utils";
 import { IntersectParams } from "./IntersectParams";
 import { PickResult } from "./PickHandler";
 
@@ -26,6 +27,7 @@ function defaultSort(lhs: PickResult, rhs: PickResult) {
 export class PickListener {
     private m_results: PickResult[] = [];
     private m_sorted: boolean = true;
+    private m_finished: boolean = true;
 
     /**
      * Constructs a new `PickListener`.
@@ -55,6 +57,7 @@ export class PickListener {
 
         if (foundFeatureIdx < 0) {
             this.m_sorted = false;
+            this.m_finished = false;
             this.m_results.push(result);
             return;
         }
@@ -64,6 +67,7 @@ export class PickListener {
         if (defaultSort(result, oldResult) < 0) {
             this.m_results[foundFeatureIdx] = result;
             this.m_sorted = false;
+            this.m_finished = false;
         }
     }
 
@@ -76,18 +80,32 @@ export class PickListener {
     }
 
     /**
-     * Returns the collected results, ordered by distance first, then by reversed render order
-     * (topmost/highest render order first).
+     * Orders the collected results by distance first, then by reversed render order
+     * (topmost/highest render order first), and limits the number of results to the maximum
+     * accepted number, see {@link IntersectParams.maxResultCount}.
+     */
+    finish(): void {
+        // Keep only the closest max results.
+        this.sortResults();
+        if (this.maxResults && this.m_results.length > this.maxResults) {
+            this.m_results.length = this.maxResults;
+        }
+        this.m_finished = true;
+    }
+
+    /**
+     * Returns the collected results. {@link PickListener.finish} should be called first to ensure
+     * the proper sorting and result count.
      * @returns The pick results.
      */
     get results(): PickResult[] {
-        this.finish();
+        assert(this.m_finished, "finish() was not called before getting the results");
         return this.m_results;
     }
 
     /**
      * Returns the closest result collected so far, following the order documented in
-     * {@link PickListener.results}
+     * {@link PickListener.finish}
      * @returns The closest pick result, or `undefined` if no result was collected.
      */
     get closestResult(): PickResult | undefined {
@@ -114,14 +132,6 @@ export class PickListener {
         if (!this.m_sorted) {
             this.m_results.sort(defaultSort);
             this.m_sorted = true;
-        }
-    }
-
-    private finish(): void {
-        // Keep only the closest max results.
-        this.sortResults();
-        if (this.maxResults && this.m_results.length > this.maxResults) {
-            this.m_results.length = this.maxResults;
         }
     }
 }
