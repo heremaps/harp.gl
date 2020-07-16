@@ -7,12 +7,17 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { FeatureCollection } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
+import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { assert } from "chai";
 import { APIFormat, AuthenticationTypeAccessToken, OmvDataSource, OmvRestClient } from "../index";
 import { OmvTileDecoder } from "../index-worker";
+import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
+
+import * as sinon from "sinon";
 
 class MockDataProvider implements DataProvider {
     /** Overriding abstract method, in this case doing nothing. */
@@ -142,5 +147,60 @@ describe("DataProviders", function() {
             assert.equal(omvDataSource["m_decoderOptions"].storageLevelOffset, 2);
             assert.equal((omvDataSource.decoder as any).m_storageLevelOffset, 2);
         });
+    });
+
+    it("DataProvider clears the cache", function() {
+        const geojson: FeatureCollection = {
+            type: "FeatureCollection",
+            features: []
+        };
+
+        const markTilesDirty = sinon.fake();
+        const clearTileCache = sinon.fake();
+
+        const mapView: any = { markTilesDirty, clearTileCache };
+
+        const tiler = new GeoJsonTiler();
+
+        const dataProvider = new GeoJsonDataProvider("geojson", geojson, {
+            tiler
+        });
+
+        const decoder = new OmvTileDecoder();
+
+        const omvDataSource = new OmvDataSource({ dataProvider, decoder });
+
+        omvDataSource.attach(mapView);
+
+        omvDataSource.connect();
+
+        dataProvider.updateInput({
+            type: "FeatureCollection",
+            features: []
+        });
+
+        assert.isTrue(clearTileCache.called);
+
+        clearTileCache.resetHistory();
+
+        assert.isFalse(clearTileCache.called);
+
+        dataProvider.updateInput({
+            type: "FeatureCollection",
+            features: []
+        });
+
+        assert.isTrue(clearTileCache.called);
+
+        clearTileCache.resetHistory();
+
+        omvDataSource.dispose();
+
+        dataProvider.updateInput({
+            type: "FeatureCollection",
+            features: []
+        });
+
+        assert.isFalse(clearTileCache.called);
     });
 });

@@ -112,6 +112,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     protected readonly logger: ILogger = LoggerManager.instance.create("TileDataSource");
     protected readonly m_decoder: ITileDecoder;
     private m_isReady: boolean = false;
+    private readonly m_unregisterClearTileCache?: () => void;
 
     /**
      * Set up the `TileDataSource`.
@@ -153,10 +154,15 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         }
         this.useGeometryLoader = true;
         this.cacheable = true;
+
+        this.m_unregisterClearTileCache = this.dataProvider().onDidInvalidate?.(() =>
+            this.mapView.clearTileCache(this.name)
+        );
     }
 
     /** @override */
     dispose() {
+        this.m_unregisterClearTileCache?.();
         this.decoder.dispose();
     }
 
