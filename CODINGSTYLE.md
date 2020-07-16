@@ -224,7 +224,7 @@ The purpose of a commit message is to summarize the scope and context of a patch
 
 ## Documentation
 
-1. Write your comments in a [TSDoc](https://github.com/Microsoft/tsdoc) compliant way.
+1. Write your comments in a [TSDoc] compliant way.
 
 1. Document the single responsibility of a class or function.
 
@@ -236,7 +236,7 @@ The purpose of a commit message is to summarize the scope and context of a patch
 
 1. If you have to leave "TODO" comments in the code, make sure that they include a related ticket number, so that the work is tracked and not forgotten.
 
-## Recommended [TSDoc](https://github.com/Microsoft/tsdoc) Style
+## Recommended [TSDoc] Style
 
 1. Write proper English sentences.
 1. Put a period "." at the end of a line or sentence.
@@ -330,3 +330,5 @@ It can be used as an extension for Visual Studio Code to help format the code.
 Before committing your code make sure you run `tslint` and `prettier` (either via command line or within your IDE (for example in Visual Studio Code you could use the: `Ctrl+Shift+P >Format...`)
 
 In case you need to change styling in already merged code - make sure to prepare a separate commit with applied formatting and merge it before merging your changes. (Please apply formatting to the whole directory/module).
+
+[TSDoc]: https://github.com/Microsoft/tsdoc
