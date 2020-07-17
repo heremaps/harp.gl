@@ -4,7 +4,7 @@
 
 `harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine written in [TypeScript](https://github.com/microsoft/TypeScript).
 
-### [harp.gl site](https://heremaps.github.io/harp.gl/)
+### [harp.gl site](https://www.harp.gl/)
 
 ### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/) Registration available [here](http://t.her.is/slack).
 

@@ -151,7 +151,7 @@ module.exports = addHarpWebpackConfig(
 
 ### MapView
 
-Then, you have to create [`MapView`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_mapview.mapview.html) that is will render map on `mapCanvas`:
+Then, you have to create [`MapView`](https://www.harp.gl/docs/master/doc/classes/_here_harp_mapview.mapview.html) that is will render map on `mapCanvas`:
 
 ```javascript
 // index.js
@@ -185,7 +185,7 @@ mapView.resize(mapCanvas.clientWidth, mapCanvas.clientHeight);
 ### Attach data source
 
 Last step is adding some
-[`OmvDataSource`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_omv_datasource.omvdatasource.html)
+[`OmvDataSource`](https://www.harp.gl/docs/master/doc/classes/_here_harp_omv_datasource.omvdatasource.html)
 to our `MapView` instance:
 
 ```javascript
@@ -210,7 +210,7 @@ You need to [obtain an apikey](#credentials) to replace `YOUR-APIKEY` and use th
 
 What we've achieved so far is basic, static non-interactive. If you want to enable control of map
 like panning, rotating use
-[`MapControls`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_map_controls.mapcontrols.html)
+[`MapControls`](https://www.harp.gl/docs/master/doc/classes/_here_harp_map_controls.mapcontrols.html)
 
 Note, this requires additional module: `npm install --save @here/harp-map-controls`.
 
