@@ -49,6 +49,8 @@ jobs:
         node-version: ${{ matrix.node_version }}
     - name: Install dependencies
       run: yarn
+    - name: Disable hard-source-webpack-plugin
+      run: echo "::set-env name=HARP_NO_HARD_SOURCE_CACHE::true"
     - name: Pretest
       run: yarn run pre-test
       shell: bash

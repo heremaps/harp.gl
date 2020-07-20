@@ -102,12 +102,15 @@ const commonConfig = {
     // @ts-ignore
     mode: process.env.NODE_ENV || "development",
     plugins: [
-        new HardSourceWebpackPlugin(),
         new webpack.DefinePlugin({
             THEMES: JSON.stringify(themeList)
         })
     ]
 };
+
+if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
+    commonConfig.plugins.push(new HardSourceWebpackPlugin());
+}
 
 const decoderConfig = merge(commonConfig, {
     target: "webworker",

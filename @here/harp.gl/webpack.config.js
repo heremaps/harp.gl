@@ -50,8 +50,7 @@ const commonConfig = {
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
             NODE_ENV: process.env.NODE_ENV || "development"
-        }),
-        new HardSourceWebpackPlugin()
+        })
     ],
     performance: {
         hints: false
@@ -59,6 +58,10 @@ const commonConfig = {
     // @ts-ignore
     mode: process.env.NODE_ENV || "development"
 };
+
+if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
+    commonConfig.plugins.push(new HardSourceWebpackPlugin());
+}
 
 const mapComponentConfig = merge(commonConfig, {
     entry: path.resolve(__dirname, "./lib/index.ts"),

@@ -69,7 +69,6 @@ const browserTestsConfig = {
         filename: "[name].bundle.js"
     },
     plugins: [
-        new HardSourceWebpackPlugin(),
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
             NODE_ENV: process.env.NODE_ENV || "development"
@@ -142,5 +141,9 @@ const browserTestsConfig = {
     // @ts-ignore
     mode: process.env.NODE_ENV || "development"
 };
+
+if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
+    browserTestsConfig.plugins.push(new HardSourceWebpackPlugin());
+}
 
 module.exports = browserTestsConfig;
