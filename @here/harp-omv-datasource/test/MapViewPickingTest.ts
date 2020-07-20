@@ -261,6 +261,30 @@ describe("MapView Picking", async function() {
     });
 
     describe("Picking tests", async function() {
+        const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
+        const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
+            .coordinates as number[][])[0];
+        const pickLabelAt: number[] = (GEOJSON_DATA.features[2].geometry as any).coordinates;
+        const offCenterLabelLookAt: number[] = [pickLabelAt[0] + 10.0, pickLabelAt[1] + 10.0];
+
+        it("Features in a data source with picking disabled are not picked", async () => {
+            geoJsonDataSource.enablePicking = false;
+            const target = new GeoCoordinates(pickPolygonAt[1], pickPolygonAt[0]);
+            mapView.lookAt({ target, tilt: 60, zoomLevel: 2 });
+            await waitForEvent(mapView, MapViewEventNames.FrameComplete);
+
+            const screenPointLocation = mapView.getScreenPosition(target) as THREE.Vector2;
+            assert.isDefined(screenPointLocation);
+
+            mapView.scene.updateWorldMatrix(false, true);
+
+            const usableIntersections = mapView
+                .intersectMapObjects(screenPointLocation.x, screenPointLocation.y)
+                .filter(item => item.userData !== undefined);
+
+            assert.equal(usableIntersections.length, 0);
+        });
+
         interface TestCase {
             name: string;
             rayOrigGeo: number[];
@@ -272,11 +296,6 @@ describe("MapView Picking", async function() {
             // Whether to test a shift of 360.0 degrees
             shiftLongitude: boolean;
         }
-        const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
-        const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
-            .coordinates as number[][])[0];
-        const pickLabelAt: number[] = (GEOJSON_DATA.features[2].geometry as any).coordinates;
-        const offCenterLabelLookAt: number[] = [pickLabelAt[0] + 10.0, pickLabelAt[1] + 10.0];
 
         const testCases: TestCase[] = [];
 
