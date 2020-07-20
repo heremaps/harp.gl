@@ -49,7 +49,7 @@ jobs:
       with:
         node-version: ${{ matrix.node_version }}
     - name: Install dependencies
-      run: yarn
+      run: yarn --frozen-lockfile
     - name: Disable hard-source-webpack-plugin
       run: echo "::set-env name=HARP_NO_HARD_SOURCE_CACHE::true"
     - name: Pretest
@@ -86,7 +86,7 @@ jobs:
     - name: Tests on Chrome (Linux)
       run: |
         set -ex
-        yarn
+        yarn --frozen-lockfile
         google-chrome --version
         whereis google-chrome
         yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
