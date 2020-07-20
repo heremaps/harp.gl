@@ -69,6 +69,31 @@ describe("DecodedTileHelpers", function() {
                 assert.exists(material);
             }, /Unsupported color format/);
         });
+
+        it("disables depthTest for solid lines by default", function() {
+            const technique: SolidLineTechnique = {
+                name: "solid-line",
+                lineWidth: 10,
+                renderOrder: 0,
+                color: "#f0f7"
+            };
+            const material = createMaterial({ technique, env })! as SolidLineMaterial;
+            assert.exists(material);
+            assert.isFalse(material.depthTest);
+        });
+
+        it("enables depthTest for solid lines if specified in the technique", function() {
+            const technique: SolidLineTechnique = {
+                name: "solid-line",
+                lineWidth: 10,
+                renderOrder: 0,
+                color: "#f0f7",
+                depthTest: true
+            };
+            const material = createMaterial({ technique, env })! as SolidLineMaterial;
+            assert.exists(material);
+            assert.isTrue(material.depthTest);
+        });
     });
     it("#applyBaseColorToMaterial toggles opacity with material", function() {
         const material = new THREE.MeshBasicMaterial();
