@@ -99,6 +99,24 @@ export function createDepthPrePassMaterial(baseMaterial: THREE.Material): THREE.
     return depthPassMaterial;
 }
 
+/**
+ * Checks if a given object is a depth prepass mesh.
+ *
+ * @param object - The object to check whether it's a depth prepass mesh.
+ * @returns `true` if the object is a depth prepass mesh, `false` otherwise.
+ *
+ * @internal
+ */
+export function isDepthPrePassMesh(object: THREE.Object3D): boolean {
+    if ((object as any).isMesh !== true) {
+        return false;
+    }
+    const mesh = object as THREE.Mesh;
+    return mesh.material instanceof Array
+        ? mesh.material.every(material => (material as any).isDepthPrepassMaterial === true)
+        : (mesh.material as any).isDepthPrepassMaterial === true;
+}
+
 // tslint:disable:max-line-length
 /**
  * Clones a given mesh to render it in the depth prepass with another material.
