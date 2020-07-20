@@ -44,8 +44,7 @@ const commonConfig = {
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
             NODE_ENV: process.env.NODE_ENV || "development"
-        }),
-        new HardSourceWebpackPlugin()
+        })
     ],
     externals: [
         {
@@ -57,6 +56,10 @@ const commonConfig = {
     },
     mode: process.env.NODE_ENV || "development"
 };
+
+if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
+    commonConfig.plugins.push(new HardSourceWebpackPlugin());
+}
 
 const mainConfig = merge(commonConfig, {
     entry: {
