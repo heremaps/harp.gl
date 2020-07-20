@@ -1,6 +1,6 @@
 # harp.gl website
 
-Source for [harp.gl](https://heremaps.github.io/harp.gl) "landing" page
+Source for [harp.gl](https://www.harp.gl) "landing" page
 
 
 ## Local testing/development
@@ -11,14 +11,7 @@ Source for [harp.gl](https://heremaps.github.io/harp.gl) "landing" page
 
 ## Production architecture
 
-Main part of "app" is hosted on [Heremaps org Github Pages](https://heremaps.github.io/harp.gl).
-
-Examples and docs are hosted on S3, behind Cloudfront.
-
-(Looks like) Cloudfront is the frontend for `harp.gl`, works as proxy for:
-
-* `https://www.harp.gl/docs/*` - rev-proxied to S3
-* rest - rev-proxied to `https://heremaps.github.io/harp.gl/`
+Main part of "app", Examples and docs are hosted on S3, behind Cloudfront. [harp.gl](https://www.harp.gl).
 
 ## Production Deployment
 

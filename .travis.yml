@@ -46,21 +46,12 @@ jobs:
           skip_cleanup: true
           on:
             branch: release
-        - provider: pages
-          skip_cleanup: true
-          committer-from-gh: true
-          keep-history: false
-          local-dir: dist/gh_deploy
-          github-token: $GITHUB_TOKEN
-          on:
-            branch: release
         - provider: s3
           access_key_id: $AWS_ACCESS_KEY_ID
           secret_access_key: $AWS_SECRET_ACCESS_KEY
           bucket: "harp.gl"
           skip_cleanup: true
           local_dir: dist/s3_deploy
-          upload-dir: docs
           region: us-east-1
           acl: public_read
           cache_control: no-cache
