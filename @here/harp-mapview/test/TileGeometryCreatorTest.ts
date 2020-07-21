@@ -25,6 +25,7 @@ import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { DataSource } from "../lib/DataSource";
+import { isDepthPrePassMesh } from "../lib/DepthPrePass";
 import { DisplacementMap } from "../lib/DisplacementMap";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { Tile } from "../lib/Tile";
@@ -83,6 +84,9 @@ describe("TileGeometryCreator", () => {
         mockDatasource.getTilingScheme.callsFake(() => webMercatorTilingScheme);
         sinon.stub(mockDatasource, "projection").get(() => mercatorProjection);
         sinon.stub(mockDatasource, "mapView").get(() => mapView);
+    });
+
+    beforeEach(function() {
         newTile = new Tile(
             (mockDatasource as unknown) as DataSource,
             TileKey.fromRowColumnLevel(0, 0, 0)
@@ -131,6 +135,145 @@ describe("TileGeometryCreator", () => {
         const imageData: ImageData = (userData.texture as THREE.DataTexture).image;
         assert.equal(imageData.width, decodedDisplacementMap.xCountVertices);
         assert.equal(imageData.height, decodedDisplacementMap.yCountVertices);
+    });
+
+    it("background geometry is registered as non-pickable", () => {
+        tgc.addGroundPlane(newTile, 0);
+        assert.equal(newTile.objects.length, 1);
+        const userData = newTile.objects[0].userData;
+        expect(userData.pickable).to.equal(false);
+    });
+
+    it("extruded polygon depth prepass and edges geometries are registered as non-pickable", () => {
+        const decodedTile: DecodedTile = {
+            geometries: [
+                {
+                    type: GeometryType.Polygon,
+                    vertexAttributes: [
+                        {
+                            name: "position",
+                            buffer: new Float32Array([1.0, 2.0, 3.0]),
+                            type: "float",
+                            itemCount: 3
+                        }
+                    ],
+                    groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }],
+                    edgeIndex: {
+                        name: "index",
+                        buffer: new Uint16Array([0]),
+                        type: "float",
+                        itemCount: 1
+                    }
+                }
+            ],
+            techniques: [
+                {
+                    name: "extruded-polygon",
+                    lineWidth: 0,
+                    opacity: 0.1,
+                    renderOrder: 0,
+                    _index: 0,
+                    _styleSetIndex: 0
+                }
+            ]
+        };
+        tgc.createObjects(newTile, decodedTile);
+        assert.equal(newTile.objects.length, 3);
+
+        newTile.objects.forEach(object =>
+            expect(object.userData.pickable).to.equal(
+                !isDepthPrePassMesh(object) && !(object as any).isLine
+            )
+        );
+    });
+
+    it("fill outline geometry is registered as non-pickable", () => {
+        const decodedTile: DecodedTile = {
+            geometries: [
+                {
+                    type: GeometryType.Polygon,
+                    vertexAttributes: [
+                        {
+                            name: "position",
+                            buffer: new Float32Array([1.0, 2.0, 3.0]),
+                            type: "float",
+                            itemCount: 3
+                        }
+                    ],
+                    groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }],
+                    edgeIndex: {
+                        name: "index",
+                        buffer: new Uint16Array([0]),
+                        type: "float",
+                        itemCount: 1
+                    }
+                }
+            ],
+            techniques: [
+                {
+                    name: "fill",
+                    renderOrder: 0,
+                    _index: 0,
+                    _styleSetIndex: 0
+                }
+            ]
+        };
+        tgc.createObjects(newTile, decodedTile);
+        assert.equal(newTile.objects.length, 2);
+        expect(newTile.objects[0].userData.pickable).equals(true);
+        expect(newTile.objects[1].userData.pickable).equals(false);
+    });
+
+    it("solid line without outline is registered as pickable", () => {
+        const decodedTile: DecodedTile = {
+            geometries: [
+                {
+                    type: GeometryType.Polygon,
+                    vertexAttributes: [],
+                    groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }]
+                }
+            ],
+            techniques: [
+                {
+                    name: "solid-line",
+                    color: "red",
+                    lineWidth: 1,
+                    renderOrder: 0,
+                    _index: 0,
+                    _styleSetIndex: 0
+                }
+            ]
+        };
+        tgc.createObjects(newTile, decodedTile);
+        assert.equal(newTile.objects.length, 1);
+        expect(newTile.objects[0].userData.pickable).equals(true);
+    });
+
+    it("only outline geometry from solid line with outline is registered as pickable", () => {
+        const decodedTile: DecodedTile = {
+            geometries: [
+                {
+                    type: GeometryType.Polygon,
+                    vertexAttributes: [],
+                    groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }]
+                }
+            ],
+            techniques: [
+                {
+                    name: "solid-line",
+                    color: "red",
+                    lineWidth: 1,
+                    secondaryWidth: 2,
+                    renderOrder: 0,
+                    _index: 0,
+                    _styleSetIndex: 0
+                }
+            ]
+        };
+        tgc.createObjects(newTile, decodedTile);
+        assert.equal(newTile.objects.length, 2);
+        expect(newTile.objects[0].userData.pickable).equals(false);
+        expect(newTile.objects[1].userData.pickable).equals(true);
     });
 
     it("categories", () => {
@@ -187,9 +330,9 @@ describe("TileGeometryCreator", () => {
         tgc.processTechniques(newTile, undefined, undefined);
         tgc.createObjects(newTile, decodedTile as DecodedTile);
 
-        assert.strictEqual(newTile.objects.length, 3);
-        assert.strictEqual(newTile.objects[1].renderOrder, 20);
-        assert.strictEqual(newTile.objects[2].renderOrder, 10);
+        assert.strictEqual(newTile.objects.length, 2);
+        assert.strictEqual(newTile.objects[0].renderOrder, 20);
+        assert.strictEqual(newTile.objects[1].renderOrder, 10);
 
         newTile.mapView.theme = savedTheme;
     });

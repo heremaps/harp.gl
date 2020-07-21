@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeometryKind } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
-import { isDepthPrePassMesh } from "./DepthPrePass";
 import { MapObjectAdapter } from "./MapObjectAdapter";
 
 function intersectObject(
@@ -15,11 +13,7 @@ function intersectObject(
     intersects: THREE.Intersection[],
     recursive?: boolean
 ) {
-    const isBackground =
-        object.userData.kind &&
-        (object.userData.kind as GeometryKind[]).some(kind => kind === GeometryKind.Background);
-
-    const isPickable = object.visible && !isDepthPrePassMesh(object) && !isBackground;
+    const isPickable = object.visible && object.userData.pickable !== false;
 
     if (object.layers.test(raycaster.layers) && isPickable) {
         const mapObjectAdapter = MapObjectAdapter.get(object);

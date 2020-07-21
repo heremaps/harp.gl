@@ -9,7 +9,6 @@
 // tslint:disable:no-unused-expression
 //    Chai uses properties instead of functions for some expect checks.
 
-import { GeometryKind } from "@here/harp-datasource-protocol";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -59,41 +58,30 @@ describe("PickingRaycaster", function() {
             }
         });
 
-        it("skips background objects", function() {
+        it("skips non-pickable objects", function() {
             const object = createFakeObject(THREE.Object3D);
-            object.userData.kind = [GeometryKind.Background];
+            object.userData.pickable = false;
             {
                 const intersections = raycaster.intersectObject(object);
                 expect(intersections).to.be.empty;
             }
             {
                 const intersections = raycaster.intersectObjects([object, object]);
-                expect(intersections).to.be.empty;
-            }
-        });
-
-        it("skips depth prepass meshes", function() {
-            const mesh = createFakeObject(THREE.Mesh);
-            mesh.material = new THREE.Material();
-            (mesh.material as any).isDepthPrepassMaterial = true;
-            {
-                const intersections = raycaster.intersectObject(mesh);
-                expect(intersections).to.be.empty;
-            }
-            {
-                const intersections = raycaster.intersectObjects([mesh, mesh]);
                 expect(intersections).to.be.empty;
             }
         });
 
         it("tests pickable objects", function() {
-            const object = createFakeObject(THREE.Object3D);
+            const object1 = createFakeObject(THREE.Object3D);
+            const object2 = createFakeObject(THREE.Object3D);
+            object2.userData.pickable = true;
+
             {
-                const intersections = raycaster.intersectObject(object);
+                const intersections = raycaster.intersectObject(object1);
                 expect(intersections).to.have.length(1);
             }
             {
-                const intersections = raycaster.intersectObjects([object, object]);
+                const intersections = raycaster.intersectObjects([object1, object2]);
                 expect(intersections).to.have.length(2);
             }
         });

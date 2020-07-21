@@ -392,13 +392,15 @@ export class TileGeometryCreator {
      * @param tile - The {@link Tile} to add the object to.
      * @param object - The object to add to the root of the tile.
      * @param geometryKind - The kind of object. Can be used for filtering.
-     * @param custom - additional parameters for [[MapObjectAdapter]]
+     * @param mapAdapterParams - additional parameters for [[MapObjectAdapter]]
+     * @param pickable - whether the object should be pickable by {@link PickHandler}.
      */
     registerTileObject(
         tile: Tile,
         object: THREE.Object3D,
         geometryKind: GeometryKind | GeometryKindSet | undefined,
-        mapAdapterParams?: MapObjectAdapterParams
+        mapAdapterParams?: MapObjectAdapterParams,
+        pickable: boolean = true
     ) {
         const kind =
             geometryKind instanceof Set
@@ -422,6 +424,7 @@ export class TileGeometryCreator {
         userData.dataSource = tile.dataSource.name;
 
         userData.kind = kind;
+        userData.pickable = pickable;
 
         // Force a visibility check of all objects.
         tile.resetVisibilityCounter();
@@ -933,9 +936,15 @@ export class TileGeometryCreator {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
                     // Set geometry kind for depth pass mesh so that it gets the displacement map
                     // for elevation overlay.
-                    this.registerTileObject(tile, depthPassMesh, techniqueKind, {
-                        technique
-                    });
+                    this.registerTileObject(
+                        tile,
+                        depthPassMesh,
+                        techniqueKind,
+                        {
+                            technique
+                        },
+                        false
+                    );
                     objects.push(depthPassMesh);
 
                     if (extrusionAnimationEnabled) {
@@ -945,9 +954,17 @@ export class TileGeometryCreator {
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
 
-                this.registerTileObject(tile, object, techniqueKind, {
-                    technique
-                });
+                // register all objects as pickable except solid lines with outlines, in that case
+                // it's enough to make outlines pickable.
+                this.registerTileObject(
+                    tile,
+                    object,
+                    techniqueKind,
+                    {
+                        technique
+                    },
+                    !hasSolidLinesOutlines
+                );
                 objects.push(object);
 
                 // Add the extruded building edges as a separate geometry.
@@ -1015,9 +1032,15 @@ export class TileGeometryCreator {
                         addToExtrudedMaterials(edgeObj.material, extrudedMaterials);
                     }
 
-                    this.registerTileObject(tile, edgeObj, techniqueKind, {
-                        technique
-                    });
+                    this.registerTileObject(
+                        tile,
+                        edgeObj,
+                        techniqueKind,
+                        {
+                            technique
+                        },
+                        false
+                    );
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
                         objectColor: buildingTechnique.color,
@@ -1070,9 +1093,15 @@ export class TileGeometryCreator {
                         false
                     );
 
-                    this.registerTileObject(tile, outlineObj, techniqueKind, {
-                        technique
-                    });
+                    this.registerTileObject(
+                        tile,
+                        outlineObj,
+                        techniqueKind,
+                        {
+                            technique
+                        },
+                        false
+                    );
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,
                         objectColor: fillTechnique.color,
@@ -1319,7 +1348,7 @@ export class TileGeometryCreator {
         const mesh = this.createGroundPlane(tile, material, false, shadowsEnabled);
         mesh.receiveShadow = shadowsEnabled;
         mesh.renderOrder = renderOrder;
-        this.registerTileObject(tile, mesh, GeometryKind.Background);
+        this.registerTileObject(tile, mesh, GeometryKind.Background, undefined, false);
         tile.objects.push(mesh);
     }
 
