@@ -97,5 +97,37 @@ describe("PickingRaycaster", function() {
                 expect(intersections).to.have.length(2);
             }
         });
+
+        it("tests object descendants if recursive is true", function() {
+            const object = createFakeObject(THREE.Object3D);
+            const child = createFakeObject(THREE.Object3D);
+            const grandchild = createFakeObject(THREE.Object3D);
+            child.children = [grandchild];
+            object.children = [child];
+            {
+                const intersections = raycaster.intersectObject(object, true);
+                expect(intersections).to.have.length(3);
+            }
+            {
+                const intersections = raycaster.intersectObjects([object, object], true);
+                expect(intersections).to.have.length(6);
+            }
+        });
+
+        it("skips object descendants if recursive is false", function() {
+            const object = createFakeObject(THREE.Object3D);
+            const child = createFakeObject(THREE.Object3D);
+            const grandchild = createFakeObject(THREE.Object3D);
+            child.children = [grandchild];
+            object.children = [child];
+            {
+                const intersections = raycaster.intersectObject(object, false);
+                expect(intersections).to.have.length(1);
+            }
+            {
+                const intersections = raycaster.intersectObjects([object, object], false);
+                expect(intersections).to.have.length(2);
+            }
+        });
     });
 });
