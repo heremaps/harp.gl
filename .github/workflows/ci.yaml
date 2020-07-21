@@ -107,11 +107,11 @@ jobs:
         yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
       shell: bash
       if: matrix.os == 'ubuntu-latest'
-    - name: Build examples
-      run: yarn run build-examples
-      shell: bash
     - name: Build bundle
       run: yarn run build-bundle
+      shell: bash  
+    - name: Build examples
+      run: yarn run build-examples
       shell: bash
     - name: Generate doc
       run: yarn run typedoc
