@@ -994,7 +994,8 @@ export class TileGeometryCreator {
                         colorMix: fadingParams.colorMix,
                         fadeNear: fadingParams.lineFadeNear,
                         fadeFar: fadingParams.lineFadeFar,
-                        extrusionRatio: extrusionAnimationEnabled ? 0 : undefined
+                        extrusionRatio: extrusionAnimationEnabled ? 0 : undefined,
+                        vertexColors: bufferGeometry.getAttribute("color") ? true : false
                     };
                     const edgeMaterial = new EdgeMaterial(materialParams);
                     const edgeObj = new THREE.LineSegments(edgeGeometry, edgeMaterial);
@@ -1019,6 +1020,7 @@ export class TileGeometryCreator {
                     });
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
+                        objectColor: buildingTechnique.color,
                         opacity: buildingTechnique.opacity
                     });
                     objects.push(edgeObj);
@@ -1053,7 +1055,8 @@ export class TileGeometryCreator {
                         color: fadingParams.color,
                         colorMix: fadingParams.colorMix,
                         fadeNear: fadingParams.lineFadeNear,
-                        fadeFar: fadingParams.lineFadeFar
+                        fadeFar: fadingParams.lineFadeFar,
+                        vertexColors: bufferGeometry.getAttribute("color") ? true : false
                     };
                     const outlineMaterial = new EdgeMaterial(materialParams);
                     const outlineObj = new THREE.LineSegments(outlineGeometry, outlineMaterial);
@@ -1072,6 +1075,7 @@ export class TileGeometryCreator {
                     });
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,
+                        objectColor: fillTechnique.color,
                         opacity: fillTechnique.opacity
                     });
                     objects.push(outlineObj);
