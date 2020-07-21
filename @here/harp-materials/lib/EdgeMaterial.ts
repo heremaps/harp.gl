@@ -19,7 +19,11 @@ import { enforceBlending, setShaderDefine, setShaderMaterialDefine } from "./Uti
 const vertexSource: string = `
 #define EDGE_DEPTH_OFFSET 0.0001
 
+#ifdef USE_COLOR
 attribute vec4 color;
+#else
+uniform vec3 color;
+#endif
 
 // SHADER_NAME may be defined by THREE.JS own shaders in which case these attributes & uniforms are
 // already defined
@@ -51,11 +55,7 @@ varying vec3 vColor;
 
 void main() {
 
-    #ifdef USE_COLOR
     vColor = mix(edgeColor.rgb, color.rgb, edgeColorMix);
-    #else
-    vColor = edgeColor.rgb;
-    #endif
 
     vec3 transformed = vec3( position );
 
@@ -124,6 +124,12 @@ export interface EdgeMaterialParameters
      * Color mix value. Mixes between vertexColors and edgeColor.
      */
     colorMix?: number;
+
+    /**
+     * Defines whether vertex coloring is used.
+     * @defaultValue false
+     */
+    vertexColors?: boolean;
 }
 
 /**
@@ -154,12 +160,15 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         if (hasExtrusion) {
             setShaderDefine(defines, "USE_EXTRUSION", true);
         }
-
+        if (params?.vertexColors === true) {
+            setShaderDefine(defines, "USE_COLOR", true);
+        }
         const shaderParams = {
             name: "EdgeMaterial",
             vertexShader: vertexSource,
             fragmentShader: fragmentSource,
             uniforms: {
+                color: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
                 edgeColor: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
                 edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
                 fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
@@ -205,6 +214,28 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
     }
 
     /**
+     * The color of the object that is rendered
+     * together with this edge.
+     *
+     * @remarks
+     * The final color of the edge is computed by
+     * interpolating the {@link edgeColor} with this color
+     * using the {@link colorMix} factor.
+     *
+     * Note that {@link objectColor} is used only
+     * when the geometry associated with this material
+     * does not have a vertex color buffer.
+     *
+     */
+    get objectColor(): THREE.Color {
+        return this.uniforms.color.value as THREE.Color;
+    }
+
+    set objectColor(value: THREE.Color) {
+        this.uniforms.color.value.copy(value);
+    }
+
+    /**
      * Edge color.
      */
     get color(): THREE.Color {
@@ -225,7 +256,6 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             return;
         }
         this.uniforms.edgeColorMix.value = value;
-        setShaderMaterialDefine(this, "USE_COLOR", value > 0.0);
     }
 
     get fadeNear(): number {
