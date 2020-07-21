@@ -241,4 +241,8 @@ export function getWebGlInfo() {
     return result;
 }
 
-logger.log("WebGlInfo", getWebGlInfo());
+try {
+    logger.log("WebGlInfo", getWebGlInfo());
+} catch {
+    logger.error("WebGL is not supported on this machine");
+}
