@@ -4,33 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeometryKind } from "@here/harp-datasource-protocol";
+import { MapEnv } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
-import { isDepthPrePassMesh } from "./DepthPrePass";
 import { MapObjectAdapter } from "./MapObjectAdapter";
 
 function intersectObject(
     object: THREE.Object3D,
     raycaster: PickingRaycaster,
+    env: MapEnv,
     intersects: THREE.Intersection[],
     recursive?: boolean
 ) {
-    const isBackground =
-        object.userData.kind &&
-        (object.userData.kind as GeometryKind[]).some(kind => kind === GeometryKind.Background);
-
-    const isPickable = object.visible && !isDepthPrePassMesh(object) && !isBackground;
-
-    if (object.layers.test(raycaster.layers) && isPickable) {
+    if (object.layers.test(raycaster.layers) && object.visible) {
         const mapObjectAdapter = MapObjectAdapter.get(object);
-        if (!mapObjectAdapter || mapObjectAdapter.isVisible()) {
+        if (!mapObjectAdapter || mapObjectAdapter.isPickable(env)) {
             object.raycast(raycaster, intersects);
         }
     }
 
     if (recursive === true) {
         for (const child of object.children) {
-            intersectObject(child, raycaster, intersects, true);
+            intersectObject(child, raycaster, env, intersects, true);
         }
     }
 }
@@ -48,8 +42,9 @@ export class PickingRaycaster extends THREE.Raycaster {
      *
      * @param width - the canvas width.
      * @param height - the canvas height.
+     * @param m_env - the view enviroment.
      */
-    constructor(public width: number, public height: number) {
+    constructor(public width: number, public height: number, private m_env: MapEnv) {
         super();
     }
 
@@ -63,7 +58,7 @@ export class PickingRaycaster extends THREE.Raycaster {
     ): THREE.Intersection[] {
         const intersects: THREE.Intersection[] = optionalTarget ?? [];
 
-        intersectObject(object, this, intersects, recursive);
+        intersectObject(object, this, this.m_env, intersects, recursive);
 
         return intersects;
     }
@@ -79,7 +74,7 @@ export class PickingRaycaster extends THREE.Raycaster {
         const intersects: THREE.Intersection[] = optionalTarget ?? [];
 
         for (const object of objects) {
-            intersectObject(object, this, intersects, recursive);
+            intersectObject(object, this, this.m_env, intersects, recursive);
         }
 
         return intersects;

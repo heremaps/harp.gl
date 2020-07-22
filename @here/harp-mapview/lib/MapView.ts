@@ -1091,7 +1091,7 @@ export class MapView extends THREE.EventDispatcher {
         // setup camera with initial position
         this.setupCamera();
 
-        this.m_raycaster = new PickingRaycaster(width, height);
+        this.m_raycaster = new PickingRaycaster(width, height, this.m_env);
 
         this.m_movementDetector = new CameraMovementDetector(
             this.m_options.movementThrottleTimeout,

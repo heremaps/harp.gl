@@ -9,7 +9,7 @@
 // tslint:disable:no-unused-expression
 //    Chai uses properties instead of functions for some expect checks.
 
-import { GeometryKind } from "@here/harp-datasource-protocol";
+import { MapEnv } from "@here/harp-datasource-protocol";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -27,7 +27,7 @@ describe("PickingRaycaster", function() {
     let raycaster: PickingRaycaster;
 
     beforeEach(function() {
-        raycaster = new PickingRaycaster(0, 0);
+        raycaster = new PickingRaycaster(0, 0, new MapEnv({}));
     });
 
     describe("intersectObject(s)", function() {
@@ -59,41 +59,32 @@ describe("PickingRaycaster", function() {
             }
         });
 
-        it("skips background objects", function() {
+        it("skips non-pickable objects", function() {
             const object = createFakeObject(THREE.Object3D);
-            object.userData.kind = [GeometryKind.Background];
+            MapObjectAdapter.create(object, { pickable: false });
             {
                 const intersections = raycaster.intersectObject(object);
                 expect(intersections).to.be.empty;
             }
             {
                 const intersections = raycaster.intersectObjects([object, object]);
-                expect(intersections).to.be.empty;
-            }
-        });
-
-        it("skips depth prepass meshes", function() {
-            const mesh = createFakeObject(THREE.Mesh);
-            mesh.material = new THREE.Material();
-            (mesh.material as any).isDepthPrepassMaterial = true;
-            {
-                const intersections = raycaster.intersectObject(mesh);
-                expect(intersections).to.be.empty;
-            }
-            {
-                const intersections = raycaster.intersectObjects([mesh, mesh]);
                 expect(intersections).to.be.empty;
             }
         });
 
         it("tests pickable objects", function() {
             const object = createFakeObject(THREE.Object3D);
+            const mesh = createFakeObject(THREE.Mesh);
+            mesh.material = new THREE.Material();
+            mesh.material.opacity = 1;
+            MapObjectAdapter.create(mesh, { pickable: true });
+
             {
                 const intersections = raycaster.intersectObject(object);
                 expect(intersections).to.have.length(1);
             }
             {
-                const intersections = raycaster.intersectObjects([object, object]);
+                const intersections = raycaster.intersectObjects([object, mesh]);
                 expect(intersections).to.have.length(2);
             }
         });

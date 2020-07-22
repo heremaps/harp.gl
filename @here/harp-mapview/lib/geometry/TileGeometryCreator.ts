@@ -392,7 +392,7 @@ export class TileGeometryCreator {
      * @param tile - The {@link Tile} to add the object to.
      * @param object - The object to add to the root of the tile.
      * @param geometryKind - The kind of object. Can be used for filtering.
-     * @param custom - additional parameters for [[MapObjectAdapter]]
+     * @param mapAdapterParams - additional parameters for [[MapObjectAdapter]]
      */
     registerTileObject(
         tile: Tile,
@@ -934,7 +934,8 @@ export class TileGeometryCreator {
                     // Set geometry kind for depth pass mesh so that it gets the displacement map
                     // for elevation overlay.
                     this.registerTileObject(tile, depthPassMesh, techniqueKind, {
-                        technique
+                        technique,
+                        pickable: false
                     });
                     objects.push(depthPassMesh);
 
@@ -945,8 +946,11 @@ export class TileGeometryCreator {
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
 
+                // register all objects as pickable except solid lines with outlines, in that case
+                // it's enough to make outlines pickable.
                 this.registerTileObject(tile, object, techniqueKind, {
-                    technique
+                    technique,
+                    pickable: !hasSolidLinesOutlines
                 });
                 objects.push(object);
 
@@ -1016,7 +1020,8 @@ export class TileGeometryCreator {
                     }
 
                     this.registerTileObject(tile, edgeObj, techniqueKind, {
-                        technique
+                        technique,
+                        pickable: false
                     });
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
@@ -1071,7 +1076,8 @@ export class TileGeometryCreator {
                     );
 
                     this.registerTileObject(tile, outlineObj, techniqueKind, {
-                        technique
+                        technique,
+                        pickable: false
                     });
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,
@@ -1319,7 +1325,7 @@ export class TileGeometryCreator {
         const mesh = this.createGroundPlane(tile, material, false, shadowsEnabled);
         mesh.receiveShadow = shadowsEnabled;
         mesh.renderOrder = renderOrder;
-        this.registerTileObject(tile, mesh, GeometryKind.Background);
+        this.registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
         tile.objects.push(mesh);
     }
 
