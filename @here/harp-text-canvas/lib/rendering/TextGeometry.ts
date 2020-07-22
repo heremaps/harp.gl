@@ -337,7 +337,8 @@ export class TextGeometry {
         const sinR = Math.sin(r);
         const offsetX = position !== undefined ? position.x : 0.0;
         const offsetY = position !== undefined ? position.y : 0.0;
-        const offsetZ = position !== undefined ? position.z : 0.0;
+        // Ignore z for rendering
+        const offsetZ = 0.0;
 
         const buffer = textBufferObject.buffer;
 
