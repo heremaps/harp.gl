@@ -1195,13 +1195,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 lines: lineGroup
             };
 
-            const techniqueTransient = evaluateTechniqueAttr<boolean>(
-                context,
-                technique.transient,
-                false
-            );
-            if (!techniqueTransient && this.m_gatherFeatureAttributes) {
-                // if this technique is transient, do not save the featureIds with the geometry
+            if (this.m_gatherFeatureAttributes) {
                 aLine.objInfos = [featureAttributes];
                 aLine.featureStarts = [0];
             }
