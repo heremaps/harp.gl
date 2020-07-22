@@ -244,5 +244,5 @@ export function getWebGlInfo() {
 try {
     logger.log("WebGlInfo", getWebGlInfo());
 } catch {
-    logger.error("WebGL is not supported on this machine");
+    logger.warn("WebGL is not supported on this machine");
 }
