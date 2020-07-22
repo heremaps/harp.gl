@@ -28,6 +28,7 @@ import { DataSource } from "../lib/DataSource";
 import { isDepthPrePassMesh } from "../lib/DepthPrePass";
 import { DisplacementMap } from "../lib/DisplacementMap";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
+import { MapObjectAdapter } from "../lib/MapObjectAdapter";
 import { Tile } from "../lib/Tile";
 
 class FakeMapView {
@@ -140,8 +141,9 @@ describe("TileGeometryCreator", () => {
     it("background geometry is registered as non-pickable", () => {
         tgc.addGroundPlane(newTile, 0);
         assert.equal(newTile.objects.length, 1);
-        const userData = newTile.objects[0].userData;
-        expect(userData.pickable).to.equal(false);
+        const adapter = MapObjectAdapter.get(newTile.objects[0]);
+        expect(adapter).not.equals(undefined);
+        expect(adapter!.isPickable(new MapEnv({}))).to.equal(false);
     });
 
     it("extruded polygon depth prepass and edges geometries are registered as non-pickable", () => {
@@ -180,11 +182,13 @@ describe("TileGeometryCreator", () => {
         tgc.createObjects(newTile, decodedTile);
         assert.equal(newTile.objects.length, 3);
 
-        newTile.objects.forEach(object =>
-            expect(object.userData.pickable).to.equal(
+        newTile.objects.forEach(object => {
+            const adapter = MapObjectAdapter.get(object);
+            expect(adapter).not.equals(undefined);
+            expect(adapter!.isPickable(new MapEnv({}))).to.equal(
                 !isDepthPrePassMesh(object) && !(object as any).isLine
-            )
-        );
+            );
+        });
     });
 
     it("fill outline geometry is registered as non-pickable", () => {
@@ -220,8 +224,13 @@ describe("TileGeometryCreator", () => {
         };
         tgc.createObjects(newTile, decodedTile);
         assert.equal(newTile.objects.length, 2);
-        expect(newTile.objects[0].userData.pickable).equals(true);
-        expect(newTile.objects[1].userData.pickable).equals(false);
+        const adapter0 = MapObjectAdapter.get(newTile.objects[0]);
+        expect(adapter0).not.equals(undefined);
+        expect(adapter0!.isPickable(new MapEnv({}))).to.equal(true);
+
+        const adapter1 = MapObjectAdapter.get(newTile.objects[1]);
+        expect(adapter1).not.equals(undefined);
+        expect(adapter1!.isPickable(new MapEnv({}))).to.equal(false);
     });
 
     it("solid line without outline is registered as pickable", () => {
@@ -246,7 +255,9 @@ describe("TileGeometryCreator", () => {
         };
         tgc.createObjects(newTile, decodedTile);
         assert.equal(newTile.objects.length, 1);
-        expect(newTile.objects[0].userData.pickable).equals(true);
+        const adapter = MapObjectAdapter.get(newTile.objects[0]);
+        expect(adapter).not.equals(undefined);
+        expect(adapter!.isPickable(new MapEnv({}))).to.equal(true);
     });
 
     it("only outline geometry from solid line with outline is registered as pickable", () => {
@@ -272,8 +283,13 @@ describe("TileGeometryCreator", () => {
         };
         tgc.createObjects(newTile, decodedTile);
         assert.equal(newTile.objects.length, 2);
-        expect(newTile.objects[0].userData.pickable).equals(false);
-        expect(newTile.objects[1].userData.pickable).equals(true);
+        const adapter0 = MapObjectAdapter.get(newTile.objects[0]);
+        expect(adapter0).not.equals(undefined);
+        expect(adapter0!.isPickable(new MapEnv({}))).to.equal(false);
+
+        const adapter1 = MapObjectAdapter.get(newTile.objects[1]);
+        expect(adapter1).not.equals(undefined);
+        expect(adapter1!.isPickable(new MapEnv({}))).to.equal(true);
     });
 
     it("categories", () => {

@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 
-import { GeometryKind, Technique } from "@here/harp-datasource-protocol";
+import { GeometryKind, getPropertyValue, MapEnv, Technique } from "@here/harp-datasource-protocol";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "./MapMaterialAdapter";
 
 /**
@@ -17,6 +17,7 @@ import { MapAdapterUpdateEnv, MapMaterialAdapter } from "./MapMaterialAdapter";
 export interface MapObjectAdapterParams {
     technique?: Technique;
     kind?: GeometryKind[];
+    pickable?: boolean;
 
     // TODO: Move here in following refactor.
     //featureData?: TileFeatureData;
@@ -69,6 +70,7 @@ export class MapObjectAdapter {
      */
     readonly kind: GeometryKind[] | undefined;
 
+    private readonly m_pickable: boolean;
     private m_lastUpdateFrameNumber = -1;
     private m_notCompletlyTransparent = true;
 
@@ -76,6 +78,7 @@ export class MapObjectAdapter {
         this.object = object;
         this.technique = params.technique;
         this.kind = params.kind;
+        this.m_pickable = params.pickable ?? true;
         this.m_notCompletlyTransparent = this.getObjectMaterials().some(
             material => material.opacity > 0
         );
@@ -117,6 +120,20 @@ export class MapObjectAdapter {
      */
     isVisible() {
         return this.object.visible && this.m_notCompletlyTransparent;
+    }
+
+    /**
+     * Whether underlying `THREE.Object3D` should be pickable by {@link PickHandler}.
+     * @param env - Property lookup environment.
+     */
+    isPickable(env: MapEnv) {
+        // An object is pickable only if it's visible, not transient and it's not explicitely marked
+        // as non-pickable.
+        return (
+            this.m_pickable &&
+            this.isVisible() &&
+            getPropertyValue(this.technique?.transient, env) !== true
+        );
     }
 
     private updateMaterials(context: MapAdapterUpdateEnv) {
