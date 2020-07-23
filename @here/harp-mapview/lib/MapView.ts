@@ -14,7 +14,7 @@ import {
     Light,
     MapEnv,
     PostEffects,
-    Sky,
+    Sky,test1
     Theme,
     Value
 } from "@here/harp-datasource-protocol";
