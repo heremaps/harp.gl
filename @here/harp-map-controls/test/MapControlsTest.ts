@@ -179,6 +179,9 @@ describe("MapControls", function() {
             addEventListener: (eventName: string, func: EventListener) => {
                 eventMap.set(eventName, func);
             },
+            removeEventListener: (eventName: string, func: EventListener) => {
+                eventMap.delete(eventName);
+            },
             getBoundingClientRect: sandbox.stub().callsFake(() => {
                 return {
                     left: 0,
@@ -288,6 +291,14 @@ describe("MapControls", function() {
             stopPropagation: sandbox.stub()
         });
         expect(updateStub.callCount).to.be.equal(1);
+    });
+
+    it("dispose", function() {
+        const controls = new MapControls(mapView);
+
+        controls.dispose();
+
+        expect(controls.eventTypes.length).to.be.equal(0, `events not removed.`);
     });
 
     describe("zoomOnTargetPosition", function() {

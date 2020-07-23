@@ -5,7 +5,7 @@
  */
 
 import * as geoUtils from "@here/harp-geoutils";
-import { MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
+import { EventDispatcher, MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import * as THREE from "three";
 import * as utils from "./Utils";
 
@@ -85,14 +85,16 @@ const MAX_TAP_DURATION = 120;
  *  - Three fingers = Orbiting the map. Up down movements influences the current orbit altitude.
  *    Left/right changes the azimuth.
  */
-export class MapControls extends THREE.EventDispatcher {
+export class MapControls extends EventDispatcher {
     /**
      * Creates MapControls object and attaches it specified [[MapView]].
      *
      * @param mapView - [[MapView]] object to which MapControls should be attached to.
+     * @param disposeWithMapView - If `true`, an event with MapView is registered to dispose of
+     * `MapControls` if MapView itself is disposed.
      */
-    static create(mapView: MapView) {
-        return new MapControls(mapView);
+    static create(mapView: MapView, disposeWithMapView = true) {
+        return new MapControls(mapView, disposeWithMapView);
     }
 
     /**
@@ -313,9 +315,11 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Constructs a new `MapControls` object.
      *
-     * @param mapView - [[MapView]] this controller modifies.Z
+     * @param mapView - [[MapView]] this controller modifies.
+     * @param disposeWithMapView - If `true`, an event with MapView is registered to dispose of
+     * `MapControls` if MapView itself is disposed.
      */
-    constructor(readonly mapView: MapView) {
+    constructor(readonly mapView: MapView, disposeWithMapView = true) {
         super();
 
         this.camera = mapView.camera;
@@ -329,6 +333,13 @@ export class MapControls extends THREE.EventDispatcher {
         this.tilt = this.tilt.bind(this);
         this.resetNorth = this.resetNorth.bind(this);
         this.assignZoomAfterTouchZoomRender = this.assignZoomAfterTouchZoomRender.bind(this);
+
+        if (disposeWithMapView) {
+            // Catch the disposal of `MapView`.
+            mapView.addEventListener(MapViewEventNames.Dispose, () => {
+                this.dispose();
+            });
+        }
     }
 
     /**
@@ -336,6 +347,7 @@ export class MapControls extends THREE.EventDispatcher {
      *
      * Unregisters all global event handlers used. This is method should be called when you stop
      * using `MapControls`.
+     * @override
      */
     dispose = () => {
         // replaced with real code in bindInputEvents

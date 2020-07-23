@@ -266,6 +266,13 @@ export class ConcurrentWorkerSet {
     }
 
     /**
+     * Is `true` if the workers have been terminated.
+     */
+    get terminated(): boolean {
+        return this.m_workers.length === 0;
+    }
+
+    /**
      * Waits for `service` to be initialized in all workers.
      *
      * Each service that starts in a worker sends an [[isInitializedMessage]] to confirm that

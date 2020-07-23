@@ -85,7 +85,7 @@ export namespace TileDependenciesExample {
         }
 
         getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}> {
-            // Generate some artifical data. Normally you would do a fetch here.
+            // Generate some artificial data. Normally you would do a fetch here.
             // In this example we create some geometry in geo space that will be converted to
             // local world space by [[CustomDecoder.convertToLocalWorldCoordinates]]
 
@@ -116,6 +116,10 @@ export namespace TileDependenciesExample {
                 }
             }
             return Promise.resolve({});
+        }
+
+        /** @override */ dispose() {
+            // Nothing to be done here.
         }
     }
 

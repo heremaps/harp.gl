@@ -339,6 +339,13 @@ export class OmvRestClient implements DataProvider {
     }
 
     /**
+     * Destroys this `OmvRestClient`.
+     */
+    dispose() {
+        // to be overloaded by subclasses
+    }
+
+    /**
      * Get actual authentication code/token for this request according to configuration.
      */
     private async getActualAuthenticationCode() {
@@ -356,7 +363,7 @@ export class OmvRestClient implements DataProvider {
     }
 
     /**
-     * Get default authnentication method basing on apiFormat and other params.
+     * Get default authentication method basing on apiFormat and other params.
      */
     private getDefaultAuthMethod() {
         // tslint:disable-next-line: deprecation
@@ -384,7 +391,7 @@ export class OmvRestClient implements DataProvider {
     }
 
     /**
-     * Apply athentication code/token using configured (or default) authentication method.
+     * Apply authentication code/token using configured (or default) authentication method.
      *
      * @param url -
      * @param init - request extra data

@@ -105,4 +105,11 @@ export class GeoJsonDataProvider extends EventDispatcher implements DataProvider
         this.addEventListener(INVALIDATED, listener);
         return () => this.removeEventListener(INVALIDATED, listener);
     }
+
+    /**
+     * Destroys this `GeoJsonDataProvider`.
+     */
+    dispose() {
+        this.m_tiler.dispose();
+    }
 }

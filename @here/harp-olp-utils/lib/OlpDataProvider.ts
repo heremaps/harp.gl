@@ -128,4 +128,12 @@ export class OlpDataProvider implements DataProvider {
             return {};
         }
     }
+
+    /**
+     * Destroys this `OlpDataProvider`.
+     * @override
+     */
+    dispose() {
+        // Nothing to be done here.
+    }
 }

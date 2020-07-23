@@ -53,10 +53,12 @@ import { CameraMovementDetector } from "./CameraMovementDetector";
 import { ClipPlanesEvaluator, createDefaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
+import { ConcurrentTilerFacade } from "./ConcurrentTilerFacade";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";
+import { EventDispatcher } from "./EventDispatcher";
 import { FrustumIntersection } from "./FrustumIntersection";
 import { overlayOnElevation } from "./geometry/overlayOnElevation";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
@@ -141,7 +143,9 @@ export enum MapViewEventNames {
     /** Called when the WebGL context is restored. */
     ContextRestored = "webglcontext-restored",
     /** Called when camera position has been changed. */
-    CameraPositionChanged = "camera-changed"
+    CameraPositionChanged = "camera-changed",
+    /** Called when dispose has been called, before any cleanup is done. */
+    Dispose = "dispose"
 }
 
 const logger = LoggerManager.instance.create("MapView");
@@ -211,6 +215,7 @@ const MOVEMENT_FINISHED_EVENT: RenderEvent = { type: MapViewEventNames.MovementF
 const CONTEXT_LOST_EVENT: RenderEvent = { type: MapViewEventNames.ContextLost } as any;
 const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRestored } as any;
 const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
+const DISPOSE_EVENT: RenderEvent = { type: MapViewEventNames.Dispose } as any;
 
 const cache = {
     vector2: [new THREE.Vector2()],
@@ -769,7 +774,7 @@ export interface LookAtParams {
  * The core class of the library to call in order to create a map visualization. It needs to be
  * linked to datasources.
  */
-export class MapView extends THREE.EventDispatcher {
+export class MapView extends EventDispatcher {
     /**
      * The instance of {@link MapRenderingManager} managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
@@ -923,6 +928,9 @@ export class MapView extends THREE.EventDispatcher {
     // Valid values start at 1, because the screen is cleared to zero
     private m_stencilValue: number = DEFAULT_STENCIL_VALUE;
     private m_taskScheduler: MapViewTaskScheduler;
+
+    // `true` if dispose() has been called on `MapView`.
+    private m_disposed = false;
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -1251,6 +1259,7 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Disposes this `MapView`.
+     * @override
      *
      * @remarks
      * This function cleans the resources that are managed manually including those that exist in
@@ -1261,6 +1270,12 @@ export class MapView extends THREE.EventDispatcher {
      * cleanup, you must ensure that all references to this `MapView` are removed.
      */
     dispose() {
+        // Enforce listeners that we are about to dispose.
+        DISPOSE_EVENT.time = Date.now();
+        this.dispatchEvent(DISPOSE_EVENT);
+
+        this.m_disposed = true;
+
         if (this.m_movementFinishedUpdateTimerId) {
             clearTimeout(this.m_movementFinishedUpdateTimerId);
             this.m_movementFinishedUpdateTimerId = undefined;
@@ -1281,8 +1296,23 @@ export class MapView extends THREE.EventDispatcher {
         this.m_textElementsRenderer.clearRenderStates();
         this.m_renderer.dispose();
         this.m_imageCache.clear();
+        this.m_tileGeometryManager.clear();
 
         this.m_movementDetector.dispose();
+
+        // Destroy the facade if the there are no workers active anymore.
+        ConcurrentDecoderFacade.destroyIfTerminated();
+        ConcurrentTilerFacade.destroyIfTerminated();
+
+        // Remove all event handlers.
+        super.dispose();
+    }
+
+    /**
+     * Is `true` if dispose() as been called on `MapView`.
+     */
+    get disposed(): boolean {
+        return this.m_disposed;
     }
 
     /**
@@ -1619,11 +1649,11 @@ export class MapView extends THREE.EventDispatcher {
      * @param type - One of the [[MapViewEventNames]] strings.
      * @param listener - The callback invoked when the `MapView` needs to render a new frame.
      */
-    removeEventListener(type: MapViewEventNames, listener: (event: RenderEvent) => void): void;
+    removeEventListener(type: MapViewEventNames, listener?: (event: RenderEvent) => void): void;
 
     // overrides with THREE.js base classes are not recognized by tslint.
     // tslint:disable-next-line: explicit-override
-    removeEventListener(type: string, listener: any): void {
+    removeEventListener(type: string, listener?: any): void {
         super.removeEventListener(type, listener);
     }
 
@@ -2739,6 +2769,11 @@ export class MapView extends THREE.EventDispatcher {
      * Requests a redraw of the scene.
      */
     update() {
+        if (this.disposed) {
+            logger.warn("update(): MapView has been disposed of.");
+            return;
+        }
+
         this.dispatchEvent(UPDATE);
 
         // Skip if update is already in progress
@@ -3386,8 +3421,9 @@ export class MapView extends THREE.EventDispatcher {
      * @param frameStartTime - The start time of the current frame
      */
     private renderLoop(frameStartTime: number) {
-        // Render loop shouldn't run when synchronous rendering is enabled
-        if (this.m_options.synchronousRendering) {
+        // Render loop shouldn't run when synchronous rendering is enabled or if `MapView` has been
+        // disposed of.
+        if (this.m_options.synchronousRendering || this.disposed) {
             return;
         }
 
@@ -3452,6 +3488,11 @@ export class MapView extends THREE.EventDispatcher {
      */
     private render(frameStartTime: number): void {
         if (this.m_drawing) {
+            return;
+        }
+
+        if (this.disposed) {
+            logger.warn("render(): MapView has been disposed of.");
             return;
         }
 

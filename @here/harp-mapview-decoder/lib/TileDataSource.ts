@@ -164,6 +164,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     dispose() {
         this.m_unregisterClearTileCache?.();
         this.decoder.dispose();
+        this.dataProvider().dispose();
     }
 
     /** @override */

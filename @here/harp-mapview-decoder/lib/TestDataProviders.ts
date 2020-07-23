@@ -31,13 +31,17 @@ export class TestSingleFileDataProvider implements DataProvider {
     async getTile(_tileKey: TileKey, _abortSignal?: AbortSignal): Promise<ArrayBufferLike> {
         return loadTestResource(this.moduleName, this.basePath, "arraybuffer");
     }
+
+    /** @override */ dispose() {
+        // Nothing to be done here.
+    }
 }
 
 /**
  * Data provider that loads test tiles from a specified base URL.
  * Tile's URLs are generated basing on the basePath and requested tileKey.
  *
- * The URL is construced using the following formula:
+ * The URL is constructed using the following formula:
  * `${this.basePath}/${tileKey.mortonCode()}.bin`
  */
 export class TestTilesDataProvider implements DataProvider {
@@ -68,5 +72,9 @@ export class TestTilesDataProvider implements DataProvider {
             signal: abortSignal
         });
         return resp.arrayBuffer();
+    }
+
+    /** @override */ dispose() {
+        // Nothing to be done here.
     }
 }
