@@ -7,7 +7,45 @@ import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { HereWebTileDataSource, WebTileDataSource } from "@here/harp-webtile-datasource";
 
+import { Theme } from "@here/harp-datasource-protocol";
+import { ProjectionType } from "@here/harp-geoutils";
 import { apikey } from "../config";
+
+const FLAT_THEME: Theme = {
+    clearColor: "#f8fbfd"
+};
+
+const GLOBE_THEME: Theme = {
+    clearColor: "#99ceff",
+    sky: {
+        type: "cubemap",
+        positiveX: "./resources/Sky_px.png",
+        negativeX: "./resources/Sky_nx.png",
+        positiveY: "./resources/Sky_py.png",
+        negativeY: "./resources/Sky_ny.png",
+        positiveZ: "./resources/Sky_pz.png",
+        negativeZ: "./resources/Sky_nz.png"
+    },
+
+    styles: {
+        polar: [
+            {
+                description: "North pole",
+                when: ["==", ["get", "kind"], "north_pole"],
+                technique: "fill",
+                renderOrder: 5,
+                color: "#99ceff"
+            },
+            {
+                description: "South pole",
+                when: ["==", ["get", "kind"], "south_pole"],
+                technique: "fill",
+                renderOrder: 5,
+                color: "#f5f8fa"
+            }
+        ]
+    }
+};
 
 // tslint:disable:max-line-length
 /**
@@ -33,7 +71,7 @@ export namespace HereWebTileDataSourceExample {
 
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base_globe.json"
+            theme: FLAT_THEME
         });
 
         // instantiate the default map controls, allowing the user to pan around freely.
@@ -41,6 +79,9 @@ export namespace HereWebTileDataSourceExample {
 
         // Add an UI.
         const ui = new MapControlsUI(controls, { zoomLevel: "input", projectionSwitch: true });
+        ui.projectionSwitchElement?.addEventListener("click", () => {
+            map.theme = map.projection.type === ProjectionType.Spherical ? GLOBE_THEME : FLAT_THEME;
+        });
         canvas.parentElement!.appendChild(ui.domElement);
 
         CopyrightElementHandler.install("copyrightNotice", map);
