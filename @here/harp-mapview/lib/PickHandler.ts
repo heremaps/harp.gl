@@ -110,6 +110,34 @@ export interface PickResult {
 
 const tmpOBB = new OrientedBox3();
 
+// Intersects the dependent tile objects using the supplied raycaster. Note, because multiple
+// tiles can point to the same dependency we need to store which results we have already
+// raycasted, see checkedDependencies.
+function intersectDependentObjects(
+    tile: Tile,
+    intersects: THREE.Intersection[],
+    rayCaster: THREE.Raycaster,
+    checkedDependencies: Set<number>,
+    mapView: MapView
+) {
+    for (const tileKey of tile.dependencies) {
+        const mortonCode = tileKey.mortonCode();
+        if (checkedDependencies.has(mortonCode)) {
+            continue;
+        }
+        checkedDependencies.add(mortonCode);
+        const otherTile = mapView.visibleTileSet.getCachedTile(
+            tile.dataSource,
+            tileKey,
+            tile.offset,
+            mapView.frameNumber
+        );
+        if (otherTile !== undefined) {
+            rayCaster.intersectObjects(otherTile.objects, true, intersects);
+        }
+    }
+}
+
 /**
  * Handles the picking of scene geometry and roads.
  * @internal
@@ -159,68 +187,24 @@ export class PickHandler {
                 // away than then furthest pick result found so far.
                 break;
             }
-            this.intersectObjects(tile, intersects, pickListener, rayCaster);
-            this.intersectDependentObjects(
+
+            intersects.length = 0;
+            rayCaster.intersectObjects(tile.objects, true, intersects);
+            intersectDependentObjects(
                 tile,
                 intersects,
-                pickListener,
                 rayCaster,
-                checkedDependencies
+                checkedDependencies,
+                this.mapView
             );
+
+            for (const intersect of intersects) {
+                pickListener.addResult(this.createResult(intersect));
+            }
         }
 
         pickListener.finish();
         return pickListener.results;
-    }
-
-    // Adds the list of intersection results to the pick listener. The intersection results are
-    // cleared after being added.
-    private addIntersectResults(intersects: THREE.Intersection[], pickListener: PickListener) {
-        for (const intersect of intersects) {
-            pickListener.addResult(this.createResult(intersect));
-        }
-        intersects.length = 0;
-    }
-
-    // Intersects the tiles objects using the supplied raycaster and adds the intersection results
-    // to the PickListener
-    private intersectObjects(
-        tile: Tile,
-        intersects: THREE.Intersection[],
-        pickListener: PickListener,
-        rayCaster: THREE.Raycaster
-    ) {
-        rayCaster.intersectObjects(tile.objects, true, intersects);
-        this.addIntersectResults(intersects, pickListener);
-    }
-
-    // Intersects the dependent tile objects using the supplied raycaster and adds the intersection
-    // results to the PickListener. Note, because multiple tiles can point to the same dependency
-    // we need to store which results we have already raycasted, see checkedDependencies.
-    private intersectDependentObjects(
-        tile: Tile,
-        intersects: THREE.Intersection[],
-        pickListener: PickListener,
-        rayCaster: THREE.Raycaster,
-        checkedDependencies: Set<number>
-    ) {
-        for (const tileKey of tile.dependencies) {
-            const mortonCode = tileKey.mortonCode();
-            if (checkedDependencies.has(mortonCode)) {
-                continue;
-            }
-            checkedDependencies.add(mortonCode);
-            const otherTile = this.mapView.visibleTileSet.getCachedTile(
-                tile.dataSource,
-                tileKey,
-                tile.offset,
-                this.mapView.frameNumber
-            );
-            if (otherTile !== undefined) {
-                rayCaster.intersectObjects(otherTile.objects, true, intersects);
-            }
-        }
-        this.addIntersectResults(intersects, pickListener);
     }
 
     private createResult(intersection: THREE.Intersection): PickResult {

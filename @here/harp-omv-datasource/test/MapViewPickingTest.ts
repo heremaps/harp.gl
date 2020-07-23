@@ -404,16 +404,16 @@ describe("MapView Picking", async function() {
                           testCase.lookAt.length > 2 ? testCase.lookAt[2] : undefined
                       )
                     : rayOrigin;
-                // typeof required because the bind returns any
-                const getTile: typeof geoJsonDataSource.getTile = geoJsonDataSource.getTile.bind(
-                    geoJsonDataSource
-                );
+
                 let stub: sinon.SinonStub | undefined;
                 if (testCase.addDependency === true) {
                     stub = sinon
                         .stub(geoJsonDataSource, "getTile")
                         .callsFake((_tileKey: TileKey, delayLoad?: boolean) => {
-                            const tile = getTile(_tileKey, delayLoad);
+                            const tile = stub!.wrappedMethod.bind(geoJsonDataSource)(
+                                _tileKey,
+                                delayLoad
+                            );
                             if (tile !== undefined) {
                                 tile.dependencies.push(
                                     TileKey.fromRowColumnLevel(
