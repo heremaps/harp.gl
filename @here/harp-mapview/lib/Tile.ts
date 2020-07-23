@@ -208,10 +208,10 @@ export class Tile implements CachedResource {
     readonly objects: TileObject[] = [];
 
     /**
-     * The optional list of HERE TileKeys of tiles with geometries that cross
-     * the boundaries of this `Tile`.
+     * The optional list of HERE TileKeys of tiles with geometries that cross the boundaries of this
+     * `Tile`.
      */
-    readonly dependencies: string[] = new Array<string>();
+    readonly dependencies: TileKey[] = [];
 
     /**
      * The bounding box of this `Tile` in geocoordinates.
@@ -912,19 +912,24 @@ export class Tile implements CachedResource {
 
     /**
      * Loads this `Tile` geometry.
+     *
+     * @returns Promise which can be used to wait for the loading to be finished.
      */
-    load() {
+    async load(): Promise<void> {
         const tileLoader = this.tileLoader;
         if (tileLoader === undefined) {
-            return;
+            return Promise.resolve();
         }
 
-        tileLoader
+        return tileLoader
             .loadAndDecode()
             .then(tileLoaderState => {
                 assert(tileLoaderState === TileLoaderState.Ready);
                 const decodedTile = tileLoader.decodedTile;
                 this.decodedTile = decodedTile;
+                decodedTile?.dependencies?.forEach(mortonCode => {
+                    this.dependencies.push(TileKey.fromMortonCode(mortonCode));
+                });
             })
             .catch(tileLoaderState => {
                 if (

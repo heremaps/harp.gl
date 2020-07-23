@@ -22,7 +22,7 @@ import * as THREE from "three";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource, DataSourceOptions } from "../lib/DataSource";
-import { FrustumIntersection } from "../lib/FrustumIntersection";
+import { FrustumIntersection, TileKeyEntry } from "../lib/FrustumIntersection";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { TileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, TileTaskGroups } from "../lib/MapView";
@@ -263,6 +263,50 @@ describe("VisibleTileSet", function() {
         const visibleTiles = dataSourceTileList[0].visibleTiles;
         assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506850);
         assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506851);
+
+        const renderedTiles = dataSourceTileList[0].renderedTiles;
+        assert.equal(renderedTiles.size, 0);
+    });
+
+    it("dependencies of tiles are added to visible tile set", function() {
+        const tileKey1 = TileKey.fromMortonCode(371506850);
+        const tileKey2 = TileKey.fromMortonCode(371506851);
+
+        // Test where we have 2 actually visible tiles (in the sense that they are in the frustum,
+        // see visibleTileKeys below) and one visible tile because it is a dependency.
+        // tslint:disable-next-line: no-string-literal
+        fixture.vts["getVisibleTileKeysForDataSources"] = sinon.stub().returns({
+            tileKeys: [
+                {
+                    dataSource: fixture.ds[0],
+                    visibleTileKeys: [new TileKeyEntry(tileKey1, 0), new TileKeyEntry(tileKey2, 0)]
+                }
+            ],
+            allBoundingBoxesFinal: true
+        });
+
+        // Adding the dependency to make sure it is visible
+        const dataSource = fixture.ds[0];
+        const tile1 = fixture.vts.getTile(dataSource, tileKey1, 0, 0);
+        assert.notEqual(tile1, undefined);
+        const tileKey3 = TileKey.fromMortonCode(371506852);
+        tile1!.dependencies.push(tileKey3);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+
+        assert.equal(dataSourceTileList.length, 1);
+        assert.equal(dataSourceTileList[0].visibleTiles.length, 3);
+
+        const visibleTiles = dataSourceTileList[0].visibleTiles;
+        assert.equal(visibleTiles[0].tileKey.mortonCode(), tileKey1.mortonCode());
+        assert.equal(visibleTiles[1].tileKey.mortonCode(), tileKey2.mortonCode());
+        assert.equal(visibleTiles[2].tileKey.mortonCode(), tileKey3.mortonCode());
+
+        // Check that the dependent tile exists in the cache.
+        assert.notEqual(fixture.vts.getCachedTile(dataSource, tileKey3, 0, 0), undefined);
 
         const renderedTiles = dataSourceTileList[0].renderedTiles;
         assert.equal(renderedTiles.size, 0);

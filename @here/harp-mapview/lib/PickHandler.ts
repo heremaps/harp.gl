@@ -110,6 +110,34 @@ export interface PickResult {
 
 const tmpOBB = new OrientedBox3();
 
+// Intersects the dependent tile objects using the supplied raycaster. Note, because multiple
+// tiles can point to the same dependency we need to store which results we have already
+// raycasted, see checkedDependencies.
+function intersectDependentObjects(
+    tile: Tile,
+    intersects: THREE.Intersection[],
+    rayCaster: THREE.Raycaster,
+    checkedDependencies: Set<number>,
+    mapView: MapView
+) {
+    for (const tileKey of tile.dependencies) {
+        const mortonCode = tileKey.mortonCode();
+        if (checkedDependencies.has(mortonCode)) {
+            continue;
+        }
+        checkedDependencies.add(mortonCode);
+        const otherTile = mapView.visibleTileSet.getCachedTile(
+            tile.dataSource,
+            tileKey,
+            tile.offset,
+            mapView.frameNumber
+        );
+        if (otherTile !== undefined) {
+            rayCaster.intersectObjects(otherTile.objects, true, intersects);
+        }
+    }
+}
+
 /**
  * Handles the picking of scene geometry and roads.
  * @internal
@@ -149,14 +177,27 @@ export class PickHandler {
         const intersects: THREE.Intersection[] = [];
         const intersectedTiles = this.getIntersectedTiles(rayCaster);
 
+        // This ensures that we check a given dependency only once (because multiple tiles could
+        // have the same dependency).
+        const checkedDependencies = new Set<number>();
+
         for (const { tile, distance } of intersectedTiles) {
             if (pickListener.done && pickListener.furthestResult!.distance < distance) {
                 // Stop when the listener has all results it needs and remaining tiles are further
                 // away than then furthest pick result found so far.
                 break;
             }
+
             intersects.length = 0;
             rayCaster.intersectObjects(tile.objects, true, intersects);
+            intersectDependentObjects(
+                tile,
+                intersects,
+                rayCaster,
+                checkedDependencies,
+                this.mapView
+            );
+
             for (const intersect of intersects) {
                 pickListener.addResult(this.createResult(intersect));
             }
@@ -224,8 +265,10 @@ export class PickHandler {
     private getIntersectedTiles(
         rayCaster: THREE.Raycaster
     ): Array<{ tile: Tile; distance: number }> {
-        const tiles = new Array<{ tile: Tile; distance: number }>();
-
+        const tiles = new Array<{
+            tile: Tile;
+            distance: number;
+        }>();
         const tileList = this.mapView.visibleTileSet.dataSourceTileList;
         tileList.forEach(dataSourceTileList => {
             if (!dataSourceTileList.dataSource.enablePicking) {

@@ -62,6 +62,12 @@ export interface DecodedTile {
      * @see [[CopyrightInfo]]
      */
     copyrightHolderIds?: string[];
+
+    /**
+     * List of {@link @here/harp-geoutils#TileKey}s stored as mortonCodes representing
+     * {@link @here/harp-mapview#Tile}s that have geometry covering this `Tile`.
+     */
+    dependencies?: number[];
 }
 
 /**

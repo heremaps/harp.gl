@@ -257,4 +257,27 @@ describe("TileLoader", function() {
             return expect(loadPromise).to.eventually.be.rejected;
         });
     });
+
+    describe("tile load", function() {
+        // Note, this test can't be in TileTest.ts because the TileLoader is not part of the
+        // @here/harp-mapview package, and trying to add package which contains the TileLoader
+        // as a dependency causes a loop which isn't allowed.
+        it("tile load sets dependencies from decoded tile", async function() {
+            const dependencies: number[] = [0, 1];
+            const decodedTile: DecodedTile = {
+                techniques: [],
+                geometries: [],
+                dependencies
+            };
+            const tileLoader = sinon.createStubInstance(TileLoader);
+            tileLoader.decodedTile = decodedTile;
+            tileLoader.loadAndDecode.returns(Promise.resolve(TileLoaderState.Ready));
+            const tile = new Tile(dataSource, tileKey);
+            tile.tileLoader = tileLoader;
+            await tile.load();
+            expect(tile.dependencies).to.be.deep.eq(
+                dependencies.map(morton => TileKey.fromMortonCode(morton))
+            );
+        });
+    });
 });
