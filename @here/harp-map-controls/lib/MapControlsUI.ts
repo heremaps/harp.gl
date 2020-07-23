@@ -255,6 +255,10 @@ export class MapControlsUI {
         return this;
     }
 
+    get projectionSwitchElement(): HTMLButtonElement | null {
+        return this.m_projectionSwitchElement;
+    }
+
     /**
      * Destroy this [[MapControlsUI]] instance. Unregisters all event handlers used. This method
      * should be called when you stop using [[MapControlsUI]].
