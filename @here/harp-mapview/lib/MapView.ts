@@ -1871,7 +1871,7 @@ export class MapView extends THREE.EventDispatcher {
      * Get the {@link ImageCache} that belongs to this `MapView`.
      *
      * Images stored in this cache are primarily used for POIs (icons) and they are used with the
-     * current theme. Although images can be explicitely added and removed from the cache, it is
+     * current theme. Although images can be explicitly added and removed from the cache, it is
      * adviced not to remove images from this cache. If an image that is part of client code
      * should be removed at any point other than changing the theme, the {@link useImageCache}
      * should be used instead.
