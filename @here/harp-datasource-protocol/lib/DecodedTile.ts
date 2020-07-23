@@ -171,6 +171,12 @@ export interface Geometry {
     featureStarts?: number[];
 
     /**
+     * Optional sorted list of feature start indices for the outline geometry.
+     * Equivalent to {@link featureStarts} but pointing into the edgeIndex attribute.
+     */
+    edgeFeatureStarts?: number[];
+
+    /**
      * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
      */
     objInfos?: AttributeMap[];

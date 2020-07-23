@@ -151,7 +151,8 @@ function mapViewFeaturesRenderingTest(
                 styleSetName: "geojson",
                 geojson: options.geoJson,
                 decoder: new OmvTileDecoder(),
-                tiler: new GeoJsonTiler()
+                tiler: new GeoJsonTiler(),
+                gatherFeatureAttributes: true
             });
             mapView.addDataSource(dataSource);
 
@@ -177,7 +178,7 @@ function mapViewFeaturesRenderingTest(
 
                 const grid = new THREE.GridHelper(gridSize, gridDivisions, 0xff0000, 0x00ff00);
                 grid.geometry.rotateX(Math.PI / 2);
-                (grid as MapAnchor).geoPosition = position;
+                (grid as MapAnchor).anchor = position;
                 grid.setRotationFromMatrix(box.getRotationMatrix());
                 mapView.mapAnchors.add(grid);
             }
@@ -746,22 +747,42 @@ describe("MapView Styling Test", function() {
                 }
             }
         ];
-        const rectangle: Feature = {
+        const rectangle1: Feature = {
             // sample rectangular polygon
             type: "Feature",
             geometry: {
                 type: "Polygon",
                 coordinates: [
                     [
-                        [0.004, 0.002],
-                        [-0.004, 0.002],
+                        [0.001, 0.001],
+                        [-0.004, 0.001],
                         [-0.004, -0.002],
-                        [0.004, -0.002]
+                        [0.001, -0.002]
                     ]
                 ]
             },
             properties: {
-                kind: "mall",
+                name: "Awesome Building",
+                kind: "building",
+                height: 200
+            }
+        };
+        const rectangle2: Feature = {
+            type: "Feature",
+            geometry: {
+                type: "Polygon",
+                coordinates: [
+                    [
+                        [0.001, 0.002],
+                        [0.004, 0.002],
+                        [0.004, -0.002],
+                        [0.001, -0.002]
+                    ]
+                ]
+            },
+            properties: {
+                name: "Not So Awesome Building",
+                kind: "building",
                 height: 200
             }
         };
@@ -790,7 +811,8 @@ describe("MapView Styling Test", function() {
                         type: "FeatureCollection",
                         features: [
                             // tested horizontal line
-                            rectangle,
+                            rectangle1,
+                            rectangle2,
                             referenceBackground,
                             ...extraFeatures
                         ]
@@ -828,12 +850,23 @@ describe("MapView Styling Test", function() {
                         lineColor: "#7f7",
                         lineWidth: 200
                     },
-                    "fiil-rgba-outline-rgba-200m": {
+                    "fill-rgba-outline-rgba-200m": {
                         color: "#0b97c470",
                         lineColor: "#7f77",
                         lineWidth: 200
+                    },
+                    "fill-outline-disabled": {
+                        color: "#0b97c4",
+                        lineColor: "#7f7",
+                        lineWidth: 200,
+                        enabled: false
+                    },
+                    "fill-outline-partially-disabled": {
+                        color: "#0b97c4",
+                        lineColor: "#7f7",
+                        lineWidth: 200,
+                        enabled: ["match", ["get", "name"], "Awesome Building", true, false]
                     }
-
                     // TODO: not supported by typings
                     // "rect-rgba-outline-rgba-5px": {
                     //     color: "#0b97c470",
@@ -849,7 +882,7 @@ describe("MapView Styling Test", function() {
                 {
                     geoJson: {
                         type: "FeatureCollection",
-                        features: [rectangle, referenceBackground]
+                        features: [rectangle1, rectangle2, referenceBackground]
                     },
                     theme: {
                         lights,
@@ -885,7 +918,7 @@ describe("MapView Styling Test", function() {
                 {
                     geoJson: {
                         type: "FeatureCollection",
-                        features: [rectangle, referenceBackground]
+                        features: [rectangle1, referenceBackground]
                     },
                     theme: {
                         lights,
@@ -987,6 +1020,13 @@ describe("MapView Styling Test", function() {
                             lineColorMix: 0,
                             lineColor: "#7f7",
                             enabled: false
+                        },
+                        "extruded-polygon-3d-rgba-outline-partialy-disabled": {
+                            color: "#0b97c480",
+                            lineWidth: 1,
+                            lineColorMix: 0,
+                            lineColor: "#7f7",
+                            enabled: ["match", ["get", "name"], "Awesome Building", true, false]
                         }
                     },
                     viewOptions
