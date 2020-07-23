@@ -971,11 +971,22 @@ describe("MapView Styling Test", function() {
                         "extruded-polygon-3d-rgba": {
                             color: "#0b97c480"
                         },
+                        "extruded-polygon-3d-rgba-disabled": {
+                            color: "#0b97c480",
+                            enabled: false
+                        },
                         "extruded-polygon-3d-rgba-outline": {
                             color: "#0b97c480",
                             lineWidth: 1,
                             lineColorMix: 0,
                             lineColor: "#7f7"
+                        },
+                        "extruded-polygon-3d-rgba-outline-disabled": {
+                            color: "#0b97c480",
+                            lineWidth: 1,
+                            lineColorMix: 0,
+                            lineColor: "#7f7",
+                            enabled: false
                         }
                     },
                     viewOptions
