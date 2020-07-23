@@ -41,6 +41,10 @@ class MockDataProvider implements DataProvider {
     ): Promise<ArrayBufferLike> {
         return new ArrayBuffer(0);
     }
+
+    /** @override */ dispose() {
+        // Nothing to be done here.
+    }
 }
 
 describe("DataProviders", function() {

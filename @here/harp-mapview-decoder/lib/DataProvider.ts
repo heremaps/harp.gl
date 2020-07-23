@@ -51,4 +51,10 @@ export interface DataProvider {
      * ```
      */
     onDidInvalidate?(listener: () => void): () => void;
+
+    /**
+     * Destroys this `DataProvider`. Implementations of `DataProvider` must dispose of
+     * asynchronous operations and services here.
+     */
+    dispose(): void;
 }

@@ -55,6 +55,10 @@ class MockDataProvider implements DataProvider {
     async getTile(): Promise<ArrayBufferLike | {}> {
         return Promise.resolve(new ArrayBuffer(5));
     }
+
+    /** @override */ dispose() {
+        // Nothing to be done here.
+    }
 }
 
 const fakeGeometry = {};

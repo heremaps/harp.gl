@@ -25,7 +25,7 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
  * 2. Usage of the styling engine in a custom datasource
  * 3. Creation of three.js objects in a web-worker
  *
- * To achive all this we have to implement a custom decoder:
+ * To achieve all this we have to implement a custom decoder:
  * ```typescript
  * [[include:custom_datasource_example_custom_decoder.ts]]
  * ```
@@ -36,16 +36,16 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
  * the styling capabilities of harp.gl. If styling is not needed one could also
  * derive from [[ITileDecoder]] directly.
  *
- * The main entrypoint for the decoder is the [[ThemedTileDecoder.decodeThemedTile]]
+ * The main entry point for the decoder is the [[ThemedTileDecoder.decodeThemedTile]]
  * method (or [[ITileDecoder.decodeTile]] if no styling is needed). All CPU intensive
  * work, like decoding and processing, should go here, because this method is executed
- * in a web-worker. The input to this method (`data`) is comming from the main-thread
+ * in a web-worker. The input to this method (`data`) is coming from the main-thread
  * and is the result of the [[DataProvider.getTile]] method.
  *
  * The [[DataProvider]] is the component that is telling harp.gl where to get the data from.
  * The main method that has to be implemented is the [[DataProvider.getTile]] method.
  * This method is executed in the main thread and should not do any CPU intense work.
- * Normaly you would just do a fetch here. The result is passed to a web-worker and gets
+ * Normally you would just do a fetch here. The result is passed to a web-worker and gets
  * processed further. In this example we don't fetch any data, but just create some data on the
  * fly.
  * ```typescript
@@ -112,7 +112,7 @@ export namespace CustomDatasourceExample {
         }
 
         getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}> {
-            // Generate some artifical data. Normally you would do a fetch here.
+            // Generate some artificial data. Normally you would do a fetch here.
             // In this example we create some geometry in geo space that will be converted to
             // local world space by [[CustomDecoder.convertToLocalWorldCoordinates]]
 
@@ -127,6 +127,10 @@ export namespace CustomDatasourceExample {
                 data.push(x, y);
             }
             return Promise.resolve(new Float32Array([data.length, ...data]));
+        }
+
+        /** @override */ dispose() {
+            // Nothing to be done here.
         }
     }
 

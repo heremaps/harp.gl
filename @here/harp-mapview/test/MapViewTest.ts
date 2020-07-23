@@ -113,7 +113,7 @@ describe("MapView", function() {
 
     //
     // This test is broken, because `setCameraGeolocationAndZoom` doesn't behave as expected, i.e
-    // it offsets actual `geoCenter` a litte.
+    // it offsets actual `geoCenter` a little.
     //
     // TODO: check who is right? this test or `setCameraGeolocationAndZoom` implementation
     //
@@ -590,27 +590,33 @@ describe("MapView", function() {
         expect(dispatchEventSpy.getCall(4).args[0].type).to.be.equal(MapViewEventNames.ContextLost);
     });
 
-    it("Correctly sets and removes event listeners by API", function() {
-        mapView = new MapView({ canvas });
+    it("Correctly sets and removes all event listeners by API", function() {
+        const checkEvent = (eventName: string) => {
+            mapView = new MapView({ canvas });
 
-        const restoreStub = sinon.stub();
-        const lostStub = sinon.stub();
+            const callStub = sinon.stub();
 
-        mapView.addEventListener(MapViewEventNames.ContextLost, lostStub);
-        mapView.addEventListener(MapViewEventNames.ContextRestored, restoreStub);
-        mapView.dispatchEvent({ type: MapViewEventNames.ContextLost });
-        mapView.dispatchEvent({ type: MapViewEventNames.ContextRestored });
+            mapView.addEventListener(eventName as MapViewEventNames, callStub);
+            mapView.dispatchEvent({ type: eventName as MapViewEventNames });
 
-        expect(restoreStub.callCount).to.be.equal(1);
-        expect(lostStub.callCount).to.be.equal(1);
+            expect(callStub.callCount).to.be.equal(
+                1,
+                `Event listener '${eventName}' not called properly.`
+            );
 
-        mapView.removeEventListener(MapViewEventNames.ContextLost, lostStub);
-        mapView.removeEventListener(MapViewEventNames.ContextRestored, restoreStub);
-        mapView.dispatchEvent({ type: MapViewEventNames.ContextRestored });
-        mapView.dispatchEvent({ type: MapViewEventNames.ContextLost });
+            mapView.removeEventListener(eventName as MapViewEventNames, callStub);
+            mapView.dispatchEvent({ type: eventName as MapViewEventNames });
 
-        expect(restoreStub.callCount).to.be.equal(1);
-        expect(lostStub.callCount).to.be.equal(1);
+            expect(callStub.callCount).to.be.equal(
+                1,
+                `Event listener '${eventName}' not removed properly.`
+            );
+        };
+
+        const events = Object.keys(MapViewEventNames);
+        for (const event of events) {
+            checkEvent(event);
+        }
     });
 
     it("supports #dispose", async function() {
@@ -618,13 +624,74 @@ describe("MapView", function() {
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
         mapView = new MapView({ canvas });
         mapView.addDataSource(dataSource);
+
+        const disposeStub = sinon.stub();
+        mapView!.addEventListener(MapViewEventNames.Dispose, disposeStub);
+
         await dataSource.connect();
+
+        expect(mapView.disposed).to.be.equal(false);
 
         mapView.dispose();
 
+        expect(mapView.disposed).to.be.equal(true);
         expect(dataSourceDisposeStub.callCount).to.be.equal(1);
         expect(addEventListenerSpy.callCount).to.be.equal(2);
         expect(removeEventListenerSpy.callCount).to.be.equal(2);
+        expect(disposeStub.callCount).to.be.equal(1, `Dispose event listener not called`);
+        mapView = undefined!;
+    });
+
+    it("#dispose removes event listeners", async function() {
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
+        mapView = new MapView({ canvas });
+        mapView.addDataSource(dataSource);
+        await dataSource.connect();
+
+        const eventStubs: Map<string, sinon.SinonStub> = new Map();
+
+        const addEvent = (eventName: string) => {
+            const callStub = sinon.stub();
+            mapView!.addEventListener(eventName as MapViewEventNames, callStub);
+            eventStubs.set(eventName, callStub);
+        };
+
+        const callEvent = (eventName: string) => {
+            const callStub = eventStubs.get(eventName)!;
+
+            mapView!.dispatchEvent({ type: eventName as MapViewEventNames });
+
+            expect(callStub.callCount).to.be.equal(
+                1,
+                `Event listener '${eventName}' not called correctly`
+            );
+        };
+
+        const callEventAfterDispose = (eventName: string) => {
+            const callStub = eventStubs.get(eventName)!;
+
+            mapView!.dispatchEvent({ type: eventName as MapViewEventNames });
+
+            expect(callStub.callCount).to.be.equal(
+                1,
+                `Event listener '${eventName}' still active after dispose`
+            );
+        };
+
+        const events = Object.keys(MapViewEventNames);
+        for (const event of events) {
+            addEvent(event);
+        }
+        for (const event of events) {
+            callEvent(event);
+        }
+
+        mapView.dispose();
+
+        for (const event of events) {
+            callEventAfterDispose(event);
+        }
+
         mapView = undefined!;
     });
 
