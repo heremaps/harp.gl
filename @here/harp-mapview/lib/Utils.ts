@@ -163,7 +163,15 @@ export namespace MapViewUtils {
 
         // Get current target position in world space before we zoom.
         const zoomTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
-        const cameraTarget = mapView.worldTarget;
+
+        // Compute current camera target, it may not be the one set in MapView, e.g. when this
+        // function is called multiple times between frames.
+        // tslint:disable-next-line: deprecation
+        const cameraTarget = MapViewUtils.getTargetAndDistance(
+            projection,
+            camera,
+            elevationProvider
+        ).target;
         const newCameraDistance = calculateDistanceFromZoomLevel(mapView, zoomLevel);
 
         if (mapView.geoMaxBounds) {
