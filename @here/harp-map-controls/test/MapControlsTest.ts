@@ -359,6 +359,31 @@ describe("MapControls", function() {
                         expect(initWorldDir.dot(endWorldDir)).closeTo(1, 1e-5);
                     });
 
+                    it(`camera target is recomputed (pitch ${pitch})`, function() {
+                        resetCamera(pitch, 5);
+                        mapControls.maxTiltAngle = 90;
+
+                        mapControls.zoomOnTargetPosition(0, 0.1, 6);
+                        // tslint:disable-next-line: deprecation
+                        const oldTarget = MapViewUtils.getTargetAndDistance(projection, camera)
+                            .target;
+                        const expAzimuth = MapViewUtils.extractSphericalCoordinatesFromLocation(
+                            mapView,
+                            camera,
+                            projection.unprojectPoint(oldTarget)
+                        ).azimuth;
+                        mapControls.zoomOnTargetPosition(0, 0.2, 7);
+                        // tslint:disable-next-line: deprecation
+                        const newTarget = MapViewUtils.getTargetAndDistance(projection, camera)
+                            .target;
+                        const actualAzimuth = MapViewUtils.extractSphericalCoordinatesFromLocation(
+                            mapView,
+                            camera,
+                            projection.unprojectPoint(newTarget)
+                        ).azimuth;
+                        expect(actualAzimuth).to.be.closeTo(expAzimuth, 1e-5);
+                    });
+
                     it(`zoom target stays at the same screen coords (pitch ${pitch})`, function() {
                         resetCamera(pitch);
 
