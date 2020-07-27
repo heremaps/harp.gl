@@ -179,6 +179,11 @@ class MeshBuffers implements IMeshBuffers {
     readonly featureStarts: number[] = [];
 
     /**
+     * Optional list of edge feature start indices. The indices point into the edge index attribute.
+     */
+    readonly edgeFeatureStarts: number[] = [];
+
+    /**
      * An optional list of additional data that can be used as additional data for the object
      * picking.
      */
@@ -1344,6 +1349,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         for (const polygon of polygons) {
             const startIndexCount = indices.length;
+            const edgeStartIndexCount = edgeIndices.length;
 
             for (let ringIndex = 0; ringIndex < polygon.length; ) {
                 const vertices: number[] = [];
@@ -1637,6 +1643,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             if (this.m_gatherFeatureAttributes) {
                 meshBuffers.objInfos.push(context.env.entries);
                 meshBuffers.featureStarts.push(startIndexCount);
+                meshBuffers.edgeFeatureStarts.push(edgeStartIndexCount);
             }
 
             const count = indices.length - startIndexCount;
@@ -1809,6 +1816,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             geometry.featureStarts = meshBuffers.featureStarts;
+            geometry.edgeFeatureStarts = meshBuffers.edgeFeatureStarts;
             geometry.objInfos = meshBuffers.objInfos;
 
             this.m_geometries.push(geometry);
