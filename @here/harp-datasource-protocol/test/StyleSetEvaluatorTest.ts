@@ -15,7 +15,7 @@ import {
 } from "../lib/InterpolatedPropertyDefs";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
 import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
-import { Definitions, StyleDeclaration, StyleSet } from "../lib/Theme";
+import { Definitions, Style, StyleSet } from "../lib/Theme";
 
 import * as THREE from "three";
 
@@ -220,7 +220,7 @@ describe("StyleSetEvaluator", function() {
         });
     });
     describe('definitions / "ref" operator support', function() {
-        const sampleStyleDeclaration: StyleDeclaration = {
+        const sampleStyleDeclaration: Style = {
             technique: "fill",
             when: ["ref", "expr"],
             attr: { lineWidth: ["ref", "number"], color: ["ref", "interpolator"] }
@@ -257,22 +257,8 @@ describe("StyleSetEvaluator", function() {
                 renderOrder: 0
             });
         });
-        it("resolves style declaration references", function() {
-            const sse = new StyleSetEvaluator([["ref", "style"]], {
-                ...sampleDefinitions,
-                style: sampleStyleDeclaration
-            });
-            const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
-
-            assert.equal(techniques.length, 1);
-            assert.deepNestedInclude(techniques[0], {
-                name: "fill",
-                lineWidth: 123,
-                renderOrder: 0
-            });
-        });
         it("reuses very same instances of objects from definition table", function() {
-            const styleReferencingObject: StyleDeclaration = {
+            const styleReferencingObject: Style = {
                 technique: "fill",
                 when: ["ref", "expr"],
                 attr: { lineWidth: ["ref", "number"], color: ["ref", "bigObject"] }
@@ -280,7 +266,7 @@ describe("StyleSetEvaluator", function() {
             const bigObject = {};
             const definitions: Definitions = {
                 ...sampleDefinitions,
-                bigObject: ["literal", bigObject]
+                bigObject: { value: ["literal", bigObject] }
             };
             const sse = new StyleSetEvaluator([styleReferencingObject], definitions);
 
@@ -523,7 +509,7 @@ describe("StyleSetEvaluator", function() {
     });
 
     it("Filter techniques by zoom level", function() {
-        function getMatchingTechniques(props: ValueMap, styleSet: StyleDeclaration[]) {
+        function getMatchingTechniques(props: ValueMap, styleSet: Style[]) {
             return new StyleSetEvaluator(styleSet).getMatchingTechniques(new MapEnv(props));
         }
 

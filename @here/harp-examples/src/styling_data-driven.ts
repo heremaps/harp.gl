@@ -48,8 +48,29 @@ export namespace DataDrivenThemeExample {
                 },
                 styles: {
                     population: [
-                        ["ref", "countryBorderOutline"],
-                        ["ref", "waterPolygons"],
+                        {
+                            id: "countryBorderOutline",
+                            description: "country border - outline",
+                            when: [
+                                "all",
+                                ["==", ["get", "$layer"], "boundaries"],
+                                ["==", ["geometry-type"], "LineString"],
+                                ["==", ["get", "kind"], "country"]
+                            ],
+                            technique: "solid-line",
+                            renderOrder: 4,
+                            color: "#52676E",
+                            lineWidth: ["ref", "countryBorderOutlineWidth"]
+                        },
+                        {
+                            id: "waterPolygons",
+                            layer: "water",
+                            description: "water",
+                            when: ["==", ["geometry-type"], "Polygon"],
+                            technique: "fill",
+                            renderOrder: 5,
+                            color: ["ref", "waterColor"]
+                        },
                         {
                             when: [
                                 "all",

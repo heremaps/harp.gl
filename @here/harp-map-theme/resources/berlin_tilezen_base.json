@@ -1,137 +1,84 @@
 {
     "definitions": {
-        "parkColor": "#6C9478",
-        "extrudedBuildingsCondition": [
-            "all",
-            ["==", ["get", "$layer"], "buildings"],
-            ["==", ["geometry-type"], "Polygon"]
-        ],
-        "defaultBuildingColor": "#EDE7E1E6",
-        "waterColor": "#436981",
-        "waterPolygons": {
-            "description": "water",
-            "when": [
+        "parkColor": { "value": "#6C9478" },
+        "extrudedBuildingsCondition": {
+            "value": [
                 "all",
-                ["==", ["get", "$layer"], "water"],
+                ["==", ["get", "$layer"], "buildings"],
                 ["==", ["geometry-type"], "Polygon"]
-            ],
-            "technique": "fill",
-            "renderOrder": 5,
-            "color": ["ref", "waterColor"]
+            ]
         },
-        "extrudedBuildings": {
-            "description": "extruded buildings",
-            "technique": "extruded-polygon",
-            "when": ["ref", "extrudedBuildingsCondition"],
-            "minZoomLevel": 16,
-            "renderOrder": 2000,
-            "height": ["get", "height"],
-            "color": ["ref", "defaultBuildingColor"],
-            "roughness": 1,
-            "metalness": 0.8,
-            "emissive": "#78858C",
-            "emissiveIntensity": 0.85,
-            "footprint": true,
-            "maxSlope": 0.8799999999999999,
-            "lineWidth": 1,
-            "lineColor": "#172023",
-            "lineColorMix": 0.6,
-            "fadeNear": 0.9,
-            "fadeFar": 1,
-            "lineFadeNear": -0.75,
-            "lineFadeFar": 1
+        "defaultBuildingColor": { "value": "#EDE7E1E6" },
+        "waterColor": { "value": "#436981" },
+        "countryBorderLineWidth": {
+            "value": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                2,
+                2000,
+                3,
+                1400,
+                4,
+                1000,
+                5,
+                500,
+                6,
+                220,
+                7,
+                90,
+                8,
+                50,
+                9,
+                30,
+                10,
+                20,
+                11,
+                15,
+                12,
+                10,
+                13,
+                5,
+                14,
+                2
+            ]
         },
-        "countryBorderLineWidth": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            2,
-            2000,
-            3,
-            1400,
-            4,
-            1000,
-            5,
-            500,
-            6,
-            220,
-            7,
-            90,
-            8,
-            50,
-            9,
-            30,
-            10,
-            20,
-            11,
-            15,
-            12,
-            10,
-            13,
-            5,
-            14,
-            2
-        ],
-        "roadsFadeNear": 0.9,
-        "roadsFadeFar": 0.95,
-        "countryBorderOutlineWidth": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            1,
-            10000,
-            2,
-            8000,
-            3,
-            7000,
-            4,
-            5000,
-            5,
-            3000,
-            6,
-            2000,
-            7,
-            1000,
-            8,
-            500,
-            9,
-            250,
-            10,
-            120,
-            11,
-            80,
-            12,
-            40,
-            13,
-            20,
-            14,
-            10
-        ],
-        "countryBorderLine": {
-            "description": "country border",
-            "when": [
-                "all",
-                ["==", ["get", "$layer"], "boundaries"],
-                ["==", ["geometry-type"], "LineString"],
-                ["==", ["get", "kind"], "country"]
-            ],
-            "technique": "solid-line",
-            "renderOrder": 4.1,
-            "color": "#2F444B",
-            "lineWidth": ["ref", "countryBorderLineWidth"]
-        },
-        "countryBorderOutline": {
-            "description": "country border - outline",
-            "when": [
-                "all",
-                ["==", ["get", "$layer"], "boundaries"],
-                ["==", ["geometry-type"], "LineString"],
-                ["==", ["get", "kind"], "country"]
-            ],
-            "technique": "solid-line",
-            "renderOrder": 4,
-            "color": "#52676E",
-            "lineWidth": ["ref", "countryBorderOutlineWidth"]
+        "roadsFadeNear": { "value": 0.9 },
+        "roadsFadeFar": { "value": 0.95 },
+        "countryBorderOutlineWidth": {
+            "value": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                1,
+                10000,
+                2,
+                8000,
+                3,
+                7000,
+                4,
+                5000,
+                5,
+                3000,
+                6,
+                2000,
+                7,
+                1000,
+                8,
+                500,
+                9,
+                250,
+                10,
+                120,
+                11,
+                80,
+                12,
+                40,
+                13,
+                20,
+                14,
+                10
+            ]
         }
     },
     "sky": {
@@ -1296,7 +1243,15 @@
                 "gapSize": ["step", ["zoom"], 100, 11, 40, 12, 24, 13, 30, 14, 25, 15, 15, 16, 8],
                 "lineWidth": ["interpolate", ["linear"], ["zoom"], 13, 2.75, 14, 1.75]
             },
-            ["ref", "waterPolygons"],
+            {
+                "id": "waterPolygons",
+                "layer": "water",
+                "description": "water",
+                "when": ["==", ["geometry-type"], "Polygon"],
+                "technique": "fill",
+                "renderOrder": 5,
+                "color": ["ref", "waterColor"]
+            },
             {
                 "description": "water",
                 "when": ["all", ["==", ["get", "$layer"], "water"]],
@@ -1307,8 +1262,34 @@
                 "opacity": 0.5,
                 "size": 12.8
             },
-            ["ref", "countryBorderOutline"],
-            ["ref", "countryBorderLine"],
+            {
+                "id": "countryBorderOutline",
+                "description": "country border - outline",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["geometry-type"], "LineString"],
+                    ["==", ["get", "kind"], "country"]
+                ],
+                "technique": "solid-line",
+                "renderOrder": 4,
+                "color": "#52676E",
+                "lineWidth": ["ref", "countryBorderOutlineWidth"]
+            },
+            {
+                "id": "countryBorderLine",
+                "description": "country border",
+                "layer": "boundaries",
+                "when": [
+                    "all",
+                    ["==", ["geometry-type"], "LineString"],
+                    ["==", ["get", "kind"], "country"]
+                ],
+                "technique": "solid-line",
+                "renderOrder": 4.1,
+                "color": "#2F444B",
+                "lineWidth": ["ref", "countryBorderLineWidth"]
+            },
             {
                 "description": "country border - labels",
                 "when": [
@@ -2250,7 +2231,29 @@
                 "fadeNear": 0.8,
                 "fadeFar": 0.9
             },
-            ["ref", "extrudedBuildings"],
+            {
+                "id": "extrudedBuildings",
+                "description": "extruded buildings",
+                "technique": "extruded-polygon",
+                "when": ["ref", "extrudedBuildingsCondition"],
+                "minZoomLevel": 16,
+                "renderOrder": 2000,
+                "height": ["get", "height"],
+                "color": ["ref", "defaultBuildingColor"],
+                "roughness": 1,
+                "metalness": 0.8,
+                "emissive": "#78858C",
+                "emissiveIntensity": 0.85,
+                "footprint": true,
+                "maxSlope": 0.8799999999999999,
+                "lineWidth": 1,
+                "lineColor": "#172023",
+                "lineColorMix": 0.6,
+                "fadeNear": 0.9,
+                "fadeFar": 1,
+                "lineFadeNear": -0.75,
+                "lineFadeFar": 1
+            },
             {
                 "description": "building_address",
                 "when": [

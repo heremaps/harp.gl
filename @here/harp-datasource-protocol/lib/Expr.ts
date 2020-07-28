@@ -13,7 +13,7 @@ import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedPropertyDefs";
-import { Definitions, isBoxedDefinition, isLiteralDefinition } from "./Theme";
+import { Definitions } from "./Theme";
 
 import * as THREE from "three";
 import { Pixels } from "./Pixels";
@@ -1038,18 +1038,14 @@ function resolveReference(node: JsonArray, referenceResolverState?: ReferenceRes
     }
     let definitionEntry = referenceResolverState.definitions[name] as any;
     let result: Expr;
-    if (isLiteralDefinition(definitionEntry)) {
-        return Expr.fromJSON(definitionEntry);
-    } else if (isBoxedDefinition(definitionEntry)) {
-        if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
-            // found a reference to an interpolation using
-            // the deprecated object-like syntax.
-            return Expr.fromJSON(interpolatedPropertyDefinitionToJsonExpr(definitionEntry.value));
-        } else if (isJsonExpr(definitionEntry.value)) {
-            definitionEntry = definitionEntry.value;
-        } else {
-            return Expr.fromJSON(definitionEntry.value);
-        }
+    if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
+        // found a reference to an interpolation using
+        // the deprecated object-like syntax.
+        return Expr.fromJSON(interpolatedPropertyDefinitionToJsonExpr(definitionEntry.value));
+    } else if (isJsonExpr(definitionEntry.value)) {
+        definitionEntry = definitionEntry.value;
+    } else {
+        return Expr.fromJSON(definitionEntry.value);
     }
 
     if (isJsonExpr(definitionEntry)) {

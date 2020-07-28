@@ -5,12 +5,11 @@
  */
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
-import { isJsonExpr, JsonExpr } from "./Expr";
-import { isInterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
+import { JsonExpr, JsonValue } from "./Expr";
+import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 import {
     BaseTechniqueParams,
     BasicExtrudedLineTechniqueParams,
-    DynamicProperty,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
     LineTechniqueParams,
@@ -134,6 +133,7 @@ export interface Theme {
      * are used together with [[Theme.priorities]] to sort
      * the objects created using this {@link Theme}, for example:
      *
+     * @example
      * ```json
      * {
      *      "priorities": [
@@ -160,6 +160,7 @@ export interface Theme {
      * technique (e.g. `"text"`) must match on the strings
      * defined by this [[Theme.labelPriorities]], for example:
      *
+     * @example
      * ```json
      * {
      *      "labelPriorities": [
@@ -184,19 +185,19 @@ export interface Theme {
  */
 export interface StylePriority {
     /**
-     * The group of this [[StylePriority]].
+     * The group of this `StylePriority`.
      */
     group: string;
 
     /**
-     * The category of this [[StylePriority]].
+     * The category of this `StylePriority`.
      */
     category?: string;
 }
 
 /**
  * A type representing HARP themes with all the styleset declarations
- * grouped in one [[Array]].
+ * grouped in one `Array`.
  *
  * @internal This type will merge with {@link Theme}.
  */
@@ -208,34 +209,18 @@ export type FlatTheme = Omit<Theme, "styles"> & {
 };
 
 /**
- * Checks if the given definition implements the [[BoxedDefinition]] interface.
- */
-export function isBoxedDefinition(def: Definition): def is BoxedDefinition {
-    const bdef = def as BoxedDefinition;
-    return (
-        typeof bdef === "object" &&
-        bdef !== null &&
-        (typeof bdef.type === "string" || typeof bdef.type === "undefined") &&
-        (typeof bdef.value === "string" ||
-            typeof bdef.value === "number" ||
-            typeof bdef.value === "boolean" ||
-            isInterpolatedPropertyDefinition(bdef.value) ||
-            isJsonExpr(bdef.value))
-    );
-}
-
-export function isLiteralDefinition(def: Definition): def is LiteralValue {
-    return typeof def === "string" || typeof def === "number" || typeof def === "boolean";
-}
-
-/**
  * Value definition commons.
  */
-export interface BaseValueDefinition {
+export interface Definition {
     /**
      * The type of the definition.
      */
-    type?: string;
+    type?: "selector" | "boolean" | "number" | "string" | "color";
+
+    /**
+     * The value of the definition.
+     */
+    value: JsonValue | InterpolatedPropertyDefinition<JsonValue>;
 
     /**
      * The description of the definition.
@@ -244,144 +229,10 @@ export interface BaseValueDefinition {
 }
 
 /**
- * Possible types of unboxed literal values carried by [[Definition]].
- */
-export type LiteralValue = string | number | boolean;
-
-/**
- * Boxed definition without type.
- */
-export interface BoxedAnyDefinition extends BaseValueDefinition {
-    /**
-     * The value of the definition.
-     */
-    value: LiteralValue | JsonExpr;
-}
-
-/**
- * A boxed boolean value definition.
- */
-export interface BoxedBooleanDefinition extends BaseValueDefinition {
-    /**
-     * The type of the definition.
-     */
-    type: "boolean";
-
-    /**
-     * The value of the definition.
-     */
-    value: DynamicProperty<boolean>;
-}
-
-/**
- * A boxed numerical value definition.
- */
-export interface BoxedNumericDefinition extends BaseValueDefinition {
-    /**
-     * The type of the definition.
-     */
-    type: "number";
-
-    /**
-     * The value of the definition.
-     */
-    value: DynamicProperty<number>;
-}
-
-/**
- * A boxed string value definition.
- */
-export interface BoxedStringDefinition extends BaseValueDefinition {
-    /**
-     * The type of the definition.
-     */
-    type: "string";
-
-    /**
-     * The value of the definition.
-     */
-    value: DynamicProperty<string>;
-}
-
-/**
- * A boxed color value definition.
- */
-export interface BoxedColorDefinition extends BaseValueDefinition {
-    /**
-     * The type of the definition.
-     */
-    type: "color";
-
-    /**
-     * The value of the definition.
-     */
-    value: DynamicProperty<string>;
-}
-
-/**
- * A boxed selector value definition.
- */
-export interface BoxedSelectorDefinition extends BaseValueDefinition {
-    /**
-     * The type of the definition.
-     */
-    type: "selector";
-
-    /**
-     * The value of the definition.
-     *
-     * See [[BaseStyle.when]].
-     */
-    value: string | JsonExpr;
-}
-
-/**
- * A boxed value definition.
- */
-export type BoxedDefinition =
-    | BoxedAnyDefinition
-    | BoxedBooleanDefinition
-    | BoxedNumericDefinition
-    | BoxedStringDefinition
-    | BoxedColorDefinition
-    | BoxedSelectorDefinition;
-
-/**
- * Possible values for `definitions` element of [Theme].
- */
-export type Definition = LiteralValue | JsonExpr | BoxedDefinition | StyleDeclaration;
-
-/**
- * An array of [[Definition]]s.
+ * An set of {@link Definition}s.
  */
 export interface Definitions {
     [name: string]: Definition;
-}
-
-/**
- * Base [StyleSelector] attributes required to match [Style] object against given feature.
- *
- * Contains [Style]'s members related to feature matching in [[StyleSetEvaluator]].
- */
-export interface StyleSelector {
-    /**
-     * Condition when this style rule applies.
-     *
-     * @remarks
-     * Condition that is applied to feature properties to check if given [[Style]] this feature
-     * should emit geometry of this style.
-     */
-    when: string | JsonExpr;
-
-    /**
-     * The layer containing the carto features processed by this style rule.
-     */
-    layer?: string;
-
-    /**
-     * Optional. If `true`, no more matching styles will be evaluated.
-     */
-    final?: boolean;
 }
 
 export type JsonExprReference = ["ref", string];
@@ -401,45 +252,59 @@ export function isJsonExprReference(value: any): value is JsonExprReference {
 }
 
 /**
- * Like [[StyleDeclaration]], but without [[Reference]] type.
+ * An array of {@link Style}s that are used together to define how a
+ * {@link @here/harp-mapview#DataSource} should be rendered.
+ *
+ * @remarks
+ * `StyleSet`s are applied to sources providing vector tiles via their method
+ * `setStyleSet`. This is also handle internally when a whole theme is passed to a
+ * {@link @here/harp-mapview#MapView} via {@link @here/harp-mapview#MapViewtheme}.
  */
-export type ResolvedStyleDeclaration = Style & StyleSelector;
+export type StyleSet = Style[];
 
 /**
- * Like [[StyleSet]], but without [[Reference]] type.
- */
-export type ResolvedStyleSet = ResolvedStyleDeclaration[];
-
-/**
- * Compound type that merges all raw [Style] with selector arguments from [BaseSelector], optionally
- * a [[Reference]].
- */
-export type StyleDeclaration = (Style & StyleSelector) | JsonExpr;
-
-export function isActualSelectorDefinition(def: Definition): def is Style & StyleSelector {
-    const styleDef = def as StyleDeclaration;
-    return (
-        typeof styleDef === "object" &&
-        styleDef !== null &&
-        !Array.isArray(styleDef) &&
-        typeof styleDef.technique === "string"
-    );
-}
-
-/**
- * An array of [[StyleSelector]]s that are used together to define how a [[DataSource]] should be
- * rendered. `StyleSet`s are applied to sources providing vector tiles via their method
- * `setStyleSet`. This is also handle internally when a whole theme is passed to a [[MapView]] via
- * `mapview.theme`.
- */
-export type StyleSet = StyleDeclaration[];
-
-/**
- * The object that defines what way an item of a [[DataSource]] should be decoded to assemble a
- * tile. [[Style]] is describing which features are shown on a map and in what way they are being
+ * The object that defines what way an item of a {@link @here/harp-mapview#DataSource}
+ * should be decoded to assemble a tile.
+ *
+ * @remarks
+ * {@link Style} is describing which features are shown on a map and in what way they are being
  * shown.
  */
-export type BaseStyle<Technique, Params> = Partial<Params> & {
+export type BaseStyle<Technique, Params> = StyleAttributes<Technique, Params> & Partial<Params>;
+
+/**
+ * The common attributes of a {@link Style}.
+ */
+export interface StyleAttributes<Technique, Params> {
+    /**
+     * Unique identifier associated with this `Style`.
+     */
+    id?: string;
+
+    /**
+     * Reference to the identifier of an existing `Style` to extend.
+     */
+    extends?: string;
+
+    /**
+     * Condition when this style rule applies.
+     *
+     * @remarks
+     * Condition that is applied to feature properties to check if given {@link Style} this feature
+     * should emit geometry of this style.
+     */
+    when: string | JsonExpr;
+
+    /**
+     * The layer containing the carto features processed by this style rule.
+     */
+    layer?: string;
+
+    /**
+     * Optional. If `true`, no more matching styles will be evaluated.
+     */
+    final?: boolean;
+
     /**
      * Human readable description.
      */
@@ -510,7 +375,7 @@ export type BaseStyle<Technique, Params> = Partial<Params> & {
     labelProperty?: string;
 
     attr?: Partial<Params>;
-};
+}
 
 export type Style =
     | SquaresStyle
@@ -532,7 +397,7 @@ export type Style =
     | NoneStyle;
 
 /**
- * A dictionary of [[StyleSet]]s.
+ * A dictionary of {@link StyleSet}s.
  */
 export interface Styles {
     [styleSetName: string]: StyleSet;
@@ -541,6 +406,7 @@ export interface Styles {
 /**
  * A reference to a style definition.
  *
+ * @remarks
  * Use as value `attrs` to reference value from `definitions`.
  *
  * Example of usage:
@@ -570,14 +436,14 @@ export type Attr<T> = { [P in keyof T]?: T[P] | JsonExpr };
 /**
  * Render feature as set of squares rendered in screen space.
  *
- * @see [[PointTechniqueParams]].
+ * @see {@link PointTechniqueParams}.
  */
 export type SquaresStyle = BaseStyle<"squares", PointTechniqueParams>;
 
 /**
  * Render feature as set of circles rendered in screen space.
  *
- * @see [[PointTechniqueParams]].
+ * @see {@link PointTechniqueParams}.
  */
 export type CirclesStyle = BaseStyle<"circles", PointTechniqueParams>;
 

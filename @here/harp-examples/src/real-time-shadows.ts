@@ -310,7 +310,7 @@ export namespace RealTimeShadows {
         ],
         definitions: {
             // Opaque buildings
-            defaultBuildingColor: "#EDE7E1FF"
+            defaultBuildingColor: { value: "#EDE7E1FF" }
         }
     };
     initializeMapView("mapCanvas", theme);

@@ -87,13 +87,6 @@ export namespace HelloCustomThemeExample {
                     parkColor: {
                         type: "color",
                         value: "#00aa33"
-                    },
-                    extrudedBuildings: {
-                        technique: "fill",
-                        when: ["ref", "extrudedBuildingsCondition"],
-                        attr: {
-                            color: "#774400"
-                        }
                     }
                 }
             }

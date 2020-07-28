@@ -20,7 +20,7 @@ import {
     Light,
     PoiStyle,
     SolidLineStyle,
-    StyleDeclaration,
+    Style,
     TextTechniqueStyle,
     TextureCoordinateType,
     Theme
@@ -221,7 +221,7 @@ describe("MapView Styling Test", function() {
             kind: "background"
         }
     };
-    const referenceBackroundStyle: StyleDeclaration = {
+    const referenceBackroundStyle: Style = {
         when: "$geometryType == 'polygon' && kind == 'background'",
         technique: "fill",
         final: true,
