@@ -6,6 +6,17 @@ const { addHarpWebpackConfig } = require("@here/harp-webpack-utils/scripts/HarpW
 // 2. The main bundle.
 
 module.exports = addHarpWebpackConfig(
-    { plugins: [new CopyWebpackPlugin([require.resolve("three/build/three.min.js")])] },
+    {
+        plugins: [
+            new CopyWebpackPlugin([
+                require.resolve("three/build/three.min.js"),
+                {
+                    from: "resources/",
+                    to: "resources/",
+                    toType: "dir"
+                }
+            ])
+        ]
+    },
     { mainEntry: "./index.js", decoderEntry: "./decoder.js", htmlTemplate: "./index.html" }
 );

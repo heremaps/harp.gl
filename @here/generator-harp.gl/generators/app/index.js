@@ -2,6 +2,7 @@ const Generator = require("yeoman-generator");
 const fs = require("fs");
 const path = require("path");
 const version = require("../../package.json").version;
+const mkdirp = require("mkdirp");
 
 module.exports = class extends Generator {
     constructor(args, opts) {
@@ -40,6 +41,8 @@ module.exports = class extends Generator {
         this.fs.copyTpl([this.templatePath(this.answers.language)], this.destinationPath(), {
             apikey: this.answers.apikey
         });
+        // Create an empty directory in yeoman: https://stackoverflow.com/questions/29830927/creating-empty-directories-in-a-yeoman-generator
+        mkdirp.sync("./resources");
     }
 
     install() {
