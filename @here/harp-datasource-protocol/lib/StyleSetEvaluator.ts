@@ -35,15 +35,7 @@ import {
 } from "./InterpolatedPropertyDefs";
 import { AttrScope, mergeTechniqueDescriptor } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
-import {
-    Definitions,
-    isActualSelectorDefinition,
-    isJsonExprReference,
-    Style,
-    StyleDeclaration,
-    StyleSelector,
-    StyleSet
-} from "./Theme";
+import { Definitions, Style, StyleSet } from "./Theme";
 
 const logger = LoggerManager.instance.create("StyleSetEvaluator");
 
@@ -139,7 +131,7 @@ interface StyleInternalParams {
     _usesFeatureState?: boolean;
 }
 
-type InternalStyle = Style & StyleSelector & StyleInternalParams;
+type InternalStyle = Style & StyleInternalParams;
 
 /**
  * [[StyleConditionClassifier]] searches for usages of `$layer` in `when` conditions
@@ -941,31 +933,11 @@ function computeDefaultRenderOrder(styleSet: InternalStyle[]) {
     }
 }
 
-function resolveReferences(styleSet: StyleDeclaration[], definitions: Definitions | undefined) {
+function resolveReferences(styleSet: Style[], definitions: Definitions | undefined) {
     return styleSet.map(style => resolveStyleReferences(style, definitions));
 }
 
-function resolveStyleReferences(
-    style: StyleDeclaration,
-    definitions: Definitions | undefined
-): InternalStyle {
-    if (isJsonExpr(style)) {
-        if (!isJsonExprReference(style)) {
-            throw new Error("invalid expression in this context, only 'ref's are supported");
-        }
-        // expand and instantiate references to style definitions.
-        const definitionName = style[1];
-        const def = definitions && definitions[definitionName];
-        if (!def) {
-            throw new Error(`invalid reference '${definitionName}' - not found`);
-        }
-        if (!isActualSelectorDefinition(def)) {
-            throw new Error(`invalid reference '${definitionName}' - expected style definition`);
-        }
-        // instantiate the style
-        return resolveStyleReferences(def, definitions);
-    }
-
+function resolveStyleReferences(style: Style, definitions: Definitions | undefined): InternalStyle {
     return { ...style };
 }
 

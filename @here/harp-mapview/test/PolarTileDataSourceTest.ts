@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { StyleDeclaration } from "@here/harp-datasource-protocol";
+import { Style } from "@here/harp-datasource-protocol";
 import {
     GeoCoordinates,
     MercatorConstants,
@@ -28,19 +28,19 @@ describe("PolarTileDataSource", function() {
     let dataSource: PolarTileDataSource;
     let mapViewStub: sinon.SinonStubbedInstance<MapView>;
 
-    const north_style: StyleDeclaration = {
+    const north_style: Style = {
         when: ["==", ["get", "kind"], "north_pole"],
         technique: "fill",
         attr: { color: "#dac0de" }
     };
-    const south_style: StyleDeclaration = {
+    const south_style: Style = {
         when: ["==", ["get", "kind"], "south_pole"],
         technique: "fill",
         attr: { color: "#bada55" }
     };
 
-    const theme_both: StyleDeclaration[] = [north_style, south_style];
-    const theme_south: StyleDeclaration[] = [south_style];
+    const theme_both: Style[] = [north_style, south_style];
+    const theme_south: Style[] = [south_style];
 
     describe("should", function() {
         it("#canGetTile()", function() {

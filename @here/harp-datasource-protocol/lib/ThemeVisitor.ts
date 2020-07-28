@@ -5,7 +5,7 @@
  */
 
 import { isJsonExpr } from "./Expr";
-import { StyleDeclaration, Theme } from "./Theme";
+import { Style, Theme } from "./Theme";
 
 /**
  * The ThemeVisitor visits every style in the theme in a depth-first fashion.
@@ -19,8 +19,8 @@ export class ThemeVisitor {
      *                  `true` to cancel visitation.
      * @returns `true` if function has finished prematurely.
      */
-    visitStyles(visitFunc: (style: StyleDeclaration) => boolean): boolean {
-        const visit = (style: StyleDeclaration): boolean => {
+    visitStyles(visitFunc: (style: Style) => boolean): boolean {
+        const visit = (style: Style): boolean => {
             if (isJsonExpr(style)) {
                 return false;
             }

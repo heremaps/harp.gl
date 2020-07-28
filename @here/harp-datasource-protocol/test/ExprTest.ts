@@ -57,11 +57,11 @@ describe("Expr", function() {
     describe("#fromJson", function() {
         describe("ref operator support", function() {
             const baseDefinitions: Definitions = {
-                color: "#ff0",
+                color: { value: "#ff0" },
                 string: { value: "abc" },
                 number: { type: "number", value: 123 },
                 number2: { value: 234 },
-                boolean: true
+                boolean: { value: true }
             };
             it("supports literal references", function() {
                 assert.equal(evaluate(Expr.fromJSON(["ref", "color"], baseDefinitions)), "#ff0");
@@ -77,7 +77,7 @@ describe("Expr", function() {
             });
             it("supports basic expression references", function() {
                 const definitions: Definitions = {
-                    literalExpr: ["+", 2, 3],
+                    literalExpr: { value: ["+", 2, 3] },
                     boxedTypedExpr: { type: "selector", value: ["+", 3, 4] },
                     boxedUntypedExpr: { value: ["+", 4, 5] }
                 };
@@ -94,10 +94,14 @@ describe("Expr", function() {
             });
             it("supports complex embedded references", function() {
                 const definitions: Definitions = {
-                    number: 1,
-                    refConstantExpr: ["+", 1, ["ref", "number"]],
-                    refExpr1: ["+", ["ref", "number"], ["ref", "number"], ["ref", "refExpr2"]],
-                    refExpr2: ["*", ["ref", "refConstantExpr"], ["ref", "refConstantExpr"]],
+                    number: { value: 1 },
+                    refConstantExpr: { value: ["+", 1, ["ref", "number"]] },
+                    refExpr1: {
+                        value: ["+", ["ref", "number"], ["ref", "number"], ["ref", "refExpr2"]]
+                    },
+                    refExpr2: {
+                        value: ["*", ["ref", "refConstantExpr"], ["ref", "refConstantExpr"]]
+                    },
                     refTopExpr: {
                         // 6 - 4 -> 2, old syntax
                         type: "selector",

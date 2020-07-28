@@ -8,19 +8,13 @@ import { isJsonExpr } from "@here/harp-datasource-protocol";
 import {
     Definitions,
     FlatTheme,
-    isActualSelectorDefinition,
-    isBoxedDefinition,
     isJsonExprReference,
-    isLiteralDefinition,
-    ResolvedStyleDeclaration,
-    ResolvedStyleSet,
-    StyleDeclaration,
+    Style,
     Styles,
     StyleSet,
     Theme
 } from "@here/harp-datasource-protocol/lib/Theme";
 import {
-    cloneDeep,
     composeUriResolvers,
     ContextLogger,
     getAppBaseUrl,
@@ -273,38 +267,6 @@ export class ThemeLoader {
      * This method mutates original `theme` instance.
      */
     private static resolveThemeReferences(theme: Theme, contextLogger: IContextLogger): Theme {
-        if (theme.definitions !== undefined) {
-            contextLogger.pushAttr("definitions");
-            /**
-             * First, try to resolve all internal references in definitions, so if we may save few
-             * CPU cycles if some definition is used many times in actual style sets.
-             */
-            for (const definitionName in theme.definitions) {
-                if (!theme.definitions.hasOwnProperty(definitionName)) {
-                    continue;
-                }
-
-                const def = theme.definitions[definitionName];
-                if (isActualSelectorDefinition(def)) {
-                    contextLogger.pushAttr(definitionName);
-                    const resolvedDef = ThemeLoader.resolveStyle(
-                        def,
-                        theme.definitions,
-                        contextLogger
-                    );
-                    contextLogger.pop();
-                    if (resolvedDef === undefined) {
-                        contextLogger.pushAttr(definitionName);
-                        contextLogger.warn("skipping invalid style in definition");
-                        contextLogger.pop();
-                        delete theme.definitions[definitionName];
-                    } else {
-                        theme.definitions[definitionName] = resolvedDef;
-                    }
-                }
-            }
-            contextLogger.pop();
-        }
         if (theme.styles !== undefined) {
             for (const styleSetName in theme.styles) {
                 if (!theme.styles.hasOwnProperty(styleSetName)) {
@@ -332,8 +294,8 @@ export class ThemeLoader {
         styleSet: StyleSet,
         definitions: Definitions | undefined,
         contextLogger: IContextLogger
-    ): ResolvedStyleSet {
-        const result: ResolvedStyleSet = [];
+    ): StyleSet {
+        const result: StyleSet = [];
 
         for (let index = 0; index < styleSet.length; ++index) {
             const currentStyle = styleSet[index];
@@ -357,29 +319,10 @@ export class ThemeLoader {
      * Expand all `ref` in [[Style]] instance basing on `definitions`.
      */
     private static resolveStyle(
-        style: StyleDeclaration,
+        style: Style,
         definitions: Definitions | undefined,
         contextLogger: IContextLogger
-    ): ResolvedStyleDeclaration | undefined {
-        if (isJsonExprReference(style)) {
-            // expand and instantiate references to style definitions.
-
-            const def = definitions && definitions[style[1]];
-
-            if (!def) {
-                contextLogger.warn(`invalid reference '${style[1]}' - not found`);
-                return undefined;
-            }
-            if (!isActualSelectorDefinition(def)) {
-                contextLogger.warn(`invalid reference '${style[1]}' - expected style definition`);
-                return undefined;
-            }
-
-            // instantiate the style
-            style = cloneDeep(def);
-        }
-        style = style as ResolvedStyleDeclaration;
-
+    ): Style | undefined {
         if (Array.isArray(style.when)) {
             contextLogger.pushAttr("when");
             const resolvedWhen = this.resolveExpressionReferences(
@@ -448,15 +391,10 @@ export class ThemeLoader {
                     failed = true;
                     return undefined;
                 }
-                if (isLiteralDefinition(def) || isJsonExpr(def)) {
+                if (isJsonExpr(def)) {
                     return def;
                 }
-                if (isBoxedDefinition(def)) {
-                    return def.value;
-                }
-                contextLogger.warn(`invalid reference '${defName}' - expected value definition`);
-                failed = true;
-                return undefined;
+                return def.value;
             } else if (Array.isArray(node)) {
                 const result = [...node];
                 for (let i = 1; i < result.length; ++i) {
@@ -612,7 +550,7 @@ export class ThemeLoader {
                 if (!theme.styles.hasOwnProperty(styleSetName)) {
                     continue;
                 }
-                const styleSet = theme.styles[styleSetName] as ResolvedStyleDeclaration[];
+                const styleSet = theme.styles[styleSetName] as Style[];
                 for (const style of styleSet) {
                     if (!style.attr) {
                         continue;

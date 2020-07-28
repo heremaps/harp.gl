@@ -17,13 +17,7 @@ import {
 } from "@here/harp-datasource-protocol/index-decoder";
 import { loadTestResource } from "@here/harp-test-utils";
 
-import {
-    Definitions,
-    isJsonExprReference,
-    Style,
-    StyleSelector,
-    Theme
-} from "@here/harp-datasource-protocol";
+import { Definitions, Theme } from "@here/harp-datasource-protocol";
 import * as Ajv from "ajv";
 import * as path from "path";
 
@@ -105,19 +99,12 @@ describe("Berlin Theme", function() {
                 for (const styleSetName in theme.styles) {
                     const styleSet = theme.styles[styleSetName];
                     for (let i = 0; i < styleSet.length; ++i) {
-                        let style = styleSet[i];
-                        if (isJsonExpr(style)) {
-                            assert(isJsonExprReference(style));
-                            assert.isDefined(theme.definitions);
-                            const refName = style[1] as string;
-                            style = theme.definitions![refName] as Style & StyleSelector;
-                            assert.isDefined(style, `invalid reference: ${style}`);
-                        }
+                        const style = styleSet[i];
                         const location = `${styleSetName}[${i}]`;
                         if (typeof style.when === "string") {
                             assert.doesNotThrow(() =>
                                 // tslint:disable-next-line: deprecation
-                                Expr.parse((style as Style & StyleSelector).when as string)
+                                Expr.parse(style.when as string)
                             );
                         } else {
                             assertExprValid(style.when, theme.definitions, `${location}.when`);
