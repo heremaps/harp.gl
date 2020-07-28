@@ -18,8 +18,9 @@ import {
     isTextTechnique,
     Technique
 } from "@here/harp-datasource-protocol";
-import { PerformanceTimer } from "@here/harp-utils";
+import { PerformanceTimer, TaskQueue } from "@here/harp-utils";
 
+import { TileTaskGroups } from "../MapView";
 import { PerformanceStatistics } from "../Statistics";
 import { Tile } from "../Tile";
 import { TileGeometryCreator } from "./TileGeometryCreator";
@@ -102,9 +103,18 @@ export class TileGeometryLoader {
     private m_availableGeometryKinds: GeometryKindSet | undefined;
     private m_enabledKinds: GeometryKindSet | undefined;
     private m_disabledKinds: GeometryKindSet | undefined;
-    private m_timeout: any;
+    private m_priority: number = 0;
 
-    constructor(private m_tile: Tile) {}
+    constructor(private m_tile: Tile, private m_taskQueue: TaskQueue) {}
+
+    set priority(value: number) {
+        this.m_priority = value;
+    }
+
+    //This is not a getter as it need to be bound to this for the taskqueue
+    getPriority(): number {
+        return this.m_priority;
+    }
 
     /**
      * The {@link Tile} this `TileGeometryLoader` is managing.
@@ -238,11 +248,6 @@ export class TileGeometryLoader {
 
         this.m_decodedTile = undefined;
         this.m_isFinished = false;
-
-        if (this.m_timeout !== undefined) {
-            clearTimeout(this.m_timeout);
-            this.m_timeout = undefined;
-        }
     }
 
     private finish() {
@@ -251,11 +256,6 @@ export class TileGeometryLoader {
 
         this.m_decodedTile = undefined;
         this.m_isFinished = true;
-
-        if (this.m_timeout !== undefined) {
-            clearTimeout(this.m_timeout);
-            this.m_timeout = undefined;
-        }
     }
 
     /**
@@ -266,6 +266,32 @@ export class TileGeometryLoader {
         enabledKinds: GeometryKindSet | undefined,
         disabledKinds: GeometryKindSet | undefined
     ) {
+        const decodedTile = this.m_decodedTile;
+
+        // Just a sanity check that satisfies compiler check below.
+        if (decodedTile === undefined) {
+            this.finish();
+            return;
+        }
+
+        this.m_taskQueue.add({
+            execute: this.prepare.bind(this, enabledKinds, disabledKinds),
+            group: TileTaskGroups.CREATE,
+            getPriority: this.getPriority.bind(this),
+            isExpired: this.discardNeedlessTile.bind(this, this.tile),
+            estimatedProcessTime: () => {
+                //TODO: this seems to be close in many cases, but take some measures to confirm
+                return (this.tile.decodedTile?.decodeTime || 30) / 6;
+            }
+        });
+    }
+
+    private prepare(
+        enabledKinds: GeometryKindSet | undefined,
+        disabledKinds: GeometryKindSet | undefined
+    ) {
+        // Reset timeout so it is untouched during processing.
+        //this.m_timeout = undefined;
         const tile = this.tile;
         const decodedTile = this.m_decodedTile;
 
@@ -275,64 +301,59 @@ export class TileGeometryLoader {
             return;
         }
 
-        this.m_timeout = setTimeout(() => {
-            // Reset timeout so it is untouched during processing.
-            this.m_timeout = undefined;
+        if (this.discardNeedlessTile(tile)) {
+            return;
+        }
 
-            if (this.discardNeedlessTile(tile)) {
-                return;
-            }
+        const stats = PerformanceStatistics.instance;
+        let now = 0;
+        if (stats.enabled) {
+            now = PerformanceTimer.now();
+        }
 
-            const stats = PerformanceStatistics.instance;
-            let now = 0;
-            if (stats.enabled) {
-                now = PerformanceTimer.now();
-            }
+        const geometryCreator = TileGeometryCreator.instance;
 
-            const geometryCreator = TileGeometryCreator.instance;
+        tile.clear();
+        // Set up techniques which should be processed.
+        geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
+        geometryCreator.createAllGeometries(tile, decodedTile);
 
-            tile.clear();
-            // Set up techniques which should be processed.
-            geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
-            geometryCreator.createAllGeometries(tile, decodedTile);
+        if (stats.enabled) {
+            const geometryCreationTime = PerformanceTimer.now() - now;
+            const currentFrame = stats.currentFrame;
 
-            if (stats.enabled) {
-                const geometryCreationTime = PerformanceTimer.now() - now;
-                const currentFrame = stats.currentFrame;
+            // Account for the geometry creation in the current frame.
+            currentFrame.addValue("render.fullFrameTime", geometryCreationTime);
+            currentFrame.addValue("render.geometryCreationTime", geometryCreationTime);
 
-                // Account for the geometry creation in the current frame.
-                currentFrame.addValue("render.fullFrameTime", geometryCreationTime);
-                currentFrame.addValue("render.geometryCreationTime", geometryCreationTime);
-
-                currentFrame.addValue("geometry.geometryCreationTime", geometryCreationTime);
-                currentFrame.addValue("geometryCount.numGeometries", decodedTile.geometries.length);
-                currentFrame.addValue("geometryCount.numTechniques", decodedTile.techniques.length);
-                currentFrame.addValue(
-                    "geometryCount.numPoiGeometries",
-                    decodedTile.poiGeometries !== undefined ? decodedTile.poiGeometries.length : 0
-                );
-                currentFrame.addValue(
-                    "geometryCount.numTextGeometries",
-                    decodedTile.textGeometries !== undefined ? decodedTile.textGeometries.length : 0
-                );
-                currentFrame.addValue(
-                    "geometryCount.numTextPathGeometries",
-                    decodedTile.textPathGeometries !== undefined
-                        ? decodedTile.textPathGeometries.length
-                        : 0
-                );
-                currentFrame.addValue(
-                    "geometryCount.numPathGeometries",
-                    decodedTile.pathGeometries !== undefined ? decodedTile.pathGeometries.length : 0
-                );
-                currentFrame.addMessage(
-                    // tslint:disable-next-line: max-line-length
-                    `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row}`
-                );
-            }
-            this.finish();
-            tile.dataSource.requestUpdate();
-        }, 0);
+            currentFrame.addValue("geometry.geometryCreationTime", geometryCreationTime);
+            currentFrame.addValue("geometryCount.numGeometries", decodedTile.geometries.length);
+            currentFrame.addValue("geometryCount.numTechniques", decodedTile.techniques.length);
+            currentFrame.addValue(
+                "geometryCount.numPoiGeometries",
+                decodedTile.poiGeometries !== undefined ? decodedTile.poiGeometries.length : 0
+            );
+            currentFrame.addValue(
+                "geometryCount.numTextGeometries",
+                decodedTile.textGeometries !== undefined ? decodedTile.textGeometries.length : 0
+            );
+            currentFrame.addValue(
+                "geometryCount.numTextPathGeometries",
+                decodedTile.textPathGeometries !== undefined
+                    ? decodedTile.textPathGeometries.length
+                    : 0
+            );
+            currentFrame.addValue(
+                "geometryCount.numPathGeometries",
+                decodedTile.pathGeometries !== undefined ? decodedTile.pathGeometries.length : 0
+            );
+            currentFrame.addMessage(
+                // tslint:disable-next-line: max-line-length
+                `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row}`
+            );
+        }
+        this.finish();
+        tile.dataSource.requestUpdate();
     }
 
     private discardNeedlessTile(tile: Tile): boolean {

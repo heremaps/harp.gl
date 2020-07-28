@@ -277,7 +277,7 @@ export abstract class Expr {
                 ? {
                       definitions,
                       lockedNames: new Set(),
-                      cache: definitionExprCache || new Map<string, Expr>()
+                      cache: definitionExprCache ?? new Map<string, Expr>()
                   }
                 : undefined;
 
@@ -577,7 +577,7 @@ export class CallExpr extends Expr {
 
     /** @override */
     protected exprIsDynamic() {
-        const descriptor = this.descriptor || ExprEvaluator.getOperator(this.op);
+        const descriptor = this.descriptor ?? ExprEvaluator.getOperator(this.op);
 
         if (descriptor && descriptor.isDynamicOperator && descriptor.isDynamicOperator(this)) {
             return true;

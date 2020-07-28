@@ -62,6 +62,12 @@ export interface DecodedTile {
      * @see [[CopyrightInfo]]
      */
     copyrightHolderIds?: string[];
+
+    /**
+     * List of {@link @here/harp-geoutils#TileKey}s stored as mortonCodes representing
+     * {@link @here/harp-mapview#Tile}s that have geometry covering this `Tile`.
+     */
+    dependencies?: number[];
 }
 
 /**
@@ -163,6 +169,12 @@ export interface Geometry {
      * feature, which ends at index[index.length-1].
      */
     featureStarts?: number[];
+
+    /**
+     * Optional sorted list of feature start indices for the outline geometry.
+     * Equivalent to {@link featureStarts} but pointing into the edgeIndex attribute.
+     */
+    edgeFeatureStarts?: number[];
 
     /**
      * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
@@ -372,7 +384,7 @@ export function getFeatureName(
     }
     if (languages !== undefined) {
         for (const lang of languages) {
-            name = env.lookup(`${basePropName}:${lang}`) || env.lookup(`${basePropName}_${lang}`);
+            name = env.lookup(`${basePropName}:${lang}`) ?? env.lookup(`${basePropName}_${lang}`);
             if (typeof name === "string" && name.length > 0) {
                 return name;
             }

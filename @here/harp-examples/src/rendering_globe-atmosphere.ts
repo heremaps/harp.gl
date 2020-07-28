@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { EarthConstants, GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import {
@@ -13,7 +12,8 @@ import {
     MapViewAtmosphere
 } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
-import { WebTileDataSource } from "@here/harp-webtile-datasource";
+import { HereTileProvider, HereWebTileDataSource } from "@here/harp-webtile-datasource";
+
 import { apikey, copyrightInfo } from "../config";
 
 export namespace GlobeAtmosphereExample {
@@ -62,9 +62,9 @@ export namespace GlobeAtmosphereExample {
                 copyrightInfo
             });
         } else {
-            dataSource = new WebTileDataSource({
+            dataSource = new HereWebTileDataSource({
                 apikey,
-                tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE
+                tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE
             });
         }
         map.addDataSource(dataSource);

@@ -42,12 +42,17 @@ class CustomDecoder extends ThemedTileDecoder
         projection: Projection
     ): Promise<DecodedTile> {
         const geometries: Geometry[] = [];
-        this.processLineFeatures(data, tileKey, styleSetEvaluator, projection, geometries);
-        this.processMeshFeatures(tileKey, styleSetEvaluator, geometries);
 
-        const decodedTile = {
+        const array = new Float32Array(data as ArrayBuffer);
+        this.processLineFeatures(array, tileKey, styleSetEvaluator, projection, geometries);
+        this.processMeshFeatures(tileKey, styleSetEvaluator, geometries);
+        const dependencies: number[] = [];
+        this.processDependencies(array, dependencies);
+
+        const decodedTile: DecodedTile = {
             techniques: styleSetEvaluator.techniques,
-            geometries
+            geometries,
+            dependencies
         };
         return Promise.resolve(decodedTile);
     }
@@ -85,7 +90,7 @@ class CustomDecoder extends ThemedTileDecoder
     }
 
     private processLineFeatures(
-        data: ArrayBufferLike | {},
+        data: Float32Array,
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
         projection: Projection,
@@ -119,23 +124,24 @@ class CustomDecoder extends ThemedTileDecoder
     }
 
     private convertToLocalWorldCoordinates(
-        data: {} | ArrayBuffer | SharedArrayBuffer,
+        data: Float32Array,
         geoCenter: GeoCoordinates,
         projection: Projection,
         worldCenter: Vector3
     ) {
         // We assume that the input data is in relative-geo-coordinates
-        // (i.e. relative lat/long to the tile center).
+        // (i.e. relative lat/long to the tile center). The first number is the
+        // number of points, the points are after that.
 
-        const points = new Float32Array(data as ArrayBuffer);
+        const numPoints = data[0];
         const tmpGeoPoint = geoCenter.clone();
         const tmpWorldPoint = new Vector3();
-        const worldPoints = new Array<number>((points.length / 2) * 3);
-        for (let i = 0; i < points.length; i += 2) {
+        const worldPoints = new Array<number>((numPoints / 2) * 3);
+        for (let i = 0; i < numPoints; i += 2) {
             tmpGeoPoint.copy(geoCenter);
-            tmpGeoPoint.latitude += points[i];
-            tmpGeoPoint.longitude += points[i + 1];
-            tmpGeoPoint.altitude = 100;
+            // We add +1 to skip the first entry which has the number of points
+            tmpGeoPoint.latitude += data[i + 1];
+            tmpGeoPoint.longitude += data[i + 2];
             projection.projectPoint(tmpGeoPoint, tmpWorldPoint);
             tmpWorldPoint.sub(worldCenter).toArray(worldPoints, (i / 2) * 3);
         }
@@ -164,6 +170,17 @@ class CustomDecoder extends ThemedTileDecoder
                 technique._index
             );
             geometries.push(geometry);
+        }
+    }
+
+    private processDependencies(data: Float32Array, dependencies: number[]) {
+        const numberPoints = data[0];
+        const numberDependenciesIndex = numberPoints + 1;
+        // Add 1 because we need to skip the first element
+        const numberDependencies = data[numberDependenciesIndex];
+        for (let i = 0; i < numberDependencies; i++) {
+            // Add 1 to skip the number of dependencies
+            dependencies.push(data[numberDependenciesIndex + i + 1]);
         }
     }
 }

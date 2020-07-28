@@ -211,8 +211,8 @@ export interface MemoryUsage {
  * and properly layout SDF and MSDF text.
  */
 export class TextCanvas {
-    private static defaultTextRenderStyle: TextRenderStyle = new TextRenderStyle();
-    private static defaultTextLayoutStyle: TextLayoutStyle = new TextLayoutStyle();
+    private static readonly defaultTextRenderStyle: TextRenderStyle = new TextRenderStyle();
+    private static readonly defaultTextLayoutStyle: TextLayoutStyle = new TextLayoutStyle();
     /**
      * Minimum amount of glyphs each [[TextCanvas]] layer can store.
      */
@@ -223,22 +223,22 @@ export class TextCanvas {
      */
     readonly maxGlyphCount: number;
 
-    private m_renderer: THREE.WebGLRenderer;
+    private readonly m_renderer: THREE.WebGLRenderer;
     private m_fontCatalog: FontCatalog;
 
-    private m_currentTextRenderStyle: TextRenderStyle;
-    private m_currentTextLayoutStyle: TextLayoutStyle;
+    private readonly m_currentTextRenderStyle: TextRenderStyle;
+    private readonly m_currentTextLayoutStyle: TextLayoutStyle;
 
     private m_material: SdfTextMaterial | THREE.Material;
     private m_bgMaterial: SdfTextMaterial | THREE.Material;
     private m_ownsMaterial: boolean;
     private m_ownsBgMaterial: boolean;
 
-    private m_defaultLayer: TextCanvasLayer;
-    private m_layers: TextCanvasLayer[];
+    private readonly m_defaultLayer: TextCanvasLayer;
+    private readonly m_layers: TextCanvasLayer[];
 
-    private m_lineTypesetter: LineTypesetter;
-    private m_pathTypesetter: PathTypesetter;
+    private readonly m_lineTypesetter: LineTypesetter;
+    private readonly m_pathTypesetter: PathTypesetter;
 
     /**
      * Constructs a new `TextCanvas`.

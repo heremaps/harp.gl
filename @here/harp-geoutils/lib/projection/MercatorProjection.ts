@@ -93,7 +93,7 @@ class MercatorProjection extends Projection {
         result.y =
             (MercatorProjection.latitudeClampProject(geoPoint.latitudeInRadians) * 0.5 + 0.5) *
             this.unitScale;
-        result.z = geoPoint.altitude || 0;
+        result.z = geoPoint.altitude ?? 0;
         return result;
     }
 
@@ -157,7 +157,7 @@ class MercatorProjection extends Projection {
             result.position.z = worldCenter.z;
             result.extents.x = longitudeSpan * 0.5;
             result.extents.y = latitudeSpan * 0.5;
-            result.extents.z = Math.max(Number.EPSILON, (geoBox.altitudeSpan || 0) * 0.5);
+            result.extents.z = Math.max(Number.EPSILON, (geoBox.altitudeSpan ?? 0) * 0.5);
         } else {
             throw new Error("invalid bounding box");
         }
@@ -262,7 +262,7 @@ class WebMercatorProjection extends MercatorProjection {
         result.x = ((geoPoint.longitude + 180) / 360) * this.unitScale;
         const sy = Math.sin(MercatorProjection.latitudeClamp(geoPoint.latitudeInRadians));
         result.y = (0.5 - Math.log((1 + sy) / (1 - sy)) / (4 * Math.PI)) * this.unitScale;
-        result.z = geoPoint.altitude || 0;
+        result.z = geoPoint.altitude ?? 0;
         return result;
     }
 

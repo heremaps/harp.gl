@@ -48,7 +48,7 @@ export class LRUCache<Key, Value> {
     /**
      * The internal map object that keeps the key-value pairs and their order.
      */
-    private m_map = new Map<Key, Entry<Key, Value>>();
+    private readonly m_map = new Map<Key, Entry<Key, Value>>();
 
     /**
      * The newest entry, i.e. the most recently used item.

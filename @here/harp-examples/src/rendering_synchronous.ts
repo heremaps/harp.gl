@@ -83,7 +83,7 @@ export namespace SynchronousRendering {
         private canvas: HTMLCanvasElement;
         private context: CanvasRenderingContext2D;
 
-        constructor(text: string, private coordinates: GeoCoordinates) {
+        constructor(text: string, private readonly coordinates: GeoCoordinates) {
             this.addHTMLElements(text);
 
             this.canvas = document.getElementById("popupLine") as HTMLCanvasElement;

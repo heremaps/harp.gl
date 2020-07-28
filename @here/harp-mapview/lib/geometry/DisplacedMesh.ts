@@ -71,8 +71,8 @@ export class DisplacedMesh extends THREE.Mesh {
     constructor(
         geometry: THREE.BufferGeometry,
         material: THREE.Material | THREE.Material[],
-        private m_getDisplacementRange: () => DisplacementRange,
-        private m_raycastStrategy?: (
+        private readonly m_getDisplacementRange: () => DisplacementRange,
+        private readonly m_raycastStrategy?: (
             mesh: THREE.Mesh,
             raycaster: THREE.Raycaster,
             intersects: THREE.Intersection[]

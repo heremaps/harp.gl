@@ -235,16 +235,16 @@ export class MapControls extends THREE.EventDispatcher {
 
     // Internal variables for animating panning (planar + spherical panning).
     private m_panIsAnimated: boolean = false;
-    private m_panDistanceFrameDelta: THREE.Vector3 = new THREE.Vector3();
+    private readonly m_panDistanceFrameDelta: THREE.Vector3 = new THREE.Vector3();
     private m_panAnimationTime: number = 0;
     private m_panAnimationStartTime: number = 0;
     private m_lastAveragedPanDistanceOrAngle: number = 0;
     private m_currentInertialPanningSpeed: number = 0;
-    private m_lastPanVector: THREE.Vector3 = new THREE.Vector3();
-    private m_rotateGlobeQuaternion: THREE.Quaternion = new THREE.Quaternion();
-    private m_lastRotateGlobeAxis: THREE.Vector3 = new THREE.Vector3();
+    private readonly m_lastPanVector: THREE.Vector3 = new THREE.Vector3();
+    private readonly m_rotateGlobeQuaternion: THREE.Quaternion = new THREE.Quaternion();
+    private readonly m_lastRotateGlobeAxis: THREE.Vector3 = new THREE.Vector3();
     private m_lastRotateGlobeAngle: number = 0;
-    private m_lastRotateGlobeFromVector: THREE.Vector3 = new THREE.Vector3();
+    private readonly m_lastRotateGlobeFromVector: THREE.Vector3 = new THREE.Vector3();
     private m_recentPanDistancesOrAngles: [number, number, number, number, number] = [
         0,
         0,
@@ -257,7 +257,7 @@ export class MapControls extends THREE.EventDispatcher {
     // Internal variables for animating zoom.
     private m_zoomIsAnimated: boolean = false;
     private m_zoomDeltaRequested: number = 0;
-    private m_zoomTargetNormalizedCoordinates: THREE.Vector2 = new THREE.Vector2();
+    private readonly m_zoomTargetNormalizedCoordinates: THREE.Vector2 = new THREE.Vector2();
     private m_zoomAnimationTime: number = 0;
     private m_zoomAnimationStartTime: number = 0;
     private m_startZoom: number = 0;
@@ -276,8 +276,8 @@ export class MapControls extends THREE.EventDispatcher {
     private m_tiltState?: TiltState;
     private m_state: State = State.NONE;
 
-    private m_tmpVector2: THREE.Vector2 = new THREE.Vector2();
-    private m_tmpVector3: THREE.Vector3 = new THREE.Vector3();
+    private readonly m_tmpVector2: THREE.Vector2 = new THREE.Vector2();
+    private readonly m_tmpVector3: THREE.Vector3 = new THREE.Vector3();
 
     // Internal variables for animating double tap.
     private m_tapStartTime: number = 0;
@@ -760,7 +760,7 @@ export class MapControls extends THREE.EventDispatcher {
                       Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
                   );
 
-        MapViewUtils.zoomOnTargetPosition(
+        const success = MapViewUtils.zoomOnTargetPosition(
             this.mapView,
             this.m_zoomTargetNormalizedCoordinates.x,
             this.m_zoomTargetNormalizedCoordinates.y,
@@ -768,7 +768,7 @@ export class MapControls extends THREE.EventDispatcher {
             this.m_maxTiltAngle
         );
 
-        if (resetZoomState) {
+        if (resetZoomState || !success) {
             this.m_targetedZoom = undefined;
             this.m_currentZoom = undefined;
         }

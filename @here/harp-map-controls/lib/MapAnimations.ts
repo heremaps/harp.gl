@@ -121,7 +121,7 @@ export abstract class CameraAnimation {
      */
     update(time?: number): boolean {
         if (this.tween) {
-            return this.tween.update(time || PerformanceTimer.now());
+            return this.tween.update(time ?? PerformanceTimer.now());
         }
         return false;
     }
@@ -209,7 +209,7 @@ export class CameraRotationAnimation extends CameraAnimation {
             this.easing =
                 typeof options.easing === "function"
                     ? options.easing
-                    : easingMap.get(options.easing) || TWEEN.Easing.Linear.None;
+                    : easingMap.get(options.easing) ?? TWEEN.Easing.Linear.None;
         }
 
         this.m_lastRotationValue = this.startAngle;
@@ -280,13 +280,13 @@ export class CameraRotationAnimation extends CameraAnimation {
         }
     }
 
-    private beginInteractionListener = (): void => {
+    private readonly beginInteractionListener = (): void => {
         if (!this.stopped) {
             this.stopTween();
         }
     };
 
-    private endInteractionListener = (): void => {
+    private readonly endInteractionListener = (): void => {
         if (!this.stopped) {
             this.startTween();
         }
@@ -368,7 +368,7 @@ export class CameraPanAnimation extends CameraAnimation {
      */
     readonly interpolation = TWEEN.Interpolation.CatmullRom;
 
-    private m_geoCoordinates: GeoCoordinatesLike[];
+    private readonly m_geoCoordinates: GeoCoordinatesLike[];
 
     /**
      * Creates a new `CameraPanAnimation` object.
@@ -390,13 +390,13 @@ export class CameraPanAnimation extends CameraAnimation {
             this.easing =
                 typeof options.easing === "function"
                     ? options.easing
-                    : easingMap.get(options.easing) || TWEEN.Easing.Linear.None;
+                    : easingMap.get(options.easing) ?? TWEEN.Easing.Linear.None;
         }
         if (options.interpolation !== undefined) {
             this.interpolation =
                 typeof options.interpolation === "function"
                     ? options.interpolation
-                    : interpolationMap.get(options.interpolation) || TWEEN.Interpolation.Linear;
+                    : interpolationMap.get(options.interpolation) ?? TWEEN.Interpolation.Linear;
         }
         this.m_geoCoordinates = options.geoCoordinates !== undefined ? options.geoCoordinates : [];
     }
@@ -441,7 +441,7 @@ export class CameraPanAnimation extends CameraAnimation {
         for (const pos of this.m_geoCoordinates) {
             to.latitude.push(pos.latitude);
             to.longitude.push(pos.longitude);
-            to.altitude.push(pos.altitude || this.mapView.camera.position.z);
+            to.altitude.push(pos.altitude ?? this.mapView.camera.position.z);
         }
 
         this.tween = new TWEEN.Tween(from)

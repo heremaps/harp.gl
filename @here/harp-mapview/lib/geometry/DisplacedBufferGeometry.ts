@@ -49,8 +49,8 @@ export function displaceBox(
  * displacement map.
  */
 export class DisplacedBufferGeometry extends THREE.BufferGeometry {
-    private m_displacedPositions: DisplacedBufferAttribute;
-    private m_originalBoundingBox = new THREE.Box3();
+    private readonly m_displacedPositions: DisplacedBufferAttribute;
+    private readonly m_originalBoundingBox = new THREE.Box3();
 
     /**
      * Creates an instance of displaced buffer geometry.

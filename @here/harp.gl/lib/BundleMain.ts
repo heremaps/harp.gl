@@ -71,9 +71,9 @@ let bundleScriptUrl: string | undefined | null;
  */
 export function getScriptUrl(name: string): string | undefined | null {
     const scriptElement =
-        document.querySelector(`script[src*='/${name}.min.js']`) ||
-        document.querySelector(`script[src='${name}.min.js']`) ||
-        document.querySelector(`script[src*='/${name}.js']`) ||
+        document.querySelector(`script[src*='/${name}.min.js']`) ??
+        document.querySelector(`script[src='${name}.min.js']`) ??
+        document.querySelector(`script[src*='/${name}.js']`) ??
         document.querySelector(`script[src='${name}.js']`);
 
     if (scriptElement) {

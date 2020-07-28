@@ -35,6 +35,9 @@ import { SkyCubemapFaceId, SKY_CUBEMAP_FACE_COUNT } from "./SkyCubemapTexture";
 
 import "@here/harp-fetch";
 
+/**
+ * @internal
+ */
 export const DEFAULT_MAX_THEME_INTHERITANCE_DEPTH = 4;
 
 /**
@@ -128,7 +131,7 @@ export class ThemeLoader {
         theme: string | Theme | FlatTheme,
         options?: ThemeLoadOptions
     ): Promise<Theme> {
-        options = options || {};
+        options = options ?? {};
         if (typeof theme === "string") {
             const uriResolver = options.uriResolver;
             const themeUrl = uriResolver !== undefined ? uriResolver.resolveUri(theme) : theme;
@@ -157,7 +160,7 @@ export class ThemeLoader {
         theme = await ThemeLoader.resolveBaseThemes(theme, options);
         if (resolveDefinitions) {
             const contextLoader = new ContextLogger(
-                options.logger || console,
+                options.logger ?? console,
                 `when processing Theme ${theme.url}:`
             );
             ThemeLoader.resolveThemeReferences(theme, contextLoader);
@@ -484,7 +487,7 @@ export class ThemeLoader {
         theme: Theme,
         options?: ThemeLoadOptions
     ): Promise<Theme> {
-        options = options || {};
+        options = options ?? {};
         if (theme.extends === undefined) {
             return theme;
         }

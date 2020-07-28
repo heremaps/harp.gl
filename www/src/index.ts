@@ -108,7 +108,10 @@ function main() {
     const options = { target: Boston, zoomLevel, tilt: 34.3, heading: 135 };
     map.lookAt(options);
 
-    map.addEventListener(MapViewEventNames.FrameComplete, () => {
+    const onFrameComplete = () => {
+        // FrameComplete is fired multiple times (each time the camera changes and the tiles are
+        // loaded), hence we just set the Render event listener once below.
+        map.removeEventListener(MapViewEventNames.FrameComplete, onFrameComplete);
         canvas.style.opacity = "1";
 
         map.addEventListener(MapViewEventNames.Render, () =>
@@ -117,7 +120,8 @@ function main() {
         setTimeout(() => {
             map.beginAnimation();
         }, 0.5);
-    });
+    };
+    map.addEventListener(MapViewEventNames.FrameComplete, onFrameComplete);
 }
 
 main();

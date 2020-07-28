@@ -27,10 +27,10 @@ export enum SubdivisionMode {
  * length of edges.
  */
 export class EdgeLengthGeometrySubdivisionModifier extends SubdivisionModifier {
-    private m_projectedBox: Box3Like;
-    private m_maxLength: number;
-    private m_maxLengthX: number;
-    private m_maxLengthY: number;
+    private readonly m_projectedBox: Box3Like;
+    private readonly m_maxLength: number;
+    private readonly m_maxLengthX: number;
+    private readonly m_maxLengthY: number;
 
     /**
      * Constructs a new [[EdgeLengthGeometrySubdivisionModifier]].

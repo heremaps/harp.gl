@@ -180,7 +180,8 @@ describe("MapView Picking", async function() {
             fontCatalog: getTestResourceUrl(
                 "@here/harp-fontcatalog",
                 "resources/Default_FontCatalog.json"
-            )
+            ),
+            addBackgroundDatasource: false
         });
 
         await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
@@ -261,6 +262,30 @@ describe("MapView Picking", async function() {
     });
 
     describe("Picking tests", async function() {
+        const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
+        const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
+            .coordinates as number[][])[0];
+        const pickLabelAt: number[] = (GEOJSON_DATA.features[2].geometry as any).coordinates;
+        const offCenterLabelLookAt: number[] = [pickLabelAt[0] + 10.0, pickLabelAt[1] + 10.0];
+
+        it("Features in a data source with picking disabled are not picked", async () => {
+            geoJsonDataSource.enablePicking = false;
+            const target = new GeoCoordinates(pickPolygonAt[1], pickPolygonAt[0]);
+            mapView.lookAt({ target, tilt: 60, zoomLevel: 2 });
+            await waitForEvent(mapView, MapViewEventNames.FrameComplete);
+
+            const screenPointLocation = mapView.getScreenPosition(target) as THREE.Vector2;
+            assert.isDefined(screenPointLocation);
+
+            mapView.scene.updateWorldMatrix(false, true);
+
+            const usableIntersections = mapView
+                .intersectMapObjects(screenPointLocation.x, screenPointLocation.y)
+                .filter(item => item.userData !== undefined);
+
+            assert.equal(usableIntersections.length, 0);
+        });
+
         interface TestCase {
             name: string;
             rayOrigGeo: number[];
@@ -271,12 +296,8 @@ describe("MapView Picking", async function() {
             lookAt?: number[];
             // Whether to test a shift of 360.0 degrees
             shiftLongitude: boolean;
+            addDependency?: boolean;
         }
-        const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
-        const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
-            .coordinates as number[][])[0];
-        const pickLabelAt: number[] = (GEOJSON_DATA.features[2].geometry as any).coordinates;
-        const offCenterLabelLookAt: number[] = [pickLabelAt[0] + 10.0, pickLabelAt[1] + 10.0];
 
         const testCases: TestCase[] = [];
 
@@ -339,6 +360,17 @@ describe("MapView Picking", async function() {
             }
         }
 
+        testCases.push({
+            name: `Pick polygon in planar projection with dependency`,
+            rayOrigGeo: pickPolygonAt,
+            featureIdx: 0,
+            projection: mercatorProjection,
+            elevation: false,
+            shiftLongitude: false,
+            addDependency: true,
+            lookAt: offCenterLabelLookAt
+        });
+
         for (const testCase of testCases) {
             it(testCase.name, async () => {
                 mapView.projection = testCase.projection;
@@ -372,8 +404,42 @@ describe("MapView Picking", async function() {
                           testCase.lookAt.length > 2 ? testCase.lookAt[2] : undefined
                       )
                     : rayOrigin;
+
+                let stub: sinon.SinonStub | undefined;
+                if (testCase.addDependency === true) {
+                    stub = sinon
+                        .stub(geoJsonDataSource, "getTile")
+                        .callsFake((_tileKey: TileKey, delayLoad?: boolean) => {
+                            const tile = stub!.wrappedMethod.bind(geoJsonDataSource)(
+                                _tileKey,
+                                delayLoad
+                            );
+                            if (tile !== undefined) {
+                                tile.dependencies.push(
+                                    TileKey.fromRowColumnLevel(
+                                        (_tileKey.row + 1) % _tileKey.rowCount(),
+                                        _tileKey.column,
+                                        _tileKey.level
+                                    )
+                                );
+                                tile.dependencies.push(
+                                    TileKey.fromRowColumnLevel(
+                                        _tileKey.row,
+                                        (_tileKey.column + 1) % _tileKey.columnCount(),
+                                        _tileKey.level
+                                    )
+                                );
+                            }
+                            return tile;
+                        });
+                }
+
                 mapView.lookAt({ target, tilt: 60, zoomLevel: 2 });
                 await waitForEvent(mapView, MapViewEventNames.FrameComplete);
+                // Reset back to the original function
+                if (stub !== undefined) {
+                    stub.restore();
+                }
 
                 const screenPointLocation = mapView.getScreenPosition(rayOrigin) as THREE.Vector2;
                 assert.isDefined(screenPointLocation);

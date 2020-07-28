@@ -32,7 +32,7 @@ export class DebugTile extends Tile {
     private readonly geometry = new THREE.Geometry();
     private readonly m_labelPositions = new THREE.BufferAttribute(new Float32Array(3), 3);
 
-    private m_textRenderStyle = new TextRenderStyle({
+    private readonly m_textRenderStyle = new TextRenderStyle({
         fontSize: {
             unit: FontUnit.Pixel,
             size: 16,
@@ -118,13 +118,14 @@ export class DebugTile extends Tile {
 
 export class DebugTileDataSource extends DataSource {
     constructor(
-        private m_tilingScheme: TilingScheme,
+        private readonly m_tilingScheme: TilingScheme,
         name = "debug",
         public maxDbgZoomLevel: number = 20
     ) {
         super({ name, minDataLevel: 1, maxDataLevel: 20, storageLevelOffset: -1 });
 
         this.cacheable = true;
+        this.enablePicking = false;
     }
 
     /** @override */

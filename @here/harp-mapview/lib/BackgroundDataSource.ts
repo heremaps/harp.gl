@@ -21,6 +21,7 @@ export class BackgroundDataSource extends DataSource {
         super({ name: "background" });
         this.cacheable = true;
         this.addGroundPlane = true;
+        this.enablePicking = false;
     }
 
     updateStorageLevelOffset() {
@@ -55,7 +56,7 @@ export class BackgroundDataSource extends DataSource {
     }
 
     setTilingScheme(tilingScheme?: TilingScheme) {
-        const newScheme = tilingScheme || BackgroundDataSource.DEFAULT_TILING_SCHEME;
+        const newScheme = tilingScheme ?? BackgroundDataSource.DEFAULT_TILING_SCHEME;
         if (newScheme === this.m_tilingScheme) {
             return;
         }

@@ -3,21 +3,23 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
+import {
+    CopyrightElementHandler,
+    CopyrightInfo,
+    MapView,
+    TextureLoader,
+    Tile
+} from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
-import { apikey } from "../config";
+import * as THREE from "three";
 
 // tslint:disable:max-line-length
 /**
- * A simple example using the webtile data source. Tiles are retrieved from
- * ```
- * https://1.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day/${level}/${column}/${row}/512/png8?apikey=${apikey}
- * ```
+ * A simple example using the webtile data source. Tiles are generated from a
+ * texture
  *
- * A [[WebTileDataSource]] is created with specified applications' apikey passed
- * as [[WebTileDataSourceOptions]]
+ * A [[WebTileDataSource]] is created with specified getTexture function
  * ```typescript
  * [[include:harp_gl_datasource_webtile_1.ts]]
  * ```
@@ -26,7 +28,7 @@ import { apikey } from "../config";
  * [[include:harp_gl_datasource_webtile_2.ts]]
  * ```
  */
-export namespace WebTileDataSourceExample {
+export namespace CustomTextureTileDatasourceExample {
     // creates a new MapView for the HTMLCanvasElement of the given id
     export function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
@@ -59,9 +61,14 @@ export namespace WebTileDataSourceExample {
     const mapView = initializeMapView("mapCanvas");
 
     // snippet:harp_gl_datasource_webtile_1.ts
+    function getTexture(tile: Tile): Promise<[THREE.Texture, CopyrightInfo[]]> {
+        return Promise.all([new TextureLoader().load("resources/wests_textures/clover.png"), []]);
+    }
+
     const webTileDataSource = new WebTileDataSource({
-        apikey,
-        ppi: WebTileDataSource.ppiValue.ppi320
+        dataProvider: {
+            getTexture
+        }
     });
     // end:harp_gl_datasource_webtile_1.ts
 

@@ -1,16 +1,11 @@
 {
-    "packages": [
-        "@here/*"
-    ],
+    "packages": ["@here/*"],
     "version": "0.17.2",
     "npmClient": "yarn",
     "useWorkspaces": true,
     "command": {
         "publish": {
-            "ignoreChanges": [
-                "test/**",
-                "README.md"
-            ]
+            "ignoreChanges": ["test/**", "README.md"]
         }
     }
 }

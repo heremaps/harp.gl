@@ -85,7 +85,10 @@ export class TileFactory<TileType extends Tile> {
      * @param m_modelConstructor - Constructor of (subclass of) [[Tile]].
      */
     constructor(
-        private m_modelConstructor: new (dataSource: DataSource, tileKey: TileKey) => TileType
+        private readonly m_modelConstructor: new (
+            dataSource: DataSource,
+            tileKey: TileKey
+        ) => TileType
     ) {}
 
     /**
@@ -109,6 +112,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     protected readonly logger: ILogger = LoggerManager.instance.create("TileDataSource");
     protected readonly m_decoder: ITileDecoder;
     private m_isReady: boolean = false;
+    private readonly m_unregisterClearTileCache?: () => void;
 
     /**
      * Set up the `TileDataSource`.
@@ -150,10 +154,15 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         }
         this.useGeometryLoader = true;
         this.cacheable = true;
+
+        this.m_unregisterClearTileCache = this.dataProvider().onDidInvalidate?.(() =>
+            this.mapView.clearTileCache(this.name)
+        );
     }
 
     /** @override */
     dispose() {
+        this.m_unregisterClearTileCache?.();
         this.decoder.dispose();
     }
 
@@ -183,7 +192,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     /** @override */
     setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
         this.m_decoder.configure(styleSet, definitions, languages);
-        this.mapView.markTilesDirty(this);
+        this.mapView.clearTileCache(this.name);
     }
 
     /**
@@ -199,9 +208,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                 ? theme.styles[this.styleSetName]
                 : undefined;
 
-        if (styleSet !== undefined) {
-            this.setStyleSet(styleSet, theme.definitions, languages);
-        }
+        this.setStyleSet(styleSet, theme.definitions, languages);
     }
 
     /**
@@ -223,9 +230,11 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      * this data source.
      *
      * @param tileKey - Quadtree address of the requested tile.
+     * @param delayLoad - If true, the Tile will be created, but Tile.load will not be called.
+     * @default false.
      * @override
      */
-    getTile(tileKey: TileKey): TileType | undefined {
+    getTile(tileKey: TileKey, delayLoad: boolean = false): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);
         tile.tileLoader = new TileLoader(
             this,
@@ -246,7 +255,9 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                     this.requestUpdate();
                 });
         }
-        tile.load();
+        if (!delayLoad) {
+            tile.load();
+        }
 
         return tile;
     }

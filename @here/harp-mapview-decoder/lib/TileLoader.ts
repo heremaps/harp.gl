@@ -12,7 +12,7 @@ import {
     TileInfo
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
-import { DataSource, TileLoaderState } from "@here/harp-mapview";
+import { DataSource, ITileLoader, TileLoaderState } from "@here/harp-mapview";
 import { LoggerManager } from "@here/harp-utils";
 
 import { DataProvider } from "./DataProvider";
@@ -26,7 +26,7 @@ const logger = LoggerManager.instance.create("TileLoader");
  * The [[TileLoader]] manages the different states of loading and decoding for a [[Tile]]. Used by
  * the [[TileDataSource]].
  */
-export class TileLoader {
+export class TileLoader implements ITileLoader {
     /**
      * Current state of `TileLoader`.
      */

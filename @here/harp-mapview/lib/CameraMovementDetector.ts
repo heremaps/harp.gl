@@ -22,8 +22,8 @@ const DEFAULT_THROTTLING_TIMEOUT = 300;
  */
 export class CameraMovementDetector {
     private m_lastAttitude?: MapViewUtils.Attitude;
-    private m_lastCameraPos = new Vector3();
-    private m_newCameraPos = new Vector3();
+    private readonly m_lastCameraPos = new Vector3();
+    private readonly m_newCameraPos = new Vector3();
     private m_cameraMovedLastFrame: boolean | undefined;
     private m_throttlingTimerId?: number = undefined;
     private m_movementDetectorDeadline: number = 0;
@@ -38,7 +38,7 @@ export class CameraMovementDetector {
      * @param m_movementFinishedFunc - Callback function, called when the user stops interacting.
      */
     constructor(
-        private m_throttlingTimeout: number | undefined,
+        private readonly m_throttlingTimeout: number | undefined,
         private m_movementStartedFunc: (() => void) | undefined,
         private m_movementFinishedFunc: (() => void) | undefined
     ) {
@@ -152,7 +152,7 @@ export class CameraMovementDetector {
         }
     }
 
-    private onDeadlineTimer = () => {
+    private readonly onDeadlineTimer = () => {
         this.m_throttlingTimerId = undefined;
         const now = performance.now();
         if (now >= this.m_movementDetectorDeadline) {

@@ -121,7 +121,7 @@ export async function genHtmlReport(
     const html = `
 <html>
 <head>
-    <title>${options.title || "Image Based Tests Results"}</title>
+    <title>${options.title ?? "Image Based Tests Results"}</title>
     <script>
         var globalSelections = {};
         ${cssClassName}
@@ -149,7 +149,7 @@ export async function genHtmlReport(
 </head>
 <body>
     <div id="navigation">
-        <h1>${options.title || "Image Based Tests Results"}</h1>
+        <h1>${options.title ?? "Image Based Tests Results"}</h1>
         <h3>Categories</h3>
         <ul>
             ${Object.keys(summaries)
@@ -231,7 +231,7 @@ export async function genHtmlReport(
                                 <img src="${referencePath}" style="width:100%; height: auto">
                             </div>
                             <div style="flex: 1 1 0%">
-                                <img src="${result.diffImagePath ||
+                                <img src="${result.diffImagePath ??
                                     ""}"  style="width:100%; height: auto">
                             </div>
                         </div>

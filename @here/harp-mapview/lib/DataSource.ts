@@ -69,6 +69,14 @@ export interface DataSourceOptions {
      * @default true
      */
     allowOverlappingTiles?: boolean;
+
+    /**
+     * Whether features from these data source can picked by calling
+     * {@link MapView.intersectMapObjects}. Disabling picking for data sources that don't need it
+     * will improve picking performance.
+     * @default true
+     */
+    enablePicking?: boolean;
 }
 
 /**
@@ -130,6 +138,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
     maxDisplayLevel: number = 20;
 
     allowOverlappingTiles: boolean = true;
+
+    enablePicking: boolean = true;
+
     /**
      * @internal
      * @hidden
@@ -177,7 +188,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
             minDisplayLevel,
             maxDisplayLevel,
             storageLevelOffset,
-            allowOverlappingTiles
+            allowOverlappingTiles,
+            enablePicking
         } = options;
         if (name === undefined || name.length === 0) {
             name = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
@@ -211,6 +223,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
         }
         if (allowOverlappingTiles !== undefined) {
             this.allowOverlappingTiles = allowOverlappingTiles;
+        }
+
+        if (enablePicking !== undefined) {
+            this.enablePicking = enablePicking;
         }
     }
 
@@ -424,8 +440,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * {@link @here/harp-geoutils#TileKey}.
      *
      * @param tileKey - The unique identifier for a map tile.
+     * @param delayLoad - If true, the Tile will be created, but Tile.load will not be called
+     * @default false.
      */
-    abstract getTile(tileKey: TileKey): Tile | undefined;
+    abstract getTile(tileKey: TileKey, delayLoad?: boolean): Tile | undefined;
 
     /**
      * This method is called by {@link MapView} before the

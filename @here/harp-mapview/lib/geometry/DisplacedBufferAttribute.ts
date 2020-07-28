@@ -15,14 +15,14 @@ import { VertexCache } from "./VertexCache";
  * specified displacement map.
  */
 export class DisplacedBufferAttribute extends THREE.BufferAttribute {
-    private static MAX_CACHE_SIZE = 6;
+    private static readonly MAX_CACHE_SIZE = 6;
     private m_texture?: Float32Array;
     private m_textureWidth: number = 0;
     private m_textureHeight: number = 0;
-    private m_cache = new VertexCache(DisplacedBufferAttribute.MAX_CACHE_SIZE);
+    private readonly m_cache = new VertexCache(DisplacedBufferAttribute.MAX_CACHE_SIZE);
     private m_lastBufferIndex?: number;
-    private m_lastPos = new THREE.Vector3();
-    private m_tmpNormal = new THREE.Vector3();
+    private readonly m_lastPos = new THREE.Vector3();
+    private readonly m_tmpNormal = new THREE.Vector3();
 
     /**
      * Creates an instance of displaced buffer attribute.

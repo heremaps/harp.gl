@@ -27,6 +27,7 @@ export interface ClipPlanesEvaluator {
     /**
      * Compute near and far clipping planes distance.
      *
+     * @remarks
      * Evaluation method should be called on every frame  and camera clip planes updated.
      * This is related to evaluator implementation and its input data, that may suddenly change
      * such as camera position or angle, projection type or so.
@@ -50,6 +51,7 @@ export interface ClipPlanesEvaluator {
 /**
  * Simplest camera clip planes evaluator, interpolates near/far planes based on ground distance.
  *
+ * @remarks
  * At general ground distance to camera along the surface normal is used as reference point for
  * planes evaluation, where near plane distance is set as fraction of this distance refereed as
  * [[nearMultiplier]]. Far plane equation has its own multiplier - [[nearFarMultiplier]],
@@ -154,6 +156,7 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
 /**
  * Abstract evaluator class that adds support for elevation constraints.
  *
+ * @remarks
  * Classes derived from this should implement algorithms that takes into account rendered
  * features height (elevations), such as ground plane is no more flat (or spherical), but
  * contains geometry that should be overlapped by frustum planes.
@@ -177,6 +180,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
     /**
      * Set maximum elevation above sea level to be rendered.
      *
+     * @remarks
      * @param elevation - the elevation (altitude) value in world units (meters).
      * @note If you set this exactly to the maximum rendered feature height (altitude above
      * the sea, you may notice some flickering or even polygons disappearing related to rounding
@@ -203,6 +207,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
     /**
      * Set minimum elevation to be rendered, values beneath the sea level are negative.
      *
+     * @remarks
      * @param elevation - the minimum elevation (depression) in world units (meters).
      * @note If you set this parameter to zero you may not see any features rendered if they are
      * just below the sea level more than half of [[nearFarMargin]] assumed. Similarly if set to
@@ -232,6 +237,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
 /**
  * Top view, clip planes evaluator that computes view ranges based on ground distance and elevation.
  *
+ * @remarks
  * This evaluator supports both planar and spherical projections, although it behavior is
  * slightly different in each case. General algorithm sets near plane and far plane close
  * to ground level, but taking into account maximum and minimum elevation of features on the ground.
@@ -254,11 +260,13 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * Helper object for reducing performance impact.
      */
     protected m_tmpQuaternion: THREE.Quaternion = new THREE.Quaternion();
-    private m_minimumViewRange: ViewRanges;
+    private readonly m_minimumViewRange: ViewRanges;
 
     /**
      * Allows to setup near/far offsets (margins), rendered geometry elevation relative to sea
      * level as also minimum near plane and maximum far plane distance constraints.
+     *
+     * @remarks
      * It is strongly recommended to set some reasonable [[nearFarMargin]] (offset) between near
      * and far planes to avoid flickering.
      * @param maxElevation - defines near plane offset from the ground in the surface normal
@@ -453,6 +461,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     /**
      * Calculate distance from a point to the tangent point of a sphere.
      *
+     * @remarks
      * Returns zero if point is below surface or only very slightly above surface of sphere.
      * @param d - Distance from point to center of sphere
      * @param r - Radius of sphere
@@ -472,6 +481,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     /**
      * Calculate far plane depending on furthest visible distance from camera position.
      *
+     * @remarks
      * Furthest visible distance is assumed to be distance from camera to horizon
      * plus distance from elevated geometry to horizon(so that high objects behind horizon
      * remain visible).
@@ -640,12 +650,15 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
 /**
  * Evaluates camera clipping planes taking into account ground distance and camera angles.
  *
+ * @remarks
  * This evaluator provides support for camera with varying tilt (pitch) angle, the angle
  * between camera __look at__ vector and the ground surface normal.
  */
 export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
     /**
      * Calculate the lengths of frustum planes intersection with the ground plane.
+     *
+     * @remarks
      * This evaluates distances between eye vector (or eye plane in orthographic projection) and
      * ground intersections of top and bottom frustum planes.
      * @note This method assumes the world surface (ground) to be flat and
@@ -1054,5 +1067,6 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
  * on ground distance and camera orientation.
  *
  * Creates {@link TiltViewClipPlanesEvaluator}.
+ * @internal
  */
 export const createDefaultClipPlanesEvaluator = () => new TiltViewClipPlanesEvaluator();

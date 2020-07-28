@@ -132,7 +132,7 @@ export class RenderingTestHelper {
         this.preloadedImageCache.set(url, p);
         return p;
     }
-    private static preloadedImageCache = new Map<string, Promise<ImageData>>();
+    private static readonly preloadedImageCache = new Map<string, Promise<ImageData>>();
 
     constructor(public mochaTest: Mocha.Context, public baseImageProps: TestImageProps) {}
 
@@ -241,4 +241,8 @@ export function getWebGlInfo() {
     return result;
 }
 
-logger.log("WebGlInfo", getWebGlInfo());
+try {
+    logger.log("WebGlInfo", getWebGlInfo());
+} catch {
+    logger.warn("WebGL is not supported on this machine");
+}

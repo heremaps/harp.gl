@@ -7,10 +7,20 @@
 import { GeoJson, ITiler } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 
-// tslint:disable-next-line:no-var-requires
-const geojsonvtExport = require("geojson-vt");
+// @ts-ignore
+import * as geojsonvtExport from "geojson-vt";
+
 // to be able to run tests on nodejs
-const geojsonvt = geojsonvtExport.default || geojsonvtExport;
+const geojsonvt = geojsonvtExport.default ?? geojsonvtExport;
+
+const EXTENT = 4096;
+
+// the factor used to compute the size of the buffer.
+const BUFFER_FACTOR = 0.05;
+
+// align the buffer to the next integer multiple of 2.
+// tslint:disable-next-line: no-bitwise
+const BUFFER = -(-Math.ceil(EXTENT * BUFFER_FACTOR) & -2);
 
 interface GeoJsonVtIndex {
     geojson: GeoJson;
@@ -57,8 +67,8 @@ export class GeoJsonTiler implements ITiler {
             indexMaxZoom: 5, // max zoom in the tile index
             indexMaxPoints: 100000, // max number of points per tile in the tile index
             tolerance: 3, // simplification tolerance (higher means simpler)
-            extent: 4096, // tile extent
-            buffer: 0, // tile buffer on each side
+            extent: EXTENT, // tile extent
+            buffer: BUFFER, // tile buffer on each side
             lineMetrics: false, // whether to calculate line metrics
             promoteId: null, // name of a feature property to be promoted to feature.id
             generateId: true, // whether to generate feature ids. Cannot be used with promoteId

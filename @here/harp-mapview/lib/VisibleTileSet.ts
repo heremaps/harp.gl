@@ -13,7 +13,7 @@ import {
     TilingScheme
 } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
-import { assert, MathUtils } from "@here/harp-utils";
+import { assert, MathUtils, TaskQueue } from "@here/harp-utils";
 import * as THREE from "three";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
@@ -21,6 +21,7 @@ import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
+import { TileTaskGroups } from "./MapView";
 import { Tile } from "./Tile";
 import { TileOffsetUtils } from "./Utils";
 
@@ -84,6 +85,15 @@ export interface VisibleTileSetOptions {
      * Number of levels to go down when searching for fallback tiles.
      */
     quadTreeSearchDistanceDown: number;
+
+    /**
+     * Maximal number of new tiles, that can be added to the scene per frame.
+     * if set to `0`the limit will be ignored and all available tiles be uploaded.
+     * @beta
+     * @internal
+     * @defaultValue 0
+     */
+    maxTilesPerFrame: number;
 }
 
 const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
@@ -379,11 +389,11 @@ export class VisibleTileSet {
     allVisibleTilesLoaded: boolean = false;
 
     private readonly m_cameraOverride = new THREE.PerspectiveCamera();
-    private m_dataSourceCache: DataSourceCache;
+    private readonly m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
     // Maps morton codes to a given Tile, used to find overlapping Tiles. We only need to have this
     // for a single TilingScheme, i.e. that of the BackgroundDataSource.
-    private m_coveringMap = new Map<number, Tile>();
+    private readonly m_coveringMap = new Map<number, Tile>();
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -391,8 +401,11 @@ export class VisibleTileSet {
     constructor(
         private readonly m_frustumIntersection: FrustumIntersection,
         private readonly m_tileGeometryManager: TileGeometryManager,
-        public options: VisibleTileSetOptions
+        public options: VisibleTileSetOptions,
+        private readonly m_taskQueue: TaskQueue
     ) {
+        this.options = options;
+        this.options.maxTilesPerFrame = Math.floor(this.options.maxTilesPerFrame ?? 0);
         this.m_resourceComputationType =
             options.resourceComputationType === undefined
                 ? ResourceComputationType.EstimationInMb
@@ -441,6 +454,28 @@ export class VisibleTileSet {
      */
     setNumberOfVisibleTiles(size: number) {
         this.options.maxVisibleDataSourceTiles = size;
+    }
+
+    /**
+     * Gets the maximum number of tiles that can be added to the scene per frame
+     * @beta
+     * @internal
+     */
+    get maxTilesPerFrame(): number {
+        return this.options.maxTilesPerFrame;
+    }
+
+    /**
+     * Gets the maximum number of tiles that can be added to the scene per frame
+     * @beta
+     * @internal
+     * @param value
+     */
+    set maxTilesPerFrame(value: number) {
+        if (value < 0) {
+            throw new Error("Invalid value, this will result in no tiles ever showing");
+        }
+        this.options.maxTilesPerFrame = Math.floor(value);
     }
 
     /**
@@ -495,9 +530,11 @@ export class VisibleTileSet {
         storageLevel: number,
         zoomLevel: number,
         dataSources: DataSource[],
+        frameNumber: number,
         elevationRangeSource?: ElevationRangeSource
     ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
         let allVisibleTilesLoaded: boolean = true;
+        let newTilesPerFrame = 0;
 
         const visibleTileKeysResult = this.getVisibleTileKeysForDataSources(
             zoomLevel,
@@ -536,8 +573,12 @@ export class VisibleTileSet {
                 i++
             ) {
                 const tileEntry = visibleTileKeys[i];
-
-                const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset);
+                const tile = this.getTile(
+                    dataSource,
+                    tileEntry.tileKey,
+                    tileEntry.offset,
+                    frameNumber
+                );
                 if (tile === undefined) {
                     continue;
                 }
@@ -546,14 +587,27 @@ export class VisibleTileSet {
                 if (!tile.allGeometryLoaded) {
                     numTilesLoading++;
                 } else {
-                    tile.numFramesVisible++;
                     // If this tile's data source is "covering" then other tiles beneath it have
                     // their rendering skipped, see [[Tile.willRender]].
                     this.skipOverlappedTiles(dataSource, tile);
 
-                    if (tile.frameNumVisible < 0) {
-                        // Store the fist frame the tile became visible.
-                        tile.frameNumVisible = dataSource.mapView.frameNumber;
+                    if (
+                        // if set to 0, it will ignore the limit and upload all available
+                        this.options.maxTilesPerFrame !== 0 &&
+                        newTilesPerFrame > this.options.maxTilesPerFrame &&
+                        //if the tile was already visible last frame dont delay it
+                        !(tile.frameNumLastVisible === frameNumber - 1)
+                    ) {
+                        tile.delayRendering = true;
+                        tile.mapView.update();
+                    } else {
+                        if (tile.frameNumVisible < 0) {
+                            // Store the fist frame the tile became visible.
+                            tile.frameNumVisible = frameNumber;
+                            newTilesPerFrame++;
+                        }
+                        tile.numFramesVisible++;
+                        tile.delayRendering = false;
                     }
                 }
                 // Update the visible area of the tile. This is used for those tiles that are
@@ -562,10 +616,27 @@ export class VisibleTileSet {
                 tile.elevationRange = tileEntry;
 
                 actuallyVisibleTiles.push(tile);
+
+                // Add any dependent tileKeys if not already visible. Consider to optimize with a
+                // Set if this proves to be a bottleneck (because of O(n^2) search). Given the fact
+                // that dependencies are rare and used for non tiled data, this shouldn't be a
+                // problem.
+                for (const tileKey of tile.dependencies) {
+                    if (
+                        visibleTileKeys.find(
+                            tileKeyEntry =>
+                                tileKeyEntry.tileKey.mortonCode() === tileKey.mortonCode()
+                        ) === undefined
+                    ) {
+                        visibleTileKeys.push(new TileKeyEntry(tileKey, 0));
+                    }
+                }
             }
 
+            // creates geometry if not yet available
             this.m_tileGeometryManager.updateTiles(actuallyVisibleTiles);
 
+            // used to actually render the tiles or find alternatives for incomplete tiles
             this.dataSourceTileList.push({
                 dataSource,
                 storageLevel,
@@ -635,11 +706,17 @@ export class VisibleTileSet {
      * @param dataSource - The data source the tile belongs to.
      * @param tileKey - The key identifying the tile.
      * @param offset - Tile offset.
+     * @param frameNumber - Frame in which the tile was requested
      * @return The tile if it was found or created, undefined otherwise.
      */
-    getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
+    getTile(
+        dataSource: DataSource,
+        tileKey: TileKey,
+        offset: number,
+        frameNumber: number
+    ): Tile | undefined {
         const cacheOnly = false;
-        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly);
+        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly, frameNumber);
     }
 
     /**
@@ -648,12 +725,18 @@ export class VisibleTileSet {
      * @param dataSource - The data source the tile belongs to.
      * @param tileKey - The key identifying the tile.
      * @param offset - Tile offset.
+     * @param frameNumber - Frame in which the tile was requested
      * @return The tile if found in cache, undefined otherwise.
      */
-    getCachedTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
+    getCachedTile(
+        dataSource: DataSource,
+        tileKey: TileKey,
+        offset: number,
+        frameNumber: number
+    ): Tile | undefined {
         assert(dataSource.cacheable);
         const cacheOnly = true;
-        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly);
+        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly, frameNumber);
     }
 
     /**
@@ -778,12 +861,17 @@ export class VisibleTileSet {
      * the {@link DataSource} with the given name.
      *
      * @param dataSourceName - The name of the {@link DataSource}.
+     * @param filter Optional tile filter
      */
-    clearTileCache(dataSource?: DataSource) {
+    clearTileCache(dataSource?: DataSource, filter?: (tile: Tile) => boolean) {
         if (dataSource !== undefined) {
             this.m_dataSourceCache.evictSelected((tile: Tile, _) => {
-                return tile.dataSource === dataSource;
+                return (
+                    tile.dataSource === dataSource && (filter !== undefined ? filter(tile) : true)
+                );
             });
+        } else if (filter !== undefined) {
+            this.m_dataSourceCache.evictSelected(filter);
         } else {
             this.m_dataSourceCache.evictAll();
         }
@@ -929,7 +1017,7 @@ export class VisibleTileSet {
             // ("incompleteTiles").
             renderListEntry.visibleTiles.forEach(tile => {
                 tile.levelOffset = 0;
-                if (tile.hasGeometry) {
+                if (tile.hasGeometry && !tile.delayRendering) {
                     renderedTiles.set(tile.uniqueKey, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
@@ -1005,8 +1093,9 @@ export class VisibleTileSet {
             );
 
             const nextLevelDiff = Math.abs(childTileKey.level - dataZoomLevel);
-            if (childTile !== undefined && childTile.hasGeometry) {
-                // childTile has geometry, so can be reused as fallback
+            if (childTile !== undefined && childTile.hasGeometry && !childTile.delayRendering) {
+                //childTile has geometry and was/can be uploaded to the GPU,
+                //so we can use it as fallback
                 renderedTiles.set(childTileCode, childTile);
                 childTile.levelOffset = nextLevelDiff;
                 continue;
@@ -1050,7 +1139,7 @@ export class VisibleTileSet {
         const parentTile = this.m_dataSourceCache.get(mortonCode, offset, dataSource);
         const parentTileKey = parentTile ? parentTile.tileKey : TileKey.fromMortonCode(mortonCode);
         const nextLevelDiff = Math.abs(dataZoomLevel - parentTileKey.level);
-        if (parentTile !== undefined && parentTile.hasGeometry) {
+        if (parentTile !== undefined && parentTile.hasGeometry && !parentTile.delayRendering) {
             checkedTiles.set(parentCode, true);
             // parentTile has geometry, so can be reused as fallback
             renderedTiles.set(parentCode, parentTile);
@@ -1086,19 +1175,20 @@ export class VisibleTileSet {
         dataSource: DataSource,
         tileKey: TileKey,
         offset: number,
-        cacheOnly: boolean
+        cacheOnly: boolean,
+        frameNumber: number
     ): Tile | undefined {
-        function updateTile(tileToUpdate?: Tile) {
-            if (tileToUpdate === undefined) {
-                return;
-            }
+        function touchTile(tileToUpdate: Tile) {
             // Keep the tile from being removed from the cache.
-            tileToUpdate.frameNumLastRequested = dataSource.mapView.frameNumber;
+            tileToUpdate.frameNumLastRequested = frameNumber;
         }
 
         if (!dataSource.cacheable && !cacheOnly) {
-            const resultTile = dataSource.getTile(tileKey);
-            updateTile(resultTile);
+            const resultTile = dataSource.getTile(tileKey, true);
+            if (resultTile !== undefined) {
+                this.addToTaskQueue(resultTile);
+                touchTile(resultTile);
+            }
             return resultTile;
         }
 
@@ -1106,7 +1196,7 @@ export class VisibleTileSet {
         let tile = tileCache.get(tileKey.mortonCode(), offset, dataSource);
 
         if (tile !== undefined && tile.offset === offset) {
-            updateTile(tile);
+            touchTile(tile);
             return tile;
         }
 
@@ -1114,15 +1204,32 @@ export class VisibleTileSet {
             return undefined;
         }
 
-        tile = dataSource.getTile(tileKey);
+        tile = dataSource.getTile(tileKey, true);
         // TODO: Update all tile information including area, min/max elevation from TileKeyEntry
         if (tile !== undefined) {
+            this.addToTaskQueue(tile);
             tile.offset = offset;
-            updateTile(tile);
+            touchTile(tile);
             tileCache.set(tileKey.mortonCode(), offset, dataSource, tile);
             this.m_tileGeometryManager.initTile(tile);
         }
         return tile;
+    }
+
+    private addToTaskQueue(tile: Tile) {
+        this.m_taskQueue.add({
+            execute: tile.load.bind(tile),
+            group: TileTaskGroups.FETCH_AND_DECODE,
+            getPriority: () => {
+                return tile?.tileLoader?.priority || 0;
+            },
+            isExpired: () => {
+                return !tile?.isVisible;
+            },
+            estimatedProcessTime: () => {
+                return 1;
+            }
+        });
     }
 
     private markDataSourceTilesDirty(renderListEntry: DataSourceTileList) {

@@ -392,7 +392,7 @@ export class TileGeometryCreator {
      * @param tile - The {@link Tile} to add the object to.
      * @param object - The object to add to the root of the tile.
      * @param geometryKind - The kind of object. Can be used for filtering.
-     * @param custom - additional parameters for [[MapObjectAdapter]]
+     * @param mapAdapterParams - additional parameters for [[MapObjectAdapter]]
      */
     registerTileObject(
         tile: Tile,
@@ -625,8 +625,8 @@ export class TileGeometryCreator {
                         textStyleCache.getRenderStyle(technique),
                         textStyleCache.getLayoutStyle(technique),
                         priority,
-                        technique.xOffset || 0.0,
-                        technique.yOffset || 0.0,
+                        technique.xOffset ?? 0.0,
+                        technique.yOffset ?? 0.0,
                         featureId,
                         technique.style,
                         undefined,
@@ -807,7 +807,7 @@ export class TileGeometryCreator {
                     assert(!isHighPrecisionLineMaterial(material));
                     const lineMaterial = material as SolidLineMaterial;
                     if (
-                        technique.clipping !== false &&
+                        technique.clipping === true &&
                         tile.projection.type === ProjectionType.Planar
                     ) {
                         tile.boundingBox.getSize(tmpVector3);
@@ -931,10 +931,12 @@ export class TileGeometryCreator {
 
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
+                    this.addUserData(tile, srcGeometry, technique, depthPassMesh);
                     // Set geometry kind for depth pass mesh so that it gets the displacement map
                     // for elevation overlay.
                     this.registerTileObject(tile, depthPassMesh, techniqueKind, {
-                        technique
+                        technique,
+                        pickable: false
                     });
                     objects.push(depthPassMesh);
 
@@ -945,13 +947,23 @@ export class TileGeometryCreator {
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
 
+                // register all objects as pickable except solid lines with outlines, in that case
+                // it's enough to make outlines pickable.
                 this.registerTileObject(tile, object, techniqueKind, {
-                    technique
+                    technique,
+                    pickable: !hasSolidLinesOutlines
                 });
                 objects.push(object);
 
                 // Add the extruded building edges as a separate geometry.
                 if (isBuilding) {
+                    // When the source geometry is split in groups, we
+                    // should create objects with an array of materials.
+                    const hasEdgeFeatureGroups =
+                        Expr.isExpr(technique.enabled) &&
+                        srcGeometry.edgeFeatureStarts &&
+                        srcGeometry.edgeFeatureStarts.length > 0;
+
                     const buildingTechnique = technique as ExtrudedPolygonTechnique;
                     const edgeGeometry = new THREE.BufferGeometry();
                     edgeGeometry.setAttribute("position", bufferGeometry.getAttribute("position"));
@@ -994,10 +1006,16 @@ export class TileGeometryCreator {
                         colorMix: fadingParams.colorMix,
                         fadeNear: fadingParams.lineFadeNear,
                         fadeFar: fadingParams.lineFadeFar,
-                        extrusionRatio: extrusionAnimationEnabled ? 0 : undefined
+                        extrusionRatio: extrusionAnimationEnabled ? 0 : undefined,
+                        vertexColors: bufferGeometry.getAttribute("color") ? true : false
                     };
                     const edgeMaterial = new EdgeMaterial(materialParams);
-                    const edgeObj = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+                    const edgeObj = new THREE.LineSegments(
+                        edgeGeometry,
+                        hasEdgeFeatureGroups ? [edgeMaterial] : edgeMaterial
+                    );
+
+                    this.addUserData(tile, srcGeometry, technique, edgeObj);
 
                     // Set the correct render order.
                     edgeObj.renderOrder = object.renderOrder + 0.1;
@@ -1015,10 +1033,12 @@ export class TileGeometryCreator {
                     }
 
                     this.registerTileObject(tile, edgeObj, techniqueKind, {
-                        technique
+                        technique,
+                        pickable: false
                     });
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
+                        objectColor: buildingTechnique.color,
                         opacity: buildingTechnique.opacity
                     });
                     objects.push(edgeObj);
@@ -1035,6 +1055,11 @@ export class TileGeometryCreator {
                 // Add the fill area edges as a separate geometry.
 
                 if (isFillTechnique(technique) && attachment.info.edgeIndex) {
+                    const hasEdgeFeatureGroups =
+                        Expr.isExpr(technique.enabled) &&
+                        srcGeometry.edgeFeatureStarts &&
+                        srcGeometry.edgeFeatureStarts.length > 0;
+
                     const outlineGeometry = new THREE.BufferGeometry();
                     outlineGeometry.setAttribute(
                         "position",
@@ -1053,10 +1078,14 @@ export class TileGeometryCreator {
                         color: fadingParams.color,
                         colorMix: fadingParams.colorMix,
                         fadeNear: fadingParams.lineFadeNear,
-                        fadeFar: fadingParams.lineFadeFar
+                        fadeFar: fadingParams.lineFadeFar,
+                        vertexColors: bufferGeometry.getAttribute("color") ? true : false
                     };
                     const outlineMaterial = new EdgeMaterial(materialParams);
-                    const outlineObj = new THREE.LineSegments(outlineGeometry, outlineMaterial);
+                    const outlineObj = new THREE.LineSegments(
+                        outlineGeometry,
+                        hasEdgeFeatureGroups ? [outlineMaterial] : outlineMaterial
+                    );
                     outlineObj.renderOrder = object.renderOrder + 0.1;
 
                     FadingFeature.addRenderHelper(
@@ -1067,11 +1096,15 @@ export class TileGeometryCreator {
                         false
                     );
 
+                    this.addUserData(tile, srcGeometry, technique, outlineObj);
+
                     this.registerTileObject(tile, outlineObj, techniqueKind, {
-                        technique
+                        technique,
+                        pickable: false
                     });
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,
+                        objectColor: fillTechnique.color,
                         opacity: fillTechnique.opacity
                     });
                     objects.push(outlineObj);
@@ -1265,7 +1298,7 @@ export class TileGeometryCreator {
                 THREE.MathUtils.degToRad(10),
                 sourceProjection
             );
-            const enableMixedLod = mapView.enableMixedLod || mapView.enableMixedLod === undefined;
+            const enableMixedLod = mapView.enableMixedLod ?? mapView.enableMixedLod === undefined;
 
             if (enableMixedLod) {
                 // Use a [[LodMesh]] to adapt tesselation of tile depending on zoom level
@@ -1315,7 +1348,7 @@ export class TileGeometryCreator {
         const mesh = this.createGroundPlane(tile, material, false, shadowsEnabled);
         mesh.receiveShadow = shadowsEnabled;
         mesh.renderOrder = renderOrder;
-        this.registerTileObject(tile, mesh, GeometryKind.Background);
+        this.registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
         tile.objects.push(mesh);
     }
 
@@ -1517,9 +1550,12 @@ export class TileGeometryCreator {
         } else {
             // Set the feature data for picking with `MapView.intersectMapObjects()` except for
             // solid-line which uses tile-based picking.
+            const isOutline =
+                object.type === "LineSegments" &&
+                (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique));
             const featureData: TileFeatureData = {
                 geometryType: srcGeometry.type,
-                starts: srcGeometry.featureStarts,
+                starts: isOutline ? srcGeometry.edgeFeatureStarts : srcGeometry.featureStarts,
                 objInfos: srcGeometry.objInfos
             };
             object.userData.feature = featureData;

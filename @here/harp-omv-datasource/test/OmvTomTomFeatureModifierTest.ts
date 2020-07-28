@@ -14,7 +14,7 @@ import { OmvFeatureFilterDescription } from "../lib/OmvDecoderDefs";
 import { OmvTomTomFeatureModifier } from "../lib/OmvTomTomFeatureModifier";
 
 export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
-    private m_description: OmvFeatureFilterDescription;
+    private readonly m_description: OmvFeatureFilterDescription;
 
     constructor(description: OmvFeatureFilterDescription) {
         super(description);

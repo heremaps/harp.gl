@@ -58,6 +58,7 @@ export interface ILineAccessor {
  * Helper function to check if an accessor is of type `ILineAccessor`.
  *
  * @param arg - `true` if `arg` is `ILineAccessor`.
+ * @internal
  */
 export function isLineAccessor(arg: any): arg is ILineAccessor {
     /**
@@ -107,6 +108,7 @@ export interface IObject3dAccessor {
  * Helper function to check if an accessor is of type `IObject3dAccessor`.
  *
  * @param arg - `true` if `arg` is `IObject3dAccessor`.
+ * @internal
  */
 export function isObject3dAccessor(arg: any): arg is IObject3dAccessor {
     return typeof arg.isObject3dAccessor === "function" && arg.isObject3dAccessor() === true;

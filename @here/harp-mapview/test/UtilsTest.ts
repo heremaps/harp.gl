@@ -9,9 +9,12 @@
 
 import {
     EarthConstants,
+    GeoBox,
     GeoCoordinates,
     mercatorProjection,
+    OrientedBox3,
     Projection,
+    ProjectionType,
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
@@ -30,6 +33,32 @@ const cameraMock = {
     quaternion: new THREE.Quaternion(),
     matrixWorld: new THREE.Matrix4()
 };
+
+function setCamera(
+    camera: THREE.Camera,
+    projection: Projection,
+    geoTarget: GeoCoordinates,
+    heading: number,
+    tilt: number,
+    distance: number
+) {
+    MapViewUtils.getCameraRotationAtTarget(
+        projection,
+        geoTarget,
+        -heading,
+        tilt,
+        camera.quaternion
+    );
+    MapViewUtils.getCameraPositionFromTargetCoordinates(
+        geoTarget,
+        distance,
+        -heading,
+        tilt,
+        projection,
+        camera.position
+    );
+    camera.updateMatrixWorld(true);
+}
 
 describe("map-view#Utils", function() {
     describe("calculateZoomLevelFromDistance", function() {
@@ -341,43 +370,25 @@ describe("map-view#Utils", function() {
         expect(objSize.gpuSize).to.be.equal(24);
     });
 
-    describe("getTargetAndDistance", function() {
-        const elevationProvider = ({} as any) as ElevationProvider;
-        let sandbox: sinon.SinonSandbox;
-        let camera: THREE.Camera;
-        const geoTarget = GeoCoordinates.fromDegrees(0, 0);
+    for (const { projName, projection } of [
+        { projName: "mercator", projection: mercatorProjection },
+        { projName: "sphere", projection: sphereProjection }
+    ]) {
+        describe(`${projName} projection`, function() {
+            describe("getTargetAndDistance", function() {
+                const elevationProvider = ({} as any) as ElevationProvider;
+                let sandbox: sinon.SinonSandbox;
+                let camera: THREE.Camera;
+                const geoTarget = GeoCoordinates.fromDegrees(0, 0);
 
-        function resetCamera(projection: Projection) {
-            const heading = 0;
-            const tilt = 0;
-            const distance = 1e6;
-            MapViewUtils.getCameraRotationAtTarget(
-                projection,
-                geoTarget,
-                -heading,
-                tilt,
-                camera.quaternion
-            );
-            MapViewUtils.getCameraPositionFromTargetCoordinates(
-                geoTarget,
-                distance,
-                -heading,
-                tilt,
-                projection,
-                camera.position
-            );
-            camera.updateMatrixWorld(true);
-        }
+                function resetCamera() {
+                    setCamera(camera, projection, geoTarget, 0, 0, 1e6);
+                }
 
-        for (const { projName, projection } of [
-            { projName: "mercator", projection: mercatorProjection },
-            { projName: "sphere", projection: sphereProjection }
-        ]) {
-            describe(`${projName} projection`, function() {
                 beforeEach(function() {
                     sandbox = sinon.createSandbox();
                     camera = new THREE.PerspectiveCamera();
-                    resetCamera(projection);
+                    resetCamera();
                 });
 
                 it("camera target and distance are offset by elevation", function() {
@@ -413,8 +424,163 @@ describe("map-view#Utils", function() {
                     );
                 });
             });
-        }
-    });
+
+            describe("constrainTargetAndDistanceToViewBounds", function() {
+                const camera: THREE.Camera = new THREE.PerspectiveCamera(undefined, 1);
+                const mapViewMock = {
+                    maxZoomLevel: 20,
+                    minZoomLevel: 1,
+                    camera,
+                    projection,
+                    focalLength: 256,
+                    worldMaxBounds: undefined as THREE.Box3 | OrientedBox3 | undefined,
+                    renderer: {
+                        getSize() {
+                            return new THREE.Vector2(300, 300);
+                        }
+                    }
+                };
+                const mapView = (mapViewMock as any) as MapView;
+
+                it("target and distance are unchanged when no bounds set", function() {
+                    const geoTarget = GeoCoordinates.fromDegrees(0, 0);
+                    const worldTarget = mapView.projection.projectPoint(
+                        geoTarget,
+                        new THREE.Vector3()
+                    );
+                    const distance = 1e7;
+                    setCamera(camera, mapView.projection, geoTarget, 0, 0, distance);
+
+                    const constrained = MapViewUtils.constrainTargetAndDistanceToViewBounds(
+                        worldTarget,
+                        distance,
+                        mapView
+                    );
+                    expect(constrained.target).deep.equals(worldTarget);
+                    expect(constrained.distance).equals(distance);
+                });
+
+                it("target and distance are unchanged when view within bounds", function() {
+                    const geoTarget = GeoCoordinates.fromDegrees(0, 0);
+                    const geoBounds = new GeoBox(
+                        GeoCoordinates.fromDegrees(-50, -50),
+                        GeoCoordinates.fromDegrees(50, 50)
+                    );
+                    const worldTarget = mapView.projection.projectPoint(
+                        geoTarget,
+                        new THREE.Vector3()
+                    );
+                    mapViewMock.worldMaxBounds = mapView.projection.projectBox(
+                        geoBounds,
+                        mapView.projection.type === ProjectionType.Planar
+                            ? new THREE.Box3()
+                            : new OrientedBox3()
+                    );
+                    const distance = 100;
+                    setCamera(camera, mapView.projection, geoTarget, 0, 0, distance);
+
+                    const constrained = MapViewUtils.constrainTargetAndDistanceToViewBounds(
+                        worldTarget,
+                        distance,
+                        mapView
+                    );
+
+                    expect(constrained.target).deep.equals(worldTarget);
+                    expect(constrained.distance).equals(distance);
+                });
+
+                it("target and distance are constrained when camera is too far", function() {
+                    const tilt = 0;
+                    const heading = 0;
+                    const geoTarget = GeoCoordinates.fromDegrees(0, 0);
+                    const geoBounds = new GeoBox(
+                        GeoCoordinates.fromDegrees(-1, -1),
+                        GeoCoordinates.fromDegrees(1, 1)
+                    );
+                    const worldTarget = mapView.projection.projectPoint(
+                        geoTarget,
+                        new THREE.Vector3()
+                    );
+                    mapViewMock.worldMaxBounds = mapView.projection.projectBox(
+                        geoBounds,
+                        mapView.projection.type === ProjectionType.Planar
+                            ? new THREE.Box3()
+                            : new OrientedBox3()
+                    );
+                    const distance = 1e6;
+                    setCamera(camera, mapView.projection, geoTarget, heading, tilt, distance);
+
+                    const constrained = MapViewUtils.constrainTargetAndDistanceToViewBounds(
+                        worldTarget,
+                        distance,
+                        mapView
+                    );
+
+                    const boundsCenter = (mapViewMock.worldMaxBounds as THREE.Box3).getCenter(
+                        new THREE.Vector3()
+                    );
+                    if (mapView.projection.type === ProjectionType.Planar) {
+                        boundsCenter.setZ(worldTarget.z);
+                    } else {
+                        boundsCenter.setLength(worldTarget.length());
+                    }
+                    expect(constrained.target).deep.equals(boundsCenter);
+                    expect(constrained.distance).to.be.lessThan(distance);
+
+                    const constrainedGeoTarget = mapView.projection.unprojectPoint(
+                        constrained.target
+                    );
+                    const newTilt = MapViewUtils.extractTiltAngleFromLocation(
+                        mapView.projection,
+                        camera,
+                        constrainedGeoTarget
+                    );
+                    expect(THREE.MathUtils.radToDeg(newTilt)).to.be.closeTo(tilt, 1e-3);
+                });
+
+                it("target and distance are constrained if target is out of bounds", function() {
+                    const tilt = 50;
+                    const heading = 10;
+                    const geoTarget = GeoCoordinates.fromDegrees(10.1, 10);
+                    const geoBounds = new GeoBox(
+                        GeoCoordinates.fromDegrees(-10, -10),
+                        GeoCoordinates.fromDegrees(10, 10)
+                    );
+                    const worldTarget = mapView.projection.projectPoint(
+                        geoTarget,
+                        new THREE.Vector3()
+                    );
+                    mapViewMock.worldMaxBounds = mapView.projection.projectBox(
+                        geoBounds,
+                        mapView.projection.type === ProjectionType.Planar
+                            ? new THREE.Box3()
+                            : new OrientedBox3()
+                    );
+                    const distance = 100;
+                    setCamera(camera, mapView.projection, geoTarget, heading, tilt, distance);
+
+                    const constrained = MapViewUtils.constrainTargetAndDistanceToViewBounds(
+                        worldTarget,
+                        distance,
+                        mapView
+                    );
+
+                    const constrainedGeoTarget = mapView.projection.unprojectPoint(
+                        constrained.target
+                    );
+                    expect(geoBounds.contains(constrainedGeoTarget)).to.equal(true);
+                    expect(constrained.distance).equals(distance);
+
+                    const newTilt = MapViewUtils.extractTiltAngleFromLocation(
+                        mapView.projection,
+                        camera,
+                        constrainedGeoTarget
+                    );
+                    expect(THREE.MathUtils.radToDeg(newTilt)).to.be.closeTo(tilt, 1e-3);
+                });
+            });
+        });
+    }
 });
 
 describe("tile-offset#Utils", function() {

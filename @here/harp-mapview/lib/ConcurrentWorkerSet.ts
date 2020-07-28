@@ -103,7 +103,7 @@ export const DEFAULT_WORKER_INITIALIZATION_TIMEOUT = 10000;
  * in m_availableWorkers.
  */
 export class ConcurrentWorkerSet {
-    private m_workerChannelLogger = LoggerManager.instance.create("WorkerChannel");
+    private readonly m_workerChannelLogger = LoggerManager.instance.create("WorkerChannel");
     private readonly m_eventListeners = new Map<string, (message: any) => void>();
     private m_workers = new Array<Worker>();
 
@@ -471,7 +471,7 @@ export class ConcurrentWorkerSet {
      * @param workerId - The workerId of the web worker.
      * @param event - The event to dispatch.
      */
-    private onWorkerMessage = (workerId: number, event: MessageEvent) => {
+    private readonly onWorkerMessage = (workerId: number, event: MessageEvent) => {
         if (WorkerServiceProtocol.isResponseMessage(event.data)) {
             const response = event.data;
             if (response.messageId === null) {

@@ -95,7 +95,7 @@ export class MapViewAtmosphere {
     private m_groundMaterial?: THREE.Material;
     private m_groundMesh?: THREE.Mesh;
 
-    private m_clipPlanesEvaluator = new TiltViewClipPlanesEvaluator(
+    private readonly m_clipPlanesEvaluator = new TiltViewClipPlanesEvaluator(
         EarthConstants.EQUATORIAL_RADIUS * SKY_ATMOSPHERE_ALTITUDE_FACTOR,
         0,
         1.0,
@@ -126,12 +126,12 @@ export class MapViewAtmosphere {
      * testing and tweaking purposes.
      */
     constructor(
-        private m_mapAnchors: MapAnchors,
-        private m_sceneCamera: THREE.Camera,
-        private m_projection: Projection,
-        private m_updateCallback?: () => void,
-        private m_atmosphereVariant: AtmosphereVariant = AtmosphereVariant.SkyAndGround,
-        private m_materialVariant = AtmosphereShadingVariant.ScatteringShader
+        private readonly m_mapAnchors: MapAnchors,
+        private readonly m_sceneCamera: THREE.Camera,
+        private readonly m_projection: Projection,
+        private readonly m_updateCallback?: () => void,
+        private readonly m_atmosphereVariant: AtmosphereVariant = AtmosphereVariant.SkyAndGround,
+        private readonly m_materialVariant = AtmosphereShadingVariant.ScatteringShader
     ) {
         // tslint:disable-next-line: no-bitwise
         if (this.m_atmosphereVariant & AtmosphereVariant.Sky) {

@@ -21,7 +21,7 @@ export type TextElementFilter = (textElementState: TextElementState) => number |
  * they're being rendered.
  */
 export class TextElementGroupState {
-    private m_textElementStates: TextElementState[];
+    private readonly m_textElementStates: TextElementState[];
     private m_visited: boolean = false;
 
     /**

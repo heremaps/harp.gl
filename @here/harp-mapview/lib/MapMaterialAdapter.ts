@@ -98,7 +98,7 @@ export class MapMaterialAdapter {
     readonly currentStyledProperties: { [name: string]: Value | undefined };
 
     private m_lastUpdateFrameNumber = -1;
-    private m_dynamicProperties: Array<[string, Expr | StylePropertyEvaluator]>;
+    private readonly m_dynamicProperties: Array<[string, Expr | StylePropertyEvaluator]>;
 
     constructor(material: THREE.Material, styledProperties: StyledProperties) {
         this.material = material;

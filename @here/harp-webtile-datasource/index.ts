@@ -13,3 +13,4 @@
  */
 
 export * from "./lib/WebTileDataSource";
+export * from "./lib/HereWebTileDataSource";

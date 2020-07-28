@@ -68,8 +68,8 @@ class TransverseMercatorProjection extends Projection {
     /** @override */
     readonly type: ProjectionType = ProjectionType.Planar;
 
-    private m_phi0: number = 0;
-    private m_lambda0: number = 0;
+    private readonly m_phi0: number = 0;
+    private readonly m_lambda0: number = 0;
 
     constructor(readonly unitScale: number) {
         super(unitScale);
@@ -124,7 +124,7 @@ class TransverseMercatorProjection extends Projection {
             this.unitScale * (THREE.MathUtils.clamp(result.x * outScale + 0.5, 0, 1) + offset);
         result.y = this.unitScale * THREE.MathUtils.clamp(result.y * outScale + 0.5, 0, 1);
 
-        result.z = geoPoint.altitude || 0;
+        result.z = geoPoint.altitude ?? 0;
         return result;
     }
 
@@ -301,7 +301,7 @@ class TransverseMercatorProjection extends Projection {
 
         const latitudes = geoPoints.map(g => g.latitude);
         const longitudes = geoPoints.filter(g => Math.abs(g.latitude) < 90).map(g => g.longitude);
-        const altitudes = geoPoints.map(g => g.altitude || 0);
+        const altitudes = geoPoints.map(g => g.altitude ?? 0);
 
         const minGeo = new GeoCoordinates(
             Math.min(...latitudes),

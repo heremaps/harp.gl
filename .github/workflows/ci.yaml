@@ -39,16 +39,19 @@ jobs:
       id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-        key: ${{ runner.os }}-${{ matrix.node_version }}--yarn-${{ hashFiles('**/yarn.lock') }}
+        key: yarn-${{ runner.os }}-${{ matrix.node_version }}-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
-          ${{ runner.os }}-yarn-
+          yarn-${{ runner.os }}-${{ matrix.node_version }}-
+          yarn-${{ runner.os }}-
 
     - name: Use Node.js ${{ matrix.node_version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
     - name: Install dependencies
-      run: yarn
+      run: yarn --frozen-lockfile
+    - name: Disable hard-source-webpack-plugin
+      run: echo "::set-env name=HARP_NO_HARD_SOURCE_CACHE::true"
     - name: Pretest
       run: yarn run pre-test
       shell: bash
@@ -80,15 +83,6 @@ jobs:
         yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
       shell: bash
       if: matrix.os == 'windows-latest'
-    - name: Tests on Chrome (Linux)
-      run: |
-        set -ex
-        yarn
-        google-chrome --version
-        whereis google-chrome
-        yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
-      shell: bash
-      if: matrix.os == 'ubuntu-latest'
     - name: Tests on Firefox (Windows)
       run: |
         export PATH=`pwd`:$PATH
@@ -96,6 +90,15 @@ jobs:
         yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
       if: matrix.os == 'windows-latest'
       shell: bash
+    - name: Tests on Chrome (Linux)
+      run: |
+        set -ex
+        yarn --frozen-lockfile
+        google-chrome --version
+        whereis google-chrome
+        yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
     - name: Tests on Firefox (Linux)
       run: |
         set -ex
@@ -104,11 +107,11 @@ jobs:
         yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
       shell: bash
       if: matrix.os == 'ubuntu-latest'
-    - name: Build examples
-      run: yarn run build-examples
-      shell: bash
     - name: Build bundle
       run: yarn run build-bundle
+      shell: bash  
+    - name: Build examples
+      run: yarn run build-examples
       shell: bash
     - name: Generate doc
       run: yarn run typedoc

@@ -15,6 +15,7 @@ import { LoggerManager } from "@here/harp-utils";
 import THREE = require("three");
 
 const logger = LoggerManager.instance.create("CameraKeyTrackAnimation");
+const MIN_DISTANCE = 0;
 
 /**
  * The Options used to create a ControlPoint
@@ -55,7 +56,7 @@ export class ControlPoint
             : new GeoCoordinates(0, 0);
         this.tilt = options.tilt ?? 0;
         this.heading = options.heading ?? 0;
-        this.distance = options.distance ?? 0;
+        this.distance = options.distance ?? MIN_DISTANCE;
         this.name = options.name ?? Date.now().toString();
     }
 }
@@ -115,20 +116,23 @@ class AnimationDummy extends THREE.Object3D {
  * @beta
  */
 export class CameraKeyTrackAnimation {
-    private m_animationClip: THREE.AnimationClip;
-    private m_animationMixer: THREE.AnimationMixer;
-    private m_animationAction: THREE.AnimationAction;
-    private m_dummy: AnimationDummy = new AnimationDummy("dummy");
-    private m_azimuthAxis = new THREE.Vector3(0, 0, 1);
-    private m_altitudeAxis = new THREE.Vector3(1, 0, 0);
+    private readonly m_animationClip: THREE.AnimationClip;
+    private readonly m_animationMixer: THREE.AnimationMixer;
+    private readonly m_animationAction: THREE.AnimationAction;
+    private readonly m_dummy: AnimationDummy = new AnimationDummy("dummy");
+    private readonly m_azimuthAxis = new THREE.Vector3(0, 0, 1);
+    private readonly m_altitudeAxis = new THREE.Vector3(1, 0, 0);
     private m_running: boolean = false;
     private m_onFinished: (() => void) | undefined;
-    private m_name?: string;
+    private readonly m_name?: string;
 
     private m_lastFrameTime: number = 0;
-    private m_animateCb: (event: RenderEvent) => void;
+    private readonly m_animateCb: (event: RenderEvent) => void;
 
-    constructor(private m_mapView: MapView, private m_options: CameraKeyTrackAnimationOptions) {
+    constructor(
+        private readonly m_mapView: MapView,
+        private m_options: CameraKeyTrackAnimationOptions
+    ) {
         const interpolation =
             this.m_options.interpolation !== undefined
                 ? this.m_options.interpolation
@@ -139,7 +143,7 @@ export class CameraKeyTrackAnimation {
 
         this.m_options.rotateOnlyClockwise = this.m_options.rotateOnlyClockwise ?? true;
 
-        this.m_name = this.m_options.name || "CameraKeyTrackAnimation" + Date.now();
+        this.m_name = (this.m_options.name ?? "CameraKeyTrackAnimation") + Date.now();
 
         const timestamps = this.m_options.controlPoints.map(point => {
             return point.timestamp;
@@ -238,7 +242,7 @@ export class CameraKeyTrackAnimation {
             this.stop();
         }
         this.m_onFinished = onFinished;
-        this.m_animationAction.play();
+        this.m_animationAction.reset().play();
         this.m_lastFrameTime = Date.now();
         this.m_mapView.addEventListener(MapViewEventNames.Render, this.m_animateCb);
         this.m_mapView.beginAnimation();
@@ -282,7 +286,7 @@ export class CameraKeyTrackAnimation {
 
         const target = this.m_mapView.projection.unprojectPoint(this.m_dummy.position);
 
-        const distance = Math.max(0, this.m_dummy.distance);
+        const distance = Math.max(MIN_DISTANCE, this.m_dummy.distance);
         if (isNaN(tilt) || isNaN(heading) || isNaN(distance) || !target.isValid()) {
             logger.error("Cannot update due to invalid data", tilt, heading, distance, target);
         }

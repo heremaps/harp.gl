@@ -16,8 +16,8 @@ import { Typesetter, TypesettingParameters } from "./Typesetter";
  * [[Typesetter]] implementation that handles multi-line complex layout text.
  */
 export class LineTypesetter implements Typesetter {
-    private m_tempTransform: THREE.Matrix3;
-    private m_tempCorners: THREE.Vector3[];
+    private readonly m_tempTransform: THREE.Matrix3;
+    private readonly m_tempCorners: THREE.Vector3[];
     private m_tempLineDirection: UnicodeUtils.Direction;
     private m_tempRunDirection: UnicodeUtils.Direction;
     private m_tempPixelSize: number;

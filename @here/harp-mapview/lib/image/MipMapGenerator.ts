@@ -28,10 +28,10 @@ export class MipMapGenerator {
         };
     }
 
-    private m_paddingCanvas?: HTMLCanvasElement;
-    private m_paddingContext?: CanvasRenderingContext2D;
-    private m_resizeCanvas?: HTMLCanvasElement;
-    private m_resizeContext?: CanvasRenderingContext2D;
+    private readonly m_paddingCanvas?: HTMLCanvasElement;
+    private readonly m_paddingContext?: CanvasRenderingContext2D;
+    private readonly m_resizeCanvas?: HTMLCanvasElement;
+    private readonly m_resizeContext?: CanvasRenderingContext2D;
 
     constructor() {
         if (!isNode) {
@@ -70,11 +70,14 @@ export class MipMapGenerator {
 
         let width = paddedWidth * 0.5;
         let height = paddedHeight * 0.5;
-        while (width >= 1 && height >= 1) {
+        // HARP-10765 WebGL complains if we don't generate down to a 1x1 texture (this was the case
+        // previously when height != width), and thus the final texture generated was 2x1 texture
+        // and not 1x1.
+        while (width >= 1 || height >= 1) {
             const mipMapLevel = mipMaps.length;
             const previousImage = mipMaps[mipMapLevel - 1];
             // Resize previous mip map level
-            mipMaps.push(this.resizeImage(previousImage, width, height));
+            mipMaps.push(this.resizeImage(previousImage, Math.max(width, 1), Math.max(height, 1)));
             width *= 0.5;
             height *= 0.5;
         }

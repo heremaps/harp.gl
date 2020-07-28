@@ -62,7 +62,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
      * Default constructor.
      * @param m_params - Copyright provider configuration.
      */
-    constructor(private m_params: OlpCopyrightProviderParams) {
+    constructor(private readonly m_params: OlpCopyrightProviderParams) {
         super();
     }
 
@@ -79,7 +79,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
             const hrn = HRN.fromString(this.m_params.hrn);
             const settings = new OlpClientSettings({
                 getToken: this.m_params.getToken,
-                environment: this.m_params.environment || hrn.data.partition
+                environment: this.m_params.environment ?? hrn.data.partition
             });
             const client = new VersionedLayerClient(
                 hrn,

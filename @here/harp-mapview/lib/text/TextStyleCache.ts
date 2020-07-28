@@ -79,7 +79,7 @@ export interface TextElementStyle {
 }
 
 export class TextStyleCache {
-    private m_textStyles: Map<string, TextElementStyle> = new Map();
+    private readonly m_textStyles: Map<string, TextElementStyle> = new Map();
     private m_defaultStyle: TextElementStyle = {
         name: DEFAULT_STYLE_NAME,
         fontCatalog: "",
@@ -420,7 +420,7 @@ export class TextStyleCache {
                 fontSize: {
                     unit: FontUnit.Pixel,
                     size: 32,
-                    backgroundSize: style.backgroundSize || 8
+                    backgroundSize: style.backgroundSize ?? 8
                 },
                 fontStyle:
                     style.fontStyle === "Regular" ||

@@ -11,6 +11,7 @@ import {
     GeoCoordinates,
     GeoCoordLike,
     MathUtils,
+    OrientedBox3,
     Projection,
     ProjectionType,
     TileKey
@@ -58,8 +59,11 @@ const tangentSpace = {
     z: new THREE.Vector3()
 };
 const cache = {
+    box3: [new THREE.Box3()],
+    obox3: [new OrientedBox3()],
     quaternions: [new THREE.Quaternion(), new THREE.Quaternion()],
-    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+    vector2: [new THREE.Vector2()],
+    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
     transforms: [
         {
@@ -137,6 +141,8 @@ export namespace MapViewUtils {
      * @param targetNDCy - Target y position in NDC space.
      * @param zoomLevel - The desired zoom level.
      * @param maxTiltAngle - The maximum tilt angle to comply by, in globe projection, in radian.
+     * @returns `false` if requested zoom cannot be achieved due to the map view's maximum bounds
+     * {@link MapView.geoMaxBounds},`true` otherwise.
      */
     export function zoomOnTargetPosition(
         mapView: MapView,
@@ -144,37 +150,50 @@ export namespace MapViewUtils {
         targetNDCy: number,
         zoomLevel: number,
         maxTiltAngle: number = MAX_TILT_RAD
-    ): void {
-        const { elevationProvider, camera } = mapView;
+    ): boolean {
+        const { elevationProvider, camera, projection } = mapView;
 
         // Use for now elevation at camera position. See getTargetAndDistance.
         const elevation = elevationProvider
             ? elevationProvider.getHeight(
-                  mapView.projection.unprojectPoint(camera.position),
+                  projection.unprojectPoint(camera.position),
                   TERRAIN_ZOOM_LEVEL
               )
             : undefined;
 
         // Get current target position in world space before we zoom.
-        const worldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
-        const groundDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
-        const cameraHeight = groundDistance + (elevation ?? 0);
+        const zoomTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
+        const cameraTarget = mapView.worldTarget;
+        const newCameraDistance = calculateDistanceFromZoomLevel(mapView, zoomLevel);
 
-        // Set the cameras height according to the given zoom level.
-        if (mapView.projection.type === ProjectionType.Planar) {
-            camera.position.setZ(cameraHeight);
-        } else if (mapView.projection.type === ProjectionType.Spherical) {
-            camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + cameraHeight);
+        if (mapView.geoMaxBounds) {
+            // If map view has maximum bounds set, constrain camera target and distance to ensure
+            // they remain within bounds.
+            const constrained = constrainTargetAndDistanceToViewBounds(
+                cameraTarget,
+                newCameraDistance,
+                mapView
+            );
+            if (constrained.distance !== newCameraDistance) {
+                // Only indicate failure when zooming out. This avoids zoom in cancellations when
+                // camera is already at the maximum distance allowed by the view bounds.
+                return zoomLevel >= mapView.zoomLevel;
+            }
         }
+        // Set the camera distance according to the given zoom level.
+        camera
+            .getWorldDirection(camera.position)
+            .multiplyScalar(-newCameraDistance)
+            .add(cameraTarget);
 
         // In sphere, we may have to also orbit the camera around the position located at the
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
-        if (mapView.projection.type === ProjectionType.Spherical) {
+        if (projection.type === ProjectionType.Spherical) {
             // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
             // changes.
             // tslint:disable-next-line: deprecation
-            const tilt = extractCameraTilt(camera, mapView.projection);
+            const tilt = extractCameraTilt(camera, projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
                 orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
@@ -182,19 +201,20 @@ export namespace MapViewUtils {
         }
 
         // Get new target position after the zoom
-        const newWorldTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
-        if (!worldTarget || !newWorldTarget) {
-            return;
+        const newZoomTarget = rayCastWorldCoordinates(mapView, targetNDCx, targetNDCy, elevation);
+        if (!zoomTarget || !newZoomTarget) {
+            return true;
         }
 
-        if (mapView.projection.type === ProjectionType.Planar) {
+        if (projection.type === ProjectionType.Planar) {
             // Calculate the difference and pan the map to maintain the map relative to the target
             // position.
-            worldTarget.sub(newWorldTarget);
-            panCameraAboveFlatMap(mapView, worldTarget.x, worldTarget.y);
-        } else if (mapView.projection.type === ProjectionType.Spherical) {
-            panCameraAroundGlobe(mapView, worldTarget, newWorldTarget);
+            zoomTarget.sub(newZoomTarget);
+            panCameraAboveFlatMap(mapView, zoomTarget.x, zoomTarget.y);
+        } else if (projection.type === ProjectionType.Spherical) {
+            panCameraAroundGlobe(mapView, zoomTarget, newZoomTarget);
         }
+        return true;
     }
 
     /**
@@ -296,6 +316,7 @@ export namespace MapViewUtils {
     /**
      * Returns the height of the camera above the earths surface.
      *
+     * @remarks
      * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
      * how high the camera is above the surface.
      *
@@ -319,6 +340,145 @@ export namespace MapViewUtils {
         return Math.abs(projection.groundDistance(location));
     }
 
+    /**
+     * Constrains given camera target and distance to {@link MapView.maxBounds}.
+     *
+     * @remarks
+     * The resulting
+     * target and distance will keep the view within the maximum bounds for a camera with tilt and
+     * yaw set to 0.
+     * @param target - The camera target.
+     * @param distance - The camera distance.
+     * @param mapView - The map view whose maximum bounds will be used as constraints.
+     * @returns constrained target and distance, or the unchanged input arguments if the view
+     * does not have maximum bounds set.
+     */
+    export function constrainTargetAndDistanceToViewBounds(
+        target: THREE.Vector3,
+        distance: number,
+        mapView: MapView
+    ): { target: THREE.Vector3; distance: number } {
+        const unconstrained = { target, distance };
+        const worldMaxBounds = mapView.worldMaxBounds;
+        const camera = mapView.camera;
+        const projection = mapView.projection;
+
+        if (!worldMaxBounds) {
+            return unconstrained;
+        }
+
+        /**
+         * Constraints are checked similarly for planar and sphere. The extents of a top down view
+         * (even if camera isn't top down) using the given camera distance are compared with those
+         * of the maximum bounds to compute a scale. There are two options:
+         * a) scale > 1. The view covers a larger area than the maximum bounds. The distance is
+         * is reduced to match the bounds extents and the target is set at the bounds center.
+         * b) scale <= 1. The view may fit within the bounds without changing the distance, only the
+         * target is moved to fit the whole view within the bounds.
+         **/
+
+        const boundsSize = worldMaxBounds.getSize(cache.vector3[1]);
+        const screenSize = mapView.renderer.getSize(cache.vector2[0]);
+        const viewHeight = calculateWorldSizeByFocalLength(
+            mapView.focalLength,
+            unconstrained.distance,
+            screenSize.height
+        );
+        const viewWidth = viewHeight * camera.aspect;
+        const scale = Math.max(viewWidth / boundsSize.x, viewHeight / boundsSize.y);
+        const viewHalfSize = new THREE.Vector3(viewWidth / 2, viewHeight / 2, 0);
+
+        const constrained = {
+            target: unconstrained.target.clone(),
+            distance: unconstrained.distance
+        };
+
+        if (projection.type === ProjectionType.Planar) {
+            if (scale > 1) {
+                constrained.distance /= scale;
+                camera
+                    .getWorldDirection(camera.position)
+                    .multiplyScalar(-constrained.distance)
+                    .add(worldMaxBounds.getCenter(constrained.target));
+            } else {
+                const targetBounds = cache.box3[0]
+                    .copy(worldMaxBounds as THREE.Box3)
+                    .expandByVector(viewHalfSize.multiplyScalar(-1));
+                targetBounds
+                    .clampPoint(unconstrained.target, constrained.target)
+                    .setZ(unconstrained.target.z);
+                if (constrained.target.equals(unconstrained.target)) {
+                    return unconstrained;
+                }
+
+                camera.position.x += constrained.target.x - unconstrained.target.x;
+                camera.position.y += constrained.target.y - unconstrained.target.y;
+            }
+            return constrained;
+        }
+
+        // Spherical projection
+        if (scale > 1) {
+            // Set target to center of max bounds but keeping same height as unconstrained target.
+            worldMaxBounds.getCenter(constrained.target);
+            constrained.target.setLength(unconstrained.target.length());
+            constrained.distance /= scale;
+        } else {
+            // Compute the bounds where the target must be to ensure a top down view remains within
+            // the maximum bounds.
+            const targetMaxBounds = cache.obox3[0];
+            targetMaxBounds.copy(worldMaxBounds as OrientedBox3);
+            targetMaxBounds.position.setLength(unconstrained.target.length());
+            targetMaxBounds.extents.sub(viewHalfSize);
+
+            // Project unconstrained target to local tangent plane at the max bounds center.
+            const rotMatrix = targetMaxBounds.getRotationMatrix(cache.matrix4[0]);
+            const localTarget = cache.vector3[1]
+                .copy(constrained.target)
+                .sub(targetMaxBounds.position)
+                .applyMatrix4(cache.matrix4[1].copy(rotMatrix).transpose())
+                .setZ(0);
+
+            // Clamp the projected target with the target bounds and check if it changes.
+            const constrainedLocalTarget = cache.vector3[2]
+                .copy(localTarget)
+                .clamp(
+                    cache.vector3[3].copy(targetMaxBounds.extents).multiplyScalar(-1),
+                    targetMaxBounds.extents
+                );
+            if (constrainedLocalTarget.equals(localTarget)) {
+                return unconstrained;
+            }
+
+            // Project the local constrained target back into the sphere.
+            constrained.target
+                .copy(constrainedLocalTarget)
+                .applyMatrix4(rotMatrix)
+                .add(targetMaxBounds.position);
+            const targetHeightSq = targetMaxBounds.position.lengthSq();
+            const constTargetDistSq = constrained.target.distanceToSquared(
+                targetMaxBounds.position
+            );
+            const constTargetDistToGround =
+                Math.sqrt(targetHeightSq) - Math.sqrt(targetHeightSq - constTargetDistSq);
+            constrained.target.addScaledVector(targetMaxBounds.zAxis, -constTargetDistToGround);
+
+            // Set the constrained target to the same height as the unconstrained one.
+            constrained.target.setLength(unconstrained.target.length());
+        }
+
+        // Pan camera to constrained target and set constrained distance.
+        MapViewUtils.panCameraAroundGlobe(
+            mapView,
+            cache.vector3[1].copy(constrained.target),
+            cache.vector3[2].copy(unconstrained.target)
+        );
+        camera
+            .getWorldDirection(camera.position)
+            .multiplyScalar(-constrained.distance)
+            .add(constrained.target);
+        return constrained;
+    }
     /**
      * @internal
      * @deprecated This method will be moved to MapView.
@@ -454,6 +614,7 @@ export namespace MapViewUtils {
      *
      * Add offset to geo points for minimal view box in flat projection with tile wrapping.
      *
+     * @remarks
      * In flat projection, with wrap around enabled, we should detect clusters of points around that
      * wrap antimeridian.
      *
@@ -510,6 +671,7 @@ export namespace MapViewUtils {
      * Given `cameraPos`, force all points that lie on non-visible sphere half to be "near" max
      * possible viewable circle from given camera position.
      *
+     * @remarks
      * Assumes that shpere projection with world center is in `(0, 0, 0)`.
      */
     export function wrapWorldPointsToView(points: THREE.Vector3[], cameraPos: THREE.Vector3) {
@@ -530,8 +692,8 @@ export namespace MapViewUtils {
      * @hidden
      * @internal
      *
-     * Return [[GeoPoints]] bounding {@link @here/harp-geoutils#GeoBox}
-     * applicable for [[getFitBoundsDistance]].
+     * Return `GeoPoints` bounding {@link @here/harp-geoutils#GeoBox}
+     * applicable for {@link getFitBoundsDistance}.
      *
      * @returns {@link @here/harp-geoutils#GeoCoordinates} set that covers `box`
      */
@@ -1508,7 +1670,8 @@ export namespace MapViewUtils {
             estimateTextureSize(standardMaterial.envMap, objectSize, visitedObjects);
         } else if (
             material instanceof THREE.LineBasicMaterial ||
-            material instanceof THREE.LineDashedMaterial
+            material instanceof THREE.LineDashedMaterial ||
+            material instanceof THREE.PointsMaterial
         ) {
             // Nothing to be done here
         } else {

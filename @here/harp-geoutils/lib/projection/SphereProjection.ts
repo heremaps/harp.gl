@@ -70,7 +70,7 @@ function makeBox3<Bounds extends Box3Like>(
     worldBox: Bounds,
     unitScale: number
 ): Bounds {
-    const halfEquatorialRadius = (unitScale + (geoBox.maxAltitude || 0)) * 0.5;
+    const halfEquatorialRadius = (unitScale + (geoBox.maxAltitude ?? 0)) * 0.5;
 
     const minLongitude = THREE.MathUtils.degToRad(geoBox.west);
     const maxLongitude = THREE.MathUtils.degToRad(geoBox.east);
@@ -144,7 +144,7 @@ function project<WorldCoordinates extends Vector3Like>(
     worldpoint: WorldCoordinates,
     unitScale: number
 ): typeof worldpoint {
-    const radius = unitScale + (geoPoint.altitude || 0);
+    const radius = unitScale + (geoPoint.altitude ?? 0);
     const latitude = THREE.MathUtils.degToRad(geoPoint.latitude);
     const longitude = THREE.MathUtils.degToRad(geoPoint.longitude);
     const cosLatitude = Math.cos(latitude);
@@ -296,8 +296,8 @@ class SphereProjection extends Projection {
                     sinMidY * cosSouth * (cosMidX * cosEast + sinMidX * sinEast);
             }
 
-            const rMax = (this.unitScale + (geoBox.maxAltitude || 0)) * 0.5;
-            const rMin = (this.unitScale + (geoBox.minAltitude || 0)) * 0.5;
+            const rMax = (this.unitScale + (geoBox.maxAltitude ?? 0)) * 0.5;
+            const rMin = (this.unitScale + (geoBox.minAltitude ?? 0)) * 0.5;
 
             // min(dot(southEast, zAxis), dot(northEast, zAxis))
 

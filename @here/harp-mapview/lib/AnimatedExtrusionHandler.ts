@@ -50,7 +50,7 @@ export class AnimatedExtrusionHandler {
     private m_forceEnabled: boolean = false;
 
     // key is tile's morton code.
-    private m_tileMap: Map<number, TileExtrusionState> = new Map();
+    private readonly m_tileMap: Map<number, TileExtrusionState> = new Map();
     private m_state: AnimatedExtrusionState = AnimatedExtrusionState.None;
     private m_startTime: number = -1;
 
@@ -59,7 +59,7 @@ export class AnimatedExtrusionHandler {
      *
      * @param m_mapView - Instance of {@link MapView} on which the animation will run.
      */
-    constructor(private m_mapView: MapView) {}
+    constructor(private readonly m_mapView: MapView) {}
 
     /**
      * Returns whether the extrusion animation is force enabled or not.

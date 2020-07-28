@@ -176,13 +176,13 @@ export class MapRenderingManager implements IMapRenderingManager {
 
     private m_outlineEffect?: OutlineEffect;
     private m_msaaPass: MSAARenderPass;
-    private m_renderPass: RenderPass = new RenderPass();
-    private m_target1: THREE.WebGLRenderTarget = new THREE.WebGLRenderTarget(1, 1);
-    private m_target2: THREE.WebGLRenderTarget = new THREE.WebGLRenderTarget(1, 1);
+    private readonly m_renderPass: RenderPass = new RenderPass();
+    private readonly m_target1: THREE.WebGLRenderTarget = new THREE.WebGLRenderTarget(1, 1);
+    private readonly m_target2: THREE.WebGLRenderTarget = new THREE.WebGLRenderTarget(1, 1);
     private m_bloomPass?: BloomPass;
     private m_sepiaPass: ShaderPass = new ShaderPass(SepiaShader);
     private m_vignettePass: ShaderPass = new ShaderPass(VignetteShader);
-    private m_readBuffer: THREE.WebGLRenderTarget;
+    private readonly m_readBuffer: THREE.WebGLRenderTarget;
     private m_dynamicMsaaSamplingLevel: MSAASampling;
     private m_staticMsaaSamplingLevel: MSAASampling;
     private m_lowResPass: LowResRenderPass;

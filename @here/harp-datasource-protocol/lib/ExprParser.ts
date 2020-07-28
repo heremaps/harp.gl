@@ -208,7 +208,7 @@ class Lexer {
      * Parsed text.
      */
     text(): string {
-        return this.m_text || "";
+        return this.m_text ?? "";
     }
 
     /**
@@ -223,7 +223,7 @@ class Lexer {
     }
 
     private yyinp(): void {
-        this.m_char = this.code.codePointAt(this.m_index++) || 0;
+        this.m_char = this.code.codePointAt(this.m_index++) ?? 0;
     }
 
     private yylex(): Token {

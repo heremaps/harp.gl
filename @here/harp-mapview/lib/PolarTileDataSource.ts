@@ -51,10 +51,10 @@ interface TechniqueEntry {
  * {@link DataSource} providing geometry for poles
  */
 export class PolarTileDataSource extends DataSource {
-    private m_tilingScheme: TilingScheme = polarTilingScheme;
-    private m_maxLatitude = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
+    private readonly m_tilingScheme: TilingScheme = polarTilingScheme;
+    private readonly m_maxLatitude = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
     private m_geometryLevelOffset: number;
-    private m_debugTiles: boolean;
+    private readonly m_debugTiles: boolean;
 
     private m_styleSetEvaluator?: StyleSetEvaluator;
     private m_northPoleEntry?: TechniqueEntry;
@@ -84,6 +84,7 @@ export class PolarTileDataSource extends DataSource {
         this.m_geometryLevelOffset = geometryLevelOffset;
         this.m_debugTiles = debugTiles;
         this.cacheable = false;
+        this.enablePicking = false;
     }
 
     /** @override */
@@ -139,11 +140,13 @@ export class PolarTileDataSource extends DataSource {
 
     /** @override */
     setTheme(theme: Theme, languages?: string[]): void {
-        const styleSet =
-            (this.styleSetName !== undefined && theme.styles && theme.styles[this.styleSetName]) ||
-            [];
+        let styleSet: StyleSet | undefined;
 
-        this.setStyleSet(styleSet, theme.definitions, languages);
+        if (this.styleSetName !== undefined && theme.styles !== undefined) {
+            styleSet = theme.styles[this.styleSetName];
+        }
+
+        this.setStyleSet(styleSet ?? [], theme.definitions, languages);
     }
 
     /** @override */

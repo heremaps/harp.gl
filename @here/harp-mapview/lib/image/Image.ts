@@ -16,6 +16,8 @@ export interface ImageItem {
     mipMaps?: ImageData[];
     /** Turns to `true` when the data has finished loading. */
     loaded: boolean;
+    /** Turns to `true` if the loading has been cancelled. */
+    cancelled?: boolean;
     /** `loadingPromise` is only used during loading/generating the image. */
     loadingPromise?: Promise<ImageItem | undefined>;
 }

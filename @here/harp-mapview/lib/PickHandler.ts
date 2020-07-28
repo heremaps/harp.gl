@@ -8,9 +8,11 @@ import { GeometryType, getFeatureId, Technique } from "@here/harp-datasource-pro
 import * as THREE from "three";
 
 import { OrientedBox3 } from "@here/harp-geoutils";
+import { IntersectParams } from "./IntersectParams";
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
-import { TileFeatureData } from "./Tile";
+import { PickListener } from "./PickListener";
+import { Tile, TileFeatureData } from "./Tile";
 
 /**
  * Describes the general type of a picked object.
@@ -74,6 +76,11 @@ export interface PickResult {
     distance: number;
 
     /**
+     * Render order of the intersected object.
+     */
+    renderOrder?: number;
+
+    /**
      * An optional feature ID of the picked object; typically applies to the Optimized Map
      * Vector (OMV) format.
      */
@@ -103,6 +110,34 @@ export interface PickResult {
 
 const tmpOBB = new OrientedBox3();
 
+// Intersects the dependent tile objects using the supplied raycaster. Note, because multiple
+// tiles can point to the same dependency we need to store which results we have already
+// raycasted, see checkedDependencies.
+function intersectDependentObjects(
+    tile: Tile,
+    intersects: THREE.Intersection[],
+    rayCaster: THREE.Raycaster,
+    checkedDependencies: Set<number>,
+    mapView: MapView
+) {
+    for (const tileKey of tile.dependencies) {
+        const mortonCode = tileKey.mortonCode();
+        if (checkedDependencies.has(mortonCode)) {
+            continue;
+        }
+        checkedDependencies.add(mortonCode);
+        const otherTile = mapView.visibleTileSet.getCachedTile(
+            tile.dataSource,
+            tileKey,
+            tile.offset,
+            mapView.frameNumber
+        );
+        if (otherTile !== undefined) {
+            rayCaster.intersectObjects(otherTile.objects, true, intersects);
+        }
+    }
+}
+
 /**
  * Handles the picking of scene geometry and roads.
  * @internal
@@ -121,24 +156,125 @@ export class PickHandler {
      *
      * @param x - The X position in CSS/client coordinates, without the applied display ratio.
      * @param y - The Y position in CSS/client coordinates, without the applied display ratio.
+     * @param parameters - The intersection test behaviour may be adjusted by providing an instance
+     * of {@link IntersectParams}.
      * @returns the list of intersection results.
      */
-    intersectMapObjects(x: number, y: number): PickResult[] {
+    intersectMapObjects(x: number, y: number, parameters?: IntersectParams): PickResult[] {
         const worldPos = this.mapView.getNormalizedScreenCoordinates(x, y);
         const rayCaster = this.mapView.raycasterFromScreenPoint(x, y);
-        const pickResults: PickResult[] = [];
+
+        const pickListener = new PickListener(parameters);
 
         if (this.mapView.textElementsRenderer !== undefined) {
             const { clientWidth, clientHeight } = this.mapView.canvas;
             const screenX = worldPos.x * clientWidth * 0.5;
             const screenY = worldPos.y * clientHeight * 0.5;
             const scenePosition = new THREE.Vector2(screenX, screenY);
-            this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickResults);
+            this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickListener);
         }
 
         const intersects: THREE.Intersection[] = [];
+        const intersectedTiles = this.getIntersectedTiles(rayCaster);
+
+        // This ensures that we check a given dependency only once (because multiple tiles could
+        // have the same dependency).
+        const checkedDependencies = new Set<number>();
+
+        for (const { tile, distance } of intersectedTiles) {
+            if (pickListener.done && pickListener.furthestResult!.distance < distance) {
+                // Stop when the listener has all results it needs and remaining tiles are further
+                // away than then furthest pick result found so far.
+                break;
+            }
+
+            intersects.length = 0;
+            rayCaster.intersectObjects(tile.objects, true, intersects);
+            intersectDependentObjects(
+                tile,
+                intersects,
+                rayCaster,
+                checkedDependencies,
+                this.mapView
+            );
+
+            for (const intersect of intersects) {
+                pickListener.addResult(this.createResult(intersect));
+            }
+        }
+
+        pickListener.finish();
+        return pickListener.results;
+    }
+
+    private createResult(intersection: THREE.Intersection): PickResult {
+        const pickResult: PickResult = {
+            type: PickObjectType.Unspecified,
+            point: intersection.point,
+            distance: intersection.distance,
+            intersection
+        };
+
+        if (
+            intersection.object.userData === undefined ||
+            intersection.object.userData.feature === undefined
+        ) {
+            return pickResult;
+        }
+
+        if (this.enablePickTechnique) {
+            pickResult.technique = intersection.object.userData.technique;
+        }
+        pickResult.renderOrder = intersection.object?.renderOrder;
+
+        const featureData: TileFeatureData = intersection.object.userData.feature;
+        this.addObjInfo(featureData, intersection, pickResult);
+        if (pickResult.userData) {
+            const featureId = getFeatureId(pickResult.userData);
+            pickResult.featureId = featureId === 0 ? undefined : featureId;
+        }
+
+        let pickObjectType: PickObjectType;
+
+        switch (featureData.geometryType) {
+            case GeometryType.Point:
+            case GeometryType.Text:
+                pickObjectType = PickObjectType.Point;
+                break;
+            case GeometryType.Line:
+            case GeometryType.ExtrudedLine:
+            case GeometryType.SolidLine:
+            case GeometryType.TextPath:
+                pickObjectType = PickObjectType.Line;
+                break;
+            case GeometryType.Polygon:
+            case GeometryType.ExtrudedPolygon:
+                pickObjectType = PickObjectType.Area;
+                break;
+            case GeometryType.Object3D:
+                pickObjectType = PickObjectType.Object3D;
+                break;
+            default:
+                pickObjectType = PickObjectType.Unspecified;
+        }
+
+        pickResult.type = pickObjectType;
+        return pickResult;
+    }
+
+    private getIntersectedTiles(
+        rayCaster: THREE.Raycaster
+    ): Array<{ tile: Tile; distance: number }> {
+        const tiles = new Array<{
+            tile: Tile;
+            distance: number;
+        }>();
         const tileList = this.mapView.visibleTileSet.dataSourceTileList;
         tileList.forEach(dataSourceTileList => {
+            if (!dataSourceTileList.dataSource.enablePicking) {
+                return;
+            }
+
             dataSourceTileList.renderedTiles.forEach(tile => {
                 tmpOBB.copy(tile.boundingBox);
                 tmpOBB.position.sub(this.mapView.worldCenter);
@@ -146,77 +282,19 @@ export class PickHandler {
                 // MapView
                 const worldOffsetX = tile.computeWorldOffsetX();
                 tmpOBB.position.x += worldOffsetX;
-
-                if (tmpOBB.intersectsRay(rayCaster.ray) !== undefined) {
-                    rayCaster.intersectObjects(tile.objects, true, intersects);
+                const distance = tmpOBB.intersectsRay(rayCaster.ray);
+                if (distance !== undefined) {
+                    tiles.push({ tile, distance });
                 }
             });
         });
 
-        for (const intersect of intersects) {
-            const pickResult: PickResult = {
-                type: PickObjectType.Unspecified,
-                point: intersect.point,
-                distance: intersect.distance,
-                intersection: intersect
-            };
-
-            if (
-                intersect.object.userData === undefined ||
-                intersect.object.userData.feature === undefined
-            ) {
-                pickResults.push(pickResult);
-                continue;
+        tiles.sort(
+            (lhs: { tile: Tile; distance: number }, rhs: { tile: Tile; distance: number }) => {
+                return lhs.distance - rhs.distance;
             }
-
-            const featureData: TileFeatureData = intersect.object.userData.feature;
-            if (this.enablePickTechnique) {
-                pickResult.technique = intersect.object.userData.technique;
-            }
-
-            this.addObjInfo(featureData, intersect, pickResult);
-
-            if (featureData.objInfos !== undefined) {
-                const featureId =
-                    featureData.objInfos.length === 1
-                        ? getFeatureId(featureData.objInfos[0])
-                        : undefined;
-                pickResult.featureId = featureId;
-            }
-
-            let pickObjectType: PickObjectType;
-
-            switch (featureData.geometryType) {
-                case GeometryType.Point:
-                case GeometryType.Text:
-                    pickObjectType = PickObjectType.Point;
-                    break;
-                case GeometryType.Line:
-                case GeometryType.ExtrudedLine:
-                case GeometryType.SolidLine:
-                case GeometryType.TextPath:
-                    pickObjectType = PickObjectType.Line;
-                    break;
-                case GeometryType.Polygon:
-                case GeometryType.ExtrudedPolygon:
-                    pickObjectType = PickObjectType.Area;
-                    break;
-                case GeometryType.Object3D:
-                    pickObjectType = PickObjectType.Object3D;
-                    break;
-                default:
-                    pickObjectType = PickObjectType.Unspecified;
-            }
-
-            pickResult.type = pickObjectType;
-            pickResults.push(pickResult);
-        }
-
-        pickResults.sort((a: PickResult, b: PickResult) => {
-            return a.distance - b.distance;
-        });
-
-        return pickResults;
+        );
+        return tiles;
     }
 
     private addObjInfo(
@@ -238,6 +316,9 @@ export class PickHandler {
             featureData.starts.length === 0 ||
             (intersect.faceIndex === undefined && intersect.index === undefined)
         ) {
+            if (featureData.objInfos.length === 1) {
+                pickResult.userData = featureData.objInfos[0];
+            }
             return;
         }
 

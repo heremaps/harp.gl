@@ -76,8 +76,7 @@ export class IconMaterial extends THREE.RawShaderMaterial {
             transparent: true,
 
             vertexColors: true,
-            premultipliedAlpha: true,
-            blending: THREE.NormalBlending
+            premultipliedAlpha: true
         };
         super(shaderParams);
     }

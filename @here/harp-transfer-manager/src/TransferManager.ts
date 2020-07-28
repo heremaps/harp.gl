@@ -104,8 +104,8 @@ export class TransferManager implements ITransferManager {
         return new Promise<void>(resolve => setTimeout(resolve, milliseconds));
     }
     private activeDownloadCount = 0;
-    private downloadQueue = new Array<DeferredPromise<Response>>();
-    private activeDownloads = new Map<RequestInfo, Promise<any>>();
+    private readonly downloadQueue = new Array<DeferredPromise<Response>>();
+    private readonly activeDownloads = new Map<RequestInfo, Promise<any>>();
     /**
      * Constructs a new [[TransferManager]].
      *

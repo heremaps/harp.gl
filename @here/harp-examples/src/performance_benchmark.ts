@@ -648,6 +648,8 @@ export namespace PerformanceBenchmark {
                 "6": 6,
                 "8": 8
             },
+            throttlingEnabled: mapViewApp.mapView.throttlingEnabled,
+            maxTilesPerFrame: mapViewApp.mapView.visibleTileSet.maxTilesPerFrame,
             PhasedLoading: false,
             Berlin: () => {
                 openMapBerlin();
@@ -800,6 +802,13 @@ export namespace PerformanceBenchmark {
             .setValue(decoderCount === undefined ? undefined : decoderCount.toFixed(0));
 
         benchmarksFolder
+            .add(guiOptions, "throttlingEnabled")
+            .onFinishChange(value => {
+                mapViewApp.mapView.throttlingEnabled = value;
+            })
+            .listen();
+
+        benchmarksFolder
             .add(guiOptions, "PixelRatio", guiOptions.PixelRatio)
             .onChange((ratioString: string) => {
                 const ratio = ratioString === "undefined" ? undefined : parseFloat(ratioString);
@@ -833,6 +842,13 @@ export namespace PerformanceBenchmark {
             .onChange((labels: boolean | undefined) => {
                 showLabels = labels === true;
             });
+
+        benchmarksFolder
+            .add(guiOptions, "maxTilesPerFrame", 0, 10, 1)
+            .onFinishChange(value => {
+                mapViewApp.mapView.visibleTileSet.maxTilesPerFrame = value;
+            })
+            .listen();
 
         openAndZoomFolder = benchmarksFolder.addFolder("OpenAndZoom");
 

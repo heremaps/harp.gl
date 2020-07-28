@@ -21,6 +21,7 @@ import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 import {
+    GeoBox,
     GeoCoordinates,
     mercatorProjection,
     sphereProjection,
@@ -82,7 +83,9 @@ describe("MapView", function() {
             const theGlobal: any = global;
             theGlobal.window = { window: { devicePixelRatio: 10 } };
             theGlobal.navigator = {};
-            theGlobal.requestAnimationFrame = () => {};
+            theGlobal.requestAnimationFrame = (callback: (time: DOMHighResTimeStamp) => void) => {
+                setTimeout(callback, 0);
+            };
         }
         addEventListenerSpy = sinon.stub();
         removeEventListenerSpy = sinon.stub();
@@ -195,6 +198,46 @@ describe("MapView", function() {
                         tilt: 30,
                         heading: -160
                     }
+                },
+                {
+                    testName: "berlin bounds only",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        )
+                    }
+                },
+                {
+                    testName: "berlin bounds + zoomLevel",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        ),
+                        zoomLevel: 10
+                    }
+                },
+                {
+                    testName: "berlin bounds + distance",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        ),
+                        distance: 38200
+                    }
+                },
+                {
+                    testName: "berlin bounds + distance + angles",
+                    lookAtParams: {
+                        bounds: new GeoBox(
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.590844, 13.522331)
+                        ),
+                        tilt: 45,
+                        heading: 45
+                    }
                 }
             ]) {
                 it(`obeys constructor params - ${testName}`, function() {
@@ -251,6 +294,30 @@ describe("MapView", function() {
                     if (lookAtParams.heading !== undefined) {
                         expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
                     }
+                    if (lookAtParams.bounds !== undefined) {
+                        expect(mapView.target.latitude).to.be.closeTo(
+                            lookAtParams.bounds.center.latitude,
+                            epsilon
+                        );
+                        expect(mapView.target.longitude).to.be.closeTo(
+                            lookAtParams.bounds.center.longitude,
+                            epsilon
+                        );
+
+                        if (lookAtParams.zoomLevel) {
+                            expect(mapView.zoomLevel).to.be.closeTo(
+                                lookAtParams.zoomLevel,
+                                epsilon
+                            );
+                        }
+
+                        if (lookAtParams.distance) {
+                            expect(mapView.targetDistance).to.be.closeTo(
+                                lookAtParams.distance,
+                                1e-8
+                            );
+                        }
+                    }
                 });
             }
         });
@@ -289,6 +356,19 @@ describe("MapView", function() {
         // Are these only floating-point issues?
         expect(mapView.tilt).to.be.closeTo(10, 1e-3);
         expect(mapView.heading).to.be.closeTo(20, 1e-3);
+    });
+
+    it("Check getters", function() {
+        // Make codecov happy ;)
+        mapView = new MapView({
+            canvas,
+            tilt: 45,
+            heading: 90
+        });
+
+        expect(mapView.imageCache.numberOfNames).to.be.equal(0);
+        expect(mapView.userImageCache.numberOfNames).to.be.equal(0);
+        assert.isDefined(mapView.pickHandler);
     });
 
     it("Correctly set and get zoom", function() {
@@ -1037,6 +1117,35 @@ describe("MapView", function() {
                 styles: {},
                 textStyles: undefined
             });
+        });
+    });
+
+    describe("frame complete", function() {
+        it("MapView emits frame complete for empty map", async function() {
+            this.timeout(100);
+            mapView = new MapView({ canvas });
+            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
+        });
+        it("MapView emits frame complete after map initialized", async function() {
+            this.timeout(100);
+            mapView = new MapView({ canvas });
+
+            const dataSource = new FakeOmvDataSource({ name: "omv" });
+            mapView.addDataSource(dataSource);
+
+            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
+        });
+        it("MapView emits frame complete again after map update", async function() {
+            this.timeout(100);
+            mapView = new MapView({ canvas });
+
+            const dataSource = new FakeOmvDataSource({ name: "omv" });
+            mapView.addDataSource(dataSource);
+
+            await waitForEvent(mapView, MapViewEventNames.FrameComplete);
+
+            mapView.update();
+            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
     });
 });

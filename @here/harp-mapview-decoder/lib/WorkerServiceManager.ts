@@ -47,12 +47,12 @@ export class WorkerServiceManager extends WorkerService {
     /**
      * Contains all registered service factories indexed by `serviceType`.
      */
-    private m_factories = new Map<string, WorkerServiceFactory>();
+    private readonly m_factories = new Map<string, WorkerServiceFactory>();
 
     /**
      * Contains all managed worker services indexed by their `serviceId`.
      */
-    private m_services = new Map<string, WorkerService>();
+    private readonly m_services = new Map<string, WorkerService>();
 
     private constructor(
         serviceId: string = WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID

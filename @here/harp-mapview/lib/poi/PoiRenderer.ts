@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { Env, getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
 import { IconMaterial } from "@here/harp-materials";
 import { MemoryUsage, TextCanvas } from "@here/harp-text-canvas";
@@ -11,6 +10,7 @@ import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";
+import { MapViewImageCache } from "../image/MapViewImageCache";
 import { MipMapGenerator } from "../image/MipMapGenerator";
 import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
@@ -393,13 +393,13 @@ export class PoiRenderer {
         return screenBox;
     }
     // keep track of the missing textures, but only warn once
-    private static m_missingTextureName: Map<string, boolean> = new Map();
+    private static readonly m_missingTextureName: Map<string, boolean> = new Map();
 
     // the render buffer containing all batches, one batch per texture/material.
-    private m_renderBuffer: PoiRenderBuffer;
+    private readonly m_renderBuffer: PoiRenderBuffer;
 
     // temporary variable to save allocations
-    private m_tempScreenBox = new Math2D.Box();
+    private readonly m_tempScreenBox = new Math2D.Box();
 
     /**
      * Create the `PoiRenderer` for the specified {@link MapView}.
@@ -544,11 +544,21 @@ export class PoiRenderer {
 
         const imageDefinition = imageTexture.image;
 
-        let imageItem = this.mapView.imageCache.findImageByName(imageDefinition);
+        // Check user image cache first.
+        let imageItem = this.mapView.userImageCache.findImageByName(imageDefinition);
+        let imageCache: MapViewImageCache | undefined;
         if (imageItem === undefined) {
-            logger.error(`init: No imageItem found with name '${imageDefinition}'`);
-            poiInfo.isValid = false;
-            return;
+            // Then check default image cache.
+            imageItem = this.mapView.imageCache.findImageByName(imageDefinition);
+            if (imageItem === undefined) {
+                logger.error(`init: No imageItem found with name '${imageDefinition}'`);
+                poiInfo.isValid = false;
+                return;
+            } else {
+                imageCache = this.mapView.imageCache;
+            }
+        } else {
+            imageCache = this.mapView.userImageCache;
         }
 
         if (!imageItem.loaded) {
@@ -557,7 +567,7 @@ export class PoiRenderer {
                 return;
             }
             const imageUrl = imageItem.url;
-            const loading = this.mapView.imageCache.loadImage(imageItem);
+            const loading = imageCache.loadImage(imageItem);
             if (loading instanceof Promise) {
                 loading
                     .then(loadedImageItem => {

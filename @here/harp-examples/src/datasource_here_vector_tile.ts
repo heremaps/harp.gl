@@ -3,10 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+
 import { apikey, copyrightInfo } from "../config";
 
 /**
@@ -71,6 +71,9 @@ export namespace DatasourceHEREVectorTileExample {
         // end:harp_gl_datasource_here_vector_tile_example_1.ts
 
         // snippet:harp_gl_datasource_here_vector_tile_example_2.ts
+
+        CopyrightElementHandler.install("copyrightNotice", map);
+
         const mapControls = new MapControls(map);
         mapControls.maxTiltAngle = 50;
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input", projectionSwitch: true });
@@ -90,23 +93,27 @@ export namespace DatasourceHEREVectorTileExample {
         return map;
     }
 
-    const mapView = initializeMapView("mapCanvas");
+    function main() {
+        const mapView = initializeMapView("mapCanvas");
 
-    // snippet:harp_gl_datasource_here_vector_tile_example_4.ts
-    const omvDataSource = new OmvDataSource({
-        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-        apiFormat: APIFormat.XYZOMV,
-        styleSetName: "tilezen",
-        authenticationCode: apikey,
-        authenticationMethod: {
-            method: AuthenticationMethod.QueryString,
-            name: "apikey"
-        },
-        copyrightInfo
-    });
-    // end:harp_gl_datasource_here_vector_tile_example_4.ts
+        // snippet:harp_gl_datasource_here_vector_tile_example_4.ts
+        const omvDataSource = new OmvDataSource({
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+            apiFormat: APIFormat.XYZOMV,
+            styleSetName: "tilezen",
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
+            copyrightInfo
+        });
+        // end:harp_gl_datasource_here_vector_tile_example_4.ts
 
-    // snippet:harp_gl_datasource_here_vector_tile_example_5.ts
-    mapView.addDataSource(omvDataSource);
-    // end:harp_gl_datasource_here_vector_tile_example_5.ts
+        // snippet:harp_gl_datasource_here_vector_tile_example_5.ts
+        mapView.addDataSource(omvDataSource);
+        // end:harp_gl_datasource_here_vector_tile_example_5.ts
+    }
+
+    main();
 }

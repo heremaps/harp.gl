@@ -54,8 +54,8 @@ interface ImageTextureDef {
  */
 export class PoiManager {
     // Keep track of the missing POI table names, but only warn once.
-    private static m_missingPoiTableName: Map<string, boolean> = new Map();
-    private static m_missingPoiName: Map<string, boolean> = new Map();
+    private static readonly m_missingPoiTableName: Map<string, boolean> = new Map();
+    private static readonly m_missingPoiName: Map<string, boolean> = new Map();
 
     /**
      * Warn about a missing POI table name, but only once.
@@ -100,8 +100,8 @@ export class PoiManager {
         }
     }
 
-    private m_imageTextures: Map<string, ImageTexture> = new Map();
-    private m_poiShieldGroups: Map<string, number> = new Map();
+    private readonly m_imageTextures: Map<string, ImageTexture> = new Map();
+    private readonly m_poiShieldGroups: Map<string, number> = new Map();
 
     /**
      * The constructor of the `PoiManager`.
@@ -370,7 +370,7 @@ export class PoiManager {
 
         if (poiGeometry.stringCatalog !== undefined) {
             assert(poiGeometry.texts.length > 0);
-            text = poiGeometry.stringCatalog[poiGeometry.texts[0]] || "";
+            text = poiGeometry.stringCatalog[poiGeometry.texts[0]] ?? "";
             if (poiGeometry.objInfos !== undefined) {
                 userData = poiGeometry.objInfos[0];
                 featureId = getFeatureId(userData);
@@ -459,7 +459,7 @@ export class PoiManager {
 
             assert(poiGeometry.texts.length > i);
             let imageTextureName = techniqueTextureName;
-            const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] || "";
+            const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] ?? "";
             const userData =
                 poiGeometry.objInfos !== undefined ? poiGeometry.objInfos[i] : undefined;
             const featureId = getFeatureId(userData);

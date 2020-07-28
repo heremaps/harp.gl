@@ -125,9 +125,19 @@ export class RenderState {
      * unchanged.
      *
      * @param time - Current time.
+     * @param disableFading - Optional flag to disable fading.
      */
-    startFadeIn(time: number) {
+    startFadeIn(time: number, disableFading?: boolean) {
         if (this.m_state === FadingState.FadingIn || this.m_state === FadingState.FadedIn) {
+            return;
+        }
+
+        if (disableFading === true) {
+            this.value = 1;
+            this.opacity = 1;
+            this.m_state = FadingState.FadedIn;
+            this.startTime = time;
+
             return;
         }
 

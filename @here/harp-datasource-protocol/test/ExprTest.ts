@@ -21,7 +21,7 @@ function evaluate(expr: string | JsonExpr | Expr, env?: Env | ValueMap): Value {
         ? // tslint:disable-next-line: deprecation
           Expr.parse(expr)
         : Expr.fromJSON(expr)
-    ).evaluate(env || new Env());
+    ).evaluate(env ?? new Env());
 }
 
 describe("Expr", function() {

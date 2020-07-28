@@ -495,7 +495,7 @@ export function reportPerformanceAndReset() {
 function saveBaselineIfRequested(results: PerformanceTestResults) {
     if (typeof window === "undefined" && process.env.PROFILEHELPER_COMMAND === "baseline") {
         const baselineFileName =
-            process.env.PROFILEHELPER_OUTPUT || ".profile-helper-baseline.json";
+            process.env.PROFILEHELPER_OUTPUT ?? ".profile-helper-baseline.json";
         if (!baselineFileName) {
             return;
         }
@@ -508,7 +508,7 @@ function saveBaselineIfRequested(results: PerformanceTestResults) {
 function loadBaseLineIfAvailable() {
     if (typeof window === "undefined") {
         const baselineFileName =
-            process.env.PROFILEHELPER_OUTPUT || ".profile-helper-baseline.json";
+            process.env.PROFILEHELPER_OUTPUT ?? ".profile-helper-baseline.json";
         if (!baselineFileName || !fs.existsSync(baselineFileName)) {
             return undefined;
         }
@@ -546,7 +546,7 @@ function sleepPromised(time: number = 1): Promise<void> {
  *     #countCall: Foo#push called=123
  */
 export function countCall(name: string, delta = 1) {
-    let current = occurenceResults.get(name) || 0;
+    let current = occurenceResults.get(name) ?? 0;
     current += delta;
     occurenceResults.set(name, current);
 }

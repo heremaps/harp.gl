@@ -172,12 +172,19 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
 }
 
 class SolidLineMeshBuilder {
-    private static DEFAULT_MATERIAL = new SolidLineMaterial({ lineWidth: 1, outlineWidth: 1 });
+    private static readonly DEFAULT_MATERIAL = new SolidLineMaterial({
+        lineWidth: 1,
+        outlineWidth: 1
+    });
 
     readonly geometryBuilder: SolidLineGeometryBuilder;
-    private m_materials: THREE.Material[] = [SolidLineMeshBuilder.DEFAULT_MATERIAL];
+    private readonly m_materials: THREE.Material[] = [SolidLineMeshBuilder.DEFAULT_MATERIAL];
     private m_featureStarts?: number[];
-    private m_groups = new Array<{ start: number; count: number; materialIndex?: number }>();
+    private readonly m_groups = new Array<{
+        start: number;
+        count: number;
+        materialIndex?: number;
+    }>();
 
     constructor(polyline: number[], bitangents: number[]) {
         this.geometryBuilder = new SolidLineGeometryBuilder(polyline, bitangents);
