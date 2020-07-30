@@ -167,16 +167,16 @@ describe("OmvDecodedTileEmitter", function() {
 
         const eps = 1e-15;
         assert.closeTo(texCoords[0], 0, eps);
-        assert.closeTo(texCoords[1], 0, eps);
+        assert.closeTo(texCoords[1], 1, eps);
 
         assert.closeTo(texCoords[2], 1, eps);
-        assert.closeTo(texCoords[3], 0, eps);
+        assert.closeTo(texCoords[3], 1, eps);
 
         assert.closeTo(texCoords[4], 1, eps);
-        assert.closeTo(texCoords[5], 1, eps);
+        assert.closeTo(texCoords[5], 0, eps);
 
         assert.closeTo(texCoords[6], 0, eps);
-        assert.closeTo(texCoords[7], 1, eps);
+        assert.closeTo(texCoords[7], 0, eps);
     });
 
     it("Test splitJaggyLines for short paths", function() {

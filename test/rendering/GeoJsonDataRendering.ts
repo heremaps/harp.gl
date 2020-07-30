@@ -8,12 +8,43 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { FeatureCollection, GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
-import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { GeoCoordinates, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
+
+enum VTJsonGeometryType {
+    Unknown,
+    Point,
+    LineString,
+    Polygon
+}
+interface VTJsonFeature {
+    geometry: number[][];
+    type: VTJsonGeometryType;
+}
+
+interface VTJsonTile {
+    features: VTJsonFeature[];
+}
+
+class ReverseWindingGeoJsonTiler extends GeoJsonTiler {
+    /** @override */
+    async getTile(indexId: string, tileKey: TileKey): Promise<{}> {
+        return super.getTile(indexId, tileKey).then(tile => {
+            for (const feature of (tile as VTJsonTile).features) {
+                if (feature.type === VTJsonGeometryType.Polygon) {
+                    for (const ring of feature.geometry) {
+                        ring.reverse();
+                    }
+                }
+            }
+            return tile;
+        });
+    }
+}
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
     let mapView: MapView;
@@ -48,8 +79,8 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         testImageName: string;
         theme: Theme;
         geoJson: string | GeoJson;
-
         lookAt?: Partial<LookAtParams>;
+        reverseWinding?: boolean;
     }
 
     async function geoJsonTest(options: GeoJsoTestOptions) {
@@ -88,7 +119,12 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 typeof options.geoJson === "string"
                     ? new URL(options.geoJson, window.location.href)
                     : options.geoJson,
-                { tiler: new GeoJsonTiler() }
+                {
+                    tiler:
+                        options.reverseWinding === true
+                            ? new ReverseWindingGeoJsonTiler()
+                            : new GeoJsonTiler()
+                }
             ),
             name: "geojson",
             styleSetName: "geojson"
@@ -185,7 +221,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders extruded polygons with height and color", async function() {
+    it("renders extruded polygons with height and color - reversed winding", async function() {
         this.timeout(5000);
 
         const ourStyle: StyleSet = [
@@ -212,7 +248,8 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             lookAt: {
                 tilt: 45,
                 heading: 30
-            }
+            },
+            reverseWinding: true
         });
     });
 

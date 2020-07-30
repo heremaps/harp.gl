@@ -72,13 +72,12 @@ import {
     webMercatorTile2TargetWorld,
     world2tile
 } from "./OmvUtils";
-import { Ring } from "./Ring";
+import { Ring, TexCoordsFunction } from "./Ring";
 
 import {
     AttrEvaluationContext,
     evaluateTechniqueAttr
 } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
-import { clipPolygon } from "@here/harp-geometry/lib/ClipPolygon";
 import {
     EdgeLengthGeometrySubdivisionModifier,
     SubdivisionMode
@@ -213,7 +212,6 @@ export enum LineType {
     Complex
 }
 
-type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => THREE.Vector2;
 const tmpColor = new THREE.Color();
 
 export class OmvDecodedTileEmitter implements IOmvEmitter {
@@ -801,40 +799,36 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
+                let outerRingIsClockwise: boolean | undefined;
 
                 for (const outline of polygon.rings) {
-                    let coords = outline;
-                    let clippedPointIndices: Set<number> | undefined;
-
                     // disable clipping for the polygon geometries
                     // rendered using the extruded-polygon technique.
                     // We can't clip these polygons for now because
                     // otherwise we could break the current assumptions
                     // used to add oultines around the extruded geometries.
-                    if (isPolygon && !isExtruded) {
-                        const shouldClipPolygon = coords.some(
-                            p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
-                        );
+                    const clipPolygon =
+                        isPolygon && !isExtruded
+                            ? outline.some(
+                                  p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
+                              )
+                            : undefined;
 
-                        if (shouldClipPolygon) {
-                            coords = clipPolygon(coords, extents);
-                            clippedPointIndices = Ring.computeClippedPointIndices(coords, outline);
-                        } else {
-                            clippedPointIndices = new Set();
-                        }
-                    }
-
-                    if (coords.length === 0) {
+                    const result = Ring.create(
+                        outline,
+                        extents,
+                        computeTexCoords,
+                        outerRingIsClockwise,
+                        clipPolygon
+                    );
+                    if (!result) {
                         continue;
                     }
-
-                    let textureCoords: THREE.Vector2[] | undefined;
-
-                    if (computeTexCoords !== undefined) {
-                        textureCoords = coords.map(coord => computeTexCoords(coord, extents));
+                    const ring = result.ring;
+                    if (outerRingIsClockwise === undefined) {
+                        outerRingIsClockwise = ring.winding !== result.reversed;
                     }
-
-                    rings.push(new Ring(coords, textureCoords, extents, clippedPointIndices));
+                    rings.push(ring);
                 }
 
                 if (rings.length === 0) {

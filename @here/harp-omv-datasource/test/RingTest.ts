@@ -21,6 +21,30 @@ import { Ring } from "../lib/Ring";
 const DEFAULT_EXTENTS = 4 * 1024;
 
 describe("Ring", function() {
+    const cwRing: Vector2[] = [
+        new Vector2(0, 0),
+        new Vector2(100, 0),
+        new Vector2(100, 100),
+        new Vector2(0, 100),
+        new Vector2(0, 0)
+    ];
+    const ccwRing: Vector2[] = [
+        new Vector2(0, 0),
+        new Vector2(0, 100),
+        new Vector2(100, 100),
+        new Vector2(100, 0),
+        new Vector2(0, 0)
+    ];
+
+    const ringToClip: Vector2[] = [
+        new Vector2(-100, 0),
+        new Vector2(4096, 0),
+        new Vector2(-50, 2048),
+        new Vector2(4096, 4096),
+        new Vector2(-100, 4096)
+    ];
+    const clippedRing: number[] = [0, 0, 4096, 0, 0, 2023, 0, 2073, 4096, 4096, 0, 4096];
+
     describe("Empty ring", () => {
         it("Defaults of empty ring", () => {
             const ring = new Ring([]);
@@ -61,14 +85,6 @@ describe("Ring", function() {
     });
 
     describe("Full quad outer ring", () => {
-        const points: Vector2[] = [
-            new Vector2(0, 0),
-            new Vector2(100, 0),
-            new Vector2(100, 100),
-            new Vector2(0, 100),
-            new Vector2(0, 0)
-        ];
-
         const texCoords: Vector2[] = [
             new Vector2(0, 0),
             new Vector2(1, 0),
@@ -78,17 +94,17 @@ describe("Ring", function() {
         ];
 
         it("no texture coordinates", () => {
-            const ring = new Ring(points, undefined, DEFAULT_EXTENTS);
+            const ring = new Ring(cwRing, undefined, DEFAULT_EXTENTS);
             assert.strictEqual(ring.area, 100 * 100);
-            assert.strictEqual(ring.winding, false);
+            assert.strictEqual(ring.winding, true);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), [0, 0, 100, 0, 100, 100, 0, 100, 0, 0]);
         });
 
         it("with texture coordinates", () => {
-            const ring = new Ring(points, texCoords, DEFAULT_EXTENTS);
+            const ring = new Ring(cwRing, texCoords, DEFAULT_EXTENTS);
             assert.strictEqual(ring.area, 100 * 100);
-            assert.strictEqual(ring.winding, false);
+            assert.strictEqual(ring.winding, true);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), [
                 0,
@@ -116,14 +132,6 @@ describe("Ring", function() {
     });
 
     describe("Full quad inner ring", () => {
-        const points: Vector2[] = [
-            new Vector2(0, 0),
-            new Vector2(0, 100),
-            new Vector2(100, 100),
-            new Vector2(100, 0),
-            new Vector2(0, 0)
-        ];
-
         const texCoords: Vector2[] = [
             new Vector2(0, 0),
             new Vector2(0, 1),
@@ -133,17 +141,17 @@ describe("Ring", function() {
         ];
 
         it("without texture coordinates", () => {
-            const ring = new Ring(points, undefined, DEFAULT_EXTENTS);
+            const ring = new Ring(ccwRing, undefined, DEFAULT_EXTENTS);
             assert.strictEqual(ring.area, -(100 * 100));
-            assert.strictEqual(ring.winding, true);
+            assert.strictEqual(ring.winding, false);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), [0, 0, 0, 100, 100, 100, 100, 0, 0, 0]);
         });
 
         it("with texture coordinates", () => {
-            const ring = new Ring(points, texCoords, DEFAULT_EXTENTS);
+            const ring = new Ring(ccwRing, texCoords, DEFAULT_EXTENTS);
             assert.strictEqual(ring.area, -(100 * 100));
-            assert.strictEqual(ring.winding, true);
+            assert.strictEqual(ring.winding, false);
             assert.strictEqual(ring.extents, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(), [
                 0,
@@ -170,7 +178,7 @@ describe("Ring", function() {
         });
 
         it("flatten to array at a specific offset", () => {
-            const ring = new Ring(points, undefined, DEFAULT_EXTENTS);
+            const ring = new Ring(ccwRing, undefined, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray([123, 321], 2), [
                 123,
                 321,
@@ -188,7 +196,7 @@ describe("Ring", function() {
         });
 
         it("flatten to array at a specific offset", () => {
-            const ring = new Ring(points, texCoords, DEFAULT_EXTENTS);
+            const ring = new Ring(ccwRing, texCoords, DEFAULT_EXTENTS);
             assert.deepEqual(ring.toArray(undefined, 6), [
                 undefined,
                 undefined,
@@ -220,7 +228,7 @@ describe("Ring", function() {
         });
 
         it("outlines", () => {
-            const ring = new Ring(points, texCoords);
+            const ring = new Ring(ccwRing, texCoords);
             assert.strictEqual(ring.isProperEdge(0), false);
             assert.strictEqual(ring.isProperEdge(1), true);
             assert.strictEqual(ring.isProperEdge(2), true);
@@ -230,28 +238,70 @@ describe("Ring", function() {
     });
 
     describe("Concave polygon resulting into 2 parts after clipping", () => {
-        const polygon: Vector2[] = [
-            new Vector2(-100, 0),
-            new Vector2(4096, 0),
-            new Vector2(-50, 2048),
-            new Vector2(4096, 4096),
-            new Vector2(-100, 4096)
-        ];
-
-        const clippedPolygon = clipPolygon(polygon, DEFAULT_EXTENTS);
+        const clippedPolygon = clipPolygon(ringToClip, DEFAULT_EXTENTS);
 
         it("edge outlines", () => {
             const ring = new Ring(clippedPolygon, undefined, DEFAULT_EXTENTS);
-            assert.strictEqual(ring.winding, false);
+            assert.strictEqual(ring.winding, true);
             const outlines = ring.points.map((_, i) => ring.isProperEdge(i));
 
             assert.deepEqual(
                 // tslint:disable-next-line: no-bitwise
                 ring.toArray().map(x => x | 0),
-                [0, 0, 4096, 0, 0, 2023, 0, 2073, 4096, 4096, 0, 4096]
+                clippedRing
             );
 
             assert.deepEqual(outlines, [false, true, false, true, false, false]);
+        });
+    });
+
+    describe("create", () => {
+        it("keeps winding of cw outer ring", () => {
+            const result = Ring.create(cwRing.slice(), DEFAULT_EXTENTS);
+            assert.isDefined(result);
+            assert.isFalse(result!.reversed);
+            assert.deepEqual(result!.ring.points, cwRing);
+        });
+
+        it("keeps winding of ccw inner ring", () => {
+            const result = Ring.create(ccwRing.slice(), DEFAULT_EXTENTS, undefined, true);
+            assert.isDefined(result);
+            assert.isFalse(result!.reversed);
+            assert.deepEqual(result!.ring.points, ccwRing);
+        });
+
+        it("reverses winding of ccw outer ring", () => {
+            const result = Ring.create(ccwRing.slice(), DEFAULT_EXTENTS);
+            assert.isDefined(result);
+            assert.isTrue(result!.reversed);
+            assert.deepEqual(result!.ring.points, ccwRing.slice().reverse());
+        });
+
+        it("reverses winding of cw inner ring", () => {
+            const result = Ring.create(cwRing.slice(), DEFAULT_EXTENTS, undefined, false);
+            assert.isDefined(result);
+            assert.isTrue(result!.reversed);
+            assert.deepEqual(result!.ring.points, cwRing.slice().reverse());
+        });
+
+        it("clips ring if clip set to true", () => {
+            const result = Ring.create(
+                ringToClip.slice(),
+                DEFAULT_EXTENTS,
+                undefined,
+                undefined,
+                true
+            );
+            assert.isDefined(result);
+            const ring = result!.ring;
+            assert.deepEqual(
+                // tslint:disable-next-line: no-bitwise
+                ring.toArray().map(x => x | 0),
+                clippedRing
+            );
+
+            assert.isDefined(ring.clippedPointIndices);
+            assert.deepEqual(ring.clippedPointIndices!, new Set([0, 2, 3, 5]));
         });
     });
 });

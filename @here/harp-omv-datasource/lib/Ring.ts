@@ -4,41 +4,98 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { clipPolygon } from "@here/harp-geometry/lib/ClipPolygon";
 import { ShapeUtils, Vector2 } from "three";
+
+/**
+ * Returns a `Set` containing the indices of the elements
+ * of `clippedPoints` that are clipped (not included in `originalPoints`).
+ *
+ * @param clippedPoints `Array` of clipped positions.
+ * @param originalPoints `Array` of unclipped positions.
+ */
+function computeClippedPointIndices(
+    clippedPoints: Vector2[],
+    originalPoints: Vector2[]
+): Set<number> {
+    const isClipped = (p: THREE.Vector2) => originalPoints.find(q => q.equals(p)) === undefined;
+    return new Set(clippedPoints.map((p, i) => (isClipped(p) ? i : -1)).filter(i => i !== -1));
+}
+
+// Assumes area was computed with ShapeUtils.area() and top-left coordinate origin.
+function isRingClockwise(ringArea: number): boolean {
+    return ringArea > 0;
+}
+
+export type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => THREE.Vector2;
 
 /**
  * A class representing a ring of a polygon geometry.
  */
 export class Ring {
     /**
-     * Returns a `Set` containing the indices of the elements
-     * of `clippedPoints` that are clipped (not included in `originalPoints`).
+     * Creates a new `Ring` with optional clipping and texture coordinates.
+     * @remark The ring winding will be reversed if necessary to comply with Mapbox vector tile
+     * specification (i.e. outer rings must be clockwise, inner rings counter-clockwise). Winding
+     * is computed assuming top-left coordinate origin.
      *
-     * @param clippedPoints `Array` of clipped positions.
-     * @param originalPoints `Array` of unclipped positions.
+     * @param coords The coordinates of the ring.
+     * @param extents The extents of the tile bounds.
+     * @param textureCoordsFunc Function that will be called if provided to generate texture
+     * coordinates.
+     * @param outerRingIsClockwise Indicates whether the input geometry is clockwise for outer
+     * rings. If not given,the ring is assumed to be an outer ring.
+     * @param clip If `true`, ring will be clipped to the given extents.
      */
-    static computeClippedPointIndices(
-        clippedPoints: Vector2[],
-        originalPoints: Vector2[]
-    ): Set<number> {
-        const isClipped = (p: THREE.Vector2) => originalPoints.find(q => q.equals(p)) === undefined;
-        return new Set(clippedPoints.map((p, i) => (isClipped(p) ? i : -1)).filter(i => i !== -1));
-    }
+    static create(
+        coords: Vector2[],
+        extents: number,
+        textureCoordsFunc?: TexCoordsFunction,
+        outerRingIsClockwise?: boolean,
+        clip?: boolean
+    ): { ring: Ring; reversed: boolean } | undefined {
+        let area = ShapeUtils.area(coords);
+        const isClockwise = isRingClockwise(area);
+        let reversed = false;
 
-    /**
-     * The signed area of this `Ring`.
-     *
-     * @remarks
-     * The sign of the area depends on the projection and the axis orientation
-     * of the ring coordinates.
-     */
-    readonly area: number;
+        const unclippedCoords = coords;
+        if (clip === true) {
+            coords = clipPolygon(coords, extents);
+        }
+
+        if (coords.length === 0) {
+            return undefined;
+        }
+
+        const isOuterRing =
+            outerRingIsClockwise === undefined ? true : isClockwise === outerRingIsClockwise;
+        if (isOuterRing !== isClockwise) {
+            coords.reverse();
+            area = -area;
+            reversed = true;
+        }
+
+        const textureCoords = textureCoordsFunc
+            ? coords.map(coord => textureCoordsFunc(coord, extents))
+            : undefined;
+
+        const clippedPointIndices =
+            clip === true
+                ? computeClippedPointIndices(coords, unclippedCoords)
+                : clip === false
+                ? new Set<number>()
+                : undefined;
+
+        const ring = new Ring(coords, textureCoords, extents, clippedPointIndices, area);
+        return { ring, reversed };
+    }
 
     /**
      * The winding of this `Ring`.
      *
      * @remarks
-     * Derived from the sign of the `area` of this Ring.
+     * Derived from the sign of the `area` of this Ring. `true` is clockwise winding assuming
+     * top-left coordinate origin.
      */
     readonly winding: boolean;
 
@@ -54,12 +111,15 @@ export class Ring {
      * @param textureCoords The optional `Array` of texture coordinates.
      * @param extents The extents of the tile bounds.
      * @param clippedPointIndices Optional `Set` containing the indices of the clipped points.
+     * @param area The signed area of this `Ring`. The sign of the area depends on the projection
+     * and the axis orientation of the ring coordinates. If not provided, it'll be computed.
      */
     constructor(
         readonly points: Vector2[],
         readonly textureCoords?: Vector2[],
         readonly extents: number = 4 * 1024,
-        readonly clippedPointIndices?: Set<number>
+        readonly clippedPointIndices?: Set<number>,
+        readonly area?: number
     ) {
         if (textureCoords !== undefined && textureCoords.length !== points.length) {
             throw new Error(
@@ -73,8 +133,10 @@ export class Ring {
             this.vertexStride = this.vertexStride + 2;
         }
 
-        this.area = ShapeUtils.area(this.points);
-        this.winding = this.area < 0;
+        if (this.area === undefined) {
+            this.area = ShapeUtils.area(this.points);
+        }
+        this.winding = isRingClockwise(this.area);
     }
 
     /**
