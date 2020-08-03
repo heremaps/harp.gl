@@ -1190,7 +1190,8 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         this.applyExtrusionParameters({ ...params, zFightingWorkaround: true });
 
         if (params?.removeDiffuseLight === true) {
-            this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, shader => {
+            this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, shaderParameters => {
+                const shader = shaderParameters as THREE.Shader;
                 shader.fragmentShader = THREE.ShaderChunk.meshphysical_frag.replace(
                     "#include <lights_physical_pars_fragment>",
                     simpleLightingShadowChunk
