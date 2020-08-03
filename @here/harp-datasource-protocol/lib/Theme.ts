@@ -505,63 +505,54 @@ export interface BaseLight {
 }
 
 /**
- * Light type: ambient.
- *
- * @remarks
- *
- * @defaultSnippets [
- *     {
- *         "label": "New Ambient Light",
- *         "description": "Adds a new Ambient Light",
- *         "body": {
- *             "type": "ambient",
- *             "name": "${1:ambient light}",
- *             "color": "#${2:fff}",
- *             "intensity": "^${3:1}"
- *         }
- *     }
- * ]
+ * Ambient light
  */
 export interface AmbientLight extends BaseLight {
-    type: "ambient";
     /**
-     * @format color-hex
+     * The type of the light.
+     */
+    type: "ambient";
+
+    /**
+     * The color of this ambient light.
      */
     color: string;
+
+    /**
+     * The intensity of this ambient light.
+     */
     intensity?: number;
 }
 
 /**
- * Light type: directional.
- *
- * @remarks
- *
- * @defaultSnippets [
- *     {
- *         "label": "New Directional Light",
- *         "description": "Adds a new Directional Light",
- *         "body": {
- *             "type": "directional",
- *             "name": "${1:directional-light$:1}",
- *             "color": "#${2:fff}",
- *             "intensity": "^${3:1}",
- *             "direction": {
- *                 "x": "^${4:1}",
- *                 "y": "^${5:0}",
- *                 "z": "^${6:0}"
- *             }
- *         }
- *     }
- * ]
+ * Directional light.
  */
 export interface DirectionalLight extends BaseLight {
-    type: "directional";
     /**
-     * @format color-hex
+     * The type of the light.
+     */
+    type: "directional";
+
+    /**
+     * The color of this directional light.
      */
     color: string;
+
+    /**
+     * The intensity of this directional light.
+     */
     intensity: number;
+
+    /**
+     * The direction of this directional light.
+     */
     direction: Vector3Like;
+
+    /**
+     * Determine if this light casts dynamic shadows.
+     *
+     * @defaultValue false
+     */
     castShadow?: boolean;
 }
 
