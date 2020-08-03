@@ -218,7 +218,7 @@ describe("ThemeLoader", function() {
             assert.equal(roadStyle.technique, "solid-line");
             const roadStyleCasted = (roadStyle as any) as SolidLineStyle;
             assert.equal(roadStyleCasted.description, "roads");
-            assert.deepEqual(roadStyleCasted.when, theme.definitions!.roadCondition.value);
+            assert.deepEqual(roadStyleCasted.when!, theme.definitions!.roadCondition.value);
             assert.equal(roadStyleCasted.attr!.lineColor, "#f00");
         });
 
@@ -553,6 +553,204 @@ describe("ThemeLoader", function() {
             const terrain = theme.styles!.terrain;
             assert.strictEqual(terrain.length, 1);
             assert.strictEqual(terrain[0].technique, "none");
+        });
+
+        it("extends existing style", async () => {
+            const baseTheme: FlatTheme = {
+                styles: [
+                    {
+                        styleSet: "tilezen",
+                        id: "buildings",
+
+                        layer: "buildings",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "extruded-polygon",
+                        color: "#f00"
+                    },
+                    {
+                        styleSet: "terrain",
+
+                        when: ["boolean", false],
+                        technique: "none"
+                    }
+                ]
+            };
+
+            const source: FlatTheme = {
+                extends: [(baseTheme as unknown) as Theme],
+                styles: [
+                    {
+                        styleSet: "tilezen",
+
+                        // extends the extisting style with this id
+                        extends: "buildings",
+
+                        technique: "extruded-polygon",
+                        color: "#0f0",
+                        lineColor: "#00f"
+                    }
+                ]
+            };
+
+            const theme = await ThemeLoader.load(source);
+
+            assert.isDefined(theme.styles);
+            assert.isArray(theme.styles!.tilezen);
+
+            const tilezen = theme.styles!.tilezen;
+            assert.strictEqual(tilezen.length, 1);
+            assert.strictEqual(tilezen[0].technique, "extruded-polygon");
+
+            assert.deepEqual(tilezen[0], {
+                styleSet: "tilezen",
+                id: "buildings",
+                extends: undefined,
+
+                layer: "buildings",
+                when: ["==", ["geometry-type"], "Polygon"],
+                technique: "extruded-polygon",
+                color: "#0f0",
+                lineColor: "#00f"
+            });
+
+            assert.isArray(theme.styles!.terrain);
+            const terrain = theme.styles!.terrain;
+            assert.strictEqual(terrain.length, 1);
+            assert.strictEqual(terrain[0].technique, "none");
+        });
+
+        it("overrides property of an existing sytle", async () => {
+            const baseTheme: FlatTheme = {
+                styles: [
+                    {
+                        styleSet: "tilezen",
+                        id: "buildings",
+
+                        layer: "buildings",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "extruded-polygon",
+                        color: "#f00"
+                    },
+                    {
+                        styleSet: "terrain",
+                        when: ["boolean", false],
+                        technique: "none"
+                    }
+                ]
+            };
+
+            const source: FlatTheme = {
+                extends: [(baseTheme as unknown) as Theme],
+                styles: [
+                    {
+                        styleSet: "tilezen",
+
+                        // overrides the extisting style with this id
+                        id: "buildings",
+
+                        layer: "buildings",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "fill"
+                    }
+                ]
+            };
+
+            const theme = await ThemeLoader.load(source);
+
+            assert.isDefined(theme.styles);
+            assert.isArray(theme.styles!.tilezen);
+
+            const tilezen = theme.styles!.tilezen;
+            assert.strictEqual(tilezen.length, 1);
+
+            assert.deepEqual(tilezen[0], {
+                styleSet: "tilezen",
+                id: "buildings",
+
+                layer: "buildings",
+                when: ["==", ["geometry-type"], "Polygon"],
+                technique: "fill"
+            });
+
+            assert.isArray(theme.styles!.terrain);
+            const terrain = theme.styles!.terrain;
+            assert.strictEqual(terrain.length, 1);
+            assert.strictEqual(terrain[0].technique, "none");
+        });
+
+        it("verify the scope of ids", async () => {
+            // the two style sets have a rule with the same id.
+            const baseTheme: FlatTheme = {
+                styles: [
+                    {
+                        styleSet: "tilezen",
+                        id: "rule-id",
+
+                        layer: "buildings",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "extruded-polygon",
+                        color: "#f00"
+                    },
+                    {
+                        styleSet: "terrain",
+                        id: "rule-id",
+
+                        when: ["boolean", false],
+                        technique: "none"
+                    }
+                ]
+            };
+
+            // the extension overrides only the rule from the
+            // referenced id of the styleset `tilezen`, and leaves
+            // the styleset `terrain` unmodified.
+
+            const source: FlatTheme = {
+                extends: [(baseTheme as unknown) as Theme],
+                styles: [
+                    {
+                        styleSet: "tilezen",
+
+                        // extends the extisting style with this id
+                        extends: "rule-id",
+
+                        technique: "extruded-polygon",
+                        color: "#0f0",
+                        lineColor: "#00f"
+                    }
+                ]
+            };
+
+            const theme = await ThemeLoader.load(source);
+
+            assert.isDefined(theme.styles);
+            assert.isArray(theme.styles!.tilezen);
+
+            const tilezen = theme.styles!.tilezen;
+            assert.strictEqual(tilezen.length, 1);
+
+            assert.deepEqual(tilezen[0], {
+                styleSet: "tilezen",
+                id: "rule-id",
+                extends: undefined,
+
+                layer: "buildings",
+                when: ["==", ["geometry-type"], "Polygon"],
+                technique: "extruded-polygon",
+                color: "#0f0",
+                lineColor: "#00f"
+            });
+
+            const terrain = theme.styles!.terrain;
+            assert.strictEqual(terrain.length, 1);
+
+            assert.deepEqual(terrain[0], {
+                styleSet: "terrain",
+                id: "rule-id",
+
+                when: ["boolean", false],
+                technique: "none"
+            });
         });
     });
 });

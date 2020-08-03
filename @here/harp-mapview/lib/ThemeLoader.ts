@@ -470,10 +470,41 @@ export class ThemeLoader {
                 if (index !== -1) {
                     // merge the current and incoming styleset
                     // and add the result to `styles`.
-                    styles[styleSetName] = [
-                        ...baseTheme.styles![styleSetName],
-                        ...theme.styles![styleSetName]
-                    ];
+
+                    const baseStyleSet = baseTheme.styles![styleSetName];
+
+                    const newStyleSet: StyleSet = [];
+                    const styleIdMap = new Map<string, number>();
+                    baseStyleSet.forEach(style => {
+                        if (typeof style.id === "string") {
+                            styleIdMap.set(style.id, newStyleSet.length);
+                        }
+                        newStyleSet.push(style);
+                    });
+
+                    const incomingStyleSet = theme.styles![styleSetName];
+                    incomingStyleSet.forEach(style => {
+                        if (typeof style.extends === "string" && styleIdMap.has(style.extends)) {
+                            // extends the existing style referenced by `style.extends`.
+                            const baseStyleIndex = styleIdMap.get(style.extends)!;
+                            const baseStyle = newStyleSet[baseStyleIndex];
+                            newStyleSet[baseStyleIndex] = { ...baseStyle, ...style } as any;
+                            newStyleSet[baseStyleIndex].extends = undefined;
+                            return;
+                        }
+
+                        if (typeof style.id === "string" && styleIdMap.has(style.id)) {
+                            // overrides the existing style with `id` equals to `style.id`.
+                            const styleIndex = styleIdMap.get(style.id)!;
+                            newStyleSet[styleIndex] = style;
+                            return;
+                        }
+
+                        newStyleSet.push(style);
+                    });
+
+                    styles[styleSetName] = newStyleSet;
+
                     // remove the styleset from the incoming list
                     incomingStyleSets.splice(index, 1);
                 } else {

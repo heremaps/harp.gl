@@ -35,5 +35,14 @@
                 2
             ]
         }
+    },
+    "styles": {
+        "tilezen": [
+            {
+                "extends": "extrudedBuildings",
+                "technique": "extruded-polygon",
+                "color": "yellow"
+            }
+        ]
     }
 }
