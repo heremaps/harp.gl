@@ -1,10 +1,11 @@
-name: Generate Docs
+name: Docs
 
 env:
     GECKODRIVER_SKIP_DOWNLOAD: true
     CHROMEDRIVER_SKIP_DOWNLOAD: true
 
-on: workflow_dispatch
+on:
+    workflow_dispatch
 
 jobs:
     docs:
@@ -12,16 +13,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v1
-            - uses: actions/setup-node@v2-beta
-              with:
-                  node-version: "12"
-            - name: Install dependencies
-              run: yarn --frozen-lockfile
-            - name: Generate docs
-              run: yarn docs
-            - name: Save docs
-              uses: actions/upload-artifact@v2
-              with:
-                  name: docs
-                  path: markdown/
+        - uses: actions/checkout@v1
+        - uses: actions/setup-node@v2-beta
+          with:
+            node-version: '12'
+        - name: Install dependencies
+          run: yarn --frozen-lockfile
+        - name: Generate docs
+          run: yarn docs
