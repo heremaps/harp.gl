@@ -297,6 +297,8 @@ export class CameraKeyTrackAnimation {
         const deltaTime = (Date.now() - this.m_lastFrameTime) / 1000;
         this.m_animationMixer.update(deltaTime);
         this.m_lastFrameTime = Date.now();
-        this.updateCameraFromDummy();
+        if (this.m_running) {
+            this.updateCameraFromDummy();
+        }
     }
 }
