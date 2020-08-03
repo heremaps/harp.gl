@@ -134,7 +134,7 @@ interface StyleInternalParams {
 type InternalStyle = Style & StyleInternalParams;
 
 /**
- * [[StyleConditionClassifier]] searches for usages of `$layer` in `when` conditions
+ * `StyleConditionClassifier` searches for usages of `$layer` in `when` conditions
  * associated with styling rules.
  *
  * @hidden

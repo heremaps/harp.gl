@@ -293,7 +293,7 @@ export interface StyleAttributes<Technique, Params> {
      * Condition that is applied to feature properties to check if given {@link Style} this feature
      * should emit geometry of this style.
      */
-    when: string | JsonExpr;
+    when?: string | JsonExpr;
 
     /**
      * The layer containing the carto features processed by this style rule.
