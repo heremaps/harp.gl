@@ -88,6 +88,19 @@ export namespace HelloCustomThemeExample {
                         type: "color",
                         value: "#00aa33"
                     }
+                },
+                styles: {
+                    tilezen: [
+                        {
+                            // overrides the `extrudedBuildings` style
+                            // to use the fill technique instead of
+                            // extruded polygons.
+                            id: "extrudedBuildings",
+                            technique: "fill",
+                            when: ["ref", "extrudedBuildingsCondition"],
+                            color: ["ref", "defaultBuildingColor"]
+                        }
+                    ]
                 }
             }
         });

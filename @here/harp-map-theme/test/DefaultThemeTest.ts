@@ -106,7 +106,7 @@ describe("Berlin Theme", function() {
                                 // tslint:disable-next-line: deprecation
                                 Expr.parse(style.when as string)
                             );
-                        } else {
+                        } else if (style.when !== undefined) {
                             assertExprValid(style.when, theme.definitions, `${location}.when`);
                         }
 
