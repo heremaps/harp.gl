@@ -104,7 +104,6 @@ export const THEME: Theme = {
                     size: 8,
                     priority: 100
                 },
-                labelProperty: "name",
                 renderOrder: 10.3
             }
         ]

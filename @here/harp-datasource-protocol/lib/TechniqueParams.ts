@@ -20,6 +20,11 @@ export type LineCaps = "Square" | "Round" | "None" | "TriangleOut" | "TriangleIn
 export type LineDashes = "Square" | "Round" | "Diamond";
 
 /**
+ * Defines how to interpret the units.
+ */
+export type MetricUnit = "Meter" | "Pixel";
+
+/**
  * Standard kinds of geometry.
  */
 export enum StandardGeometryKind {
@@ -915,8 +920,6 @@ export interface BasicExtrudedLineTechniqueParams
      *
      * `"basic"`   : Simple shading, faster to render. Only simple color and opacity are effective.
      * `"standard"`: Elaborate shading, with metalness, and roughness.
-     *
-     * TODO: is this TechniqueParams or Style prop ?
      */
     shading?: "basic";
     /**
@@ -1001,12 +1004,11 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * opaque.
      */
     opacity?: DynamicProperty<number>;
-    // TODO: Make pixel units default.
     /**
      * @deprecated Specify metrics units as part of the value instead.
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
      */
-    metricUnit?: string;
+    metricUnit?: MetricUnit;
     /**
      * Width of a line in `metricUnit` for different zoom levels.
      */
