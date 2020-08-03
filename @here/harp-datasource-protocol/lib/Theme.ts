@@ -361,19 +361,6 @@ export interface StyleAttributes<Technique, Params> {
      */
     debug?: boolean;
 
-    // TODO: Make pixel units default.
-    /**
-     * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
-     *
-     * @deprecated use "string encoded numerals" as documented in TODO, wher eis the doc ?
-     */
-    metricUnit?: "Meter" | "Pixel";
-
-    /**
-     * XYZ defines the property to display as text label of a feature in the styles.
-     */
-    labelProperty?: string;
-
     attr?: Partial<Params>;
 }
 
@@ -747,14 +734,13 @@ export interface PoiTableDef {
     /** Name of the `PoiTable`. Must be unique. */
     name?: string;
     /**
-     * Stores the list of [[PoiTableEntry]]s.
+     * Stores the list of {@link PoiTableEntryDef}s.
      */
     poiList?: PoiTableEntryDef[];
 }
 
 /**
- * Interface for the JSON description of the [[PoiTableEntry]]. The interface is being implemented
- * as [[PoiTableEntry]].
+ * Interface descrining POI entries.
  */
 export interface PoiTableEntryDef {
     /** Default name of the POI as the key for looking it up. */
