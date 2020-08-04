@@ -21,3 +21,13 @@ jobs:
           run: yarn --frozen-lockfile
         - name: Generate docs
           run: yarn docs
+        - name: Save API metadata
+          uses: actions/upload-artifact@master
+          with:
+            name: harp-api-metadata
+            path: input
+        - name: Save API reference
+          uses: actions/upload-artifact@master
+          with:
+            name: harp-api-reference
+            path: markdown
