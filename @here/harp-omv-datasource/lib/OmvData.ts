@@ -6,9 +6,9 @@
 
 import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
-import { ILogger } from "@here/harp-utils";
+import { assert, ILogger } from "@here/harp-utils";
 import * as Long from "long";
-import { Vector2 } from "three";
+import { ShapeUtils, Vector2 } from "three";
 import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
@@ -357,6 +357,29 @@ function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGe
     } // switch
 }
 
+// Ensures ring winding follows Mapbox Vector Tile specification: outer rings must be clockwise,
+// inner rings counter-clockwise.
+function checkWinding(multipolygon: IPolygonGeometry[]) {
+    if (multipolygon.length === 0) {
+        return;
+    }
+
+    const firstPolygon = multipolygon[0];
+    assert(firstPolygon.rings.length > 0);
+
+    // Opposite sign to ShapeUtils.isClockWise, since webMercator tile space has top-left origin.
+    const isOuterRingClockWise = ShapeUtils.area(firstPolygon.rings[0]) > 0;
+    if (isOuterRingClockWise) {
+        return;
+    }
+
+    for (const polygon of multipolygon) {
+        for (const ring of polygon.rings) {
+            ring.reverse();
+        }
+    }
+}
+
 /**
  * The class [[OmvProtobufDataAdapter]] converts OMV protobuf geo data
  * to geometries for the given [[IGeometryProcessor]].
@@ -588,6 +611,8 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
         if (geometry.length === 0) {
             return;
         }
+
+        checkWinding(geometry);
 
         const env = createFeatureEnv(
             this.m_layer,
