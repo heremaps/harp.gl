@@ -10,6 +10,10 @@ import { isLatLngLike, LatLngLike } from "./LatLngLike";
 
 import * as THREE from "three";
 
+export const MAX_LATITUDE = 90;
+export const MIN_LATITUDE = -90;
+export const MAX_LONGITUDE = 180;
+export const MIN_LONGITUDE = -180;
 /**
  * Represents an object in different geo coordinate formats
  */
@@ -177,27 +181,27 @@ export class GeoCoordinates implements GeoCoordinatesLike {
             return this;
         }
 
-        if (latitude > 90) {
-            let wrapped = (latitude + 90) % 360;
-            if (wrapped >= 180) {
-                longitude += 180;
+        if (latitude > MAX_LATITUDE) {
+            let wrapped = (latitude + MAX_LATITUDE) % 360;
+            if (wrapped >= MAX_LONGITUDE) {
+                longitude += MAX_LONGITUDE;
                 wrapped = 360 - wrapped;
             }
 
             latitude = wrapped - 90;
         }
 
-        if (latitude < -90) {
-            let wrapped = (latitude - 90) % 360;
-            if (wrapped <= -180) {
-                longitude += 180;
+        if (latitude < MIN_LATITUDE) {
+            let wrapped = (latitude + MIN_LATITUDE) % 360;
+            if (wrapped <= MIN_LONGITUDE) {
+                longitude += MAX_LONGITUDE;
                 wrapped = -360 - wrapped;
             }
 
             latitude = wrapped + 90;
         }
 
-        if (longitude < -180 || longitude > 180) {
+        if (longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE) {
             const sign = Math.sign(longitude);
             longitude = (((longitude % 360) + 180 * sign) % 360) - 180 * sign;
         }

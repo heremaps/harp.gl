@@ -13,6 +13,7 @@
  */
 
 export * from "./lib/AnimatedExtrusionHandler";
+export * from "./lib/BoundsGenerator";
 export * from "./lib/CameraMovementDetector";
 export * from "./lib/ClipPlanesEvaluator";
 export * from "./lib/ColorCache";

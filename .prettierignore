@@ -8,3 +8,4 @@ dist/
 coverage/
 lerna.json
 .github/workflows
+.vscode/
