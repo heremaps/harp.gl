@@ -29,10 +29,10 @@ import { FeaturesDataSource } from "@here/harp-features-datasource";
 import { GeoBox, OrientedBox3, ProjectionType } from "@here/harp-geoutils";
 import { LookAtParams, MapAnchor, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
-import { OmvTileDecoder } from "@here/harp-omv-datasource/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";
 import { getReferenceImageUrl } from "@here/harp-test-utils/lib/rendering/ReferenceImageLocator";
 import { getOptionValue, mergeWithOptions } from "@here/harp-utils";
+import { OmvTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
 
 interface RenderingTestOptions extends TestOptions {
     /**

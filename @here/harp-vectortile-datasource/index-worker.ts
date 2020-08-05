@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export * from "@here/harp-vectortile-datasource/index-worker";
+export * from "./lib/OmvDecoder";
+export * from "./lib/OmvTiler";
+export * from "./lib/OmvDecoderDefs";

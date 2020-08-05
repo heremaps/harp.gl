@@ -11,9 +11,9 @@ import { FeatureCollection, GeoJson, Light, StyleSet, Theme } from "@here/harp-d
 import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
-import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
-import { OmvTileDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
+import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-vectortile-datasource";
+import { OmvTileDecoder } from "@here/harp-vectortile-datasource/lib/OmvDecoder";
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
     let mapView: MapView;
