@@ -4,4 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { GeoJsonDataProvider, GeoJsonDataProviderOptions } from "@here/harp-omv-datasource";
+export { GeoJsonDataProvider, GeoJsonDataProviderOptions } from "@here/harp-vectortile-datasource";

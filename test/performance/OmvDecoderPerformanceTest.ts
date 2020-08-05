@@ -24,16 +24,16 @@ import {
     OmvRestClient,
     OmvRestClientParameters
 } from "@here/harp-omv-datasource";
-import { DecodeInfo } from "@here/harp-omv-datasource/lib/DecodeInfo";
+import { getTestResourceUrl } from "@here/harp-test-utils";
+import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
+import { DecodeInfo } from "@here/harp-vectortile-datasource/lib/DecodeInfo";
 import {
     IGeometryProcessor,
     ILineGeometry,
     IPolygonGeometry
-} from "@here/harp-omv-datasource/lib/IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "@here/harp-omv-datasource/lib/OmvData";
-import { OmvDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
-import { getTestResourceUrl } from "@here/harp-test-utils";
-import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
+} from "@here/harp-vectortile-datasource/lib/IGeometryProcessor";
+import { OmvProtobufDataAdapter } from "@here/harp-vectortile-datasource/lib/OmvData";
+import { OmvDecoder } from "@here/harp-vectortile-datasource/lib/OmvDecoder";
 
 export interface OMVDecoderPerformanceTestOptions {
     /**

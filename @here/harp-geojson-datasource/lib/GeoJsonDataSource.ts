@@ -8,7 +8,7 @@ import {
     OmvDataSource,
     OmvWithCustomDataProvider,
     OmvWithRestClientParams
-} from "@here/harp-omv-datasource";
+} from "@here/harp-vectortile-datasource";
 
 /**
  * `GeoJsonDataSource` is used for the visualization of geometric objects provided in the GeoJSON
