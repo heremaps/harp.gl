@@ -5,7 +5,7 @@
  */
 import { getPropertyValue, isTextTechnique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
-import { DataSource, TextElement } from "@here/harp-mapview";
+import { DataSource, TextElement, Tile } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
 import {
     ContextualArabicConverter,
@@ -16,7 +16,6 @@ import {
 import * as THREE from "three";
 
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
-import { OmvTile } from "./OmvTile";
 
 const debugMaterial = new THREE.LineBasicMaterial({
     color: 0x000000,
@@ -74,7 +73,7 @@ textRenderStyle.color = new THREE.Color(0.8, 0.2, 0.2);
 // Set maximum priority.
 const PRIORITY_ALWAYS = Number.MAX_SAFE_INTEGER;
 
-export class OmvDebugLabelsTile extends OmvTile {
+export class OmvDebugLabelsTile extends Tile {
     constructor(dataSource: DataSource, tileKey: TileKey) {
         super(dataSource, tileKey);
     }

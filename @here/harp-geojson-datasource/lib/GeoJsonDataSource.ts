@@ -5,16 +5,17 @@
  */
 
 import {
-    OmvDataSource,
     OmvWithCustomDataProvider,
-    OmvWithRestClientParams
+    OmvWithRestClientParams,
+    VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
 
 /**
  * `GeoJsonDataSource` is used for the visualization of geometric objects provided in the GeoJSON
  * format. To be able to render GeoJSON data, a `GeoJsonDataSource` instance must be added to the
- * [[MapView]] instance.
+ * {@link @here/harp-mapview#MapView} instance.
  *
+ * @example
  * ```typescript
  *    const geoJsonDataProvider = new GeoJsonDataProvider(
  *        "italy",
@@ -27,7 +28,7 @@ import {
  *    mapView.addDataSource(geoJsonDataSource);
  *   ```
  */
-export class GeoJsonDataSource extends OmvDataSource {
+export class GeoJsonDataSource extends VectorTileDataSource {
     /**
      * Default constructor.
      *

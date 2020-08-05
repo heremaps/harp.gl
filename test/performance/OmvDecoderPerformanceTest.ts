@@ -18,14 +18,14 @@ import {
     webMercatorProjection
 } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
+import { getTestResourceUrl } from "@here/harp-test-utils";
+import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
 import {
     APIFormat,
     AuthenticationMethod,
     OmvRestClient,
     OmvRestClientParameters
-} from "@here/harp-omv-datasource";
-import { getTestResourceUrl } from "@here/harp-test-utils";
-import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
+} from "@here/harp-vectortile-datasource";
 import { DecodeInfo } from "@here/harp-vectortile-datasource/lib/DecodeInfo";
 import {
     IGeometryProcessor,

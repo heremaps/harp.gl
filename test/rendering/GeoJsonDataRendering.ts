@@ -12,7 +12,7 @@ import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
-import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-vectortile-datasource";
+import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { OmvTileDecoder } from "@here/harp-vectortile-datasource/lib/OmvDecoder";
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
@@ -81,7 +81,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             return "";
         };
 
-        const geoJsonDataSource = new OmvDataSource({
+        const geoJsonDataSource = new VectorTileDataSource({
             decoder: new OmvTileDecoder(),
             dataProvider: new GeoJsonDataProvider(
                 "geojson",

@@ -43,6 +43,9 @@
             "path": "../harp-olp-utils"
         },
         {
+            "path": "../harp-vectortile-datasource"
+        },
+        {
             "path": "../harp-omv-datasource"
         },
         {
