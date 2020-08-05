@@ -41,8 +41,7 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 import { OmvTileDecoder } from "../index-worker";
 import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
-import { OmvDataSource } from "../lib/OmvDataSource";
-import { OmvTile } from "../lib/OmvTile";
+import { VectorTileDataSource } from "../lib/VectorTileDataSource";
 import { GEOJSON_DATA, THEME } from "./resources/geoJsonData";
 
 declare const global: any;
@@ -54,17 +53,16 @@ describe("MapView Picking", async function() {
     const sandbox = sinon.createSandbox();
     let canvas: HTMLCanvasElement;
     let mapView: MapView;
-    let geoJsonDataSource: OmvDataSource;
+    let geoJsonDataSource: VectorTileDataSource;
     let fakeElevationSource: DataSource;
     let fakeElevationRangeSource: ElevationRangeSource;
     let fakeElevationProvider: ElevationProvider;
     const FAKE_HEIGHT = 500000.0;
 
     async function getDecodedTile() {
-        let tile = geoJsonDataSource.getTile(tileKey);
+        const tile = geoJsonDataSource.getTile(tileKey)!;
 
         assert(tile !== undefined);
-        tile = tile as OmvTile;
 
         assert.isDefined(tile.tileLoader);
 
@@ -193,7 +191,7 @@ describe("MapView Picking", async function() {
             tiler: new GeoJsonTiler()
         });
 
-        geoJsonDataSource = new OmvDataSource({
+        geoJsonDataSource = new VectorTileDataSource({
             decoder: new OmvTileDecoder(),
             dataProvider: geoJsonDataProvider,
             name: "geojson",

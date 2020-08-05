@@ -12,7 +12,10 @@ if (!(self as any).THREE) {
     );
 }
 
-import { OmvTileDecoderService, OmvTilerService } from "@here/harp-omv-datasource/index-worker";
+import {
+    OmvTileDecoderService,
+    OmvTilerService
+} from "@here/harp-vectortile-datasource/index-worker";
 
 OmvTilerService.start();
 OmvTileDecoderService.start();

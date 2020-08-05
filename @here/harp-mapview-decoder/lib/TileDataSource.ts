@@ -108,7 +108,7 @@ export class TileFactory<TileType extends Tile> {
  * tile content asynchronously. The decoder can be passed in as an option, or a default
  * asynchronous one is generated.
  */
-export class TileDataSource<TileType extends Tile> extends DataSource {
+export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
     protected readonly logger: ILogger = LoggerManager.instance.create("TileDataSource");
     protected readonly m_decoder: ITileDecoder;
     private m_isReady: boolean = false;

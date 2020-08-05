@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { VectorTileDataSourceParameters } from "@here/harp-vectortile-datasource";
+
+export {
+    APIFormat,
+    AuthenticationMethod,
+    GeoJsonDataProvider
+} from "@here/harp-vectortile-datasource";
+
 /**
  * HERE OMV Data source.
  *
@@ -12,4 +20,10 @@
  * @packageDocumentation
  */
 
-export * from "@here/harp-vectortile-datasource";
+/**
+ * @deprecated Use {@link @here/harp-vectortile-datasource#VectorTileDataSourceParameters}
+ *             instad.
+ */
+export type OmvDataSourceParameters = VectorTileDataSourceParameters;
+
+export * from "./lib/OmvDataSource";

@@ -10,6 +10,6 @@ declare let self: Worker & {
 
 self.importScripts("three.min.js");
 
-import { OmvTileDecoderService } from "@here/harp-omv-datasource/index-worker";
+import { OmvTileDecoderService } from "@here/harp-vectortile-datasource/index-worker";
 
 OmvTileDecoderService.start();
