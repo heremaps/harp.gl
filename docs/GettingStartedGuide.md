@@ -5,6 +5,7 @@ To begin with `harp.gl`, we provide a few starting points:
 - [Import harp.gl with simple bundle](#simple)
 - [Create simple app](#npm) using npm
 - [Integrate `harp.gl` into your existing Webpack based project](#integrate)
+- [Integrate `harp.gl` into your existing Angular application](GettingStartedAngular.md)
 - [Look at examples](#examples)
 - [Don't forget the credentials](#credentials)
 
