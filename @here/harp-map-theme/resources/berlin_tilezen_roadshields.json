@@ -1,0 +1,35 @@
+{
+    "extends": "berlin_tilezen_base.json",
+    "styles": {
+        "tilezen": [
+            {
+                "extends": "roadshield_highway",
+                "description": "DEBUG roadshields - show all road shields",
+                "when": ["all", ["==", ["get", "$layer"], "roads"], ["has", "ref"]],
+                "minZoomLevel": 1,
+                "technique": "line-marker",
+                "label": "ref",
+                "size": 9,
+                "imageTexture": [
+                    "concat",
+                    "default-",
+                    ["clamp", ["length", ["string", ["get", "ref"], ""]], 2, 6]
+                ],
+                "iconScale": 0.9,
+                "priority": ["-", 37, ["length", ["get", "ref"]]],
+                "minDistance": 100,
+                "vAlignment": "Center",
+                "hAlignment": "Center",
+                "textIsOptional": false,
+                "iconIsOptional": false,
+                "textMayOverlap": true,
+                "textReserveSpace": false,
+                "iconMayOverlap": true,
+                "iconReserveSpace": false,
+                "renderTextDuringMovements": false,
+                "color": "#00a0a0",
+                "showOnMap": true
+            }
+        ]
+    }
+}

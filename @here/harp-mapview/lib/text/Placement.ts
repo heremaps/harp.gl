@@ -246,7 +246,10 @@ function computePointTextOffset(
     env: Env,
     offset: THREE.Vector2 = new THREE.Vector2()
 ): THREE.Vector2 {
-    assert(textElement.type === TextElementType.PoiLabel);
+    assert(
+        textElement.type === TextElementType.PoiLabel ||
+            textElement.type === TextElementType.LineMarker
+    );
     assert(textElement.layoutStyle !== undefined);
     assert(textElement.bounds !== undefined);
 
