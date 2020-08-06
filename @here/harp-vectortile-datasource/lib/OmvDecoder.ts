@@ -36,7 +36,6 @@ import {
     OmvGenericFeatureFilter,
     OmvGenericFeatureModifier
 } from "./OmvDataFilter";
-import { OmvDecodedTileEmitter } from "./OmvDecodedTileEmitter";
 import {
     FeatureModifierId,
     OmvDecoderOptions,
@@ -46,41 +45,14 @@ import {
 import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
+import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
 
 const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
-
-export interface IOmvEmitter {
-    processPointFeature(
-        layer: string,
-        extents: number,
-        geometry: THREE.Vector2[],
-        context: AttrEvaluationContext,
-        techniques: IndexedTechnique[]
-    ): void;
-
-    processLineFeature(
-        layer: string,
-        extents: number,
-        feature: ILineGeometry[],
-        context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
-    ): void;
-
-    processPolygonFeature(
-        layer: string,
-        extents: number,
-        feature: IPolygonGeometry[],
-        context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
-    ): void;
-}
 
 export class OmvDecoder implements IGeometryProcessor {
     // The emitter is optional now.
     // TODO: Add option to control emitter generation.
-    private m_decodedTileEmitter: OmvDecodedTileEmitter | undefined;
+    private m_decodedTileEmitter: VectorTileDataEmitter | undefined;
     private readonly m_dataAdapters: DataAdapter[] = [];
 
     constructor(
@@ -141,7 +113,7 @@ export class OmvDecoder implements IGeometryProcessor {
             this.m_storageLevelOffset
         );
 
-        this.m_decodedTileEmitter = new OmvDecodedTileEmitter(
+        this.m_decodedTileEmitter = new VectorTileDataEmitter(
             decodeInfo,
             this.m_styleSetEvaluator,
             this.m_gatherFeatureAttributes,
