@@ -13,11 +13,11 @@ import {
 import { webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
-import { DecodeInfo } from "./DecodeInfo";
-import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvFeatureFilter } from "./OmvDataFilter";
-import { OmvDataAdapter } from "./OmvDecoder";
-import { isArrayBufferLike, tile2world } from "./OmvUtils";
+import { DataAdapter } from "../../DataAdapter";
+import { DecodeInfo } from "../../DecodeInfo";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
+import { OmvFeatureFilter } from "../../OmvDataFilter";
+import { isArrayBufferLike, tile2world } from "../../OmvUtils";
 
 const VT_JSON_EXTENTS = 4096;
 
@@ -76,10 +76,10 @@ const worldPos = new Vector3();
 export const VTJsonDataAdapterId: string = "vt-json";
 
 /**
- * The class `VTJsonDataAdapter` converts VT-json data to geometries for the given
+ * The class `GeoJsonVtDataAdapter` converts VT-json data to geometries for the given
  * {@link IGeometryProcessor}.
  */
-export class VTJsonDataAdapter implements OmvDataAdapter {
+export class GeoJsonVtDataAdapter implements DataAdapter {
     id = VTJsonDataAdapterId;
 
     constructor(

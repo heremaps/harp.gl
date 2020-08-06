@@ -178,7 +178,7 @@ $root.com = (function() {
                 /**
                  * GeomType enum.
                  * @name com.mapbox.pb.Tile.GeomType
-                 * @enum {string}
+                 * @enum {number}
                  * @property {number} UNKNOWN=0 UNKNOWN value
                  * @property {number} POINT=1 POINT value
                  * @property {number} LINESTRING=2 LINESTRING value

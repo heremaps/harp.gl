@@ -6,232 +6,26 @@
 
 import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
-import { assert, ILogger } from "@here/harp-utils";
-import * as Long from "long";
+import { ILogger } from "@here/harp-utils";
 import { ShapeUtils, Vector2 } from "three";
-import { DecodeInfo } from "./DecodeInfo";
-import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvFeatureFilter } from "./OmvDataFilter";
-import { OmvDataAdapter } from "./OmvDecoder";
-import { OmvGeometryType } from "./OmvDecoderDefs";
-import { isArrayBufferLike } from "./OmvUtils";
+import { DataAdapter } from "../../DataAdapter";
+import { DecodeInfo } from "../../DecodeInfo";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
+import { OmvFeatureFilter } from "../../OmvDataFilter";
+import { OmvGeometryType } from "../../OmvDecoderDefs";
+import { isArrayBufferLike } from "../../OmvUtils";
+import {
+    FeatureAttributes,
+    GeometryCommands,
+    isClosePathCommand,
+    isLineToCommand,
+    isMoveToCommand,
+    OmvVisitor,
+    visitOmv
+} from "./OmvData";
 import { com } from "./proto/vector_tile";
 
-/**
- * @hidden
- */
-export enum CommandKind {
-    MoveTo = 1,
-    LineTo = 2,
-    ClosePath = 7
-}
-
-/**
- * @hidden
- */
-export interface BaseCommand {
-    kind: CommandKind;
-}
-
-/**
- * @hidden
- */
-export interface PositionCommand extends BaseCommand {
-    position: Vector2;
-}
-
-/**
- * @hidden
- */
-export type GeometryCommand = BaseCommand | PositionCommand;
-
-/**
- * @hidden
- */
-export function isMoveToCommand(command: GeometryCommand): command is PositionCommand {
-    return command.kind === CommandKind.MoveTo;
-}
-
-/**
- * @hidden
- */
-export function isLineToCommand(command: GeometryCommand): command is PositionCommand {
-    return command.kind === CommandKind.LineTo;
-}
-
-/**
- * @hidden
- */
-export function isClosePathCommand(command: GeometryCommand): command is PositionCommand {
-    return command.kind === CommandKind.ClosePath;
-}
-
-/**
- * @hidden
- */
-export interface OmvVisitor {
-    visitLayer?(layer: com.mapbox.pb.Tile.ILayer): boolean;
-    endVisitLayer?(layer: com.mapbox.pb.Tile.ILayer): void;
-    visitPointFeature?(feature: com.mapbox.pb.Tile.IFeature): void;
-    visitLineFeature?(feature: com.mapbox.pb.Tile.IFeature): void;
-    visitPolygonFeature?(feature: com.mapbox.pb.Tile.IFeature): void;
-}
-
-/**
- * @hidden
- */
-export function visitOmv(vectorTile: com.mapbox.pb.Tile, visitor: OmvVisitor) {
-    if (!vectorTile.layers) {
-        return;
-    }
-
-    for (const layer of vectorTile.layers) {
-        if (!visitor.visitLayer || visitor.visitLayer(layer)) {
-            visitOmvLayer(layer, visitor);
-        }
-        if (visitor.endVisitLayer) {
-            visitor.endVisitLayer(layer);
-        }
-    }
-}
-
-/**
- * @hidden
- */
-export function visitOmvLayer(layer: com.mapbox.pb.Tile.ILayer, visitor: OmvVisitor) {
-    if (!visitor.visitLayer || visitor.visitLayer(layer)) {
-        if (layer.features) {
-            for (const feature of layer.features) {
-                switch (feature.type) {
-                    case com.mapbox.pb.Tile.GeomType.UNKNOWN:
-                        break;
-
-                    case com.mapbox.pb.Tile.GeomType.POINT:
-                        if (visitor.visitPointFeature) {
-                            visitor.visitPointFeature(feature);
-                        }
-                        break;
-
-                    case com.mapbox.pb.Tile.GeomType.LINESTRING:
-                        if (visitor.visitLineFeature) {
-                            visitor.visitLineFeature(feature);
-                        }
-                        break;
-
-                    case com.mapbox.pb.Tile.GeomType.POLYGON:
-                        if (visitor.visitPolygonFeature) {
-                            visitor.visitPolygonFeature(feature);
-                        }
-                        break;
-                }
-            }
-        }
-    }
-
-    if (visitor.endVisitLayer) {
-        visitor.endVisitLayer(layer);
-    }
-}
-
-/**
- * @hidden
- */
-export interface FeatureAttributesVisitor {
-    visitAttribute(name: string, value: com.mapbox.pb.Tile.IValue): boolean;
-}
-
-/**
- * @hidden
- */
-export class FeatureAttributes {
-    accept(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        visitor: FeatureAttributesVisitor
-    ): void {
-        const { keys, values } = layer;
-        const tags = feature.tags;
-
-        if (!tags || !keys || !values) {
-            return;
-        }
-
-        for (let i = 0; i < tags.length; i += 2) {
-            const key = keys[tags[i]];
-            const value = values[tags[i + 1]];
-            if (!visitor.visitAttribute(key, value)) {
-                break;
-            }
-        }
-    }
-}
-
-/**
- * @hidden
- */
-export interface GeometryCommandsVisitor {
-    type: "Point" | "Line" | "Polygon";
-    visitCommand(command: GeometryCommand): void;
-}
-
-/**
- * @hidden
- */
-export class GeometryCommands {
-    accept(geometry: number[] | null, visitor: GeometryCommandsVisitor) {
-        if (!geometry) {
-            return;
-        }
-
-        const geometryCount = geometry.length;
-
-        let currX = 0;
-        let currY = 0;
-
-        const xCoords: number[] = [];
-        const yCoords: number[] = [];
-        const commands: GeometryCommand[] = [];
-        for (let cmdIndex = 0; cmdIndex < geometryCount; ) {
-            // tslint:disable:no-bitwise
-            const kind = (geometry[cmdIndex] & 0x7) as CommandKind;
-            const count = geometry[cmdIndex] >> 0x3;
-            // tslint:enable:no-bitwise
-            ++cmdIndex;
-
-            if (kind === CommandKind.MoveTo || kind === CommandKind.LineTo) {
-                for (let n = 0; n < count; ++n) {
-                    const xx = geometry[cmdIndex++];
-                    const yy = geometry[cmdIndex++];
-
-                    // tslint:disable:no-bitwise
-                    currX += (xx >> 1) ^ -(xx & 1);
-                    currY += (yy >> 1) ^ -(yy & 1);
-                    if (visitor.type === "Polygon") {
-                        xCoords.push(currX);
-                        yCoords.push(currY);
-                    }
-
-                    const position = new Vector2(currX, currY);
-                    commands.push({ kind, position });
-                }
-            } else {
-                for (const command of commands) {
-                    visitor.visitCommand(command);
-                }
-                visitor.visitCommand({ kind });
-                xCoords.length = 0;
-                yCoords.length = 0;
-                commands.length = 0;
-            }
-        }
-
-        if (commands.length > 0) {
-            for (const command of commands) {
-                visitor.visitCommand(command);
-            }
-        }
-    }
-}
+import * as Long from "long";
 
 const propertyCategories = [
     "stringValue",
@@ -311,7 +105,7 @@ function readAttributes(
     return attributes;
 }
 
-function createFeatureEnv(
+export function createFeatureEnv(
     layer: com.mapbox.pb.Tile.ILayer,
     feature: com.mapbox.pb.Tile.IFeature,
     geometryType: string,
@@ -338,7 +132,7 @@ function createFeatureEnv(
     return new MapEnv(attributes, parent);
 }
 
-function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGeometryType {
+export function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGeometryType {
     if (feature === undefined) {
         return OmvGeometryType.UNKNOWN;
     }
@@ -365,7 +159,10 @@ function checkWinding(multipolygon: IPolygonGeometry[]) {
     }
 
     const firstPolygon = multipolygon[0];
-    assert(firstPolygon.rings.length > 0);
+
+    if (firstPolygon.rings.length === 0) {
+        return;
+    }
 
     // Opposite sign to ShapeUtils.isClockWise, since webMercator tile space has top-left origin.
     const isOuterRingClockWise = ShapeUtils.area(firstPolygon.rings[0]) > 0;
@@ -381,10 +178,11 @@ function checkWinding(multipolygon: IPolygonGeometry[]) {
 }
 
 /**
- * The class [[OmvProtobufDataAdapter]] converts OMV protobuf geo data
- * to geometries for the given [[IGeometryProcessor]].
+ * The class `OmvDataAdapter` converts OMV protobuf geo data
+ * to geometries for the given `IGeometryProcessor`.
  */
-export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
+
+export class OmvDataAdapter implements DataAdapter, OmvVisitor {
     id = "omv-protobuf";
 
     private readonly m_geometryCommands = new GeometryCommands();

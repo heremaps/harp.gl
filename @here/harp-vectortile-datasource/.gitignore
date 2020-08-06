@@ -6,6 +6,6 @@ dist
 *.js
 *.js.map
 !./lib/typings/earcut.d.ts
-!./lib/proto/vector_tile.js
-!./lib/proto/vector_tile.d.ts
+!./lib/adapters/omv/proto/vector_tile.js
+!./lib/adapters/omv/proto/vector_tile.d.ts
 *.tgz
