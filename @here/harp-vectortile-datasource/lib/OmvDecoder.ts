@@ -22,11 +22,13 @@ import {
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
-// tslint:disable-next-line:max-line-length
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
+import { GeoJsonVtDataAdapter } from "./adapters/geojson-vt/GeoJsonVtDataAdapter";
+import { GeoJsonDataAdapter } from "./adapters/geojson/GeoJsonDataAdapter";
+import { OmvDataAdapter } from "./adapters/omv/OmvDataAdapter";
+import { DataAdapter } from "./DataAdapter";
 import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "./OmvData";
 import {
     ComposedDataFilter,
     OmvFeatureFilter,
@@ -44,8 +46,6 @@ import {
 import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
-import { TiledGeoJsonDataAdapter } from "./TiledGeoJsonAdapter";
-import { VTJsonDataAdapter } from "./VTJsonDataAdapter";
 
 const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
 
@@ -77,37 +77,11 @@ export interface IOmvEmitter {
     ): void;
 }
 
-/**
- * The class [[OmvDataAdapter]] prepares protobuf encoded OMV data so they
- * can be processed by [[OmvDecoder]].
- */
-export interface OmvDataAdapter {
-    /**
-     * OmvDataAdapter's id.
-     */
-    id: string;
-
-    /**
-     * Checks if the given data can be processed by this OmvDataAdapter.
-     *
-     * @param data - The raw data to adapt.
-     */
-    canProcess(data: ArrayBufferLike | {}): boolean;
-
-    /**
-     * Process the given raw data.
-     *
-     * @param data - The raw data to process.
-     * @param decodeInfo - The [[DecodeInfo]] of the tile to process.
-     */
-    process(data: ArrayBufferLike | {}, decodeInfo: DecodeInfo): void;
-}
-
 export class OmvDecoder implements IGeometryProcessor {
     // The emitter is optional now.
     // TODO: Add option to control emitter generation.
     private m_decodedTileEmitter: OmvDecodedTileEmitter | undefined;
-    private readonly m_dataAdapters: OmvDataAdapter[] = [];
+    private readonly m_dataAdapters: DataAdapter[] = [];
 
     constructor(
         private readonly m_projection: Projection,
@@ -126,9 +100,9 @@ export class OmvDecoder implements IGeometryProcessor {
             ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
             : styleSetDataFilter;
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataPreFilter, logger));
-        this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataPreFilter, logger));
-        this.m_dataAdapters.push(new TiledGeoJsonDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new OmvDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new GeoJsonVtDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new GeoJsonDataAdapter(this, dataPreFilter, logger));
     }
 
     get storageLevelOffset() {
