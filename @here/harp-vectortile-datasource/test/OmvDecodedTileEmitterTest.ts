@@ -25,10 +25,10 @@ import { assert } from "chai";
 import { Vector2, Vector3 } from "three";
 import { DecodeInfo } from "../lib/DecodeInfo";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
-import { OmvDecodedTileEmitter } from "../lib/OmvDecodedTileEmitter";
 import { world2tile } from "../lib/OmvUtils";
+import { VectorTileDataEmitter } from "../lib/VectorTileDataEmitter";
 
-class OmvDecodedTileEmitterTest extends OmvDecodedTileEmitter {
+class OmvDecodedTileEmitterTest extends VectorTileDataEmitter {
     splitJaggyLinesTest(
         lines: number[][],
         minEstimatedLabelLengthSqr: number,

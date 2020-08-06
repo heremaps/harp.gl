@@ -64,7 +64,6 @@ import {
 } from "@here/harp-geoutils";
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { IOmvEmitter } from "./OmvDecoder";
 import {
     tile2world,
     webMercatorTile2TargetTile,
@@ -223,7 +222,7 @@ class MeshBuffers implements IMeshBuffers {
     }
 }
 
-export enum LineType {
+enum LineType {
     Simple,
     Complex
 }
@@ -231,7 +230,7 @@ export enum LineType {
 type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => THREE.Vector2;
 const tmpColor = new THREE.Color();
 
-export class OmvDecodedTileEmitter implements IOmvEmitter {
+export class VectorTileDataEmitter {
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
 
