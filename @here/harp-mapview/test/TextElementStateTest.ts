@@ -369,7 +369,7 @@ describe("TextElementState", function() {
             } as any);
             textElementState.update(100);
 
-            expect(textElementState.textRenderState).to.be.undefined;
+            expect(textElementState.textRenderState).to.not.be.undefined;
             expect(textElementState.iconRenderStates).to.not.be.undefined;
             expect(textElementState.iconRenderStates![0].fadeTime).to.equal(100);
             expect(textElementState.iconRenderStates![1].fadeTime).to.equal(100);

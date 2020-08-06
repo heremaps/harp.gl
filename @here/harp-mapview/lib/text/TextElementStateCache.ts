@@ -64,7 +64,8 @@ function findDuplicateById(
     if (duplicateIndex === -1) {
         return -1;
     }
-    const candidate = candidates[duplicateIndex].element;
+    const candidateElement = candidates[duplicateIndex];
+    const candidate = candidateElement.element;
     assert(element.featureId === candidate.featureId);
 
     if (candidate.text !== element.text) {
@@ -76,6 +77,15 @@ function findDuplicateById(
             `Text feature id ${element.featureId} collision between "${element.text} and \
              ${candidate.text}`
         );
+        return undefined;
+    }
+
+    if (
+        elementState.iconRenderStates !== undefined &&
+        candidateElement.iconRenderStates !== undefined &&
+        elementState.iconRenderStates.length !== candidateElement.iconRenderStates.length
+    ) {
+        // Cached line marker element needs the same number of icons to fit.
         return undefined;
     }
     return duplicateIndex;
@@ -153,6 +163,16 @@ function findDuplicateByText(
             // Cached text element is too far away to be a duplicate.
             continue;
         }
+
+        if (
+            elementState.iconRenderStates !== undefined &&
+            candidateEntry.iconRenderStates !== undefined &&
+            elementState.iconRenderStates.length !== candidateEntry.iconRenderStates.length
+        ) {
+            // Cached line marker element needs the same number of icons to fit.
+            continue;
+        }
+
         if (
             duplicate === undefined ||
             isBetterDuplicate(cachedElement, distSquared, duplicate, dupDistSquared)
@@ -209,6 +229,14 @@ export class TextElementStateCache {
 
     get size(): number {
         return this.m_referenceMap.size;
+    }
+
+    /**
+     * @hidden
+     * @returns Size of internal cache for deduplication for debugging purposes.
+     */
+    get cacheSize(): number {
+        return this.m_textMap.size;
     }
 
     /**
@@ -318,20 +346,23 @@ export class TextElementStateCache {
      * Replaces a visible unvisited text element with a visited duplicate.
      * @param zoomLevel - Current zoom level.
      * @param elementState - State of the text element to deduplicate.
+     * @returns `true` if an item from the cache has been reused and its state has been replaced,
+     * `false` otherwise.
      */
-    replaceElement(zoomLevel: number, elementState: TextElementState): void {
+    replaceElement(zoomLevel: number, elementState: TextElementState): boolean {
         assert(elementState.visible);
         const cacheResult = this.findDuplicate(elementState, zoomLevel);
 
         if (cacheResult === undefined || cacheResult.index === -1) {
             // No replacement found;
-            return;
+            return false;
         }
 
         const replacement = cacheResult.entries[cacheResult.index];
         assert(!replacement.visible);
 
         replacement.replace(elementState);
+        return true;
     }
 
     /**

@@ -7,6 +7,8 @@ import { getPropertyValue, isTextTechnique } from "@here/harp-datasource-protoco
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { DataSource, TextElement, Tile } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
+import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { TextElementType } from "@here/harp-mapview/lib/text/TextElementType";
 import {
     ContextualArabicConverter,
     FontUnit,
@@ -14,8 +16,6 @@ import {
     TextRenderStyle
 } from "@here/harp-text-canvas";
 import * as THREE from "three";
-
-import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 
 const debugMaterial = new THREE.LineBasicMaterial({
     color: 0x000000,
@@ -58,6 +58,14 @@ const debugBlueCircleMaterial = new THREE.MeshBasicMaterial({
     transparent: true
 });
 
+const debugOrangeCircleMaterial = new THREE.MeshBasicMaterial({
+    color: 0xa07000,
+    depthTest: false,
+    depthFunc: THREE.NeverDepth,
+    opacity: 0.75,
+    transparent: true
+});
+
 const textRenderStyle = new TextRenderStyle();
 const textLayoutStyle = new TextLayoutStyle();
 
@@ -72,6 +80,57 @@ textRenderStyle.color = new THREE.Color(0.8, 0.2, 0.2);
 
 // Set maximum priority.
 const PRIORITY_ALWAYS = Number.MAX_SAFE_INTEGER;
+
+class DebugGeometry {
+    geometry = new THREE.BufferGeometry();
+    indices = new Array<number>();
+    positions = new Array<number>();
+}
+
+function addPoint(
+    xPos: number,
+    yPos: number,
+    zPos: number,
+    size: number,
+    debugGeometry: DebugGeometry
+) {
+    debugGeometry.positions.push(xPos, yPos - size, zPos);
+    debugGeometry.positions.push(xPos + size, yPos, zPos);
+    debugGeometry.positions.push(xPos, yPos + size, zPos);
+    debugGeometry.positions.push(xPos - size, yPos, zPos);
+
+    const index = debugGeometry.positions.length / 3;
+
+    debugGeometry.indices.push(index - 4);
+    debugGeometry.indices.push(index - 3);
+    debugGeometry.indices.push(index - 2);
+    debugGeometry.indices.push(index - 4);
+    debugGeometry.indices.push(index - 2);
+    debugGeometry.indices.push(index - 1);
+}
+
+function addObject(
+    objects: THREE.Object3D[],
+    debugGeometry: DebugGeometry,
+    priorityOffset: number = 0,
+    factory: (geom: THREE.BufferGeometry) => THREE.Object3D
+) {
+    if (debugGeometry.indices.length > 0) {
+        debugGeometry.geometry.addGroup(0, debugGeometry.indices.length, 0);
+
+        debugGeometry.geometry.setAttribute(
+            "position",
+            new THREE.BufferAttribute(new Float32Array(debugGeometry.positions), 3)
+        );
+
+        debugGeometry.geometry.setIndex(
+            new THREE.BufferAttribute(new Uint32Array(debugGeometry.indices), 1)
+        );
+        const mesh = factory(debugGeometry.geometry);
+        mesh.renderOrder = PRIORITY_ALWAYS - priorityOffset;
+        objects.push(mesh);
+    }
+}
 
 export class OmvDebugLabelsTile extends Tile {
     constructor(dataSource: DataSource, tileKey: TileKey) {
@@ -92,8 +151,12 @@ export class OmvDebugLabelsTile extends Tile {
         const debugTextPaths = debugContext.getValue("DEBUG_TEXT_PATHS");
         const debugTextPathsFull = debugContext.getValue("DEBUG_TEXT_PATHS_FULL");
         const debugTextPoisFull = debugContext.getValue("DEBUG_TEXT_POIS_FULL");
+        const debugLineMarkers = debugContext.getValue("DEBUG_TEXT_LINE_MARKER");
 
-        if (!(debugTextPaths || debugTextPathsFull) || this.decodedTile === undefined) {
+        if (
+            !(debugTextPaths || debugTextPathsFull || debugLineMarkers) ||
+            this.decodedTile === undefined
+        ) {
             return;
         }
 
@@ -121,109 +184,104 @@ export class OmvDebugLabelsTile extends Tile {
         const centerZ = this.center.z;
         const pointScale = this.mapView.pixelToWorld;
         const worldOffsetX = this.computeWorldOffsetX();
+        const zHeight = 10;
 
         let pointLabelIndex = 0;
 
         if (this.textElementGroups.count() > 0) {
-            const bluePointGeometry = new THREE.BufferGeometry();
-            const bluePointIndices = new Array<number>();
-            const bluePointPositions = new Array<number>();
-
+            const bluePoints = new DebugGeometry();
+            const orangePoints = new DebugGeometry();
             const addedTextElements: TextElement[] = [];
 
             this.textElementGroups.forEach((textElement: TextElement) => {
-                if (textElement.path !== undefined) {
+                if (
+                    textElement.type !== TextElementType.LineMarker &&
+                    textElement.type !== TextElementType.PoiLabel
+                ) {
                     return;
                 }
 
-                const x = textElement.position.x - centerX;
-                const y = textElement.position.y - centerY;
-                const z = 5 - centerZ;
+                const isLineMarker = textElement.type === TextElementType.LineMarker;
+                const geometry = isLineMarker ? orangePoints : bluePoints;
+                const pointSize = pointScale * 5;
 
-                // bluePointIndices.push(bluePointPositions.length / 3);
-                // bluePointPositions.push(x, y, z);
+                const addLabel = (x: number, y: number, z: number) => {
+                    addPoint(x, y, z, pointSize, geometry);
 
-                const pointSize = pointScale * 3;
+                    if (debugTextPoisFull || debugLineMarkers) {
+                        const offsetXY = pointSize * 0.5;
+                        const label: string = `${textElement.text} [${pointLabelIndex}]`;
 
-                bluePointPositions.push(x, y - pointSize, z);
-                bluePointPositions.push(x + pointSize, y, z);
-                bluePointPositions.push(x, y + pointSize, z);
-                bluePointPositions.push(x - pointSize, y, z);
+                        const labelElement = new TextElement(
+                            ContextualArabicConverter.instance.convert(label),
+                            new THREE.Vector3(
+                                x + worldOffsetX + centerX + offsetXY,
+                                y + centerY + offsetXY,
+                                z + centerZ
+                            ),
+                            textRenderStyle,
+                            textLayoutStyle,
+                            PRIORITY_ALWAYS,
+                            0.0,
+                            0.0
+                        );
+                        labelElement.minZoomLevel = 0;
+                        labelElement.mayOverlap = true;
+                        labelElement.reserveSpace = false;
+                        labelElement.alwaysOnTop = true;
+                        labelElement.ignoreDistance = true;
+                        labelElement.priority = TextElement.HIGHEST_PRIORITY;
 
-                const pointIndex = bluePointPositions.length / 3;
+                        (labelElement as any)._isDebug = true;
 
-                bluePointIndices.push(pointIndex - 4);
-                bluePointIndices.push(pointIndex - 3);
-                bluePointIndices.push(pointIndex - 2);
-                bluePointIndices.push(pointIndex - 4);
-                bluePointIndices.push(pointIndex - 2);
-                bluePointIndices.push(pointIndex - 1);
+                        addedTextElements.push(labelElement);
+                    }
 
-                if (debugTextPoisFull) {
-                    const offsetXY = pointSize * 0.5;
-                    const label: string = `${textElement.text} [${pointLabelIndex}]`;
+                    pointLabelIndex++;
+                };
 
-                    const labelElement = new TextElement(
-                        ContextualArabicConverter.instance.convert(label),
-                        new THREE.Vector3(
-                            x + worldOffsetX + centerX + offsetXY,
-                            y + centerY + offsetXY,
-                            z + centerZ
-                        ),
-                        textRenderStyle,
-                        textLayoutStyle,
-                        PRIORITY_ALWAYS,
-                        0.0,
-                        0.0
-                    );
-                    labelElement.minZoomLevel = 0;
-                    labelElement.mayOverlap = true;
-                    labelElement.reserveSpace = false;
-                    labelElement.alwaysOnTop = true;
-                    labelElement.ignoreDistance = true;
-                    labelElement.priority = TextElement.HIGHEST_PRIORITY;
-
-                    (labelElement as any)._isDebug = true;
-
-                    addedTextElements.push(labelElement);
+                if (textElement.path !== undefined && Array.isArray(textElement.path)) {
+                    for (let i = 0; i < textElement.path.length; i++) {
+                        const pos = textElement.path[i];
+                        const x = pos.x - centerX;
+                        const y = pos.y - centerY;
+                        const z = zHeight + pos.z + i * 5 - centerZ;
+                        addLabel(x, y, z);
+                    }
+                } else if (debugTextPoisFull) {
+                    const x = textElement.position.x - centerX;
+                    const y = textElement.position.y - centerY;
+                    const z = 5 - centerZ;
+                    addLabel(x, y, z);
                 }
-
-                pointLabelIndex++;
             });
 
             for (const labelElement of addedTextElements) {
                 this.addTextElement(labelElement);
             }
 
-            if (bluePointIndices.length > 0) {
-                bluePointGeometry.addGroup(0, bluePointIndices.length, 0);
-
-                bluePointGeometry.setAttribute(
-                    "position",
-                    new THREE.BufferAttribute(new Float32Array(bluePointPositions), 3)
-                );
-
-                bluePointGeometry.setIndex(
-                    new THREE.BufferAttribute(new Uint32Array(bluePointIndices), 1)
-                );
-                const bluePointMesh = new THREE.Mesh(bluePointGeometry, debugBlueCircleMaterial);
-                bluePointMesh.renderOrder = PRIORITY_ALWAYS;
-                this.objects.push(bluePointMesh);
-            }
+            addObject(
+                this.objects,
+                bluePoints,
+                0,
+                (geometry: THREE.BufferGeometry): THREE.Object3D => {
+                    return new THREE.Mesh(geometry, debugBlueCircleMaterial);
+                }
+            );
+            addObject(
+                this.objects,
+                orangePoints,
+                0,
+                (geometry: THREE.BufferGeometry): THREE.Object3D => {
+                    return new THREE.Mesh(geometry, debugOrangeCircleMaterial);
+                }
+            );
         }
 
         if (this.preparedTextPaths !== undefined) {
-            const lineGeometry = new THREE.BufferGeometry();
-            const lineIndices = new Array<number>();
-            const linePositions = new Array<number>();
-
-            const redPointGeometry = new THREE.BufferGeometry();
-            const redPointIndices = new Array<number>();
-            const redPointPositions = new Array<number>();
-
-            const blackPointGeometry = new THREE.BufferGeometry();
-            const blackPointIndices = new Array<number>();
-            const blackPointPositions = new Array<number>();
+            const lines = new DebugGeometry();
+            const redPoints = new DebugGeometry();
+            const blackPoints = new DebugGeometry();
 
             let baseVertex = 0;
 
@@ -239,7 +297,7 @@ export class OmvDebugLabelsTile extends Tile {
                     );
                 }
 
-                baseVertex = linePositions.length / 3;
+                baseVertex = lines.positions.length / 3;
 
                 const text = textPath.text;
 
@@ -250,8 +308,6 @@ export class OmvDebugLabelsTile extends Tile {
                     (indexFilter === undefined || indexFilter === elementIndex);
 
                 if (createDebugInfo) {
-                    const zHeight = 10;
-
                     for (let i = 0; i < textPath.path.length; i += 3) {
                         const pathIndex = i / 3;
                         const x = textPath.path[i] - centerX;
@@ -260,32 +316,21 @@ export class OmvDebugLabelsTile extends Tile {
                         const z = zHeight + textPath.path[i + 2] + i / 3 - centerZ;
 
                         if (debugTextPaths) {
-                            linePositions.push(x, y, z);
+                            lines.positions.push(x, y, z);
                         }
 
-                        const isRedPoint = i === 0;
+                        const isRedPoint = i === 0 && debugTextPaths;
 
                         if (debugTextPathsFull || isRedPoint) {
                             const pointSize = pointScale * (isRedPoint ? 6 : 4);
+                            const geometry = isRedPoint ? redPoints : blackPoints;
 
-                            const positions = isRedPoint ? redPointPositions : blackPointPositions;
-                            const indices = isRedPoint ? redPointIndices : blackPointIndices;
-
-                            positions.push(x, y - pointSize, z);
-                            positions.push(x + pointSize, y, z);
-                            positions.push(x, y + pointSize, z);
-                            positions.push(x - pointSize, y, z);
-
-                            const pointIndex = positions.length / 3;
-
-                            indices.push(pointIndex - 4);
-                            indices.push(pointIndex - 3);
-                            indices.push(pointIndex - 2);
-                            indices.push(pointIndex - 4);
-                            indices.push(pointIndex - 2);
-                            indices.push(pointIndex - 1);
+                            addPoint(x, y, z, pointSize, geometry);
 
                             if (debugTextPathsFull) {
+                                const xOffset = technique.xOffset ?? 0.0;
+                                const yOffset = technique.yOffset ?? 0.0;
+                                const minZoomLevel = technique.minZoomLevel;
                                 // give point index a label
                                 const label: string =
                                     pathIndex % 5 === 0
@@ -301,10 +346,10 @@ export class OmvDebugLabelsTile extends Tile {
                                     textRenderStyle,
                                     textLayoutStyle,
                                     getPropertyValue(technique.priority ?? 0, env),
-                                    technique.xOffset ?? 0.0,
-                                    technique.yOffset ?? 0.0
+                                    xOffset,
+                                    yOffset
                                 );
-                                labelElement.minZoomLevel = technique.minZoomLevel;
+                                labelElement.minZoomLevel = minZoomLevel;
                                 labelElement.mayOverlap = true;
                                 labelElement.reserveSpace = false;
                                 labelElement.alwaysOnTop = true;
@@ -319,60 +364,39 @@ export class OmvDebugLabelsTile extends Tile {
                     const N = textPath.path.length / 3;
                     for (let i = 0; i < N; ++i) {
                         if (i > 0) {
-                            lineIndices.push(baseVertex + i);
+                            lines.indices.push(baseVertex + i);
                         }
                         if (i + 1 < N) {
-                            lineIndices.push(baseVertex + i);
+                            lines.indices.push(baseVertex + i);
                         }
                     }
                 }
             }
 
-            if (lineIndices.length > 0) {
-                lineGeometry.addGroup(0, lineIndices.length, 0);
-
-                lineGeometry.setAttribute(
-                    "position",
-                    new THREE.BufferAttribute(new Float32Array(linePositions), 3)
-                );
-
-                lineGeometry.setIndex(new THREE.BufferAttribute(new Uint32Array(lineIndices), 1));
-                const lineMesh = new THREE.LineSegments(lineGeometry, debugMaterial);
-                lineMesh.renderOrder = PRIORITY_ALWAYS - 2;
-                this.objects.push(lineMesh);
-            }
-
-            if (redPointIndices.length > 0) {
-                redPointGeometry.addGroup(0, redPointIndices.length, 0);
-
-                redPointGeometry.setAttribute(
-                    "position",
-                    new THREE.BufferAttribute(new Float32Array(redPointPositions), 3)
-                );
-
-                redPointGeometry.setIndex(
-                    new THREE.BufferAttribute(new Uint32Array(redPointIndices), 1)
-                );
-                const redPointMesh = new THREE.Mesh(redPointGeometry, debugCircleMaterial);
-                redPointMesh.renderOrder = PRIORITY_ALWAYS;
-                this.objects.push(redPointMesh);
-            }
-
-            if (blackPointIndices.length > 0) {
-                blackPointGeometry.addGroup(0, blackPointIndices.length, 0);
-
-                blackPointGeometry.setAttribute(
-                    "position",
-                    new THREE.BufferAttribute(new Float32Array(blackPointPositions), 3)
-                );
-
-                blackPointGeometry.setIndex(
-                    new THREE.BufferAttribute(new Uint32Array(blackPointIndices), 1)
-                );
-                const blackPointMesh = new THREE.Mesh(blackPointGeometry, debugBlackCircleMaterial);
-                blackPointMesh.renderOrder = PRIORITY_ALWAYS - 1;
-                this.objects.push(blackPointMesh);
-            }
+            addObject(
+                this.objects,
+                lines,
+                -2,
+                (geometry: THREE.BufferGeometry): THREE.Object3D => {
+                    return new THREE.LineSegments(geometry, debugMaterial);
+                }
+            );
+            addObject(
+                this.objects,
+                redPoints,
+                0,
+                (geometry: THREE.BufferGeometry): THREE.Object3D => {
+                    return new THREE.Mesh(geometry, debugCircleMaterial);
+                }
+            );
+            addObject(
+                this.objects,
+                blackPoints,
+                -1,
+                (geometry: THREE.BufferGeometry): THREE.Object3D => {
+                    return new THREE.Mesh(geometry, debugBlackCircleMaterial);
+                }
+            );
         }
     }
 }

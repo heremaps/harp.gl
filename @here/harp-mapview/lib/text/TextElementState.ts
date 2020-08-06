@@ -298,6 +298,8 @@ export class TextElementState {
         assert(this.m_iconRenderStates === undefined);
 
         const { textFadeTime } = this.element;
+        this.m_textRenderState = new RenderState(textFadeTime);
+
         const iconFadeTime = this.element.poiInfo?.technique.iconFadeTime;
         if (this.element.type === TextElementType.LineMarker) {
             this.m_iconRenderStates = new Array<RenderState>();
@@ -308,8 +310,6 @@ export class TextElementState {
             }
             return;
         }
-
-        this.m_textRenderState = new RenderState(textFadeTime);
 
         if (this.element.type === TextElementType.PoiLabel) {
             this.m_iconRenderStates = new RenderState(iconFadeTime);

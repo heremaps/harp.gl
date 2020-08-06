@@ -166,6 +166,7 @@
     "styles": {
         "tilezen": [
             {
+                "id": "roadshield_highway",
                 "description": "highway-roadshield",
                 "when": [
                     "all",
@@ -179,7 +180,11 @@
                 "style": "smallSign",
                 "label": "ref",
                 "size": 12.8,
-                "imageTexture": ["concat", "default-", ["clamp", ["length", ["get", "ref"]], 2, 6]],
+                "imageTexture": [
+                    "concat",
+                    "default-",
+                    ["clamp", ["length", ["string", ["get", "ref"], ""]], 2, 6]
+                ],
                 "iconScale": 1.28,
                 "priority": ["-", 37, ["length", ["get", "ref"]]],
                 "minDistance": 200,
@@ -189,11 +194,11 @@
                 "iconIsOptional": false,
                 "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
                 "color": "#000000",
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "highway-outline",
@@ -359,10 +364,10 @@
                 "iconIsOptional": false,
                 "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "primary-road-shield-3, zoom > 11",
@@ -391,10 +396,10 @@
                 "iconIsOptional": false,
                 "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "primary-road-shield-4, zoom > 11",
@@ -423,10 +428,10 @@
                 "iconIsOptional": false,
                 "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "primary-road-shield-5, zoom > 11",
@@ -455,10 +460,10 @@
                 "iconIsOptional": false,
                 "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "primary-road-shield-5+, zoom > 11",
@@ -487,10 +492,10 @@
                 "iconIsOptional": false,
                 "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "primary-outline",
@@ -674,7 +679,11 @@
                 "backgroundColor": "#FFFFFF",
                 "backgroundOpacity": 0.5,
                 "size": 12.8,
-                "imageTexture": ["concat", "default-", ["clamp", ["length", ["get", "ref"]], 2, 6]],
+                "imageTexture": [
+                    "concat",
+                    "default-",
+                    ["clamp", ["length", ["string", ["get", "ref"], ""]], 2, 6]
+                ],
                 "iconScale": 1.28,
                 "priority": ["-", 26, ["length", ["get", "ref"]]],
                 "fadeNear": 0.8,
@@ -682,12 +691,12 @@
                 "minDistance": 300,
                 "textIsOptional": false,
                 "iconIsOptional": false,
-                "textMayOverlap": true,
+                "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "secondary-fill",
@@ -761,7 +770,11 @@
                 "backgroundColor": "#FFFFFF",
                 "backgroundOpacity": 0.5,
                 "size": 12.8,
-                "imageTexture": ["concat", "default-", ["clamp", ["length", ["get", "ref"]], 2, 6]],
+                "imageTexture": [
+                    "concat",
+                    "default-",
+                    ["clamp", ["length", ["string", ["get", "ref"], ""]], 2, 6]
+                ],
                 "iconScale": 1.28,
                 "priority": ["-", 22, ["length", ["get", "ref"]]],
                 "fadeNear": 0.8,
@@ -771,10 +784,10 @@
                 "iconIsOptional": false,
                 "textMayOverlap": false,
                 "textReserveSpace": true,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
                 "renderTextDuringMovements": true,
-                "showOnMap": false
+                "showOnMap": true
             },
             {
                 "description": "tertiary-outline",
