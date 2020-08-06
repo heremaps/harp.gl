@@ -4,6 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export * from "./lib/OmvDecoder";
+export * from "./lib/VectorTileDecoder";
 export * from "./lib/OmvTiler";
 export * from "./lib/OmvDecoderDefs";

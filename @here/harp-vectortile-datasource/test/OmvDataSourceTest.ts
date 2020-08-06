@@ -19,7 +19,7 @@ import {
     OmvRestClient,
     VectorTileDataSource
 } from "../index";
-import { OmvTileDecoder } from "../index-worker";
+import { VectorTileDecoder } from "../index-worker";
 import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
 
 import * as sinon from "sinon";
@@ -51,7 +51,7 @@ describe("DataProviders", function() {
     it("Creates a OmvDataSource with a custom DataProvider", function() {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
-            decoder: new OmvTileDecoder(),
+            decoder: new VectorTileDecoder(),
             dataProvider: mockDataProvider
         });
         assert.equal(omvDataSource.dataProvider(), mockDataProvider);
@@ -60,7 +60,7 @@ describe("DataProviders", function() {
 
     it("Creates a OmvDataSource with a REST based DataProvider with proper params", function() {
         const omvDataSource = new VectorTileDataSource({
-            decoder: new OmvTileDecoder(),
+            decoder: new VectorTileDecoder(),
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
             authenticationCode: "123",
@@ -85,7 +85,7 @@ describe("DataProviders", function() {
     it("Creates OmvDataSource with custom DataProvider, ignoring other attributes", function() {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
-            decoder: new OmvTileDecoder(),
+            decoder: new VectorTileDecoder(),
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
             authenticationCode: "123",
@@ -97,7 +97,7 @@ describe("DataProviders", function() {
     it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
-            decoder: new OmvTileDecoder(),
+            decoder: new VectorTileDecoder(),
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
             authenticationCode: "123",
@@ -117,7 +117,7 @@ describe("DataProviders", function() {
     it("supports minDataLevel and maxDataLevel in constructor", function() {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
-            decoder: new OmvTileDecoder(),
+            decoder: new VectorTileDecoder(),
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
             authenticationCode: "123",
@@ -143,7 +143,7 @@ describe("DataProviders", function() {
             } as any;
             const mockDataProvider = new MockDataProvider();
             const omvDataSource = new VectorTileDataSource({
-                decoder: new OmvTileDecoder(),
+                decoder: new VectorTileDecoder(),
                 baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
                 apiFormat: APIFormat.MapboxV4,
                 authenticationCode: "123",
@@ -175,7 +175,7 @@ describe("DataProviders", function() {
             tiler
         });
 
-        const decoder = new OmvTileDecoder();
+        const decoder = new VectorTileDecoder();
 
         const omvDataSource = new VectorTileDataSource({ dataProvider, decoder });
 
