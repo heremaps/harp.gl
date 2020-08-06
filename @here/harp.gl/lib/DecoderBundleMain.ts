@@ -13,9 +13,9 @@ if (!(self as any).THREE) {
 }
 
 import {
-    OmvTileDecoderService,
-    OmvTilerService
+    OmvTilerService,
+    VectorTileDecoderService
 } from "@here/harp-vectortile-datasource/index-worker";
 
 OmvTilerService.start();
-OmvTileDecoderService.start();
+VectorTileDecoderService.start();

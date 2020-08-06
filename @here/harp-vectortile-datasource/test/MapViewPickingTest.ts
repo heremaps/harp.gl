@@ -39,7 +39,7 @@ import { getAppBaseUrl } from "@here/harp-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
-import { OmvTileDecoder } from "../index-worker";
+import { VectorTileDecoder } from "../index-worker";
 import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
 import { VectorTileDataSource } from "../lib/VectorTileDataSource";
 import { GEOJSON_DATA, THEME } from "./resources/geoJsonData";
@@ -192,7 +192,7 @@ describe("MapView Picking", async function() {
         });
 
         geoJsonDataSource = new VectorTileDataSource({
-            decoder: new OmvTileDecoder(),
+            decoder: new VectorTileDecoder(),
             dataProvider: geoJsonDataProvider,
             name: "geojson",
             styleSetName: "geojson",

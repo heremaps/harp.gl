@@ -47,9 +47,9 @@ import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
 import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
 
-const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
+const logger = LoggerManager.instance.create("VectorTileDecoder", { enabled: false });
 
-export class OmvDecoder implements IGeometryProcessor {
+export class VectorTileDataProcessor implements IGeometryProcessor {
     // The emitter is optional now.
     // TODO: Add option to control emitter generation.
     private m_decodedTileEmitter: VectorTileDataEmitter | undefined;
@@ -292,7 +292,11 @@ export class OmvDecoder implements IGeometryProcessor {
         return techniques;
     }
 }
-export class OmvTileDecoder extends ThemedTileDecoder {
+
+/**
+ * The vector tile decoder.
+ */
+export class VectorTileDecoder extends ThemedTileDecoder {
     private m_showMissingTechniques: boolean = false;
     private m_featureFilter?: OmvFeatureFilter;
     private m_featureModifiers?: OmvFeatureModifier[];
@@ -314,7 +318,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     ): Promise<DecodedTile> {
         const startTime = PerformanceTimer.now();
 
-        const decoder = new OmvDecoder(
+        const decoder = new VectorTileDataProcessor(
             projection,
             styleSetEvaluator,
             this.m_showMissingTechniques,
@@ -441,32 +445,20 @@ export class OmvTileDecoder extends ThemedTileDecoder {
 }
 
 /**
- * OMV tile decoder service.
+ * Vector Tile Decoder Service.
  */
-export class OmvTileDecoderService {
+export class VectorTileDecoderService {
     /**
-     * Register[[OmvTileDecoder]] service class in [[WorkerServiceManager]].
+     * Register a vector tile decoder service.
      *
+     * @remarks
      * Has to be called during initialization of decoder bundle.
      */
     static start() {
         WorkerServiceManager.getInstance().register({
             serviceType: OMV_TILE_DECODER_SERVICE_TYPE,
             factory: (serviceId: string) =>
-                TileDecoderService.start(serviceId, new OmvTileDecoder())
+                TileDecoderService.start(serviceId, new VectorTileDecoder())
         });
-    }
-}
-
-/**
- * Starts an OMV decoder service.
- *
- * @deprecated Please use [[OmvTileDecoderService.start]].
- */
-export default class OmvWorkerClient {
-    // TODO(HARP-3651): remove this class when clients are ready
-    constructor() {
-        logger.warn("OmvWorkerClient class is deprecated, please use OmvTileDecoderService.start");
-        OmvTileDecoderService.start();
     }
 }

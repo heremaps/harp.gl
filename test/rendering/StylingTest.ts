@@ -32,7 +32,7 @@ import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";
 import { getReferenceImageUrl } from "@here/harp-test-utils/lib/rendering/ReferenceImageLocator";
 import { getOptionValue, mergeWithOptions } from "@here/harp-utils";
-import { OmvTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
+import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
 
 interface RenderingTestOptions extends TestOptions {
     /**
@@ -150,7 +150,7 @@ function mapViewFeaturesRenderingTest(
             const dataSource = new FeaturesDataSource({
                 styleSetName: "geojson",
                 geojson: options.geoJson,
-                decoder: new OmvTileDecoder(),
+                decoder: new VectorTileDecoder(),
                 tiler: new GeoJsonTiler(),
                 gatherFeatureAttributes: true
             });
