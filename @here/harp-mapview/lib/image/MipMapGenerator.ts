@@ -6,9 +6,12 @@
 
 import * as THREE from "three";
 
+import { LoggerManager } from "@here/harp-utils";
 import { ImageItem } from "./Image";
 
 const isNode = typeof window === "undefined";
+
+const logger = LoggerManager.instance.create("MipMapGenerator");
 
 /**
  * Mip map generator resizes textures to next bigger power-of-two size by adding padding
@@ -51,7 +54,8 @@ export class MipMapGenerator {
      */
     generateTextureAtlasMipMap(image: ImageItem): ImageData[] {
         if (isNode) {
-            throw new Error("MipMapGenerator only works in browser.");
+            logger.warn("MipMapGenerator only works in browser.");
+            return [];
         }
 
         if (image.imageData === undefined) {

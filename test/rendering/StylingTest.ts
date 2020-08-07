@@ -54,15 +54,140 @@ function baseRenderingTest(
     cleanupFun?: () => void
 ) {
     const commonTestOptions = { module: "harp.gl" };
-    const imageUrl = getReferenceImageUrl({ ...commonTestOptions, platform: getPlatform(), name });
+    const imageUrl = RenderingTestHelper === undefined
+        ? ""
+        : getReferenceImageUrl({ ...commonTestOptions, platform: getPlatform(), name });
 
-    RenderingTestHelper.cachedLoadImageData(imageUrl).catch(_ => {
-        // We can ignore error here, as _if_ this file was really needed, then test
-        // will try to resolve this promise and report failure in test context.
-    });
-    it(name, async function() {
+    if (RenderingTestHelper !== undefined) {
+        RenderingTestHelper.cachedLoadImageData(imageUrl).catch(_ => {
+            // We can ignore error here, as _if_ this file was really needed, then test
+            // will try to resolve this promise and report failure in test context.
+        });
+    }
+    it(name, async function () {
         let canvas: HTMLCanvasElement | undefined;
         // TODO: remove `module` name from RenderingTestHalper API
+
+        // TODO: Check for node context properly and revert changes to global
+        if (RenderingTestHelper === undefined) {
+            global.requestAnimationFrame = (callback) => { return setTimeout(callback, 0); };
+            global.cancelAnimationFrame = (handle: number) => { clearTimeout(handle); };
+            global.createImageBitmap = () => Promise.resolve({
+                width: 10,
+                height: 10,
+                close: noop
+            });
+            global.location = { href: "https://harp.gl" } as unknown as Location;
+            global.window = (global as unknown) as (Window & typeof globalThis);
+            global.document = {
+                createElementNS: () => {
+                    // createElementNS: (_namespaceURI: "http://www.w3.org/1999/xhtml",
+                    //     _qualifiedName: string) => {
+                    return {
+                        addEventListener: (type: string, listener: EventListener) => {
+                            if (type === "load") {
+                                setTimeout(listener.bind({ bla: 42 }), 0);
+                            }
+                        },
+                        removeEventListener: noop,
+                    } as any;
+                }
+            } as unknown as Document;
+            // tslint:disable-next-line: no-empty
+            const noop = () => { };
+            const context = {
+                getParameter: (param: number) => {
+                    switch (param) {
+                        case 7938: return "WebGL 1";
+                        default: return "yes";
+                    }
+                },
+                getExtension: () => null,
+                createTexture: () => { return {}; },
+                activeTexture: noop,
+                bindTexture: noop,
+                texParameteri: noop,
+                texImage2D: noop,
+                createBuffer: () => { return {}; },
+                bindBuffer: noop,
+                bufferData: noop,
+                bufferSubData: noop,
+                createProgram: () => { return {}; },
+                deleteProgram: noop,
+                createShader: () => { return {}; },
+                compileShader: noop,
+                shaderSource: noop,
+                attachShader: noop,
+                linkProgram: noop,
+                getProgramInfoLog: () => "",
+                getShaderInfoLog: () => "",
+                getProgramParameter: () => {
+                    return true;
+                },
+                getActiveAttrib: () => {
+                    return {};
+                },
+                getAttribLocation: () => {
+                    return 0;
+                },
+                getActiveUniform: () => {
+                    return { name: "someName" };
+                },
+                getUniformLocation: () => {
+                    return {};
+
+                },
+                deleteShader: noop,
+                useProgram: noop,
+                clearColor: noop,
+                clearDepth: noop,
+                clearStencil: noop,
+                clear: noop,
+                enable: noop,
+                disable: noop,
+                colorMask: noop,
+                depthMask: noop,
+                depthFunc: noop,
+                stencilMask: noop,
+                stencilFunc: noop,
+                stencilOp: noop,
+                frontFace: noop,
+                cullFace: noop,
+                scissor: noop,
+                viewport: noop,
+                cancelAnimationFrame: noop,
+                drawElements: noop,
+                drawArrays: noop,
+                blendEquation: noop,
+                blendEquationSeparate: noop,
+                blendFuncSeparate: noop,
+                lineWidth: noop,
+                createFramebuffer: () => {
+                    return {};
+                },
+                bindFramebuffer: noop,
+                framebufferTexture2D: noop
+            };
+            // tslint:disable-next-line: no-object-literal-type-assertion
+            canvas = {
+                width: options.width ?? options.height ?? 100,
+                height: options.height ?? options.width ?? 100,
+                // tslint:disable-next-line: no-empty
+                addEventListener: noop,
+                removeEventListener: noop,
+                getContext: () => context
+            } as unknown as HTMLCanvasElement;
+            try {
+                await testFun(canvas);
+            } finally {
+                if (cleanupFun !== undefined) {
+                    cleanupFun();
+                }
+            }
+
+            return;
+        }
+
         try {
             const ibct = new RenderingTestHelper(this, commonTestOptions);
 
@@ -137,7 +262,7 @@ function mapViewFeaturesRenderingTest(
     baseRenderingTest(
         name,
         options,
-        async function(canvas) {
+        async function (canvas) {
             //document.body.appendChild(canvas);
             mapView = new MapView({
                 canvas,
@@ -201,7 +326,7 @@ function mapViewFeaturesRenderingTest(
     );
 }
 
-describe("MapView Styling Test", function() {
+describe("MapView Styling Test", function () {
     const referenceBackground: Feature = {
         // background polygon, taking about half of view
         type: "Feature",
@@ -233,7 +358,7 @@ describe("MapView Styling Test", function() {
         fontCatalogs: [
             {
                 name: "fira",
-                url: "../@here/harp-fontcatalog/resources/Default_FontCatalog.json"
+                url: "./node_modules/@here/harp-fontcatalog/resources/Default_FontCatalog.json"
             }
         ],
         images: {
@@ -252,7 +377,7 @@ describe("MapView Styling Test", function() {
         ]
     };
 
-    describe("point features", function() {
+    describe("point features", function () {
         const points: Feature[] = [
             {
                 type: "Feature",
@@ -386,7 +511,7 @@ describe("MapView Styling Test", function() {
             }
         }
 
-        describe("text", function() {
+        describe("text", function () {
             makePointTextTestCases(
                 {
                     "point-text-basic": { color: "#f0f", size: 16 },
@@ -404,7 +529,7 @@ describe("MapView Styling Test", function() {
             );
         });
 
-        describe("poi", function() {
+        describe("poi", function () {
             makePointPoiTestCases(
                 {
                     "poi-basic-icon-only": {
@@ -437,7 +562,7 @@ describe("MapView Styling Test", function() {
             );
         });
 
-        describe("circles", function() {
+        describe("circles", function () {
             makePointTestCases(
                 {
                     "point-circles-basic": { color: "#ca6", size: 10 },
@@ -451,7 +576,7 @@ describe("MapView Styling Test", function() {
             );
         });
     });
-    describe("line features", function() {
+    describe("line features", function () {
         const straightLine: Feature = {
             type: "Feature",
             geometry: {
@@ -518,8 +643,8 @@ describe("MapView Styling Test", function() {
             }
         }
 
-        describe("solid-line technique", function() {
-            describe("basic", function() {
+        describe("solid-line technique", function () {
+            describe("basic", function () {
                 makeLineTestCase({
                     "basic-100m": { lineWidth: 100, color: "#0b97c4" },
                     "basic-dash-100m": {
@@ -625,7 +750,7 @@ describe("MapView Styling Test", function() {
                 );
             });
 
-            describe("with outline", function() {
+            describe("with outline", function () {
                 makeLineTestCase({
                     "outline-10px-2px": {
                         // BUGGY ?
@@ -680,7 +805,7 @@ describe("MapView Styling Test", function() {
                 );
             });
         });
-        describe("text from lines", function() {
+        describe("text from lines", function () {
             mapViewFeaturesRenderingTest(`line-text-basic`, {
                 width: 200,
                 height: 200,
@@ -727,7 +852,7 @@ describe("MapView Styling Test", function() {
             });
         });
     });
-    describe("polygon features", function() {
+    describe("polygon features", function () {
         const lights: Light[] = [
             {
                 type: "ambient",
@@ -834,14 +959,14 @@ describe("MapView Styling Test", function() {
                 });
             }
         }
-        describe("fill technique", function() {
-            describe("no outline", function() {
+        describe("fill technique", function () {
+            describe("no outline", function () {
                 makePolygonTestCases("fill", {
                     fill: { color: "#0b97c4" },
                     "fill-rgba": { color: "#0b97c470" }
                 });
             });
-            describe("with outline", function() {
+            describe("with outline", function () {
                 makePolygonTestCases("fill", {
                     // all tests are buggy ? because all outlines have 1px width
                     "fill-outline-200m": { color: "#0b97c4", lineColor: "#7f7", lineWidth: 200 },
@@ -876,7 +1001,7 @@ describe("MapView Styling Test", function() {
                 });
             });
         });
-        describe("standard technique", function() {
+        describe("standard technique", function () {
             mapViewFeaturesRenderingTest(
                 `polygon-standard-texture`,
                 {
@@ -952,7 +1077,7 @@ describe("MapView Styling Test", function() {
             );
         });
 
-        describe("extruded-polygon technique", function() {
+        describe("extruded-polygon technique", function () {
             const tower: Feature = {
                 // sample polygon, that is smaller and higher than previous one
                 type: "Feature",
@@ -980,7 +1105,7 @@ describe("MapView Styling Test", function() {
                     heading: 30
                 }
             };
-            describe("flat", function() {
+            describe("flat", function () {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
@@ -996,7 +1121,7 @@ describe("MapView Styling Test", function() {
                     viewOptions
                 );
             });
-            describe("3d", function() {
+            describe("3d", function () {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
@@ -1032,7 +1157,7 @@ describe("MapView Styling Test", function() {
                     viewOptions
                 );
             });
-            describe("3d overlapping", function() {
+            describe("3d overlapping", function () {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
