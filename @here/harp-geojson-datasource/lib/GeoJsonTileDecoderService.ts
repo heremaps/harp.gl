@@ -10,16 +10,16 @@ const logger = LoggerManager.instance.create("WorkerService", { enabled: false }
 
 /**
  * @deprecated GeoJsonTileDecoderService Use
- *             {@link @here/harp-vectortile-datasource#OmvTileDecoderService} instead.
+ *             {@link @here/harp-vectortile-datasource#VectorTileDecoderService} instead.
  */
 export class GeoJsonTileDecoderService {
     /**
      * @deprecated GeoJsonTileDecoderService Use
-     *             {@link @here/harp-vectortile-datasource#OmvTileDecoderService} instead.
+     *             {@link @here/harp-vectortile-datasource#VectorTileDecoderService} instead.
      */
     start() {
         logger.warn(
-            "GeoJsonTileDecoderService class is deprecated, please use OmvTileDecoderService"
+            "GeoJsonTileDecoderService class is deprecated, please use VectorTileDecoderService"
         );
     }
 }

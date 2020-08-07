@@ -12,6 +12,7 @@ import { DataProvider } from "@here/harp-mapview-decoder";
 import { LoggerManager } from "@here/harp-utils";
 
 import { EventDispatcher } from "three";
+import { GEOJSON_TILER_SERVICE_TYPE } from "./OmvDecoderDefs";
 
 const logger = LoggerManager.instance.create("GeoJsonDataProvider");
 
@@ -63,7 +64,10 @@ export class GeoJsonDataProvider extends EventDispatcher implements DataProvider
 
         this.m_tiler =
             options?.tiler ??
-            ConcurrentTilerFacade.getTiler("omv-tiler", options && options.workerTilerUrl);
+            ConcurrentTilerFacade.getTiler(
+                GEOJSON_TILER_SERVICE_TYPE,
+                options && options.workerTilerUrl
+            );
     }
 
     async connect(): Promise<void> {

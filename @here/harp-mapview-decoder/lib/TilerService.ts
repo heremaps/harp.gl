@@ -10,18 +10,22 @@ import { GeoJsonTiler } from "./GeoJsonTiler";
 import { WorkerService, WorkerServiceResponse } from "./WorkerService";
 
 /**
- * An extension to [[WorkerService]], the `TilerService` implements an asynchronous (message based)
- * service to tile untiled payloads in web workers. The `TilerService` itself lives in the web
- * worker, and communicates with messages by means of a [[ConcurrentWorkerSet]] with the
+ * An extension to {@link WorkerService}, the `TilerService`
+ * implements an asynchronous (message based)
+ * service to tile untiled payloads in web workers.
+ *
+ * @remarks
+ * The `TilerService` itself lives in the web
+ * worker, and communicates with messages by means of a `ConcurrentWorkerSet` with the
  * application.
  *
  * The `TilerService` registers tile indices (parent tile to be subdivided) by handling a
- * [[RegisterIndexRequest]], and can later retrieve tiled payloads from through the [[TileRequest]].
- * The data is sent back in form of a [[WorkerServiceResponse]].
+ * `RegisterIndexRequest`, and can later retrieve tiled payloads from through the `TileRequest`.
+ * The data is sent back in form of a {@link WorkerServiceResponse}.
  */
 export class TilerService extends WorkerService {
     /**
-     * Start a [[TilerService]].
+     * Start a `TilerService`.
      *
      * @param serviceId - Service id. Must be unique.
      */
@@ -42,8 +46,8 @@ export class TilerService extends WorkerService {
     /**
      * Handle incoming request messages. Identifies message type and processes the request.
      *
-     * @param request - [[WorkerTilerProtocol]] request.
-     * @returns A promise which resolves to a [[WorkerServiceResponse]].
+     * @param request - {@link WorkerTilerProtocol} request.
+     * @returns A promise which resolves to a {@link WorkerServiceResponse}.
      * @override
      */
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
