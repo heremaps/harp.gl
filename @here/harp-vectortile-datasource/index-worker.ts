@@ -5,5 +5,5 @@
  */
 
 export * from "./lib/VectorTileDecoder";
-export * from "./lib/OmvTiler";
+export * from "./lib/GeoJsonTilerService";
 export * from "./lib/OmvDecoderDefs";

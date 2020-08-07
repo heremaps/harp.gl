@@ -213,15 +213,21 @@ export interface OmvDecoderOptions {
 }
 
 /**
- * Default OMV tile decoder service type.
+ * Vector tile decoder service type id.
  *
- * Used for requesting decoder services using [[WorkerServiceManager]].
+ * @remarks
+ * Used for requesting decoder services using `WorkerServiceManager`.
+ *
+ * @internal
  */
-export const OMV_TILE_DECODER_SERVICE_TYPE = "omv-tile-decoder";
+export const VECTOR_TILE_DECODER_SERVICE_TYPE = "vector-tile-decoder";
 
 /**
- * Default OMV tiler service type.
+ * GeoJson tiler service type id.
  *
- * Used for requesting tiler services using [[WorkerServiceManager]].
+ * @remarks
+ * Used for requesting tiler services using `WorkerServiceManager`.
+ *
+ * @internal
  */
-export const OMV_TILER_SERVICE_TYPE = "omv-tiler";
+export const GEOJSON_TILER_SERVICE_TYPE = "geojson-tiler";

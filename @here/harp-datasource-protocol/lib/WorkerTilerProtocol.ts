@@ -8,7 +8,7 @@ import { GeoJson } from "../lib/GeoJsonDataType";
 import { WorkerServiceProtocol } from "./WorkerServiceProtocol";
 
 /**
- * Communication protocol with [[ITiler]].
+ * Communication protocol with {@link ITiler}.
  */
 export namespace WorkerTilerProtocol {
     /**

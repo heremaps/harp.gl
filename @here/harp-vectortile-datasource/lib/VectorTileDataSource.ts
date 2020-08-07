@@ -24,7 +24,7 @@ import {
     FeatureModifierId,
     OmvDecoderOptions,
     OmvFeatureFilterDescription,
-    OMV_TILE_DECODER_SERVICE_TYPE
+    VECTOR_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
 import {
     APIFormat,
@@ -285,7 +285,7 @@ export class VectorTileDataSource extends TileDataSource {
     constructor(private readonly m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory ?? new TileFactory(Tile), {
             styleSetName: m_params.styleSetName ?? "omv",
-            concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,
+            concurrentDecoderServiceName: VECTOR_TILE_DECODER_SERVICE_TYPE,
             minDataLevel: m_params.minDataLevel ?? 1,
             maxDataLevel: m_params.maxDataLevel ?? 17,
             storageLevelOffset: m_params.storageLevelOffset ?? -1,

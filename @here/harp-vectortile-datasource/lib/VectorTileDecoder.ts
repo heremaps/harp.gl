@@ -40,7 +40,7 @@ import {
     FeatureModifierId,
     OmvDecoderOptions,
     OmvFeatureFilterDescription,
-    OMV_TILE_DECODER_SERVICE_TYPE
+    VECTOR_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
 import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
@@ -456,7 +456,7 @@ export class VectorTileDecoderService {
      */
     static start() {
         WorkerServiceManager.getInstance().register({
-            serviceType: OMV_TILE_DECODER_SERVICE_TYPE,
+            serviceType: VECTOR_TILE_DECODER_SERVICE_TYPE,
             factory: (serviceId: string) =>
                 TileDecoderService.start(serviceId, new VectorTileDecoder())
         });
