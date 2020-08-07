@@ -27,12 +27,22 @@ import {
 } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
 import { GeoBox, OrientedBox3, ProjectionType } from "@here/harp-geoutils";
-import { LookAtParams, MapAnchor, MapView, MapViewEventNames } from "@here/harp-mapview";
+import {
+    ImageCache,
+    LookAtParams,
+    MapAnchor,
+    MapView,
+    MapViewEventNames
+} from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";
 import { getReferenceImageUrl } from "@here/harp-test-utils/lib/rendering/ReferenceImageLocator";
-import { getOptionValue, mergeWithOptions } from "@here/harp-utils";
+import { getWebGLContextStub } from "@here/harp-test-utils/lib/WebGLStub";
+import { getOptionValue, LoggerManager, LogLevel, mergeWithOptions } from "@here/harp-utils";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
+
+// We also run this test in node with a mocked WebGLContext to get the code coverage numbers.
+const isNode = typeof window === "undefined";
 
 interface RenderingTestOptions extends TestOptions {
     /**
@@ -45,170 +55,6 @@ interface RenderingTestOptions extends TestOptions {
      * @defult `100` or `width` if given
      */
     height?: number;
-}
-
-function baseRenderingTest(
-    name: string,
-    options: RenderingTestOptions,
-    testFun: (canvas: HTMLCanvasElement) => Promise<void>,
-    cleanupFun?: () => void
-) {
-    const commonTestOptions = { module: "harp.gl" };
-    const imageUrl = RenderingTestHelper === undefined
-        ? ""
-        : getReferenceImageUrl({ ...commonTestOptions, platform: getPlatform(), name });
-
-    if (RenderingTestHelper !== undefined) {
-        RenderingTestHelper.cachedLoadImageData(imageUrl).catch(_ => {
-            // We can ignore error here, as _if_ this file was really needed, then test
-            // will try to resolve this promise and report failure in test context.
-        });
-    }
-    it(name, async function () {
-        let canvas: HTMLCanvasElement | undefined;
-        // TODO: remove `module` name from RenderingTestHalper API
-
-        // TODO: Check for node context properly and revert changes to global
-        if (RenderingTestHelper === undefined) {
-            global.requestAnimationFrame = (callback) => { return setTimeout(callback, 0); };
-            global.cancelAnimationFrame = (handle: number) => { clearTimeout(handle); };
-            global.createImageBitmap = () => Promise.resolve({
-                width: 10,
-                height: 10,
-                close: noop
-            });
-            global.location = { href: "https://harp.gl" } as unknown as Location;
-            global.window = (global as unknown) as (Window & typeof globalThis);
-            global.document = {
-                createElementNS: () => {
-                    // createElementNS: (_namespaceURI: "http://www.w3.org/1999/xhtml",
-                    //     _qualifiedName: string) => {
-                    return {
-                        addEventListener: (type: string, listener: EventListener) => {
-                            if (type === "load") {
-                                setTimeout(listener.bind({ bla: 42 }), 0);
-                            }
-                        },
-                        removeEventListener: noop,
-                    } as any;
-                }
-            } as unknown as Document;
-            // tslint:disable-next-line: no-empty
-            const noop = () => { };
-            const context = {
-                getParameter: (param: number) => {
-                    switch (param) {
-                        case 7938: return "WebGL 1";
-                        default: return "yes";
-                    }
-                },
-                getExtension: () => null,
-                createTexture: () => { return {}; },
-                activeTexture: noop,
-                bindTexture: noop,
-                texParameteri: noop,
-                texImage2D: noop,
-                createBuffer: () => { return {}; },
-                bindBuffer: noop,
-                bufferData: noop,
-                bufferSubData: noop,
-                createProgram: () => { return {}; },
-                deleteProgram: noop,
-                createShader: () => { return {}; },
-                compileShader: noop,
-                shaderSource: noop,
-                attachShader: noop,
-                linkProgram: noop,
-                getProgramInfoLog: () => "",
-                getShaderInfoLog: () => "",
-                getProgramParameter: () => {
-                    return true;
-                },
-                getActiveAttrib: () => {
-                    return {};
-                },
-                getAttribLocation: () => {
-                    return 0;
-                },
-                getActiveUniform: () => {
-                    return { name: "someName" };
-                },
-                getUniformLocation: () => {
-                    return {};
-
-                },
-                deleteShader: noop,
-                useProgram: noop,
-                clearColor: noop,
-                clearDepth: noop,
-                clearStencil: noop,
-                clear: noop,
-                enable: noop,
-                disable: noop,
-                colorMask: noop,
-                depthMask: noop,
-                depthFunc: noop,
-                stencilMask: noop,
-                stencilFunc: noop,
-                stencilOp: noop,
-                frontFace: noop,
-                cullFace: noop,
-                scissor: noop,
-                viewport: noop,
-                cancelAnimationFrame: noop,
-                drawElements: noop,
-                drawArrays: noop,
-                blendEquation: noop,
-                blendEquationSeparate: noop,
-                blendFuncSeparate: noop,
-                lineWidth: noop,
-                createFramebuffer: () => {
-                    return {};
-                },
-                bindFramebuffer: noop,
-                framebufferTexture2D: noop
-            };
-            // tslint:disable-next-line: no-object-literal-type-assertion
-            canvas = {
-                width: options.width ?? options.height ?? 100,
-                height: options.height ?? options.width ?? 100,
-                // tslint:disable-next-line: no-empty
-                addEventListener: noop,
-                removeEventListener: noop,
-                getContext: () => context
-            } as unknown as HTMLCanvasElement;
-            try {
-                await testFun(canvas);
-            } finally {
-                if (cleanupFun !== undefined) {
-                    cleanupFun();
-                }
-            }
-
-            return;
-        }
-
-        try {
-            const ibct = new RenderingTestHelper(this, commonTestOptions);
-
-            canvas = document.createElement("canvas");
-            canvas.width = options.width ?? options.height ?? 100;
-            canvas.height = options.height ?? options.width ?? 100;
-
-            await testFun(canvas);
-
-            await ibct.assertCanvasMatchesReference(canvas, name, options);
-        } finally {
-            if (cleanupFun !== undefined) {
-                cleanupFun();
-            }
-            if (canvas !== undefined) {
-                canvas.width = 0;
-                canvas.height = 0;
-                canvas = undefined!;
-            }
-        }
-    });
 }
 
 function mapViewFitGeoBox(
@@ -253,80 +99,186 @@ interface GeoJsonMapViewRenderingTestOptions extends RenderingTestOptions {
     grid?: number;
 }
 
-function mapViewFeaturesRenderingTest(
-    name: string,
-    options: GeoJsonMapViewRenderingTestOptions,
-    testFun?: (mapView: MapView, dataSource: FeaturesDataSource) => Promise<void>
-) {
-    let mapView: MapView | undefined;
-    baseRenderingTest(
-        name,
-        options,
-        async function (canvas) {
-            //document.body.appendChild(canvas);
-            mapView = new MapView({
-                canvas,
-                theme: options.theme ?? {},
-                preserveDrawingBuffer: true,
-                disableFading: true,
-                pixelRatio: 1
+describe("MapView Styling Test", function() {
+    let canvas: HTMLCanvasElement;
+
+    function baseRenderingTest(
+        name: string,
+        options: RenderingTestOptions,
+        testFun: () => Promise<void>,
+        cleanupFun?: () => void
+    ) {
+        const commonTestOptions = { module: "harp.gl" };
+        const imageUrl = isNode
+            ? ""
+            : getReferenceImageUrl({ ...commonTestOptions, platform: getPlatform(), name });
+
+        if (!isNode) {
+            RenderingTestHelper.cachedLoadImageData(imageUrl).catch(_ => {
+                // We can ignore error here, as _if_ this file was really needed, then test
+                // will try to resolve this promise and report failure in test context.
             });
-            mapView.animatedExtrusionHandler.enabled = false;
-            const dataSource = new FeaturesDataSource({
-                styleSetName: "geojson",
-                geojson: options.geoJson,
-                decoder: new VectorTileDecoder(),
-                tiler: new GeoJsonTiler(),
-                gatherFeatureAttributes: true
-            });
-            mapView.addDataSource(dataSource);
-
-            const geoBox = dataSource.getGeoBox()!;
-            assert.isDefined(geoBox);
-
-            const defaultLookAt = mapViewFitGeoBox(
-                mapView,
-                geoBox,
-                getOptionValue(options.margin, 0.15)
-            );
-
-            const lookAt = mergeWithOptions(defaultLookAt, options.lookAt);
-
-            mapView.lookAt(lookAt);
-            if (options.grid !== undefined) {
-                const gridDivisions = 4;
-                const gridSize = options.grid * gridDivisions;
-
-                const position = geoBox.center;
-                const box = new OrientedBox3();
-                mapView.projection.localTangentSpace(position, box);
-
-                const grid = new THREE.GridHelper(gridSize, gridDivisions, 0xff0000, 0x00ff00);
-                grid.geometry.rotateX(Math.PI / 2);
-                (grid as MapAnchor).anchor = position;
-                grid.setRotationFromMatrix(box.getRotationMatrix());
-                mapView.mapAnchors.add(grid);
-            }
-
-            mapView.update();
-            if (testFun !== undefined) {
-                await testFun(mapView, dataSource);
-            } else {
-                await waitForEvent(mapView, MapViewEventNames.FrameComplete);
-            }
-            // Don't dispose mapView yet b/c the context will be lost since three.js 0.115
-            // when WebGLRenderer.dispose is called (i.e. actual IBCT image will be empty).
-        },
-        () => {
-            if (mapView !== undefined) {
-                mapView.dispose();
-                mapView = undefined!;
-            }
         }
-    );
-}
+        it(name, async function() {
+            // let canvas: HTMLCanvasElement | undefined;
+            // TODO: remove `module` name from RenderingTestHelper API
+            try {
+                const ibct = isNode ? undefined : new RenderingTestHelper(this, commonTestOptions);
 
-describe("MapView Styling Test", function () {
+                canvas.width = options.width ?? options.height ?? 100;
+                canvas.height = options.height ?? options.width ?? 100;
+                await testFun();
+
+                await ibct?.assertCanvasMatchesReference(canvas, name, options);
+            } finally {
+                if (cleanupFun !== undefined) {
+                    cleanupFun();
+                }
+            }
+        });
+    }
+
+    function mapViewFeaturesRenderingTest(
+        name: string,
+        options: GeoJsonMapViewRenderingTestOptions,
+        testFun?: (mapView: MapView, dataSource: FeaturesDataSource) => Promise<void>
+    ) {
+        LoggerManager.instance.setLogLevel("ImageCache", LogLevel.Warn);
+        let mapView: MapView | undefined;
+        baseRenderingTest(
+            name,
+            options,
+            async function() {
+                //document.body.appendChild(canvas);
+                mapView = new MapView({
+                    canvas,
+                    theme: options.theme ?? {},
+                    preserveDrawingBuffer: true,
+                    disableFading: true,
+                    pixelRatio: 1
+                });
+                mapView.animatedExtrusionHandler.enabled = false;
+                const dataSource = new FeaturesDataSource({
+                    styleSetName: "geojson",
+                    geojson: options.geoJson,
+                    decoder: new VectorTileDecoder(),
+                    tiler: new GeoJsonTiler(),
+                    gatherFeatureAttributes: true
+                });
+                mapView.addDataSource(dataSource);
+
+                const geoBox = dataSource.getGeoBox()!;
+                assert.isDefined(geoBox);
+
+                const defaultLookAt = mapViewFitGeoBox(
+                    mapView,
+                    geoBox,
+                    getOptionValue(options.margin, 0.15)
+                );
+
+                const lookAt = mergeWithOptions(defaultLookAt, options.lookAt);
+
+                mapView.lookAt(lookAt);
+                if (options.grid !== undefined) {
+                    const gridDivisions = 4;
+                    const gridSize = options.grid * gridDivisions;
+
+                    const position = geoBox.center;
+                    const box = new OrientedBox3();
+                    mapView.projection.localTangentSpace(position, box);
+
+                    const grid = new THREE.GridHelper(gridSize, gridDivisions, 0xff0000, 0x00ff00);
+                    grid.geometry.rotateX(Math.PI / 2);
+                    (grid as MapAnchor).anchor = position;
+                    grid.setRotationFromMatrix(box.getRotationMatrix());
+                    mapView.mapAnchors.add(grid);
+                }
+
+                mapView.update();
+                if (testFun !== undefined) {
+                    await testFun(mapView, dataSource);
+                } else {
+                    await waitForEvent(mapView, MapViewEventNames.FrameComplete);
+                }
+                // Don't dispose mapView yet b/c the context will be lost since three.js 0.115
+                // when WebGLRenderer.dispose is called (i.e. actual IBCT image will be empty).
+            },
+            () => {
+                if (mapView !== undefined) {
+                    mapView.dispose();
+                    mapView = undefined!;
+                }
+            }
+        );
+    }
+
+    beforeEach(function() {
+        if (isNode) {
+            // tslint:disable-next-line: no-empty
+            const noop = () => {};
+
+            global.requestAnimationFrame = callback => {
+                return setTimeout(callback, 0);
+            };
+            global.cancelAnimationFrame = (handle: number) => {
+                clearTimeout(handle);
+            };
+            global.createImageBitmap = () =>
+                Promise.resolve({
+                    width: 10,
+                    height: 10,
+                    close: noop
+                });
+            global.location = ({ href: "https://harp.gl" } as unknown) as Location;
+            global.window = (global as unknown) as Window & typeof globalThis;
+            global.document = ({
+                createElementNS: (_namespace: string, qualifiedName: string) => {
+                    if (qualifiedName !== "img") {
+                        return {};
+                    }
+                    return {
+                        addEventListener: (type: string, listener: EventListener) => {
+                            if (type === "load") {
+                                setTimeout(listener.bind({ bla: 42 }), 0);
+                            }
+                        },
+                        removeEventListener: noop
+                    } as any;
+                }
+            } as unknown) as Document;
+
+            const context = getWebGLContextStub();
+            canvas = ({
+                width: 100,
+                height: 100,
+                // tslint:disable-next-line: no-empty
+                addEventListener: noop,
+                removeEventListener: noop,
+                getContext: () => context
+            } as unknown) as HTMLCanvasElement;
+        } else {
+            canvas = document.createElement("canvas");
+        }
+    });
+    afterEach(function() {
+        ImageCache.dispose();
+        if (isNode) {
+            delete global.window;
+            delete global.document;
+            delete global.location;
+            delete global.requestAnimationFrame;
+            delete global.cancelAnimationFrame;
+            delete global.createImageBitmap;
+            delete global.navigator;
+        }
+
+        if (canvas !== undefined) {
+            canvas.width = 0;
+            canvas.height = 0;
+            canvas = undefined!;
+        }
+    });
+
     const referenceBackground: Feature = {
         // background polygon, taking about half of view
         type: "Feature",
@@ -358,7 +310,9 @@ describe("MapView Styling Test", function () {
         fontCatalogs: [
             {
                 name: "fira",
-                url: "./node_modules/@here/harp-fontcatalog/resources/Default_FontCatalog.json"
+                url:
+                    (isNode ? "./node_modules/" : "../") +
+                    "@here/harp-fontcatalog/resources/Default_FontCatalog.json"
             }
         ],
         images: {
@@ -377,7 +331,7 @@ describe("MapView Styling Test", function () {
         ]
     };
 
-    describe("point features", function () {
+    describe("point features", function() {
         const points: Feature[] = [
             {
                 type: "Feature",
@@ -410,39 +364,7 @@ describe("MapView Styling Test", function () {
                 }
             }
         ];
-        function makePointTextTestCases(
-            testCases: { [name: string]: TextTechniqueStyle["attr"] },
-            options?: Partial<GeoJsonMapViewRenderingTestOptions>
-        ) {
-            // tslint:disable-next-line:forin
-            for (const testCase in testCases) {
-                const attr: TextTechniqueStyle["attr"] = testCases[testCase]!;
-                mapViewFeaturesRenderingTest(`solid-line-styling-${testCase}`, {
-                    geoJson: {
-                        type: "FeatureCollection",
-                        features: [
-                            // tested horizontal line
-                            ...points,
-                            referenceBackground
-                        ]
-                    },
-                    theme: {
-                        ...themeTextSettings,
-                        styles: {
-                            geojson: [
-                                referenceBackroundStyle,
-                                {
-                                    when: "$geometryType == 'point'",
-                                    technique: "text",
-                                    attr
-                                }
-                            ]
-                        }
-                    },
-                    ...options
-                });
-            }
-        }
+
         function makePointPoiTestCases(
             testCases: { [name: string]: PoiStyle["attr"] },
             options?: Partial<GeoJsonMapViewRenderingTestOptions>
@@ -511,7 +433,41 @@ describe("MapView Styling Test", function () {
             }
         }
 
-        describe("text", function () {
+        function makePointTextTestCases(
+            testCases: { [name: string]: TextTechniqueStyle["attr"] },
+            options?: Partial<GeoJsonMapViewRenderingTestOptions>
+        ) {
+            // tslint:disable-next-line:forin
+            for (const testCase in testCases) {
+                const attr: TextTechniqueStyle["attr"] = testCases[testCase]!;
+                mapViewFeaturesRenderingTest(`solid-line-styling-${testCase}`, {
+                    geoJson: {
+                        type: "FeatureCollection",
+                        features: [
+                            // tested horizontal line
+                            ...points,
+                            referenceBackground
+                        ]
+                    },
+                    theme: {
+                        ...themeTextSettings,
+                        styles: {
+                            geojson: [
+                                referenceBackroundStyle,
+                                {
+                                    when: "$geometryType == 'point'",
+                                    technique: "text",
+                                    attr
+                                }
+                            ]
+                        }
+                    },
+                    ...options
+                });
+            }
+        }
+
+        describe("text", function() {
             makePointTextTestCases(
                 {
                     "point-text-basic": { color: "#f0f", size: 16 },
@@ -529,7 +485,7 @@ describe("MapView Styling Test", function () {
             );
         });
 
-        describe("poi", function () {
+        describe("poi", function() {
             makePointPoiTestCases(
                 {
                     "poi-basic-icon-only": {
@@ -562,7 +518,7 @@ describe("MapView Styling Test", function () {
             );
         });
 
-        describe("circles", function () {
+        describe("circles", function() {
             makePointTestCases(
                 {
                     "point-circles-basic": { color: "#ca6", size: 10 },
@@ -576,7 +532,7 @@ describe("MapView Styling Test", function () {
             );
         });
     });
-    describe("line features", function () {
+    describe("line features", function() {
         const straightLine: Feature = {
             type: "Feature",
             geometry: {
@@ -643,8 +599,8 @@ describe("MapView Styling Test", function () {
             }
         }
 
-        describe("solid-line technique", function () {
-            describe("basic", function () {
+        describe("solid-line technique", function() {
+            describe("basic", function() {
                 makeLineTestCase({
                     "basic-100m": { lineWidth: 100, color: "#0b97c4" },
                     "basic-dash-100m": {
@@ -750,7 +706,7 @@ describe("MapView Styling Test", function () {
                 );
             });
 
-            describe("with outline", function () {
+            describe("with outline", function() {
                 makeLineTestCase({
                     "outline-10px-2px": {
                         // BUGGY ?
@@ -805,7 +761,7 @@ describe("MapView Styling Test", function () {
                 );
             });
         });
-        describe("text from lines", function () {
+        describe("text from lines", function() {
             mapViewFeaturesRenderingTest(`line-text-basic`, {
                 width: 200,
                 height: 200,
@@ -852,7 +808,7 @@ describe("MapView Styling Test", function () {
             });
         });
     });
-    describe("polygon features", function () {
+    describe("polygon features", function() {
         const lights: Light[] = [
             {
                 type: "ambient",
@@ -959,14 +915,14 @@ describe("MapView Styling Test", function () {
                 });
             }
         }
-        describe("fill technique", function () {
-            describe("no outline", function () {
+        describe("fill technique", function() {
+            describe("no outline", function() {
                 makePolygonTestCases("fill", {
                     fill: { color: "#0b97c4" },
                     "fill-rgba": { color: "#0b97c470" }
                 });
             });
-            describe("with outline", function () {
+            describe("with outline", function() {
                 makePolygonTestCases("fill", {
                     // all tests are buggy ? because all outlines have 1px width
                     "fill-outline-200m": { color: "#0b97c4", lineColor: "#7f7", lineWidth: 200 },
@@ -1001,7 +957,7 @@ describe("MapView Styling Test", function () {
                 });
             });
         });
-        describe("standard technique", function () {
+        describe("standard technique", function() {
             mapViewFeaturesRenderingTest(
                 `polygon-standard-texture`,
                 {
@@ -1077,7 +1033,7 @@ describe("MapView Styling Test", function () {
             );
         });
 
-        describe("extruded-polygon technique", function () {
+        describe("extruded-polygon technique", function() {
             const tower: Feature = {
                 // sample polygon, that is smaller and higher than previous one
                 type: "Feature",
@@ -1105,7 +1061,7 @@ describe("MapView Styling Test", function () {
                     heading: 30
                 }
             };
-            describe("flat", function () {
+            describe("flat", function() {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
@@ -1121,7 +1077,7 @@ describe("MapView Styling Test", function () {
                     viewOptions
                 );
             });
-            describe("3d", function () {
+            describe("3d", function() {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
@@ -1157,7 +1113,7 @@ describe("MapView Styling Test", function () {
                     viewOptions
                 );
             });
-            describe("3d overlapping", function () {
+            describe("3d overlapping", function() {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
