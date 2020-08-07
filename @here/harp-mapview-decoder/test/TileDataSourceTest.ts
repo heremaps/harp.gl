@@ -30,6 +30,9 @@ function createMockDataProvider() {
         },
         async getTile(): Promise<ArrayBuffer> {
             return Promise.resolve(new ArrayBuffer(5));
+        },
+        /** @override */ dispose() {
+            // Nothing to be done here.
         }
     };
     const mock = sinon.stub(mockTemplate);

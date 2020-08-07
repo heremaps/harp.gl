@@ -12,6 +12,7 @@
         "@here/harp-map-controls",
         "@here/harp-mapview",
         "@here/harp-mapview-decoder",
+        "@here/harp-vectortile-datasource",
         "@here/harp-omv-datasource",
         "@here/harp-webtile-datasource",
         "@here/harp-text-canvas",

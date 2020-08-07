@@ -2,53 +2,65 @@
 
 To begin with `harp.gl`, we provide a few starting points:
 
-- [Import harp.gl with simple bundle](#simple)
-- [Create simple app](#npm) using npm
-- [Integrate `harp.gl` into your existing Webpack based project](#integrate)
-- [Integrate `harp.gl` into your existing Angular application](GettingStartedAngular.md)
-- [Look at examples](#examples)
-- [Don't forget the credentials](#credentials)
+-   [Import harp.gl with simple bundle](#simple)
+-   [Create simple app](#npm) using npm
+-   [Integrate `harp.gl` into your existing Webpack based project](#integrate)
+-   [Integrate `harp.gl` into your existing Angular application](GettingStartedAngular.md)
+-   [Look at examples](#examples)
+-   [Don't forget the credentials](#credentials)
 
 ## <a name="simple"></a> Import harp.gl with simple bundle
 
 Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
+
 ```html
 <html>
-   <head>
-      <style>
-         body, html { border: 0; margin: 0; padding: 0; }
-         #map { height: 100vh; width: 100vw; }
-      </style>
-      <script src="https://unpkg.com/three/build/three.min.js"></script>
-      <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
-   </head>
-   <body>
-      <canvas id="map"></canvas>
-      <script src="index.js"></script>
-   </body>
+    <head>
+        <style>
+            body,
+            html {
+                border: 0;
+                margin: 0;
+                padding: 0;
+            }
+            #map {
+                height: 100vh;
+                width: 100vw;
+            }
+        </style>
+        <script src="https://unpkg.com/three/build/three.min.js"></script>
+        <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
+    </head>
+    <body>
+        <canvas id="map"></canvas>
+        <script src="index.js"></script>
+    </body>
 </html>
 ```
+
 Initialize the map:
+
 ```javascript
 const map = new harp.MapView({
-   canvas: document.getElementById("map"),
-   theme: "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json",
-   target: new harp.GeoCoordinates(37.773972, -122.431297), //San Francisco,
-   zoomLevel: 13
+    canvas: document.getElementById("map"),
+    theme:
+        "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json",
+    target: new harp.GeoCoordinates(37.773972, -122.431297), //San Francisco,
+    zoomLevel: 13
 });
 const controls = new harp.MapControls(map);
 
 window.onresize = () => map.resize(window.innerWidth, window.innerHeight);
 
 const omvDataSource = new harp.OmvDataSource({
-   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-   apiFormat: harp.APIFormat.XYZOMV,
-   styleSetName: "tilezen",
-   authenticationCode: "YOUR-APIKEY",
-   authenticationMethod: {
-         method: harp.AuthenticationMethod.QueryString,
-         name: "apikey"
-   }
+    baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+    apiFormat: harp.APIFormat.XYZOMV,
+    styleSetName: "tilezen",
+    authenticationCode: "YOUR-APIKEY",
+    authenticationMethod: {
+        method: harp.AuthenticationMethod.QueryString,
+        name: "apikey"
+    }
 });
 map.addDataSource(omvDataSource);
 ```
@@ -79,13 +91,13 @@ format require us to use some javascript code bundler - this example will facili
 Install them into your project:
 
 ```shell
-npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme
+npm install --save @here/harp-mapview @here/harp-vectortile-datasource @here/harp-map-theme
 ```
 
 You have installed 3 key components needed to render basic map:
 
 -   `@here/harp-mapview` - map renderer itself
--   `@here/harp-omv-datasource` - tile provider based on OMV/MVT vector tile format
+-   `@here/harp-vectortile-datasource` - tile provider based on OMV/MVT vector tile format
 -   `@here/harp-map-theme` - default theme and font resources required to render map in OMV/tilezen
     scheme
 
@@ -105,7 +117,7 @@ decoding.
 Create a file named `./harp-gl-decoders.js` to initialize the decoding service:
 
 ```javascript
-import { OmvTileDecoderService } from "@here/harp-omv-datasource/index-worker";
+import { OmvTileDecoderService } from "@here/harp-vectortile-datasource/index-worker";
 
 OmvTileDecoderService.start();
 ```
@@ -140,11 +152,13 @@ Add the following lines to your `webpack.config.js`:
 ```javascript
 const { addHarpWebpackConfig } = require("@here/harp-webpack-utils/scripts/HarpWebpackConfig");
 const myConfig = {};
-module.exports = addHarpWebpackConfig(
-    myConfig,
-    { mainEntry: "./index.js", decoderEntry: "./harp-gl-decoders.js", htmlTemplate: "./index.html" }
-);
+module.exports = addHarpWebpackConfig(myConfig, {
+    mainEntry: "./index.js",
+    decoderEntry: "./harp-gl-decoders.js",
+    htmlTemplate: "./index.html"
+});
 ```
+
 `myConfig` is your existing Webpack configuration. Configuration values in `myConfig` will override any values generated by `addHarpWebpackConfig`.
 `./index.js` is the path to your main application code. Will be used as the entry point for the main application bundle. May be omitted if Webpack `entry` configuration is included in `myConfig`.
 `./harp-gl-decoders.js` is the path to your decoder service. Will be used as the entry point for the web worker decoder bundle. If omitted no decoder bundle will be created.
@@ -190,17 +204,21 @@ Last step is adding some
 to our `MapView` instance:
 
 ```javascript
-import { APIFormat, AuthenticationTypeMapboxV4, OmvDataSource } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationTypeMapboxV4,
+    OmvDataSource
+} from "@here/harp-vectortile-datasource";
 
 const dataSource = new OmvDataSource({
-   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-   apiFormat: harp.APIFormat.XYZOMV,
-   styleSetName: "tilezen",
-   authenticationCode: "YOUR-APIKEY",
-   authenticationMethod: {
-         method: harp.AuthenticationMethod.QueryString,
-         name: "apikey"
-   }
+    baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+    apiFormat: harp.APIFormat.XYZOMV,
+    styleSetName: "tilezen",
+    authenticationCode: "YOUR-APIKEY",
+    authenticationMethod: {
+        method: harp.AuthenticationMethod.QueryString,
+        name: "apikey"
+    }
 });
 mapView.addDataSource(dataSource);
 ```

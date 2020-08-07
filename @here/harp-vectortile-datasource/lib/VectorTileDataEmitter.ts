@@ -64,8 +64,6 @@ import {
 } from "@here/harp-geoutils";
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { LinesGeometry } from "./OmvDataSource";
-import { IOmvEmitter } from "./OmvDecoder";
 import {
     tile2world,
     webMercatorTile2TargetTile,
@@ -158,6 +156,22 @@ function createIndexBufferAttribute(
     };
 }
 
+interface LinesGeometry {
+    type: GeometryType;
+    lines: LineGroup;
+    technique: number;
+
+    /**
+     * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
+     */
+    objInfos?: AttributeMap[];
+
+    /**
+     * Optional list of feature start indices. The indices point into the index attribute.
+     */
+    featureStarts?: number[];
+}
+
 // for tilezen by default extrude all buildings even those without height data
 class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
@@ -208,7 +222,7 @@ class MeshBuffers implements IMeshBuffers {
     }
 }
 
-export enum LineType {
+enum LineType {
     Simple,
     Complex
 }
@@ -216,7 +230,7 @@ export enum LineType {
 type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => THREE.Vector2;
 const tmpColor = new THREE.Color();
 
-export class OmvDecodedTileEmitter implements IOmvEmitter {
+export class VectorTileDataEmitter {
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
 

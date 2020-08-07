@@ -7,13 +7,12 @@
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
-import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { world2tile } from "./OmvUtils";
-
-import * as THREE from "three";
-import { DecodeInfo } from "./DecodeInfo";
-import { OmvFeatureFilter } from "./OmvDataFilter";
-import { OmvDataAdapter } from "./OmvDecoder";
+import { Vector2, Vector3 } from "three";
+import { DataAdapter } from "../../DataAdapter";
+import { DecodeInfo } from "../../DecodeInfo";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
+import { OmvFeatureFilter } from "../../OmvDataFilter";
+import { world2tile } from "../../OmvUtils";
 
 const DEFAULT_EXTENTS = 4 * 1024;
 
@@ -85,8 +84,8 @@ function convertGeometryType(type: string): string {
     } // switch
 }
 
-const worldP = new THREE.Vector3();
-const localP = new THREE.Vector2();
+const worldP = new Vector3();
+const localP = new Vector2();
 
 /**
  * Converts a `geoPoint` to local tile space.
@@ -95,10 +94,10 @@ const localP = new THREE.Vector2();
  * @param decodeInfo - The [[DecodeInfo]].
  * @hidden
  */
-function convertPoint(geoPoint: GeoPointLike, decodeInfo: DecodeInfo): THREE.Vector2 {
+function convertPoint(geoPoint: GeoPointLike, decodeInfo: DecodeInfo): Vector2 {
     webMercatorProjection.projectPoint(GeoCoordinates.fromGeoPoint(geoPoint), worldP);
     localP.set(worldP.x, worldP.y);
-    return world2tile(DEFAULT_EXTENTS, decodeInfo, localP, false, new THREE.Vector2());
+    return world2tile(DEFAULT_EXTENTS, decodeInfo, localP, false, new Vector2());
 }
 
 function convertLineStringGeometry(
@@ -149,7 +148,7 @@ function convertPolygonGeometry(
 function convertPointGeometry(
     geometry: GeoJsonPointGeometry | GeoJsonMultiPointGeometry,
     decodeInfo: DecodeInfo
-): THREE.Vector2[] {
+): Vector2[] {
     if (geometry.type === "Point") {
         return [convertPoint(geometry.coordinates, decodeInfo)];
     }
@@ -157,8 +156,8 @@ function convertPointGeometry(
     return geometry.coordinates.map(geoPoint => convertPoint(geoPoint, decodeInfo));
 }
 
-export class TiledGeoJsonDataAdapter implements OmvDataAdapter {
-    id = "TiledGeoJsonDataAdapter";
+export class GeoJsonDataAdapter implements DataAdapter {
+    id = "GeoJsonDataAdapter";
 
     constructor(
         readonly m_processor: IGeometryProcessor,

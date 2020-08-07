@@ -5,3 +5,9 @@
  */
 
 export * from "@here/harp-vectortile-datasource/index-worker";
+
+export {
+    VectorTileDataProcessor as OmvDecoder,
+    VectorTileDecoderService as OmvTileDecoderService,
+    VectorTileDecoder as OmvTileDecoder
+} from "@here/harp-vectortile-datasource/index-worker";

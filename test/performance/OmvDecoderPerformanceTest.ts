@@ -18,22 +18,22 @@ import {
     webMercatorProjection
 } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
+import { getTestResourceUrl } from "@here/harp-test-utils";
+import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
 import {
     APIFormat,
     AuthenticationMethod,
     OmvRestClient,
     OmvRestClientParameters
-} from "@here/harp-omv-datasource";
-import { getTestResourceUrl } from "@here/harp-test-utils";
-import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
+} from "@here/harp-vectortile-datasource";
+import { OmvDataAdapter } from "@here/harp-vectortile-datasource/lib/adapters/omv/OmvDataAdapter";
 import { DecodeInfo } from "@here/harp-vectortile-datasource/lib/DecodeInfo";
 import {
     IGeometryProcessor,
     ILineGeometry,
     IPolygonGeometry
 } from "@here/harp-vectortile-datasource/lib/IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "@here/harp-vectortile-datasource/lib/OmvData";
-import { OmvDecoder } from "@here/harp-vectortile-datasource/lib/OmvDecoder";
+import { VectorTileDataProcessor } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
 
 export interface OMVDecoderPerformanceTestOptions {
     /**
@@ -141,7 +141,7 @@ export function createOMVDecoderPerformanceTest(
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvProtobufDataAdapter(geometryProcessor, undefined);
+                    const decoder = new OmvDataAdapter(geometryProcessor, undefined);
                     const decodeInfo = new DecodeInfo("profiler", mercatorProjection, tileKey, 0);
                     decoder.process(tileData, decodeInfo);
                 }
@@ -161,7 +161,11 @@ export function createOMVDecoderPerformanceTest(
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvDecoder(projection, styleSetEvaluator, false);
+                    const decoder = new VectorTileDataProcessor(
+                        projection,
+                        styleSetEvaluator,
+                        false
+                    );
                     decoder.getDecodedTile(tileKey, tileData);
                 }
             });
@@ -181,7 +185,11 @@ export function createOMVDecoderPerformanceTest(
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvDecoder(projection, styleSetEvaluator, false);
+                    const decoder = new VectorTileDataProcessor(
+                        projection,
+                        styleSetEvaluator,
+                        false
+                    );
                     decoder.getDecodedTile(tileKey, tileData);
                 }
             });

@@ -14,7 +14,7 @@
     "scripts": {
         "build": "tsc --build $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/OmvTest.js",
-        "gen-decoder": "pbjs -t static-module -w commonjs --no-encode --no-verify --no-create lib/proto/vector_tile.proto -o lib/proto/vector_tile.js && pbts lib/proto/vector_tile.js -o lib/proto/vector_tile.d.ts",
+        "gen-decoder": "pbjs -t static-module -w commonjs --no-encode --no-verify --no-create lib/proto/adapters/omv/vector_tile.proto -o lib/proto/adapters/omv/vector_tile.js && pbts lib/proto/adapters/omv/vector_tile.js -o lib/proto/adapters/omv/vector_tile.d.ts",
         "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {

@@ -5,17 +5,14 @@
  */
 
 import {
-    AttributeMap,
     Definitions,
-    GeometryType,
     ITileDecoder,
     OptionsMap,
     StyleSet,
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
 import { EarthConstants, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
-import { LineGroup } from "@here/harp-lines";
-import { CopyrightInfo, CopyrightProvider, DataSourceOptions } from "@here/harp-mapview";
+import { CopyrightInfo, CopyrightProvider, DataSourceOptions, Tile } from "@here/harp-mapview";
 import {
     DataProvider,
     TileDataSource,
@@ -35,32 +32,15 @@ import {
     OmvRestClient,
     OmvRestClientParameters
 } from "./OmvRestClient";
-import { OmvTile } from "./OmvTile";
 
-const logger = LoggerManager.instance.create("OmvDataSource");
+const logger = LoggerManager.instance.create("VectorTileDataSource");
 
-export interface LinesGeometry {
-    type: GeometryType;
-    lines: LineGroup;
-    technique: number;
-
-    /**
-     * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
-     */
-    objInfos?: AttributeMap[];
-
-    /**
-     * Optional list of feature start indices. The indices point into the index attribute.
-     */
-    featureStarts?: number[];
+export interface VectorTileFactory {
+    /** Create an instance of {@link @here/harp-mapview#Tile} or a subclass. */
+    createTile(dataSource: VectorTileDataSource, tileKey: TileKey): Tile;
 }
 
-export interface OmvTileFactory {
-    /** Create an instance of [[OmvTile]] or a subclass. */
-    createTile(dataSource: OmvDataSource, tileKey: TileKey): OmvTile;
-}
-
-export interface OmvDataSourceParameters extends DataSourceOptions {
+export interface VectorTileDataSourceParameters extends DataSourceOptions {
     /**
      * If set to `true`, features that have no technique in the theme will be printed to the console
      * (can be excessive!).
@@ -115,27 +95,32 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
     skipShortLabels?: boolean;
 
     /**
-     * A description for the feature filter that can be safely passed down to the web workers. It
-     * has to be generated with the help of the [[OmvFeatureFilterDescriptionBuilder]] (to guarantee
-     * correctness). This parameter gets applied to the decoder used in the [[OmvDataSource]]
-     * which might be shared between various [[OmvDataSource]]s.
+     * A description for the feature filter that can be safely passed down to the web workers.
+     *
+     * @reamrks
+     * It has to be generated with the help of the [[OmvFeatureFilterDescriptionBuilder]]
+     * (to guarantee correctness). This parameter gets applied to the decoder used in the
+     * {@link VectorTileDataSource} which might be shared between
+     * various {@link VectorTileDataSource}s.
      */
     filterDescr?: OmvFeatureFilterDescription;
 
     /**
-     * Optional, custom factory for [[Tile]] instances created by this [[OmvDataSource]].
+     * Optional, custom factory for {@link @here/harp-mapview#Tile} instances created
+     * by this {@link VectorTileDataSource}.
      */
-    tileFactory?: TileFactory<OmvTile>;
+    tileFactory?: TileFactory<Tile>;
 
     /**
      * Identifier used to choose [[OmvFeatureModifier]]s to be applied.
      *
+     * @remarks
      * If left `undefined` at least [[OmvGenericFeatureModifier]] will be applied.
      * The list of feature modifiers may be extended internally by some data source options
      * such as [[politicalView]] which adds [[OmvPoliticalViewFeatureModifier]].
      *
-     * @note This parameter gets applied to the decoder used in the [[OmvDataSource]] which might
-     * be shared between various [[OmvDataSource]]s.
+     * @note This parameter gets applied to the decoder used in the {@link VectorTileDataSource}
+     * which might be shared between various {@link VectorTileDataSource}s.
      */
     featureModifierId?: FeatureModifierId;
 
@@ -162,6 +147,7 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
     /**
      * Maximum geometry height above groud level this `OmvDataSource` can produce.
      *
+     * @renarks
      * Used in first stage of frustum culling before [[Tile.maxGeometryHeight]] data is available.
      *
      * @default [[EarthConstants.MAX_BUILDING_HEIGHT]].
@@ -174,15 +160,19 @@ export interface OmvDataSourceParameters extends DataSourceOptions {
     enableElevationOverlay?: boolean;
 
     /**
-     * Indicates whether to add a ground plane to cover the tile completely. This is necessary for
-     * the fallback logic, such that the parent fall back tiles don't overlap the children tiles.
+     * Indicates whether to add a ground plane to cover the tile completely.
+     *
+     * @renarks
+     * This is necessary for the fallback logic, such that the parent fall back tiles don't
+     * overlap the children tiles.
      * Default is true (i.e. if not defined it is taken to be true)
      */
     addGroundPlane?: boolean;
 }
 
 /**
- * A helper function to retrieve the [[DataProvider]] from the [[OmvDataSource]]s parameters.
+ * A helper function to retrieve the [[DataProvider]] from the
+ * {@link VectorTileDataSource}s parameters.
  *
  * @param params - The parameters passed into the OmvDataSource.
  */
@@ -199,8 +189,11 @@ function getDataProvider(params: OmvWithRestClientParams | OmvWithCustomDataProv
     }
 }
 
-export type OmvWithRestClientParams = OmvRestClientParameters & OmvDataSourceParameters;
-export type OmvWithCustomDataProvider = OmvDataSourceParameters & { dataProvider: DataProvider };
+export type OmvWithRestClientParams = VectorTileDataSourceParameters & OmvRestClientParameters;
+
+export type OmvWithCustomDataProvider = VectorTileDataSourceParameters & {
+    dataProvider: DataProvider;
+};
 
 let missingOmvDecoderServiceInfoEmitted: boolean = false;
 
@@ -274,11 +267,23 @@ function completeDataSourceParameters(
     };
 }
 
-export class OmvDataSource extends TileDataSource<OmvTile> {
+/**
+ * `VectorTileDataSource` is used for the visualization of vector tiles.
+ *
+ * @example
+ * ```typescript
+ *    const dataSource = new VectorTielDataSource({
+ *        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+ *        authenticationCode: apikey
+ *    });
+ *    mapView.addDataSource(dataSource);
+ *   ```
+ */
+export class VectorTileDataSource extends TileDataSource {
     private readonly m_decoderOptions: OmvDecoderOptions;
 
     constructor(private readonly m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
-        super(m_params.tileFactory ?? new TileFactory(OmvTile), {
+        super(m_params.tileFactory ?? new TileFactory(Tile), {
             styleSetName: m_params.styleSetName ?? "omv",
             concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,
             minDataLevel: m_params.minDataLevel ?? 1,
@@ -341,7 +346,8 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     }
 
     /**
-     * Set a new data filter. Can also be done during the creation of an [[OmvDataSource]].
+     * Set a new data filter. Can also be done during
+     * the creation of an {@link VectorTileDataSource}.
      * Will be applied to the decoder, which might be shared with other omv datasources.
      *
      * @param filterDescription - Data filter description created with

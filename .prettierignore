@@ -1,4 +1,5 @@
-@here/harp-vectortile-datasource/lib/proto/vector_tile.d.ts
+@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.d.ts
+@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.js
 @here/harp-datasource-protocol/theme.schema.json
 @here/harp-map-theme/resources/fonts/
 @here/harp-text-canvas/resources/fonts/

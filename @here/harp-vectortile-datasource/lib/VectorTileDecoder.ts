@@ -22,11 +22,13 @@ import {
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
-// tslint:disable-next-line:max-line-length
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
+import { GeoJsonVtDataAdapter } from "./adapters/geojson-vt/GeoJsonVtDataAdapter";
+import { GeoJsonDataAdapter } from "./adapters/geojson/GeoJsonDataAdapter";
+import { OmvDataAdapter } from "./adapters/omv/OmvDataAdapter";
+import { DataAdapter } from "./DataAdapter";
 import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "./OmvData";
 import {
     ComposedDataFilter,
     OmvFeatureFilter,
@@ -34,7 +36,6 @@ import {
     OmvGenericFeatureFilter,
     OmvGenericFeatureModifier
 } from "./OmvDataFilter";
-import { OmvDecodedTileEmitter } from "./OmvDecodedTileEmitter";
 import {
     FeatureModifierId,
     OmvDecoderOptions,
@@ -44,70 +45,15 @@ import {
 import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
-import { TiledGeoJsonDataAdapter } from "./TiledGeoJsonAdapter";
-import { VTJsonDataAdapter } from "./VTJsonDataAdapter";
+import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
 
-const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
+const logger = LoggerManager.instance.create("VectorTileDecoder", { enabled: false });
 
-export interface IOmvEmitter {
-    processPointFeature(
-        layer: string,
-        extents: number,
-        geometry: THREE.Vector2[],
-        context: AttrEvaluationContext,
-        techniques: IndexedTechnique[]
-    ): void;
-
-    processLineFeature(
-        layer: string,
-        extents: number,
-        feature: ILineGeometry[],
-        context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
-    ): void;
-
-    processPolygonFeature(
-        layer: string,
-        extents: number,
-        feature: IPolygonGeometry[],
-        context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
-    ): void;
-}
-
-/**
- * The class [[OmvDataAdapter]] prepares protobuf encoded OMV data so they
- * can be processed by [[OmvDecoder]].
- */
-export interface OmvDataAdapter {
-    /**
-     * OmvDataAdapter's id.
-     */
-    id: string;
-
-    /**
-     * Checks if the given data can be processed by this OmvDataAdapter.
-     *
-     * @param data - The raw data to adapt.
-     */
-    canProcess(data: ArrayBufferLike | {}): boolean;
-
-    /**
-     * Process the given raw data.
-     *
-     * @param data - The raw data to process.
-     * @param decodeInfo - The [[DecodeInfo]] of the tile to process.
-     */
-    process(data: ArrayBufferLike | {}, decodeInfo: DecodeInfo): void;
-}
-
-export class OmvDecoder implements IGeometryProcessor {
+export class VectorTileDataProcessor implements IGeometryProcessor {
     // The emitter is optional now.
     // TODO: Add option to control emitter generation.
-    private m_decodedTileEmitter: OmvDecodedTileEmitter | undefined;
-    private readonly m_dataAdapters: OmvDataAdapter[] = [];
+    private m_decodedTileEmitter: VectorTileDataEmitter | undefined;
+    private readonly m_dataAdapters: DataAdapter[] = [];
 
     constructor(
         private readonly m_projection: Projection,
@@ -126,9 +72,9 @@ export class OmvDecoder implements IGeometryProcessor {
             ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
             : styleSetDataFilter;
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataPreFilter, logger));
-        this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataPreFilter, logger));
-        this.m_dataAdapters.push(new TiledGeoJsonDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new OmvDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new GeoJsonVtDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new GeoJsonDataAdapter(this, dataPreFilter, logger));
     }
 
     get storageLevelOffset() {
@@ -167,7 +113,7 @@ export class OmvDecoder implements IGeometryProcessor {
             this.m_storageLevelOffset
         );
 
-        this.m_decodedTileEmitter = new OmvDecodedTileEmitter(
+        this.m_decodedTileEmitter = new VectorTileDataEmitter(
             decodeInfo,
             this.m_styleSetEvaluator,
             this.m_gatherFeatureAttributes,
@@ -346,7 +292,11 @@ export class OmvDecoder implements IGeometryProcessor {
         return techniques;
     }
 }
-export class OmvTileDecoder extends ThemedTileDecoder {
+
+/**
+ * The vector tile decoder.
+ */
+export class VectorTileDecoder extends ThemedTileDecoder {
     private m_showMissingTechniques: boolean = false;
     private m_featureFilter?: OmvFeatureFilter;
     private m_featureModifiers?: OmvFeatureModifier[];
@@ -368,7 +318,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     ): Promise<DecodedTile> {
         const startTime = PerformanceTimer.now();
 
-        const decoder = new OmvDecoder(
+        const decoder = new VectorTileDataProcessor(
             projection,
             styleSetEvaluator,
             this.m_showMissingTechniques,
@@ -495,32 +445,20 @@ export class OmvTileDecoder extends ThemedTileDecoder {
 }
 
 /**
- * OMV tile decoder service.
+ * Vector Tile Decoder Service.
  */
-export class OmvTileDecoderService {
+export class VectorTileDecoderService {
     /**
-     * Register[[OmvTileDecoder]] service class in [[WorkerServiceManager]].
+     * Register a vector tile decoder service.
      *
+     * @remarks
      * Has to be called during initialization of decoder bundle.
      */
     static start() {
         WorkerServiceManager.getInstance().register({
             serviceType: OMV_TILE_DECODER_SERVICE_TYPE,
             factory: (serviceId: string) =>
-                TileDecoderService.start(serviceId, new OmvTileDecoder())
+                TileDecoderService.start(serviceId, new VectorTileDecoder())
         });
-    }
-}
-
-/**
- * Starts an OMV decoder service.
- *
- * @deprecated Please use [[OmvTileDecoderService.start]].
- */
-export default class OmvWorkerClient {
-    // TODO(HARP-3651): remove this class when clients are ready
-    constructor() {
-        logger.warn("OmvWorkerClient class is deprecated, please use OmvTileDecoderService.start");
-        OmvTileDecoderService.start();
     }
 }

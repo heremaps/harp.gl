@@ -16,7 +16,10 @@ import {
 
 /**
  * The `OmvFeatureFilter` is designed to work in an `OmvVisitor`/`visitOmv` combination (for
- * example, `OmvDecoder`). Returning `false` from any of the calls terminates processing of that
+ * example, `OmvDecoder`).
+ *
+ * @remarks
+ * Returning `false` from any of the calls terminates processing of that
  * layer or feature.
  *
  * The `OmvFeatureFilter` is an "early-opt-out" filter, which cannot filter individual features,
@@ -74,7 +77,10 @@ export interface OmvFeatureFilter {
 }
 
 /**
- * The `OmvFeatureModifier` can be used to filter individual features. It gets passed in the [[Env]]
+ * The `OmvFeatureModifier` can be used to filter individual features.
+ *
+ * @remarks
+ * It gets passed in the `Env`
  * of the feature, which contains all the values that can be searched for in a style. If a filter
  * function returns false, the feature is ignored, and no geometry is being created.
  *
@@ -543,7 +549,7 @@ export namespace OmvFeatureFilterDescriptionBuilder {
  * `OmvFeatureFilter` implementation that uses a `OmvFeatureFilterDescription` to filter `TileData`
  * features before they are completely decoded.
  *
- * @hidden
+ * @internal
  */
 export class OmvGenericFeatureFilter implements OmvFeatureFilter {
     private static matchLayer(
@@ -685,6 +691,8 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
 /**
  * An [[OmvFeatureFilter]] implementation that delegates all filter decision
  * returning `true` for any predicate if all delegates return `true`.
+ *
+ * @internal
  */
 export class ComposedDataFilter implements OmvFeatureFilter {
     constructor(readonly filters: OmvFeatureFilter[]) {}
@@ -731,7 +739,7 @@ export class ComposedDataFilter implements OmvFeatureFilter {
  * `OmvFeatureModifier` implementation that uses a `OmvFeatureFilterDescription` to filter
  * `TileData` features before they are completely decoded.
  *
- * @hidden
+ * @internal
  */
 export class OmvGenericFeatureModifier implements OmvFeatureModifier {
     static matchItems(

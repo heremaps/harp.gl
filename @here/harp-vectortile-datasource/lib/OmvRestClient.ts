@@ -12,11 +12,16 @@ import { LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("OmvRestClient");
 
+interface QueryParameters {
+    [key: string]: string;
+}
+
 // tslint:disable:max-line-length
 export enum APIFormat {
     /**
      * Use the REST API format of HERE Vector Tiles Server component version 1.
      *
+     * @remarks
      * Documentation:
      *  https://developer.here.com/documentation/vector-tiles-api/dev_guide/index.html
      *
@@ -38,6 +43,7 @@ export enum APIFormat {
     /**
      * Use the REST API format of Mapbox Vector Tile API v4.
      *
+     * @remarks
      * Usage:
      * `<OmvRestClientParams.baseUrl>/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
      *
@@ -54,6 +60,7 @@ export enum APIFormat {
     /**
      * Use the REST API format of XYZ Vector Tile API in MVT format.
      *
+     * @remarks
      * Usage:
      * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
      *
@@ -70,6 +77,7 @@ export enum APIFormat {
     /**
      * Use the REST API format of XYZ Vector Tile API in JSON format.
      *
+     * @remarks
      * Usage:
      * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
      *
@@ -86,6 +94,7 @@ export enum APIFormat {
     /**
      * Use the REST API format of XYZ Vector Tile API in OMV format.
      *
+     * @remarks
      * Usage:
      * `<OmvRestClientParams.baseUrl>/tiles/herebase.02/<zoom>/<X>/<Y>/omv?access_token=<OmvRestClientParams.authenticationCode>`
      *
@@ -102,6 +111,7 @@ export enum APIFormat {
     /**
      * Use the REST API format of Tomtoms Vector Tile API v1.
      *
+     * @remarks
      * Usage:
      * `<OmvRestClientParams.baseUrl>/<zoom>/<X>/<Y>.pbf?key=<OmvRestClientParams.authenticationCode>`
      *
@@ -118,6 +128,7 @@ export enum APIFormat {
     /**
      * Use the REST API format of XYZ Space Vector Tile API in OMV format.
      *
+     * @remarks
      * Usage:
      * `<OmvRestClientParams.baseUrl>/hub/spaces/<space-id>/tile/web/<zoom>_<X>_<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
      *
@@ -178,10 +189,13 @@ export interface OmvRestClientParameters {
     /**
      * `URL` pattern used to fetch tile files.
      *
+     * @remarks
      * `URL` with special keywords replaced to retrieve specific tile:
-     *  - `{z}` - zoom level of tile, @see [[TileKey.level]]
-     *  - `{x}` - horizontal coordinate of tile (column number), @see [[TileKey.column]]
-     *  - `{y}` - vertical coordinate of Tile (row number), @see [[TileKey.row]]
+     *  - `{z}` - zoom level of tile, @see {@link @here/harp-geoutils#TileKey.level}
+     *  - `{x}` - horizontal coordinate of tile (column number),
+     *            see {@link @here/harp-geoutils#TileKey.column}
+     *  - `{y}` - vertical coordinate of Tile (row number),
+     *            see {@link @here/harp-geoutils#TileKey.row}
      *
      * Examples of `url` patterns:
      * ```
@@ -221,6 +235,7 @@ export interface OmvRestClientParameters {
     /**
      * Authentication code used for the different APIs.
      *
+     * @remarks
      * When [[AuthenticationCodeProvider]] is is used as value, the provider is called before each
      * to get currently valid authentication code/token.
      *
@@ -231,6 +246,7 @@ export interface OmvRestClientParameters {
     /**
      * Specifies [[AuthMethod]] to be used when requesting tiles.
      *
+     * @remarks
      * Defaults for each [[APIFormat]] are documented with each format type.
      */
     authenticationMethod?: AuthenticationMethodInfo;
@@ -293,6 +309,7 @@ export class OmvRestClient implements DataProvider {
     /**
      * Asynchronously fetches a tile from this restful server.
      *
+     * @remarks
      * **Note:** If the tile doesn't exist, a successful response with a `404` status code is
      * returned.
      *
@@ -339,6 +356,13 @@ export class OmvRestClient implements DataProvider {
     }
 
     /**
+     * Destroys this `OmvRestClient`.
+     */
+    dispose() {
+        // to be overloaded by subclasses
+    }
+
+    /**
      * Get actual authentication code/token for this request according to configuration.
      */
     private async getActualAuthenticationCode() {
@@ -356,7 +380,7 @@ export class OmvRestClient implements DataProvider {
     }
 
     /**
-     * Get default authnentication method basing on apiFormat and other params.
+     * Get default authentication method basing on apiFormat and other params.
      */
     private getDefaultAuthMethod() {
         // tslint:disable-next-line: deprecation
@@ -384,7 +408,7 @@ export class OmvRestClient implements DataProvider {
     }
 
     /**
-     * Apply athentication code/token using configured (or default) authentication method.
+     * Apply authentication code/token using configured (or default) authentication method.
      *
      * @param url -
      * @param init - request extra data
@@ -458,16 +482,20 @@ export class OmvRestClient implements DataProvider {
         return this.params.baseUrl + path;
     }
 
-    private addQueryParams(url: string, queryParams: { [key: string]: string }): string {
+    private addQueryParams(url: string, queryParams: QueryParameters): string {
         let queryString = "";
-        let concatinator = url.indexOf("?") !== -1 ? "&" : "?";
-        Object.getOwnPropertyNames(queryParams).forEach(property => {
-            const prop = property as keyof typeof queryParams;
-            queryString += concatinator + prop + "=" + queryParams[prop];
-            if (concatinator === "?") {
-                concatinator = "&";
+        let sep = url.indexOf("?") !== -1 ? "&" : "?";
+        for (const prop in queryParams) {
+            if (!queryParams.hasOwnProperty(prop)) {
+                continue;
             }
-        });
+            queryString += `${sep}${encodeURIComponent(prop)}=${encodeURIComponent(
+                queryParams[prop]
+            )}`;
+            if (sep === "?") {
+                sep = "&";
+            }
+        }
         return url + queryString;
     }
 }

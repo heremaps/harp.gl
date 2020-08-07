@@ -86,6 +86,22 @@ export class ConcurrentTilerFacade {
     }
 
     /**
+     * Destroys this [[ConcurrentTilerFacade]] if all of the [[ConcurrentWorkerSet]]s are
+     * terminated.
+     */
+    static destroyIfTerminated() {
+        let allWorkerSetsTerminated = true;
+        Object.keys(this.workerSets).forEach(name => {
+            if (!this.workerSets[name].terminated) {
+                allWorkerSetsTerminated = false;
+            }
+        });
+        if (allWorkerSetsTerminated) {
+            ConcurrentTilerFacade.destroy();
+        }
+    }
+
+    /**
      * The [[ConcurrentWorkerSet]] instances which are stored by the script URL.
      */
     private static workerSets: {
