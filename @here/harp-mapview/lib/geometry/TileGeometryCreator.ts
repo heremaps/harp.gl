@@ -55,7 +55,13 @@ import {
     SubdivisionMode
 } from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
-import { EarthConstants, GeoCoordinates, ProjectionType } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    GeoBox,
+    GeoCoordinates,
+    Projection,
+    ProjectionType
+} from "@here/harp-geoutils";
 import {
     EdgeMaterial,
     EdgeMaterialParameters,
@@ -195,6 +201,13 @@ function addToExtrudedMaterials(
     } else {
         extrudedMaterials.push(material as ExtrusionFeature);
     }
+}
+
+export interface TileCorners {
+    se: THREE.Vector3;
+    sw: THREE.Vector3;
+    ne: THREE.Vector3;
+    nw: THREE.Vector3;
 }
 
 /**
@@ -1246,32 +1259,22 @@ export class TileGeometryCreator {
             attr.needsUpdate = true;
         }
 
-        // Create plane
-        const { east, west, north, south } = tile.geoBox;
         const geometry = new THREE.BufferGeometry();
-        const sw = sourceProjection.projectPoint(
-            new GeoCoordinates(south, west),
-            new THREE.Vector3()
-        );
-        const se = sourceProjection.projectPoint(
-            new GeoCoordinates(south, east),
-            new THREE.Vector3()
-        );
-        const nw = sourceProjection.projectPoint(
-            new GeoCoordinates(north, west),
-            new THREE.Vector3()
-        );
-        const ne = sourceProjection.projectPoint(
-            new GeoCoordinates(north, east),
-            new THREE.Vector3()
-        );
+        // Create plane
+        const tileCorners = this.generateTilePlaneCorners(tile.geoBox, sourceProjection);
+
         const posAttr = new THREE.BufferAttribute(
-            new Float32Array([...sw.toArray(), ...se.toArray(), ...nw.toArray(), ...ne.toArray()]),
+            new Float32Array([
+                ...tileCorners.sw.toArray(),
+                ...tileCorners.se.toArray(),
+                ...tileCorners.nw.toArray(),
+                ...tileCorners.ne.toArray()
+            ]),
             3
         );
         geometry.setAttribute("position", posAttr);
         if (shadowsEnabled === true) {
-            sourceProjection.surfaceNormal(sw, tmpV);
+            sourceProjection.surfaceNormal(tileCorners.sw, tmpV);
             // Webmercator needs to have it negated to work correctly.
             tmpV.negate();
             const normAttr = new THREE.BufferAttribute(
@@ -1331,6 +1334,27 @@ export class TileGeometryCreator {
             moveTileCenter(geometry);
             return new THREE.Mesh(geometry, material);
         }
+    }
+
+    generateTilePlaneCorners(geoBox: GeoBox, sourceProjection: Projection): TileCorners {
+        const { east, west, north, south } = geoBox;
+        const sw = sourceProjection.projectPoint(
+            new GeoCoordinates(south, west),
+            new THREE.Vector3()
+        );
+        const se = sourceProjection.projectPoint(
+            new GeoCoordinates(south, east),
+            new THREE.Vector3()
+        );
+        const nw = sourceProjection.projectPoint(
+            new GeoCoordinates(north, west),
+            new THREE.Vector3()
+        );
+        const ne = sourceProjection.projectPoint(
+            new GeoCoordinates(north, east),
+            new THREE.Vector3()
+        );
+        return { sw, se, nw, ne };
     }
 
     /**

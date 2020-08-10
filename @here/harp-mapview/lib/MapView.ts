@@ -1257,6 +1257,10 @@ export class MapView extends EventDispatcher {
         this.update();
     }
 
+    get tileWrappingEnabled(): boolean {
+        return this.m_tileWrappingEnabled;
+    }
+
     /**
      * Disposes this `MapView`.
      * @override
@@ -3916,6 +3920,15 @@ export class MapView extends EventDispatcher {
         }
 
         const index = geometry.getIndex()!;
+        if (index === null) {
+            //something went wrong with the geometry
+            logger.error(
+                "Something went wrong with this geometry: ",
+                geometry,
+                " there is no index"
+            );
+            return true;
+        }
 
         // clear the groups.
         geometry.clearGroups();

@@ -912,7 +912,7 @@ export namespace MapViewUtils {
      * @returns Intersection coordinates, or `null` if raycast failed.
      */
     export function rayCastWorldCoordinates(
-        mapView: MapView,
+        mapView: MapView | { camera: THREE.Camera; projection: Projection },
         pointOnScreenXinNDC: number,
         pointOnScreenYinNDC: number,
         elevation?: number
