@@ -10,9 +10,9 @@ import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
+import { FeatureFilter } from "../../FeatureFilter";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
-import { OmvFeatureFilter } from "../../OmvDataFilter";
-import { world2tile } from "../../OmvUtils";
+import { world2tile } from "../../Utils";
 
 const DEFAULT_EXTENTS = 4 * 1024;
 
@@ -161,7 +161,7 @@ export class GeoJsonDataAdapter implements DataAdapter {
 
     constructor(
         readonly m_processor: IGeometryProcessor,
-        readonly dataFilter: OmvFeatureFilter,
+        readonly dataFilter: FeatureFilter,
         readonly m_logger?: ILogger
     ) {}
 

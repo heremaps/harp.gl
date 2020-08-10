@@ -6,10 +6,10 @@
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { LoggerManager } from "@here/harp-utils";
-import { OmvGenericFeatureModifier } from "./OmvDataFilter";
-import { OmvFeatureFilterDescription, OmvFilterDescription } from "./OmvDecoderDefs";
+import { GenericFeatureModifier } from "../FeatureFilter";
+import { FeatureFilterDescription, FilterDescription } from "../OmvDecoderDefs";
 
-const logger = LoggerManager.instance.create("OmvTomTomFeatureModifier");
+const logger = LoggerManager.instance.create("TomTomFeatureModifier");
 
 const DEFAULT_BUILDING_COLOR = "#AAAAAA";
 const DEFAULT_DO_EXTRUDE_BUILDINGS = "true";
@@ -20,15 +20,15 @@ const DEFAULT_BUILDING_HEIGHT = "20";
  * Modifies the MapEnv of the TomTom Vector Tiles to be similar to the OMV format, so that the same
  * theme files can be used.
  */
-export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
-    constructor(description: OmvFeatureFilterDescription) {
+export class TomTomFeatureModifier extends GenericFeatureModifier {
+    constructor(description: FeatureFilterDescription) {
         super(description);
     }
 
     /** @override */
     protected doProcessFeature(
-        itemsToProcess: OmvFilterDescription[],
-        itemsToIgnore: OmvFilterDescription[],
+        itemsToProcess: FilterDescription[],
+        itemsToIgnore: FilterDescription[],
         layer: string,
         env: MapEnv,
         defaultResult: boolean

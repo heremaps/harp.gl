@@ -64,13 +64,13 @@ import {
 } from "@here/harp-geoutils";
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
+import { Ring } from "./Ring";
 import {
     tile2world,
     webMercatorTile2TargetTile,
     webMercatorTile2TargetWorld,
     world2tile
-} from "./OmvUtils";
-import { Ring } from "./Ring";
+} from "./Utils";
 
 import {
     AttrEvaluationContext,

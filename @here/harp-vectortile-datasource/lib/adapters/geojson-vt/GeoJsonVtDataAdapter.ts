@@ -15,9 +15,9 @@ import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
+import { FeatureFilter } from "../../FeatureFilter";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
-import { OmvFeatureFilter } from "../../OmvDataFilter";
-import { isArrayBufferLike, tile2world } from "../../OmvUtils";
+import { isArrayBufferLike, tile2world } from "../../Utils";
 
 const VT_JSON_EXTENTS = 4096;
 
@@ -84,15 +84,15 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
 
     constructor(
         readonly m_processor: IGeometryProcessor,
-        private m_dataFilter?: OmvFeatureFilter,
+        private m_dataFilter?: FeatureFilter,
         readonly m_logger?: ILogger
     ) {}
 
-    get dataFilter(): OmvFeatureFilter | undefined {
+    get dataFilter(): FeatureFilter | undefined {
         return this.m_dataFilter;
     }
 
-    set dataFilter(dataFilter: OmvFeatureFilter | undefined) {
+    set dataFilter(dataFilter: FeatureFilter | undefined) {
         this.m_dataFilter = dataFilter;
     }
 

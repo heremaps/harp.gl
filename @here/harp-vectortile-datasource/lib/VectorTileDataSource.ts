@@ -21,17 +21,12 @@ import {
 } from "@here/harp-mapview-decoder";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import {
+    DecoderOptions,
+    FeatureFilterDescription,
     FeatureModifierId,
-    OmvDecoderOptions,
-    OmvFeatureFilterDescription,
     VECTOR_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
-import {
-    APIFormat,
-    AuthenticationMethod,
-    OmvRestClient,
-    OmvRestClientParameters
-} from "./OmvRestClient";
+import { APIFormat, AuthenticationMethod, RestClient, RestClientParameters } from "./OmvRestClient";
 
 const logger = LoggerManager.instance.create("VectorTileDataSource");
 
@@ -98,12 +93,12 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
      * A description for the feature filter that can be safely passed down to the web workers.
      *
      * @reamrks
-     * It has to be generated with the help of the [[OmvFeatureFilterDescriptionBuilder]]
+     * It has to be generated with the help of the [[FeatureFilterDescriptionBuilder]]
      * (to guarantee correctness). This parameter gets applied to the decoder used in the
      * {@link VectorTileDataSource} which might be shared between
      * various {@link VectorTileDataSource}s.
      */
-    filterDescr?: OmvFeatureFilterDescription;
+    filterDescr?: FeatureFilterDescription;
 
     /**
      * Optional, custom factory for {@link @here/harp-mapview#Tile} instances created
@@ -117,7 +112,7 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
      * @remarks
      * If left `undefined` at least [[OmvGenericFeatureModifier]] will be applied.
      * The list of feature modifiers may be extended internally by some data source options
-     * such as [[politicalView]] which adds [[OmvPoliticalViewFeatureModifier]].
+     * such as [[politicalView]] which adds [[PoliticalViewFeatureModifier]].
      *
      * @note This parameter gets applied to the decoder used in the {@link VectorTileDataSource}
      * which might be shared between various {@link VectorTileDataSource}s.
@@ -183,13 +178,13 @@ function getDataProvider(params: OmvWithRestClientParams | OmvWithCustomDataProv
         (params as OmvWithRestClientParams).baseUrl ??
         (params as OmvWithRestClientParams).url
     ) {
-        return new OmvRestClient(params as OmvRestClientParameters);
+        return new RestClient(params as RestClientParameters);
     } else {
         throw new Error("OmvDataSource: missing url, baseUrl or dataProvider params");
     }
 }
 
-export type OmvWithRestClientParams = VectorTileDataSourceParameters & OmvRestClientParameters;
+export type OmvWithRestClientParams = VectorTileDataSourceParameters & RestClientParameters;
 
 export type OmvWithCustomDataProvider = VectorTileDataSourceParameters & {
     dataProvider: DataProvider;
@@ -256,7 +251,7 @@ function completeDataSourceParameters(
         return {
             ...completedParams,
             tilingScheme: webMercatorTilingScheme,
-            dataProvider: new OmvRestClient(completedParams)
+            dataProvider: new RestClient(completedParams)
         };
     }
 
@@ -280,7 +275,7 @@ function completeDataSourceParameters(
  *   ```
  */
 export class VectorTileDataSource extends TileDataSource {
-    private readonly m_decoderOptions: OmvDecoderOptions;
+    private readonly m_decoderOptions: DecoderOptions;
 
     constructor(private readonly m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory ?? new TileFactory(Tile), {
@@ -351,9 +346,9 @@ export class VectorTileDataSource extends TileDataSource {
      * Will be applied to the decoder, which might be shared with other omv datasources.
      *
      * @param filterDescription - Data filter description created with
-     * [[OmvFeatureFilterDescriptionBuilder]].
+     * [[FeatureFilterDescriptionBuilder]].
      */
-    setDataFilter(filterDescription: OmvFeatureFilterDescription): void {
+    setDataFilter(filterDescription: FeatureFilterDescription): void {
         this.m_decoderOptions.filterDescription =
             filterDescription !== null ? filterDescription : undefined;
 

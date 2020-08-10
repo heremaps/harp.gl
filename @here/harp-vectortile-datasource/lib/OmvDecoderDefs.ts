@@ -17,7 +17,7 @@ export enum FeatureModifierId {
      */
     default,
     /**
-     * Identifier to use the OmvTomTomFeatureModifier in the OmvDecoder.
+     * Identifier to use the TomTomFeatureModifier in the OmvDecoder.
      */
     tomTom
 }
@@ -25,17 +25,17 @@ export enum FeatureModifierId {
 /**
  * Definition of a filter.
  */
-export interface OmvFilterString {
+export interface FilterString {
     /**  String value */
     value: string;
     /** Match condition */
-    match: OmvFilterString.StringMatch;
+    match: FilterString.StringMatch;
 }
 
 /**
- * Adding the match condition type and the matching function to the namespace of `OmvFilterString`.
+ * Adding the match condition type and the matching function to the namespace of `FilterString`.
  */
-export namespace OmvFilterString {
+export namespace FilterString {
     /**
      * Match condition.
      */
@@ -61,15 +61,15 @@ export namespace OmvFilterString {
      *
      * @internal
      */
-    export function matchString(str: string, filterString: OmvFilterString): boolean {
+    export function matchString(str: string, filterString: FilterString): boolean {
         switch (filterString.match) {
-            case OmvFilterString.StringMatch.Any:
+            case FilterString.StringMatch.Any:
                 return true;
-            case OmvFilterString.StringMatch.Match:
+            case FilterString.StringMatch.Match:
                 return str === filterString.value;
-            case OmvFilterString.StringMatch.StartsWith:
+            case FilterString.StringMatch.StartsWith:
                 return filterString.value.startsWith(str);
-            case OmvFilterString.StringMatch.EndsWith:
+            case FilterString.StringMatch.EndsWith:
                 return filterString.value.endsWith(str);
             default:
                 return str.indexOf(filterString.value) >= 0;
@@ -80,12 +80,15 @@ export namespace OmvFilterString {
 /**
  * Definition of a filter for a feature attribute
  */
-export interface OmvFilterFeatureAttribute {
+export interface FilterFeatureAttribute {
     key: string;
     value: Value;
 }
 
-export enum OmvGeometryType {
+/**
+ * @internal
+ */
+export enum GeometryType {
     UNKNOWN = 0,
     POINT = 1,
     LINESTRING = 2,
@@ -95,10 +98,10 @@ export enum OmvGeometryType {
 /**
  * Internal type of a layer filter description, Should not be publicly available.
  *
- * @hidden
+ * @internal
  */
-export interface OmvLayerFilterDescription {
-    name: OmvFilterString;
+export interface LayerFilterDescription {
+    name: FilterString;
     minLevel: number;
     maxLevel: number;
 }
@@ -106,36 +109,36 @@ export interface OmvLayerFilterDescription {
 /**
  * Internal type of a single filter description, Should not be publicly available.
  *
- * @hidden
+ * @internal
  */
-export interface OmvFilterDescription {
-    layerName: OmvFilterString;
-    geometryTypes?: OmvGeometryType[];
-    classes?: OmvFilterString[];
+export interface FilterDescription {
+    layerName: FilterString;
+    geometryTypes?: GeometryType[];
+    classes?: FilterString[];
     minLevel: number;
     maxLevel: number;
-    featureAttribute?: OmvFilterFeatureAttribute;
+    featureAttribute?: FilterFeatureAttribute;
 }
 
 /**
  * Internal type of a complete [[OmvFeatureFilter]] description, should not be publicly available.
  *
- * @hidden
+ * @internal
  */
-export interface OmvFeatureFilterDescription {
+export interface FeatureFilterDescription {
     processLayersDefault: boolean;
     processPointsDefault: boolean;
     processLinesDefault: boolean;
     processPolygonsDefault: boolean;
 
-    layersToProcess: OmvLayerFilterDescription[];
-    layersToIgnore: OmvLayerFilterDescription[];
-    pointsToProcess: OmvFilterDescription[];
-    pointsToIgnore: OmvFilterDescription[];
-    linesToProcess: OmvFilterDescription[];
-    linesToIgnore: OmvFilterDescription[];
-    polygonsToProcess: OmvFilterDescription[];
-    polygonsToIgnore: OmvFilterDescription[];
+    layersToProcess: LayerFilterDescription[];
+    layersToIgnore: LayerFilterDescription[];
+    pointsToProcess: FilterDescription[];
+    pointsToIgnore: FilterDescription[];
+    linesToProcess: FilterDescription[];
+    linesToIgnore: FilterDescription[];
+    polygonsToProcess: FilterDescription[];
+    polygonsToIgnore: FilterDescription[];
 
     // enabledKinds and disabledKinds
     kindsToProcess: string[];
@@ -145,9 +148,9 @@ export interface OmvFeatureFilterDescription {
 /**
  * Internal interface for options passed from the [[OmvDataSource]] to the decoder.
  *
- * @hidden
+ * @internal
  */
-export interface OmvDecoderOptions {
+export interface DecoderOptions {
     /**
      * If true, features that have no technique in the theme will be printed to the console (can be
      * excessive!).
@@ -186,10 +189,10 @@ export interface OmvDecoderOptions {
 
     /**
      * A description for the feature filter which can be safely passed down to the web workers.
-     * It has to be generated with the help of the [[OmvFeatureFilterDescriptionBuilder]] (to
+     * It has to be generated with the help of the [[FeatureFilterDescriptionBuilder]] (to
      * guarantee the correctness).
      */
-    filterDescription?: OmvFeatureFilterDescription | null;
+    filterDescription?: FeatureFilterDescription | null;
 
     // NOTE: Consider using OmvFeatureModifiers objects already instead of ids, this way we could
     // get rid of politicalView property as properly configured feature modifier (with country

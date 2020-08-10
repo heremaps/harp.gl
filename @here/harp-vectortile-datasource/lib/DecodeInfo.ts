@@ -13,7 +13,7 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 
-import { WorldTileProjectionCookie } from "./OmvUtils";
+import { WorldTileProjectionCookie } from "./Utils";
 
 import * as THREE from "three";
 

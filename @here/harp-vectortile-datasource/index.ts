@@ -12,7 +12,7 @@
  * @packageDocumentation
  */
 
-export * from "./lib/OmvDataFilter";
+export * from "./lib/FeatureFilter";
 export * from "./lib/VectorTileDataSource";
 export * from "./lib/OmvDecoderDefs";
 export * from "./lib/OmvDebugLabelsTile";

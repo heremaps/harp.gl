@@ -9,14 +9,14 @@
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { assert } from "chai";
-import { OmvFeatureFilterDescriptionBuilder } from "../lib/OmvDataFilter";
-import { OmvFeatureFilterDescription } from "../lib/OmvDecoderDefs";
-import { OmvTomTomFeatureModifier } from "../lib/OmvTomTomFeatureModifier";
+import { FeatureFilterDescriptionBuilder } from "../lib/FeatureFilter";
+import { TomTomFeatureModifier } from "../lib/modifiers/TomTomFeatureModifier";
+import { FeatureFilterDescription } from "../lib/OmvDecoderDefs";
 
-export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
-    private readonly m_description: OmvFeatureFilterDescription;
+export class TomTomModifierMock extends TomTomFeatureModifier {
+    private readonly m_description: FeatureFilterDescription;
 
-    constructor(description: OmvFeatureFilterDescription) {
+    constructor(description: FeatureFilterDescription) {
         super(description);
         this.m_description = description;
     }
@@ -31,15 +31,15 @@ export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
     }
 }
 /**
- * Add unit tests for OmvTomTomFeatureModifier
+ * Add unit tests for TomTomFeatureModifier
  */
-describe("OmvTomTomFeatureModifier", function() {
-    let tomTomFeatureModifier: OmvTomTomModifierMock;
+describe("TomTomFeatureModifier", function() {
+    let tomTomFeatureModifier: TomTomModifierMock;
 
     before(function() {
-        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const filterBuilder = new FeatureFilterDescriptionBuilder();
         const filterDescription = filterBuilder.createDescription();
-        tomTomFeatureModifier = new OmvTomTomModifierMock(filterDescription);
+        tomTomFeatureModifier = new TomTomModifierMock(filterDescription);
     });
 
     it("modify Landuse layers", function() {

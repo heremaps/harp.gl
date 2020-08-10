@@ -4,14 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { VectorTileDataSourceParameters } from "@here/harp-vectortile-datasource";
-
-export {
-    APIFormat,
-    AuthenticationMethod,
-    GeoJsonDataProvider
-} from "@here/harp-vectortile-datasource";
-
 /**
  * HERE OMV Data source.
  *
@@ -20,10 +12,37 @@ export {
  * @packageDocumentation
  */
 
-/**
- * @deprecated Use {@link @here/harp-vectortile-datasource#VectorTileDataSourceParameters}
- *             instad.
- */
-export type OmvDataSourceParameters = VectorTileDataSourceParameters;
+export {
+    APIFormat,
+    AuthenticationMethod,
+    GeoJsonDataProvider,
+    VectorTileDataSourceParameters as OmvDataSourceParameters
+} from "@here/harp-vectortile-datasource";
+
+export {
+    ComposedDataFilter,
+    FeatureFilter as OmvFeatureFilter,
+    FeatureFilterDescriptionBuilder as OmvFeatureFilterDescriptionBuilder,
+    FeatureModifier as OmvFeatureModifier,
+    GenericFeatureFilter as OmvGenericFeatureFilter,
+    GenericFeatureModifier as OmvGenericFeatureModifier
+} from "@here/harp-vectortile-datasource/lib/FeatureFilter";
+
+export {
+    FeatureModifierId,
+    DecoderOptions as OmvDecoderOptions,
+    FeatureFilterDescription as OmvFeatureFilterDescription,
+    FilterDescription as OmvFilterDescription,
+    FilterFeatureAttribute as OmvFilterFeatureAttribute,
+    FilterString as OmvFilterString,
+    GeometryType as OmvGeometryType
+} from "@here/harp-vectortile-datasource/lib/OmvDecoderDefs";
+
+export {
+    RestClient as OmvRestClient,
+    RestClientParameters as OmvRestClientParameters
+} from "@here/harp-vectortile-datasource/lib/OmvRestClient";
+
+export * from "@here/harp-vectortile-datasource/lib/OmvRestClient";
 
 export * from "./lib/OmvDataSource";

@@ -185,7 +185,7 @@ export const AuthenticationTypeAccessToken: AuthenticationMethodInfo = {
     name: "access_token"
 };
 
-export interface OmvRestClientParameters {
+export interface RestClientParameters {
     /**
      * `URL` pattern used to fetch tile files.
      *
@@ -284,11 +284,11 @@ export interface OmvRestClientParameters {
 /**
  * REST client supporting getting protobuf OMV Tile from REST-based servers.
  */
-export class OmvRestClient implements DataProvider {
+export class RestClient implements DataProvider {
     private readonly downloadManager: ITransferManager;
     private readonly urlParams: { [key: string]: string };
 
-    constructor(readonly params: OmvRestClientParameters) {
+    constructor(readonly params: RestClientParameters) {
         this.downloadManager =
             params.downloadManager === undefined
                 ? TransferManager.instance()

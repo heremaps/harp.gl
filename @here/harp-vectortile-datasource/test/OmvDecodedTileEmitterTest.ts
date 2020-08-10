@@ -25,7 +25,7 @@ import { assert } from "chai";
 import { Vector2, Vector3 } from "three";
 import { DecodeInfo } from "../lib/DecodeInfo";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
-import { world2tile } from "../lib/OmvUtils";
+import { world2tile } from "../lib/Utils";
 import { VectorTileDataEmitter } from "../lib/VectorTileDataEmitter";
 
 class OmvDecodedTileEmitterTest extends VectorTileDataEmitter {

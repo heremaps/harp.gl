@@ -8,13 +8,13 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import {
-    OmvFeatureFilter,
-    OmvFeatureFilterDescriptionBuilder,
-    OmvFeatureModifier,
-    OmvFilterDescription,
-    OmvFilterString,
-    OmvGenericFeatureModifier,
-    OmvGeometryType
+    FeatureFilter,
+    FeatureFilterDescriptionBuilder,
+    FeatureModifier,
+    FilterDescription,
+    FilterString,
+    GenericFeatureModifier,
+    GeometryType
 } from "../index";
 
 import { MapEnv, Value } from "@here/harp-datasource-protocol/index-decoder";
@@ -27,7 +27,7 @@ import { assert } from "chai";
  * FIXME: HARP-1152 Add unit tests for filter
  */
 
-export class RoadFilter implements OmvFeatureFilter {
+export class RoadFilter implements FeatureFilter {
     hasKindFilter: boolean = true;
 
     wantsKind(kind: string | string[]): boolean {
@@ -43,20 +43,20 @@ export class RoadFilter implements OmvFeatureFilter {
         return layer !== undefined && layer === "road"; // only road lines, no labels
     }
 
-    wantsPointFeature(_layer: string, _geometryType: OmvGeometryType): boolean {
+    wantsPointFeature(_layer: string, _geometryType: GeometryType): boolean {
         return false;
     }
 
-    wantsLineFeature(_layer: string, _geometryType: OmvGeometryType): boolean {
+    wantsLineFeature(_layer: string, _geometryType: GeometryType): boolean {
         return true;
     }
 
-    wantsPolygonFeature(_layer: string, _geometryType: OmvGeometryType): boolean {
+    wantsPolygonFeature(_layer: string, _geometryType: GeometryType): boolean {
         return false;
     }
 }
 
-export class RoadFeatureFilter implements OmvFeatureModifier {
+export class RoadFeatureFilter implements FeatureModifier {
     doProcessPointFeature(_layer: string, _env: MapEnv): boolean {
         return false;
     }
@@ -75,7 +75,7 @@ export class RoadFeatureFilter implements OmvFeatureModifier {
     }
 }
 
-export class RoadsToRailroads implements OmvFeatureModifier {
+export class RoadsToRailroads implements FeatureModifier {
     doProcessPointFeature(_layer: string, _env: MapEnv): boolean {
         return false;
     }
@@ -92,21 +92,21 @@ export class RoadsToRailroads implements OmvFeatureModifier {
 }
 
 /**
- * FIXME: HARP-1152 Add unit tests for OmvFeatureFilterDescriptionBuilder
+ * FIXME: HARP-1152 Add unit tests for FeatureFilterDescriptionBuilder
  */
-describe("OmvFeatureFilterDescriptionBuilder", function() {
+describe("FeatureFilterDescriptionBuilder", function() {
     it("setup", function() {
-        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const filterBuilder = new FeatureFilterDescriptionBuilder();
         const filterDescr = filterBuilder.createDescription();
 
         assert.isObject(filterDescr);
     });
 
     it("addFilters", function() {
-        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const filterBuilder = new FeatureFilterDescriptionBuilder();
 
         // load roads only on levels 0-13
-        filterBuilder.ignoreLayer("road", OmvFilterString.StringMatch.Match, 0, 13);
+        filterBuilder.ignoreLayer("road", FilterString.StringMatch.Match, 0, 13);
 
         const filterDescr = filterBuilder.createDescription();
 
@@ -120,12 +120,12 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
     });
 
     it("addFilters2", function() {
-        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const filterBuilder = new FeatureFilterDescriptionBuilder();
 
         filterBuilder.processLayer("road");
         filterBuilder.processLine({
             layer: "road",
-            geomType: OmvGeometryType.LINESTRING,
+            geomType: GeometryType.LINESTRING,
             featureClass: "street"
         });
 
@@ -139,7 +139,7 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
     });
 
     it("addKindFilters", function() {
-        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const filterBuilder = new FeatureFilterDescriptionBuilder();
 
         filterBuilder.ignoreKinds(["area"]);
         filterBuilder.processKinds(["water"]);
@@ -154,8 +154,8 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
     });
 
     it("addAttributeFilters", function() {
-        const createItems = (layer: string, key: string, value: Value): OmvFilterDescription[] => {
-            const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const createItems = (layer: string, key: string, value: Value): FilterDescription[] => {
+            const filterBuilder = new FeatureFilterDescriptionBuilder();
             filterBuilder.processPolygons({ layer, featureAttribute: { key, value } });
 
             const filterDescr = filterBuilder.createDescription();
@@ -171,39 +171,33 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
 
         const env = new MapEnv({ has_landmark: true });
         assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("buildings", env, itemsTrue),
+            GenericFeatureModifier.matchAttribute("buildings", env, itemsTrue),
             true
         );
         assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("buildings", env, itemsFalse),
+            GenericFeatureModifier.matchAttribute("buildings", env, itemsFalse),
             false
         );
-        assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("roads", env, itemsTrue),
-            false
-        );
-        assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("roads", env, itemsFalse),
-            false
-        );
+        assert.strictEqual(GenericFeatureModifier.matchAttribute("roads", env, itemsTrue), false);
+        assert.strictEqual(GenericFeatureModifier.matchAttribute("roads", env, itemsFalse), false);
 
         const envBadValue = new MapEnv({ has_landmark: "not_a_boolean" });
         assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("buildings", envBadValue, itemsTrue),
+            GenericFeatureModifier.matchAttribute("buildings", envBadValue, itemsTrue),
             false
         );
         assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("buildings", envBadValue, itemsFalse),
+            GenericFeatureModifier.matchAttribute("buildings", envBadValue, itemsFalse),
             false
         );
 
         const envBadKey = new MapEnv({ foo: true });
         assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("buildings", envBadKey, itemsTrue),
+            GenericFeatureModifier.matchAttribute("buildings", envBadKey, itemsTrue),
             false
         );
         assert.strictEqual(
-            OmvGenericFeatureModifier.matchAttribute("buildings", envBadKey, itemsFalse),
+            GenericFeatureModifier.matchAttribute("buildings", envBadKey, itemsFalse),
             false
         );
     });

@@ -6,13 +6,14 @@
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { LoggerManager } from "@here/harp-utils";
-import { OmvFeatureModifier } from "./OmvDataFilter";
+import { FeatureModifier } from "../FeatureFilter";
 
-const logger = LoggerManager.instance.create("OmvPoliticalViewFeatureModifier");
+const logger = LoggerManager.instance.create("PoliticalViewFeatureModifier");
 
 /**
  * Modifies the MapEnv of the Vector Tiles in Tilezen format with different POV.
  *
+ * @remarks
  * This feature modifier updates feature properties according to different political
  * point of view.
  * Political views (or alternate point of views) are supported in Tilezen by adding
@@ -24,7 +25,7 @@ const logger = LoggerManager.instance.create("OmvPoliticalViewFeatureModifier");
  *
  * @hidden
  */
-export class OmvPoliticalViewFeatureModifier implements OmvFeatureModifier {
+export class PoliticalViewFeatureModifier implements FeatureModifier {
     private readonly m_countryCode: string;
 
     /**

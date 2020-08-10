@@ -12,7 +12,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { TransferManager } from "@here/harp-transfer-manager";
 import { assert } from "chai";
 import * as sinon from "sinon";
-import { APIFormat, AuthenticationMethod, AuthenticationTypeBearer, OmvRestClient } from "../index";
+import { APIFormat, AuthenticationMethod, AuthenticationTypeBearer, RestClient } from "../index";
 
 function createMockDownloadResponse(tileUrl: string) {
     const mock = {
@@ -48,7 +48,7 @@ describe("OmvRestClient", function() {
     });
 
     it("supports url pattern", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             url: "https://some.base.url/somepath/{z}/{x}/{y}/omv",
             downloadManager: mockDownloadManager
         });
@@ -57,7 +57,7 @@ describe("OmvRestClient", function() {
     });
 
     it("supports url pattern and custom `urlParams`", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             url: "https://some.base.url/somepath/{z}/{x}/{y}.mvt",
             urlParams: {
                 token: "1234567890abcdefg"
@@ -72,7 +72,7 @@ describe("OmvRestClient", function() {
     });
 
     it("generates proper Url with HEREV1 Format", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
             downloadManager: mockDownloadManager
@@ -82,7 +82,7 @@ describe("OmvRestClient", function() {
     });
 
     it("generates proper Url with MapBox Format", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
             authenticationCode: async () => "123",
@@ -96,7 +96,7 @@ describe("OmvRestClient", function() {
     });
 
     it("generates proper Url with TomTom Format", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://a.tomtom.base.url",
             apiFormat: APIFormat.TomtomV1,
             authenticationCode: "123",
@@ -107,7 +107,7 @@ describe("OmvRestClient", function() {
     });
 
     it("generates proper Url with XYZ OMV Format", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             authenticationCode: async () => "123",
@@ -121,7 +121,7 @@ describe("OmvRestClient", function() {
     });
 
     it("supports custom authentication method based on query string key", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
             downloadManager: mockDownloadManager,
@@ -136,7 +136,7 @@ describe("OmvRestClient", function() {
     });
 
     it("generates authentication header with bearer token from a function", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
             downloadManager: mockDownloadManager,
@@ -157,7 +157,7 @@ describe("OmvRestClient", function() {
     });
 
     it("bearer auth token with custom query params", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
             downloadManager: mockDownloadManager,
@@ -185,7 +185,7 @@ describe("OmvRestClient", function() {
     });
 
     it("query param auth with custom query param", async function() {
-        const restClient = new OmvRestClient({
+        const restClient = new RestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
             downloadManager: mockDownloadManager,

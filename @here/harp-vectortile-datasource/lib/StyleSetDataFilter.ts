@@ -5,7 +5,7 @@
  */
 
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-import { OmvFeatureFilter } from "./OmvDataFilter";
+import { FeatureFilter } from "./FeatureFilter";
 
 /**
  * An [[OmvFeatureFilter]] implementation that queries [[StyleSetEvaluator]]
@@ -17,7 +17,7 @@ import { OmvFeatureFilter } from "./OmvDataFilter";
  * @see [[StyleSetEvaluator.wantsFeature]]
  * @see [[StyleSetEvaluator.wantsLayer]]
  */
-export class StyleSetDataFilter implements OmvFeatureFilter {
+export class StyleSetDataFilter implements FeatureFilter {
     hasKindFilter: boolean = false;
 
     constructor(readonly styleSetEvaluator: StyleSetEvaluator) {}

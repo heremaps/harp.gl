@@ -16,7 +16,7 @@ import { assert } from "chai";
 import {
     APIFormat,
     AuthenticationTypeAccessToken,
-    OmvRestClient,
+    RestClient,
     VectorTileDataSource
 } from "../index";
 import { VectorTileDecoder } from "../index-worker";
@@ -67,9 +67,9 @@ describe("DataProviders", function() {
             authenticationMethod: AuthenticationTypeAccessToken
         });
         const provider = omvDataSource.dataProvider();
-        assert.instanceOf(provider, OmvRestClient);
+        assert.instanceOf(provider, RestClient);
 
-        const omvRestClientProvider = provider as OmvRestClient;
+        const omvRestClientProvider = provider as RestClient;
         assert.equal(
             omvRestClientProvider.params.baseUrl,
             "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7"

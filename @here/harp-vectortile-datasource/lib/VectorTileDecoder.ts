@@ -28,22 +28,22 @@ import { GeoJsonDataAdapter } from "./adapters/geojson/GeoJsonDataAdapter";
 import { OmvDataAdapter } from "./adapters/omv/OmvDataAdapter";
 import { DataAdapter } from "./DataAdapter";
 import { DecodeInfo } from "./DecodeInfo";
-import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import {
     ComposedDataFilter,
-    OmvFeatureFilter,
-    OmvFeatureModifier,
-    OmvGenericFeatureFilter,
-    OmvGenericFeatureModifier
-} from "./OmvDataFilter";
+    FeatureFilter,
+    FeatureModifier,
+    GenericFeatureFilter,
+    GenericFeatureModifier
+} from "./FeatureFilter";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
+import { PoliticalViewFeatureModifier } from "./modifiers/PoliticalViewFeatureModifier";
+import { TomTomFeatureModifier } from "./modifiers/TomTomFeatureModifier";
 import {
+    DecoderOptions,
+    FeatureFilterDescription,
     FeatureModifierId,
-    OmvDecoderOptions,
-    OmvFeatureFilterDescription,
     VECTOR_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
-import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
-import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
 import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
 
@@ -59,8 +59,8 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         private readonly m_projection: Projection,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_showMissingTechniques: boolean,
-        private readonly m_dataFilter?: OmvFeatureFilter,
-        private readonly m_featureModifiers?: OmvFeatureModifier[],
+        private readonly m_dataFilter?: FeatureFilter,
+        private readonly m_featureModifiers?: FeatureModifier[],
         private readonly m_gatherFeatureAttributes = false,
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
@@ -298,8 +298,8 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
  */
 export class VectorTileDecoder extends ThemedTileDecoder {
     private m_showMissingTechniques: boolean = false;
-    private m_featureFilter?: OmvFeatureFilter;
-    private m_featureModifiers?: OmvFeatureModifier[];
+    private m_featureFilter?: FeatureFilter;
+    private m_featureModifiers?: FeatureModifier[];
     private m_gatherFeatureAttributes: boolean = false;
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
@@ -348,7 +348,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
         super.configure(styleSet, definitions, languages, options);
 
         if (options) {
-            const omvOptions = options as OmvDecoderOptions;
+            const omvOptions = options as DecoderOptions;
 
             if (omvOptions.showMissingTechniques !== undefined) {
                 this.m_showMissingTechniques = omvOptions.showMissingTechniques === true;
@@ -363,9 +363,9 @@ export class VectorTileDecoder extends ThemedTileDecoder {
                     const featureModifiersIds = omvOptions.featureModifiers;
 
                     // Create new filter from description.
-                    this.m_featureFilter = new OmvGenericFeatureFilter(filterDescription);
+                    this.m_featureFilter = new GenericFeatureFilter(filterDescription);
                     // Create feature modifiers.
-                    const featureModifiers: OmvFeatureModifier[] = [];
+                    const featureModifiers: FeatureModifier[] = [];
                     if (featureModifiersIds !== undefined) {
                         featureModifiersIds.forEach(fmId => {
                             featureModifiers.push(
@@ -392,7 +392,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
                 // commonly accepted point of view - without feature modifier.
                 if (featureModifiers) {
                     featureModifiers = featureModifiers.filter(
-                        fm => !(fm instanceof OmvPoliticalViewFeatureModifier)
+                        fm => !(fm instanceof PoliticalViewFeatureModifier)
                     );
                 }
                 // If political view is indeed requested append feature modifier at the end of list.
@@ -401,7 +401,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
                         politicalView.length === 2,
                         "The political view must be specified as two letters ISO 3166-1 standard!"
                     );
-                    const povFeatureModifier = new OmvPoliticalViewFeatureModifier(politicalView);
+                    const povFeatureModifier = new PoliticalViewFeatureModifier(politicalView);
                     if (featureModifiers) {
                         featureModifiers.push(povFeatureModifier);
                     } else {
@@ -429,17 +429,17 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     }
 
     private createFeatureModifier(
-        filterDescription: OmvFeatureFilterDescription,
+        filterDescription: FeatureFilterDescription,
         featureModifierId?: FeatureModifierId
-    ): OmvFeatureModifier {
+    ): FeatureModifier {
         switch (featureModifierId) {
             case FeatureModifierId.tomTom:
-                return new OmvTomTomFeatureModifier(filterDescription);
+                return new TomTomFeatureModifier(filterDescription);
             case FeatureModifierId.default:
-                return new OmvGenericFeatureModifier(filterDescription);
+                return new GenericFeatureModifier(filterDescription);
             default:
                 assert(!"Unrecognized feature modifier id, using default!");
-                return new OmvGenericFeatureModifier(filterDescription);
+                return new GenericFeatureModifier(filterDescription);
         }
     }
 }

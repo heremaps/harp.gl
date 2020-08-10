@@ -10,10 +10,10 @@ import { ILogger } from "@here/harp-utils";
 import { ShapeUtils, Vector2 } from "three";
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
+import { FeatureFilter } from "../../FeatureFilter";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
-import { OmvFeatureFilter } from "../../OmvDataFilter";
-import { OmvGeometryType } from "../../OmvDecoderDefs";
-import { isArrayBufferLike } from "../../OmvUtils";
+import { GeometryType } from "../../OmvDecoderDefs";
+import { isArrayBufferLike } from "../../Utils";
 import {
     FeatureAttributes,
     GeometryCommands,
@@ -132,22 +132,22 @@ export function createFeatureEnv(
     return new MapEnv(attributes, parent);
 }
 
-export function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGeometryType {
+export function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): GeometryType {
     if (feature === undefined) {
-        return OmvGeometryType.UNKNOWN;
+        return GeometryType.UNKNOWN;
     }
 
     switch (feature.type) {
         case com.mapbox.pb.Tile.GeomType.UNKNOWN:
-            return OmvGeometryType.UNKNOWN;
+            return GeometryType.UNKNOWN;
         case com.mapbox.pb.Tile.GeomType.POINT:
-            return OmvGeometryType.POINT;
+            return GeometryType.POINT;
         case com.mapbox.pb.Tile.GeomType.LINESTRING:
-            return OmvGeometryType.LINESTRING;
+            return GeometryType.LINESTRING;
         case com.mapbox.pb.Tile.GeomType.POLYGON:
-            return OmvGeometryType.POLYGON;
+            return GeometryType.POLYGON;
         default:
-            return OmvGeometryType.UNKNOWN;
+            return GeometryType.UNKNOWN;
     } // switch
 }
 
@@ -188,7 +188,7 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
     private readonly m_geometryCommands = new GeometryCommands();
     private readonly m_processor: IGeometryProcessor;
     private readonly m_logger?: ILogger;
-    private m_dataFilter?: OmvFeatureFilter;
+    private m_dataFilter?: FeatureFilter;
 
     private m_tileKey!: TileKey;
     private m_layer!: com.mapbox.pb.Tile.ILayer;
@@ -200,7 +200,7 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
      * @param dataFilter - The [[OmvFeatureFilter]] used to filter features.
      * @param logger - The [[ILogger]] used to log diagnostic messages.
      */
-    constructor(processor: IGeometryProcessor, dataFilter?: OmvFeatureFilter, logger?: ILogger) {
+    constructor(processor: IGeometryProcessor, dataFilter?: FeatureFilter, logger?: ILogger) {
         this.m_processor = processor;
         this.m_dataFilter = dataFilter;
         this.m_logger = logger;
@@ -209,14 +209,14 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
     /**
      * The [[OmvFeatureFilter]] used to filter features.
      */
-    get dataFilter(): OmvFeatureFilter | undefined {
+    get dataFilter(): FeatureFilter | undefined {
         return this.m_dataFilter;
     }
 
     /**
      * The [[OmvFeatureFilter]] used to filter features.
      */
-    set dataFilter(dataFilter: OmvFeatureFilter | undefined) {
+    set dataFilter(dataFilter: FeatureFilter | undefined) {
         this.m_dataFilter = dataFilter;
     }
 

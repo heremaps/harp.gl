@@ -6,12 +6,12 @@
 import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import {
-    OmvFeatureFilterDescription,
-    OmvFilterDescription,
-    OmvFilterFeatureAttribute,
-    OmvFilterString,
-    OmvGeometryType,
-    OmvLayerFilterDescription
+    FeatureFilterDescription,
+    FilterDescription,
+    FilterFeatureAttribute,
+    FilterString,
+    GeometryType,
+    LayerFilterDescription
 } from "./OmvDecoderDefs";
 
 /**
@@ -26,7 +26,7 @@ import {
  * because at that point the features are not really decoded. Use the [[OmvFeatureModifier]] to
  * filter for individual features.
  */
-export interface OmvFeatureFilter {
+export interface FeatureFilter {
     /**
      * Returns `true` if the filter contains rules for specific kinds.
      */
@@ -47,7 +47,7 @@ export interface OmvFeatureFilter {
      * @param feature - Current feature.
      * @param level - Level of tile.
      */
-    wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
+    wantsPointFeature(layer: string, geometryType: GeometryType, level: number): boolean;
 
     /**
      * Return `false` if the line feature should not be processed.
@@ -56,7 +56,7 @@ export interface OmvFeatureFilter {
      * @param feature - Current feature.
      * @param level - Level of tile.
      */
-    wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
+    wantsLineFeature(layer: string, geometryType: GeometryType, level: number): boolean;
 
     /**
      * Return `false` if the polygon feature should not be processed.
@@ -65,7 +65,7 @@ export interface OmvFeatureFilter {
      * @param feature - Current feature.
      * @param level - Level of tile.
      */
-    wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
+    wantsPolygonFeature(layer: string, geometryType: GeometryType, level: number): boolean;
 
     /**
      * Return `false` if kind of object is not enabled and the geometry should not be created.
@@ -89,7 +89,7 @@ export interface OmvFeatureFilter {
  * `OmvFeatureModifier` is executed before the styles are selected, so the geometry is created with
  * the modified feature properties.
  */
-export interface OmvFeatureModifier {
+export interface FeatureModifier {
     /**
      * Check if the point feature described by `env` should be processed. The properties can be
      * modified or added to.
@@ -129,20 +129,20 @@ export interface OmvFeatureModifier {
  * as an [[OmvFeatureModifier]].
  *
  */
-export class OmvFeatureFilterDescriptionBuilder {
+export class FeatureFilterDescriptionBuilder {
     private readonly m_processLayersDefault: boolean = true;
     private readonly m_processPointsDefault: boolean = true;
     private readonly m_processLinesDefault: boolean = true;
     private readonly m_processPolygonsDefault: boolean = true;
 
-    private readonly m_layersToProcess = new Array<OmvLayerFilterDescription>();
-    private readonly m_layersToIgnore = new Array<OmvLayerFilterDescription>();
-    private readonly m_pointsToProcess = new Array<OmvFilterDescription>();
-    private readonly m_ignoredPoints = new Array<OmvFilterDescription>();
-    private readonly m_linesToProcess = new Array<OmvFilterDescription>();
-    private readonly m_linesToIgnore = new Array<OmvFilterDescription>();
-    private readonly m_polygonsToProcess = new Array<OmvFilterDescription>();
-    private readonly m_polygonsToIgnore = new Array<OmvFilterDescription>();
+    private readonly m_layersToProcess = new Array<LayerFilterDescription>();
+    private readonly m_layersToIgnore = new Array<LayerFilterDescription>();
+    private readonly m_pointsToProcess = new Array<FilterDescription>();
+    private readonly m_ignoredPoints = new Array<FilterDescription>();
+    private readonly m_linesToProcess = new Array<FilterDescription>();
+    private readonly m_linesToIgnore = new Array<FilterDescription>();
+    private readonly m_polygonsToProcess = new Array<FilterDescription>();
+    private readonly m_polygonsToIgnore = new Array<FilterDescription>();
 
     private m_kindsToProcess: string[] = [];
     private m_kindsToIgnore: string[] = [];
@@ -160,9 +160,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      * @param processPolygonsDefault - If `true`, all unspecified polygon features will be
      * processed. If `false`, all unspecified polygon features will be ignored.
      */
-    constructor(
-        options?: OmvFeatureFilterDescriptionBuilder.OmvFeatureFilterDescriptionBuilderOptions
-    ) {
+    constructor(options?: FeatureFilterDescriptionBuilder.FeatureFilterDescriptionBuilderOptions) {
         if (options) {
             this.m_processLayersDefault =
                 options.processLayersDefault !== undefined ? options.processLayersDefault : true;
@@ -185,7 +183,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      */
     processLayer(
         layer: string,
-        match = OmvFilterString.StringMatch.Match,
+        match = FilterString.StringMatch.Match,
         minLevel: number = 0,
         maxLevel: number = Infinity
     ) {
@@ -204,7 +202,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      */
     ignoreLayer(
         layer: string,
-        match = OmvFilterString.StringMatch.Match,
+        match = FilterString.StringMatch.Match,
         minLevel: number = 0,
         maxLevel: number = Infinity
     ) {
@@ -220,7 +218,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Feature options.
      */
-    processPoint(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
+    processPoint(options: FeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_pointsToProcess, options);
     }
 
@@ -229,7 +227,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Multi feature options.
      */
-    processPoints(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
+    processPoints(options: FeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_pointsToProcess, options);
     }
 
@@ -238,7 +236,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Feature options.
      */
-    ignorePoint(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
+    ignorePoint(options: FeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_ignoredPoints, options);
     }
 
@@ -247,7 +245,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Multi feature options.
      */
-    ignorePoints(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
+    ignorePoints(options: FeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_ignoredPoints, options);
     }
 
@@ -256,7 +254,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Feature options.
      */
-    processLine(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
+    processLine(options: FeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_linesToProcess, options);
     }
 
@@ -265,7 +263,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Multi feature options.
      */
-    processLines(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
+    processLines(options: FeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_linesToProcess, options);
     }
 
@@ -274,7 +272,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Feature options.
      */
-    ignoreLine(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
+    ignoreLine(options: FeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_linesToIgnore, options);
     }
 
@@ -283,7 +281,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Multi feature options.
      */
-    ignoreLines(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
+    ignoreLines(options: FeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_linesToIgnore, options);
     }
 
@@ -292,7 +290,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Feature options.
      */
-    processPolygon(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
+    processPolygon(options: FeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_polygonsToProcess, options);
     }
 
@@ -301,7 +299,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Multi feature options.
      */
-    processPolygons(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
+    processPolygons(options: FeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_polygonsToProcess, options);
     }
 
@@ -310,7 +308,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Feature options.
      */
-    ignorePolygon(options: OmvFeatureFilterDescriptionBuilder.FeatureOption) {
+    ignorePolygon(options: FeatureFilterDescriptionBuilder.FeatureOption) {
         this.addItem(this.m_polygonsToIgnore, options);
     }
 
@@ -319,7 +317,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      *
      * @param options - Multi feature options.
      */
-    ignorePolygons(options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption) {
+    ignorePolygons(options: FeatureFilterDescriptionBuilder.MultiFeatureOption) {
         this.addItems(this.m_polygonsToIgnore, options);
     }
 
@@ -344,7 +342,7 @@ export class OmvFeatureFilterDescriptionBuilder {
     /**
      * Create a filter description that can be passed as an option to the [[OmvDataSource]].
      */
-    createDescription(): OmvFeatureFilterDescription {
+    createDescription(): FeatureFilterDescription {
         return {
             processLayersDefault: this.m_processLayersDefault,
             processPointsDefault: this.m_processPointsDefault,
@@ -366,8 +364,8 @@ export class OmvFeatureFilterDescriptionBuilder {
     }
 
     private addItem(
-        items: OmvFilterDescription[],
-        options: OmvFeatureFilterDescriptionBuilder.FeatureOption
+        items: FilterDescription[],
+        options: FeatureFilterDescriptionBuilder.FeatureOption
     ) {
         if (options.minLevel === undefined || isNaN(options.minLevel)) {
             options.minLevel = 0;
@@ -376,12 +374,12 @@ export class OmvFeatureFilterDescriptionBuilder {
             options.maxLevel = Infinity;
         }
 
-        const item: OmvFilterDescription = {
+        const item: FilterDescription = {
             layerName: {
                 value: options.layer,
                 match:
                     options.matchLayer === undefined
-                        ? OmvFilterString.StringMatch.Match
+                        ? FilterString.StringMatch.Match
                         : options.matchLayer
             },
             geometryTypes:
@@ -395,7 +393,7 @@ export class OmvFeatureFilterDescriptionBuilder {
                     value: options.featureClass,
                     match:
                         options.matchClass === undefined
-                            ? OmvFilterString.StringMatch.Match
+                            ? FilterString.StringMatch.Match
                             : options.matchClass
                 }
             ],
@@ -408,8 +406,8 @@ export class OmvFeatureFilterDescriptionBuilder {
     }
 
     private addItems(
-        items: OmvFilterDescription[],
-        options: OmvFeatureFilterDescriptionBuilder.MultiFeatureOption
+        items: FilterDescription[],
+        options: FeatureFilterDescriptionBuilder.MultiFeatureOption
     ) {
         if (options.minLevel === undefined || isNaN(options.minLevel)) {
             options.minLevel = 0;
@@ -418,12 +416,12 @@ export class OmvFeatureFilterDescriptionBuilder {
             options.maxLevel = Infinity;
         }
 
-        const item: OmvFilterDescription = {
+        const item: FilterDescription = {
             layerName: {
                 value: options.layer,
                 match:
                     options.matchLayer === undefined
-                        ? OmvFilterString.StringMatch.Match
+                        ? FilterString.StringMatch.Match
                         : options.matchLayer
             },
             geometryTypes:
@@ -442,11 +440,11 @@ export class OmvFeatureFilterDescriptionBuilder {
     }
 }
 
-export namespace OmvFeatureFilterDescriptionBuilder {
+export namespace FeatureFilterDescriptionBuilder {
     /**
-     * Options for `OmvFeatureFilterDescriptionBuilder`.
+     * Options for `FeatureFilterDescriptionBuilder`.
      */
-    export interface OmvFeatureFilterDescriptionBuilderOptions {
+    export interface FeatureFilterDescriptionBuilderOptions {
         /**
          * If `true`, all unspecified layers will be processed. If `false`, all unspecified layers
          * will be ignored.
@@ -482,7 +480,7 @@ export namespace OmvFeatureFilterDescriptionBuilder {
          * Optional geometry type to be limited to. If specified, but does not match, the feature is
          * ignored.
          */
-        geomType: OmvGeometryType | OmvGeometryType[] | undefined;
+        geomType: GeometryType | GeometryType[] | undefined;
         /**
          * Optional class to match. If specified, but does not match, the feature is ignored.
          */
@@ -490,11 +488,11 @@ export namespace OmvFeatureFilterDescriptionBuilder {
         /**
          * Match condition for the layer name.
          */
-        matchLayer?: OmvFilterString.StringMatch;
+        matchLayer?: FilterString.StringMatch;
         /**
          * Match condition for `featureClass`.
          */
-        matchClass?: OmvFilterString.StringMatch;
+        matchClass?: FilterString.StringMatch;
         /**
          * Minimum tile level to match.
          */
@@ -506,7 +504,7 @@ export namespace OmvFeatureFilterDescriptionBuilder {
         /**
          * Feature attribute to match.
          */
-        featureAttribute?: OmvFilterFeatureAttribute;
+        featureAttribute?: FilterFeatureAttribute;
     }
 
     /**
@@ -521,15 +519,15 @@ export namespace OmvFeatureFilterDescriptionBuilder {
          * Optional geometry type to be limited to. If specified, but does not match, the feature is
          * ignored.
          */
-        geomTypes?: OmvGeometryType | OmvGeometryType[] | undefined;
+        geomTypes?: GeometryType | GeometryType[] | undefined;
         /**
          * Optional classes to match. If specified, but does not match, the feature is ignored.
          */
-        featureClasses?: OmvFilterString[];
+        featureClasses?: FilterString[];
         /**
          * Match condition for the layer name.
          */
-        matchLayer?: OmvFilterString.StringMatch;
+        matchLayer?: FilterString.StringMatch;
         /**
          * Minimum tile level to match.
          */
@@ -541,20 +539,20 @@ export namespace OmvFeatureFilterDescriptionBuilder {
         /**
          * Feature attribute to match.
          */
-        featureAttribute?: OmvFilterFeatureAttribute;
+        featureAttribute?: FilterFeatureAttribute;
     }
 }
 
 /**
- * `OmvFeatureFilter` implementation that uses a `OmvFeatureFilterDescription` to filter `TileData`
+ * `OmvFeatureFilter` implementation that uses a `FeatureFilterDescription` to filter `TileData`
  * features before they are completely decoded.
  *
  * @internal
  */
-export class OmvGenericFeatureFilter implements OmvFeatureFilter {
+export class GenericFeatureFilter implements FeatureFilter {
     private static matchLayer(
         layer: string,
-        layerItems: OmvLayerFilterDescription[],
+        layerItems: LayerFilterDescription[],
         level: number
     ): boolean {
         for (const layerItem of layerItems) {
@@ -562,7 +560,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (OmvFilterString.matchString(layer, layerItem.name)) {
+            if (FilterString.matchString(layer, layerItem.name)) {
                 return true;
             }
         }
@@ -572,7 +570,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
     private readonly disabledKinds: GeometryKindSet | undefined;
     private readonly enabledKinds: GeometryKindSet | undefined;
 
-    constructor(private readonly description: OmvFeatureFilterDescription) {
+    constructor(private readonly description: FeatureFilterDescription) {
         if (this.description.kindsToProcess.length > 0) {
             this.enabledKinds = new GeometryKindSet(
                 this.description.kindsToProcess as GeometryKind[]
@@ -586,18 +584,18 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
     }
 
     wantsLayer(layer: string, level: number): boolean {
-        if (OmvGenericFeatureFilter.matchLayer(layer, this.description.layersToProcess, level)) {
+        if (GenericFeatureFilter.matchLayer(layer, this.description.layersToProcess, level)) {
             return true;
         }
 
-        if (OmvGenericFeatureFilter.matchLayer(layer, this.description.layersToIgnore, level)) {
+        if (GenericFeatureFilter.matchLayer(layer, this.description.layersToIgnore, level)) {
             return false;
         }
 
         return this.description.processLayersDefault;
     }
 
-    wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+    wantsPointFeature(layer: string, geometryType: GeometryType, level: number): boolean {
         return this.wantsFeature(
             this.description.pointsToProcess,
             this.description.pointsToIgnore,
@@ -608,7 +606,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         );
     }
 
-    wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+    wantsLineFeature(layer: string, geometryType: GeometryType, level: number): boolean {
         return this.wantsFeature(
             this.description.linesToProcess,
             this.description.linesToIgnore,
@@ -619,7 +617,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         );
     }
 
-    wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+    wantsPolygonFeature(layer: string, geometryType: GeometryType, level: number): boolean {
         return this.wantsFeature(
             this.description.polygonsToProcess,
             this.description.polygonsToIgnore,
@@ -651,10 +649,10 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
     }
 
     private wantsFeature(
-        itemsToProcess: OmvFilterDescription[],
-        itemsToIgnore: OmvFilterDescription[],
+        itemsToProcess: FilterDescription[],
+        itemsToIgnore: FilterDescription[],
         layer: string,
-        geometryType: OmvGeometryType,
+        geometryType: GeometryType,
         level: number,
         defaultResult: boolean
     ): boolean {
@@ -663,7 +661,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (!OmvFilterString.matchString(layer, item.layerName)) {
+            if (!FilterString.matchString(layer, item.layerName)) {
                 // this rule is not for this layer
                 continue;
             }
@@ -674,7 +672,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         }
 
         for (const item of itemsToIgnore) {
-            if (!OmvFilterString.matchString(layer, item.layerName)) {
+            if (!FilterString.matchString(layer, item.layerName)) {
                 // this rule is not for this layer
                 continue;
             }
@@ -694,8 +692,8 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
  *
  * @internal
  */
-export class ComposedDataFilter implements OmvFeatureFilter {
-    constructor(readonly filters: OmvFeatureFilter[]) {}
+export class ComposedDataFilter implements FeatureFilter {
+    constructor(readonly filters: FeatureFilter[]) {}
 
     get hasKindFilter() {
         return this.filters.reduce<boolean>(
@@ -710,19 +708,19 @@ export class ComposedDataFilter implements OmvFeatureFilter {
             true
         );
     }
-    wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+    wantsPointFeature(layer: string, geometryType: GeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsPointFeature(layer, geometryType, level),
             true
         );
     }
-    wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+    wantsLineFeature(layer: string, geometryType: GeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsLineFeature(layer, geometryType, level),
             true
         );
     }
-    wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+    wantsPolygonFeature(layer: string, geometryType: GeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsPolygonFeature(layer, geometryType, level),
             true
@@ -736,24 +734,24 @@ export class ComposedDataFilter implements OmvFeatureFilter {
     }
 }
 /**
- * `OmvFeatureModifier` implementation that uses a `OmvFeatureFilterDescription` to filter
+ * `OmvFeatureModifier` implementation that uses a `FeatureFilterDescription` to filter
  * `TileData` features before they are completely decoded.
  *
  * @internal
  */
-export class OmvGenericFeatureModifier implements OmvFeatureModifier {
+export class GenericFeatureModifier implements FeatureModifier {
     static matchItems(
         layerName: string,
         featureClass: string,
-        items: OmvFilterDescription[]
+        items: FilterDescription[]
     ): boolean {
         for (const item of items) {
             if (item.classes !== undefined) {
-                if (!OmvFilterString.matchString(layerName, item.layerName)) {
+                if (!FilterString.matchString(layerName, item.layerName)) {
                     continue;
                 }
                 for (const matchClass of item.classes) {
-                    if (OmvFilterString.matchString(featureClass, matchClass)) {
+                    if (FilterString.matchString(featureClass, matchClass)) {
                         return true;
                     }
                 }
@@ -762,11 +760,11 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         return false;
     }
 
-    static matchAttribute(layerName: string, env: MapEnv, items: OmvFilterDescription[]): boolean {
+    static matchAttribute(layerName: string, env: MapEnv, items: FilterDescription[]): boolean {
         for (const item of items) {
             if (item.featureAttribute !== undefined) {
                 if (
-                    OmvFilterString.matchString(layerName, item.layerName) &&
+                    FilterString.matchString(layerName, item.layerName) &&
                     env.lookup(item.featureAttribute.key) === item.featureAttribute.value
                 ) {
                     return true;
@@ -776,7 +774,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         return false;
     }
 
-    constructor(private readonly description: OmvFeatureFilterDescription) {}
+    constructor(private readonly description: FeatureFilterDescription) {}
 
     doProcessPointFeature(layer: string, env: MapEnv): boolean {
         return this.doProcessFeature(
@@ -809,8 +807,8 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
     }
 
     protected doProcessFeature(
-        itemsToProcess: OmvFilterDescription[],
-        itemsToIgnore: OmvFilterDescription[],
+        itemsToProcess: FilterDescription[],
+        itemsToIgnore: FilterDescription[],
         layer: string,
         env: MapEnv,
         defaultResult: boolean
@@ -828,23 +826,20 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
 
         if (
             featureClass &&
-            OmvGenericFeatureModifier.matchItems(layer, featureClass, itemsToProcess)
+            GenericFeatureModifier.matchItems(layer, featureClass, itemsToProcess)
         ) {
             return true;
         }
 
-        if (
-            featureClass &&
-            OmvGenericFeatureModifier.matchItems(layer, featureClass, itemsToIgnore)
-        ) {
+        if (featureClass && GenericFeatureModifier.matchItems(layer, featureClass, itemsToIgnore)) {
             return false;
         }
 
-        if (OmvGenericFeatureModifier.matchAttribute(layer, env, itemsToProcess)) {
+        if (GenericFeatureModifier.matchAttribute(layer, env, itemsToProcess)) {
             return true;
         }
 
-        if (OmvGenericFeatureModifier.matchAttribute(layer, env, itemsToIgnore)) {
+        if (GenericFeatureModifier.matchAttribute(layer, env, itemsToIgnore)) {
             return false;
         }
 

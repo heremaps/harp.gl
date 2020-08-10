@@ -23,8 +23,8 @@ import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper"
 import {
     APIFormat,
     AuthenticationMethod,
-    OmvRestClient,
-    OmvRestClientParameters
+    RestClient,
+    RestClientParameters
 } from "@here/harp-vectortile-datasource";
 import { OmvDataAdapter } from "@here/harp-vectortile-datasource/lib/adapters/omv/OmvDataAdapter";
 import { DecodeInfo } from "@here/harp-vectortile-datasource/lib/DecodeInfo";
@@ -60,7 +60,7 @@ export interface OMVDecoderPerformanceTestOptions {
     /**
      * Requires settings for [[OmvRestClient]] to download tiles.
      */
-    omvRestClientOptions: OmvRestClientParameters;
+    omvRestClientOptions: RestClientParameters;
 }
 
 /**
@@ -82,7 +82,7 @@ export function createOMVDecoderPerformanceTest(
 
         before(async function() {
             this.timeout(10000);
-            const omvDataProvider = new OmvRestClient(options.omvRestClientOptions);
+            const omvDataProvider = new RestClient(options.omvRestClientOptions);
 
             await omvDataProvider.connect();
             assert(omvDataProvider.ready());
