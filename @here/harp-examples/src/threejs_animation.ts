@@ -7,12 +7,8 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapAnchor, MapViewEventNames, RenderEvent } from "@here/harp-mapview";
 import * as THREE from "three";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { HelloWorldExample } from "./getting-started_hello-world_npm";
-
-// tslint:disable-next-line:no-var-requires
-(window as any).Zlib = require("three/examples/js/libs/inflate.min.js").Zlib;
-
-import "three/examples/js/loaders/FBXLoader";
 
 /**
  * This example builds on top of the [[ThreejsAddSimpleObject]].
@@ -82,7 +78,7 @@ export namespace ThreejsAddAnimatedObject {
     };
 
     // snippet:harp_gl_threejs_add_animated-object_load.ts
-    const loader = new (THREE as any).FBXLoader();
+    const loader = new FBXLoader();
     loader.load("resources/dancing.fbx", onLoad);
     // end:harp_gl_threejs_add_animated-object_load.ts
 
