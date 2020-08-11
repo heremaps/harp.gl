@@ -2706,7 +2706,12 @@ export class MapView extends EventDispatcher {
      */
     getGeoCoordinatesAtSafe(x: number, y: number): GeoCoordinates {
         const worldPosition = this.getWorldPositionAtSafe(x, y);
-        return this.projection.unprojectPoint(worldPosition).normalized();
+        const geoPos = this.projection.unprojectPoint(worldPosition);
+        if (!this.tileWrappingEnabled && this.projection.type === ProjectionType.Planar) {
+            // When the map is not wrapped we clamp the longitude
+            geoPos.longitude = THREE.MathUtils.clamp(geoPos.longitude, -180, 180);
+        }
+        return geoPos.normalized();
     }
 
     /**
@@ -2727,7 +2732,13 @@ export class MapView extends EventDispatcher {
         if (!worldPosition) {
             return null;
         }
-        return this.projection.unprojectPoint(worldPosition).normalized();
+
+        const geoPos = this.projection.unprojectPoint(worldPosition);
+        if (!this.tileWrappingEnabled && this.projection.type === ProjectionType.Planar) {
+            // When the map is not wrapped we clamp the longitude
+            geoPos.longitude = THREE.MathUtils.clamp(geoPos.longitude, -180, 180);
+        }
+        return geoPos.normalized();
     }
 
     /**

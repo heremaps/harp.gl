@@ -23,8 +23,10 @@ const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 import {
     GeoBox,
     GeoCoordinates,
+    MAX_LONGITUDE,
     MercatorConstants,
     mercatorProjection,
+    MIN_LONGITUDE,
     sphereProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
@@ -990,7 +992,7 @@ describe("MapView", function() {
         assert.closeTo(top!.altitude!, 0, eps);
     });
 
-    it("convert screen to geo anti meridian east mercator", async function() {
+    it("convert screen to geo anti meridian east mercator wrapped", async function() {
         const target = new GeoCoordinates(0, 180);
         const eps = 1e-10;
 
@@ -1012,7 +1014,7 @@ describe("MapView", function() {
         assert.closeTo(top!.altitude!, 0, eps);
     });
 
-    it("convert screen to geo anti meridian west mercator", async function() {
+    it("convert screen to geo anti meridian west mercator wrapped", async function() {
         const target = new GeoCoordinates(0, -180);
         const eps = 1e-10;
 
@@ -1030,6 +1032,64 @@ describe("MapView", function() {
         assert.isNotNull(top);
         assert.closeTo(top!.latitude, target.latitude, eps);
         assert.closeTo(top!.longitude, 179.5419726676294, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
+    });
+
+    it("convert screen to geo anti meridian east mercator not-wrapped", async function() {
+        const target = new GeoCoordinates(0, 180);
+        const eps = 1e-10;
+
+        mapView = new MapView({
+            canvas,
+            target,
+            tilt: 45,
+            zoomLevel: 10,
+            heading: 90,
+            tileWrappingEnabled: false
+        });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the anti-meridian should wrap around
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        assert.closeTo(top!.latitude, target.latitude, eps);
+        assert.closeTo(top!.longitude, MAX_LONGITUDE, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
+    });
+
+    it("convert screen to geo anti meridian west mercator not-wrapped", async function() {
+        const target = new GeoCoordinates(0, -180);
+        const eps = 1e-10;
+
+        mapView = new MapView({
+            canvas,
+            target,
+            tilt: 45,
+            zoomLevel: 10,
+            heading: -90,
+            tileWrappingEnabled: false
+        });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the anti-meridian should wrap around
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        assert.closeTo(top!.latitude, target.latitude, eps);
+        assert.closeTo(top!.longitude, MIN_LONGITUDE, eps);
         assert.isDefined(top!.altitude);
         assert.closeTo(top!.altitude!, 0, eps);
     });
