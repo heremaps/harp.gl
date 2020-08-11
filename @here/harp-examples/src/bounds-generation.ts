@@ -17,6 +17,15 @@ import { OmvDataSource } from "@here/harp-omv-datasource";
 import { apikey } from "../config";
 
 export namespace BoundsExample {
+    const message = document.createElement("div");
+    message.innerHTML = ' Press "space" to generate and draw a bounds polygon of the current view ';
+
+    message.style.position = "absolute";
+    message.style.cssFloat = "right";
+    message.style.top = "10px";
+    message.style.right = "10px";
+    document.body.appendChild(message);
+
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
