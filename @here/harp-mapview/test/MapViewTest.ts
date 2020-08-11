@@ -886,7 +886,7 @@ describe("MapView", function() {
                 assert.closeTo(top!.altitude!, 0, eps);
             } else {
                 assert.isNull(top);
-                top = mapView.getGeoCoordinatesAtSafe(canvas.clientWidth / 2, 0);
+                top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0, true);
                 assert.isAbove(top.altitude!, 0);
             }
             assert.isAbove(top!.latitude, target.latitude);
