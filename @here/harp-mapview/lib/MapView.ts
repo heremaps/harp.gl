@@ -1265,6 +1265,9 @@ export class MapView extends EventDispatcher {
      * Disposes this `MapView`.
      * @override
      *
+     * @param freeContext - `true` to force ThreeJS to loose the context. Supply `false` to keep
+     * the context for further use.
+     *
      * @remarks
      * This function cleans the resources that are managed manually including those that exist in
      * shared caches.
@@ -1273,7 +1276,7 @@ export class MapView extends EventDispatcher {
      * TypeScript's garbage collecting mechanism. Consequently, if you need to perform a full
      * cleanup, you must ensure that all references to this `MapView` are removed.
      */
-    dispose() {
+    dispose(freeContext = true) {
         // Enforce listeners that we are about to dispose.
         DISPOSE_EVENT.time = Date.now();
         this.dispatchEvent(DISPOSE_EVENT);
@@ -1299,6 +1302,16 @@ export class MapView extends EventDispatcher {
         this.m_visibleTiles.clearTileCache();
         this.m_textElementsRenderer.clearRenderStates();
         this.m_renderer.dispose();
+
+        if (freeContext) {
+            // See for a discussion of using this call to force freeing the context:
+            //   https://github.com/mrdoob/three.js/pull/17588
+            // The patch to call forceContextLoss() upon WebGLRenderer.dispose() had been merged,
+            // but has been reverted later:
+            //   https://github.com/mrdoob/three.js/pull/19022
+            this.m_renderer.forceContextLoss();
+        }
+
         this.m_imageCache.clear();
         this.m_tileGeometryManager.clear();
 
