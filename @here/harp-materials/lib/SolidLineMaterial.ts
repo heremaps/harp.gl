@@ -8,6 +8,7 @@ import { LineCaps, LineDashes } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";
 import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
+import { RawShaderMaterial } from "./RawShaderMaterial";
 import linesShaderChunk, { LineCapsModes } from "./ShaderChunks/LinesChunks";
 import {
     enforceBlending,
@@ -15,7 +16,6 @@ import {
     setShaderDefine,
     setShaderMaterialDefine
 } from "./Utils";
-import { WebGL1RawShaderMaterial } from "./WebGL1RawShaderMaterial";
 
 const LineCapsDefinesMapping: { [key in LineCaps]: number } = {
     None: LineCapsModes.CAPS_NONE,
@@ -404,7 +404,7 @@ export interface SolidLineMaterialParameters
 /**
  * Material designed to render solid variable-width lines.
  */
-export class SolidLineMaterial extends WebGL1RawShaderMaterial
+export class SolidLineMaterial extends RawShaderMaterial
     implements DisplacementFeature, FadingFeature {
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;

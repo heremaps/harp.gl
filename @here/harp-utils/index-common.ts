@@ -21,3 +21,4 @@ export * from "./lib/UrlUtils";
 export * from "./lib/Functions";
 export * from "./lib/SampleBilinear";
 export * from "./lib/AuthenticationUtils";
+export * from "./lib/GlslUtils";

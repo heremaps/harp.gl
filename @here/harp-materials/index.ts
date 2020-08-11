@@ -24,7 +24,7 @@ export * from "./lib/LuminosityHighPassShader";
 export * from "./lib/MapMeshMaterialsDefs";
 export * from "./lib/MapMeshMaterials";
 export * from "./lib/MSAAMaterial";
-export * from "./lib/WebGL1RawShaderMaterial";
+export * from "./lib/RawShaderMaterial";
 export * from "./lib/SepiaShader";
 export * from "./lib/SkyAtmosphereMaterial";
 export * from "./lib/SolidLineMaterial";

@@ -20,11 +20,10 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-lrucache": "^0.18.0"
+        "@here/harp-lrucache": "^0.18.0",
+        "@here/harp-utils": "^0.18.0"
     },
     "devDependencies": {
-        "@here/harp-geoutils": "^0.18.0",
-        "@here/harp-materials": "^0.18.0",
         "@here/harp-test-utils": "^0.18.0",
         "@types/chai": "^4.2.11",
         "@types/mocha": "^7.0.2",

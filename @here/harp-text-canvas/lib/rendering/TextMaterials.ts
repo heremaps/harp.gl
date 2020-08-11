@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WebGL1RawShaderMaterial } from "@here/harp-materials";
+import { convertFragmentShaderToWebGL2, convertVertexShaderToWebGL2 } from "@here/harp-utils";
 import * as THREE from "three";
 
 const SdfShaderChunks = {
@@ -158,11 +158,18 @@ const sdfTextFragmentSource: string = `
         gl_FragColor = color;
     }`;
 
+function convertShader(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
+    if (renderer.capabilities.isWebGL2) {
+        shader.vertexShader = convertVertexShaderToWebGL2(shader.vertexShader);
+        shader.fragmentShader = convertFragmentShaderToWebGL2(shader.fragmentShader);
+    }
+}
+
 /**
  * @hidden
  * Material used for clearing glyphs from a [[GlyphTextureCache]].
  */
-export class GlyphClearMaterial extends WebGL1RawShaderMaterial {
+export class GlyphClearMaterial extends THREE.RawShaderMaterial {
     /**
      * Creates a new `GlyphClearMaterial`.
      *
@@ -180,13 +187,19 @@ export class GlyphClearMaterial extends WebGL1RawShaderMaterial {
         };
         super(shaderParams);
     }
+
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
+    onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
+        convertShader(shader, renderer);
+    }
 }
 
 /**
  * @hidden
  * Material used for copying glyphs into a [[GlyphTextureCache]].
  */
-export class GlyphCopyMaterial extends WebGL1RawShaderMaterial {
+export class GlyphCopyMaterial extends THREE.RawShaderMaterial {
     /**
      * Creates a new `GlyphCopyMaterial`.
      *
@@ -214,6 +227,12 @@ export class GlyphCopyMaterial extends WebGL1RawShaderMaterial {
         };
         super(shaderParams);
     }
+
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
+    onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
+        convertShader(shader, renderer);
+    }
 }
 
 /**
@@ -234,7 +253,7 @@ export interface SdfTextMaterialParameters {
 /**
  * Material designed to render transformable, high quality SDF text.
  */
-export class SdfTextMaterial extends WebGL1RawShaderMaterial {
+export class SdfTextMaterial extends THREE.RawShaderMaterial {
     /**
      * Creates a new `SdfTextMaterial`.
      *
@@ -272,5 +291,11 @@ export class SdfTextMaterial extends WebGL1RawShaderMaterial {
         };
         super(shaderParams);
         this.extensions.derivatives = true;
+    }
+
+    // overrides with THREE.js base classes are not recognized by tslint.
+    // tslint:disable-next-line: explicit-override
+    onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
+        convertShader(shader, renderer);
     }
 }
