@@ -25,6 +25,10 @@ export class BoundsGenerator {
         private m_tileWrappingEnabled: boolean = false
     ) {}
 
+    set projection(projection: Projection) {
+        this.m_projection = projection;
+    }
+
     /**
      * Generates an Array of GeoCoordinates covering the visible map.
      * The coordinates are sorted to ccw winding, so a polygon could be drawn with them.
