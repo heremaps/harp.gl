@@ -6,6 +6,7 @@
 
 import * as THREE from "three";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
+import { WebGL1RawShaderMaterial } from "./WebGL1RawShaderMaterial";
 
 const vertexSource: string = `
 #ifdef USE_COLOR
@@ -53,7 +54,7 @@ void main() {
 }`;
 
 /**
- * Parameters used when constructing a new {@link SolidLineMaterial}.
+ * Parameters used when constructing a new {@link HighPrecisionLineMaterial}.
  */
 export interface HighPrecisionLineMaterialParameters {
     /**
@@ -69,7 +70,7 @@ export interface HighPrecisionLineMaterialParameters {
 /**
  * Material designed to render high precision lines (ideal for position-sensible data).
  */
-export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
+export class HighPrecisionLineMaterial extends WebGL1RawShaderMaterial {
     static DEFAULT_COLOR: number = 0x000050;
     static DEFAULT_OPACITY: number = 1.0;
 

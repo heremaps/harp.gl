@@ -15,6 +15,7 @@ import {
     setShaderDefine,
     setShaderMaterialDefine
 } from "./Utils";
+import { WebGL1RawShaderMaterial } from "./WebGL1RawShaderMaterial";
 
 const LineCapsDefinesMapping: { [key in LineCaps]: number } = {
     None: LineCapsModes.CAPS_NONE,
@@ -403,7 +404,7 @@ export interface SolidLineMaterialParameters
 /**
  * Material designed to render solid variable-width lines.
  */
-export class SolidLineMaterial extends THREE.RawShaderMaterial
+export class SolidLineMaterial extends WebGL1RawShaderMaterial
     implements DisplacementFeature, FadingFeature {
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;
@@ -443,6 +444,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         let fogParam = true;
         let opacityParam = 1.0;
         let displacementMap;
+
         if (params !== undefined) {
             fogParam = params.fog === true;
             if (fogParam) {
@@ -459,6 +461,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             }
         }
 
+        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "SolidLineMaterial",
             vertexShader: vertexSource,
@@ -587,6 +590,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
      *
      * @param enable - Whether we want to enable the fog.
      */
+    // tslint:disable-next-line: explicit-override
     set fog(enable: boolean) {
         this.m_fog = enable;
         // Function may be called from THREE.js cause we override setter,
@@ -600,6 +604,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     /**
      * Checks if fog is enabled.
      */
+    // tslint:disable-next-line: explicit-override
     get fog(): boolean {
         return this.m_fog && getShaderMaterialDefine(this, "USE_FOG") === true;
     }
@@ -637,9 +642,11 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     /**
      * Line opacity.
      */
+    // tslint:disable-next-line: explicit-override
     get opacity(): number {
         return this.m_opacity;
     }
+    // tslint:disable-next-line: explicit-override
     set opacity(value: number) {
         this.m_opacity = value;
         // Setting opacity before uniform being created requires late invalidation,

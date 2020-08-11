@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { WebGL1RawShaderMaterial } from "@here/harp-materials";
 import * as THREE from "three";
 
 const SdfShaderChunks = {
@@ -40,11 +41,11 @@ const SdfShaderChunks = {
         }
 
         float getDistance(vec2 uvOffset) {
-            vec3 sample = texture2D(sdfTexture, vUv.xy + uvOffset).rgb;
+            vec3 texSample = texture2D(sdfTexture, vUv.xy + uvOffset).rgb;
             #if MSDF
-            return median(sample.r, sample.g, sample.b);
+            return median(texSample.r, texSample.g, texSample.b);
             #else
-            return sample.r;
+            return texSample.r;
             #endif
         }
 
@@ -114,18 +115,18 @@ const copyFragmentSource: string = `
     varying vec3 vUv;
 
     void main() {
-        vec4 sample = vec4(0.0);
+        vec4 texSample = vec4(0.0);
         if (vUv.z < pageOffset || vUv.z > (pageOffset + 7.0)) discard;
-        else if (vUv.z < pageOffset + 1.0) sample = texture2D(page0, vUv.xy);
-        else if (vUv.z < pageOffset + 2.0) sample = texture2D(page1, vUv.xy);
-        else if (vUv.z < pageOffset + 3.0) sample = texture2D(page2, vUv.xy);
-        else if (vUv.z < pageOffset + 4.0) sample = texture2D(page3, vUv.xy);
-        else if (vUv.z < pageOffset + 5.0) sample = texture2D(page4, vUv.xy);
-        else if (vUv.z < pageOffset + 6.0) sample = texture2D(page5, vUv.xy);
-        else if (vUv.z < pageOffset + 7.0) sample = texture2D(page6, vUv.xy);
-        else sample = texture2D(page7, vUv.xy);
+        else if (vUv.z < pageOffset + 1.0) texSample = texture2D(page0, vUv.xy);
+        else if (vUv.z < pageOffset + 2.0) texSample = texture2D(page1, vUv.xy);
+        else if (vUv.z < pageOffset + 3.0) texSample = texture2D(page2, vUv.xy);
+        else if (vUv.z < pageOffset + 4.0) texSample = texture2D(page3, vUv.xy);
+        else if (vUv.z < pageOffset + 5.0) texSample = texture2D(page4, vUv.xy);
+        else if (vUv.z < pageOffset + 6.0) texSample = texture2D(page5, vUv.xy);
+        else if (vUv.z < pageOffset + 7.0) texSample = texture2D(page6, vUv.xy);
+        else texSample = texture2D(page7, vUv.xy);
 
-        gl_FragColor = sample;
+        gl_FragColor = texSample;
     }`;
 
 const sdfTextVertexSource: string = `
@@ -161,13 +162,14 @@ const sdfTextFragmentSource: string = `
  * @hidden
  * Material used for clearing glyphs from a [[GlyphTextureCache]].
  */
-export class GlyphClearMaterial extends THREE.RawShaderMaterial {
+export class GlyphClearMaterial extends WebGL1RawShaderMaterial {
     /**
      * Creates a new `GlyphClearMaterial`.
      *
      * @returns New `GlyphClearMaterial`.
      */
     constructor() {
+        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "GlyphClearMaterial",
             vertexShader: clearVertexSource,
@@ -184,13 +186,14 @@ export class GlyphClearMaterial extends THREE.RawShaderMaterial {
  * @hidden
  * Material used for copying glyphs into a [[GlyphTextureCache]].
  */
-export class GlyphCopyMaterial extends THREE.RawShaderMaterial {
+export class GlyphCopyMaterial extends WebGL1RawShaderMaterial {
     /**
      * Creates a new `GlyphCopyMaterial`.
      *
      * @returns New `GlyphCopyMaterial`.
      */
     constructor() {
+        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "GlyphCopyMaterial",
             vertexShader: copyVertexSource,
@@ -231,7 +234,7 @@ export interface SdfTextMaterialParameters {
 /**
  * Material designed to render transformable, high quality SDF text.
  */
-export class SdfTextMaterial extends THREE.RawShaderMaterial {
+export class SdfTextMaterial extends WebGL1RawShaderMaterial {
     /**
      * Creates a new `SdfTextMaterial`.
      *
@@ -240,6 +243,7 @@ export class SdfTextMaterial extends THREE.RawShaderMaterial {
      * @returns New `SdfTextMaterial`.
      */
     constructor(params: SdfTextMaterialParameters) {
+        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "SdfTextMaterial",
             vertexShader:

@@ -6,6 +6,7 @@
 import * as THREE from "three";
 import AtmosphereShaderChunks from "./ShaderChunks/AtmosphereChunks";
 import { setShaderDefine } from "./Utils";
+import { WebGL1RawShaderMaterial } from "./WebGL1RawShaderMaterial";
 
 const EQUATORIAL_RADIUS: number = 6378137.0;
 
@@ -260,7 +261,7 @@ export const SkyAtmosphereShader: THREE.Shader = {
     `
 };
 
-export class SkyAtmosphereMaterial extends THREE.RawShaderMaterial {
+export class SkyAtmosphereMaterial extends WebGL1RawShaderMaterial {
     constructor(params?: any) {
         // Import shader chunks
         const defines: { [key: string]: any } = {};

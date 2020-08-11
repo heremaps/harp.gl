@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+import { WebGL1RawShaderMaterial } from "./WebGL1RawShaderMaterial";
 
 const vertexSource: string = `
 attribute vec4 position;
@@ -56,7 +57,7 @@ export interface IconMaterialParameters {
  * 2D material for icons, similar to [[TextMaterial]]. Uses component in texture coordinates to
  * apply opacity.
  */
-export class IconMaterial extends THREE.RawShaderMaterial {
+export class IconMaterial extends WebGL1RawShaderMaterial {
     /**
      * Constructs a new `IconMaterial`.
      *
