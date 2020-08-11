@@ -2646,6 +2646,38 @@ export class MapView extends EventDispatcher {
      * Returns the world space position from the given screen position.
      *
      * @remarks
+     * This method will always return a point. if the given `(x, y)` value is not intersecting
+     * the ground plane a fallback point on the far plane will be computed.
+     * Therfore the returned point might not be on the earth surface.
+     *
+     * @param x - The X position in css/client coordinates (without applied display ratio).
+     * @param y - The Y position in css/client coordinates (without applied display ratio).
+     */
+    getWorldPositionAtSafe(x: number, y: number): THREE.Vector3 {
+        this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_camera);
+        const worldPos =
+            this.projection.type === ProjectionType.Spherical
+                ? this.m_raycaster.ray.intersectSphere(this.m_sphere, cache.vector3[0])
+                : this.m_raycaster.ray.intersectPlane(this.m_plane, cache.vector3[0]);
+
+        if (worldPos === null) {
+            // Fall back to the far plane
+            const cosAlpha = this.m_camera
+                .getWorldDirection(cache.vector3[0])
+                .dot(this.m_raycaster.ray.direction);
+
+            return cache.vector3[0]
+                .copy(this.m_raycaster.ray.direction)
+                .multiplyScalar(this.m_camera.far / cosAlpha)
+                .add(this.m_camera.position);
+        }
+        return worldPos;
+    }
+
+    /**
+     * Returns the world space position from the given screen position.
+     *
+     * @remarks
      * The return value can be `null`, in case the camera is facing the horizon
      * and the given `(x, y)` value is not intersecting the ground plane.
      *
@@ -2657,6 +2689,24 @@ export class MapView extends EventDispatcher {
         return this.projection.type === ProjectionType.Spherical
             ? this.m_raycaster.ray.intersectSphere(this.m_sphere, cache.vector3[0])
             : this.m_raycaster.ray.intersectPlane(this.m_plane, cache.vector3[0]);
+    }
+
+    /**
+     * Returns the {@link @here/harp-geoutils#GeoCoordinates} from the
+     * given screen position.
+     *
+     * @remarks
+     * This method will always return a point. if the given `(x, y)` value is not intersecting
+     * the ground plane a fallback point on the far plane will be computed.
+     * Therfore the returned point might not be on the earth surface (i.e. altitude > 0)
+     *
+     * @param x - The X position in css/client coordinates (without applied display ratio).
+     * @param y - The Y position in css/client coordinates (without applied display ratio).
+     * @param fallback - Fallback to
+     */
+    getGeoCoordinatesAtSafe(x: number, y: number): GeoCoordinates {
+        const worldPosition = this.getWorldPositionAtSafe(x, y);
+        return this.projection.unprojectPoint(worldPosition).normalized();
     }
 
     /**
@@ -2677,7 +2727,7 @@ export class MapView extends EventDispatcher {
         if (!worldPosition) {
             return null;
         }
-        return this.projection.unprojectPoint(worldPosition);
+        return this.projection.unprojectPoint(worldPosition).normalized();
     }
 
     /**
