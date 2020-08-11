@@ -106,6 +106,18 @@ describe("BoundsGenerator", function() {
         assert.isEmpty(geoPolygon);
     });
 
+    it("generates empty polygon for spherical projection,  after projection changes", function() {
+        mapView?.lookAt(lookAtParams);
+        mapView?.renderSync(); // render once to update camera parameter
+        let geoPolygon = (boundsGenerator as BoundsGenerator).generate();
+        assert.isNotEmpty(geoPolygon);
+        assert.equal(geoPolygon.length, 4);
+
+        boundsGenerator.projection = sphereProjection;
+        geoPolygon = (boundsGenerator as BoundsGenerator).generate();
+        assert.isEmpty(geoPolygon);
+    });
+
     it("generates polygon of canvas corners for canvas filled with map", function() {
         mapView?.lookAt(lookAtParams);
         mapView?.renderSync(); // render once to update camera parameter
