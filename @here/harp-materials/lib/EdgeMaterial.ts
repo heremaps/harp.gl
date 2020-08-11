@@ -14,8 +14,8 @@ import {
     FadingFeatureParameters
 } from "./MapMeshMaterials";
 import { ExtrusionFeatureDefs } from "./MapMeshMaterialsDefs";
+import { RawShaderMaterial } from "./RawShaderMaterial";
 import { enforceBlending, setShaderDefine, setShaderMaterialDefine } from "./Utils";
-import { WebGL1RawShaderMaterial } from "./WebGL1RawShaderMaterial";
 
 const vertexSource: string = `
 #define EDGE_DEPTH_OFFSET 0.0001
@@ -137,7 +137,7 @@ export interface EdgeMaterialParameters
  * Material designed to render the edges of extruded buildings using GL_LINES. It supports solid
  * colors, vertex colors, color mixing and distance fading.
  */
-export class EdgeMaterial extends WebGL1RawShaderMaterial
+export class EdgeMaterial extends RawShaderMaterial
     implements FadingFeature, ExtrusionFeature, DisplacementFeature {
     static DEFAULT_COLOR: number = 0x000000;
     static DEFAULT_COLOR_MIX: number = 0.0;
