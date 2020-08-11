@@ -1055,7 +1055,7 @@ describe("MapView", function() {
         assert.isDefined(center!.altitude);
         assert.closeTo(center!.altitude!, 0, eps);
 
-        // Clicking "behind" the anti-meridian should wrap around
+        // Clicking "behind" the anti-meridian should clamp
         const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
 
         assert.isNotNull(top);
@@ -1084,7 +1084,7 @@ describe("MapView", function() {
         assert.isDefined(center!.altitude);
         assert.closeTo(center!.altitude!, 0, eps);
 
-        // Clicking "behind" the anti-meridian should wrap around
+        // Clicking "behind" the anti-meridian should clamp
         const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
 
         assert.isNotNull(top);
