@@ -52,7 +52,7 @@ module.exports = class extends Generator {
             "@here/harp-geoutils",
             "@here/harp-map-controls",
             "@here/harp-map-theme",
-            "@here/harp-omv-datasource",
+            "@here/harp-vectortile-datasource",
             "@here/harp-webpack-utils"
         ];
         // for CI testing support installing from local packages

@@ -7,7 +7,7 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapControls } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 
 const defaultTheme = "resources/berlin_tilezen_base.json";
 
@@ -35,10 +35,10 @@ export class View {
             decoderUrl: "decoder.bundle.js"
         });
 
-        const omvDataSource = new OmvDataSource({
+        const dataSource = new VectorTileDataSource({
             authenticationCode: "<%= apikey %>"
         });
-        mapView.addDataSource(omvDataSource);
+        mapView.addDataSource(dataSource);
 
         MapControls.create(mapView);
 
