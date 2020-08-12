@@ -804,7 +804,7 @@ export class MapView extends EventDispatcher {
     private m_visibleTileSetLock: boolean = false;
     private readonly m_tileGeometryManager: TileGeometryManager;
 
-    private readonly m_tileWrappingEnabled: boolean = true;
+    private m_tileWrappingEnabled: boolean = true;
 
     private m_zoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
@@ -1259,6 +1259,13 @@ export class MapView extends EventDispatcher {
 
     get tileWrappingEnabled(): boolean {
         return this.m_tileWrappingEnabled;
+    }
+
+    set tileWrappingEnabled(enabled: boolean) {
+        if (enabled !== this.m_tileWrappingEnabled) {
+            this.m_tileWrappingEnabled = enabled;
+            this.m_visibleTiles = this.createVisibleTileSet();
+        }
     }
 
     /**
