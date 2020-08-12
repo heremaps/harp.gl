@@ -2642,42 +2642,72 @@ export class MapView extends EventDispatcher {
         return this.m_raycaster;
     }
 
+    getWorldPositionAt(x: number, y: number, fallback: true): THREE.Vector3;
+    getWorldPositionAt(x: number, y: number, fallback?: boolean): THREE.Vector3 | null;
+
     /**
      * Returns the world space position from the given screen position.
      *
      * @remarks
-     * The return value can be `null`, in case the camera is facing the horizon
+     * If `fallback !== true` the return value can be `null`, in case the camera has a high tilt
      * and the given `(x, y)` value is not intersecting the ground plane.
+     * If `fallback === true` the return value will always exist but it might not be on the earth
+     * surface.
      *
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
+     * @param fallback - Whether to compute a fallback position if the earth surface is not hit.
      */
-    getWorldPositionAt(x: number, y: number): THREE.Vector3 | null {
+    getWorldPositionAt(x: number, y: number, fallback?: boolean): THREE.Vector3 | null {
         this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_camera);
-        return this.projection.type === ProjectionType.Spherical
-            ? this.m_raycaster.ray.intersectSphere(this.m_sphere, cache.vector3[0])
-            : this.m_raycaster.ray.intersectPlane(this.m_plane, cache.vector3[0]);
+        const worldPos =
+            this.projection.type === ProjectionType.Spherical
+                ? this.m_raycaster.ray.intersectSphere(this.m_sphere, cache.vector3[0])
+                : this.m_raycaster.ray.intersectPlane(this.m_plane, cache.vector3[0]);
+
+        if (worldPos === null && fallback === true) {
+            // Fall back to the far plane
+            const cosAlpha = this.m_camera
+                .getWorldDirection(cache.vector3[0])
+                .dot(this.m_raycaster.ray.direction);
+
+            return cache.vector3[0]
+                .copy(this.m_raycaster.ray.direction)
+                .multiplyScalar(this.m_camera.far / cosAlpha)
+                .add(this.m_camera.position);
+        }
+        return worldPos;
     }
+
+    getGeoCoordinatesAt(x: number, y: number, fallback: true): GeoCoordinates;
+    getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null;
 
     /**
      * Returns the {@link @here/harp-geoutils#GeoCoordinates} from the
      * given screen position.
      *
      * @remarks
-     * The return value can be
-     * `null`, in case the camera is facing the horizon and
-     * the given `(x, y)` value is not
-     * intersecting the ground plane.
+     * If `fallback !== true` the return value can be `null`, in case the camera has a high tilt
+     * and the given `(x, y)` value is not intersecting the ground plane.
+     * If `fallback === true` the return value will always exist but it might not be on the earth
+     * surface.
      *
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
+     * @param fallback - Whether to compute a fallback position if the earth surface is not hit.
      */
-    getGeoCoordinatesAt(x: number, y: number): GeoCoordinates | null {
-        const worldPosition = this.getWorldPositionAt(x, y);
+    getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null {
+        const worldPosition = this.getWorldPositionAt(x, y, fallback);
         if (!worldPosition) {
             return null;
         }
-        return this.projection.unprojectPoint(worldPosition);
+
+        const geoPos = this.projection.unprojectPoint(worldPosition);
+        if (!this.tileWrappingEnabled && this.projection.type === ProjectionType.Planar) {
+            // When the map is not wrapped we clamp the longitude
+            geoPos.longitude = THREE.MathUtils.clamp(geoPos.longitude, -180, 180);
+        }
+        return geoPos.normalized();
     }
 
     /**

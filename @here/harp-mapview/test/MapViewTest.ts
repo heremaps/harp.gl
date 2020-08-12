@@ -23,7 +23,10 @@ const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 import {
     GeoBox,
     GeoCoordinates,
+    MAX_LONGITUDE,
+    MercatorConstants,
     mercatorProjection,
+    MIN_LONGITUDE,
     sphereProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
@@ -782,7 +785,7 @@ describe("MapView", function() {
         expect(mapView.fog instanceof MapViewFog).to.equal(true);
     });
 
-    it("converts screen coords to geo to screen", function() {
+    it("converts screen coords to geo to screen w/ different pixel ratio", function() {
         const customCanvas = {
             clientWidth: 1920,
             clientHeight: 1080,
@@ -810,7 +813,7 @@ describe("MapView", function() {
             }
         }
     });
-    it("converts screen coords to world to screen", function() {
+    it("converts screen coords to world to screen w/ different pixel ratio", function() {
         const customCanvas = {
             clientWidth: 1920,
             clientHeight: 1080,
@@ -837,6 +840,258 @@ describe("MapView", function() {
                 mapView = undefined;
             }
         }
+    });
+
+    it("convert screen to geo different tilt mercator", async function() {
+        const eps = 1e-10;
+        const target = new GeoCoordinates(52.5145, 13.3501);
+        mapView = new MapView({ canvas, target, tilt: 0, zoomLevel: 10 });
+        for (let tilt = 0; tilt < 90; ++tilt) {
+            mapView.tilt = tilt;
+            const center = mapView.getGeoCoordinatesAt(
+                canvas.clientWidth / 2,
+                canvas.clientHeight / 2
+            );
+            assert.isNotNull(center);
+            assert.closeTo(center!.latitude, target.latitude, eps);
+            assert.closeTo(center!.longitude, target.longitude, eps);
+            assert.isDefined(center!.altitude);
+            assert.closeTo(center!.altitude!, 0, eps);
+
+            const left = mapView.getGeoCoordinatesAt(0, canvas.clientHeight / 2);
+            assert.isNotNull(left);
+            assert.closeTo(left!.latitude, target.latitude, eps);
+            assert.isBelow(left!.longitude, target.longitude);
+            assert.isDefined(left!.altitude);
+            assert.closeTo(left!.altitude!, 0, eps);
+
+            const right = mapView.getGeoCoordinatesAt(canvas.clientWidth, canvas.clientHeight / 2);
+            assert.isNotNull(right);
+            assert.closeTo(right!.latitude, target.latitude, eps);
+            assert.isAbove(right!.longitude, target.longitude);
+            assert.isDefined(right!.altitude);
+            assert.closeTo(right!.altitude!, 0, eps);
+
+            const bottom = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight);
+            assert.isNotNull(bottom);
+            assert.isBelow(bottom!.latitude, target.latitude);
+            assert.closeTo(bottom!.longitude, target.longitude, eps);
+            assert.isDefined(bottom!.altitude);
+            assert.closeTo(bottom!.altitude!, 0, eps);
+
+            let top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+            if (tilt <= 70) {
+                assert.isNotNull(top);
+                assert.isDefined(top!.altitude);
+                assert.closeTo(top!.altitude!, 0, eps);
+            } else {
+                assert.isNull(top);
+                top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0, true);
+                assert.isAbove(top.altitude!, 0);
+            }
+            assert.isAbove(top!.latitude, target.latitude);
+            assert.closeTo(top!.longitude, target.longitude, eps);
+        }
+    });
+
+    it("convert screen to geo different zoom mercator", async function() {
+        const eps = 1e-10;
+        const target = new GeoCoordinates(52.5145, 13.3501);
+        mapView = new MapView({ canvas, target, tilt: 45, zoomLevel: 1 });
+        for (let zoom = 1; zoom < 20; ++zoom) {
+            mapView.zoomLevel = zoom;
+            const center = mapView.getGeoCoordinatesAt(
+                canvas.clientWidth / 2,
+                canvas.clientHeight / 2
+            );
+            assert.isNotNull(center);
+            assert.closeTo(center!.latitude, target.latitude, eps);
+            assert.closeTo(center!.longitude, target.longitude, eps);
+            assert.isDefined(center!.altitude);
+            assert.closeTo(center!.altitude!, 0, eps);
+
+            const left = mapView.getGeoCoordinatesAt(0, canvas.clientHeight / 2);
+            assert.isNotNull(left);
+            assert.closeTo(left!.latitude, target.latitude, eps);
+            assert.isBelow(left!.longitude, target.longitude);
+            assert.isDefined(left!.altitude);
+            assert.closeTo(left!.altitude!, 0, eps);
+
+            const right = mapView.getGeoCoordinatesAt(canvas.clientWidth, canvas.clientHeight / 2);
+            assert.isNotNull(right);
+            assert.closeTo(right!.latitude, target.latitude, eps);
+            assert.isAbove(right!.longitude, target.longitude);
+            assert.isDefined(right!.altitude);
+            assert.closeTo(right!.altitude!, 0, eps);
+
+            const bottom = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight);
+            assert.isNotNull(bottom);
+            assert.isBelow(bottom!.latitude, target.latitude);
+            assert.closeTo(bottom!.longitude, target.longitude, eps);
+            assert.isDefined(bottom!.altitude);
+            assert.closeTo(bottom!.altitude!, 0, eps);
+
+            const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+            assert.isNotNull(top);
+            assert.isAbove(top!.latitude, target.latitude);
+            assert.closeTo(top!.longitude, target.longitude, eps);
+            assert.isDefined(top!.altitude);
+            assert.closeTo(top!.altitude!, 0, eps);
+        }
+    });
+
+    it("convert screen to geo north pole mercator", async function() {
+        const target = new GeoCoordinates(
+            THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE),
+            0
+        );
+        const eps = 1e-10;
+
+        mapView = new MapView({ canvas, target, tilt: 45, zoomLevel: 10 });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the north pole should return the north pole.
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        // FIXME: Latitude returned is bigger than MAXIMUM_LATITUDE
+        assert.closeTo(top!.latitude, target.latitude, 0.05);
+        assert.closeTo(top!.longitude, target.longitude, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
+    });
+
+    it("convert screen to geo south pole mercator", async function() {
+        const target = new GeoCoordinates(
+            -THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE),
+            0
+        );
+        const eps = 1e-10;
+
+        mapView = new MapView({ canvas, target, tilt: 45, zoomLevel: 10, heading: 180 });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the south pole should return the south pole.
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        // FIXME: Latitude returned is smaller than -MAXIMUM_LATITUDE
+        assert.closeTo(top!.latitude, target.latitude, 0.05);
+        assert.closeTo(top!.longitude, target.longitude, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
+    });
+
+    it("convert screen to geo anti meridian east mercator wrapped", async function() {
+        const target = new GeoCoordinates(0, 180);
+        const eps = 1e-10;
+
+        mapView = new MapView({ canvas, target, tilt: 45, zoomLevel: 10, heading: 90 });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the anti-meridian should wrap around
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        assert.closeTo(top!.latitude, target.latitude, eps);
+        assert.closeTo(top!.longitude, -179.5419726676294, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
+    });
+
+    it("convert screen to geo anti meridian west mercator wrapped", async function() {
+        const target = new GeoCoordinates(0, -180);
+        const eps = 1e-10;
+
+        mapView = new MapView({ canvas, target, tilt: 45, zoomLevel: 10, heading: -90 });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the anti-meridian should wrap around
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        assert.closeTo(top!.latitude, target.latitude, eps);
+        assert.closeTo(top!.longitude, 179.5419726676294, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
+    });
+
+    it("convert screen to geo anti meridian east mercator not-wrapped", async function() {
+        const target = new GeoCoordinates(0, 180);
+        const eps = 1e-10;
+
+        mapView = new MapView({
+            canvas,
+            target,
+            tilt: 45,
+            zoomLevel: 10,
+            heading: 90,
+            tileWrappingEnabled: false
+        });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the anti-meridian should clamp
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        assert.closeTo(top!.latitude, target.latitude, eps);
+        assert.closeTo(top!.longitude, MAX_LONGITUDE, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
+    });
+
+    it("convert screen to geo anti meridian west mercator not-wrapped", async function() {
+        const target = new GeoCoordinates(0, -180);
+        const eps = 1e-10;
+
+        mapView = new MapView({
+            canvas,
+            target,
+            tilt: 45,
+            zoomLevel: 10,
+            heading: -90,
+            tileWrappingEnabled: false
+        });
+        const center = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, canvas.clientHeight / 2);
+        assert.isNotNull(center);
+        assert.closeTo(center!.latitude, target.latitude, eps);
+        assert.closeTo(center!.longitude, target.longitude, eps);
+        assert.isDefined(center!.altitude);
+        assert.closeTo(center!.altitude!, 0, eps);
+
+        // Clicking "behind" the anti-meridian should clamp
+        const top = mapView.getGeoCoordinatesAt(canvas.clientWidth / 2, 0);
+
+        assert.isNotNull(top);
+        assert.closeTo(top!.latitude, target.latitude, eps);
+        assert.closeTo(top!.longitude, MIN_LONGITUDE, eps);
+        assert.isDefined(top!.altitude);
+        assert.closeTo(top!.altitude!, 0, eps);
     });
 
     it("updates scene materials, objects & skips transparent ones", async function() {
