@@ -256,7 +256,9 @@ export class CameraKeyTrackAnimation {
         this.m_mapView.removeEventListener(MapViewEventNames.Render, this.m_animateCb);
         this.m_mapView.endAnimation();
         if (this.m_onFinished !== undefined) {
-            this.m_onFinished();
+            // called asynchronously, as the last animate event still will get dispatched
+            // and should run before the onFinished callback
+            window.setTimeout(this.m_onFinished, 0);
         }
         this.m_running = false;
     }
@@ -297,8 +299,6 @@ export class CameraKeyTrackAnimation {
         const deltaTime = (Date.now() - this.m_lastFrameTime) / 1000;
         this.m_animationMixer.update(deltaTime);
         this.m_lastFrameTime = Date.now();
-        if (this.m_running) {
-            this.updateCameraFromDummy();
-        }
+        this.updateCameraFromDummy();
     }
 }
