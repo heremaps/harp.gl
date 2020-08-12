@@ -12,7 +12,7 @@ import {
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
 
 import { apikey } from "../config";
@@ -334,7 +334,7 @@ export namespace PolygonsFeaturesExample {
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
-        const baseMap = new OmvDataSource({
+        const baseMap = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             authenticationCode: apikey
         });

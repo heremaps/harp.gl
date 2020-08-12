@@ -7,7 +7,7 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, PickResult } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { apikey } from "../config";
 
 /**
@@ -217,7 +217,7 @@ export namespace PickingExample {
 
         // end:datasource_object_picking_1.ts
 
-        const omvDataSource = new OmvDataSource({
+        const omvDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             authenticationCode: apikey,
             gatherFeatureAttributes: true

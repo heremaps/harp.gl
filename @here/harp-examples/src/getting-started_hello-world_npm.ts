@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { apikey } from "../config";
 
 /**
@@ -50,7 +50,7 @@ import { apikey } from "../config";
  * [[include:harp_gl_hello_world_example_3.ts]]
  * ```
  * At the end of the initialization a [[MapView]] object is returned. To show map tiles an exemplary
- * datasource is used, [[OmvDataSource]]:
+ * datasource is used, [[VectorTileDataSource]]:
  *
  * ```typescript
  * [[include:harp_gl_hello_world_example_4.ts]]
@@ -105,14 +105,14 @@ export namespace HelloWorldExample {
         });
         // end:harp_gl_hello_world_example_3.ts
 
-        addOmvDataSource(map);
+        addVectorTileDataSource(map);
 
         return map;
     }
 
-    function addOmvDataSource(map: MapView) {
+    function addVectorTileDataSource(map: MapView) {
         // snippet:harp_gl_hello_world_example_4.ts
-        const omvDataSource = new OmvDataSource({
+        const omvDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             authenticationCode: apikey
         });

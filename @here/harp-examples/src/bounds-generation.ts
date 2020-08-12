@@ -12,7 +12,7 @@ import {
 import { GeoCoordinates, mercatorProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { BoundsGenerator, CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 
 import { apikey } from "../config";
 
@@ -85,7 +85,7 @@ export namespace BoundsExample {
             map.resize(window.innerWidth, window.innerHeight);
         });
 
-        addOmvDataSource(map);
+        addVectorTileDataSource(map);
         const featureList: MapViewFeature[] = []; //createFeatureList();
         let featuresDataSource: FeaturesDataSource | undefined;
         //@ts-ignore
@@ -169,8 +169,8 @@ export namespace BoundsExample {
         return map;
     }
 
-    function addOmvDataSource(map: MapView) {
-        const omvDataSource = new OmvDataSource({
+    function addVectorTileDataSource(map: MapView) {
+        const omvDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             authenticationCode: apikey
         });

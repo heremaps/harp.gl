@@ -8,7 +8,7 @@ import { StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { apikey } from "../config";
 
 /**
@@ -169,7 +169,7 @@ export namespace GeoJsonExample {
             mapView.resize(innerWidth - _width, innerHeight);
         });
 
-        const baseMap = new OmvDataSource({
+        const baseMap = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             authenticationCode: apikey
         });

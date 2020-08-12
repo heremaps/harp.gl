@@ -14,7 +14,7 @@ import {
     MapViewOptions,
     MapViewUtils
 } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
 import { apikey } from "../config";
 
@@ -94,13 +94,13 @@ export namespace FreeCameraAppDebuggingToolExample {
         }
 
         /**
-         * Attaches the [[OmvDataSource]] and [[DebugTileDataSource]] to the map as well as
+         * Attaches the [[VectorTileDataSource]] and [[DebugTileDataSource]] to the map as well as
          * initializes the debug view (making the: `R`, `T` and `V` keys modify the camera's current
          * rotation (`R`), translation/postion (`T`) and changing the camera view to the one the
          * user is seeing (`V`).
          */
         start() {
-            const omvDataSource = new OmvDataSource({
+            const omvDataSource = new VectorTileDataSource({
                 baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
                 authenticationCode: apikey
             });
