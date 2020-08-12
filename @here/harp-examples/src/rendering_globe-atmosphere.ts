@@ -11,7 +11,11 @@ import {
     MapView,
     MapViewAtmosphere
 } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    VectorTileDataSource
+} from "@here/harp-vectortile-datasource";
 import { HereTileProvider, HereWebTileDataSource } from "@here/harp-webtile-datasource";
 
 import { apikey, copyrightInfo } from "../config";
@@ -49,7 +53,7 @@ export namespace GlobeAtmosphereExample {
 
         let dataSource;
         if (dataSourceVariant === DataSourceVariant.Omv) {
-            dataSource = new OmvDataSource({
+            dataSource = new VectorTileDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
                 apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",

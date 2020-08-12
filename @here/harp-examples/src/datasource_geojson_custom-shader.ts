@@ -7,7 +7,7 @@
 import { GeoBox, GeoCoordinates, GeoPointLike } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
+import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { apikey } from "../config";
 
 import * as geojson from "../resources/polygon.json";
@@ -118,7 +118,7 @@ export namespace GeoJsonCustomShaderExample {
         start() {}
 
         private addBaseMap() {
-            const dataSource = new OmvDataSource({
+            const dataSource = new VectorTileDataSource({
                 baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
                 authenticationCode: apikey
             });
@@ -127,7 +127,7 @@ export namespace GeoJsonCustomShaderExample {
         }
 
         private addEvRange() {
-            const datasource = new OmvDataSource({
+            const datasource = new VectorTileDataSource({
                 dataProvider: new GeoJsonDataProvider("geojson", geojson as any),
                 styleSetName: "geojson"
             });

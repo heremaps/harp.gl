@@ -9,7 +9,11 @@ import { isJsonExpr } from "@here/harp-datasource-protocol/lib/Expr";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, ThemeLoader } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    VectorTileDataSource
+} from "@here/harp-vectortile-datasource";
 import { apikey, copyrightInfo } from "../config";
 
 export namespace HelloWorldTexturedExample {
@@ -18,7 +22,7 @@ export namespace HelloWorldTexturedExample {
 
         const mapView = initializeMapView("mapCanvas");
 
-        const omvDataSource = new OmvDataSource({
+        const omvDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",

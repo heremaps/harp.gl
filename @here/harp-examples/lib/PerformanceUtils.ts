@@ -18,8 +18,12 @@ import {
     SimpleFrameStatistics
 } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    VectorTileDataSource
+} from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
 import { apikey, copyrightInfo } from "../config";
 import { PerformanceTestData } from "./PerformanceConfig";
@@ -31,7 +35,7 @@ export namespace PerformanceUtils {
         mapView: MapView;
         mapControls: MapControls;
         omvDataSourceConnected: boolean;
-        mainDataSource: OmvDataSource | undefined;
+        mainDataSource: VectorTileDataSource | undefined;
     }
 
     export interface ThemeDef {
@@ -175,11 +179,11 @@ export namespace PerformanceUtils {
         dataSourceTypes: string[],
         storageLevelOffsetModifier: number
     ): Promise<DataSource[]> {
-        const createDataSource = (dataSourceType: string): OmvDataSource => {
-            let dataSource: OmvDataSource | undefined;
+        const createDataSource = (dataSourceType: string): VectorTileDataSource => {
+            let dataSource: VectorTileDataSource | undefined;
             switch (dataSourceType) {
                 case "OMV":
-                    dataSource = new OmvDataSource({
+                    dataSource = new VectorTileDataSource({
                         baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
                         apiFormat: APIFormat.XYZOMV,
                         styleSetName: "tilezen",
@@ -207,7 +211,7 @@ export namespace PerformanceUtils {
                 }
 
                 return mapViewApp.mapView.addDataSource(dataSource).then(() => {
-                    if (dataSource instanceof OmvDataSource) {
+                    if (dataSource instanceof VectorTileDataSource) {
                         mapViewApp.omvDataSourceConnected = true;
                     }
                     return dataSource;
@@ -678,7 +682,7 @@ export namespace PerformanceUtils {
 
     function applyDataFilter(mapView: MapView, showLabels: boolean) {
         for (const dataSource of mapView.dataSources) {
-            if (dataSource instanceof OmvDataSource) {
+            if (dataSource instanceof VectorTileDataSource) {
                 applyDataFilterToDataSource(mapView, dataSource, showLabels);
             }
         }
@@ -686,7 +690,7 @@ export namespace PerformanceUtils {
 
     function applyDataFilterToDataSource(
         mapView: MapView,
-        dataSource: OmvDataSource,
+        dataSource: VectorTileDataSource,
         showLabels: boolean
     ) {
         const tileGeometryManager = mapView.tileGeometryManager;

@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, ThemeLoader } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { GUI } from "dat.gui";
 import { apikey } from "../config";
 
@@ -46,7 +46,7 @@ export namespace ThemesExample {
 
     const mapView = initializeMapView();
 
-    const omvDataSource = new OmvDataSource({
+    const omvDataSource = new VectorTileDataSource({
         baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         authenticationCode: apikey
     });

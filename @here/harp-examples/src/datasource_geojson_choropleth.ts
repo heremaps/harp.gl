@@ -7,7 +7,7 @@ import { Style, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { GeoJsonDataProvider, OmvDataSource } from "@here/harp-omv-datasource";
+import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
 
 import { apikey } from "../config";
@@ -88,7 +88,7 @@ export namespace GeoJsonHeatmapExample {
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
-        const baseMapDataSource = new OmvDataSource({
+        const baseMapDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             authenticationCode: apikey
         });
@@ -166,7 +166,7 @@ export namespace GeoJsonHeatmapExample {
         "italy",
         new URL("resources/italy.json", window.location.href)
     );
-    const geoJsonDataSource = new OmvDataSource({
+    const geoJsonDataSource = new VectorTileDataSource({
         dataProvider: geoJsonDataProvider,
         styleSetName: "geojson"
     });

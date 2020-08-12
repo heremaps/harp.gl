@@ -5,11 +5,15 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
-// import { GeoJsonDataProvider } from "@here/harp-omv-datasource";
+// import { GeoJsonDataProvider } from "@here/harp-vectortile-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    VectorTileDataSource
+} from "@here/harp-vectortile-datasource";
 import { apikey, copyrightInfo } from "../config";
 
 /**
@@ -461,7 +465,7 @@ export namespace TiledGeoJsonTechniquesExample {
             }
         });
 
-        const baseMapDataSource = new OmvDataSource({
+        const baseMapDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",

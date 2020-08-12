@@ -11,21 +11,21 @@ import {
     APIFormat,
     AuthenticationMethod,
     GeoJsonDataProvider,
-    OmvDataSource
-} from "@here/harp-omv-datasource";
+    VectorTileDataSource
+} from "@here/harp-vectortile-datasource";
 import { apikey, copyrightInfo } from "../config";
 import * as geojson from "../resources/italy.json";
 
 /**
- * In this example showcases how to use the styling of a [[OmvDataSource]] that using a
+ * In this example showcases how to use the styling of a [[VectorTileDataSource]] that using a
  * [[GeoJsonDataProvider]] with a dynamic [[StyleSet]] to generate a quiz game. First, we generate a
  * [[MapView]], without [[MapControls]] this time, and then we also attach an additional base map
- * from an [[OmvDataSource]].
+ * from an [[VectorTileDataSource]].
  * ```typescript
  * [[include:harp_gl_initmapview.ts]]
  * ```
  *
- * We then create the map of Italy via a [[OmvDataSource]] that only serves one GeoJson.
+ * We then create the map of Italy via a [[VectorTileDataSource]] that only serves one GeoJson.
  * This is performed via a custom class, `GeoJsonDataProvider`. When the datasource is linked we
  * then set its [[StyleSet]] and add the click listener on the canvas to handle the quiz logic.
  * ```typescript
@@ -34,7 +34,7 @@ import * as geojson from "../resources/italy.json";
  *
  * The quiz logic is performed when a region is picked. The name of the picked
  * region is compared to the expected name, and if they match, an update to the
- * [[OmvDataSource]]'s [[StyleSet]] is performed.
+ * [[VectorTileDataSource]]'s [[StyleSet]] is performed.
  * ```typescript
  * [[include:harp_gl_gamelogic.ts]]
  * ```
@@ -94,7 +94,7 @@ export namespace GeoJsonStylingGame {
             mapView.resize(window.innerWidth, window.innerHeight);
         });
         mapView.canvas.addEventListener("contextmenu", e => e.preventDefault());
-        const baseMap = new OmvDataSource({
+        const baseMap = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
@@ -114,7 +114,7 @@ export namespace GeoJsonStylingGame {
             new URL("resources/italy.json", window.location.href)
         );
 
-        const geoJsonDataSource = new OmvDataSource({
+        const geoJsonDataSource = new VectorTileDataSource({
             dataProvider: geoJsonDataProvider,
             name: "geojson",
             styleSetName: "geojson",

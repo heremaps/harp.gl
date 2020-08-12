@@ -8,7 +8,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { GUI } from "dat.gui";
 import * as THREE from "three";
 import "three/examples/js/controls/TrackballControls";
@@ -228,7 +228,7 @@ function initializeMapView(id: string, theme: Theme): MapView {
         map.resize(window.innerWidth, window.innerHeight);
     });
 
-    addOmvDataSource().then(() => {
+    addVectorTileDataSource().then(() => {
         const light = map.lights.find(item => item instanceof THREE.DirectionalLight) as
             | THREE.DirectionalLight
             | undefined;
@@ -249,8 +249,8 @@ function initializeMapView(id: string, theme: Theme): MapView {
     return map;
 }
 
-const addOmvDataSource = (): Promise<void> => {
-    const omvDataSource = new OmvDataSource({
+const addVectorTileDataSource = (): Promise<void> => {
+    const omvDataSource = new VectorTileDataSource({
         baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         authenticationCode: apikey
     });

@@ -5,7 +5,11 @@
  */
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationMethod,
+    VectorTileDataSource
+} from "@here/harp-vectortile-datasource";
 
 import { apikey, copyrightInfo } from "../config";
 
@@ -43,7 +47,7 @@ import { apikey, copyrightInfo } from "../config";
  * [[include:harp_gl_datasource_here_vector_tile_example_3.ts]]
  * ```
  * At the end of the initialization a [[MapView]] object is returned. To show vector tiles the HERE
- * Vector Tile datasource is used, [[OmvDataSource]]:
+ * Vector Tile datasource is used, [[VectorTileDataSource]]:
  *
  * ```typescript
  * [[include:harp_gl_datasource_here_vector_tile_example_4.ts]]
@@ -97,7 +101,7 @@ export namespace DatasourceHEREVectorTileExample {
         const mapView = initializeMapView("mapCanvas");
 
         // snippet:harp_gl_datasource_here_vector_tile_example_4.ts
-        const omvDataSource = new OmvDataSource({
+        const omvDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",

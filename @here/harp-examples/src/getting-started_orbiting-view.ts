@@ -6,7 +6,7 @@
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { GUI } from "dat.gui";
 import { apikey } from "../config";
 
@@ -67,7 +67,7 @@ export namespace CameraOrbitExample {
             mapView.resize(window.innerWidth, window.innerHeight);
         });
 
-        const omvDataSource = new OmvDataSource({
+        const omvDataSource = new VectorTileDataSource({
             baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             authenticationCode: apikey
         });
