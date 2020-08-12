@@ -4,10 +4,10 @@ Yeoman generator for [harp.gl](https://github.com/heremaps/harp.gl) based projec
 
 ## Pre-requirements
 
-* [node.js](https://nodejs.org/)
-* [yeoman](https://yeoman.io/) - Install globally with `npm install -g yo` or use without
-  installation with `npx` like this `npx yo`.
-* By default, generated app retrieves map data from HERE Vector Tiles Service. You need an `apikey` that you can generate yourself. Please see our [Getting Started Guide](../../docs/GettingStartedGuide.md).
+-   [node.js](https://nodejs.org/)
+-   [yeoman](https://yeoman.io/) - Install globally with `npm install -g yo` or use without
+    installation with `npx` like this `npx yo`.
+-   By default, generated app retrieves map data from HERE Vector Tiles Service. You need an `apikey` that you can generate yourself. Please see our [Getting Started Guide](../../docs/GettingStartedGuide.md).
 
 ## Usage
 
@@ -17,15 +17,17 @@ cd 3dmap-example
 npx -p yo -p @here/generator-harp.gl yo @here/harp.gl
 > package name 3dmap-example name:
 ```
+
 This command will generate complete, clean project based on Node.js, Webpack, Typescript.
 Set you access token in `View.ts`:
 
 ```typescript
-const omvDataSource = new OmvDataSource({
+const dataSource = new VectorTileDataSource({
     baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
     authenticationCode: "YOUR-APIKEY"
 });
 ```
+
 Then start it using `webpack-dev-server`:
 
 ```sh
