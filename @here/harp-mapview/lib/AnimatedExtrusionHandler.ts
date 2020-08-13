@@ -112,7 +112,7 @@ export class AnimatedExtrusionHandler {
 
         const animateExtrusionValue = getPropertyValue(technique.animateExtrusion, env);
 
-        if (animateExtrusionValue === null) {
+        if (animateExtrusionValue === null && "minZoomLevel" in technique) {
             return this.enabled;
         }
 

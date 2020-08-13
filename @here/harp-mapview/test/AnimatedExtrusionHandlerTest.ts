@@ -83,13 +83,36 @@ describe("AnimatedExtrusionHandler", function() {
             expect(enabled).to.be.false;
         });
 
-        it("returns forced enable value if technique does not define animateExtrusion", function() {
+        // tslint:disable-next-line: max-line-length
+        it("returns forced enabled if technique has minZoomLevel but not animateExtrusion", function() {
+            {
+                const enabled = handler.setAnimationProperties(
+                    {
+                        name: "extruded-polygon",
+                        minZoomLevel: 5
+                    } as any,
+                    env
+                );
+                expect(enabled).to.be.true;
+            }
+
+            {
+                handler.enabled = false;
+                const enabled = handler.setAnimationProperties(
+                    { name: "extruded-polygon", minZoomLevel: 5 } as any,
+                    env
+                );
+                expect(enabled).to.be.false;
+            }
+        });
+
+        it("returns false if technique has neither minZoomLevel nor animateExtrusion", function() {
             {
                 const enabled = handler.setAnimationProperties(
                     { name: "extruded-polygon" } as any,
                     env
                 );
-                expect(enabled).to.be.true;
+                expect(enabled).to.be.false;
             }
 
             {
