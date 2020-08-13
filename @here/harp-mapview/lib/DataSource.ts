@@ -382,6 +382,14 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
+     * @return Whether this `DataSource` is detached from the `MapView`
+     */
+
+    isDetached() {
+        return this.m_mapView === undefined;
+    }
+
+    /**
      * Invoked by {@link MapView} to notify when the
      * {@link @here/harp-datasource-protocol#Theme} has been changed.
      *
