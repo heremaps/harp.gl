@@ -8,14 +8,16 @@ const { addHarpWebpackConfig } = require("@here/harp-webpack-utils/scripts/HarpW
 module.exports = addHarpWebpackConfig(
     {
         plugins: [
-            new CopyWebpackPlugin([
-                require.resolve("three/build/three.min.js"),
-                {
-                    from: "resources/",
-                    to: "resources/",
-                    toType: "dir"
-                }
-            ])
+            new CopyWebpackPlugin({
+                patterns: [
+                    require.resolve("three/build/three.min.js"),
+                    {
+                        from: "resources/",
+                        to: "resources/",
+                        toType: "dir"
+                    }
+                ]
+            })
         ]
     },
     { mainEntry: "./index.ts", decoderEntry: "./decoder.ts", htmlTemplate: "./index.html" }

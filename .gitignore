@@ -7,6 +7,7 @@ test-npm-packages-app/
 .DS_Store
 .nyc_output/
 rendering-test-results/
+*.tgz
 *.tsbuildinfo
 *.ts.map
 /input/

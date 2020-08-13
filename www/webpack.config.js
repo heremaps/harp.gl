@@ -77,34 +77,36 @@ const mainConfig = merge(commonConfig, {
         new ScriptExtHtmlWebpackPlugin({
             defaultAttribute: "defer"
         }),
-        new CopyWebpackPlugin([
-            require.resolve("three/build/three.min.js"),
-            "_config.yml",
-            {
-                from: "./docs",
-                to: "docs",
-                toType: "dir"
-            },
-            {
-                from: path.resolve(__dirname, "./examples"),
-                to: "examples",
-                toType: "dir"
-            },
-            {
-                from: "./resources/",
-                to: "resources",
-                toType: "dir"
-            },
-            {
-                from: "package.json", // dummy path, we ignore input anyway
-                to: "releases.json",
-                transform: () => {
-                    return fetch("https://www.harp.gl/releases.json").then(res => {
-                        return res.text();
-                    });
+        new CopyWebpackPlugin({
+            patterns: [
+                require.resolve("three/build/three.min.js"),
+                "_config.yml",
+                {
+                    from: "./docs",
+                    to: "docs",
+                    toType: "dir"
+                },
+                {
+                    from: path.resolve(__dirname, "./examples"),
+                    to: "examples",
+                    toType: "dir"
+                },
+                {
+                    from: "./resources/",
+                    to: "resources",
+                    toType: "dir"
+                },
+                {
+                    from: "package.json", // dummy path, we ignore input anyway
+                    to: "releases.json",
+                    transform: () => {
+                        return fetch("https://www.harp.gl/releases.json").then(res => {
+                            return res.text();
+                        });
+                    }
                 }
-            }
-        ])
+            ]
+        })
     ]
 });
 

@@ -44,7 +44,7 @@
         "@types/dat.gui": "^0.7.1",
         "@types/highlight.js": "^9.12.4",
         "@types/long": "^4.0.1",
-        "copy-webpack-plugin": "^5.1.1",
+        "copy-webpack-plugin": "^6.0.3",
         "cross-env": "^7.0.2",
         "css-loader": "^3.5.3",
         "dat.gui": "^0.7.7",

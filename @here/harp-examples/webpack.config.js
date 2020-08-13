@@ -205,6 +205,19 @@ const exampleDefs = Object.keys(allEntries).reduce(function(r, entry) {
     return r;
 }, {});
 
+// Workaround for `ERROR in unable to locate` on Windows
+// see https://github.com/webpack-contrib/copy-webpack-plugin/issues/317
+const srcFiles = glob.sync(path.join(__dirname, "src", "*.{ts,tsx,html}")).map(from => {
+    return { from, to: "src/[name].[ext]" };
+});
+
+const htmlFiles = glob.sync(path.join(__dirname, "src/*.html")).map(from => {
+    return {
+        from,
+        to: "[name].[ext]"
+    };
+});
+
 const assets = [
     {
         from: __dirname + "/example-definitions.js.in",
@@ -213,15 +226,9 @@ const assets = [
             return content.toString().replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, null, 4));
         }
     },
-    {
-        from: path.join(__dirname, "src", "*.{ts,tsx,html}"),
-        to: "src/[name].[ext]"
-    },
+    ...srcFiles,
     path.join(__dirname, "index.html"),
-    {
-        from: path.join(__dirname, "src/*.html"),
-        to: "[name].[ext]"
-    },
+    ...htmlFiles,
     path.join(__dirname, "codebrowser.html"),
     { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
     { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
@@ -243,6 +250,7 @@ const assets = [
         to: "harp-decoders.js"
     }
 ].filter(asset => {
+    // ignore stuff that is not found
     if (asset === undefined || asset === null) {
         return false;
     } else if (typeof asset === "string") {
@@ -250,11 +258,18 @@ const assets = [
     } else if (typeof asset === "object") {
         return asset.from;
     }
-}); // ignore stuff that is not found
+});
 
-browserConfig.plugins.push(
-    // @ts-ignore
-    new CopyWebpackPlugin(assets, { ignore: ["*.npmignore", "*.gitignore"] })
-);
+assets.forEach(asset => {
+    if (typeof asset === "object") {
+        asset.globOptions = {
+            dot: true,
+            ignore: [".npmignore", ".gitignore"]
+        };
+    }
+});
+
+// @ts-ignore
+browserConfig.plugins.push(new CopyWebpackPlugin({ patterns: assets }));
 
 module.exports = [decoderConfig, browserConfig, codeBrowserConfig, exampleBrowserConfig];

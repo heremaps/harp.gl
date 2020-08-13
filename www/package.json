@@ -22,7 +22,7 @@
         "@here/harp-mapview": "^0.18.0",
         "@here/harp-vectortile-datasource": "^0.18.0",
         "@here/harp-utils": "^0.18.0",
-        "copy-webpack-plugin": "^5.1.1",
+        "copy-webpack-plugin": "^6.0.3",
         "css-loader": "^3.5.3",
         "file-loader": "^6.0.0",
         "hard-source-webpack-plugin": "^0.13.1",
