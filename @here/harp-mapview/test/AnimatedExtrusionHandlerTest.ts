@@ -15,6 +15,7 @@ import { ExtrusionFeature } from "@here/harp-materials";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import { AnimatedExtrusionHandler } from "../lib/AnimatedExtrusionHandler";
+import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 
@@ -37,28 +38,29 @@ class FakeDataSource {
     }
 }
 
-class FakeTile {
-    removeTileCallback?: (tile: Tile) => void;
-    readonly dataSource = new FakeDataSource();
-
-    constructor(readonly tileKey: TileKey) {}
-
-    addDisposeCallback(callback: (tile: Tile) => void) {
-        this.removeTileCallback = callback;
-    }
-}
-
 describe("AnimatedExtrusionHandler", function() {
     const minZoomLevel = 17;
     let mapView: MapView;
+    let defaultDataSource: DataSource;
     let handler: AnimatedExtrusionHandler;
     let technique: Technique;
     const env = new MapEnv({});
     let clock: sinon.SinonFakeTimers;
 
+    class FakeTile {
+        removeTileCallback?: (tile: Tile) => void;
+
+        constructor(readonly tileKey: TileKey, readonly dataSource = defaultDataSource) {}
+
+        addDisposeCallback(callback: (tile: Tile) => void) {
+            this.removeTileCallback = callback;
+        }
+    }
+
     beforeEach(() => {
         technique = { name: "extruded-polygon", minZoomLevel } as any;
         mapView = new FakeMapView() as any;
+        defaultDataSource = new FakeDataSource() as any;
         handler = new AnimatedExtrusionHandler(mapView);
         clock = sinon.useFakeTimers();
     });
@@ -84,35 +86,13 @@ describe("AnimatedExtrusionHandler", function() {
         });
 
         // tslint:disable-next-line: max-line-length
-        it("returns forced enabled if technique has minZoomLevel but not animateExtrusion", function() {
-            {
-                const enabled = handler.setAnimationProperties(
-                    {
-                        name: "extruded-polygon",
-                        minZoomLevel: 5
-                    } as any,
-                    env
-                );
-                expect(enabled).to.be.true;
-            }
-
-            {
-                handler.enabled = false;
-                const enabled = handler.setAnimationProperties(
-                    { name: "extruded-polygon", minZoomLevel: 5 } as any,
-                    env
-                );
-                expect(enabled).to.be.false;
-            }
-        });
-
-        it("returns false if technique has neither minZoomLevel nor animateExtrusion", function() {
+        it("returns forced enabled if technique does not define animateExtrusion", function() {
             {
                 const enabled = handler.setAnimationProperties(
                     { name: "extruded-polygon" } as any,
                     env
                 );
-                expect(enabled).to.be.false;
+                expect(enabled).to.be.true;
             }
 
             {
@@ -231,23 +211,34 @@ describe("AnimatedExtrusionHandler", function() {
         });
 
         it("updates extrusion ratio", function() {
-            const material: ExtrusionFeature = { extrusionRatio: 0 };
+            const material1: ExtrusionFeature = { extrusionRatio: 0 };
+            const material2: ExtrusionFeature = { extrusionRatio: 0 };
             const duration = handler.duration;
-            const tile = new FakeTile(new TileKey(1, 2, minZoomLevel));
+            // two tiles with same key but different data source.
+            const tile1 = new FakeTile(new TileKey(1, 2, minZoomLevel));
+            const tile2 = new FakeTile(
+                new TileKey(1, 2, minZoomLevel),
+                new FakeDataSource() as any
+            );
 
             handler.setAnimationProperties(technique, env);
-            handler.add(tile as any, [material]);
+            handler.add(tile1 as any, [material1]);
+            handler.add(tile2 as any, [material2]);
             handler.update(minZoomLevel);
 
             clock.tick(duration / 2);
             handler.update(minZoomLevel);
-            expect(material.extrusionRatio)
+            expect(material1.extrusionRatio)
+                .to.be.greaterThan(0)
+                .and.lessThan(1);
+            expect(material2.extrusionRatio)
                 .to.be.greaterThan(0)
                 .and.lessThan(1);
 
             clock.tick(duration / 2);
             handler.update(minZoomLevel);
-            expect(material.extrusionRatio).to.be.equal(1);
+            expect(material1.extrusionRatio).to.be.equal(1);
+            expect(material2.extrusionRatio).to.be.equal(1);
             expect(handler.isAnimating).to.be.false;
         });
     });
