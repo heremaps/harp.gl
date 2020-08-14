@@ -13,6 +13,7 @@ import {
 import { TileKey } from "@here/harp-geoutils";
 import { ExtrusionFeature, ExtrusionFeatureDefs } from "@here/harp-materials";
 import { MathUtils } from "@here/harp-utils";
+import { DataSource } from "./DataSource";
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
@@ -26,12 +27,15 @@ export enum AnimatedExtrusionState {
 }
 
 const DEFAULT_EXTRUSION_DURATION = 750; // milliseconds
-const DEFAULT_MIN_ZOOM_LEVEL = 16;
+const DEFAULT_MIN_ZOOM_LEVEL = 1;
 
 interface TileExtrusionState {
     materials: ExtrusionFeature[];
     animated: boolean;
 }
+
+// key is tile's morton code.
+type TileMap = Map<number, TileExtrusionState>;
 
 /**
  * Handles animated extrusion effect of the buildings in {@link MapView}.
@@ -49,8 +53,7 @@ export class AnimatedExtrusionHandler {
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_forceEnabled: boolean = false;
 
-    // key is tile's morton code.
-    private readonly m_tileMap: Map<number, TileExtrusionState> = new Map();
+    private readonly m_dataSourceMap: Map<DataSource, TileMap> = new Map();
     private m_state: AnimatedExtrusionState = AnimatedExtrusionState.None;
     private m_startTime: number = -1;
 
@@ -98,8 +101,7 @@ export class AnimatedExtrusionHandler {
             return false;
         }
 
-        const techniqueHasMinZl = technique.hasOwnProperty("minZoomLevel");
-        if (techniqueHasMinZl) {
+        if (technique.hasOwnProperty("minZoomLevel")) {
             this.m_minZoomLevel = (technique as any).minZoomLevel;
         }
 
@@ -113,7 +115,7 @@ export class AnimatedExtrusionHandler {
 
         const animateExtrusionValue = getPropertyValue(technique.animateExtrusion, env);
 
-        if (animateExtrusionValue === null && techniqueHasMinZl) {
+        if (animateExtrusionValue === null) {
             return this.enabled;
         }
 
@@ -129,7 +131,7 @@ export class AnimatedExtrusionHandler {
      * @internal
      */
     update(zoomLevel: number) {
-        const extrusionVisible = this.m_tileMap.size > 0 && zoomLevel >= this.m_minZoomLevel;
+        const extrusionVisible = this.m_dataSourceMap.size > 0 && zoomLevel >= this.m_minZoomLevel;
 
         if (this.m_state === AnimatedExtrusionState.None && extrusionVisible) {
             this.m_state = AnimatedExtrusionState.Started;
@@ -161,7 +163,10 @@ export class AnimatedExtrusionHandler {
                 this.resetAnimation(false);
             }
         }
-        this.m_tileMap.set(tile.tileKey.mortonCode(), { materials, animated });
+        this.getOrCreateTileMap(tile.dataSource).set(tile.tileKey.mortonCode(), {
+            materials,
+            animated
+        });
     }
 
     /**
@@ -172,6 +177,19 @@ export class AnimatedExtrusionHandler {
             this.m_state !== AnimatedExtrusionState.Finished &&
             this.m_state !== AnimatedExtrusionState.None
         );
+    }
+
+    private getTileMap(dataSource: DataSource, create: boolean = false): TileMap | undefined {
+        return this.m_dataSourceMap.get(dataSource);
+    }
+
+    private getOrCreateTileMap(dataSource: DataSource): TileMap {
+        let tileMap = this.m_dataSourceMap.get(dataSource);
+        if (!tileMap) {
+            tileMap = new Map();
+            this.m_dataSourceMap.set(dataSource, tileMap);
+        }
+        return tileMap;
     }
 
     private skipAnimation(tile: Tile): boolean {
@@ -185,11 +203,14 @@ export class AnimatedExtrusionHandler {
             distanceToMinLevel,
             this.m_mapView.visibleTileSet.options.quadTreeSearchDistanceUp
         );
-
+        const tileMap = this.getTileMap(tile.dataSource);
+        if (!tileMap) {
+            return false;
+        }
         let lastTileKey = tile.tileKey;
         for (let deltaUp = 1; deltaUp <= levelsUp; ++deltaUp) {
             lastTileKey = lastTileKey.parent();
-            if (this.m_tileMap.get(lastTileKey.mortonCode())?.animated ?? false) {
+            if (tileMap.get(lastTileKey.mortonCode())?.animated ?? false) {
                 return true;
             }
         }
@@ -203,6 +224,10 @@ export class AnimatedExtrusionHandler {
             this.m_mapView.visibleTileSet.options.quadTreeSearchDistanceDown
         );
 
+        const tileMap = this.getTileMap(tile.dataSource);
+        if (!tileMap) {
+            return false;
+        }
         const tilingScheme = tile.dataSource.getTilingScheme();
         let nextTileKeys = [tile.tileKey];
         let childTileKeys: TileKey[] = [];
@@ -210,7 +235,7 @@ export class AnimatedExtrusionHandler {
             childTileKeys.length = 0;
             for (const tileKey of nextTileKeys) {
                 for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
-                    if (this.m_tileMap.get(childTileKey.mortonCode())?.animated ?? false) {
+                    if (tileMap.get(childTileKey.mortonCode())?.animated ?? false) {
                         return true;
                     }
                     childTileKeys.push(childTileKey);
@@ -224,7 +249,17 @@ export class AnimatedExtrusionHandler {
     }
 
     private removeTile(tile: Tile): void {
-        this.m_tileMap.delete(tile.tileKey.mortonCode());
+        const tileMap = this.getTileMap(tile.dataSource);
+        if (!tileMap) {
+            return;
+        }
+        tileMap.delete(tile.tileKey.mortonCode());
+
+        // Remove tile map if it's empty. That way, counting the number of data sources in the
+        // map is enough to know if there's any tile.
+        if (tileMap.size === 0) {
+            this.m_dataSourceMap.delete(tile.dataSource);
+        }
     }
 
     private animateExtrusion() {
@@ -258,19 +293,23 @@ export class AnimatedExtrusionHandler {
         this.m_state = AnimatedExtrusionState.None;
         this.m_startTime = -1;
         if (resetTiles) {
-            this.m_tileMap.forEach(state => {
-                state.animated = false;
+            this.m_dataSourceMap.forEach(tileMap => {
+                tileMap.forEach(state => {
+                    state.animated = false;
+                });
             });
         }
     }
     private setExtrusionRatio(value: number) {
-        this.m_tileMap.forEach(state => {
-            if (!state.animated) {
-                this.setTileExtrusionRatio(state.materials, value);
-                if (value >= 1) {
-                    state.animated = true;
+        this.m_dataSourceMap.forEach(tileMap => {
+            tileMap.forEach(state => {
+                if (!state.animated) {
+                    this.setTileExtrusionRatio(state.materials, value);
+                    if (value >= 1) {
+                        state.animated = true;
+                    }
                 }
-            }
+            });
         });
     }
 
