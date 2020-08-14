@@ -3,9 +3,16 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { EarthConstants, GeoCoordinates, Projection, ProjectionType } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    GeoCoordinates,
+    GeoPolygon,
+    GeoPolygonCoordinates,
+    Projection,
+    ProjectionType
+} from "@here/harp-geoutils";
 import { LoggerManager } from "@here/harp-utils";
-import { Frustum, Line3, Matrix4, PerspectiveCamera, Plane, Ray, Vector2, Vector3 } from "three";
+import { Frustum, Line3, Matrix4, PerspectiveCamera, Plane, Ray, Vector3 } from "three";
 
 import { TileCorners } from "./geometry/TileGeometryCreator";
 import { MapViewUtils } from "./Utils";
@@ -14,6 +21,8 @@ const logger = LoggerManager.instance.create("BoundsGenerator");
 
 /**
  * Generates Bounds for a camera view and a projection
+ *
+ * @beta, @internal
  */
 export class BoundsGenerator {
     private readonly m_groundPlaneNormal = new Vector3(0, 0, 1);
@@ -33,27 +42,27 @@ export class BoundsGenerator {
      * Generates an Array of GeoCoordinates covering the visible map.
      * The coordinates are sorted to ccw winding, so a polygon could be drawn with them.
      */
-    generate(): GeoCoordinates[] {
+    generate(): GeoPolygon | undefined {
         //TODO: support spherical projection
 
         //!!!!!!!ALTITUDE IS NOT TAKEN INTO ACCOUNT!!!!!!!!!
-        const geoPolygon: GeoCoordinates[] = [];
+        const coordinates: GeoCoordinates[] = [];
 
         //CASE A: FLAT PROJECTION
         if (this.m_projection.type === ProjectionType.Planar) {
             // 1.) Raycast into all four corners of the canvas
             //     => if an intersection is found, add it to the polygon
-            this.addCanvasCornerIntersection(geoPolygon);
+            this.addCanvasCornerIntersection(coordinates);
 
             // => All 4 corners found an intersection, therefore the screen is covered with the map
             // and the polygon complete
-            if (geoPolygon.length === 4) {
-                return geoPolygon;
+            if (coordinates.length === 4) {
+                return new GeoPolygon(coordinates as GeoPolygonCoordinates, true);
             }
 
             //2.) Raycast into the two corners of the horizon cutting the canvas sides
             //    => if an intersection is found, add it to the polygon
-            this.addHorizonIntersection(geoPolygon);
+            this.addHorizonIntersection(coordinates);
 
             //Setup the frustum for further checks
             const frustum = new Frustum().setFromProjectionMatrix(
@@ -73,7 +82,7 @@ export class BoundsGenerator {
                 //     => if true, add it to the polygon
                 [worldCorners.ne, worldCorners.nw, worldCorners.se, worldCorners.sw].forEach(
                     corner => {
-                        this.addPointInFrustum(corner, frustum, geoPolygon);
+                        this.addPointInFrustum(corner, frustum, coordinates);
                     }
                 );
             }
@@ -90,7 +99,7 @@ export class BoundsGenerator {
                     new Line3(worldCorners.se, worldCorners.ne), // east edge
                     new Line3(worldCorners.nw, worldCorners.sw) //  west edge
                 ].forEach(edge => {
-                    this.addFrustumIntersection(edge, frustum, geoPolygon);
+                    this.addFrustumIntersection(edge, frustum, coordinates);
                 });
             } else {
                 // if tile wrapping:
@@ -108,18 +117,19 @@ export class BoundsGenerator {
                     new Ray(worldCorners.ne, directionEast), // north east ray
                     new Ray(worldCorners.ne, directionWest) //  north west ray
                 ].forEach(ray => {
-                    this.addFrustumIntersection(ray, frustum, geoPolygon);
+                    this.addFrustumIntersection(ray, frustum, coordinates);
                 });
             }
         } else {
             logger.error("This ProjectionType", this.m_projection, " is not yet supported!");
         }
 
-        // 5.) Sort the coordinates in the polygon to be ccw, assuming the coordinates are creating
-        //     a convex shape.
-        this.sortCCW(geoPolygon);
-
-        return geoPolygon;
+        // 5.) Create the Polygon and set needsSort to `true`as we expect it to be convex and
+        //     sortable
+        if (coordinates.length > 2) {
+            return new GeoPolygon(coordinates as GeoPolygonCoordinates, true);
+        }
+        return undefined;
     }
 
     private getWorldConers(projection: Projection): TileCorners | undefined {
@@ -199,37 +209,6 @@ export class BoundsGenerator {
         return true;
     }
 
-    private sortCCW(coordinates: GeoCoordinates[]) {
-        if (coordinates.length < 2) {
-            return;
-        }
-        const polySum = coordinates.reduce((prev, curr) => {
-            return new GeoCoordinates(
-                prev.latitude + curr.latitude,
-                prev.longitude + curr.longitude
-            );
-        });
-        //create an average center point to rotate around
-        const polyCenter = new GeoCoordinates(
-            polySum.latitude / coordinates.length,
-            polySum.longitude / coordinates.length
-        );
-
-        //sorts by angle from x-axis
-        coordinates.sort((a: GeoCoordinates, b: GeoCoordinates) => {
-            const veca = new Vector2(
-                a.latitude - polyCenter.latitude,
-                a.longitude - polyCenter.longitude
-            ).normalize();
-            const vecb = new Vector2(
-                b.latitude - polyCenter.latitude,
-                b.longitude - polyCenter.longitude
-            ).normalize();
-
-            return vecb.angle() - veca.angle();
-        });
-    }
-
     private addPointInFrustum(point: Vector3, frustum: Frustum, geoPolygon: GeoCoordinates[]) {
         if (frustum.containsPoint(point)) {
             const geoPoint = this.m_projection.unprojectPoint(point);
@@ -254,7 +233,7 @@ export class BoundsGenerator {
 
             if (intersection) {
                 //uses this check to fix inaccuracies
-                if (this.closeToFrustum(intersection)) {
+                if (MapViewUtils.closeToFrustum(intersection, this.m_camera)) {
                     const geoIntersection = this.m_projection.unprojectPoint(intersection);
 
                     //correct altitude caused by inaccuracies, due to large numbers to 0
@@ -263,19 +242,6 @@ export class BoundsGenerator {
                 }
             }
         });
-    }
-
-    private closeToFrustum(point: Vector3): boolean {
-        const e = 0.0000000001;
-        const ndcPoint = new Vector3().copy(point).project(this.m_camera);
-        if (
-            Math.abs(ndcPoint.x) - e < 1 &&
-            Math.abs(ndcPoint.y) - e < 1 &&
-            Math.abs(ndcPoint.z) - e < 1
-        ) {
-            return true;
-        }
-        return false;
     }
 
     private getVerticalHorizonPositionInNDC(): number | undefined {

@@ -3,11 +3,11 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as THREE from "three";
 
 import { GeoBoxExtentLike } from "./GeoBoxExtentLike";
 import { GeoCoordinates } from "./GeoCoordinates";
+import { GeoCoordinatesLike } from "./GeoCoordinatesLike";
 
 /**
  * `GeoBox` is used to represent a bounding box in geo coordinates.
@@ -223,7 +223,7 @@ export class GeoBox implements GeoBoxExtentLike {
      *
      * @param point - The point that may expand the bounding box.
      */
-    growToContain(point: GeoCoordinates) {
+    growToContain(point: GeoCoordinatesLike) {
         this.southWest.latitude = Math.min(this.southWest.latitude, point.latitude);
         this.southWest.longitude = Math.min(this.southWest.longitude, point.longitude);
         this.southWest.altitude =

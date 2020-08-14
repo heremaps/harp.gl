@@ -3,10 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as THREE from "three";
 
 import { GeoCoordinatesLike, isGeoCoordinatesLike } from "./GeoCoordinatesLike";
+import { GeoCoordLike } from "./GeoCoordLike";
 import { GeoPointLike, isGeoPointLike } from "./GeoPointLike";
 import { isLatLngLike, LatLngLike } from "./LatLngLike";
 
@@ -14,10 +14,6 @@ export const MAX_LATITUDE = 90;
 export const MIN_LATITUDE = -90;
 export const MAX_LONGITUDE = 180;
 export const MIN_LONGITUDE = -180;
-/**
- * Represents an object in different geo coordinate formats
- */
-export type GeoCoordLike = GeoPointLike | GeoCoordinatesLike | LatLngLike;
 
 /**
  * `GeoCoordinates` is used to represent geo positions.

@@ -3,17 +3,16 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     GeoBox,
     GeoCoordinates,
-    GeoCoordLike,
     MathUtils,
     OrientedBox3,
     Projection,
     ProjectionType,
     TileKey
 } from "@here/harp-geoutils";
+import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
@@ -1600,6 +1599,22 @@ export namespace MapViewUtils {
             !mapView.visibleTileSet.allVisibleTilesLoaded;
 
         return isLoading;
+    }
+
+    export function closeToFrustum(
+        point: THREE.Vector3,
+        camera: THREE.Camera,
+        eps: number = 1e-13
+    ): boolean {
+        const ndcPoint = new THREE.Vector3().copy(point).project(camera);
+        if (
+            Math.abs(ndcPoint.x) - eps < 1 &&
+            Math.abs(ndcPoint.y) - eps < 1 &&
+            Math.abs(ndcPoint.z) - eps < 1
+        ) {
+            return true;
+        }
+        return false;
     }
 
     function estimateTextureSize(

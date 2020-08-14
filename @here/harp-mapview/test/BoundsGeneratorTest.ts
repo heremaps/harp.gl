@@ -91,7 +91,7 @@ describe("BoundsGenerator", function() {
         }
     });
 
-    it("generates empty polygon for spherical projection,  until implemented", function() {
+    it("generates undefined for spherical projection,  until implemented", function() {
         mapView = new MapView({ canvas, projection: sphereProjection });
         //create new instance of boundsGenerator with the new mapView instance parameters
         boundsGenerator = new BoundsGenerator(
@@ -102,36 +102,39 @@ describe("BoundsGenerator", function() {
         mapView?.lookAt(lookAtParams);
         mapView?.renderSync(); // render once to update camera parameter
         const geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isEmpty(geoPolygon);
+        assert.isUndefined(geoPolygon);
     });
 
-    it("generates empty polygon for spherical projection,  after projection changes", function() {
+    it("generates undefined for spherical projection,  after projection changes", function() {
         mapView?.lookAt(lookAtParams);
         mapView?.renderSync(); // render once to update camera parameter
         let geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        assert.isNotEmpty(geoPolygon?.coordinates);
+        assert.equal(geoPolygon?.coordinates?.length, 4);
 
         boundsGenerator.projection = sphereProjection;
         geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isEmpty(geoPolygon);
+        assert.isUndefined(geoPolygon);
     });
 
     it("generates polygon of canvas corners for canvas filled with map", function() {
         mapView?.lookAt(lookAtParams);
         mapView?.renderSync(); // render once to update camera parameter
-        const geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
+        assert.isNotEmpty(coordinates);
+        assert.equal(coordinates?.length, 4);
 
         let corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        if (coordinates === undefined) {
+            return;
+        }
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, 1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, 1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
     });
 
     it("generates polygon for canvas filled with map, w/ tileWrapping", function() {
@@ -154,37 +157,44 @@ describe("BoundsGenerator", function() {
         });
         mapView?.renderSync(); // render once to update camera parameter
 
-        const geoPolygon = boundsGenerator.generate();
+        const coordinates = boundsGenerator.generate()?.coordinates;
 
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        assert.isNotEmpty(coordinates);
+        assert.equal(coordinates?.length, 4);
+
+        if (coordinates === undefined) {
+            return;
+        }
 
         let corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, 1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, 1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
     });
 
     it("generates polygon of world Corners, if whole world plane is visible", function() {
         mapView?.lookAt({ zoomLevel: 0 });
         mapView?.renderSync(); // render once to update camera parameter
-        const geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
+        assert.isNotEmpty(coordinates);
+        assert.equal(coordinates?.length, 4);
 
         const worldCorners = TileGeometryCreator.instance.generateTilePlaneCorners(
             mercatorTilingScheme.getGeoBox(TileKey.fromRowColumnLevel(0, 0, 0)),
             mapView?.projection as Projection
         );
+        if (coordinates === undefined) {
+            return;
+        }
 
-        assert.deepInclude(geoPolygon, mapView?.projection.unprojectPoint(worldCorners.se));
-        assert.deepInclude(geoPolygon, mapView?.projection.unprojectPoint(worldCorners.sw));
-        assert.deepInclude(geoPolygon, mapView?.projection.unprojectPoint(worldCorners.ne));
-        assert.deepInclude(geoPolygon, mapView?.projection.unprojectPoint(worldCorners.nw));
+        assert.deepInclude(coordinates, mapView?.projection.unprojectPoint(worldCorners.se));
+        assert.deepInclude(coordinates, mapView?.projection.unprojectPoint(worldCorners.sw));
+        assert.deepInclude(coordinates, mapView?.projection.unprojectPoint(worldCorners.ne));
+        assert.deepInclude(coordinates, mapView?.projection.unprojectPoint(worldCorners.nw));
     });
 
     it("generates polygon of world vertically clipped by frustum , w/ tileWrapping", function() {
@@ -208,14 +218,14 @@ describe("BoundsGenerator", function() {
         });
         mapView?.renderSync(); // render once to update camera parameter
 
-        const geoPolygon = boundsGenerator.generate();
+        const coordinates = boundsGenerator.generate()?.coordinates;
 
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        assert.isNotEmpty(coordinates);
+        assert.equal(coordinates?.length, 4);
 
         const delta = 0.0000001;
-        geoPolygon.forEach(point => {
-            const worldPoint = mapView?.projection.projectPoint(point);
+        coordinates?.forEach(point => {
+            const worldPoint = mapView?.projection.projectPoint(GeoCoordinates.fromObject(point));
             if (worldPoint) {
                 const ndcPoint = new THREE.Vector3()
                     .copy(worldPoint as THREE.Vector3)
@@ -253,14 +263,14 @@ describe("BoundsGenerator", function() {
         });
         mapView?.renderSync(); // render once to update camera parameter
 
-        const geoPolygon = boundsGenerator.generate();
+        const coordinates = boundsGenerator.generate()?.coordinates;
 
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        assert.isNotEmpty(coordinates);
+        assert.equal(coordinates?.length, 4);
 
         const delta = 0.0000001;
-        geoPolygon.forEach(point => {
-            const worldPoint = mapView?.projection.projectPoint(point);
+        coordinates?.forEach(point => {
+            const worldPoint = mapView?.projection.projectPoint(GeoCoordinates.fromObject(point));
             if (worldPoint) {
                 const ndcPoint = new THREE.Vector3()
                     .copy(worldPoint as THREE.Vector3)
@@ -279,20 +289,23 @@ describe("BoundsGenerator", function() {
     it("generates polygon for tilted map, cut by horizon", function() {
         mapView?.lookAt({ tilt: 80 });
         mapView?.renderSync(); // render once to update camera parameter
-        const geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
+        assert.isNotEmpty(coordinates);
+        assert.equal(coordinates?.length, 4);
 
         let corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        if (coordinates === undefined) {
+            return;
+        }
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
 
         //only include lower corners, the upper ones are above horizon
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, 1);
-        assert.notDeepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.notDeepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, 1);
-        assert.notDeepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.notDeepInclude(coordinates, corner as GeoCoordinates);
     });
 
     it("generates polygon for tilted map, cut by horizon, w/ tileWrapping", function() {
@@ -310,21 +323,24 @@ describe("BoundsGenerator", function() {
             zoomLevel: 6
         });
         mapView?.renderSync(); // render once to update camera parameter
-        const geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isNotEmpty(geoPolygon);
-        assert.equal(geoPolygon.length, 4);
+        const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
+        assert.isNotEmpty(coordinates);
+        assert.equal(coordinates?.length, 4);
 
+        if (coordinates === undefined) {
+            return;
+        }
         let corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
 
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
 
         //only include lower corners, the upper ones are above horizon
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, 1);
-        assert.notDeepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.notDeepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, 1);
-        assert.notDeepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.notDeepInclude(coordinates, corner as GeoCoordinates);
     });
 
     it("generates polygon for tilted and heading rotated map, one worldCorner in view", function() {
@@ -340,24 +356,27 @@ describe("BoundsGenerator", function() {
             zoomLevel: 3
         });
         mapView?.renderSync(); // render once to update camera parameter
-        const geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isNotEmpty(geoPolygon);
+        const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
+        assert.isNotEmpty(coordinates);
         assert.equal(
-            geoPolygon.length,
+            coordinates?.length,
             5,
             "polygon contains 5 points and one worldcorner is in view"
         );
 
+        if (coordinates === undefined) {
+            return;
+        }
         let corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, -1);
-        assert.deepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.deepInclude(coordinates, corner as GeoCoordinates);
 
         //only include lower corners, the upper ones are above horizon
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, -1, 1);
-        assert.notDeepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.notDeepInclude(coordinates, corner as GeoCoordinates);
         corner = MapViewUtils.rayCastGeoCoordinates(mapView as MapView, 1, 1);
-        assert.notDeepInclude(geoPolygon, corner as GeoCoordinates);
+        assert.notDeepInclude(coordinates, corner as GeoCoordinates);
     });
 
     it("generates polygon for tilted  and heading rotated map, plane cut 2 times", function() {
@@ -373,10 +392,10 @@ describe("BoundsGenerator", function() {
             zoomLevel: 3
         });
         mapView?.renderSync(); // render once to update camera parameter
-        const geoPolygon = (boundsGenerator as BoundsGenerator).generate();
-        assert.isNotEmpty(geoPolygon);
+        const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
+        assert.isNotEmpty(coordinates);
         assert.equal(
-            geoPolygon.length,
+            coordinates?.length,
             6,
             "polygon contains 6 points and two worldcorners are in view, and 2 corners are clipped"
         );

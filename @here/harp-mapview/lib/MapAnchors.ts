@@ -3,16 +3,15 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { StylePriority } from "@here/harp-datasource-protocol";
 import {
     GeoCoordinates,
-    GeoCoordLike,
     isGeoCoordinatesLike,
     isVector3Like,
     Projection,
     Vector3Like
 } from "@here/harp-geoutils";
+import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import * as THREE from "three";
 
 /**
