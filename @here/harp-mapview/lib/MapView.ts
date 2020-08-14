@@ -1262,6 +1262,10 @@ export class MapView extends EventDispatcher {
     }
 
     set tileWrappingEnabled(enabled: boolean) {
+        if (this.projection.type === ProjectionType.Spherical) {
+            logger.warn("Setting this with spherical projection has no affect. Was this intended?");
+            return;
+        }
         if (enabled !== this.m_tileWrappingEnabled) {
             this.m_tileWrappingEnabled = enabled;
             this.m_visibleTiles = this.createVisibleTileSet();

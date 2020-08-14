@@ -622,6 +622,22 @@ describe("MapView", function() {
         }
     });
 
+    it("correctly set and get tile wrapping mode", function() {
+        mapView = new MapView({ canvas, projection: mercatorProjection });
+        const vts = mapView.visibleTileSet;
+        mapView.tileWrappingEnabled = false;
+        expect(mapView.tileWrappingEnabled).equal(false);
+        const vts2 = mapView.visibleTileSet;
+        // Ensure the VisibleTileSet was recreated
+        expect(vts).to.be.not.equal(vts2);
+    });
+
+    it("ignore set and get tile wrapping mode for sphere projection", function() {
+        mapView = new MapView({ canvas, projection: sphereProjection });
+        mapView.tileWrappingEnabled = false;
+        expect(mapView.tileWrappingEnabled).equal(true);
+    });
+
     it("supports #dispose", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
