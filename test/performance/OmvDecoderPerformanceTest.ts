@@ -73,8 +73,8 @@ export function createOMVDecoderPerformanceTest(
     name: string,
     options: OMVDecoderPerformanceTestOptions
 ) {
-    const repeats = options.repeats || 10;
-    const styleSetName = options.styleSetName || "tilezen";
+    const repeats = options.repeats ?? 10;
+    const styleSetName = options.styleSetName ?? "tilezen";
     describe(`OMVDecoderPerformanceTest - ${name}`, function() {
         this.timeout(0);
         let omvTiles: Array<[TileKey, ArrayBuffer]>;

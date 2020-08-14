@@ -14,7 +14,7 @@ const DEFAULT_PROCESSING_ESTIMATE_TIME = 2;
 const UPDATE_EVENT = { type: "update" };
 
 export class MapViewTaskScheduler extends THREE.EventDispatcher {
-    private m_taskQueue: TaskQueue;
+    private readonly m_taskQueue: TaskQueue;
     private m_throttlingEnabled: boolean = false;
 
     constructor(private m_maxFps: number = DEFAULT_MAX_FPS) {
@@ -93,7 +93,7 @@ export class MapViewTaskScheduler extends THREE.EventDispatcher {
                     // if there is a time estimate use it, otherwise default to 1 ms
                     // TODO: check whats a sane default, 1 seems to do it for now
                     availableTime -=
-                        task.estimatedProcessTime?.() || DEFAULT_PROCESSING_ESTIMATE_TIME;
+                        task.estimatedProcessTime?.() ?? DEFAULT_PROCESSING_ESTIMATE_TIME;
                     // always process at least 1 Task, so in the worst case the fps over tiles
                     // paradigma is sacrificed to not have an empty screen
                     if (availableTime > 0 || counter === 1) {

@@ -1221,7 +1221,7 @@ export class VisibleTileSet {
             execute: tile.load.bind(tile),
             group: TileTaskGroups.FETCH_AND_DECODE,
             getPriority: () => {
-                return tile?.tileLoader?.priority || 0;
+                return tile?.tileLoader?.priority ?? 0;
             },
             isExpired: () => {
                 return !tile?.isVisible;

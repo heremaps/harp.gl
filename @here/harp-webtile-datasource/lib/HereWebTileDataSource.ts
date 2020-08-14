@@ -27,11 +27,14 @@ import {
 const textureLoader = new TextureLoader();
 
 /**
- * Options for [[HereWebTileDataSource]].
+ * Options for {@link HereWebTileDataSource}.
  */
 interface HereWebTileDataSourceOptions {
     // tslint:disable:max-line-length
     /**
+     * Base URL.
+     *
+     * @remarks
      * This parameter specifies static part of the final Web Tile URL:
      *  * base url without protocol and load-balancing (`{1-4}.`) prefix
      *  * path,
@@ -225,7 +228,7 @@ export class HereTileProvider implements WebTileDataProvider {
         link: "https://legal.here.com/terms"
     };
 
-    constructor(private m_options: HereWebTileDataSourceParameters) {
+    constructor(private readonly m_options: HereWebTileDataSourceParameters) {
         this.m_ppi = getOptionValue(m_options.ppi, WebTileDataSource.ppiValue.ppi72);
         this.m_tileBaseAddress = m_options.tileBaseAddress ?? HereTileProvider.TILE_BASE_NORMAL;
         if (

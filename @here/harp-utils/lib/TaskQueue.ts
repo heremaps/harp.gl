@@ -50,15 +50,20 @@ export interface TaskQueueOptions {
     /**
      * Optional function to sort the priority, if set, i will override the internal TaskQueue.sort
      * function.
-     * Caution, the [[TaskQueue]] uses the last element in the Arrays first, so the
+     *
+     * @remarks
+     * Caution, the {@link TaskQueue} uses the last element in the Arrays first, so the
      * highest priorities should be ordered to the end
      */
     prioSortFn?: (a: Task, b: Task) => number;
 }
 
 /**
- * A Pull-TaskQueue sorted by priority and group-able [[Task]]s by [[Task.group]]
+ * A Pull-TaskQueue sorted by priority and group-able {@link Task}s by {@link Task.group}.
  *
+ * @remarks
+ *
+ * @example
  * Sample Usage
  * ```
  *  const taskQueue = new TaskQueue({
@@ -80,9 +85,9 @@ export interface TaskQueueOptions {
  *  ```
  */
 export class TaskQueue {
-    private m_taskLists: Map<string, Task[]> = new Map();
+    private readonly m_taskLists: Map<string, Task[]> = new Map();
 
-    constructor(private m_options: TaskQueueOptions) {
+    constructor(private readonly m_options: TaskQueueOptions) {
         this.m_options.groups?.forEach(group => {
             this.m_taskLists.set(group, []);
         });

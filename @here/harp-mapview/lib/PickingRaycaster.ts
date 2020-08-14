@@ -44,7 +44,7 @@ export class PickingRaycaster extends THREE.Raycaster {
      * @param height - the canvas height.
      * @param m_env - the view enviroment.
      */
-    constructor(public width: number, public height: number, private m_env: MapEnv) {
+    constructor(public width: number, public height: number, private readonly m_env: MapEnv) {
         super();
     }
 

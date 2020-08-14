@@ -105,7 +105,7 @@ export class TileGeometryLoader {
     private m_disabledKinds: GeometryKindSet | undefined;
     private m_priority: number = 0;
 
-    constructor(private m_tile: Tile, private m_taskQueue: TaskQueue) {}
+    constructor(private readonly m_tile: Tile, private readonly m_taskQueue: TaskQueue) {}
 
     set priority(value: number) {
         this.m_priority = value;
@@ -281,7 +281,7 @@ export class TileGeometryLoader {
             isExpired: this.discardNeedlessTile.bind(this, this.tile),
             estimatedProcessTime: () => {
                 //TODO: this seems to be close in many cases, but take some measures to confirm
-                return (this.tile.decodedTile?.decodeTime || 30) / 6;
+                return (this.tile.decodedTile?.decodeTime ?? 30) / 6;
             }
         });
     }
