@@ -116,7 +116,7 @@ export class WebTileDataSource extends DataSource {
     /** @override */
     getTile(tileKey: TileKey) {
         const tile: Tile = new Tile(this, tileKey);
-        let {} = this.dataProvider
+        this.dataProvider
             .getTexture(tile)
             .then(value => {
                 const [texture, copyrightInfo] = value;

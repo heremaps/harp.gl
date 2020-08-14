@@ -14,7 +14,7 @@ import * as THREE from "three";
  * is released.
  */
 export class EventDispatcher {
-    private m_listeners: Map<string, Array<(event: THREE.Event) => void>> = new Map();
+    private readonly m_listeners: Map<string, Array<(event: THREE.Event) => void>> = new Map();
 
     /**
      * Destroy this `EventDispatcher` instance.

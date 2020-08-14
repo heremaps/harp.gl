@@ -16,13 +16,13 @@ const logger = LoggerManager.instance.create("BoundsGenerator");
  * Generates Bounds for a camera view and a projection
  */
 export class BoundsGenerator {
-    private m_groundPlaneNormal = new Vector3(0, 0, 1);
-    private m_groundPlane = new Plane(this.m_groundPlaneNormal.clone());
+    private readonly m_groundPlaneNormal = new Vector3(0, 0, 1);
+    private readonly m_groundPlane = new Plane(this.m_groundPlaneNormal.clone());
 
     constructor(
-        private m_camera: PerspectiveCamera,
+        private readonly m_camera: PerspectiveCamera,
         private m_projection: Projection,
-        private m_tileWrappingEnabled: boolean = false
+        private readonly m_tileWrappingEnabled: boolean = false
     ) {}
 
     set projection(projection: Projection) {

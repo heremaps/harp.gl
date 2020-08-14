@@ -3481,7 +3481,7 @@ export class MapView extends EventDispatcher {
     private renderLoop(frameStartTime: number) {
         // Render loop shouldn't run when synchronous rendering is enabled or if `MapView` has been
         // disposed of.
-        if (this.m_options.synchronousRendering || this.disposed) {
+        if (this.m_options.synchronousRendering === true || this.disposed) {
             return;
         }
 
