@@ -98,7 +98,8 @@ export class AnimatedExtrusionHandler {
             return false;
         }
 
-        if ("minZoomLevel" in technique) {
+        const techniqueHasMinZl = technique.hasOwnProperty("minZoomLevel");
+        if (techniqueHasMinZl) {
             this.m_minZoomLevel = (technique as any).minZoomLevel;
         }
 
@@ -112,7 +113,7 @@ export class AnimatedExtrusionHandler {
 
         const animateExtrusionValue = getPropertyValue(technique.animateExtrusion, env);
 
-        if (animateExtrusionValue === null && "minZoomLevel" in technique) {
+        if (animateExtrusionValue === null && techniqueHasMinZl) {
             return this.enabled;
         }
 
