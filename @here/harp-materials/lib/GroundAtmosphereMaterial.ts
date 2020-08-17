@@ -6,7 +6,7 @@
 import * as THREE from "three";
 import { RawShaderMaterial } from "./RawShaderMaterial";
 import AtmosphereShaderChunks from "./ShaderChunks/AtmosphereChunks";
-import { setShaderDefine } from "./Utils";
+import { setShaderDefine, setShaderMaterialDefine } from "./Utils";
 
 const EQUATORIAL_RADIUS: number = 6378137.0;
 
@@ -21,19 +21,15 @@ export const GroundAtmosphereShader: THREE.Shader = {
         u_lightDirectionWorld: new THREE.Uniform(new THREE.Vector3(0, 1, 0)),
         u_modelViewProjection: new THREE.Uniform(new THREE.Matrix4()),
         // Environment settings:
-        // atmosphere inner and outer radius, camera height, light mode
+        // atmosphere inner and outer radius, camera height
         u_atmosphereEnv: new THREE.Uniform(
-            new THREE.Vector4(
+            new THREE.Vector3(
                 // Maximum inner radius
                 EQUATORIAL_RADIUS * 1.001,
                 // Maximum outer radius
                 EQUATORIAL_RADIUS * 1.025,
                 // Camera height
-                0,
-                // Toggles the light modes:
-                // 0 - light always directly overhead,
-                // 1 - lighting uses light direction: uniform u_lightDirectionWorld
-                1
+                0
             )
         ),
         u_hsvCorrection: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
@@ -62,7 +58,7 @@ export const GroundAtmosphereShader: THREE.Shader = {
     uniform vec3 u_eyePositionWorld;
     uniform vec3 u_lightDirectionWorld;
 
-    uniform vec4 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height, light mode
+    uniform vec3 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height
     uniform vec3 u_hsvCorrection;
 
     const float Pi = 3.141592653589793;
@@ -86,7 +82,6 @@ export const GroundAtmosphereShader: THREE.Shader = {
     varying vec3 v_vertToCamera;
     varying vec3 v_vertToOrigin;
 
-    ${AtmosphereShaderChunks.atmosphere_common_utils}
     ${AtmosphereShaderChunks.atmosphere_vertex_utils}
 
     //
@@ -102,7 +97,7 @@ export const GroundAtmosphereShader: THREE.Shader = {
     //
     // Further modifications by HERE.
     //
-    AtmosphereColor computeGroundAtmosphere(vec3 v3Pos, vec3 vLightDir, bool dynamicLighting)
+    AtmosphereColor computeGroundAtmosphere(vec3 v3Pos, vec3 vLightDir)
     {
         // Retrieve environment variables
         float fInnerRadius = u_atmosphereEnv.x;
@@ -153,14 +148,18 @@ export const GroundAtmosphereShader: THREE.Shader = {
 #endif
         float fCameraScale = scale(fCameraAngle);
 
+#ifdef DYNAMIC_LIGHT
         // When we want the atmosphere to be uniform over the globe so it is set to 1.0.
-#if defined(IMPROVE_DOT_PRECISION)
-        // The light angle for given light source may be calculated as:
-        // angle = dot(vLightDir, v3Dir) / length(v3Dir);
-        // where v3Dir holds normalized vertex position, but for precision issues we v3Pos (un-normalized)
-        float fLightAngle = conditionalBranchFree(dynamicLighting, dot(vLightDir, v3Pos) / length(v3Pos), 1.0);
+        #if defined(IMPROVE_DOT_PRECISION)
+            // The light angle for given light source may be calculated as:
+            // angle = dot(vLightDir, v3Dir) / length(v3Dir);
+            // where v3Dir holds normalized vertex position, but for precision issues we v3Pos (un-normalized)
+            float fLightAngle = dot(vLightDir, v3Pos) / length(v3Pos);
+        #else
+            float fLightAngle = dot(vLightDir, v3Dir);
+        #endif
 #else
-        float fLightAngle = conditionalBranchFree(dynamicLighting, dot(vLightDir, v3Dir), 1.0);
+        float fLightAngle = 1.0;
 #endif
         float fLightScale = scale(fLightAngle);
 
@@ -198,15 +197,14 @@ export const GroundAtmosphereShader: THREE.Shader = {
 
     void main(void)
     {
-        float fLightMode = u_atmosphereEnv.w;
-        bool bDynamicLight = fLightMode != 0.0;
-
-        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
-            u_lightDirectionWorld,
-            u_eyePositionWorld);
+        #ifdef DYNAMIC_LIGHT
+            vec3 vLightDir = u_lightDirectionWorld;
+        #else
+            vec3 vLightDir = u_eyePositionWorld;
+        #endif
         vLightDir = normalize(vLightDir);
 
-        AtmosphereColor atmColor = computeGroundAtmosphere(position.xyz, vLightDir, bDynamicLight);
+        AtmosphereColor atmColor = computeGroundAtmosphere(position.xyz, vLightDir);
         v_mieColor = atmColor.mie;
         v_rayleighColor = atmColor.rayleigh;
         v_vertToCamera = u_eyePositionWorld - position.xyz;
@@ -230,7 +228,7 @@ export const GroundAtmosphereShader: THREE.Shader = {
     uniform vec3 u_hsvCorrection; // Hue, saturation, brightness
     #endif
 
-    uniform vec4 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height, light mode
+    uniform vec3 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height
     uniform vec3 u_eyePositionWorld;
     uniform vec3 u_lightDirectionWorld;
 
@@ -242,7 +240,6 @@ export const GroundAtmosphereShader: THREE.Shader = {
     varying vec3 v_vertToCamera;
     varying vec3 v_vertToOrigin;
 
-    ${AtmosphereShaderChunks.atmosphere_common_utils}
     ${AtmosphereShaderChunks.atmosphere_fragment_utils}
 
     void main(void)
@@ -250,12 +247,12 @@ export const GroundAtmosphereShader: THREE.Shader = {
         float fInnerRadius = u_atmosphereEnv.x;
         float fOuterRadius = u_atmosphereEnv.y;
         float fCameraHeight = u_atmosphereEnv.z;
-        float fLightMode = u_atmosphereEnv.w;
-        bool bDynamicLight = fLightMode != 0.0;
 
-        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
-            u_lightDirectionWorld,
-            u_eyePositionWorld);
+        #ifdef DYNAMIC_LIGHT
+            vec3 vLightDir = u_lightDirectionWorld;
+        #else
+            vec3 vLightDir = u_eyePositionWorld;
+        #endif
         vLightDir = normalize(vLightDir);
 
         // GPU gems mix of ground solution, with custom alpha settings
@@ -289,20 +286,21 @@ export const GroundAtmosphereShader: THREE.Shader = {
     #endif
 
 #if defined(FADE_NIGHT) || defined(DARKEN_NIGHT)
+    #ifdef DYNAMIC_LIGHT
         // Adjust factor based on time of day, results are:
         // 0.0 = night,
         // 1.0 = day.
-    #ifdef NIGHT_GLOBAL
-        // Global night fade based on camera and light orientation
-        float fNightFactor = conditionalBranchFree(bDynamicLight,
-            clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0),
-             1.0);
-        fNightFactor = pow(fNightFactor, 0.5);
-    #else // NIGHT_LOCAL
-        float fNightFactor = conditionalBranchFree(bDynamicLight,
-            clamp(dot(v_vertToOrigin, vLightDir) / length(v_vertToOrigin), 0.0, 1.0),
-            1.0);
-        fNightFactor = pow(fNightFactor, 0.8);
+        #ifdef NIGHT_GLOBAL
+            // Global night fade based on camera and light orientation
+            float fNightFactor = clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0);
+            fNightFactor = pow(fNightFactor, 0.5);
+        #else // NIGHT_LOCAL
+            float fNightFactor =
+                clamp(dot(v_vertToOrigin, vLightDir) / length(v_vertToOrigin), 0.0, 1.0);
+            fNightFactor = pow(fNightFactor, 0.8);
+        #endif
+    #else
+        float fNightFactor = 1.0;
     #endif
 #endif
 
@@ -359,7 +357,7 @@ export class GroundAtmosphereMaterial extends RawShaderMaterial {
     }
 
     setDynamicLighting(enableLighting: boolean) {
-        this.uniforms.u_atmosphereEnv.value.w = enableLighting ? 1.0 : 0.0;
+        setShaderMaterialDefine(this, "DYNAMIC_LIGHT", enableLighting);
     }
 
     /**
@@ -437,7 +435,8 @@ export class GroundAtmosphereMaterial extends RawShaderMaterial {
                     "CAMERA_IN_ATMOSPHERE",
                     !cameraInSpace
                 );
-                shaderMaterial.needsUpdate = needsUpdate0 || needsUpdate1;
+                shaderMaterial.needsUpdate =
+                    shaderMaterial.needsUpdate || needsUpdate0 || needsUpdate1;
             } else {
                 throw Error("Atmosphere material has missing uniforms");
             }

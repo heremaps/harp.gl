@@ -6,7 +6,7 @@
 import * as THREE from "three";
 import { RawShaderMaterial } from "./RawShaderMaterial";
 import AtmosphereShaderChunks from "./ShaderChunks/AtmosphereChunks";
-import { setShaderDefine } from "./Utils";
+import { setShaderDefine, setShaderMaterialDefine } from "./Utils";
 
 const EQUATORIAL_RADIUS: number = 6378137.0;
 
@@ -21,19 +21,15 @@ export const SkyAtmosphereShader: THREE.Shader = {
         u_lightDirectionWorld: new THREE.Uniform(new THREE.Vector3(0, 1, 0)),
         u_modelViewProjection: new THREE.Uniform(new THREE.Matrix4()),
         // Environment settings:
-        // atmosphere inner and outer radius, camera height, light mode
+        // atmosphere inner and outer radius, camera height
         u_atmosphereEnv: new THREE.Uniform(
-            new THREE.Vector4(
+            new THREE.Vector3(
                 // Maximum inner radius
                 EQUATORIAL_RADIUS,
                 // Maximum outer radius
                 EQUATORIAL_RADIUS * 1.025,
                 // Camera height
-                0,
-                // Toggles the light modes:
-                // 0 - light always directly overhead,
-                // 1 - lighting uses light direction: uniform u_lightDirectionWorld
-                1
+                0.0
             )
         ),
         u_hsvCorrection: new THREE.Uniform(new THREE.Vector3(0, 0, 0)),
@@ -57,7 +53,7 @@ export const SkyAtmosphereShader: THREE.Shader = {
     uniform vec3 u_eyePositionWorld;
     uniform vec3 u_lightDirectionWorld;
 
-    uniform vec4 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height, light mode
+    uniform vec3 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height
     uniform vec3 u_hsvCorrection;
 
     const float Pi = 3.141592653589793;
@@ -80,7 +76,6 @@ export const SkyAtmosphereShader: THREE.Shader = {
     varying vec3 v_mieColor;
     varying vec3 v_vertToCamera;
 
-    ${AtmosphereShaderChunks.atmosphere_common_utils}
     ${AtmosphereShaderChunks.atmosphere_vertex_utils}
 
     //
@@ -96,7 +91,7 @@ export const SkyAtmosphereShader: THREE.Shader = {
     //
     // Further modifications by HERE
     //
-    AtmosphereColor computeSkyAtmosphere(vec3 v3Pos, vec3 vLightDir, bool dynamicLighting)
+    AtmosphereColor computeSkyAtmosphere(vec3 v3Pos, vec3 vLightDir)
     {
         // Unpack attributes
         float fInnerRadius = u_atmosphereEnv.x;
@@ -171,15 +166,14 @@ export const SkyAtmosphereShader: THREE.Shader = {
 
     void main(void)
     {
-        float fLightMode = u_atmosphereEnv.w;
-        bool bDynamicLight = fLightMode != 0.0;
-
-        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
-            u_lightDirectionWorld,
-            u_eyePositionWorld);
+        #ifdef DYNAMIC_LIGHT
+            vec3 vLightDir = u_lightDirectionWorld;
+        #else
+            vec3 vLightDir = u_eyePositionWorld;
+        #endif
         vLightDir = normalize(vLightDir);
 
-        AtmosphereColor atmColor = computeSkyAtmosphere(position.xyz, vLightDir, bDynamicLight);
+        AtmosphereColor atmColor = computeSkyAtmosphere(position.xyz, vLightDir);
         v_mieColor = atmColor.mie;
         v_rayleighColor = atmColor.rayleigh;
         v_vertToCamera = u_eyePositionWorld - position.xyz;
@@ -199,7 +193,7 @@ export const SkyAtmosphereShader: THREE.Shader = {
     uniform vec3 u_hsvCorrection; // Hue, saturation, brightness
     #endif
 
-    uniform vec4 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height, light mode
+    uniform vec3 u_atmosphereEnv; // Atmosphere inner and outer radius, camera height
     uniform vec3 u_eyePositionWorld;
     uniform vec3 u_lightDirectionWorld;
 
@@ -210,7 +204,6 @@ export const SkyAtmosphereShader: THREE.Shader = {
     varying vec3 v_mieColor;
     varying vec3 v_vertToCamera;
 
-    ${AtmosphereShaderChunks.atmosphere_common_utils}
     ${AtmosphereShaderChunks.atmosphere_fragment_utils}
 
     void main(void)
@@ -218,12 +211,15 @@ export const SkyAtmosphereShader: THREE.Shader = {
         float fInnerRadius = u_atmosphereEnv.x;
         float fOuterRadius = u_atmosphereEnv.y;
         float fCameraHeight = u_atmosphereEnv.z;
-        float fLightMode = u_atmosphereEnv.w;
-        bool bDynamicLight = fLightMode != 0.0;
 
-        vec3 vLightDir = conditionalBranchFree(bDynamicLight,
-            u_lightDirectionWorld,
-            u_eyePositionWorld);
+        #ifdef DYNAMIC_LIGHT
+            vec3 vLightDir = u_lightDirectionWorld;
+            // Alter alpha based on time of day (0.0 = night , 1.0 = day)
+            float fNightAlpha = clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0);
+        #else
+            vec3 vLightDir = u_eyePositionWorld;
+            float fNightAlpha = 1.0;
+        #endif
         vLightDir = normalize(vLightDir);
 
         // NOTE:
@@ -249,11 +245,6 @@ export const SkyAtmosphereShader: THREE.Shader = {
         // Alter alpha based on how close the viewer is to the ground (1.0 = on ground, 0.0 = at edge of atmosphere)
         float fAtmosphereAlpha = clamp((fOuterRadius - fCameraHeight) /
             (fOuterRadius - fInnerRadius), 0.0, 1.0);
-
-        // Alter alpha based on time of day (0.0 = night , 1.0 = day)
-        float fNightAlpha = conditionalBranchFree(bDynamicLight,
-            clamp(dot(normalize(u_eyePositionWorld), vLightDir), 0.0, 1.0),
-            1.0);
         fAtmosphereAlpha *= pow(fNightAlpha, 0.5);
 
         gl_FragColor = vec4(cRgb, mix(cRgb.b, 1.0, fAtmosphereAlpha));
@@ -283,7 +274,7 @@ export class SkyAtmosphereMaterial extends RawShaderMaterial {
     }
 
     setDynamicLighting(enableLighting: boolean) {
-        this.uniforms.u_atmosphereEnv.value.w = enableLighting ? 1.0 : 0.0;
+        setShaderMaterialDefine(this, "DYNAMIC_LIGHT", enableLighting);
     }
 
     /**
@@ -361,7 +352,8 @@ export class SkyAtmosphereMaterial extends RawShaderMaterial {
                     "CAMERA_IN_ATMOSPHERE",
                     !cameraInSpace
                 );
-                shaderMaterial.needsUpdate = needsUpdate0 || needsUpdate1;
+                shaderMaterial.needsUpdate =
+                    shaderMaterial.needsUpdate || needsUpdate0 || needsUpdate1;
             } else {
                 throw Error("Atmosphere material has missing uniforms");
             }
