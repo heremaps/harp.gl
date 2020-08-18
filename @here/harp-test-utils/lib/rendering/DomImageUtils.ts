@@ -9,7 +9,6 @@ import * as THREE from "three";
 import { TestOptions } from "./RenderingTestHelper";
 
 declare const require: any;
-// tslint:disable-next-line:no-var-requires
 const pixelmatch = require("pixelmatch");
 
 const logger = LoggerManager.instance.create("DomImageUtils");

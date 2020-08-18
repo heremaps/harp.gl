@@ -75,11 +75,9 @@ export interface IPass {
 export class Pass implements IPass {
     enabled: boolean = false;
     renderToScreen: boolean = false;
-    // tslint:disable-next-line:no-unused-variable
     setSize(width: number, height: number) {
         // Implemented in sub-classes.
     }
-    // tslint:disable:no-unused-variable
     render(
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
@@ -90,7 +88,6 @@ export class Pass implements IPass {
     ) {
         // Implemented in sub-classes.
     }
-    // tslint:enable:no-unused-variable
 }
 
 /**

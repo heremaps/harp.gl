@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console */
+
 export enum LogLevel {
     DEBUG,
     INFO,
@@ -28,19 +30,15 @@ class LoggerVerbose implements Logger {
         const paramsToShow = optionalParams.length ? optionalParams : "";
         switch (level) {
             case LogLevel.DEBUG:
-                // tslint:disable-next-line: no-console
                 console.debug(msg, paramsToShow);
                 break;
             case LogLevel.WARN:
-                // tslint:disable-next-line: no-console
                 console.warn(msg, paramsToShow);
                 break;
             case LogLevel.ERROR:
-                // tslint:disable-next-line: no-console
                 console.error(msg, paramsToShow);
                 break;
             default:
-                // tslint:disable-next-line: no-console
                 console.info(msg, paramsToShow);
                 break;
         }
@@ -51,13 +49,10 @@ class LoggerCritical implements Logger {
     log(level: LogLevel, msg?: any, ...optionalParams: any[]) {
         const paramsToShow = optionalParams.length ? optionalParams : "";
         if (level === LogLevel.INFO) {
-            // tslint:disable-next-line: no-console
             console.info(msg, paramsToShow);
         } else if (level === LogLevel.WARN) {
-            // tslint:disable-next-line: no-console
             console.warn(msg, paramsToShow);
         } else if (level === LogLevel.ERROR) {
-            // tslint:disable-next-line: no-console
             console.error(msg, paramsToShow);
         }
     }

@@ -42,9 +42,6 @@
         "prettier": "^1.19.1",
         "three": "^0.119.0",
         "ts-mocha": "^7.0.0",
-        "tslint": "^6.1.2",
-        "tslint-config-prettier": "^1.18.0",
-        "tslint-override": "^1.0.0",
         "typedoc": "^0.17.7",
         "typescript": "^3.9.3",
         "webpack": "^4.43.0",
@@ -52,7 +49,7 @@
         "webpack-dev-server": "^3.11.0"
     },
     "scripts": {
-        "pre-test": "yarn run code-pre-tests --forbid-only && yarn run prettier && yarn run tslint",
+        "pre-test": "yarn run code-pre-tests --forbid-only && yarn run prettier && yarn eslint",
         "code-pre-tests": "ts-mocha --no-timeouts ./test/*.ts",
         "test": "ts-mocha ./@here/*/test/*.ts",
         "performance-test-node": "ts-mocha ./test/performance/**/*.ts",
@@ -73,11 +70,10 @@
         "approve-reference-rendering-tests": "npx ts-node @here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts approve",
         "typedoc": "ts-node ./scripts/setup-docs.ts && typedoc --disableOutputCheck --options typedoc.json",
         "docs": "ts-node ./scripts/apidocs.ts",
-        "tslint": "tslint --project tsconfig.json",
-        "tslint:fix": "tslint --fix --project tsconfig.json",
         "prettier": "prettier -l \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "prettier:fix": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "eslint": "eslint --ext .ts ./@here test scripts",
+        "eslint:fix": "eslint --write --ext .ts ./@here test scripts",
         "postinstall": "yarn workspace @here/harp-datasource-protocol generate-json-schema",
         "prepare-doc-deploy": "ts-node ./scripts/prepare_doc_deploy.ts"
     },

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -38,10 +39,8 @@ import { ObjectOperators } from "./operators/ObjectOperators";
 import { StringOperators } from "./operators/StringOperators";
 import { TypeOperators } from "./operators/TypeOperators";
 import { VectorOperators } from "./operators/VectorOperators";
-import { RGBA } from "./RGBA";
-
-import * as THREE from "three";
 import { Pixels } from "./Pixels";
+import { RGBA } from "./RGBA";
 
 export interface OperatorDescriptor {
     /**
@@ -326,7 +325,6 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             if (firstDynamicCondition !== -1) {
                 let branches: Array<[Expr, Expr]> | undefined;
 
-                // tslint:disable-next-line: prefer-for-of
                 for (let i = 0; i < match.branches.length; ++i) {
                     const [condition, body] = match.branches[i];
 
@@ -413,7 +411,6 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             return new StepExpr(
                 context.wrapValue(input),
                 context.wrapValue(defaultValue),
-                // tslint:disable-next-line: no-shadowed-variable
                 expr.stops.map(([key, value]) => {
                     const v = context.evaluate(value);
                     return [key, context.wrapValue(v)];

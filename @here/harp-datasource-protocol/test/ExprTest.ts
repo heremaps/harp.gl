@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
@@ -18,8 +17,7 @@ function evaluate(expr: string | JsonExpr | Expr, env?: Env | ValueMap): Value {
     return (Expr.isExpr(expr)
         ? expr
         : typeof expr === "string"
-        ? // tslint:disable-next-line: deprecation
-          Expr.parse(expr)
+        ? Expr.parse(expr)
         : Expr.fromJSON(expr)
     ).evaluate(env ?? new Env());
 }

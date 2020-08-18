@@ -89,7 +89,7 @@ export class GlyphTextureCache {
             this.m_cacheHeight * entryHeight
         );
         if (this.m_textureSize.y > MAX_TEXTURE_SIZE || this.m_textureSize.x > MAX_TEXTURE_SIZE) {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.warn(
                 "GlyphTextureCache texture size (" +
                     this.m_textureSize.x +

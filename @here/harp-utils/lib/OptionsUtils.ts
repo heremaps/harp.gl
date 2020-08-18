@@ -97,7 +97,6 @@ export function getOptionValue<T>(...values: Array<T | undefined>): T | undefine
 export function mergeWithOptions<T extends object>(parameters: T, options?: Partial<T>): T {
     // NOTE: `as object` needed due to TypeScript bug:
     //       https://github.com/Microsoft/TypeScript/issues/14409
-    // tslint:disable-next-line:no-object-literal-type-assertion
     const result = { ...(parameters as object) } as T;
     if (options === undefined || options === null) {
         return result;

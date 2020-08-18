@@ -12,9 +12,8 @@ import {
     WORKERCHANNEL_MSG_TYPE
 } from "@here/harp-utils";
 
-import { WorkerLoader } from "./workers/WorkerLoader";
-
 import * as THREE from "three";
+import { WorkerLoader } from "./workers/WorkerLoader";
 
 const logger = LoggerManager.instance.create("ConcurrentWorkerSet");
 

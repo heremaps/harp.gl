@@ -82,7 +82,6 @@ export class DisplacedMesh extends THREE.Mesh {
     }
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
     raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
         // All materials in the object are expected to have the same displacement map.
         const firstMaterial = this.firstMaterial;

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
@@ -55,7 +54,6 @@ describe("OptionsUtils", function() {
             assert(mergeWithOptions(FOO_DEFAULTS) !== FOO_DEFAULTS);
         });
         it("doesn't copy options not existing in template", function() {
-            // tslint:disable-next-line:no-object-literal-type-assertion
             const options: FooOptions = { someOtherOption: "a" } as FooOptions;
             assert.deepEqual(mergeWithOptions(FOO_DEFAULTS, options), FOO_DEFAULTS);
         });
@@ -104,13 +102,11 @@ describe("OptionsUtils", function() {
             //
             // test Object.assign
             //
-            // tslint:disable-next-line:prefer-object-spread
             const objectAssignWithNull = Object.assign({}, FOO_DEFAULTS, {
                 useTextures: maskedNull
             });
             assert.deepEqual(objectAssignWithNull.useTextures, null);
 
-            // tslint:disable-next-line:prefer-object-spread
             const objectAssignWithUndefined = Object.assign({}, FOO_DEFAULTS, {
                 useTextures: maskedUndefined
             });

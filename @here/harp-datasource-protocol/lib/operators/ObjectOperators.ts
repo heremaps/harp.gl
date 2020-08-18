@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Env } from "../Env";
 import { CallExpr, Expr, ExprScope } from "../Expr";
 
-import { Env } from "../Env";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;

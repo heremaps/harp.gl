@@ -217,7 +217,6 @@ describe("ClipPolygon", () => {
         const clippedPolygon = clipPolygon(polygon, extents);
 
         const expectedPolygon = clippedPolygon.reduce((points, { x, y }) => {
-            // tslint:disable-next-line: no-bitwise
             points.push(x | 0, y | 0);
             return points;
         }, [] as number[]);

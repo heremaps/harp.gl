@@ -16,7 +16,6 @@ interface QueryParameters {
     [key: string]: string;
 }
 
-// tslint:disable:max-line-length
 export enum APIFormat {
     /**
      * Use the REST API format of HERE Vector Tiles Server component version 1.
@@ -142,7 +141,6 @@ export enum APIFormat {
      */
     XYZSpace
 }
-// tslint:enable:max-line-length
 
 /**
  * Authentication token/code provider used by [[OmvRestClient]] before each call to currently valid
@@ -370,9 +368,7 @@ export class OmvRestClient implements DataProvider {
             return this.params.authenticationCode;
         } else if (this.params.authenticationCode !== undefined) {
             return this.params.authenticationCode();
-            // tslint:disable-next-line: deprecation
         } else if (this.params.getBearerToken !== undefined) {
-            // tslint:disable-next-line: deprecation
             return this.params.getBearerToken();
         } else {
             return undefined;
@@ -383,7 +379,6 @@ export class OmvRestClient implements DataProvider {
      * Get default authentication method basing on apiFormat and other params.
      */
     private getDefaultAuthMethod() {
-        // tslint:disable-next-line: deprecation
         if (this.params.getBearerToken !== undefined) {
             return AuthenticationTypeBearer;
         }

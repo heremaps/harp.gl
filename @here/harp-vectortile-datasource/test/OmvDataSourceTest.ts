@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { FeatureCollection } from "@here/harp-datasource-protocol";
@@ -13,6 +12,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { assert } from "chai";
+import * as sinon from "sinon";
 import {
     APIFormat,
     AuthenticationTypeAccessToken,
@@ -21,8 +21,6 @@ import {
 } from "../index";
 import { VectorTileDecoder } from "../index-worker";
 import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
-
-import * as sinon from "sinon";
 
 class MockDataProvider implements DataProvider {
     /** Overriding abstract method, in this case doing nothing. */
@@ -106,10 +104,8 @@ describe("DataProviders", function() {
             maxZoomLevel: 17
         });
 
-        // tslint:disable-next-line: deprecation
         assert.equal(omvDataSource.minZoomLevel, 3);
         assert.equal(omvDataSource.minDataLevel, 3);
-        // tslint:disable-next-line: deprecation
         assert.equal(omvDataSource.maxZoomLevel, 17);
         assert.equal(omvDataSource.maxDataLevel, 17);
     });
@@ -126,10 +122,8 @@ describe("DataProviders", function() {
             maxDataLevel: 17
         });
 
-        // tslint:disable-next-line: deprecation
         assert.equal(omvDataSource.minZoomLevel, 3);
         assert.equal(omvDataSource.minDataLevel, 3);
-        // tslint:disable-next-line: deprecation
         assert.equal(omvDataSource.maxZoomLevel, 17);
         assert.equal(omvDataSource.maxDataLevel, 17);
     });
@@ -152,7 +146,6 @@ describe("DataProviders", function() {
             omvDataSource.attach(mapView);
             omvDataSource.storageLevelOffset = 2;
             assert.equal(omvDataSource.storageLevelOffset, 2);
-            // tslint:disable-next-line: no-string-literal
             assert.equal(omvDataSource["m_decoderOptions"].storageLevelOffset, 2);
             assert.equal((omvDataSource.decoder as any).m_storageLevelOffset, 2);
         });

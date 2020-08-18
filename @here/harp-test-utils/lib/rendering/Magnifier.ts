@@ -13,7 +13,6 @@ function rgbToHex(r: number, g: number, b: number) {
     if (r > 255 || g > 255 || b > 255) {
         throw new Error("Invalid color component");
     }
-    // tslint:disable-next-line:no-bitwise
     return ((r << 16) | (g << 8) | b).toString(16).toUpperCase();
 }
 type RGBColorTuple = [number, number, number];
@@ -25,7 +24,6 @@ function htmlColor(rgb: RGBColorTuple) {
     return "#" + rgbToHex(rgb[0], rgb[1], rgb[2]);
 }
 function colorIndicator(rgb: RGBColorTuple) {
-    // tslint:disable-next-line:max-line-length
     return `<div
         style='
             display: inline-block;

@@ -34,13 +34,10 @@ import { stubPoiRenderer, stubPoiRendererFactory } from "./stubPoiRenderer";
 import { stubTextCanvas, stubTextCanvasFactory } from "./stubTextCanvas";
 import { FadeState } from "./TextElementsRendererTestUtils";
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox): ViewState {

@@ -13,9 +13,8 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 
-import { WorldTileProjectionCookie } from "./OmvUtils";
-
 import * as THREE from "three";
+import { WorldTileProjectionCookie } from "./OmvUtils";
 
 export class DecodeInfo {
     /**

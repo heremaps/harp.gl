@@ -13,10 +13,8 @@ const SHIFT_RED: number = 16;
 const SHIFT_GREEN: number = 8;
 const SHIFT_BLUE: number = 0;
 
-// tslint:disable: no-bitwise
 //    Allow bitwise operations for colors decoding
 
-// tslint:disable-next-line: no-bitwise
 const HEX_FULL_CHANNEL: number = 0xff;
 const HEX_RGB_MASK: number = 0xffffff;
 const HEX_TRGB_MASK: number = 0xffffffff;

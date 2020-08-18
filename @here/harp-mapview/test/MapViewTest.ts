@@ -4,22 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assert, expect } from "chai";
 import * as path from "path";
-import * as sinon from "sinon";
-import * as THREE from "three";
 import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
+import { Expr } from "@here/harp-datasource-protocol";
 import {
     GeoBox,
     GeoCoordinates,
@@ -30,21 +25,22 @@ import {
     sphereProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
-import { MapView, MapViewEventNames } from "../lib/MapView";
-import { MapViewFog } from "../lib/MapViewFog";
-import { MapViewUtils } from "../lib/Utils";
-
-import { Expr } from "@here/harp-datasource-protocol";
 import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils";
+import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
+import * as THREE from "three";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { DataSource } from "../lib/DataSource";
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSource";
 import { MapMaterialAdapter } from "../lib/MapMaterialAdapter";
 import { MapObjectAdapter } from "../lib/MapObjectAdapter";
+import { MapView, MapViewEventNames } from "../lib/MapView";
+import { MapViewFog } from "../lib/MapViewFog";
+import { MapViewUtils } from "../lib/Utils";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
@@ -80,7 +76,6 @@ describe("MapView", function() {
         sandbox
             .stub(THREE, "WebGL1Renderer")
             .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
-        // tslint:disable-next-line:no-unused-variable
         const fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
         if (inNodeContext) {
             const theGlobal: any = global;
@@ -127,7 +122,6 @@ describe("MapView", function() {
         const zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
         mapView = new MapView({ canvas });
-        // tslint:disable-next-line: deprecation
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
 
         expect(zoomSpy.calledOnce).to.be.true;
@@ -341,7 +335,6 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("Correctly sets geolocation and zoom from options in constructor with sphere projection", function() {
         mapView = new MapView({
             canvas,
@@ -453,7 +446,6 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("Correctly sets geolocation with GeoCoordinatesLike as parameter in constructor", function() {
         mapView = new MapView({
             canvas,
@@ -504,7 +496,6 @@ describe("MapView", function() {
         expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("Correctly sets target with GeoCoordinatesLike", function() {
         mapView = new MapView({
             canvas
@@ -1251,7 +1242,6 @@ describe("MapView", function() {
         beforeEach(function() {
             fakeElevationSource = {
                 name: "terrain",
-                // tslint:disable-next-line: no-shadowed-variable
                 attach(mapView: MapView) {
                     this.mapView = mapView;
                 },

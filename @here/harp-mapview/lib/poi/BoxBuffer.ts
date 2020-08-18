@@ -3,10 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { MemoryUsage } from "@here/harp-text-canvas";
 import { Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { MemoryUsage } from "@here/harp-text-canvas";
 import { getPixelFromImage, screenToUvCoordinates } from "./PixelPicker";
 
 /**

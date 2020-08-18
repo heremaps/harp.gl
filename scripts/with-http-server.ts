@@ -5,15 +5,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console */
+
 declare const require: any;
 
-// tslint:disable:no-console
-
 import * as child_process from "child_process";
-import * as commander from "commander";
-import * as express from "express";
 import * as http from "http";
 import * as path from "path";
+import * as commander from "commander";
+import * as express from "express";
 
 const modulesToLoad: string[] = [];
 function addLoadedModule(val: string) {
@@ -41,7 +41,6 @@ const app = express();
  */
 for (const modulePath of modulesToLoad) {
     try {
-        // tslint:disable-next-line:no-var-requires
         const module = require(modulePath);
         const middleware =
             typeof module === "function"

@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
+/* eslint-disable no-console */
+
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { assertRejected, getTestResourceUrl, stubGlobalConstructor } from "@here/harp-test-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
-
-import { assertRejected, getTestResourceUrl, stubGlobalConstructor } from "@here/harp-test-utils";
 
 import { WorkerLoader } from "../lib/workers/WorkerLoader";
 import { FakeWebWorker, willExecuteWorkerScript } from "./FakeWebWorker";
@@ -184,7 +184,6 @@ describe("WorkerLoader", function() {
                 // It's reported on console and to mocha, so we
                 //  1) Show log message, so random developer is not worried about error in developer
                 //     console
-                // tslint:disable-next-line:no-console
                 console.log(
                     "Next 'TypeError' about accessing null in some blob based worker is handled. " +
                         "Don't worry"

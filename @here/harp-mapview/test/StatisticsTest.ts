@@ -14,7 +14,6 @@ import {
     Statistics
 } from "../lib/Statistics";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 declare const global: any;
@@ -85,11 +84,9 @@ describe("mapview-statistics", function() {
             rb.deq();
         });
         assert.throws(() => {
-            // tslint:disable-next-line:no-unused-expression
             rb.top;
         });
         assert.throws(() => {
-            // tslint:disable-next-line:no-unused-expression
             rb.bottom;
         });
 

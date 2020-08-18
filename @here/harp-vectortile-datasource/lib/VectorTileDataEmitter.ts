@@ -48,30 +48,6 @@ import {
     StyleSetEvaluator,
     Value
 } from "@here/harp-datasource-protocol/index-decoder";
-import { LineGroup } from "@here/harp-lines/lib/Lines";
-import { triangulateLine } from "@here/harp-lines/lib/TriangulateLines";
-import { assert, getOptionValue, LoggerManager, Math2D } from "@here/harp-utils";
-import earcut from "earcut";
-import * as THREE from "three";
-
-import {
-    GeoBox,
-    GeoCoordinates,
-    normalizedEquirectangularProjection,
-    ProjectionType,
-    Vector3Like,
-    webMercatorProjection
-} from "@here/harp-geoutils";
-
-import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import {
-    tile2world,
-    webMercatorTile2TargetTile,
-    webMercatorTile2TargetWorld,
-    world2tile
-} from "./OmvUtils";
-import { Ring } from "./Ring";
-
 import {
     AttrEvaluationContext,
     evaluateTechniqueAttr
@@ -81,10 +57,31 @@ import {
     EdgeLengthGeometrySubdivisionModifier,
     SubdivisionMode
 } from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
-// tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
+import {
+    GeoBox,
+    GeoCoordinates,
+    normalizedEquirectangularProjection,
+    ProjectionType,
+    Vector3Like,
+    webMercatorProjection
+} from "@here/harp-geoutils";
+import { LineGroup } from "@here/harp-lines/lib/Lines";
+import { triangulateLine } from "@here/harp-lines/lib/TriangulateLines";
 import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
+import { assert, getOptionValue, LoggerManager, Math2D } from "@here/harp-utils";
+import earcut from "earcut";
+import * as THREE from "three";
+
 import { DecodeInfo } from "./DecodeInfo";
+import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
+import {
+    tile2world,
+    webMercatorTile2TargetTile,
+    webMercatorTile2TargetWorld,
+    world2tile
+} from "./OmvUtils";
+import { Ring } from "./Ring";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
@@ -1287,7 +1284,6 @@ export class VectorTileDataEmitter {
             const featureHeight = context.env.lookup("height") as number;
             const styleSetDefaultHeight = evaluateTechniqueAttr<number>(
                 context,
-                // tslint:disable-next-line: deprecation
                 extrudedPolygonTechnique.defaultHeight
             );
             height =

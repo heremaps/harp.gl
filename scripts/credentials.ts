@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console */
+
 import * as fs from "fs";
 import { apikey } from "../@here/harp-examples/config";
-
-// tslint:disable : no-console
 
 function usage() {
     console.log(`Usage: ${process.argv[1]} targetDir`);

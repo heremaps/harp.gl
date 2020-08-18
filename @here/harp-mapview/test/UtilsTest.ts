@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import {
@@ -112,7 +111,6 @@ describe("map-view#Utils", function() {
         const cameraHeight =
             MapViewUtils.calculateDistanceToGroundFromZoomLevel(mapView, xyzView.zoom) /
             Math.cos(THREE.MathUtils.degToRad(xyzView.pitch));
-        // tslint:disable-next-line: deprecation
         const cameraCoordinates = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
             new GeoCoordinates(xyzView.center[0], xyzView.center[1]),
             cameraHeight,
@@ -263,7 +261,6 @@ describe("map-view#Utils", function() {
         expect(objSize.gpuSize).to.be.equal(1584); // see previous test
     });
 
-    // tslint:disable-next-line: max-line-length
     it("estimate size of world with 1000 cubes (BufferGeometry)", async function(this: Mocha.Context) {
         this.timeout(4000);
         const scene: THREE.Scene = new THREE.Scene();
@@ -394,7 +391,6 @@ describe("map-view#Utils", function() {
                 it("camera target and distance are offset by elevation", function() {
                     elevationProvider.getHeight = sandbox.stub().returns(0);
 
-                    // tslint:disable-next-line: deprecation
                     const resultNoElevation = MapViewUtils.getTargetAndDistance(
                         projection,
                         camera,
@@ -410,7 +406,6 @@ describe("map-view#Utils", function() {
                     const elevation = 42;
                     elevationProvider.getHeight = sandbox.stub().returns(elevation);
 
-                    // tslint:disable-next-line: deprecation
                     const resultElevation = MapViewUtils.getTargetAndDistance(
                         projection,
                         camera,

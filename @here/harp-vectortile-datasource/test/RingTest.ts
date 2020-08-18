@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { clipPolygon } from "@here/harp-geometry/lib/ClipPolygon";
@@ -49,12 +46,10 @@ describe("Ring", function() {
 
         it("throws exception", () => {
             assert.throws(() => {
-                // tslint:disable-next-line:no-unused-variable
                 const ring = new Ring([new Vector2(0, 0)], []);
             }, "the array of texture coordinates must have the same number of elements of the array of points");
 
             assert.throws(() => {
-                // tslint:disable-next-line:no-unused-variable
                 const ring = new Ring([], [new Vector2(0, 0)]);
             }, "the array of texture coordinates must have the same number of elements of the array of points");
         });
@@ -246,7 +241,6 @@ describe("Ring", function() {
             const outlines = ring.points.map((_, i) => ring.isProperEdge(i));
 
             assert.deepEqual(
-                // tslint:disable-next-line: no-bitwise
                 ring.toArray().map(x => x | 0),
                 [0, 0, 4096, 0, 0, 2023, 0, 2073, 4096, 4096, 0, 4096]
             );

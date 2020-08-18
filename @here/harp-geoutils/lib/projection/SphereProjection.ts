@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike, isGeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
@@ -15,8 +16,6 @@ import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { mercatorProjection, webMercatorProjection } from "./MercatorProjection";
 import { Projection, ProjectionType } from "./Projection";
-
-import * as THREE from "three";
 
 /**
  * Transforms the given vector using the provided basis.
@@ -88,12 +87,10 @@ function makeBox3<Bounds extends Box3Like>(
         quadrantIndex <= maxLongitudeQuadrant;
         quadrantIndex++
     ) {
-        // tslint:disable-next-line: no-bitwise
         const x = ((quadrantIndex + 1) & 1) * ((quadrantIndex & 2) - 1);
         xMin = Math.min(x, xMin);
         xMax = Math.max(x, xMax);
 
-        // tslint:disable-next-line: no-bitwise
         const y = (quadrantIndex & 1) * ((quadrantIndex & 2) - 1);
         yMin = Math.min(y, yMin);
         yMax = Math.max(y, yMax);
@@ -383,7 +380,6 @@ class SphereProjection extends Projection {
             const scale = r + z;
 
             if (result === undefined) {
-                // tslint:disable-next-line: no-object-literal-type-assertion
                 result = {} as Vector3Like;
             }
 

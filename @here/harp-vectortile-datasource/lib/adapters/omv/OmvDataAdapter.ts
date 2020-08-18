@@ -7,6 +7,7 @@
 import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
+import * as Long from "long";
 import { ShapeUtils, Vector2 } from "three";
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
@@ -24,8 +25,6 @@ import {
     visitOmv
 } from "./OmvData";
 import { com } from "./proto/vector_tile";
-
-import * as Long from "long";
 
 const propertyCategories = [
     "stringValue",

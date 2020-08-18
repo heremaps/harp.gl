@@ -49,7 +49,6 @@ import {
     ExprEvaluatorContext,
     OperatorDescriptor
 } from "@here/harp-datasource-protocol/lib/ExprEvaluator";
-// tslint:disable:max-line-length
 import {
     EdgeLengthGeometrySubdivisionModifier,
     SubdivisionMode
@@ -266,7 +265,6 @@ export class TileGeometryCreator {
         disabledKinds?: GeometryKindSet | undefined
     ) {
         for (const technique of decodedTile.techniques) {
-            // tslint:disable-next-line: deprecation
             const kind = technique.kind;
 
             // No info about kind, no way to filter it.
@@ -570,7 +568,6 @@ export class TileGeometryCreator {
                         : DEFAULT_TEXT_DISTANCE_SCALE;
                 textElement.mayOverlap = technique.mayOverlap === true;
                 textElement.reserveSpace = technique.reserveSpace !== false;
-                // tslint:disable-next-line: deprecation
                 textElement.kind = technique.kind;
                 // Get the userData for text element picking.
                 textElement.userData = textPath.objInfos;
@@ -657,7 +654,6 @@ export class TileGeometryCreator {
                             : mapView.maxZoomLevel;
                     textElement.mayOverlap = technique.mayOverlap === true;
                     textElement.reserveSpace = technique.reserveSpace !== false;
-                    // tslint:disable-next-line: deprecation
                     textElement.kind = technique.kind;
 
                     textElement.fadeNear = fadeNear;
@@ -772,7 +768,6 @@ export class TileGeometryCreator {
                     materials[techniqueIndex] = material;
                 }
 
-                // tslint:disable-next-line: deprecation
                 const techniqueKind = technique.kind;
 
                 // Modify the standard textured shader to support height-based coloring.
@@ -863,7 +858,6 @@ export class TileGeometryCreator {
                     (isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
                     technique.enablePicking !== undefined
                 ) {
-                    // tslint:disable-next-line:max-line-length
                     (object as MapViewPoints).enableRayTesting = technique.enablePicking!;
                 }
 
@@ -1166,7 +1160,6 @@ export class TileGeometryCreator {
 
                     const secondaryWidth = buildMetricValueEvaluator(
                         outlineTechnique.secondaryWidth,
-                        // tslint:disable-next-line: deprecation
                         outlineTechnique.metricUnit
                     );
                     this.registerTileObject(tile, outlineObj, techniqueKind, { technique });

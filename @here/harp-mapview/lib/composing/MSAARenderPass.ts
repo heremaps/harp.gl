@@ -229,14 +229,11 @@ export class MSAARenderPass extends Pass {
         }
     }
 
-    // tslint:disable:max-line-length
     /**
      * The list of offsets to apply to the camera, per sampling level, adapted from :
      *
      * @see https://msdn.microsoft.com/en-us/library/windows/desktop/ff476218%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
      */
-    // tslint:enable:max-line-length
-    // tslint:disable-next-line:member-ordering
     static readonly OffsetVectors: number[][][] = [
         [[0, 0]],
         [

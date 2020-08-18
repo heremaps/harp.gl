@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { assert } from "chai";
-import * as THREE from "three";
 
 import {
     CirclesStyle,
@@ -33,6 +29,8 @@ import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@he
 import { getReferenceImageUrl } from "@here/harp-test-utils/lib/rendering/ReferenceImageLocator";
 import { getOptionValue, mergeWithOptions } from "@here/harp-utils";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
+import { assert } from "chai";
+import * as THREE from "three";
 
 interface RenderingTestOptions extends TestOptions {
     /**
@@ -238,7 +236,6 @@ describe("MapView Styling Test", function() {
         ],
         images: {
             "my-marker-icon": {
-                // tslint:disable-next-line:max-line-length
                 url:
                     "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIyLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHdpZHRoPSI0OHB4IiBoZWlnaHQ9IjQ4cHgiIHZlcnNpb249IjEuMSIgaWQ9Imx1aS1pY29uLWRlc3RpbmF0aW9ucGluLW9uZGFyay1zb2xpZC1sYXJnZSIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQ4IDQ4IgoJIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDQ4IDQ4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8ZyBpZD0ibHVpLWljb24tZGVzdGluYXRpb25waW4tb25kYXJrLXNvbGlkLWxhcmdlLWJvdW5kaW5nLWJveCIgb3BhY2l0eT0iMCI+CgkJPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQ3LDF2NDZIMVYxSDQ3IE00OCwwSDB2NDhoNDhWMEw0OCwweiIvPgoJPC9nPgoJPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9IiNmZmZmZmYiIGQ9Ik0yNCwyQzEzLjg3MDgsMiw1LjY2NjcsMTAuMTU4NCw1LjY2NjcsMjAuMjIzMwoJCWMwLDUuMDMyNSwyLjA1MzMsOS41ODg0LDUuMzcxNywxMi44ODgzTDI0LDQ2bDEyLjk2MTctMTIuODg4M2MzLjMxODMtMy4zLDUuMzcxNy03Ljg1NTgsNS4zNzE3LTEyLjg4ODMKCQlDNDIuMzMzMywxMC4xNTg0LDM0LjEyOTIsMiwyNCwyeiBNMjQsMjVjLTIuNzY1LDAtNS0yLjIzNS01LTVzMi4yMzUtNSw1LTVzNSwyLjIzNSw1LDVTMjYuNzY1LDI1LDI0LDI1eiIvPgo8L2c+Cjwvc3ZnPgo=",
                 preload: true
@@ -289,7 +286,6 @@ describe("MapView Styling Test", function() {
             testCases: { [name: string]: TextTechniqueStyle["attr"] },
             options?: Partial<GeoJsonMapViewRenderingTestOptions>
         ) {
-            // tslint:disable-next-line:forin
             for (const testCase in testCases) {
                 const attr: TextTechniqueStyle["attr"] = testCases[testCase]!;
                 mapViewFeaturesRenderingTest(`solid-line-styling-${testCase}`, {
@@ -322,7 +318,6 @@ describe("MapView Styling Test", function() {
             testCases: { [name: string]: PoiStyle["attr"] },
             options?: Partial<GeoJsonMapViewRenderingTestOptions>
         ) {
-            // tslint:disable-next-line:forin
             for (const testCase in testCases) {
                 const attr: PoiStyle["attr"] = testCases[testCase]!;
                 mapViewFeaturesRenderingTest(`poi-styling-${testCase}`, {
@@ -356,7 +351,6 @@ describe("MapView Styling Test", function() {
             testCases: { [name: string]: CirclesStyle["attr"] },
             options?: Partial<GeoJsonMapViewRenderingTestOptions>
         ) {
-            // tslint:disable-next-line:forin
             for (const testCase in testCases) {
                 const attr: CirclesStyle["attr"] = testCases[testCase]!;
                 mapViewFeaturesRenderingTest(`solid-line-styling-${testCase}`, {
@@ -487,7 +481,6 @@ describe("MapView Styling Test", function() {
             testCases: { [name: string]: SolidLineStyle["attr"] },
             lineGeometry: Feature = straightLine
         ) {
-            // tslint:disable-next-line: forin
             for (const testCase in testCases) {
                 for (const clipping of [true, false]) {
                     const postfix = clipping === true ? "" : "-no-clipping";
@@ -802,7 +795,6 @@ describe("MapView Styling Test", function() {
                 delete options.geoJson;
             }
 
-            // tslint:disable-next-line:forin
             for (const testCase in testCases) {
                 const attr: T["attr"] = testCases[testCase]!;
 

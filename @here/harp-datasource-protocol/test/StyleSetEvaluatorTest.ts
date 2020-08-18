@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+import * as THREE from "three";
 import { Env, Expr, MapEnv, ValueMap } from "../lib/Expr";
 import {
     InterpolatedPropertyDefinition,
@@ -16,8 +16,6 @@ import {
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
 import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { Definitions, Style, StyleSet } from "../lib/Theme";
-
-import * as THREE from "three";
 
 describe("StyleSetEvaluator", function() {
     const basicStyleSetAutoOrder: StyleSet = [

@@ -41,6 +41,23 @@
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
 
+        "import/order": ["error", { "alphabetize": { "order": "asc", "caseInsensitive": true } }],
+
+        "max-len": [
+            "error",
+            {
+                "code": 100,
+                "tabWidth": 4,
+                "ignoreStrings": true,
+                "ignoreTemplateLiterals": true,
+                "ignoreRegExpLiterals": true,
+                "ignoreUrls": true,
+                "ignoreComments": true
+            }
+        ],
+
+        "no-console": ["error"],
+
         "accessor-pairs": "off",
         "generator-star-spacing": "off",
         "handle-callback-err": "off",

@@ -179,9 +179,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
         let { name } = options;
         const {
             styleSetName,
-            // tslint:disable-next-line: deprecation
             minZoomLevel,
-            // tslint:disable-next-line: deprecation
             maxZoomLevel,
             minDataLevel,
             maxDataLevel,
@@ -205,11 +203,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
             this.maxDataLevel = maxDataLevel;
         }
         if (minZoomLevel !== undefined) {
-            // tslint:disable-next-line: deprecation
             this.minZoomLevel = minZoomLevel;
         }
         if (maxZoomLevel !== undefined) {
-            // tslint:disable-next-line: deprecation
             this.maxZoomLevel = maxZoomLevel;
         }
         if (minDisplayLevel !== undefined) {
@@ -397,7 +393,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @param styleSet - The new theme that {@link MapView} uses.
      * @param languages - An optional list of languages for the `DataSource`.
      */
-    // tslint:disable-next-line:no-unused-variable
     setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
         // to be overwritten by subclasses
     }
@@ -452,7 +447,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * @param tile - The {@link Tile} to update.
      */
-    // tslint:disable-next-line:no-unused-variable
     updateTile(tile: Tile) {
         // to be overloaded by subclasses
     }
@@ -614,7 +608,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @returns `true` if the text elements created for the
      *          given {@link @here/harp-geoutils#TileKey} should be rendered.
      */
-    // tslint:disable-next-line:no-unused-variable
     shouldRenderText(zoomLevel: number, tileKey: TileKey): boolean {
         return true;
     }

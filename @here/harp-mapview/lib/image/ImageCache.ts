@@ -396,7 +396,6 @@ export class ImageCache {
                     const context = canvas.getContext("2d");
                     if (context !== null) {
                         logger.debug(
-                            // tslint:disable-next-line: max-line-length
                             `... finished creating bitmap image in canvas: ${imageItem.url} ${image}`
                         );
                         context.drawImage(

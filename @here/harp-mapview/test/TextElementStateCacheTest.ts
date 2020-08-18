@@ -13,8 +13,6 @@ import { TextElementState } from "../lib/text/TextElementState";
 import { TextElementStateCache } from "../lib/text/TextElementStateCache";
 import { lineMarkerBuilder, pointTextBuilder, TextElementBuilder } from "./TextElementBuilder";
 
-// tslint:disable: no-unused-expression
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 const tileKey = new TileKey(1, 1, 1);

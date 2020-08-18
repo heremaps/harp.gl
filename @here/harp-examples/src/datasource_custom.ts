@@ -18,7 +18,6 @@ import {
 
 import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
 
-// tslint:disable: max-line-length
 /**
  * This example shows how to create your own datasource with following features:
  * 1. Decoding and processing in a web-worker
@@ -118,7 +117,6 @@ export namespace CustomDatasourceExample {
 
             const data = new Array<number>();
             // Do some scaling so that the data fits into the tile.
-            // tslint:disable-next-line: no-bitwise
             const scale = 10.0 / (1 << tileKey.level);
             data.push(0.0, 0.0);
             for (let t = 0.0; t < Math.PI * 4; t += 0.1) {

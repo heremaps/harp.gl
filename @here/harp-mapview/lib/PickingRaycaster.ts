@@ -50,7 +50,6 @@ export class PickingRaycaster extends THREE.Raycaster {
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize overrides of
     // three.js classes.
-    // tslint:disable-next-line: explicit-override
     intersectObject(
         object: THREE.Object3D,
         recursive?: boolean,
@@ -65,7 +64,6 @@ export class PickingRaycaster extends THREE.Raycaster {
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize overrides of
     // three.js classes.
-    // tslint:disable-next-line: explicit-override
     intersectObjects(
         objects: THREE.Object3D[],
         recursive?: boolean,

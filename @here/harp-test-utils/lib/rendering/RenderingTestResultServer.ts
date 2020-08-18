@@ -6,15 +6,15 @@
 
 // @here:check-imports:environment:node
 
+import * as fs from "fs";
+import * as path from "path";
+import * as util from "util";
+import { LoggerManager } from "@here/harp-utils";
 import * as bodyParser from "body-parser";
 import * as express from "express";
-import * as fs from "fs";
 import * as mkpath from "mkpath";
-import * as path from "path";
 import * as serveStatic from "serve-static";
-import * as util from "util";
 
-import { LoggerManager } from "@here/harp-utils";
 import { genHtmlReport } from "./HtmlReport";
 import { ImageTestResultLocal, ImageTestResultRequest } from "./Interface";
 import { getOutputImagePath, loadSavedResults } from "./RenderingTestResultCommon";
@@ -168,7 +168,6 @@ export function installMiddleware(app: express.Router, basePath: string) {
 
     // tslint gives a false alert b/c bodyParser is a function(deprecated) and a namespace.
     // We are using the non-deprecated namespace here, so all fine.
-    // tslint:disable-next-line: deprecation
     const jsonParser = bodyParser.json({ limit: 1024 * 1024 * 16 });
     app.get("/ibct-report", jsonParser, getIbctReport);
     app.post("/ibct-feedback", jsonParser, postIbctFeedback);

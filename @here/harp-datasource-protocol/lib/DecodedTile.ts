@@ -423,17 +423,13 @@ export function getFeatureText(
         if (technique.text !== undefined) {
             return evaluateTechniqueAttr(context, technique.text);
         }
-        // tslint:disable-next-line: deprecation
         if (technique.label !== undefined) {
-            // tslint:disable-next-line: deprecation
             propName = evaluateTechniqueAttr(context, technique.label)!;
             if (typeof propName !== "string") {
                 return undefined;
             }
         }
-        // tslint:disable-next-line: deprecation
         useAbbreviation = technique.useAbbreviation;
-        // tslint:disable-next-line: deprecation
         useIsoCode = technique.useIsoCode;
     }
 

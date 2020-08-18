@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/harp-datasource-protocol";
@@ -16,16 +15,15 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/harp-mapview";
+import { LoggerManager } from "@here/harp-utils";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { LoggerManager } from "@here/harp-utils";
 import { DataProvider, TileLoader } from "../index";
 
 // Needed for using expect(...).true for example
-// tslint:disable: no-unused-expression
 
 class MockDataSource extends DataSource {
     /** @override */
@@ -97,7 +95,6 @@ class MockTileDecoder implements ITileDecoder {
 function createMockMapView() {
     return ({
         projection: webMercatorProjection,
-        // tslint:disable-next-line:no-empty
         getDataSourceByName() {},
         statistics: new Statistics()
     } as any) as MapView;
@@ -208,7 +205,6 @@ describe("TileLoader", function() {
                     expect(tileLoader.state).to.equal(TileLoaderState.Failed);
 
                     getTileStub.restore();
-                    // tslint:disable-next-line: no-shadowed-variable
                     const loadPromise = tileLoader.loadAndDecode();
                     expect(loadPromise).to.not.be.undefined;
 
@@ -229,7 +225,6 @@ describe("TileLoader", function() {
             );
 
             const loadPromise = tileLoader.loadAndDecode();
-            // tslint:disable-next-line: no-unused-expression
             expect(loadPromise).to.not.be.undefined;
 
             tileLoader.cancel();
@@ -247,7 +242,6 @@ describe("TileLoader", function() {
                 0
             );
             const loadPromise = tileLoader.loadAndDecode();
-            // tslint:disable-next-line: no-unused-expression
             expect(loadPromise).to.not.be.undefined;
 
             // mock loaded data state

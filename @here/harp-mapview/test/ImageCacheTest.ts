@@ -11,7 +11,6 @@ import { ImageCache } from "../lib/image/ImageCache";
 import { MapViewImageCache } from "../lib/image/MapViewImageCache";
 import { MapView } from "../lib/MapView";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 class ImageData {
@@ -22,7 +21,6 @@ class ImageData {
 }
 
 describe("MapViewImageCache", function() {
-    // tslint:disable-next-line:no-object-literal-type-assertion
     const mapView: MapView = {} as MapView;
 
     beforeEach(function() {
@@ -455,7 +453,6 @@ describe("ImageCache", function() {
     });
 
     it("#registerImage", function() {
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
         const cache = ImageCache.instance;
         cache.clearAll();
@@ -474,7 +471,6 @@ describe("ImageCache", function() {
 
     if (typeof document !== "undefined") {
         it("#addImage", async function() {
-            // tslint:disable-next-line:no-object-literal-type-assertion
             const mapView: MapView = {} as MapView;
             const cache = ImageCache.instance;
             cache.clearAll();
@@ -506,7 +502,6 @@ describe("ImageCache", function() {
         });
 
         it("#loadImage", async function() {
-            // tslint:disable-next-line:no-object-literal-type-assertion
             const mapView: MapView = {} as MapView;
             const cache = ImageCache.instance;
             cache.clearAll();
@@ -541,7 +536,6 @@ describe("ImageCache", function() {
     }
 
     it("#clearAll", function() {
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
         const cache = ImageCache.instance;
         const imageData = new ImageData(16, 16);
@@ -554,7 +548,6 @@ describe("ImageCache", function() {
     });
 
     it("#dispose", function() {
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
         const imageData = new ImageData(16, 16);
         ImageCache.instance.registerImage(mapView, "httpx://naxos.de", imageData);
@@ -568,9 +561,7 @@ describe("ImageCache", function() {
         const cache = ImageCache.instance;
         cache.clearAll();
 
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView2: MapView = {} as MapView;
 
         const imageData1 = new ImageData(16, 16);
@@ -590,9 +581,7 @@ describe("ImageCache", function() {
         const cache = ImageCache.instance;
         cache.clearAll();
 
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView2: MapView = {} as MapView;
 
         const imageData1 = new ImageData(16, 16);
@@ -616,9 +605,7 @@ describe("ImageCache", function() {
         const cache = ImageCache.instance;
         cache.clearAll();
 
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView2: MapView = {} as MapView;
 
         const imageData1 = new ImageData(16, 16);
@@ -637,9 +624,7 @@ describe("ImageCache", function() {
 
     it("#remove image item", function() {
         const cache = ImageCache.instance;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
 
         const imageData1 = new ImageData(16, 16);
 
@@ -654,9 +639,7 @@ describe("ImageCache", function() {
 
     it("#remove image", function() {
         const cache = ImageCache.instance;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
 
         const imageData1 = new ImageData(16, 16);
 
@@ -671,9 +654,7 @@ describe("ImageCache", function() {
 
     it("#remove image by filter", function() {
         const cache = ImageCache.instance;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -695,9 +676,7 @@ describe("ImageCache", function() {
 
     it("#remove image by filter 2", function() {
         const cache = ImageCache.instance;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -717,9 +696,7 @@ describe("ImageCache", function() {
 
     it("#remove all images by filter", function() {
         const cache = ImageCache.instance;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -737,9 +714,7 @@ describe("ImageCache", function() {
 
     it("#apply", function() {
         const cache = ImageCache.instance;
-        // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView1: MapView = {} as MapView;
-        // tslint:disable-next-line:no-object-literal-type-assertion
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);

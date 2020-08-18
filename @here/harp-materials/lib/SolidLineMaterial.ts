@@ -461,7 +461,6 @@ export class SolidLineMaterial extends RawShaderMaterial
             }
         }
 
-        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "SolidLineMaterial",
             vertexShader: vertexSource,
@@ -590,7 +589,6 @@ export class SolidLineMaterial extends RawShaderMaterial
      *
      * @param enable - Whether we want to enable the fog.
      */
-    // tslint:disable-next-line: explicit-override
     set fog(enable: boolean) {
         this.m_fog = enable;
         // Function may be called from THREE.js cause we override setter,
@@ -604,7 +602,6 @@ export class SolidLineMaterial extends RawShaderMaterial
     /**
      * Checks if fog is enabled.
      */
-    // tslint:disable-next-line: explicit-override
     get fog(): boolean {
         return this.m_fog && getShaderMaterialDefine(this, "USE_FOG") === true;
     }
@@ -642,11 +639,9 @@ export class SolidLineMaterial extends RawShaderMaterial
     /**
      * Line opacity.
      */
-    // tslint:disable-next-line: explicit-override
     get opacity(): number {
         return this.m_opacity;
     }
-    // tslint:disable-next-line: explicit-override
     set opacity(value: number) {
         this.m_opacity = value;
         // Setting opacity before uniform being created requires late invalidation,

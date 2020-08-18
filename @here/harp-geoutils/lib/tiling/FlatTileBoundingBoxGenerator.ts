@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { GeoBox } from "../coordinates/GeoBox";
 import { Box3Like } from "../math/Box3Like";
 import { Vector3Like } from "../math/Vector3Like";
@@ -11,8 +12,6 @@ import { Projection } from "../projection/Projection";
 import { SubdivisionScheme } from "./SubdivisionScheme";
 import { TileKey } from "./TileKey";
 import { TilingScheme } from "./TilingScheme";
-
-import * as THREE from "three";
 
 /**
  * `FlatTileBoundingBoxGenerator` generates bounding boxes in world and geo coordinates for a given

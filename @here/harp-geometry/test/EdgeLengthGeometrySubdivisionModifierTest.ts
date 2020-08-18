@@ -4,15 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-// tslint:disable:no-unused-expression
 //    Chai uses properties instead of functions for some expect checks.
 
+import * as geo from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as THREE from "three";
 
-import * as geo from "@here/harp-geoutils";
 import {
     EdgeLengthGeometrySubdivisionModifier,
     SubdivisionMode
@@ -57,7 +55,6 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
             const geoPoint = new geo.GeoCoordinates(53.3, 13.4);
             const tileKey = geo.webMercatorTilingScheme.getTileKey(geoPoint, 3);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(tileKey).is.not.undefined;
 
             geobox = geo.webMercatorTilingScheme.getGeoBox(tileKey!);
@@ -190,7 +187,6 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
             const geoPoint = new geo.GeoCoordinates(53.3, 13.4);
             const tileKey = geo.hereTilingScheme.getTileKey(geoPoint, 3);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(tileKey).is.not.undefined;
 
             geobox = geo.hereTilingScheme.getGeoBox(tileKey!);

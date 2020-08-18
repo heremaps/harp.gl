@@ -176,7 +176,6 @@ export class GlyphClearMaterial extends THREE.RawShaderMaterial {
      * @returns New `GlyphClearMaterial`.
      */
     constructor() {
-        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "GlyphClearMaterial",
             vertexShader: clearVertexSource,
@@ -189,7 +188,6 @@ export class GlyphClearMaterial extends THREE.RawShaderMaterial {
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
         convertShader(shader, renderer);
     }
@@ -206,7 +204,6 @@ export class GlyphCopyMaterial extends THREE.RawShaderMaterial {
      * @returns New `GlyphCopyMaterial`.
      */
     constructor() {
-        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "GlyphCopyMaterial",
             vertexShader: copyVertexSource,
@@ -229,7 +226,6 @@ export class GlyphCopyMaterial extends THREE.RawShaderMaterial {
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
         convertShader(shader, renderer);
     }
@@ -262,7 +258,6 @@ export class SdfTextMaterial extends THREE.RawShaderMaterial {
      * @returns New `SdfTextMaterial`.
      */
     constructor(params: SdfTextMaterialParameters) {
-        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "SdfTextMaterial",
             vertexShader:
@@ -294,7 +289,6 @@ export class SdfTextMaterial extends THREE.RawShaderMaterial {
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
         convertShader(shader, renderer);
     }

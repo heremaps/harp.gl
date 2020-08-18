@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
@@ -156,10 +155,8 @@ describe("MapControls", function() {
     before(function() {
         if (inNodeContext) {
             const theGlobal: any = global;
-            // tslint:disable-next-line:no-empty
             theGlobal.requestAnimationFrame = () => {};
             theGlobal.performance = {
-                // tslint:disable-next-line:no-empty
                 now: () => {}
             };
             (global as any).window = {
@@ -197,7 +194,6 @@ describe("MapControls", function() {
         mapView = sandbox.createStubInstance(MapView) as any;
         sandbox.stub(mapView, "renderer").get(() => ({ domElement }));
         updateStub = mapView.update as any;
-        // tslint:disable-next-line: deprecation
         lookAtStub = mapView.lookAt as any;
 
         sandbox.stub(mapView, "projection").get(() => {
@@ -327,7 +323,6 @@ describe("MapControls", function() {
         }
 
         function computeZoomLevel() {
-            // tslint:disable-next-line: deprecation
             const distance = MapViewUtils.getTargetAndDistance(mapView.projection, camera).distance;
             return MapViewUtils.calculateZoomLevelFromDistance(mapView, distance);
         }
@@ -375,7 +370,6 @@ describe("MapControls", function() {
                         mapControls.maxTiltAngle = 90;
 
                         mapControls.zoomOnTargetPosition(0, 0.1, 6);
-                        // tslint:disable-next-line: deprecation
                         const oldTarget = MapViewUtils.getTargetAndDistance(projection, camera)
                             .target;
                         const expAzimuth = MapViewUtils.extractSphericalCoordinatesFromLocation(
@@ -384,7 +378,6 @@ describe("MapControls", function() {
                             projection.unprojectPoint(oldTarget)
                         ).azimuth;
                         mapControls.zoomOnTargetPosition(0, 0.2, 7);
-                        // tslint:disable-next-line: deprecation
                         const newTarget = MapViewUtils.getTargetAndDistance(projection, camera)
                             .target;
                         const actualAzimuth = MapViewUtils.extractSphericalCoordinatesFromLocation(

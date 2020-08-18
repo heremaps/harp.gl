@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { GeoCoordinatesLike, isGeoCoordinatesLike } from "./GeoCoordinatesLike";
 import { GeoPointLike, isGeoPointLike } from "./GeoPointLike";
 import { isLatLngLike, LatLngLike } from "./LatLngLike";
-
-import * as THREE from "three";
 
 export const MAX_LATITUDE = 90;
 export const MIN_LATITUDE = -90;

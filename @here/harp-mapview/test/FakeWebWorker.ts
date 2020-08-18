@@ -8,7 +8,6 @@ import { assert } from "chai";
 
 declare const global: any;
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
 /**

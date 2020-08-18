@@ -8,7 +8,6 @@ import { execSync } from "child_process";
 import { writeFileSync } from "fs";
 import { copySync, ensureDirSync, removeSync } from "fs-extra";
 
-// tslint:disable-next-line:no-var-requires
 const fetch = require("node-fetch");
 
 //This script prepares the documentation and harp.gl website to be deployed
@@ -59,7 +58,6 @@ interface Release {
 if (branch !== "master") {
     const now = new Date();
     const dateString = `${now.getDate()}-${now.getMonth()}-${now.getFullYear()}`;
-    // tslint:disable-next-line: no-implicit-dependencies no-var-requires
     const mapviewPackage = require("@here/harp-mapview/package.json");
     const newRelease: Release = {
         date: dateString,

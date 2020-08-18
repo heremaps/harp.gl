@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ncp } from "ncp";
-import * as path from "path";
+/* eslint-disable no-console */
 
-// tslint:disable:no-console
+import * as path from "path";
+import { ncp } from "ncp";
 
 function onCopyError(err: Error[] | null) {
     if (err === null) {

@@ -157,7 +157,6 @@ class CustomDecoder extends ThemedTileDecoder
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
 
         // Scale the mesh so that its size is relative to the tile size.
-        // tslint:disable-next-line: no-bitwise
         const scale = (1 << 20) / (1 << tileKey.level);
         const boxGeometry = new BoxBufferGeometry(1.0 * scale, 5.0 * scale, 5.0 * scale);
         const matrix = new Matrix4();

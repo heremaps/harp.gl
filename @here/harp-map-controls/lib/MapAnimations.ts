@@ -5,13 +5,13 @@
  */
 
 import { GeoCoordinates, GeoCoordinatesLike } from "@here/harp-geoutils";
-import { EventNames, MapControls } from "./MapControls";
 
 import { MapView } from "@here/harp-mapview";
 import { PerformanceTimer } from "@here/harp-utils";
 
 import * as TWEEN from "@tweenjs/tween.js";
 import * as THREE from "three";
+import { EventNames, MapControls } from "./MapControls";
 
 /**
  * Functions used for specifying animations' speed.
@@ -168,7 +168,6 @@ export class CameraRotationAnimation extends CameraAnimation {
      */
     readonly endAngle: number = 360;
 
-    // tslint:disable-next-line:no-unused-variable
     private readonly m_axis = new THREE.Vector3(0, 0, 1);
     private m_userCamerRotation?: THREE.Quaternion;
     private m_lastRotationValue: number;

@@ -9,7 +9,6 @@ import { HereTileProvider, HereWebTileDataSource } from "@here/harp-webtile-data
 
 import { apikey } from "../config";
 
-// tslint:disable:max-line-length
 /**
  * A simple example using the webtile data source. Tiles are retrieved from
  * ```

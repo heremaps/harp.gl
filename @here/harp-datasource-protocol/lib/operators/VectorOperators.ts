@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { Value } from "../Env";
 import { CallExpr, NumberLiteralExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
-
-import * as THREE from "three";
 
 type MakeVectorCallExpr = CallExpr & {
     _value?: THREE.Vector2 | THREE.Vector3 | THREE.Vector4;

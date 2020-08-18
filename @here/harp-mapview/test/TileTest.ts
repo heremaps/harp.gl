@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { assert, expect } from "chai";
 
 import { DecodedTile } from "@here/harp-datasource-protocol";
 import {
@@ -16,6 +13,7 @@ import {
     TileKey,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+import { assert, expect } from "chai";
 import * as THREE from "three";
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
@@ -167,7 +165,6 @@ describe("Tile", function() {
     it("setting skipping will cause willRender to return false", function() {
         const tile = new Tile(stubDataSource, tileKey);
         tile.skipRendering = true;
-        // tslint:disable: no-unused-expression
         expect(tile.willRender(0)).is.false;
         tile.skipRendering = false;
         expect(tile.willRender(0)).is.true;

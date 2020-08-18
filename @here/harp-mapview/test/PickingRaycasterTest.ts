@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-// tslint:disable:no-unused-expression
 //    Chai uses properties instead of functions for some expect checks.
 
 import { MapEnv } from "@here/harp-datasource-protocol";
@@ -19,7 +17,7 @@ import { PickingRaycaster } from "../lib/PickingRaycaster";
 function createFakeObject<T extends THREE.Object3D>(type: new () => T): T {
     const object = new type();
     sinon.stub(object, "raycast").callsFake((_, intersects) => {
-        intersects.push({ distance: 0, point: new THREE.Vector3(), object });
+        (intersects as any).push({ distance: 0, point: new THREE.Vector3(), object });
     });
     return object;
 }

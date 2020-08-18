@@ -4,19 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { expect } from "chai";
 import * as path from "path";
-import * as sinon from "sinon";
-import * as THREE from "three";
 
 import { Env } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
@@ -39,6 +33,9 @@ import {
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
+import { expect } from "chai";
+import * as sinon from "sinon";
+import * as THREE from "three";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import {
     persistentPointLabelTextMargin,

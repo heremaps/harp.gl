@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
@@ -130,7 +129,6 @@ describe("SphereProjection", function() {
     });
 
     samples.forEach(([geoPoint, expectedWorldPoint]) => {
-        // tslint:disable-next-line: max-line-length
         it(`ProjectPoint (${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude})`, function() {
             const worldPoint = sphereProjection.projectPoint(geoPoint);
 
@@ -176,7 +174,6 @@ describe("SphereProjection", function() {
         ];
 
         insidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
             it(`ProjectBox contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = new Vector3();
                 sphereProjection.projectPoint(geoPoint, p);
@@ -185,7 +182,6 @@ describe("SphereProjection", function() {
         });
 
         outsidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
             it(`ProjectBox !contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = new Vector3();
                 sphereProjection.projectPoint(geoPoint, p);
@@ -214,7 +210,6 @@ describe("SphereProjection", function() {
         const outsidePoints = [new GeoCoordinates(60, 0, 0)];
 
         insidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
             it(`ProjectBigBox contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = new Vector3();
                 sphereProjection.projectPoint(geoPoint, p);
@@ -223,7 +218,6 @@ describe("SphereProjection", function() {
         });
 
         outsidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
             it(`ProjectBigBox !contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = new Vector3();
                 sphereProjection.projectPoint(geoPoint, p);

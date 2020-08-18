@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-// tslint:disable:no-unused-expression
 //    Chai uses properties instead of functions for some expect checks.
 
 import { MapEnv, Technique } from "@here/harp-datasource-protocol";
@@ -85,7 +83,6 @@ describe("AnimatedExtrusionHandler", function() {
             expect(enabled).to.be.false;
         });
 
-        // tslint:disable-next-line: max-line-length
         it("returns forced enabled if technique does not define animateExtrusion", function() {
             {
                 const enabled = handler.setAnimationProperties(

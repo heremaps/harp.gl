@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console */
+
 import * as fs from "fs";
 
 //
@@ -11,7 +13,6 @@ import * as fs from "fs";
 // from `perf_hooks` in node env.
 //
 if (typeof window === "undefined") {
-    // tslint:disable-next-line:no-var-requires
     const perfHooks = require("perf_hooks");
 
     (global as any).performance = perfHooks.performance;
@@ -349,9 +350,7 @@ export function reportPerformanceEntry(entry: PerformanceTestResultEntry) {
         throughput: readableNum(calculateThroughPutPerSeconds(stats.repeats, stats.sum), "/s"),
         repeats: stats.repeats
     };
-    // tslint:disable-next-line:no-console
     console.log(`#performance ${name}`);
-    // tslint:disable-next-line:no-console
     console.log(`  ${tagsToString(mainTags)}`);
     const averages = {
         avg: readableNum(stats.avg),
@@ -359,7 +358,6 @@ export function reportPerformanceEntry(entry: PerformanceTestResultEntry) {
         med: readableNum(stats.med),
         med95: readableNum(stats.med95)
     };
-    // tslint:disable-next-line:no-console
     console.log(`  ${tagsToString(averages)}`);
     if (stats.gcTime !== undefined) {
         const gcAdjusted = {
@@ -369,10 +367,8 @@ export function reportPerformanceEntry(entry: PerformanceTestResultEntry) {
                 calculateThroughPutPerSeconds(stats.repeats, stats.sum - stats.gcTime)
             )
         };
-        // tslint:disable-next-line:no-console
         console.log(`  ${tagsToString(gcAdjusted)}`);
     }
-    // tslint:disable-next-line:no-console
     console.log(``);
 }
 
@@ -414,11 +410,8 @@ export function reportPerformanceEntryWithBaseline(
         med95: compare(currentStats.med95, baseseLineStats.med95)
     };
 
-    // tslint:disable-next-line:no-console
     console.log(`#performance ${name}`);
-    // tslint:disable-next-line:no-console
     console.log(`  ${tagsToString(mainTags)}`);
-    // tslint:disable-next-line:no-console
     console.log(`  ${tagsToString(averages)}`);
 
     if (currentStats.gcTime !== undefined && baseseLineStats.gcTime !== undefined) {
@@ -440,10 +433,8 @@ export function reportPerformanceEntryWithBaseline(
                 "/s"
             )
         };
-        // tslint:disable-next-line:no-console
         console.log(`  ${tagsToString(gcAdjusted)}`);
     }
-    // tslint:disable-next-line:no-console
     console.log("");
 }
 
@@ -499,7 +490,6 @@ function saveBaselineIfRequested(results: PerformanceTestResults) {
         if (!baselineFileName) {
             return;
         }
-        // tslint:disable-next-line:no-console
         console.log(`#performance saving baseline to ${baselineFileName}`);
         fs.writeFileSync(baselineFileName, JSON.stringify(results, null, 2), "utf-8");
     }
@@ -512,7 +502,6 @@ function loadBaseLineIfAvailable() {
         if (!baselineFileName || !fs.existsSync(baselineFileName)) {
             return undefined;
         }
-        // tslint:disable-next-line:no-console
         console.log(`#performance loading baseline from ${baselineFileName}`);
         return JSON.parse(fs.readFileSync(baselineFileName, "utf-8"));
     }
@@ -628,7 +617,6 @@ export function countCalls(): any {
  */
 export function reportCallCountsAndReset() {
     occurenceResults.forEach((value, name) => {
-        // tslint:disable-next-line:no-console
         console.log(`#countCall ${name}: called=${value}`);
     });
     occurenceResults.clear();

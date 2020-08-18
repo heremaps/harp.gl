@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
 import { HighPrecisionPointMaterial } from "@here/harp-materials";
+import * as THREE from "three";
 
 import { HighPrecisionObject } from "./HighPrecisionLines";
 import { HighPrecisionUtils } from "./HighPrecisionUtils";

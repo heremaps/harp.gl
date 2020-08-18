@@ -26,7 +26,7 @@ jobs:
     steps:
     - name: Reset git settings (Windows)
       # Global git config on windows has autocrlf enabled.
-      # This breaks lot of checks, including tslint.
+      # This breaks lot of checks, including eslint.
       run: git config --global core.autocrlf false
       if: matrix.os == 'windows-latest'
     - uses: actions/checkout@v1

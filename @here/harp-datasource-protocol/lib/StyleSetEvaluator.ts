@@ -314,7 +314,6 @@ class OptimizedSubSetKey {
 
     private updateKey() {
         if (this.layer !== undefined) {
-            // tslint:disable-next-line:prefer-conditional-expression
             if (this.geometryType !== undefined) {
                 this.key = `${this.layer}:${this.geometryType}`;
             } else {
@@ -530,8 +529,7 @@ export class StyleSetEvaluator {
             try {
                 style._whenExpr = Array.isArray(style.when)
                     ? Expr.fromJSON(style.when, this.m_definitions, this.m_definitionExprCache)
-                    : // tslint:disable-next-line: deprecation
-                      Expr.parse(style.when);
+                    : Expr.parse(style.when);
 
                 // search for usages of '$layer' and any other
                 // special symbol that can be used to speed up the evaluation

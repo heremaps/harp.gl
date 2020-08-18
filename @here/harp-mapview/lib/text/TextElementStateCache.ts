@@ -33,7 +33,6 @@ function getDedupSqDistTolerance(zoomLevel: number) {
     // tolerance zoom level.
     // error = sqrt(sqError) = sqrt(minSqError* 2^(4d)) = minError*2^(2d)
 
-    //tslint:disable-next-line: no-bitwise
     return minSqTol << (levelDelta << 2);
 }
 

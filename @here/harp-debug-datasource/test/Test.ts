@@ -6,7 +6,6 @@
 
 import { assert } from "chai";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 describe("debug-datasource", function() {

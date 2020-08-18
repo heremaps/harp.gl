@@ -182,10 +182,8 @@ export class GeometryCommands {
         const yCoords: number[] = [];
         const commands: GeometryCommand[] = [];
         for (let cmdIndex = 0; cmdIndex < geometryCount; ) {
-            // tslint:disable:no-bitwise
             const kind = (geometry[cmdIndex] & 0x7) as CommandKind;
             const count = geometry[cmdIndex] >> 0x3;
-            // tslint:enable:no-bitwise
             ++cmdIndex;
 
             if (kind === CommandKind.MoveTo || kind === CommandKind.LineTo) {
@@ -193,7 +191,6 @@ export class GeometryCommands {
                     const xx = geometry[cmdIndex++];
                     const yy = geometry[cmdIndex++];
 
-                    // tslint:disable:no-bitwise
                     currX += (xx >> 1) ^ -(xx & 1);
                     currY += (yy >> 1) ^ -(yy & 1);
                     if (visitor.type === "Polygon") {

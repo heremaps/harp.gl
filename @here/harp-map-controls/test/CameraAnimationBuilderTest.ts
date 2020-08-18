@@ -12,7 +12,6 @@ import * as THREE from "three";
 import { CameraAnimationBuilder } from "../lib/CameraAnimationBuilder";
 import { CameraKeyTrackAnimationOptions, ControlPoint } from "../lib/CameraKeyTrackAnimation";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 describe("MapControls", function() {

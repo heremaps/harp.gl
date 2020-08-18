@@ -21,13 +21,11 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 class FakeVisibleTileSet {
-    // tslint:disable-next-line: no-empty
     disposeTile(tile: Tile) {}
 }
 
@@ -71,7 +69,6 @@ class MockDataSource extends DataSource {
 function createFakeMapView() {
     return ({
         projection: webMercatorProjection,
-        // tslint:disable-next-line:no-empty
         getDataSourceByName() {},
         statistics: new Statistics(),
         frameNumber: 5, // must be higher then 0, for tile visibility check
@@ -120,13 +117,10 @@ describe("TileGeometryLoader", function() {
 
     describe("tile preprocessing", function() {
         it("should not load geometry before update", function() {
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.basicGeometryLoaded).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.allGeometryLoaded).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
             return expect(geometryLoader.isFinished).to.be.false;
         });
 
@@ -134,16 +128,12 @@ describe("TileGeometryLoader", function() {
             geometryLoader.update(undefined, undefined);
             geometryLoader.update(undefined, undefined);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.geometryCreationPending).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.basicGeometryLoaded).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.allGeometryLoaded).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
             return expect(geometryLoader.isFinished).to.be.false;
         });
 
@@ -151,18 +141,15 @@ describe("TileGeometryLoader", function() {
             // Mimic the tile is being decoded.
             tile.decodedTile = createFakeDecodedTile();
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.isFinished).to.be.false;
 
             geometryLoader!.update(undefined, undefined);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.geometryCreationPending).to.be.true;
 
             mapView.taskQueue.processNext(TileTaskGroups.CREATE);
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -174,11 +161,9 @@ describe("TileGeometryLoader", function() {
 
             geometryLoader!.update(undefined, undefined);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.geometryCreationPending).to.be.false;
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -190,11 +175,9 @@ describe("TileGeometryLoader", function() {
 
             geometryLoader!.update(undefined, undefined);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.geometryCreationPending).to.be.false;
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -203,11 +186,9 @@ describe("TileGeometryLoader", function() {
             tile.tileLoader!.isFinished = true;
             geometryLoader!.update(undefined, undefined);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.geometryCreationPending).to.be.false;
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -230,11 +211,9 @@ describe("TileGeometryLoader", function() {
             expect(spyProcessTechniques.callCount).equal(0);
             expect(spyCreateGeometries.callCount).equal(0);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.geometryCreationPending).to.be.false;
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -255,11 +234,9 @@ describe("TileGeometryLoader", function() {
             expect(spyProcessTechniques.callCount).equal(0);
             expect(spyCreateGeometries.callCount).equal(0);
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.geometryCreationPending).to.be.false;
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -289,7 +266,6 @@ describe("TileGeometryLoader", function() {
             expect(spyProcessTechniques.callCount).equal(1);
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -318,7 +294,6 @@ describe("TileGeometryLoader", function() {
             await willEventually(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(1);
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -347,7 +322,6 @@ describe("TileGeometryLoader", function() {
             await willEventually(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(0);
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -377,7 +351,6 @@ describe("TileGeometryLoader", function() {
             await willEventually(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(0);
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });

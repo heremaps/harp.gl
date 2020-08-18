@@ -14,7 +14,6 @@ import {
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
 import * as THREE from "three";
 
-// tslint:disable:max-line-length
 /**
  * A simple example using the webtile data source. Tiles are generated from a
  * texture

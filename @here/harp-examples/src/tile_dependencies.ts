@@ -91,7 +91,6 @@ export namespace TileDependenciesExample {
 
             const data = new Array<number>();
             // Do some scaling so that the data fits into the tile.
-            // tslint:disable-next-line: no-bitwise
             const scale = 10.0 / (1 << tileKey.level);
             data.push(0.0, 0.0);
             for (let t = 0.0; t < Math.PI * 4; t += 0.1) {

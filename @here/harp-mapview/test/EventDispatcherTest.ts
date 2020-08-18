@@ -9,13 +9,10 @@ import * as sinon from "sinon";
 import { EventDispatcher } from "../lib/EventDispatcher";
 import { MapViewEventNames } from "../lib/MapView";
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 declare const global: any;
