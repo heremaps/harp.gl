@@ -98,13 +98,15 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
 
 function createPlugins(htmlTemplate?: string): Plugin[] {
     const plugins = [
-        new CopyWebpackPlugin([
-            {
-                from: "node_modules/@here/harp-map-theme/resources",
-                to: "resources",
-                toType: "dir"
-            }
-        ])
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: "node_modules/@here/harp-map-theme/resources",
+                    to: "resources",
+                    toType: "dir"
+                }
+            ]
+        })
     ];
     if (htmlTemplate !== undefined) {
         plugins.push(
