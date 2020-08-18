@@ -3,12 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { Theme } from "@here/harp-datasource-protocol";
+import { ProjectionType } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { HereWebTileDataSource, WebTileDataSource } from "@here/harp-webtile-datasource";
 
-import { Theme } from "@here/harp-datasource-protocol";
-import { ProjectionType } from "@here/harp-geoutils";
 import { apikey } from "../config";
 
 const FLAT_THEME: Theme = {
@@ -47,7 +47,6 @@ const GLOBE_THEME: Theme = {
     }
 };
 
-// tslint:disable:max-line-length
 /**
  * A simple example using the herewebtile data source. Tiles are retrieved from
  * ```

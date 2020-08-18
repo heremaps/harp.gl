@@ -11,7 +11,6 @@ import { TextElementBuilder } from "./TextElementBuilder";
  * Auxiliary types, constants and functions used to test TextElementsRenderer.
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 // time must not be 0 b/c 0 is used as a special value in TextElementsRenderer.

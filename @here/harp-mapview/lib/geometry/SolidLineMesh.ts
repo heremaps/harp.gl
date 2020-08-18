@@ -434,7 +434,6 @@ export class SolidLineMesh extends THREE.Mesh {
     }
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
     raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
         SolidLineMesh.raycast(this, raycaster, intersects);
     }

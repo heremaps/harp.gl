@@ -6,10 +6,9 @@
 
 import { CubemapSky, GradientSky } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
+import * as THREE from "three";
 import { SkyCubemapTexture } from "./SkyCubemapTexture";
 import { SkyGradientTexture } from "./SkyGradientTexture";
-
-import * as THREE from "three";
 
 /**
  * Class that handles {@link MapView}'s sky background.

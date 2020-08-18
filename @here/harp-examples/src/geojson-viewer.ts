@@ -179,7 +179,6 @@ export namespace GeoJsonExample {
     }
 
     function getExampleHTML(): string {
-        // tslint:disable:max-line-length
         return `
             <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600&amp;display=swap" rel="stylesheet">
             <style>
@@ -280,7 +279,9 @@ export namespace GeoJsonExample {
             </div>
 
             <input type="file" id="input" style="display: none;" />
-            <button id=browse onclick="document.getElementById('input').click();">Browse a file</button>
+            <button id=browse onclick="document.getElementById('input').click();">
+                Browse a file
+            </button>
 
             <div id="drag-overlay">
                 <div id="drag-dashes"></div>

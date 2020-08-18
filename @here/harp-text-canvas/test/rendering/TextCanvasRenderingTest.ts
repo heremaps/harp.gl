@@ -4,12 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
-// tslint:disable:no-console
-
+import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
 
-import { RenderingTestHelper } from "@here/harp-test-utils";
 import {
     FontCatalog,
     FontUnit,

@@ -1210,7 +1210,6 @@ export class MapControls extends EventDispatcher {
         this.m_touchState.touches = [];
 
         // TouchList doesn't conform to iterator interface so we cannot use 'for of'
-        // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < touches.length; ++i) {
             const touchState = this.convertTouchPoint(touches[i]);
             if (touchState !== undefined) {

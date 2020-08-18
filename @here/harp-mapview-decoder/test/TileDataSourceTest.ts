@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/harp-datasource-protocol";
@@ -80,7 +79,6 @@ function createMockTileDecoder() {
 function createMockMapView() {
     return ({
         projection: webMercatorProjection,
-        // tslint:disable-next-line:no-empty
         getDataSourceByName() {},
         statistics: new Statistics(),
         frameNumber: 0
@@ -304,10 +302,8 @@ describe("TileDataSource", function() {
             maxZoomLevel: 17
         });
 
-        // tslint:disable-next-line: deprecation
         assert.equal(testedDataSource.minZoomLevel, 3);
         assert.equal(testedDataSource.minDataLevel, 3);
-        // tslint:disable-next-line: deprecation
         assert.equal(testedDataSource.maxZoomLevel, 17);
         assert.equal(testedDataSource.maxDataLevel, 17);
     });

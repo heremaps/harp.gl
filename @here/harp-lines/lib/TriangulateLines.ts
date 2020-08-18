@@ -53,7 +53,6 @@ function addCircle(
  *
  * @param lineWidth - Width of line.
  */
-// tslint:disable-next-line:no-unused-variable
 export function numCirclePoints(lineWidth: number): number {
     return SECTORS_IN_CIRCLE + 1;
 }

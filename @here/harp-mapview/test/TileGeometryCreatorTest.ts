@@ -72,7 +72,6 @@ class MockDataSource extends DataSource {
     }
 }
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 describe("TileGeometryCreator", () => {

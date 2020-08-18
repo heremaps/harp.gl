@@ -62,7 +62,6 @@ export class TileGeometryLoader {
      * @param {Technique} technique
      */
     static compileGeometryKind(technique: Technique): GeometryKind | GeometryKindSet {
-        // tslint:disable-next-line: deprecation
         let geometryKind = technique.kind;
 
         // Set default kind based on technique.
@@ -88,10 +87,8 @@ export class TileGeometryLoader {
                 geometryKind = GeometryKind.All;
             }
 
-            // tslint:disable-next-line: deprecation
             technique.kind = geometryKind;
         } else if (Array.isArray(geometryKind)) {
-            // tslint:disable-next-line: deprecation
             geometryKind = technique.kind = new GeometryKindSet(geometryKind);
         }
 
@@ -348,7 +345,6 @@ export class TileGeometryLoader {
                 decodedTile.pathGeometries !== undefined ? decodedTile.pathGeometries.length : 0
             );
             currentFrame.addMessage(
-                // tslint:disable-next-line: max-line-length
                 `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row}`
             );
         }
@@ -368,7 +364,6 @@ export class TileGeometryLoader {
             const stats = PerformanceStatistics.instance;
             if (stats.enabled) {
                 stats.currentFrame.addMessage(
-                    // tslint:disable-next-line: max-line-length
                     `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - invisible`
                 );
             }
@@ -380,7 +375,6 @@ export class TileGeometryLoader {
             const stats = PerformanceStatistics.instance;
             if (stats.enabled) {
                 stats.currentFrame.addMessage(
-                    // tslint:disable-next-line: max-line-length
                     `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - disposed`
                 );
             }

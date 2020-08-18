@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Value } from "./Env";
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -20,8 +21,6 @@ import {
     StringLiteralExpr,
     VarExpr
 } from "./Expr";
-
-import { Value } from "./Env";
 
 /**
  * [[ExprPool]] maintains a set of unique interned {@link Expr} objects.

@@ -45,7 +45,6 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         return this.decodeThemedTile(data, tileKey, this.m_styleSetEvaluator, projection);
     }
 
-    // tslint:disable:no-unused-variable
     getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
@@ -53,7 +52,6 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     ): Promise<TileInfo | undefined> {
         return Promise.resolve(undefined);
     }
-    // tslint:disable:no-unused-variable
 
     configure(
         styleSet?: StyleSet,

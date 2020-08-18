@@ -13,6 +13,7 @@ import {
     StyleSet
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { Projection, TileKey } from "@here/harp-geoutils";
 import {
     ThemedTileDecoder,
@@ -22,7 +23,6 @@ import {
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { GeoJsonVtDataAdapter } from "./adapters/geojson-vt/GeoJsonVtDataAdapter";
 import { GeoJsonDataAdapter } from "./adapters/geojson/GeoJsonDataAdapter";
 import { OmvDataAdapter } from "./adapters/omv/OmvDataAdapter";
@@ -284,7 +284,6 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         if (this.m_dataFilter !== undefined && this.m_dataFilter.hasKindFilter) {
             techniques = techniques.filter(technique => {
                 const kind =
-                    // tslint:disable-next-line: deprecation
                     technique.kind === undefined ? defaultKind : (technique.kind as GeometryKind);
                 return this.m_dataFilter!.wantsKind(kind);
             });

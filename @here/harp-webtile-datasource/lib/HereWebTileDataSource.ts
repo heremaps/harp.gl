@@ -30,7 +30,6 @@ const textureLoader = new TextureLoader();
  * Options for {@link HereWebTileDataSource}.
  */
 interface HereWebTileDataSourceOptions {
-    // tslint:disable:max-line-length
     /**
      * Base URL.
      *
@@ -68,7 +67,6 @@ interface HereWebTileDataSourceOptions {
      * @see [[HereTileProvider.TILE_TRAFFIC_NORMAL]]
      */
     tileBaseAddress?: string;
-    // tslint:enable:max-line-length
 
     /**
      * The resolution of Web Tile images, defaults to 512.

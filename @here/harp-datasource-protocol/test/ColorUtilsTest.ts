@@ -7,9 +7,6 @@
 import { assert } from "chai";
 import { ColorUtils } from "../lib/ColorUtils";
 
-// tslint:disable:only-arrow-functions
-// tslint:disable:no-bitwise
-
 describe("ColorUtils", function() {
     it("support rgba in signed int range", function() {
         const encoded = ColorUtils.getHexFromRgba(0.1, 0.5, 1.0, 0.1)!;

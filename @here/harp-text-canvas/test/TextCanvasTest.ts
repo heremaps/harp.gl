@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
-import { getTestResourceUrl } from "@here/harp-test-utils";
 import {
     DefaultTextStyle,
     FontCatalog,

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
 import {
     Light,
     MagFilter,
@@ -14,6 +12,7 @@ import {
     TextureDataType,
     WrappingMode
 } from "@here/harp-datasource-protocol";
+import * as THREE from "three";
 
 /**
  * Returns `three.js` pixel format object basing on a [[PixelFormat]] specified.

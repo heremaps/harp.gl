@@ -24,7 +24,6 @@ export class ColorUtils {
      * @returns color red component value in between 0 to 255.
      */
     static red(value: number): number {
-        // tslint:disable-next-line: no-bitwise
         return value >> 24 >= 0 ? value >> 24 : 256 + (value >> 24);
     }
 
@@ -35,7 +34,6 @@ export class ColorUtils {
      * @returns color green component value in between 0 to 255.
      */
     static green(value: number): number {
-        // tslint:disable-next-line: no-bitwise
         return (value >> 16) & 255;
     }
 
@@ -46,7 +44,6 @@ export class ColorUtils {
      * @returns color blue component value in between 0 to 255.
      */
     static blue(value: number): number {
-        // tslint:disable-next-line: no-bitwise
         return (value >> 8) & 255;
     }
 
@@ -57,7 +54,6 @@ export class ColorUtils {
      * @returns color alpha component value in between 0 to 255.
      */
     static alpha(value: number): number {
-        // tslint:disable-next-line: no-bitwise
         return value & 255;
     }
 
@@ -68,7 +64,6 @@ export class ColorUtils {
      * @returns 32-bit coded integer color value.
      */
     static rgbaToInt(c: RGBA): number {
-        // tslint:disable-next-line: no-bitwise
         return ((c.a & 255) << 24) + (((c.b & 255) << 16) + ((c.g & 255) << 8) + (c.r & 255));
     }
 
@@ -135,7 +130,6 @@ export class ColorUtils {
         const factor = ColorUtils.alpha(fg) / 255;
         const color: RGBA = {
             r: Math.min(Math.floor(ColorUtils.red(bg) * (1 - factor) + ColorUtils.red(fg)), 255),
-            // tslint:disable-next-line: max-line-length
             g: Math.min(
                 Math.floor(ColorUtils.green(bg) * (1 - factor) + ColorUtils.green(fg)),
                 255

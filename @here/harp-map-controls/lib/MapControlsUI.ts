@@ -410,7 +410,6 @@ function getTextStyle() {
     `;
 }
 
-// tslint:disable:max-line-length
 function getFlatMapSVG() {
     return `
     <svg style="margin-top:5px;" class="harp-gl_controls_switch_svg" width="25" height="25" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">

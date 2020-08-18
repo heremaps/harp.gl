@@ -85,7 +85,6 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         this.farMin = nearMin * nearFarMultiplier + farOffset;
     }
 
-    // tslint:disable-next-line: no-empty
     set minElevation(elevation: number) {}
 
     get minElevation(): number {
@@ -93,7 +92,6 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         return 0;
     }
 
-    // tslint:disable-next-line: no-empty
     set maxElevation(elevation: number) {}
 
     get maxElevation(): number {
@@ -560,7 +558,6 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         //               C
         //
         // See:
-        // tslint:disable-next-line: max-line-length
         // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 
         // Vector from camera to world center
@@ -714,7 +711,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // opposite to elevating ground level.
         const halfPiLimit = Math.PI / 2 - epsilon;
         const cameraAltitude = this.getCameraAltitude(camera, projection);
-        // tslint:disable-next-line: deprecation
         const cameraTilt = MapViewUtils.extractCameraTilt(camera, projection);
         // Angle between z and c2
         let topAngleRad: number;
@@ -818,7 +814,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         }
 
         // Compute target (focus) point distance.
-        // tslint:disable-next-line: deprecation
         const { distance } = MapViewUtils.getTargetAndDistance(
             projection,
             camera,
@@ -900,7 +895,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
 
         // Compute the focus point (target) distance for current camera and projection setup,
         // in a same way the MapView component does.
-        // tslint:disable-next-line: deprecation
         const { distance } = MapViewUtils.getTargetAndDistance(
             projection,
             camera,
@@ -953,7 +947,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         //               C
         //
         // See:
-        // tslint:disable-next-line: max-line-length
         // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 
         // compute length of t (distance to fov intersection with sphere)
@@ -1018,7 +1011,6 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
         this.invalidatePlanes(this.m_nearPlane, fixedFar);
     }
 
-    // tslint:disable-next-line: no-empty
     set minElevation(elevation: number) {}
 
     get minElevation(): number {
@@ -1026,7 +1018,6 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
         return 0;
     }
 
-    // tslint:disable-next-line: no-empty
     set maxElevation(elevation: number) {}
 
     get maxElevation(): number {

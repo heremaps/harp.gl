@@ -792,7 +792,6 @@ export class Tile implements CachedResource {
      * @param object - The object that references the geometry.
      * @returns `true` if the geometry can be disposed.
      */
-    // tslint:disable-next-line:no-unused-variable
     shouldDisposeObjectGeometry(object: TileObject): boolean {
         return true;
     }
@@ -804,7 +803,6 @@ export class Tile implements CachedResource {
      * @param object - The object referencing the geometry.
      * @returns `true` if the material can be disposed.
      */
-    // tslint:disable-next-line:no-unused-variable
     shouldDisposeObjectMaterial(object: TileObject): boolean {
         return true;
     }

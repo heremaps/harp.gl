@@ -301,7 +301,7 @@ export class FontCatalog {
                     this.m_loadingJson.delete(jsonPath);
                     this.m_loadedJson.set(jsonPath, json);
                 } catch (e) {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.error(e);
                     this.m_loadingJson.delete(jsonPath);
                 }

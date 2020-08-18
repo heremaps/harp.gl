@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
-
-import { assert } from "chai";
-
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { apikey } from "@here/harp-examples/config";
@@ -34,6 +30,7 @@ import {
     IPolygonGeometry
 } from "@here/harp-vectortile-datasource/lib/IGeometryProcessor";
 import { VectorTileDataProcessor } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
+import { assert } from "chai";
 
 export interface OMVDecoderPerformanceTestOptions {
     /**

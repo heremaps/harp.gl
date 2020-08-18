@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-// tslint:disable: no-bitwise
 //    Allow bitwise operations for colors decoding tests
 
 import { assert } from "chai";

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console */
+
 import { IChannel } from "./IChannel";
 
 /**
@@ -12,32 +14,26 @@ import { IChannel } from "./IChannel";
 
 export class ConsoleChannel implements IChannel {
     error(message?: any, ...optionalParams: any[]) {
-        // tslint:disable-next-line:no-console
         console.error(message, ...optionalParams);
     }
 
     debug(message?: any, ...optionalParams: any[]) {
-        // tslint:disable-next-line:no-console
         console.debug(message, ...optionalParams);
     }
 
     info(message?: any, ...optionalParams: any[]) {
-        // tslint:disable-next-line:no-console
         console.info(message, ...optionalParams);
     }
 
     log(message?: any, ...optionalParams: any[]) {
-        // tslint:disable-next-line:no-console
         console.log(message, ...optionalParams);
     }
 
     trace(message?: any, ...optionalParams: any[]) {
-        // tslint:disable-next-line:no-console
         console.trace(message, ...optionalParams);
     }
 
     warn(message?: any, ...optionalParams: any[]) {
-        // tslint:disable-next-line:no-console
         console.warn(message, ...optionalParams);
     }
 }

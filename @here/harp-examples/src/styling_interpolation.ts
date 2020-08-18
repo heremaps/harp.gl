@@ -87,7 +87,6 @@ export namespace TiledGeoJsonTechniquesExample {
                 },
                 {
                     when:
-                        // tslint:disable-next-line:max-line-length
                         "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['nature','forest','park','wood','natural_wood','grass','meadow','village_green','dog_park','garden','nature_reserve','protected_area'])",
                     technique: "fill",
                     attr: {
@@ -131,7 +130,6 @@ export namespace TiledGeoJsonTechniquesExample {
                 },
                 {
                     when:
-                        // tslint:disable-next-line:max-line-length
                         "$layer == 'roads' && kind in ['major_road', 'highway', 'minor_road'] && kind_detail in ['unclassified', 'residential', 'service']",
                     technique: "solid-line",
                     attr: {
@@ -162,7 +160,6 @@ export namespace TiledGeoJsonTechniquesExample {
                 },
                 {
                     when:
-                        // tslint:disable-next-line:max-line-length
                         "$layer == 'roads' && kind in ['major_road', 'highway', 'minor_road'] && kind_detail == 'tertiary'",
                     technique: "solid-line",
                     attr: {
@@ -193,7 +190,6 @@ export namespace TiledGeoJsonTechniquesExample {
                 },
                 {
                     when:
-                        // tslint:disable-next-line:max-line-length
                         "$layer == 'roads' && kind in ['major_road', 'highway', 'minor_road'] && kind_detail == 'secondary'",
                     technique: "solid-line",
                     attr: {
@@ -224,7 +220,6 @@ export namespace TiledGeoJsonTechniquesExample {
                 },
                 {
                     when:
-                        // tslint:disable-next-line:max-line-length
                         "$layer == 'roads' && kind in ['major_road', 'highway', 'minor_road'] && kind_detail == 'primary'",
                     technique: "solid-line",
                     attr: {

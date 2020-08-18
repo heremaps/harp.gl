@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
 import { Env, ExtrudedPolygonTechnique } from "@here/harp-datasource-protocol";
 import { ColorUtils } from "@here/harp-datasource-protocol/lib/ColorUtils";
 import { enforceBlending, MapMeshStandardMaterial } from "@here/harp-materials";
+import * as THREE from "three";
 import { evaluateBaseColorProperty } from "./DecodedTileHelpers";
 
 /**
@@ -117,7 +116,6 @@ export function isDepthPrePassMesh(object: THREE.Object3D): boolean {
         : (mesh.material as any).isDepthPrepassMaterial === true;
 }
 
-// tslint:disable:max-line-length
 /**
  * Clones a given mesh to render it in the depth prepass with another material.
  *
@@ -136,7 +134,6 @@ export function isDepthPrePassMesh(object: THREE.Object3D): boolean {
  *
  * @internal
  */
-// tslint:enable:max-line-length
 export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
     const originalGeometry = mesh.geometry;
 

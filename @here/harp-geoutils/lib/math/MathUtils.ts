@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { Box3Like } from "./Box3Like";
 import { Vector3Like } from "./Vector3Like";
-
-import * as THREE from "three";
 
 export namespace MathUtils {
     /**

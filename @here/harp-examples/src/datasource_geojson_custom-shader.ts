@@ -114,7 +114,6 @@ export namespace GeoJsonCustomShaderExample {
             window.addEventListener("resize", adjustSize);
         }
 
-        // tslint:disable-next-line: no-empty
         start() {}
 
         private addBaseMap() {

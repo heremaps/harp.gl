@@ -4,20 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { assert } from "chai";
-import * as THREE from "three";
-
 import { Expr, getPropertyValue, MapEnv, SolidLineTechnique } from "@here/harp-datasource-protocol";
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assertLogsSync } from "@here/harp-test-utils";
 import { LoggerManager } from "@here/harp-utils";
+import { assert } from "chai";
+import * as THREE from "three";
 import {
     applyBaseColorToMaterial,
     createMaterial,
     evaluateColorProperty
 } from "../lib/DecodedTileHelpers";
-
-// tslint:disable:only-arrow-functions
 
 function assertLogsError(testCode: () => void, errorMessagePattern: string | RegExp) {
     return assertLogsSync(testCode, LoggerManager.instance.channel, "error", errorMessagePattern);

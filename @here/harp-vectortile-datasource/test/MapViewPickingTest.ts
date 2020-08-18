@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { DecodedTile, Geometry, GeometryType } from "@here/harp-datasource-protocol";

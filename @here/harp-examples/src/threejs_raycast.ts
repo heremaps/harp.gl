@@ -77,7 +77,6 @@ export namespace ThreejsRaycast {
             map.resize(window.innerWidth, window.innerHeight);
         });
 
-        // tslint:disable:no-unused-expression
         new LongPressHandler(canvas, event => {
             // snippet:harp_gl_threejs_raycast_0.ts
             const pickResults = map.intersectMapObjects(event.pageX, event.pageY);

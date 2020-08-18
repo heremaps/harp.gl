@@ -19,7 +19,6 @@ const EXTENT = 4096;
 const BUFFER_FACTOR = 0.05;
 
 // align the buffer to the next integer multiple of 2.
-// tslint:disable-next-line: no-bitwise
 const BUFFER = -(-Math.ceil(EXTENT * BUFFER_FACTOR) & -2);
 
 interface GeoJsonVtIndex {

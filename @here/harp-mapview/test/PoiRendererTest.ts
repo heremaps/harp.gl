@@ -4,20 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { expect } from "chai";
-import * as THREE from "three";
 
 import { Env } from "@here/harp-datasource-protocol";
 import { Math2D } from "@here/harp-utils";
+import { expect } from "chai";
+import * as THREE from "three";
 
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { LoggerManager } from "@here/harp-utils";
@@ -99,7 +98,6 @@ describeOnlyNode("Theme typings test", function(this: Mocha.Suite) {
         validate("Theme", ProperTheme);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("syntax test for improperly defined Theme object (excessive properties)", function(this: Mocha.Context) {
         this.timeout(30000);
 

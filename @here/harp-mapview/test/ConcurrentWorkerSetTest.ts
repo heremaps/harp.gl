@@ -16,7 +16,6 @@ import * as sinon from "sinon";
 import { ConcurrentWorkerSet, isLoggingMessage } from "../lib/ConcurrentWorkerSet";
 import { FakeWebWorker, willExecuteWorkerScript } from "./FakeWebWorker";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 declare const global: any;
@@ -488,7 +487,6 @@ describe("ConcurrentWorkerSet", function() {
                 }
             });
 
-            // tslint:disable-next-line:no-unused-expression
             new ConcurrentWorkerSet({
                 scriptUrl: "foot.js",
                 workerCount: 200

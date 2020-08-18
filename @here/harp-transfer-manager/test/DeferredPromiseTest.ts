@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:completed-docs
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import * as chai from "chai";
@@ -32,9 +30,7 @@ describe("DeferredPromise", function() {
         // Delay execution
         await delay(1);
 
-        // tslint:disable-next-line: no-unused-expression
         expect(deferred.promise).to.not.be.undefined;
-        // tslint:disable-next-line: no-unused-expression
         expect(isSettled).to.be.false;
     });
 
@@ -48,7 +44,6 @@ describe("DeferredPromise", function() {
         deferred.exec();
         await expect(deferred.promise).to.eventually.be.fulfilled;
 
-        // tslint:disable-next-line: no-unused-expression
         expect(isSettled).to.be.true;
     });
 
@@ -62,7 +57,6 @@ describe("DeferredPromise", function() {
         deferred.exec();
         await expect(deferred.promise).to.eventually.be.rejectedWith("Some error happened.");
 
-        // tslint:disable-next-line: no-unused-expression
         expect(isSettled).to.be.true;
     });
 });

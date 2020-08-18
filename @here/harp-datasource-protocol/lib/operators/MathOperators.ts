@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { CallExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
-
-import * as THREE from "three";
 
 const operators = {
     "^": {
@@ -15,7 +14,6 @@ const operators = {
             const a = context.evaluate(call.args[0]);
             const b = context.evaluate(call.args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
-                // tslint:disable-next-line: max-line-length
                 throw new Error(
                     `invalid operands '${typeof a}' and '${typeof b}' for operator '^'`
                 );
@@ -51,7 +49,6 @@ const operators = {
             const a = context.evaluate(call.args[0]);
             const b = context.evaluate(call.args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
-                // tslint:disable-next-line: max-line-length
                 throw new Error(
                     `invalid operands '${typeof a}' and '${typeof b}' for operator '/'`
                 );
@@ -65,7 +62,6 @@ const operators = {
             const a = context.evaluate(call.args[0]);
             const b = context.evaluate(call.args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
-                // tslint:disable-next-line: max-line-length
                 throw new Error(
                     `invalid operands '${typeof a}' and '${typeof b}' for operator '%'`
                 );

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import { TileKey } from "@here/harp-geoutils";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -24,7 +25,6 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { TileKey } from "@here/harp-geoutils";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { overlayTextElement } from "../geometry/overlayOnElevation";

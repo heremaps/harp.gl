@@ -6,7 +6,6 @@
 
 import * as hljs from "highlight.js";
 
-// tslint:disable-next-line:no-implicit-dependencies
 import "style-loader!css-loader!highlight.js/styles/default.css";
 
 (() => {

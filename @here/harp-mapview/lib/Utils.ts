@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
 import {
     GeoBox,
     GeoCoordinates,
@@ -19,6 +17,7 @@ import {
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
+import * as THREE from "three";
 import { ElevationProvider } from "./ElevationProvider";
 import { LodMesh } from "./geometry/LodMesh";
 import { MapView } from "./MapView";
@@ -166,7 +165,6 @@ export namespace MapViewUtils {
 
         // Compute current camera target, it may not be the one set in MapView, e.g. when this
         // function is called multiple times between frames.
-        // tslint:disable-next-line: deprecation
         const cameraTarget = MapViewUtils.getTargetAndDistance(
             projection,
             camera,
@@ -200,7 +198,6 @@ export namespace MapViewUtils {
         if (projection.type === ProjectionType.Spherical) {
             // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
             // changes.
-            // tslint:disable-next-line: deprecation
             const tilt = extractCameraTilt(camera, projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
@@ -281,7 +278,6 @@ export namespace MapViewUtils {
         // This function does almost the same as:
         // rayCastGeoCoordinates(mapView, 0, 0)
         // but in more gentle and performance wise manner
-        // tslint:disable-next-line: deprecation
         const targetWorldPos = getWorldTargetFromCamera(camera, projection, elevation);
         if (targetWorldPos !== null) {
             return projection.unprojectPoint(targetWorldPos);
@@ -514,8 +510,7 @@ export namespace MapViewUtils {
         // infinity.
         const target =
             cameraPitch < MAX_TILT_RAD
-                ? // tslint:disable-next-line: deprecation
-                  getWorldTargetFromCamera(camera, projection, elevation)
+                ? getWorldTargetFromCamera(camera, projection, elevation)
                 : null;
         if (target !== null) {
             const distance = camera.position.distanceTo(target);
@@ -1128,7 +1123,6 @@ export namespace MapViewUtils {
         } else {
             // Sanity check if new projection type is introduced.
             assert(projection.type === ProjectionType.Spherical);
-            // tslint:disable-next-line: deprecation
             const targetGeoCoords = MapViewUtils.getGeoTargetFromCamera(camera, projection);
             // If focus point is lost we then expose maximum allowable tilt value.
             if (targetGeoCoords !== null) {
@@ -2012,14 +2006,12 @@ export namespace TileOffsetUtils {
         }
         // Offset is now a number between >= 0 and < totalOffsetsToStore
         for (let i = 0; i < offsetBits && offset > 0; i++) {
-            // tslint:disable: no-bitwise
             // 53 is used because 2^53-1 is the biggest number that Javascript can represent as an
             // integer safely.
             if (offset & 0x1) {
                 result += powerOfTwo[53 - offsetBits + i];
             }
             offset >>>= 1;
-            // tslint:enable: no-bitwise
         }
         assert(offset === 0);
         return result;

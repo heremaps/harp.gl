@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GeometryKind, getPropertyValue, MapEnv, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
-import { GeometryKind, getPropertyValue, MapEnv, Technique } from "@here/harp-datasource-protocol";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "./MapMaterialAdapter";
 
 /**

@@ -149,7 +149,6 @@ export class MapAnchors {
             }
 
             const anchor =
-                // tslint:disable-next-line: deprecation
                 mapAnchor.geoPosition !== undefined ? mapAnchor.geoPosition : mapAnchor.anchor;
             if (anchor !== undefined) {
                 if (isVector3Like(anchor)) {

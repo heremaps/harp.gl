@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
 import {
     Definitions,
     StandardGeometryKind,
@@ -22,6 +20,7 @@ import {
     TilingScheme,
     TransverseMercatorUtils
 } from "@here/harp-geoutils";
+import * as THREE from "three";
 
 import { DataSource, DataSourceOptions } from "./DataSource";
 import { createMaterial } from "./DecodedTileHelpers";
@@ -316,7 +315,6 @@ export class PolarTileDataSource extends DataSource {
             points.splice(inPointB ? 2 : 1, 4, cutStart);
 
             const level = tile.tileKey.level - this.storageLevelOffset + this.m_geometryLevelOffset;
-            // tslint:disable-next-line:no-bitwise
             const subdivisions = 1 << Math.max(0, level);
             const step = 360 / subdivisions;
 

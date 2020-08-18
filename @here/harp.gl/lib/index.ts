@@ -7,7 +7,7 @@
 import { mapBundleMain } from "./BundleMain";
 
 if (!(window as any).THREE) {
-    // tslint:disable-next-line:no-console
+    // eslint-disable-next-line no-console
     console.warn(
         "harp.js: It looks like 'three.js' is not loaded. This script requires 'THREE' object to " +
             "be defined. See https://github.com/heremaps/harp.gl/@here/harp.gl."

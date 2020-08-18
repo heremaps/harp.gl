@@ -36,7 +36,6 @@ import {
 } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 class FakeMapView {
@@ -224,7 +223,6 @@ describe("VisibleTileSet", function() {
     }
 
     // Needed for chai expect.
-    // tslint:disable: no-unused-expression
 
     const compareDataSources = (
         dstl: DataSourceTileList[],
@@ -234,12 +232,10 @@ describe("VisibleTileSet", function() {
         dstl.forEach(dataSourceTileList => {
             if (dsSkipped.indexOf(dataSourceTileList.dataSource) !== -1) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
-                    // tslint:disable-next-line: no-string-literal
                     expect(tile["skipRendering"]).is.true;
                 });
             } else if (dsValid.indexOf(dataSourceTileList.dataSource) !== -1) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
-                    // tslint:disable-next-line: no-string-literal
                     expect(tile["skipRendering"]).is.false;
                 });
             }
@@ -274,7 +270,6 @@ describe("VisibleTileSet", function() {
 
         // Test where we have 2 actually visible tiles (in the sense that they are in the frustum,
         // see visibleTileKeys below) and one visible tile because it is a dependency.
-        // tslint:disable-next-line: no-string-literal
         fixture.vts["getVisibleTileKeysForDataSources"] = sinon.stub().returns({
             tileKeys: [
                 {
@@ -569,7 +564,6 @@ describe("VisibleTileSet", function() {
         const result = updateRenderList(zoomLevel, storageLevel);
         result.tileList.forEach(dataSourceTileList => {
             dataSourceTileList.visibleTiles.forEach(tile => {
-                // tslint:disable-next-line: no-string-literal
                 expect(tile["skipRendering"]).is.false;
             });
         });

@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { assert } from "@here/harp-utils";
-import { ColorUtils } from "./ColorUtils";
-
 //@ts-ignore
 import { parseCSSColor } from "csscolorparser";
+import { ColorUtils } from "./ColorUtils";
 
 /**
  * Enumeration of supported string encoded numerals.

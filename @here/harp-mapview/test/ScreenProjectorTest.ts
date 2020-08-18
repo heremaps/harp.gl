@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ScreenProjector } from "../lib/ScreenProjector";
-
 import { assert, expect } from "chai";
 import * as THREE from "three";
+import { ScreenProjector } from "../lib/ScreenProjector";
 
 describe("ScreenProjector", () => {
     const screenSize: number = 10;

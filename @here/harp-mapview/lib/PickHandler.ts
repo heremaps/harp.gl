@@ -5,9 +5,9 @@
  */
 
 import { GeometryType, getFeatureId, Technique } from "@here/harp-datasource-protocol";
+import { OrientedBox3 } from "@here/harp-geoutils";
 import * as THREE from "three";
 
-import { OrientedBox3 } from "@here/harp-geoutils";
 import { IntersectParams } from "./IntersectParams";
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";

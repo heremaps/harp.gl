@@ -14,11 +14,9 @@ class QuadTreeSubdivisionScheme implements SubdivisionScheme {
         return 2;
     }
     getLevelDimensionX(level: number): number {
-        // tslint:disable-next-line:no-bitwise
         return 1 << level;
     }
     getLevelDimensionY(level: number): number {
-        // tslint:disable-next-line:no-bitwise
         return 1 << level;
     }
 }

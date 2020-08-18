@@ -16,13 +16,11 @@ export class RawShaderMaterial extends THREE.RawShaderMaterial {
      *
      * @param params - Optional material parameters.
      */
-    // tslint:disable-next-line: deprecation
     constructor(params?: THREE.ShaderMaterialParameters) {
         super(params);
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
         if (renderer.capabilities.isWebGL2) {
             shader.vertexShader = convertVertexShaderToWebGL2(shader.vertexShader);

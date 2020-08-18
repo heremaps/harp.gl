@@ -8,11 +8,11 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 
 import { GroundAtmosphereMaterial, SkyAtmosphereMaterial } from "@here/harp-materials";
-import { MapAnchor, MapAnchors } from "./MapAnchors";
 
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { TiltViewClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import { MapAnchor, MapAnchors } from "./MapAnchors";
 
 /**
  * Atmosphere effect variants.
@@ -133,11 +133,9 @@ export class MapViewAtmosphere {
         private readonly m_atmosphereVariant: AtmosphereVariant = AtmosphereVariant.SkyAndGround,
         private readonly m_materialVariant = AtmosphereShadingVariant.ScatteringShader
     ) {
-        // tslint:disable-next-line: no-bitwise
         if (this.m_atmosphereVariant & AtmosphereVariant.Sky) {
             this.createSkyGeometry();
         }
-        // tslint:disable-next-line: no-bitwise
         if (this.m_atmosphereVariant & AtmosphereVariant.Ground) {
             this.createGroundGeometry();
         }

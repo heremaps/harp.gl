@@ -148,7 +148,6 @@ export class TextStyleCache {
                 this.createTextElementStyle(element, element.name!)
             );
         });
-        // tslint:disable-next-line:no-unused-variable
         for (const [, style] of this.m_textStyles) {
             if (style.textCanvas === undefined) {
                 if (style.fontCatalog !== undefined) {

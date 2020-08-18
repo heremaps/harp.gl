@@ -14,7 +14,6 @@ import * as THREE from "three";
 import "three/examples/js/controls/TrackballControls";
 import { apikey } from "../config";
 
-// tslint:disable-next-line:no-var-requires
 const SunCalc = require("suncalc");
 
 const FADE_DURATION = 30 * 60 * 1000; // in ms
@@ -61,7 +60,6 @@ function swapCamera() {
 }
 
 function setupDebugStuff() {
-    // tslint:disable-next-line: no-string-literal
     const mapCameraHelper = new THREE.CameraHelper(map["m_rteCamera"]);
     mapCameraHelper.renderOrder = Number.MAX_SAFE_INTEGER;
     map.scene.add(mapCameraHelper);

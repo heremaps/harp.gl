@@ -103,7 +103,7 @@ export namespace BoundsExample {
                 case " ":
                     // Generate the the bounds  of the current view and add them as a feature
                     const corners = boundsGenerator.generate();
-                    // tslint:disable-next-line: no-console
+                    // eslint-disable-next-line no-console
                     console.log(corners);
                     if (corners && corners.length > 0) {
                         //add starting vertex to the end to close the polygon
@@ -142,7 +142,7 @@ export namespace BoundsExample {
                     featuresDataSource?.add(cornerpoints);
                     break;
                 case "l":
-                    // tslint:disable-next-line: no-console
+                    // eslint-disable-next-line no-console
                     console.log(
                         "target: ",
                         map.target,

@@ -1658,7 +1658,6 @@ export class MapView extends EventDispatcher {
     addEventListener(type: MapViewEventNames, listener: (event: RenderEvent) => void): void;
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     addEventListener(type: string, listener: any): void {
         super.addEventListener(type, listener);
     }
@@ -1680,7 +1679,6 @@ export class MapView extends EventDispatcher {
     removeEventListener(type: MapViewEventNames, listener?: (event: RenderEvent) => void): void;
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     removeEventListener(type: string, listener?: any): void {
         super.removeEventListener(type, listener);
     }
@@ -2287,7 +2285,6 @@ export class MapView extends EventDispatcher {
         this.m_textElementsRenderer.clearOverlayText();
     }
 
-    // tslint:disable: max-line-length
     /**
      * Adjusts the camera to look at a given geo coordinate with tilt and heading angles.
      *
@@ -2337,7 +2334,6 @@ export class MapView extends EventDispatcher {
      * {@labels WITH_PARAMS}
      */
     lookAt(params: Partial<LookAtParams>): void;
-    // tslint:enable: max-line-length
 
     /**
      * The method that sets the camera to the desired angle (`tiltDeg`) and `distance` (in meters)
@@ -3329,7 +3325,6 @@ export class MapView extends EventDispatcher {
      * Derive the look at settings (i.e. target, zoom, ...) from the current camera.
      */
     private updateLookAtSettings() {
-        // tslint:disable-next-line: deprecation
         let { target, distance } = MapViewUtils.getTargetAndDistance(
             this.projection,
             this.camera,
@@ -3504,7 +3499,6 @@ export class MapView extends EventDispatcher {
         }
 
         // Continue rendering if update is pending or animation is running
-        // tslint:disable-next-line: prefer-conditional-expression
         if (this.m_updatePending || this.animating) {
             this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
         } else {
@@ -4065,9 +4059,7 @@ export class MapView extends EventDispatcher {
 
         this.m_themeIsLoading = true;
         Promise.resolve<string | Theme>(theme)
-            // tslint:disable-next-line: no-shadowed-variable
             .then(theme => ThemeLoader.load(theme, { uriResolver: this.m_uriResolver }))
-            // tslint:disable-next-line: no-shadowed-variable
             .then(theme => {
                 this.m_themeIsLoading = false;
                 this.theme = theme;
@@ -4203,7 +4195,6 @@ export class MapView extends EventDispatcher {
                 const light = createLight(lightDescription);
                 if (!light) {
                     logger.warn(
-                        // tslint:disable-next-line: max-line-length
                         `MapView: failed to create light ${lightDescription.name} of type ${lightDescription.type}`
                     );
                     return;
@@ -4372,7 +4363,6 @@ export class MapView extends EventDispatcher {
     }
 
     private setupStats(enable: boolean) {
-        // tslint:disable-next-line:no-unused-expression
         new PerformanceStatistics(enable, 1000);
     }
 

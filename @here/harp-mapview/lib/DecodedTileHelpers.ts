@@ -477,29 +477,18 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
             ]);
             baseProps.lineWidth = buildMetricValueEvaluator(
                 technique.lineWidth ?? 0, // Compatibility: `undefined` lineWidth means hidden.
-                // tslint:disable-next-line: deprecation
                 technique.metricUnit
             );
             baseProps.outlineWidth = buildMetricValueEvaluator(
                 technique.outlineWidth,
-                // tslint:disable-next-line: deprecation
                 technique.metricUnit
             );
             baseProps.dashSize = buildMetricValueEvaluator(
                 technique.dashSize,
-                // tslint:disable-next-line: deprecation
                 technique.metricUnit
             );
-            baseProps.gapSize = buildMetricValueEvaluator(
-                technique.gapSize,
-                // tslint:disable-next-line: deprecation
-                technique.metricUnit
-            );
-            baseProps.offset = buildMetricValueEvaluator(
-                technique.offset,
-                // tslint:disable-next-line: deprecation
-                technique.metricUnit
-            );
+            baseProps.gapSize = buildMetricValueEvaluator(technique.gapSize, technique.metricUnit);
+            baseProps.offset = buildMetricValueEvaluator(technique.offset, technique.metricUnit);
             return baseProps;
         }
         case "fill":

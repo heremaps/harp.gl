@@ -26,7 +26,6 @@ function asyncWorkerBootstrap(dependencies: string[]): Promise<void> {
 
         let timeoutHit = false;
         const warnTimeout = setTimeout(() => {
-            // tslint:disable-next-line:no-console
             timeoutHit = true;
             reject(
                 new Error("#asyncWorkerBootstrap: Timeout waiting for `worker-bootstrap-response`.")
@@ -68,7 +67,7 @@ if ((self as any).THREE) {
             import("./DecoderBundleMain");
         })
         .catch(error => {
-            // tslint:disable-next-line:no-console
+            // eslint-disable-next-line no-console
             console.error(`harp-decoders.js: failed to bootstrap: ${error}`, error);
         });
 }

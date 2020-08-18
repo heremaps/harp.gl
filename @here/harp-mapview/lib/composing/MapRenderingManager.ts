@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as THREE from "three";
 
 import {
     IBloomEffect,
@@ -12,6 +11,7 @@ import {
     IVignetteEffect
 } from "@here/harp-datasource-protocol";
 import { SepiaShader, VignetteShader } from "@here/harp-materials";
+import * as THREE from "three";
 import { IPassManager } from "./IPassManager";
 import { LowResRenderPass } from "./LowResRenderPass";
 import { MSAARenderPass, MSAASampling } from "./MSAARenderPass";

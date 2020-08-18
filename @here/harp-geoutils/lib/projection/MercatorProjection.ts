@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike, isGeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
@@ -14,8 +15,6 @@ import { TransformLike } from "../math/TransformLike";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
-
-import * as THREE from "three";
 
 class MercatorProjection extends Projection {
     protected static clamp(val: number, min: number, max: number): number {
@@ -86,7 +85,6 @@ class MercatorProjection extends Projection {
         }
 
         if (!result) {
-            // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
         result.x = ((geoPoint.longitude + 180) / 360) * this.unitScale;
@@ -211,7 +209,6 @@ class MercatorProjection extends Projection {
             (sourceProjection === webMercatorProjection || sourceProjection === mercatorProjection)
         ) {
             if (result === undefined) {
-                // tslint:disable-next-line: no-object-literal-type-assertion
                 result = {} as Vector3Like;
             }
 
@@ -255,7 +252,6 @@ class WebMercatorProjection extends MercatorProjection {
          * Note: type of `result` is Vector3Like and not as expected: THREE.Vector3!
          */
         if (!result) {
-            // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
 

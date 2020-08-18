@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* tslint:disable:max-line-length */
 /**
  * See:
  * https://developers.google.com/web/updates/2012/08/When-milliseconds-are-not-enough-performance-now
  */
-/* tslint:ensable:max-line-length */
 
 export class PerformanceTimer {
     /**
@@ -31,7 +29,6 @@ export class PerformanceTimer {
         return PerformanceTimer.nowFunc();
     }
 
-    // tslint:disable-next-line:no-unused-variable
     private static readonly instance = new PerformanceTimer();
 
     private static readonly nowFunc: () => number = PerformanceTimer.getNowFunc();

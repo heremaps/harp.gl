@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
-// tslint:disable:only-arrow-functions
 // Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import * as chai from "chai";
 const { expect } = chai;
 import * as chai_as_promised from "chai-as-promised";
 chai.use(chai_as_promised);
 import * as sinon from "sinon";
 
-import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
 import { Tile } from "../lib/Tile";

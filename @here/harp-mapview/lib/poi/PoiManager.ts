@@ -629,7 +629,6 @@ export class PoiManager {
                 ? technique.distanceScale
                 : DEFAULT_TEXT_DISTANCE_SCALE;
 
-        // tslint:disable-next-line: deprecation
         textElement.kind = technique.kind;
         return textElement;
     }

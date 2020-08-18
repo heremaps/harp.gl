@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
 import { GeoBoxExtentLike } from "./GeoBoxExtentLike";
 import { GeoCoordinates } from "./GeoCoordinates";
-
-import * as THREE from "three";
 
 /**
  * `GeoBox` is used to represent a bounding box in geo coordinates.

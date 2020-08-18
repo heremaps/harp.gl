@@ -20,7 +20,6 @@ import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { LookAtParams, MapView } from "../lib/MapView";
 import { MapViewUtils } from "../lib/Utils";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 declare const global: any;
