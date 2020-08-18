@@ -19,12 +19,12 @@ import {
     parseStringEncodedColor,
     ShaderTechnique,
     Technique,
-    techniqueDescriptors,
     TextureProperties,
     TEXTURE_PROPERTY_KEYS,
     TRANSPARENCY_PROPERTY_KEYS,
     Value
 } from "@here/harp-datasource-protocol";
+import { techniqueDescriptors } from "@here/harp-datasource-protocol/lib/TechniqueDescriptors";
 import {
     CirclePointsMaterial,
     disableBlending,

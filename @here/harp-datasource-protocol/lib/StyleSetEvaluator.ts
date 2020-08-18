@@ -33,13 +33,11 @@ import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedPropertyDefs";
-import { AttrScope, mergeTechniqueDescriptor } from "./TechniqueDescriptor";
-import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
+import { AttrScope, techniqueDescriptors } from "./TechniqueDescriptors";
+import { IndexedTechnique, Technique } from "./Techniques";
 import { Definitions, Style, StyleSet } from "./Theme";
 
 const logger = LoggerManager.instance.create("StyleSetEvaluator");
-
-const emptyTechniqueDescriptor = mergeTechniqueDescriptor<Technique>({});
 
 const DEFAULT_TECHNIQUE_ATTR_SCOPE = AttrScope.TechniqueGeometry;
 
@@ -62,11 +60,9 @@ function getStyleAttributeScope(style: InternalStyle, attrName: string): AttrSco
         }
     }
 
-    const descriptions = techniqueDescriptors as any;
+    const techniqueDescriptor: any = techniqueDescriptors[style.technique as Technique["name"]];
 
-    const techniqueDescriptor = descriptions[style.technique] ?? emptyTechniqueDescriptor;
-
-    return techniqueDescriptor.attrScopes[attrName] ?? DEFAULT_TECHNIQUE_ATTR_SCOPE;
+    return techniqueDescriptor.attrScopes?.[attrName] ?? DEFAULT_TECHNIQUE_ATTR_SCOPE;
 }
 
 interface StyleInternalParams {
