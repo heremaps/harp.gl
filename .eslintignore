@@ -3,3 +3,4 @@
 @here/generator-harp.gl/**/*.ts
 dist/**
 **/*.js
+@here/harp-vector-tile/lib/adapters/omv/proto/vector_tile.d.ts
