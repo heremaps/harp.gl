@@ -27,7 +27,7 @@ describe("MipMapGenerator", function() {
                 "test/resources/headshot.png"
             );
             const image = new Image();
-            return new Promise((resolve, reject) => {
+            return await new Promise((resolve, reject) => {
                 image.onload = resolve;
                 image.onerror = reject;
                 image.src = imageUrl;

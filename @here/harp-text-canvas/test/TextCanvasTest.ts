@@ -19,9 +19,9 @@ import {
 } from "../index";
 
 async function loadTexture(url: string): Promise<THREE.Texture> {
-    return new Promise(resolve => {
+    return await new Promise(resolve => {
         new THREE.TextureLoader().load(url, resolve);
-    }) as Promise<THREE.Texture>;
+    });
 }
 
 async function loadJSON(url: string): Promise<any> {

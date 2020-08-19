@@ -285,7 +285,7 @@ export class ConcurrentWorkerSet {
     async connect(serviceId: string): Promise<void> {
         this.ensureStarted();
         await Promise.all(this.m_workerPromises);
-        return this.getReadyPromise(serviceId).promise as Promise<void>;
+        return await this.getReadyPromise(serviceId).promise;
     }
 
     /**

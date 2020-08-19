@@ -37,14 +37,14 @@ export class GeoJsonTiler implements ITiler {
     }
 
     async connect(): Promise<void> {
-        return Promise.resolve();
+        return await Promise.resolve();
     }
 
     async registerIndex(indexId: string, input: URL | GeoJson): Promise<void> {
         if (this.indexes.has(indexId)) {
             return;
         }
-        return this.updateIndex(indexId, input);
+        return await this.updateIndex(indexId, input);
     }
 
     async updateIndex(indexId: string, input: URL | GeoJson): Promise<void> {

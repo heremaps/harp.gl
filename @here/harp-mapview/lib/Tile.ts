@@ -908,10 +908,10 @@ export class Tile implements CachedResource {
     async load(): Promise<void> {
         const tileLoader = this.tileLoader;
         if (tileLoader === undefined) {
-            return Promise.resolve();
+            return await Promise.resolve();
         }
 
-        return tileLoader
+        return await tileLoader
             .loadAndDecode()
             .then(tileLoaderState => {
                 assert(tileLoaderState === TileLoaderState.Ready);

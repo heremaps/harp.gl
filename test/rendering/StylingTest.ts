@@ -902,7 +902,7 @@ describe("MapView Styling Test", function() {
                 },
                 async () => {
                     // we have no API to know when texture is already loaded
-                    return new Promise(resolve => setTimeout(resolve, 500));
+                    return await new Promise(resolve => setTimeout(resolve, 500));
                 }
             );
             mapViewFeaturesRenderingTest(
@@ -939,7 +939,7 @@ describe("MapView Styling Test", function() {
                 },
                 async () => {
                     // we have no API to know when texture is already loaded
-                    return new Promise(resolve => setTimeout(resolve, 500));
+                    return await new Promise(resolve => setTimeout(resolve, 500));
                 }
             );
         });

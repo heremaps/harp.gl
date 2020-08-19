@@ -103,7 +103,7 @@ export class GeoJsonDataProvider extends EventDispatcher implements DataProvider
     }
 
     async getTile(tileKey: TileKey): Promise<{}> {
-        return this.m_tiler.getTile(this.name, tileKey);
+        return await this.m_tiler.getTile(this.name, tileKey);
     }
 
     onDidInvalidate(listener: () => void) {

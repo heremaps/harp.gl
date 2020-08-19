@@ -31,7 +31,7 @@ export class TestSingleFileDataProvider implements DataProvider {
     }
 
     async getTile(_tileKey: TileKey, _abortSignal?: AbortSignal): Promise<ArrayBufferLike> {
-        return loadTestResource(this.moduleName, this.basePath, "arraybuffer");
+        return await loadTestResource(this.moduleName, this.basePath, "arraybuffer");
     }
 
     /** @override */ dispose() {
@@ -73,7 +73,7 @@ export class TestTilesDataProvider implements DataProvider {
         const resp = await fetch(url, {
             signal: abortSignal
         });
-        return resp.arrayBuffer();
+        return await resp.arrayBuffer();
     }
 
     /** @override */ dispose() {

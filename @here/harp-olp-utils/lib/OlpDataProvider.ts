@@ -108,7 +108,7 @@ export class OlpDataProvider implements DataProvider {
             if (response.status !== 200) {
                 throw new Error(response.statusText);
             }
-            return response.arrayBuffer();
+            return await response.arrayBuffer();
         } catch (error) {
             if (error.name === "AbortError" || error.message === "AbortError: Aborted") {
                 // Rethrow abort errors as they shall be handled on higher level.

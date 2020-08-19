@@ -205,7 +205,7 @@ async function prepareSprites(
     );
 
     // Store all post-processed images into output directory.
-    return storeImages(inputFiles, images, outputDir, outputFormat);
+    return await storeImages(inputFiles, images, outputDir, outputFormat);
 }
 
 function processImages(

@@ -226,7 +226,7 @@ describe("WorkerLoader", function() {
                 const fetchStub = sandbox.stub(window, "fetch");
                 fetchStub.callsFake(async (url: RequestInfo) => {
                     assert.equal(url, cspTestScriptUrl);
-                    return originalFetch(testWorkerUrl);
+                    return await originalFetch(testWorkerUrl);
                 });
 
                 const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
@@ -271,7 +271,7 @@ describe("WorkerLoader", function() {
                 const fetchStub = sandbox.stub(window, "fetch");
                 fetchStub.callsFake(async (url: RequestInfo) => {
                     assert.equal(url, cspTestScriptUrl);
-                    return originalFetch(testWorkerUrl);
+                    return await originalFetch(testWorkerUrl);
                 });
                 const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
 
