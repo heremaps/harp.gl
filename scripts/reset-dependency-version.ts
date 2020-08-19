@@ -39,6 +39,7 @@ packageFiles.push(__dirname + "/../package.json");
 /* Bump all dependencies */
 
 function bump(dependencies: any[], packageFile: string) {
+    // eslint-disable-next-line @typescript-eslint/no-for-in-array
     for (const dep in dependencies) {
         if (dep !== newPackage) {
             continue;

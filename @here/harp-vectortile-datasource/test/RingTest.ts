@@ -47,11 +47,11 @@ describe("Ring", function() {
 
         it("throws exception", () => {
             assert.throws(() => {
-                const ring = new Ring([new Vector2(0, 0)], []);
+                const _ring = new Ring([new Vector2(0, 0)], []);
             }, "the array of texture coordinates must have the same number of elements of the array of points");
 
             assert.throws(() => {
-                const ring = new Ring([], [new Vector2(0, 0)]);
+                const _ring = new Ring([], [new Vector2(0, 0)]);
             }, "the array of texture coordinates must have the same number of elements of the array of points");
         });
     });

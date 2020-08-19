@@ -78,7 +78,7 @@ describe("MapView", function() {
         sandbox
             .stub(THREE, "WebGL1Renderer")
             .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
-        const fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
+        const _fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
         if (inNodeContext) {
             const theGlobal: any = global;
             theGlobal.window = { window: { devicePixelRatio: 10 } };
