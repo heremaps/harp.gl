@@ -14,6 +14,7 @@ import {
     VerticalPlacement
 } from "@here/harp-text-canvas/lib/rendering/TextStyle";
 import { expect } from "chai";
+
 import { TextElementState } from "../lib/text/TextElementState";
 import { TextElementType } from "../lib/text/TextElementType";
 

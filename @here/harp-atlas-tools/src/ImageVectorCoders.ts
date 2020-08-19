@@ -5,6 +5,7 @@
  */
 
 import * as Jimp from "jimp";
+
 import { ColorUtils } from "./ColorUtils";
 import { FileSystem, ImageFormat } from "./FileSystem";
 import { ImageBitmapEncoderConstructor } from "./ImageBitmapCoders";

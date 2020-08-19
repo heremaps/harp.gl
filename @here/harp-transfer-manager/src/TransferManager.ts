@@ -11,6 +11,7 @@
  */
 
 import "@here/harp-fetch";
+
 import { DeferredPromise } from "./DeferredPromise";
 
 /**

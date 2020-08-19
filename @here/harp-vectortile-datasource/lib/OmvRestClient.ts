@@ -5,6 +5,7 @@
  */
 
 import "@here/harp-fetch";
+
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { ITransferManager, TransferManager } from "@here/harp-transfer-manager";

@@ -7,6 +7,7 @@
 import * as geoUtils from "@here/harp-geoutils";
 import { EventDispatcher, MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import * as THREE from "three";
+
 import * as utils from "./Utils";
 
 enum State {

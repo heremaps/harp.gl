@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import "@here/harp-fetch";
+
 import { isJsonExpr } from "@here/harp-datasource-protocol";
 import {
     Definitions,
@@ -25,9 +27,8 @@ import {
     resolveReferenceUri,
     UriResolver
 } from "@here/harp-utils";
-import { SkyCubemapFaceId, SKY_CUBEMAP_FACE_COUNT } from "./SkyCubemapTexture";
 
-import "@here/harp-fetch";
+import { SKY_CUBEMAP_FACE_COUNT, SkyCubemapFaceId } from "./SkyCubemapTexture";
 
 /**
  * @internal

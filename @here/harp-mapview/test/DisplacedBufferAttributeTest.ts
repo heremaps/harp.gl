@@ -8,6 +8,7 @@
 
 import { expect } from "chai";
 import * as THREE from "three";
+
 import { DisplacedBufferAttribute } from "../lib/geometry/DisplacedBufferAttribute";
 
 function createBuffer(array: number[], itemSize: number) {

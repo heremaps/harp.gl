@@ -5,6 +5,7 @@
  */
 
 import { getOptionValue } from "@here/harp-utils";
+
 import { MapView, MapViewEventNames } from "../MapView";
 import { CopyrightInfo } from "./CopyrightInfo";
 

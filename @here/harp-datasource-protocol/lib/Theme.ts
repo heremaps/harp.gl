@@ -5,6 +5,7 @@
  */
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
+
 import { JsonExpr, JsonValue } from "./Expr";
 import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 import {

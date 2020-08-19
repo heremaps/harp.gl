@@ -5,6 +5,7 @@
  */
 
 import { TextCanvas } from "@here/harp-text-canvas";
+
 import { PoiRenderer } from "../poi/PoiRenderer";
 
 export interface TextCanvasRenderer {

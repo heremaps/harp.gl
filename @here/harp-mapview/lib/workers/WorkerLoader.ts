@@ -7,6 +7,7 @@
 import "@here/harp-fetch";
 
 import { getUrlOrigin, LoggerManager } from "@here/harp-utils";
+
 import { isWorkerBootstrapRequest, WorkerBootstrapResponse } from "./WorkerBootstrapDefs";
 
 const logger = LoggerManager.instance.create("WorkerLoader");

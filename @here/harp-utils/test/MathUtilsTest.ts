@@ -5,6 +5,7 @@
  */
 
 import { assert } from "chai";
+
 import { MathUtils } from "../lib/MathUtils";
 
 describe("MathUtils", () => {

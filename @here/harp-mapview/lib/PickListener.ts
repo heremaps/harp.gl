@@ -5,6 +5,7 @@
  */
 
 import { assert } from "@here/harp-utils";
+
 import { IntersectParams } from "./IntersectParams";
 import { PickResult } from "./PickHandler";
 

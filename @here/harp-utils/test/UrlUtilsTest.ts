@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { baseUrl, getUrlOrigin, resolveReferenceUri } from "../lib/UrlUtils";
 
 describe("UrlUtils", function() {

@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { hereTilingScheme } from "../lib/tiling/HereTilingScheme";

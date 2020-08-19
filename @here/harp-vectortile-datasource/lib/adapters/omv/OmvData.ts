@@ -5,6 +5,7 @@
  */
 
 import { Vector2 } from "three";
+
 import { com } from "./proto/vector_tile";
 
 /**

@@ -5,6 +5,7 @@
  */
 
 import { TextCanvas } from "@here/harp-text-canvas";
+
 import { MapView } from "../MapView";
 import { PoiRenderer } from "./PoiRenderer";
 

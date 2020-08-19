@@ -26,6 +26,7 @@ import { MapMeshBasicMaterial } from "@here/harp-materials";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { DataSource } from "../lib/DataSource";
 import { isDepthPrePassMesh } from "../lib/DepthPrePass";
 import { DisplacementMap } from "../lib/DisplacementMap";

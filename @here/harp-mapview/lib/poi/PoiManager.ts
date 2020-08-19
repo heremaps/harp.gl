@@ -22,6 +22,7 @@ import {
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, assertExists, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { ColorCache } from "../ColorCache";
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";

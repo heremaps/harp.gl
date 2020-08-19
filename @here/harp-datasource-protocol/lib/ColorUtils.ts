@@ -6,6 +6,7 @@
 
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { RGBA } from "./RGBA";
 
 const SHIFT_TRANSPARENCY: number = 24;

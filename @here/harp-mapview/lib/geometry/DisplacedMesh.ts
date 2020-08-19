@@ -7,6 +7,7 @@
 import { DisplacementFeature, hasDisplacementFeature } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { DisplacedBufferAttribute } from "./DisplacedBufferAttribute";
 import { DisplacedBufferGeometry, DisplacementRange } from "./DisplacedBufferGeometry";
 

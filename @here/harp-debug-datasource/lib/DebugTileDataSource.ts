@@ -13,7 +13,6 @@ import {
     TextRenderStyle,
     VerticalAlignment
 } from "@here/harp-text-canvas";
-
 import * as THREE from "three";
 
 const debugMaterial = new THREE.LineBasicMaterial({

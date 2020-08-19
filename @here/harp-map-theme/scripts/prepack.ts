@@ -6,8 +6,8 @@
 
 /* eslint-disable no-console */
 
-import * as path from "path";
 import { ncp } from "ncp";
+import * as path from "path";
 
 function onCopyError(err: Error[] | null) {
     if (err === null) {

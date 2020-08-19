@@ -22,6 +22,7 @@ import {
 } from "@here/harp-geoutils";
 import { assert } from "chai";
 import { Vector2, Vector3 } from "three";
+
 import { DecodeInfo } from "../lib/DecodeInfo";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
 import { world2tile } from "../lib/OmvUtils";

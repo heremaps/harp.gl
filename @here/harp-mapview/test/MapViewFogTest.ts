@@ -10,6 +10,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assert } from "chai";
 import { BoxGeometry, Fog, Mesh, Scene } from "three";
+
 import { MapViewFog } from "../lib/MapViewFog";
 
 describe("MapViewFog", function() {

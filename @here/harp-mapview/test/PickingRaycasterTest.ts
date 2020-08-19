@@ -11,6 +11,7 @@ import { MapEnv } from "@here/harp-datasource-protocol";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { MapObjectAdapter } from "../lib/MapObjectAdapter";
 import { PickingRaycaster } from "../lib/PickingRaycaster";
 

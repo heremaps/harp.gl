@@ -10,6 +10,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, expect } from "chai";
 import * as THREE from "three";
+
 import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
 import { buildObject, createMaterial, usesObject3D } from "./../lib/DecodedTileHelpers";
 import { Tile } from "./../lib/Tile";

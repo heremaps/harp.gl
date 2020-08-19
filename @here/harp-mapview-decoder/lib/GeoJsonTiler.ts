@@ -6,7 +6,6 @@
 
 import { GeoJson, ITiler } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
-
 // @ts-ignore
 import * as geojsonvtExport from "geojson-vt";
 

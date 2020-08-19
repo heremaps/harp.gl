@@ -20,6 +20,7 @@ import {
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";

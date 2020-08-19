@@ -7,11 +7,11 @@
 
 /* eslint-disable no-console */
 
-import * as fs from "fs";
-import * as path from "path";
 import { ThemeLoader } from "@here/harp-mapview";
 import * as program from "commander";
+import * as fs from "fs";
 import * as glob from "glob";
+import * as path from "path";
 
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"))
     .version;

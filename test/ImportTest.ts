@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from "fs";
-import * as path from "path";
-
 import { assert } from "chai";
+import * as fs from "fs";
 import * as glob from "glob";
+import * as path from "path";
 
 // these dependencies are ok to include in files using node.js
 const nodeDependencyWhitelist: { [moduleName: string]: boolean } = {

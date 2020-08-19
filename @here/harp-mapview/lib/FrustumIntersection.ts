@@ -13,6 +13,7 @@ import {
 } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";

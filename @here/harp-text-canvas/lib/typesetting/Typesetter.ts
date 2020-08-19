@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { FontCatalog } from "../rendering/FontCatalog";
 import { GlyphData } from "../rendering/GlyphData";
 import { TextGeometry } from "../rendering/TextGeometry";

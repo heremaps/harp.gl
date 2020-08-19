@@ -7,6 +7,7 @@ import { DecodedTile, GeometryType, TextPathGeometry } from "@here/harp-datasour
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationRange } from "./ElevationRangeSource";

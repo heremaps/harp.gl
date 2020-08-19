@@ -8,6 +8,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { HighPrecisionLineMaterial } from "@here/harp-materials";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { MapView } from "./MapView";
 
 /**

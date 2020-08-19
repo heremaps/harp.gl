@@ -6,6 +6,7 @@
 
 import { Projection, sphereProjection } from "@here/harp-geoutils";
 import { Vector3 } from "three";
+
 import { SubdivisionModifier } from "./SubdivisionModifier";
 
 const VERTEX_POSITION_CACHE = [new Vector3(), new Vector3(), new Vector3()];

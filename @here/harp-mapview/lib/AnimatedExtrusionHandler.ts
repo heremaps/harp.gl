@@ -13,6 +13,7 @@ import {
 import { TileKey } from "@here/harp-geoutils";
 import { ExtrusionFeature, ExtrusionFeatureDefs } from "@here/harp-materials";
 import { MathUtils } from "@here/harp-utils";
+
 import { DataSource } from "./DataSource";
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";

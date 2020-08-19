@@ -8,6 +8,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, PickResult } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
+
 import { apikey } from "../config";
 
 /**

@@ -11,6 +11,7 @@ import {
     WorkerTilerProtocol
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
+
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
 
 /**

@@ -10,10 +10,10 @@
 declare const require: any;
 
 import * as child_process from "child_process";
-import * as http from "http";
-import * as path from "path";
 import * as commander from "commander";
 import * as express from "express";
+import * as http from "http";
+import * as path from "path";
 
 const modulesToLoad: string[] = [];
 function addLoadedModule(val: string) {

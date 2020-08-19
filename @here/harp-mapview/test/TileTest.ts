@@ -15,6 +15,7 @@ import {
 } from "@here/harp-geoutils";
 import { assert, expect } from "chai";
 import * as THREE from "three";
+
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
 import { TextElement } from "../lib/text/TextElement";

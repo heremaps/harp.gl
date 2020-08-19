@@ -8,6 +8,7 @@
 
 import { MapEnv, Value } from "@here/harp-datasource-protocol/index-decoder";
 import { assert } from "chai";
+
 import {
     OmvFeatureFilter,
     OmvFeatureFilterDescriptionBuilder,

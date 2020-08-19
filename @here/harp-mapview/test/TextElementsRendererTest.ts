@@ -9,6 +9,7 @@
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { TextElement } from "../lib/text/TextElement";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 import {
@@ -27,16 +28,16 @@ import {
 } from "./TextElementsRendererTestFixture";
 import {
     builder,
-    fadedIn,
-    fadedOut,
-    fadeIn,
-    fadeInAndFadedOut,
-    FadeState,
     FADE_2_CYCLES,
     FADE_CYCLE,
     FADE_IN,
     FADE_IN_OUT,
     FADE_OUT,
+    fadedIn,
+    fadedOut,
+    fadeIn,
+    fadeInAndFadedOut,
+    FadeState,
     firstNFrames,
     framesEnabled,
     frameStates,

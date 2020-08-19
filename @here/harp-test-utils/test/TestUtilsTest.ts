@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { inBrowserContext, inNodeContext, inWebWorkerContext } from "../lib/TestUtils";
 
 describe("@here/harp-test-utils", function() {

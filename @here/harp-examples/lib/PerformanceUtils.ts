@@ -25,6 +25,7 @@ import {
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
+
 import { apikey, copyrightInfo } from "../config";
 import { PerformanceTestData } from "./PerformanceConfig";
 

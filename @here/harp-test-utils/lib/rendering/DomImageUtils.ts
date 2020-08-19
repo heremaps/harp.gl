@@ -6,6 +6,7 @@
 
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { TestOptions } from "./RenderingTestHelper";
 
 declare const require: any;

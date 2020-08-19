@@ -7,6 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import * as THREE from "three";
+
 import { HelloWorldExample } from "./getting-started_hello-world_npm";
 
 /**

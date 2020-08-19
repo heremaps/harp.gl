@@ -36,6 +36,7 @@ import { getAppBaseUrl } from "@here/harp-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { VectorTileDecoder } from "../index-worker";
 import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
 import { VectorTileDataSource } from "../lib/VectorTileDataSource";

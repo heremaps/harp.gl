@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { DisplacedBufferAttribute } from "./DisplacedBufferAttribute";
 
 const tmpV1 = new THREE.Vector3();

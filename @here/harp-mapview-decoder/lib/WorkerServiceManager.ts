@@ -5,6 +5,7 @@
  */
 
 import { WorkerServiceProtocol } from "@here/harp-datasource-protocol";
+
 import { WorkerService, WorkerServiceResponse } from "./WorkerService";
 
 /**

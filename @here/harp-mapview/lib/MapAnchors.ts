@@ -13,7 +13,6 @@ import {
     Projection,
     Vector3Like
 } from "@here/harp-geoutils";
-
 import * as THREE from "three";
 
 /**

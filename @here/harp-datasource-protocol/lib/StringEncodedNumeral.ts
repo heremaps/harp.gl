@@ -6,6 +6,7 @@
 import { assert } from "@here/harp-utils";
 //@ts-ignore
 import { parseCSSColor } from "csscolorparser";
+
 import { ColorUtils } from "./ColorUtils";
 
 /**

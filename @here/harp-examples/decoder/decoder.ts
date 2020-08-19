@@ -14,6 +14,7 @@ import {
     GeoJsonTilerService,
     VectorTileDecoderService
 } from "@here/harp-vectortile-datasource/index-worker";
+
 import { CustomDecoderService } from "./custom_decoder";
 
 VectorTileDecoderService.start();

@@ -13,6 +13,7 @@ import {
     GeoJsonDataProvider,
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
+
 import { apikey, copyrightInfo } from "../config";
 import * as geojson from "../resources/italy.json";
 

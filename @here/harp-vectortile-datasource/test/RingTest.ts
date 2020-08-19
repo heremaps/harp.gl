@@ -13,6 +13,7 @@
 import { clipPolygon } from "@here/harp-geometry/lib/ClipPolygon";
 import { assert } from "chai";
 import { Vector2 } from "three";
+
 import { Ring } from "../lib/Ring";
 
 const DEFAULT_EXTENTS = 4 * 1024;

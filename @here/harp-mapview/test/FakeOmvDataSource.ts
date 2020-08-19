@@ -12,6 +12,7 @@ import {
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+
 import { DataSource, DataSourceOptions } from "../lib/DataSource";
 import { ITileLoader, Tile, TileLoaderState } from "../lib/Tile";
 

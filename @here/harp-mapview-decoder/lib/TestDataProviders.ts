@@ -5,8 +5,10 @@
  */
 
 import "@here/harp-fetch";
+
 import { TileKey } from "@here/harp-geoutils";
 import { loadTestResource } from "@here/harp-test-utils";
+
 import { DataProvider } from "../lib/DataProvider";
 
 /**

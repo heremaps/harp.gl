@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { enforceBlending } from "./Utils";
 
 const vertexShader: string = `

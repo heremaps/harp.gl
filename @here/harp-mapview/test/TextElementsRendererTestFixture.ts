@@ -10,6 +10,7 @@ import { TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { ScreenProjector } from "../lib/ScreenProjector";

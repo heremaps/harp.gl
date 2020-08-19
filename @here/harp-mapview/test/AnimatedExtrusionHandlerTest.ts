@@ -12,6 +12,7 @@ import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { ExtrusionFeature } from "@here/harp-materials";
 import { expect } from "chai";
 import * as sinon from "sinon";
+
 import { AnimatedExtrusionHandler } from "../lib/AnimatedExtrusionHandler";
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";

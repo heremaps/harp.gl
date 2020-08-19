@@ -5,12 +5,11 @@
  */
 
 import { GeoCoordinates, GeoCoordinatesLike } from "@here/harp-geoutils";
-
 import { MapView } from "@here/harp-mapview";
 import { PerformanceTimer } from "@here/harp-utils";
-
 import * as TWEEN from "@tweenjs/tween.js";
 import * as THREE from "three";
+
 import { EventNames, MapControls } from "./MapControls";
 
 /**

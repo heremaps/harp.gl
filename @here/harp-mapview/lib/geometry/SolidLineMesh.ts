@@ -8,6 +8,7 @@ import { OrientedBox3 } from "@here/harp-geoutils";
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { displaceBox, DisplacedBufferGeometry, DisplacementRange } from "./DisplacedBufferGeometry";
 
 const tmpSphere = new THREE.Sphere();

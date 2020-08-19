@@ -19,6 +19,7 @@ import {
     VectorTileDataSource,
     VectorTileDataSourceParameters
 } from "@here/harp-vectortile-datasource";
+
 import { MapViewFeature } from "./Features";
 
 const logger = LoggerManager.instance.create("FeaturesDataSource");

@@ -17,6 +17,7 @@ import {
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { MapView } from "../lib/MapView";
 import { PolarTileDataSource } from "../lib/PolarTileDataSource";
 import { Tile } from "../lib/Tile";

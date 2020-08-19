@@ -32,6 +32,7 @@ import { getAppBaseUrl } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { DataSource } from "../lib/DataSource";
 import { ElevationProvider } from "../lib/ElevationProvider";

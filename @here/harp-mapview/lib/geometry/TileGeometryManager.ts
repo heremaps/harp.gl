@@ -5,6 +5,7 @@
  */
 
 import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
+
 import { MapObjectAdapter } from "../MapObjectAdapter";
 import { MapView } from "../MapView";
 import { Tile } from "../Tile";

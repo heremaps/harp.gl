@@ -12,6 +12,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import { SepiaShader, VignetteShader } from "@here/harp-materials";
 import * as THREE from "three";
+
 import { IPassManager } from "./IPassManager";
 import { LowResRenderPass } from "./LowResRenderPass";
 import { MSAARenderPass, MSAASampling } from "./MSAARenderPass";

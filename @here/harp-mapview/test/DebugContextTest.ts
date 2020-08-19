@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { debugContext } from "../lib/DebugContext";
 
 describe("debug-context", function() {

@@ -7,7 +7,6 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert, expect } from "chai";
-
 import * as THREE from "three";
 
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";

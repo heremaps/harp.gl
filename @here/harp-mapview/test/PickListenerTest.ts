@@ -9,6 +9,7 @@
 
 import { expect } from "chai";
 import * as THREE from "three";
+
 import { PickObjectType, PickResult } from "../lib/PickHandler";
 import { PickListener } from "../lib/PickListener";
 

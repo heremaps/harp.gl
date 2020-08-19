@@ -6,6 +6,7 @@
 
 import { LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { debugContext } from "./DebugContext";
 
 declare const require: any;

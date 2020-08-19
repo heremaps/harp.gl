@@ -7,6 +7,7 @@
 import { mercatorProjection, ProjectionType, sphereProjection } from "@here/harp-geoutils";
 import { MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import * as THREE from "three";
+
 import { MapControls } from "./MapControls";
 
 /**

@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { MapEnv } from "../lib/Env";
 import { Expr, JsonArray } from "../lib/Expr";
 import { getPropertyValue } from "../lib/PropertyValue";

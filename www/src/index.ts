@@ -12,6 +12,7 @@ import {
     AuthenticationMethod,
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
+
 import { apikey, copyrightInfo } from "../../@here/harp-examples/config";
 
 const theme = require("../resources/theme.json");

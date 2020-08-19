@@ -5,6 +5,7 @@
  */
 
 import { TilerService, WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";
+
 import { GEOJSON_TILER_SERVICE_TYPE } from "./OmvDecoderDefs";
 
 /**

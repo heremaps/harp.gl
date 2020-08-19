@@ -12,6 +12,7 @@ import {
     vPlacementFromAlignment
 } from "@here/harp-text-canvas";
 import { assert } from "@here/harp-utils";
+
 import { LayoutState } from "./LayoutState";
 import { RenderState } from "./RenderState";
 import { TextElement } from "./TextElement";

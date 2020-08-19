@@ -11,6 +11,7 @@ import {
     TextTechnique
 } from "@here/harp-datasource-protocol";
 import { TextLayoutStyle, TextRenderStyle } from "@here/harp-text-canvas";
+
 import { Tile } from "../Tile";
 
 export class TileTextStyleCache {

@@ -7,9 +7,9 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { Math2D } from "@here/harp-utils";
-
 import { assert } from "chai";
 import * as THREE from "three";
+
 import {
     CollisionBox,
     DetailedCollisionBox,

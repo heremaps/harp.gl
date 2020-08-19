@@ -5,6 +5,7 @@
  */
 
 import { IChannel } from "@here/harp-utils";
+
 import { PrePlacementResult } from "./Placement";
 
 export class UpdateStats {

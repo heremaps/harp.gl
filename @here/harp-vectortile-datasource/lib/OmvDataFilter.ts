@@ -5,6 +5,7 @@
  */
 import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
+
 import {
     OmvFeatureFilterDescription,
     OmvFilterDescription,

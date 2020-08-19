@@ -19,8 +19,8 @@ import {
     parseStringEncodedColor,
     ShaderTechnique,
     Technique,
-    TextureProperties,
     TEXTURE_PROPERTY_KEYS,
+    TextureProperties,
     TRANSPARENCY_PROPERTY_KEYS,
     Value
 } from "@here/harp-datasource-protocol";
@@ -36,6 +36,7 @@ import {
 } from "@here/harp-materials";
 import { assert, LoggerManager, pick } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { DisplacedMesh } from "./geometry/DisplacedMesh";
 import { SolidLineMesh } from "./geometry/SolidLineMesh";
 import { MapAdapterUpdateEnv, MapMaterialAdapter, StyledProperties } from "./MapMaterialAdapter";

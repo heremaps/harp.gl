@@ -8,6 +8,7 @@ import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { GUI } from "dat.gui";
+
 import { apikey } from "../config";
 
 /**

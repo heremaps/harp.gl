@@ -10,6 +10,7 @@ import { assertLogsSync } from "@here/harp-test-utils";
 import { LoggerManager } from "@here/harp-utils";
 import { assert } from "chai";
 import * as THREE from "three";
+
 import {
     applyBaseColorToMaterial,
     createMaterial,

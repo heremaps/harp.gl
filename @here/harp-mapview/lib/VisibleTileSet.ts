@@ -15,6 +15,7 @@ import {
 import { LRUCache } from "@here/harp-lrucache";
 import { assert, MathUtils, TaskQueue } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";

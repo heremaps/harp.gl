@@ -5,6 +5,7 @@
  */
 
 import { LineMarkerTechnique, PoiTechnique } from "@here/harp-datasource-protocol";
+
 import { PoiInfo, TextElement } from "../lib/text/TextElement";
 
 export class PoiInfoBuilder {
