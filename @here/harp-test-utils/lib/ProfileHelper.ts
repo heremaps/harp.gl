@@ -235,13 +235,12 @@ async function runAndMeasureGc(testFun: () => void): Promise<{ gcTime: number | 
         return { gcTime: undefined };
     }
     let gcTime = 0;
-    let obs: PerformanceObserver;
 
     let perfStartEntry: PerformanceEntry | undefined;
     let perfEndEntry: PerformanceEntry | undefined;
 
     let perfCountersCollected = false;
-    obs = new PerformanceObserver((list, observer) => {
+    const obs = new PerformanceObserver((list, observer) => {
         if (perfStartEntry === undefined || perfEndEntry === undefined) {
             const markedEntries = list.getEntriesByType("mark");
             if (perfStartEntry === undefined) {
