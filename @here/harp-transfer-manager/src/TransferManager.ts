@@ -75,6 +75,7 @@ export class TransferManager implements ITransferManager {
     static instance(): TransferManager {
         return TransferManager.defaultInstance;
     }
+
     private static readonly defaultInstance = new TransferManager();
     private static async fetchRepeatedly(
         fetchFunction: typeof fetch,
@@ -101,9 +102,11 @@ export class TransferManager implements ITransferManager {
             TransferManager.fetchRepeatedly(fetchFunction, maxRetries, retryCount + 1, url, init)
         );
     }
+
     private static waitFor(milliseconds: number): Promise<void> {
         return new Promise<void>(resolve => setTimeout(resolve, milliseconds));
     }
+
     private activeDownloadCount = 0;
     private readonly downloadQueue = new Array<DeferredPromise<Response>>();
     private readonly activeDownloads = new Map<RequestInfo, Promise<any>>();
@@ -127,6 +130,7 @@ export class TransferManager implements ITransferManager {
     downloadJson<T>(url: RequestInfo, init?: RequestInit): Promise<T> {
         return this.downloadAs<T>(response => response.json(), url, init);
     }
+
     /**
      * Downloads a binary object. Merges downloads of string URLS if requested multiple times.
      *
@@ -140,6 +144,7 @@ export class TransferManager implements ITransferManager {
     downloadArrayBuffer(url: RequestInfo, init?: RequestInit): Promise<ArrayBuffer> {
         return this.download(url, init).then(response => response.arrayBuffer());
     }
+
     /**
      * Downloads a URL and returns the response.
      *
@@ -156,6 +161,7 @@ export class TransferManager implements ITransferManager {
         }
         return this.doDownload(url, init);
     }
+
     private async doDownload(url: RequestInfo, init?: RequestInit): Promise<Response> {
         try {
             ++this.activeDownloadCount;
@@ -174,10 +180,12 @@ export class TransferManager implements ITransferManager {
             throw error;
         }
     }
+
     private onDownloadDone() {
         --this.activeDownloadCount;
         this.execDeferredDownload();
     }
+
     private execDeferredDownload() {
         const future = this.downloadQueue.pop();
         if (future === undefined) {
@@ -185,6 +193,7 @@ export class TransferManager implements ITransferManager {
         }
         future.exec();
     }
+
     private downloadAs<T>(
         converter: (response: Response) => Promise<T>,
         url: RequestInfo,

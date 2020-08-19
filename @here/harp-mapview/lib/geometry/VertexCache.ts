@@ -93,6 +93,7 @@ export class VertexCache {
         }
         return undefined;
     }
+
     private promoteEntry(vertexIdx: number): void {
         if (vertexIdx === this.m_newestIdx) {
             return;
@@ -120,23 +121,29 @@ export class VertexCache {
         this.setNewerIdx(this.m_newestIdx, vertexIdx);
         this.m_newestIdx = vertexIdx;
     }
+
     private getOlderIdx(vertexIdx: number): number {
         return this.m_cache[vertexIdx + Field.OlderIdx];
     }
+
     private setOlderIdx(vertexIdx: number, olderIdx: number): void {
         this.m_cache[vertexIdx + Field.OlderIdx] = olderIdx;
     }
+
     private getNewerIdx(vertexIdx: number): number {
         return this.m_cache[vertexIdx + Field.NewerIdx];
     }
+
     private setNewerIdx(vertexIdx: number, newerIdx: number): void {
         this.m_cache[vertexIdx + Field.NewerIdx] = newerIdx;
     }
+
     private getVertex(vertexIdx: number, vertex: Vector3Like): void {
         vertex.x = this.m_cache[vertexIdx + Field.X];
         vertex.y = this.m_cache[vertexIdx + Field.Y];
         vertex.z = this.m_cache[vertexIdx + Field.Z];
     }
+
     private setVertex(vertexIdx: number, vertexId: number, vertex: Vector3Like): void {
         this.m_cache[vertexIdx] = vertexId;
         this.m_cache[vertexIdx + Field.X] = vertex.x;

@@ -299,6 +299,7 @@ export class FrustumIntersection {
 
         return undefined;
     }
+
     /**
      * Estimate screen space area of tile and distance to center of tile
      * @param tileBounds - The bounding volume of a tile

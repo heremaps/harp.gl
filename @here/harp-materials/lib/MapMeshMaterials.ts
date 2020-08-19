@@ -372,6 +372,7 @@ export class DisplacementFeatureMixin implements DisplacementFeature, MixinShade
             DisplacementFeature.updateDisplacementFeature(this);
         }
     }
+
     /**
      * The mixin class should call this method to register the property [[displacementMap]]
      */
@@ -654,6 +655,7 @@ export class FadingFeatureMixin implements FadingFeature {
     protected getFadeNear(): number {
         return this.m_fadeNear;
     }
+
     /**
      * @see [[FadingFeature#fadeNear]]
      */
@@ -671,6 +673,7 @@ export class FadingFeatureMixin implements FadingFeature {
     protected getFadeFar(): number {
         return this.m_fadeFar;
     }
+
     /**
      * @see [[FadingFeature#fadeFar]]
      */
@@ -889,6 +892,7 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
     protected getExtrusionRatio(): number {
         return this.m_extrusion;
     }
+
     /**
      * @see [[ExtrusionFeature#extrusion]]
      */
@@ -1024,6 +1028,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     get fadeNear(): number {
         return FadingFeature.DEFAULT_FADE_NEAR;
     }
+
     set fadeNear(value: number) {
         // to be overridden
     }
@@ -1031,6 +1036,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     get fadeFar(): number {
         return FadingFeature.DEFAULT_FADE_FAR;
     }
+
     set fadeFar(value: number) {
         // to be overridden
     }
@@ -1038,6 +1044,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     get extrusionRatio(): number {
         return ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     }
+
     set extrusionRatio(value: number) {
         // to be overridden
     }
@@ -1117,6 +1124,7 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
     get extrusionRatio(): number {
         return ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     }
+
     set extrusionRatio(value: number) {
         // to be overridden
     }
@@ -1227,6 +1235,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get fadeNear(): number {
         return FadingFeature.DEFAULT_FADE_NEAR;
     }
+
     set fadeNear(value: number) {
         // to be overridden
     }
@@ -1234,6 +1243,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get fadeFar(): number {
         return FadingFeature.DEFAULT_FADE_FAR;
     }
+
     set fadeFar(value: number) {
         // to be overridden
     }
@@ -1241,6 +1251,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get extrusionRatio(): number {
         return ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     }
+
     set extrusionRatio(value: number) {
         // to be overridden
     }
@@ -1255,6 +1266,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get removeDiffuseLight(): boolean {
         return false;
     }
+
     /** @internal */
     set removeDiffuseLight(val: boolean) {
         // Stays empty.

@@ -149,6 +149,7 @@ class TextElementLists {
         // All text element lists here have the same priority.
         return this.lists[0].group.priority;
     }
+
     /**
      * Sum up the number of elements in all lists.
      */

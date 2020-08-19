@@ -711,24 +711,28 @@ export class ComposedDataFilter implements OmvFeatureFilter {
             true
         );
     }
+
     wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsPointFeature(layer, geometryType, level),
             true
         );
     }
+
     wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsLineFeature(layer, geometryType, level),
             true
         );
     }
+
     wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsPolygonFeature(layer, geometryType, level),
             true
         );
     }
+
     wantsKind(kind: string | string[]): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsKind(kind),

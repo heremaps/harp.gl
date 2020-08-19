@@ -392,6 +392,7 @@ export class PoiRenderer {
 
         return screenBox;
     }
+
     // keep track of the missing textures, but only warn once
     private static readonly m_missingTextureName: Map<string, boolean> = new Map();
 

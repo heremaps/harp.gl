@@ -26,14 +26,17 @@ export class LowResRenderPass extends Pass {
         0,
         1
     );
+
     private readonly m_quadScene: THREE.Scene = new THREE.Scene();
     private readonly m_quadUniforms: { [uniformName: string]: THREE.IUniform } =
         CopyShader.uniforms;
+
     private readonly m_quadMaterial: THREE.ShaderMaterial = new CopyMaterial(this.m_quadUniforms);
     private readonly m_quad: THREE.Mesh = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(2, 2),
         this.m_quadMaterial
     );
+
     private m_pixelRatio: number | undefined;
     private m_savedWidth = 0;
     private m_savedHeight = 0;

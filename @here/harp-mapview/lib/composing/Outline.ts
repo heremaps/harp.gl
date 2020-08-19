@@ -132,6 +132,7 @@ export class OutlineEffect {
         MeshStandardMaterial: "physical",
         MeshPhysicalMaterial: "physical"
     };
+
     private readonly m_uniformsChunk = {
         outlineThickness: { value: this.m_defaultThickness },
         outlineColor: { value: this.m_defaultColor },

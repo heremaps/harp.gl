@@ -301,6 +301,7 @@ export class AnimatedExtrusionHandler {
             });
         }
     }
+
     private setExtrusionRatio(value: number) {
         this.m_dataSourceMap.forEach(tileMap => {
             tileMap.forEach(state => {

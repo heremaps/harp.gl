@@ -72,6 +72,7 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         new THREE.Vector3(),
         new THREE.Vector3()
     ];
+
     protected m_tmpQuaternion: THREE.Quaternion = new THREE.Quaternion();
 
     constructor(
@@ -255,6 +256,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         new THREE.Vector3(),
         new THREE.Vector3()
     ];
+
     /**
      * Helper object for reducing performance impact.
      */

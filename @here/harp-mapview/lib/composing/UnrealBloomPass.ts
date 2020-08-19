@@ -38,6 +38,7 @@ export class BloomPass extends Pass {
         0,
         1
     );
+
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private m_basic = new THREE.MeshBasicMaterial();
     private m_quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2));
@@ -155,6 +156,7 @@ export class BloomPass extends Pass {
             transparent: true
         });
     }
+
     dispose() {
         for (const rt of this.m_renderTargetsHorizontal) {
             rt.dispose();
@@ -164,6 +166,7 @@ export class BloomPass extends Pass {
         }
         this.m_renderTargetBright.dispose();
     }
+
     /** @override */
     setSize(width: number, height: number) {
         let resx = Math.round(width / 2);
@@ -180,6 +183,7 @@ export class BloomPass extends Pass {
             resy = Math.round(resy / 2);
         }
     }
+
     /** @override */
     render(
         renderer: THREE.WebGLRenderer,

@@ -57,9 +57,11 @@ export class MSAARenderPass extends Pass {
         0,
         1
     );
+
     private readonly m_quadScene: THREE.Scene = new THREE.Scene();
     private readonly m_quadUniforms: { [uniformName: string]: THREE.IUniform } =
         CopyShader.uniforms;
+
     private readonly m_quadMaterial: THREE.ShaderMaterial = new MSAAMaterial(this.m_quadUniforms);
     private readonly m_quad: THREE.Mesh = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(2, 2),

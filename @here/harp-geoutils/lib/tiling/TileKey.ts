@@ -127,6 +127,7 @@ export class TileKey {
         }
         return TileKey.fromRowColumnLevel(row, column, level);
     }
+
     /**
      * Creates a tile key from a numeric Morton code representation.
      *

@@ -72,6 +72,7 @@ export class BlendImages implements ImageProcessor {
         readonly blendOperation: BlendOperation,
         readonly offset: Offset = { x: 0, y: 0 }
     ) {}
+
     run(srcImage: ImageDecoder | ImageEncoder): ImageEncoder {
         // TODO: Not all blending modes has been yet tested
         return ImageUtils.blendImages(
@@ -91,6 +92,7 @@ export class CombineImages implements ImageProcessor {
         readonly sizeRef: ResultImageSizeSpecifier = ResultImageSizeSpecifier.Dst,
         readonly offset: Offset = { x: 0, y: 0 }
     ) {}
+
     run(srcImage: ImageDecoder | ImageEncoder): ImageEncoder {
         return ImageUtils.combineImages(
             this.dstImage,

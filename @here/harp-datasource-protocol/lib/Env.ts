@@ -62,6 +62,7 @@ export class Env {
     lookup(name: string): Value | undefined {
         return undefined;
     }
+
     /**
      * Return an object containing all properties of this environment. (Here: empty object).
      */
@@ -94,6 +95,7 @@ export class MapEnv extends Env {
     constructor(readonly entries: ValueMap, private readonly parent?: Env) {
         super();
     }
+
     /**
      * Returns property in {@link Env} by name.
      *
@@ -109,6 +111,7 @@ export class MapEnv extends Env {
         }
         return this.parent ? this.parent.lookup(name) : undefined;
     }
+
     /**
      * Return an object containing all properties of this environment, takes care of the parent
      * object.

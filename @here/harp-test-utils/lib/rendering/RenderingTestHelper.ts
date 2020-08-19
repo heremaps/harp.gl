@@ -130,6 +130,7 @@ export class RenderingTestHelper {
         this.preloadedImageCache.set(url, p);
         return p;
     }
+
     private static readonly preloadedImageCache = new Map<string, Promise<ImageData>>();
 
     constructor(public mochaTest: Mocha.Context, public baseImageProps: TestImageProps) {}

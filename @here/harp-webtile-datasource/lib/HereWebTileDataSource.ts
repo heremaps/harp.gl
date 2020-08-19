@@ -191,6 +191,7 @@ export class HereTileProvider implements WebTileDataProvider {
      */
     static readonly TILE_BASE_NORMAL =
         "base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day";
+
     /**
      * Base address for Aerial Map rendered using `hybrid.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-hybrid-map.html

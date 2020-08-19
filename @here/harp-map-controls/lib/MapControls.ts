@@ -255,6 +255,7 @@ export class MapControls extends EventDispatcher {
         0,
         0
     ];
+
     private m_currentPanDistanceOrAngleIndex: number = 0;
 
     // Internal variables for animating zoom.

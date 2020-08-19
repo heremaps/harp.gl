@@ -62,6 +62,7 @@ export class TextGeometry {
     get backgroundMesh(): THREE.Mesh {
         return this.m_bgMesh;
     }
+
     /**
      * Maximum glyph capacity.
      */

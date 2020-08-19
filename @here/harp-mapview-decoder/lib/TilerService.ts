@@ -33,6 +33,7 @@ export class TilerService extends WorkerService {
     static start(serviceId: string) {
         return new TilerService(serviceId);
     }
+
     tiler: ITiler = new GeoJsonTiler();
 
     /**

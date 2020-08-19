@@ -22,10 +22,12 @@ export class PoiInfoBuilder {
         name: "labeled-icon",
         renderOrder: 0
     };
+
     static readonly LINE_MARKER_TECHNIQUE: LineMarkerTechnique = {
         name: "line-marker",
         renderOrder: 0
     };
+
     static readonly DEF_TECHNIQUE = PoiInfoBuilder.POI_TECHNIQUE;
 
     private readonly m_iconMinZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MIN_ZL;
