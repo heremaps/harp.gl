@@ -28,7 +28,7 @@ export class TextureLoader {
     ): Promise<THREE.Texture> {
         // Use THREE.js texture loader directly if no request header is set
         if (requestHeaders === undefined) {
-            return this.loadWithThreeLoader(url);
+            return await this.loadWithThreeLoader(url);
         }
 
         // Load image with fetch API if request header is set

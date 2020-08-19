@@ -183,7 +183,7 @@ export class ThemeLoader {
      *
      */
     static async loadAsync(themeUrl: string): Promise<Theme> {
-        return ThemeLoader.load(themeUrl);
+        return await ThemeLoader.load(themeUrl);
     }
 
     /**

@@ -30,7 +30,7 @@ describe("OlpDataProvider", function() {
 
         // Setup stub VersionedLayerClient.getData to always throw AbortError
         sandbox.stub(VersionedLayerClient.prototype, "getData").callsFake(async () => {
-            return new Promise((resolve, reject) => {
+            return await new Promise((resolve, reject) => {
                 setTimeout(() => {
                     const error = new Error("Aborted");
                     error.name = "AbortError";
@@ -49,7 +49,7 @@ describe("OlpDataProvider", function() {
         const tileKey = TileKey.fromRowColumnLevel(2, 2, 2);
 
         // Assert that OlpProvider reports `AbortError`
-        await assertRejected(async () => dataProvider.getTile(tileKey), /Aborted/);
+        await assertRejected(async () => await dataProvider.getTile(tileKey), /Aborted/);
     });
 
     it("#getData obeys `abortSignal`", async function() {
@@ -59,7 +59,7 @@ describe("OlpDataProvider", function() {
         // Setup stub VersionedLayerClient.getData to always throw AbortError
 
         sandbox.stub(VersionedLayerClient.prototype, "getData").callsFake(async () => {
-            return new Promise<Response>((resolve, reject) => {
+            return await new Promise<Response>((resolve, reject) => {
                 setTimeout(() => {
                     const fakeResponse: Partial<Response> = {
                         status: 200
@@ -86,7 +86,7 @@ describe("OlpDataProvider", function() {
 
         // Assert that OlpProvider reports `AbortError` when signaled.
         await assertRejected(
-            async () => dataProvider.getTile(tileKey, abortController.signal),
+            async () => await dataProvider.getTile(tileKey, abortController.signal),
             /Aborted/
         );
     });

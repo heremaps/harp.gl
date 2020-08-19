@@ -348,10 +348,10 @@ export class OmvRestClient implements DataProvider {
         tileUrl = this.addQueryParams(tileUrl, this.urlParams);
 
         if (this.params.apiFormat === APIFormat.XYZJson) {
-            return this.downloadManager.downloadJson(tileUrl, init);
+            return await this.downloadManager.downloadJson(tileUrl, init);
         }
 
-        return this.downloadManager.downloadArrayBuffer(tileUrl, init);
+        return await this.downloadManager.downloadArrayBuffer(tileUrl, init);
     }
 
     /**
@@ -368,9 +368,9 @@ export class OmvRestClient implements DataProvider {
         if (typeof this.params.authenticationCode === "string") {
             return this.params.authenticationCode;
         } else if (this.params.authenticationCode !== undefined) {
-            return this.params.authenticationCode();
+            return await this.params.authenticationCode();
         } else if (this.params.getBearerToken !== undefined) {
-            return this.params.getBearerToken();
+            return await this.params.getBearerToken();
         } else {
             return undefined;
         }

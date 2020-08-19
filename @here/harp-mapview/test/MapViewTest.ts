@@ -1549,7 +1549,7 @@ describe("MapView", function() {
         it("MapView emits frame complete for empty map", async function() {
             this.timeout(100);
             mapView = new MapView({ canvas });
-            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
+            return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
         it("MapView emits frame complete after map initialized", async function() {
             this.timeout(100);
@@ -1558,7 +1558,7 @@ describe("MapView", function() {
             const dataSource = new FakeOmvDataSource({ name: "omv" });
             mapView.addDataSource(dataSource);
 
-            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
+            return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
         it("MapView emits frame complete again after map update", async function() {
             this.timeout(100);
@@ -1570,7 +1570,7 @@ describe("MapView", function() {
             await waitForEvent(mapView, MapViewEventNames.FrameComplete);
 
             mapView.update();
-            return waitForEvent(mapView, MapViewEventNames.FrameComplete);
+            return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
     });
 });

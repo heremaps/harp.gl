@@ -20,7 +20,7 @@ describe("CopyrightProviders", function() {
     describe("#UrlCopyrightProvider", function() {
         async function getCopyrights(geoBox: GeoBox, level: number): Promise<CopyrightInfo[]> {
             const provider = new UrlCopyrightProvider("", "normal");
-            return provider.getCopyrights(geoBox, level);
+            return await provider.getCopyrights(geoBox, level);
         }
 
         describe("#init", function() {

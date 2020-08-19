@@ -30,7 +30,7 @@ function createMockDataProvider() {
             return true;
         },
         async getTile(): Promise<ArrayBuffer> {
-            return Promise.resolve(new ArrayBuffer(5));
+            return await Promise.resolve(new ArrayBuffer(5));
         },
         /** @override */ dispose() {
             // Nothing to be done here.
@@ -60,14 +60,14 @@ function createMockTileDecoder() {
             // dispose is not used
         },
         async decodeTile(): Promise<DecodedTile> {
-            return Promise.resolve(fakeEmptyGeometry);
+            return await Promise.resolve(fakeEmptyGeometry);
         },
         async getTileInfo(
             _data: ArrayBufferLike,
             _tileKey: TileKey,
             _projection: Projection
         ): Promise<TileInfo | undefined> {
-            return Promise.resolve(undefined);
+            return await Promise.resolve(undefined);
         },
         configure() {
             // no configuration needed for mock

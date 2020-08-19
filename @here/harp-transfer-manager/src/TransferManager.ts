@@ -98,7 +98,7 @@ export class TransferManager implements ITransferManager {
                 throw err;
             }
         }
-        return TransferManager.waitFor(TransferManager.retryTimeout * retryCount).then(() =>
+        return await TransferManager.waitFor(TransferManager.retryTimeout * retryCount).then(() =>
             TransferManager.fetchRepeatedly(fetchFunction, maxRetries, retryCount + 1, url, init)
         );
     }
