@@ -24,7 +24,7 @@ import {
     GeoBox,
     GeoBoxExtentLike,
     GeoCoordinates,
-    GeoCoordLike,
+    GeoPolygon,
     isGeoBoxExtentLike,
     isGeoCoordinatesLike,
     isVector3Like,
@@ -35,6 +35,7 @@ import {
     TilingScheme,
     Vector3Like
 } from "@here/harp-geoutils";
+import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { SolidLineMaterial } from "@here/harp-materials";
 import {
     assert,
@@ -724,6 +725,9 @@ export interface LookAtParams {
      *   use {@link LookAtParams.target} or `bounds.target` and
      *   ensure whole box is visible
      *
+     * * if `bounds` is {@link @here/harp-geoutils#GeoPolygon}, then `lookAt`
+     *   use `bounds.getCentroid()` and ensure whole polygon is visible
+     *
      * * if `bounds` is {@link @here/harp-geoutils#GeoBoxExtentLike},
      *   then `lookAt` will use {@link LookAtParams.target} or
      *   current {@link MapView.target} and ensure whole extents are visible
@@ -738,7 +742,7 @@ export interface LookAtParams {
      * @see {@link (MapView.lookAt:WITH_PARAMS)} for defails how `bounds`
      *      interact with `target` parameter
      */
-    bounds: GeoBox | GeoBoxExtentLike | GeoCoordLike[];
+    bounds: GeoBox | GeoBoxExtentLike | GeoCoordLike[] | GeoPolygon;
 
     /**
      * Camera distance to the target point in world units.
@@ -3155,6 +3159,9 @@ export class MapView extends EventDispatcher {
                     ? GeoCoordinates.fromObject(params.target)
                     : params.bounds.center;
                 geoPoints = MapViewUtils.geoBoxToGeoPoints(params.bounds);
+            } else if (params.bounds instanceof GeoPolygon) {
+                target = params.bounds.getCentroid();
+                geoPoints = params.bounds.coordinates;
             } else if (isGeoBoxExtentLike(params.bounds)) {
                 target = params.target ? GeoCoordinates.fromObject(params.target) : this.target;
                 const box = GeoBox.fromCenterAndExtents(target, params.bounds);
@@ -3167,7 +3174,12 @@ export class MapView extends EventDispatcher {
             } else {
                 throw Error("#lookAt: Invalid 'bounds' value");
             }
-            if (this.m_tileWrappingEnabled && this.projection.type === ProjectionType.Planar) {
+            if (
+                // if the points are created from the corners of the geoBox dont cluster them
+                !(params.bounds instanceof GeoBox || params.bounds instanceof GeoPolygon) &&
+                this.m_tileWrappingEnabled &&
+                this.projection.type === ProjectionType.Planar
+            ) {
                 // In flat projection, with wrap around enabled, we should detect clusters of
                 // points around  antimeridian and possible move some points to sibling worlds.
                 //

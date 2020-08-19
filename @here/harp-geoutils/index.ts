@@ -17,6 +17,8 @@ export * from "./lib/coordinates/GeoBoxExtentLike";
 export * from "./lib/coordinates/GeoCoordinatesLike";
 export * from "./lib/coordinates/GeoCoordinates";
 export * from "./lib/coordinates/GeoPointLike";
+export * from "./lib/coordinates/GeoPolygonLike";
+export * from "./lib/coordinates/GeoPolygon";
 export * from "./lib/coordinates/LatLngLike";
 export * from "./lib/projection/EarthConstants";
 export * from "./lib/projection/EquirectangularProjection";

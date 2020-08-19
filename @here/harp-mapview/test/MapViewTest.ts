@@ -3,21 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    expect-type assertions are unused expressions and are perfectly valid
-
-//    lots of stubs are needed which are just placeholders and are empty
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import * as path from "path";
-import * as nodeUrl from "url";
-const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
-
 import { Expr } from "@here/harp-datasource-protocol";
 import {
     GeoBox,
     GeoCoordinates,
+    GeoCoordinatesLike,
+    GeoPolygon,
     MAX_LONGITUDE,
     MercatorConstants,
     mercatorProjection,
@@ -30,8 +21,10 @@ import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
 import { assert, expect } from "chai";
+import * as path from "path";
 import * as sinon from "sinon";
 import * as THREE from "three";
+import * as nodeUrl from "url";
 
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { DataSource } from "../lib/DataSource";
@@ -43,6 +36,14 @@ import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
+
+//    expect-type assertions are unused expressions and are perfectly valid
+
+//    lots of stubs are needed which are just placeholders and are empty
+
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 declare const global: any;
 
@@ -223,7 +224,8 @@ describe("MapView", function() {
                             new GeoCoordinates(52.438917, 13.275001),
                             new GeoCoordinates(52.590844, 13.522331)
                         ),
-                        distance: 38200
+                        distance: 38200,
+                        expectAllInView: false
                     }
                 },
                 {
@@ -233,6 +235,56 @@ describe("MapView", function() {
                             new GeoCoordinates(52.438917, 13.275001),
                             new GeoCoordinates(52.590844, 13.522331)
                         ),
+                        tilt: 45,
+                        heading: 45
+                    }
+                },
+                {
+                    testName: "berlin polygon bounds only",
+                    lookAtParams: {
+                        bounds: new GeoPolygon([
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.438917, 13.522331),
+                            new GeoCoordinates(52.590844, 13.522331),
+                            new GeoCoordinates(52.590844, 13.275001)
+                        ])
+                    }
+                },
+                {
+                    testName: "berlin polygon bounds + zoomLevel",
+                    lookAtParams: {
+                        bounds: new GeoPolygon([
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.438917, 13.522331),
+                            new GeoCoordinates(52.590844, 13.522331),
+                            new GeoCoordinates(52.590844, 13.275001)
+                        ]),
+                        zoomLevel: 10
+                    }
+                },
+                {
+                    testName: "berlin polygon bounds + distance",
+                    lookAtParams: {
+                        bounds: new GeoPolygon([
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.438917, 13.522331),
+                            new GeoCoordinates(52.590844, 13.522331),
+                            new GeoCoordinates(52.590844, 13.275001)
+                        ]),
+
+                        distance: 38200,
+                        expectAllInView: false
+                    }
+                },
+                {
+                    testName: "berlin polygonbounds + distance + angles",
+                    lookAtParams: {
+                        bounds: new GeoPolygon([
+                            new GeoCoordinates(52.438917, 13.275001),
+                            new GeoCoordinates(52.438917, 13.522331),
+                            new GeoCoordinates(52.590844, 13.522331),
+                            new GeoCoordinates(52.590844, 13.275001)
+                        ]),
                         tilt: 45,
                         heading: 45
                     }
@@ -293,14 +345,58 @@ describe("MapView", function() {
                         expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
                     }
                     if (lookAtParams.bounds !== undefined) {
-                        expect(mapView.target.latitude).to.be.closeTo(
-                            lookAtParams.bounds.center.latitude,
-                            epsilon
-                        );
-                        expect(mapView.target.longitude).to.be.closeTo(
-                            lookAtParams.bounds.center.longitude,
-                            epsilon
-                        );
+                        let center: GeoCoordinatesLike | undefined;
+                        let geoPoints: GeoCoordinatesLike[] = [];
+                        if (lookAtParams.bounds instanceof GeoBox) {
+                            center = lookAtParams.bounds.center;
+                            geoPoints.push(lookAtParams.bounds.northEast);
+                            geoPoints.push(lookAtParams.bounds.southWest);
+                            geoPoints.push(
+                                new GeoCoordinates(
+                                    lookAtParams.bounds.south,
+                                    lookAtParams.bounds.east
+                                )
+                            );
+                            geoPoints.push(
+                                new GeoCoordinates(
+                                    lookAtParams.bounds.north,
+                                    lookAtParams.bounds.west
+                                )
+                            );
+                        } else if (lookAtParams.bounds instanceof GeoPolygon) {
+                            center = lookAtParams.bounds.getCentroid();
+                            geoPoints = lookAtParams.bounds.coordinates as GeoCoordinatesLike[];
+                        }
+                        expect(center).not.to.be.undefined;
+                        if (center !== undefined) {
+                            expect(mapView.target.latitude).to.be.closeTo(center.latitude, epsilon);
+                            expect(mapView.target.longitude).to.be.closeTo(
+                                center.longitude,
+                                epsilon
+                            );
+                        }
+                        if (
+                            lookAtParams.expectAllInView === undefined ||
+                            lookAtParams.expectAllInView === true
+                        ) {
+                            //render once to update near and far plane
+                            mapView.renderSync();
+
+                            geoPoints.forEach(point => {
+                                //const worldPoint: Vector3 = new Vector3(0, 0);
+                                const worldPoint = mapView?.projection.projectPoint(point);
+                                expect(worldPoint).not.to.be.undefined;
+                                if (worldPoint !== undefined && mapView?.camera !== undefined) {
+                                    expect(
+                                        MapViewUtils.closeToFrustum(
+                                            worldPoint as THREE.Vector3,
+                                            mapView?.camera,
+                                            0.00001
+                                        )
+                                    ).to.be.true;
+                                }
+                            });
+                        }
 
                         if (lookAtParams.zoomLevel) {
                             expect(mapView.zoomLevel).to.be.closeTo(
