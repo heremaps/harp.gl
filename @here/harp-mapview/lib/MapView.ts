@@ -2704,8 +2704,10 @@ export class MapView extends EventDispatcher {
         return worldPos;
     }
 
+    /**
+     * Same as {@link MapView.getGeoCoordinatesAt} but always returning a geo coordinate.
+     */
     getGeoCoordinatesAt(x: number, y: number, fallback: true): GeoCoordinates;
-    getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null;
 
     /**
      * Returns the {@link @here/harp-geoutils#GeoCoordinates} from the
@@ -2716,11 +2718,18 @@ export class MapView extends EventDispatcher {
      * and the given `(x, y)` value is not intersecting the ground plane.
      * If `fallback === true` the return value will always exist but it might not be on the earth
      * surface.
+     * If {@link MapView.tileWrappingEnabled} is `true` the returned geo coordinates will have a
+     * longitude clamped to [-180,180] degrees.
+     * The returned geo coordinates are not normalized so that a map object placed at that position
+     * will be below the (x,y) screen coordinates, regardless which world repetition was on screen.
      *
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
      * @param fallback - Whether to compute a fallback position if the earth surface is not hit.
+     * @returns Unnormalized geo coordinates
      */
+    getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null;
+
     getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null {
         const worldPosition = this.getWorldPositionAt(x, y, fallback);
         if (!worldPosition) {
@@ -2732,7 +2741,7 @@ export class MapView extends EventDispatcher {
             // When the map is not wrapped we clamp the longitude
             geoPos.longitude = THREE.MathUtils.clamp(geoPos.longitude, -180, 180);
         }
-        return geoPos.normalized();
+        return geoPos;
     }
 
     /**
