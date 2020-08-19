@@ -74,7 +74,7 @@
         "prettier": "prettier -l \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "prettier:fix": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "eslint": "eslint --ext .ts ./@here test scripts",
-        "eslint:fix": "eslint --write --ext .ts ./@here test scripts",
+        "eslint:fix": "eslint --fix --ext .ts ./@here test scripts",
         "postinstall": "yarn workspace @here/harp-datasource-protocol generate-json-schema",
         "prepare-doc-deploy": "ts-node ./scripts/prepare_doc_deploy.ts"
     },
