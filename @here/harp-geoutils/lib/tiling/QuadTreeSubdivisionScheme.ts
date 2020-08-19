@@ -10,12 +10,15 @@ class QuadTreeSubdivisionScheme implements SubdivisionScheme {
     getSubdivisionX(): number {
         return 2;
     }
+
     getSubdivisionY(): number {
         return 2;
     }
+
     getLevelDimensionX(level: number): number {
         return 1 << level;
     }
+
     getLevelDimensionY(level: number): number {
         return 1 << level;
     }

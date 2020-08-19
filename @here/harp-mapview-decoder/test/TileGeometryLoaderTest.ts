@@ -45,6 +45,7 @@ class FakeTileLoader implements ITileLoader {
     updatePriority(area: number): void {
         // do nothing.
     }
+
     cancel(): void {
         // do nothing.
     }

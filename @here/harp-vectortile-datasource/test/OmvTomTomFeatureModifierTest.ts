@@ -20,6 +20,7 @@ export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
         super(description);
         this.m_description = description;
     }
+
     processFeature(layer: string, env: MapEnv): boolean {
         return super.doProcessFeature(
             this.m_description.linesToProcess,

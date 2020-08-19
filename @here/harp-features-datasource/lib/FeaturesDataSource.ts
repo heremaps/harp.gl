@@ -148,6 +148,7 @@ export class FeaturesDataSource extends VectorTileDataSource {
             await this.update();
         }
     }
+
     /**
      * Override [[DataSource.attach]] to know if we're really connected to [[MapView]].
      * @param mapView -

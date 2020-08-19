@@ -520,6 +520,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     get maxGeometryHeight() {
         return this.m_maxGeometryHeight;
     }
+
     set maxGeometryHeight(value: number) {
         this.m_maxGeometryHeight = value;
     }

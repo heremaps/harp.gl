@@ -155,6 +155,7 @@ export class MapRenderingManager implements IMapRenderingManager {
         radius: 0.4,
         threshold: 0.85
     };
+
     outline = {
         enabled: false,
         thickness: 0.005,
@@ -162,11 +163,13 @@ export class MapRenderingManager implements IMapRenderingManager {
         ghostExtrudedPolygons: false,
         needsUpdate: false
     };
+
     vignette = {
         enabled: false,
         offset: 1.0,
         darkness: 1.0
     };
+
     sepia = {
         enabled: false,
         amount: 0.5

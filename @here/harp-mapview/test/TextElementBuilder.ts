@@ -120,6 +120,7 @@ export class TextElementBuilder {
         this.m_mayOverlap = mayOverlap;
         return this;
     }
+
     build(): TextElement {
         const textElement = new TextElement(
             this.m_text,

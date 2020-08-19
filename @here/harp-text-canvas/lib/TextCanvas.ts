@@ -300,6 +300,7 @@ export class TextCanvas {
     get fontCatalog(): FontCatalog {
         return this.m_fontCatalog;
     }
+
     set fontCatalog(value: FontCatalog) {
         this.m_fontCatalog = value;
 
@@ -330,6 +331,7 @@ export class TextCanvas {
     get material(): THREE.Material {
         return this.m_material;
     }
+
     set material(value: THREE.Material) {
         if (this.m_ownsMaterial) {
             this.m_material.dispose();
@@ -348,6 +350,7 @@ export class TextCanvas {
     get backgroundMaterial(): THREE.Material {
         return this.m_bgMaterial;
     }
+
     set backgroundMaterial(value: THREE.Material) {
         if (this.m_ownsBgMaterial) {
             this.m_bgMaterial.dispose();
@@ -366,6 +369,7 @@ export class TextCanvas {
     get textRenderStyle(): TextRenderStyle {
         return this.m_currentTextRenderStyle;
     }
+
     set textRenderStyle(style: TextRenderStyle) {
         this.m_currentTextRenderStyle.copy(style);
     }
@@ -376,6 +380,7 @@ export class TextCanvas {
     get textLayoutStyle(): TextLayoutStyle {
         return this.m_currentTextLayoutStyle;
     }
+
     set textLayoutStyle(style: TextLayoutStyle) {
         this.m_currentTextLayoutStyle.copy(style);
     }

@@ -30,12 +30,15 @@ export class StyleSetDataFilter implements OmvFeatureFilter {
     wantsPointFeature(layer: string): boolean {
         return this.styleSetEvaluator.wantsFeature(layer, "point");
     }
+
     wantsLineFeature(layer: string): boolean {
         return this.styleSetEvaluator.wantsFeature(layer, "line");
     }
+
     wantsPolygonFeature(layer: string): boolean {
         return this.styleSetEvaluator.wantsFeature(layer, "polygon");
     }
+
     wantsKind(): boolean {
         return true;
     }

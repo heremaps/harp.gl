@@ -40,27 +40,35 @@ export class CollisionBox extends Math2D.Box implements IBox {
         }
         return this;
     }
+
     get minX(): number {
         return this.x;
     }
+
     set minX(minX: number) {
         this.x = minX;
     }
+
     get maxX(): number {
         return this.x + this.w;
     }
+
     set maxX(maxX: number) {
         this.w = maxX - this.x;
     }
+
     get minY(): number {
         return this.y;
     }
+
     set minY(minY: number) {
         this.y = minY;
     }
+
     get maxY(): number {
         return this.y + this.h;
     }
+
     set maxY(maxY: number) {
         this.h = maxY - this.y;
     }

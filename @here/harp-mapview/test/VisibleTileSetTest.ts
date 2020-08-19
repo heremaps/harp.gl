@@ -204,6 +204,7 @@ describe("VisibleTileSet", function() {
         constructor(private readonly tilingScheme?: TilingScheme) {
             super();
         }
+
         /** @override */
         getTilingScheme(): TilingScheme {
             return this.tilingScheme ?? webMercatorTilingScheme;

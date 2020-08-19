@@ -143,6 +143,7 @@ export class HighPrecisionPointMaterial extends THREE.PointsMaterial {
     get uvTransform(): THREE.Matrix3 {
         return this.uniforms.uvTransform.value;
     }
+
     set uvTransform(value: THREE.Matrix3) {
         this.uniforms.uvTransform.value = value;
     }

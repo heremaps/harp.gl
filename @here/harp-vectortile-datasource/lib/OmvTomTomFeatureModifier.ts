@@ -216,6 +216,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
             layer.indexOf("Local road") >= 0
         );
     }
+
     private isRoadPrimary(layer: string): boolean {
         return (
             layer.indexOf("Major local road") >= 0 ||

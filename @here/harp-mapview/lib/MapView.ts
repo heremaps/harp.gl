@@ -843,6 +843,7 @@ export class MapView extends EventDispatcher {
         minimum: DEFAULT_CAM_NEAR_PLANE,
         maximum: DEFAULT_CAM_FAR_PLANE
     };
+
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_pixelToWorld?: number;

@@ -643,6 +643,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get opacity(): number {
         return this.m_opacity;
     }
+
     set opacity(value: number) {
         this.m_opacity = value;
         // Setting opacity before uniform being created requires late invalidation,
@@ -660,6 +661,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get color(): THREE.Color {
         return this.uniforms.diffuse.value as THREE.Color;
     }
+
     set color(value: THREE.Color) {
         this.uniforms.diffuse.value.copy(value);
     }
@@ -672,6 +674,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get outlineColor(): THREE.Color {
         return this.uniforms.outlineColor.value as THREE.Color;
     }
+
     set outlineColor(value: THREE.Color) {
         this.uniforms.outlineColor.value.copy(value);
     }
@@ -684,6 +687,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get dashColor(): THREE.Color {
         return this.uniforms.dashColor.value as THREE.Color;
     }
+
     set dashColor(value: THREE.Color) {
         this.uniforms.dashColor.value.copy(value);
         setShaderMaterialDefine(this, "USE_DASH_COLOR", true);
@@ -695,6 +699,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get lineWidth(): number {
         return (this.uniforms.extrusionWidth.value as number) * 2;
     }
+
     set lineWidth(value: number) {
         this.uniforms.extrusionWidth.value = value / 2;
     }
@@ -705,6 +710,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get outlineWidth(): number {
         return this.uniforms.outlineWidth.value as number;
     }
+
     set outlineWidth(value: number) {
         this.uniforms.outlineWidth.value = value;
         this.outline = value > 0.0;
@@ -719,6 +725,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get dashSize(): number {
         return this.uniforms.dashSize.value as number;
     }
+
     set dashSize(value: number) {
         this.uniforms.dashSize.value = value;
     }
@@ -732,6 +739,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get gapSize(): number {
         return this.uniforms.gapSize.value as number;
     }
+
     set gapSize(value: number) {
         this.uniforms.gapSize.value = value;
         setShaderMaterialDefine(this, "USE_DASHED_LINE", value > 0.0);
@@ -753,6 +761,7 @@ export class SolidLineMaterial extends RawShaderMaterial
         }
         return result;
     }
+
     set caps(value: LineCaps) {
         // Line caps mode may be set directly from theme, thus we need to check value
         // for correctness and provide string to define mapping in fragment shader.
@@ -773,6 +782,7 @@ export class SolidLineMaterial extends RawShaderMaterial
         }
         return result;
     }
+
     set dashes(value: LineDashes) {
         // Line dashes mode may be set directly from theme, thus we need to check value
         // for correctness and provide string to define mapping in fragment shader.
@@ -784,6 +794,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get fadeNear(): number {
         return this.uniforms.fadeNear.value as number;
     }
+
     set fadeNear(value: number) {
         this.uniforms.fadeNear.value = value;
     }
@@ -791,6 +802,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get fadeFar(): number {
         return this.uniforms.fadeFar.value as number;
     }
+
     set fadeFar(value: number) {
         this.uniforms.fadeFar.value = value;
         setShaderMaterialDefine(this, "USE_FADING", value > 0.0);
@@ -799,6 +811,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get displacementMap(): THREE.Texture | null {
         return this.uniforms.displacementMap.value;
     }
+
     set displacementMap(map: THREE.Texture | null) {
         if (this.uniforms.displacementMap.value === map) {
             return;
@@ -814,6 +827,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get drawRangeStart(): number {
         return this.uniforms.drawRange.value.x as number;
     }
+
     set drawRangeStart(value: number) {
         this.uniforms.drawRange.value.x = value;
     }
@@ -821,6 +835,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     get drawRangeEnd(): number {
         return this.uniforms.drawRange.value.y as number;
     }
+
     set drawRangeEnd(value: number) {
         this.uniforms.drawRange.value.y = value;
     }
@@ -830,6 +845,7 @@ export class SolidLineMaterial extends RawShaderMaterial
         const useTileClip = tileSize.x > 0 && tileSize.y > 0;
         setShaderMaterialDefine(this, "USE_TILE_CLIP", useTileClip);
     }
+
     get clipTileSize(): THREE.Vector2 {
         return this.uniforms.tileSize.value as THREE.Vector2;
     }

@@ -10,12 +10,15 @@ class HalfQuadTreeSubdivisionScheme implements SubdivisionScheme {
     getSubdivisionX(): number {
         return 2;
     }
+
     getSubdivisionY(level: number): number {
         return level === 0 ? 1 : 2;
     }
+
     getLevelDimensionX(level: number): number {
         return 1 << level;
     }
+
     getLevelDimensionY(level: number): number {
         return level !== 0 ? 1 << (level - 1) : 1;
     }

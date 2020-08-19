@@ -25,30 +25,39 @@ export class MapViewState implements ViewState {
     get worldCenter(): THREE.Vector3 {
         return this.m_mapView.worldCenter;
     }
+
     get cameraIsMoving(): boolean {
         return this.m_mapView.cameraIsMoving;
     }
+
     get maxVisibilityDist(): number {
         return this.m_mapView.viewRanges.maximum;
     }
+
     get zoomLevel(): number {
         return this.m_mapView.zoomLevel;
     }
+
     get env(): Env {
         return this.m_mapView.env;
     }
+
     get frameNumber(): number {
         return this.m_mapView.frameNumber;
     }
+
     get lookAtVector(): THREE.Vector3 {
         return this.m_mapView.camera.getWorldDirection(this.m_lookAtVector);
     }
+
     get lookAtDistance(): number {
         return this.m_mapView.targetDistance;
     }
+
     get isDynamic(): boolean {
         return this.m_mapView.isDynamicFrame;
     }
+
     get hiddenGeometryKinds(): GeometryKindSet | undefined {
         return this.m_mapView.tileGeometryManager === undefined
             ? undefined

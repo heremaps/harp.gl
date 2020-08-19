@@ -38,7 +38,6 @@
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/no-unnecessary-type-assertion": "off",
         "@typescript-eslint/method-signature-style": "off",
-        "@typescript-eslint/lines-between-class-members": "off",
         "@typescript-eslint/no-unused-expressions": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "@typescript-eslint/no-non-null-assertion": "off",

@@ -304,6 +304,7 @@ export class TestFixture {
     setElevationProvider(enabled: boolean) {
         this.m_viewState.elevationProvider = enabled ? this.m_elevationProviderStub : undefined;
     }
+
     private checkTextElementRendered(
         textElement: TextElement,
         opacityMatcher: OpacityMatcher | undefined

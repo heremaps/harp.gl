@@ -20,12 +20,15 @@ class TestSubdivisionScheme implements SubdivisionScheme {
     getSubdivisionX(level: number): number {
         return 0;
     }
+
     getSubdivisionY(level: number): number {
         return 0;
     }
+
     getLevelDimensionX(level: number): number {
         return 0;
     }
+
     getLevelDimensionY(level: number): number {
         return 0;
     }

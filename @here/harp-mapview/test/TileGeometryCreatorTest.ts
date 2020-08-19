@@ -67,6 +67,7 @@ class MockDataSource extends DataSource {
     getTilingScheme(): TilingScheme {
         throw new Error("Method not implemented.");
     }
+
     /** @override */
     getTile(tileKey: TileKey): Tile | undefined {
         throw new Error("Method not implemented.");

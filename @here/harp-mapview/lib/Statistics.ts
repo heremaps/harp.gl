@@ -970,6 +970,7 @@ export class PerformanceStatistics {
     get isFull(): boolean {
         return this.m_frameEvents.length >= this.maxNumFrames;
     }
+
     /**
      * Global instance to the instance. The current instance can be overridden by creating a new
      * `PerformanceStatistics`.
