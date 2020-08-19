@@ -7,7 +7,11 @@
     "rules": {
         "prettier/prettier": "error",
 
-        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            { "varsIgnorePattern": "^_", "args": "none" }
+        ],
+
         "@typescript-eslint/default-param-last": "off",
         "@typescript-eslint/prefer-reduce-type-parameter": "off",
         "@typescript-eslint/prefer-ts-expect-error": "off",
