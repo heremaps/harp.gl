@@ -8,6 +8,7 @@ import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
+
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";

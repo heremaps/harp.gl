@@ -5,6 +5,7 @@
  */
 
 import { GeoCoordinates, TileKey, TilingScheme } from "@here/harp-geoutils";
+
 import { TileDisplacementMap } from "./DisplacementMap";
 
 export interface ElevationProvider {

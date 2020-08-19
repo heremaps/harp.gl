@@ -7,10 +7,12 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import "@here/harp-fetch";
+
 import { TileKey } from "@here/harp-geoutils";
 import { TransferManager } from "@here/harp-transfer-manager";
 import { assert } from "chai";
 import * as sinon from "sinon";
+
 import { APIFormat, AuthenticationMethod, AuthenticationTypeBearer, OmvRestClient } from "../index";
 
 function createMockDownloadResponse(tileUrl: string) {

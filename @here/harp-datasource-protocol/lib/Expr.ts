@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { Env, Value } from "./Env";
 import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprEvaluator";
 import { ExprInstantiator, InstantiationContext } from "./ExprInstantiator";
@@ -14,7 +15,6 @@ import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedPropertyDefs";
-
 import { Pixels } from "./Pixels";
 import { RGBA } from "./RGBA";
 import { Definitions } from "./Theme";

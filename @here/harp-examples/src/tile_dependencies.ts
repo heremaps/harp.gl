@@ -16,6 +16,7 @@ import {
     TileFactory
 } from "@here/harp-mapview-decoder";
 import { GUI } from "dat.gui";
+
 import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
 
 /**

@@ -8,9 +8,9 @@
 
 import { execSync } from "child_process";
 import * as fs from "fs";
-import * as path from "path";
 import * as fse from "fs-extra";
 import * as glob from "glob";
+import * as path from "path";
 
 /**
  * Script to extract all code snippets from examples, render Mermaid diagrams and

@@ -5,6 +5,7 @@
  */
 
 import { LoggerManager } from "@here/harp-utils";
+
 import { Env } from "./Env";
 import { Expr, ExprScope, Value } from "./Expr";
 import { Pixels } from "./Pixels";

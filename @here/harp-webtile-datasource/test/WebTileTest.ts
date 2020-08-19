@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { HereTileProvider, HereWebTileDataSource, WebTileDataSource } from "../index";
 
 describe("WebTileDataSource", function() {

@@ -10,10 +10,9 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import * as path from "path";
+import "@here/harp-fetch";
 
 import { Env } from "@here/harp-datasource-protocol";
-import "@here/harp-fetch";
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import {
     FontCatalog,
@@ -34,8 +33,10 @@ import {
 } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
 import { expect } from "chai";
+import * as path from "path";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import {
     persistentPointLabelTextMargin,

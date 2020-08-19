@@ -5,6 +5,7 @@
  */
 
 import { ITransferManager, TransferManager } from "@here/harp-transfer-manager";
+
 import {
     AreaCopyrightInfo,
     CopyrightCoverageProvider,

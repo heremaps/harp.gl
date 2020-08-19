@@ -21,6 +21,7 @@ import {
     UriResolver
 } from "@here/harp-utils";
 import { assert } from "chai";
+
 import { ThemeLoader } from "../lib/ThemeLoader";
 
 function makeUrlRelative(baseUrl: string, url: string) {

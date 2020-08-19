@@ -39,8 +39,8 @@ import {
     TextGeometry,
     TextPathGeometry,
     TextTechnique,
-    textureCoordinateType,
-    TextureCoordinateType
+    TextureCoordinateType,
+    textureCoordinateType
 } from "@here/harp-datasource-protocol";
 import {
     Env,

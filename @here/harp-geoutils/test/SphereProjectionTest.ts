@@ -8,6 +8,7 @@
 
 import { assert } from "chai";
 import { Vector3 } from "three";
+
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../lib/coordinates/GeoCoordinatesLike";

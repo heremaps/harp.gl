@@ -36,6 +36,7 @@ import {
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
+
 import { ColorCache } from "../ColorCache";
 import { evaluateColorProperty } from "../DecodedTileHelpers";
 import { PoiRenderer } from "../poi/PoiRenderer";

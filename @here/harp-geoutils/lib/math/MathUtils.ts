@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { Box3Like } from "./Box3Like";
 import { Vector3Like } from "./Vector3Like";
 

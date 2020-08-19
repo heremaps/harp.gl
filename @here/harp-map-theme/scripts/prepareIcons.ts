@@ -6,14 +6,14 @@
 
 /* eslint-disable no-console */
 
-import * as os from "os";
-import * as path from "path";
 import {
     AtlasOptions,
     generateSprites,
     generateSpritesAtlas,
     ProcessingOptions
 } from "@here/harp-atlas-tools/src";
+import * as os from "os";
+import * as path from "path";
 
 // Allow to use console output, script runs in a shell (node), not in the browser.
 

@@ -8,6 +8,7 @@ import { mercatorProjection } from "@here/harp-geoutils";
 import { SolidLineMaterial, SolidLineMaterialParameters } from "@here/harp-materials";
 import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
+
 import { createLineGeometry, LineGroup } from "../../lib/Lines";
 
 function createFakeDisplacementMap(sideSize: number): THREE.DataTexture {

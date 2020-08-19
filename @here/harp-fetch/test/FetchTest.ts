@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as path from "path";
-import { assert } from "chai";
 import "../index";
+
+import { assert } from "chai";
+import * as path from "path";
 
 const isNode = typeof window === "undefined";
 const describeOnlyNode = isNode ? describe : xdescribe;

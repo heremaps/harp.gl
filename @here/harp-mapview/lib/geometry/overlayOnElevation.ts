@@ -9,6 +9,7 @@ import { Projection } from "@here/harp-geoutils";
 import { hasDisplacementFeature } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { TileDisplacementMap } from "../DisplacementMap";
 import { ElevationProvider } from "../ElevationProvider";
 import { TextElement } from "../text/TextElement";

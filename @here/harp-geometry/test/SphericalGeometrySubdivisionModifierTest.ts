@@ -8,8 +8,8 @@
 
 import * as geo from "@here/harp-geoutils";
 import { assert } from "chai";
-
 import * as THREE from "three";
+
 import { SphericalGeometrySubdivisionModifier } from "../lib/SphericalGeometrySubdivisionModifier";
 
 describe("SphericalGeometrySubdivisionModifier", function() {

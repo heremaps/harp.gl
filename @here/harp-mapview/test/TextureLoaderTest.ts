@@ -11,9 +11,9 @@ import * as chai from "chai";
 import * as chai_as_promised from "chai-as-promised";
 chai.use(chai_as_promised);
 const { expect } = chai;
-import * as THREE from "three";
-
 import "@here/harp-fetch";
+
+import * as THREE from "three";
 
 import { TextureLoader } from "../lib/TextureLoader";
 

@@ -6,6 +6,7 @@
 
 import { FontCatalog } from "@here/harp-text-canvas";
 import * as sinon from "sinon";
+
 import { DEFAULT_FONT_CATALOG_NAME, FontCatalogLoader } from "../lib/text/FontCatalogLoader";
 
 /**

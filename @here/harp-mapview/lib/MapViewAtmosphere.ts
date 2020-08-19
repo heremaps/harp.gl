@@ -6,11 +6,10 @@
 
 import { Theme } from "@here/harp-datasource-protocol";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
-
 import { GroundAtmosphereMaterial, SkyAtmosphereMaterial } from "@here/harp-materials";
-
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { TiltViewClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { MapAnchor, MapAnchors } from "./MapAnchors";
 

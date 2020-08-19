@@ -5,6 +5,7 @@
  */
 
 import { ITileDecoder } from "@here/harp-datasource-protocol";
+
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
 import { WorkerBasedDecoder } from "./WorkerBasedDecoder";
 

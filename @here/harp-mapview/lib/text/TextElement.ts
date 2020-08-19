@@ -21,7 +21,6 @@ import {
     TextRenderStyle
 } from "@here/harp-text-canvas";
 import { Math2D, MathUtils } from "@here/harp-utils";
-
 import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";

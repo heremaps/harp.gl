@@ -5,6 +5,7 @@
  */
 
 import { GroupedPriorityList } from "@here/harp-utils";
+
 import { TextElement } from "./TextElement";
 
 /**

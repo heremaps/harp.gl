@@ -8,6 +8,7 @@ import { Env } from "@here/harp-datasource-protocol";
 import { Math2D } from "@here/harp-utils";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
 import { PoiRendererFactory } from "../lib/poi/PoiRendererFactory";
 import { ScreenCollisions } from "../lib/ScreenCollisions";

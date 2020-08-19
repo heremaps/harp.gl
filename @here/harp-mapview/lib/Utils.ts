@@ -18,6 +18,7 @@ import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstant
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { ElevationProvider } from "./ElevationProvider";
 import { LodMesh } from "./geometry/LodMesh";
 import { MapView } from "./MapView";

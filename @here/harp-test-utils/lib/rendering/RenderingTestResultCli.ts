@@ -6,10 +6,10 @@
 
 // @here:check-imports:environment:node
 
-import * as fs from "fs";
-
 import { LoggerManager } from "@here/harp-utils";
 import * as program from "commander";
+import * as fs from "fs";
+
 import { genHtmlReport } from "./HtmlReport";
 import { ImageTestResultLocal } from "./Interface";
 import { getOutputImagePath, loadSavedResults } from "./RenderingTestResultCommon";

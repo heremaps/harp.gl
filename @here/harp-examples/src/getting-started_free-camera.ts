@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Import the gesture handlers from the three.js additional libraries.
+// The controls are not in common.js they explicitly require a
+// global instance of THREE and they must be imported only for their
+// side effect.
+import "three/examples/js/controls/TrackballControls";
+import "three/examples/js/controls/TransformControls";
+
 import { DebugTileDataSource } from "@here/harp-debug-datasource";
 import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
@@ -16,14 +23,8 @@ import {
 } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
-import { apikey } from "../config";
 
-// Import the gesture handlers from the three.js additional libraries.
-// The controls are not in common.js they explicitly require a
-// global instance of THREE and they must be imported only for their
-// side effect.
-import "three/examples/js/controls/TrackballControls";
-import "three/examples/js/controls/TransformControls";
+import { apikey } from "../config";
 
 /**
  * This app adds another freely moveable camera into the map view scene.

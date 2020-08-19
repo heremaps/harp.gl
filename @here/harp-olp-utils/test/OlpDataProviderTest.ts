@@ -7,10 +7,12 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import "@here/harp-fetch";
+
 import { TileKey } from "@here/harp-geoutils";
 import { assertRejected } from "@here/harp-test-utils";
 import { VersionedLayerClient } from "@here/olp-sdk-dataservice-read";
 import * as sinon from "sinon";
+
 import { OlpDataProvider } from "../lib/OlpDataProvider";
 
 describe("OlpDataProvider", function() {

@@ -6,6 +6,7 @@
 
 import { CopyShader, LuminosityHighPassShader } from "@here/harp-materials";
 import * as THREE from "three";
+
 import { Pass } from "./Pass";
 
 const BlurDirectionX = new THREE.Vector2(1.0, 0.0);

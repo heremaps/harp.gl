@@ -8,6 +8,7 @@ import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 

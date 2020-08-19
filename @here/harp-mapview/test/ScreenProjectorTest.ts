@@ -6,6 +6,7 @@
 
 import { assert, expect } from "chai";
 import * as THREE from "three";
+
 import { ScreenProjector } from "../lib/ScreenProjector";
 
 describe("ScreenProjector", () => {

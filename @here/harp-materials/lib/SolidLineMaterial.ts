@@ -6,6 +6,7 @@
 
 import { LineCaps, LineDashes } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
+
 import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";
 import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
 import { RawShaderMaterial } from "./RawShaderMaterial";

@@ -6,14 +6,14 @@
 
 // @here:check-imports:environment:node
 
-import * as fs from "fs";
-import * as path from "path";
-import * as util from "util";
 import { LoggerManager } from "@here/harp-utils";
 import * as bodyParser from "body-parser";
 import * as express from "express";
+import * as fs from "fs";
 import * as mkpath from "mkpath";
+import * as path from "path";
 import * as serveStatic from "serve-static";
+import * as util from "util";
 
 import { genHtmlReport } from "./HtmlReport";
 import { ImageTestResultLocal, ImageTestResultRequest } from "./Interface";

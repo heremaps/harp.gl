@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { SubTiles } from "../lib/tiling/SubTiles";
 import { TileKey } from "../lib/tiling/TileKey";
 

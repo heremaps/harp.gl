@@ -6,6 +6,7 @@
 
 import { TextLayoutParameters, TextRenderParameters } from "@here/harp-text-canvas";
 import * as THREE from "three";
+
 import { TextElement } from "../lib/text/TextElement";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 

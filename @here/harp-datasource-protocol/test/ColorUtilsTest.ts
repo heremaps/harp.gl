@@ -5,6 +5,7 @@
  */
 
 import { assert } from "chai";
+
 import { ColorUtils } from "../lib/ColorUtils";
 
 describe("ColorUtils", function() {

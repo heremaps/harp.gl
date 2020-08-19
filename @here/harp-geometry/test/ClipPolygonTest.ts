@@ -7,6 +7,7 @@
 import { assert } from "chai";
 import earcut from "earcut";
 import { ShapeUtils, Vector2 } from "three";
+
 import { clipPolygon } from "../lib/ClipPolygon";
 
 describe("ClipPolygon", () => {

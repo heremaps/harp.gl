@@ -8,6 +8,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { ElevationProvider } from "./ElevationProvider";
 import { MapViewUtils } from "./Utils";
 

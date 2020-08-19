@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoJson, ITiler, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
+
+import { GeoJson, ITiler, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { ConcurrentTilerFacade } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { LoggerManager } from "@here/harp-utils";
-
 import { EventDispatcher } from "three";
+
 import { GEOJSON_TILER_SERVICE_TYPE } from "./OmvDecoderDefs";
 
 const logger = LoggerManager.instance.create("GeoJsonDataProvider");

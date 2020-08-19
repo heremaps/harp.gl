@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
 const vertexSource: string = `

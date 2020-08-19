@@ -12,6 +12,7 @@ import { TransferManager } from "@here/harp-transfer-manager";
 import { LoggerManager } from "@here/harp-utils";
 import { expect } from "chai";
 import * as sinon from "sinon";
+
 import { CopyrightInfo } from "../lib/copyrights/CopyrightInfo";
 import { UrlCopyrightProvider } from "../lib/copyrights/UrlCopyrightProvider";
 

@@ -8,6 +8,7 @@ import { Env, ExtrudedPolygonTechnique } from "@here/harp-datasource-protocol";
 import { ColorUtils } from "@here/harp-datasource-protocol/lib/ColorUtils";
 import { enforceBlending, MapMeshStandardMaterial } from "@here/harp-materials";
 import * as THREE from "three";
+
 import { evaluateBaseColorProperty } from "./DecodedTileHelpers";
 
 /**

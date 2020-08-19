@@ -23,6 +23,7 @@ import {
     WorkerServiceManager
 } from "@here/harp-mapview-decoder/index-worker";
 import { BoxBufferGeometry, Matrix4, Vector3 } from "three";
+
 import { CUSTOM_DECODER_SERVICE_TYPE } from "./custom_decoder_defs";
 
 export // snippet:custom_datasource_example_custom_decoder.ts

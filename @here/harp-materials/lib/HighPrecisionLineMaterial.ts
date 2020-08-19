@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { RawShaderMaterial } from "./RawShaderMaterial";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 

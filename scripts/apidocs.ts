@@ -6,10 +6,10 @@
 
 /* eslint-disable no-console */
 
+import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
-import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 
 async function main() {
     const reportFolder = path.resolve("input");

@@ -7,8 +7,9 @@
 // @here:check-imports:environment:node
 
 import * as fs from "fs";
-import * as util from "util";
 import * as glob from "glob";
+import * as util from "util";
+
 import { ImageTestResultLocal, TestImageProps } from "./Interface";
 
 const promisedGlob = util.promisify(glob);

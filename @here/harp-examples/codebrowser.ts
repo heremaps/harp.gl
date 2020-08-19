@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as hljs from "highlight.js";
-
 import "style-loader!css-loader!highlight.js/styles/default.css";
+
+import * as hljs from "highlight.js";
 
 (() => {
     if (location.search === undefined || location.search.length === 0) {

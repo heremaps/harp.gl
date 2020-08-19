@@ -5,8 +5,8 @@
  */
 
 import { HighPrecisionLineMaterial } from "@here/harp-materials";
-
 import * as THREE from "three";
+
 import { HighPrecisionUtils } from "./HighPrecisionUtils";
 
 /**

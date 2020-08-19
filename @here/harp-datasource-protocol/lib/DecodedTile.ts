@@ -14,6 +14,7 @@ import {
     Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
+
 import { Env } from "./Expr";
 import { AttrEvaluationContext, evaluateTechniqueAttr } from "./TechniqueAttr";
 import {

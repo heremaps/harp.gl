@@ -8,6 +8,7 @@
 
 import { assert, expect } from "chai";
 import * as THREE from "three";
+
 import { BufferAttribute, Geometry } from "../lib/DecodedTile";
 import { ThreeBufferUtils } from "../lib/ThreeBufferUtils";
 

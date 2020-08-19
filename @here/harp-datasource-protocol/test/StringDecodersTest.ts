@@ -9,6 +9,7 @@
 //    Allow bitwise operations for colors decoding tests
 
 import { assert } from "chai";
+
 import { ColorUtils } from "../lib/ColorUtils";
 import { parseStringEncodedNumeral } from "../lib/StringEncodedNumeral";
 

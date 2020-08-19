@@ -6,6 +6,7 @@
 
 import { ITiler, WorkerTilerProtocol } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
+
 import { GeoJsonTiler } from "./GeoJsonTiler";
 import { WorkerService, WorkerServiceResponse } from "./WorkerService";
 

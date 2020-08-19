@@ -7,6 +7,7 @@
 import { Env, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { Projection } from "@here/harp-geoutils";
 import * as THREE from "three";
+
 import { ElevationProvider } from "../ElevationProvider";
 import { MapView } from "../MapView";
 import { ViewState } from "./ViewState";

@@ -9,6 +9,7 @@
 import { hereTilingScheme, mercatorTilingScheme } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as sinon from "sinon";
+
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { MapView } from "../lib/MapView";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";

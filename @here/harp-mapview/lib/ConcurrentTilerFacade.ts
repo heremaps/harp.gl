@@ -5,6 +5,7 @@
  */
 
 import { ITiler } from "@here/harp-datasource-protocol";
+
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
 import { WorkerBasedTiler } from "./WorkerBasedTiler";
 

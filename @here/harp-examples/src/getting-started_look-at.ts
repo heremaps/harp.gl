@@ -6,6 +6,7 @@
 
 import { GeoBox, GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
 import { GUI } from "dat.gui";
+
 import { HelloWorldExample } from "./getting-started_hello-world_npm";
 
 /**

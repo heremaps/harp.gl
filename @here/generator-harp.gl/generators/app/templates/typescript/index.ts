@@ -5,6 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
+
 import { View } from "./View";
 
 const app = new View({

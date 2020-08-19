@@ -20,6 +20,7 @@ import {
     TileFactory
 } from "@here/harp-mapview-decoder";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
+
 import {
     FeatureModifierId,
     OmvDecoderOptions,

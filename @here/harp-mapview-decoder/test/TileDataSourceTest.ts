@@ -6,8 +6,9 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
+
+import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/harp-datasource-protocol";
 import {
     Projection,
     TileKey,
@@ -17,6 +18,7 @@ import {
 import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/harp-mapview";
 import { assert } from "chai";
 import * as sinon from "sinon";
+
 import { DataProvider, TileDataSource, TileFactory } from "../index";
 
 function createMockDataProvider() {

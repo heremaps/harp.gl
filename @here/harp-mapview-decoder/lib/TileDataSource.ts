@@ -22,6 +22,7 @@ import {
     TileLoaderState
 } from "@here/harp-mapview";
 import { ILogger, LoggerManager } from "@here/harp-utils";
+
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
 

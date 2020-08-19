@@ -5,6 +5,7 @@
  */
 
 import { MathUtils } from "three";
+
 import { ColorUtils } from "./ColorUtils";
 import { parseStringEncodedColor } from "./StringEncodedNumeral";
 

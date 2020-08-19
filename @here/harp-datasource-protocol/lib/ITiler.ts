@@ -5,6 +5,7 @@
  */
 
 import { TileKey } from "@here/harp-geoutils";
+
 import { GeoJson } from "../lib/GeoJsonDataType";
 
 /**

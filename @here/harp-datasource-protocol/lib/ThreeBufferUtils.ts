@@ -10,6 +10,7 @@ import {
     InterleavedBufferAttribute as ThreeInterleavedBufferAttribute,
     TypedArray
 } from "three";
+
 import {
     BufferAttribute,
     BufferElementType,

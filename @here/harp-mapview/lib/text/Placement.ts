@@ -19,6 +19,7 @@ import {
 } from "@here/harp-text-canvas";
 import { assert, Math2D, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { CollisionBox, DetailedCollisionBox, IBox, ScreenCollisions } from "../ScreenCollisions";

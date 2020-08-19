@@ -10,6 +10,7 @@
 import { SolidLineMaterial } from "@here/harp-materials";
 import { expect } from "chai";
 import * as THREE from "three";
+
 import { DisplacedBufferGeometry } from "../lib/geometry/DisplacedBufferGeometry";
 import { SolidLineMesh } from "../lib/geometry/SolidLineMesh";
 

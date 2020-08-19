@@ -7,6 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { Task, TaskQueue } from "../lib/TaskQueue";
 
 describe("TaskQueue", function() {

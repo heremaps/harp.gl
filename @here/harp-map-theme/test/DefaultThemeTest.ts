@@ -8,7 +8,6 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import * as path from "path";
 import { Definitions, Theme } from "@here/harp-datasource-protocol";
 import {
     Expr,
@@ -16,11 +15,10 @@ import {
     JsonExpr,
     StyleSetEvaluator
 } from "@here/harp-datasource-protocol/index-decoder";
-
 import { loadTestResource } from "@here/harp-test-utils";
-
 import * as Ajv from "ajv";
 import { assert } from "chai";
+import * as path from "path";
 
 function assertExprValid(
     expr: JsonExpr,

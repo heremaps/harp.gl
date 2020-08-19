@@ -6,6 +6,7 @@
 
 import { MapEnv } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
+
 import { MapObjectAdapter } from "./MapObjectAdapter";
 
 function intersectObject(

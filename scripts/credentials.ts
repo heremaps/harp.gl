@@ -7,6 +7,7 @@
 /* eslint-disable no-console */
 
 import * as fs from "fs";
+
 import { apikey } from "../@here/harp-examples/config";
 
 function usage() {

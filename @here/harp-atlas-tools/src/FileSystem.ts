@@ -5,8 +5,8 @@
  */
 
 import * as fileSystem from "fs";
-import * as path from "path";
 import * as mkpath from "mkpath";
+import * as path from "path";
 
 /**
  * Describes possible image formats.

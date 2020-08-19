@@ -13,6 +13,7 @@ import {
 import { webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
+
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";

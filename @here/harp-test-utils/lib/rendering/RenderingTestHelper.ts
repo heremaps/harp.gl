@@ -4,15 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as querystring from "querystring";
 import { LoggerManager } from "@here/harp-utils";
 import { assert } from "chai";
+import * as querystring from "querystring";
 import * as THREE from "three";
 import { UAParser } from "ua-parser-js";
 
 import { canvasToImageData, compareImages, loadImageData } from "./DomImageUtils";
 import { DomReporter } from "./DomReporter";
-
 import { Reporter, TestImageProps } from "./Interface";
 import { getReferenceImageUrl } from "./ReferenceImageLocator";
 import { RenderingTestResultReporter } from "./RenderingTestResultReporter";

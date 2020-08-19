@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -25,7 +26,6 @@ import {
     Value,
     VarExpr
 } from "./Expr";
-
 import { ArrayOperators } from "./operators/ArrayOperators";
 import { CastOperators } from "./operators/CastOperators";
 import { ColorOperators } from "./operators/ColorOperators";

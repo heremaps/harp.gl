@@ -5,6 +5,7 @@
  */
 
 import "@here/harp-fetch";
+
 import { TileKey } from "@here/harp-geoutils";
 
 /**

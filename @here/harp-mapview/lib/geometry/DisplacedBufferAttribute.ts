@@ -7,6 +7,7 @@
 import { Vector3Like } from "@here/harp-geoutils";
 import { sampleBilinear } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { VertexCache } from "./VertexCache";
 
 /**

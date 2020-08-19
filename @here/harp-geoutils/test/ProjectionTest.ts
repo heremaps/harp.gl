@@ -6,6 +6,7 @@
 
 import { assert } from "chai";
 import * as THREE from "three";
+
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { Box3Like } from "../lib/math/Box3Like";

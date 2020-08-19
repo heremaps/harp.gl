@@ -5,6 +5,7 @@
  */
 
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+
 import { OmvFeatureFilter } from "./OmvDataFilter";
 
 /**

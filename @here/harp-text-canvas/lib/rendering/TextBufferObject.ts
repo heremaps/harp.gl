@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { GlyphData } from "./GlyphData";
 import { TextLayoutStyle, TextRenderStyle } from "./TextStyle";
 

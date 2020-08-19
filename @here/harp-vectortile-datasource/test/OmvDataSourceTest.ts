@@ -6,13 +6,15 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { FeatureCollection } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
+
+import { FeatureCollection } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { assert } from "chai";
 import * as sinon from "sinon";
+
 import {
     APIFormat,
     AuthenticationTypeAccessToken,

@@ -7,6 +7,7 @@
 import { GeometryType, getFeatureId } from "@here/harp-datasource-protocol";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { Tile, TileFeatureData } from "../Tile";
 import {
     BufferedGeometryLineAccessor,

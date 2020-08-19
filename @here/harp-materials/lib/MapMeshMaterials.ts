@@ -6,7 +6,6 @@
 
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { applyMixinsWithoutProperties, assert, chainCallbacks } from "@here/harp-utils";
-
 import * as THREE from "three";
 
 import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";

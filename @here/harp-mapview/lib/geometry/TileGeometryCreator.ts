@@ -77,6 +77,7 @@ import {
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import {
     applyBaseColorToMaterial,
     buildMetricValueEvaluator,

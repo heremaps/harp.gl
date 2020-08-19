@@ -6,6 +6,7 @@
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { LoggerManager } from "@here/harp-utils";
+
 import { OmvFeatureModifier } from "./OmvDataFilter";
 
 const logger = LoggerManager.instance.create("OmvPoliticalViewFeatureModifier");
