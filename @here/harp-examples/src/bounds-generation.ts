@@ -127,7 +127,6 @@ export namespace BoundsExample {
         });
 
         addVectorTileDataSource(map);
-        //@ts-ignore
         const featuresDataSource = addFeaturesDataSource(map, []);
         const boundsGenerator = new BoundsGenerator(
             map.camera,
@@ -292,7 +291,7 @@ export namespace BoundsExample {
         return map;
     }
 
-    function addFeaturesDataSource(map: MapView, featureList: [MapViewFeature]) {
+    function addFeaturesDataSource(map: MapView, featureList: MapViewFeature[]) {
         const featuresDataSource = new FeaturesDataSource({
             name: "featureDataSource",
             styleSetName: "geojson",

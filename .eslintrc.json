@@ -89,7 +89,6 @@
         "no-useless-return": "off",
         "no-return-await": "off",
         "operator-linebreak": "off",
-        "prefer-const": "off",
         "prefer-promise-reject-errors": "off",
         "promise/param-names": "off",
         "quote-props": "off",

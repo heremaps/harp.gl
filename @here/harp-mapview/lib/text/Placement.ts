@@ -185,6 +185,7 @@ export function checkReadyForPlacement(
     poiManager: PoiManager,
     maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
+    // eslint-disable-next-line prefer-const
     let viewDistance: number | undefined;
 
     if (!textElement.visible) {
