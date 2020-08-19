@@ -90,21 +90,21 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
         return replicatedAttribute;
     }
 
-    private static computePositionsAndBitangets(
+    private static computePositionsAndBitangents(
         polyline: number[],
-        polylineBitangets: number[]
+        polylineBitangents: number[]
     ): { positions: number[]; bitangents: number[] } {
         const positions = SolidLineGeometryBuilder.replicateToExtrudedVertices(polyline, 3);
         const bitangents: number[] = [];
-        const sameBitangent = polylineBitangets.length === 3;
+        const sameBitangent = polylineBitangents.length === 3;
 
         for (let i = 0; i < polyline.length - 3; i += 3) {
             for (let j = i; j < i + 6; j += 3) {
                 const bitangent1Idx = sameBitangent ? 0 : j;
                 const bitangent1 = new THREE.Vector3(
-                    polylineBitangets[bitangent1Idx],
-                    polylineBitangets[bitangent1Idx + 1],
-                    polylineBitangets[bitangent1Idx + 2]
+                    polylineBitangents[bitangent1Idx],
+                    polylineBitangents[bitangent1Idx + 1],
+                    polylineBitangents[bitangent1Idx + 2]
                 ).normalize();
                 bitangent1.toArray(bitangents, bitangents.length);
                 bitangent1.negate().toArray(bitangents, bitangents.length);
@@ -131,7 +131,7 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
     }
 
     constructor(polyline: number[], polylineBitangents: number[]) {
-        const { positions, bitangents } = SolidLineGeometryBuilder.computePositionsAndBitangets(
+        const { positions, bitangents } = SolidLineGeometryBuilder.computePositionsAndBitangents(
             polyline,
             polylineBitangents
         );
@@ -141,7 +141,7 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
     }
 
     addPolyline(polyline: number[], polylineBitangents: number[]): SolidLineGeometryBuilder {
-        const { positions, bitangents } = SolidLineGeometryBuilder.computePositionsAndBitangets(
+        const { positions, bitangents } = SolidLineGeometryBuilder.computePositionsAndBitangents(
             polyline,
             polylineBitangents
         );
@@ -572,6 +572,26 @@ describe("SolidLineMesh", function() {
         checkIntersect(intersects, {
             distance,
             point: new THREE.Vector3(0, 1, 10),
+            index: 0,
+            object: mesh
+        });
+    });
+
+    it("raycast returns intersection on modified geometry (auto update bounding volume)", function() {
+        const mesh = new SolidLineMeshBuilder([0, 0, 0, 1, 0, 0], [0, 1, 0]).build();
+        const intersects: THREE.Intersection[] = [];
+        const { raycaster, distance } = buildRayTo([5, 1, 0]);
+        mesh.raycast(raycaster, intersects);
+
+        expect(intersects).empty;
+
+        const geometryBuilder = new SolidLineGeometryBuilder([0, 0, 0, 5, 0, 0], [0, 1, 0]);
+        mesh.geometry = geometryBuilder.build();
+        mesh.raycast(raycaster, intersects);
+
+        checkIntersect(intersects, {
+            distance,
+            point: new THREE.Vector3(5, 1, 0),
             index: 0,
             object: mesh
         });
