@@ -844,21 +844,12 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * `True` if the basic geometry has been loaded, and the `Tile` is ready  for display.
-     */
-    get basicGeometryLoaded(): boolean {
-        return this.m_tileGeometryLoader === undefined
-            ? this.hasGeometry
-            : this.m_tileGeometryLoader.basicGeometryLoaded || this.m_tileGeometryLoader.isFinished;
-    }
-
-    /**
      * `True` if all geometry of the `Tile` has been loaded.
      */
     get allGeometryLoaded(): boolean {
         return this.m_tileGeometryLoader === undefined
             ? this.hasGeometry
-            : this.m_tileGeometryLoader.allGeometryLoaded || this.m_tileGeometryLoader.isFinished;
+            : this.m_tileGeometryLoader.isFinished;
     }
 
     /**

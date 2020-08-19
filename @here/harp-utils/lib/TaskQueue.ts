@@ -220,12 +220,13 @@ export class TaskQueue {
     }
 
     private updateTaskList(taskList: Task[]) {
-        taskList.forEach(task => {
+        for (let i = 0; i < taskList.length; i++) {
+            const task = taskList[i];
             if (task?.isExpired?.()) {
-                taskList.splice(taskList.indexOf(task), 1);
+                taskList.splice(i, 1);
+                i--;
             }
-        });
-
+        }
         taskList.sort(this.sort);
     }
 }
