@@ -147,6 +147,7 @@ export class FileSystem {
     static getFilesListWithExtensions(directoryPath: string, fileExtensions: string[]): string[] {
         const files: string[] = fileSystem.readdirSync(directoryPath);
         const filesFiltered = files.filter(fileName => {
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array
             for (const fileExt in fileExtensions) {
                 if (fileName.toLowerCase().endsWith(fileExt)) {
                     return true;

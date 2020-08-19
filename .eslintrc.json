@@ -7,7 +7,6 @@
     "rules": {
         "prettier/prettier": "error",
 
-        "@typescript-eslint/no-for-in-array": "off",
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/default-param-last": "off",
         "@typescript-eslint/prefer-reduce-type-parameter": "off",
