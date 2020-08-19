@@ -47,7 +47,7 @@ export class MapViewImageCache {
         }
         const oldNames = this.m_url2Name.get(url);
         if (oldNames !== undefined) {
-            if (oldNames.indexOf(name) < 0) {
+            if (!oldNames.includes(name)) {
                 oldNames.push(name);
             }
         } else {

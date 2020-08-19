@@ -72,7 +72,7 @@ export namespace OmvFilterString {
             case OmvFilterString.StringMatch.EndsWith:
                 return filterString.value.endsWith(str);
             default:
-                return str.indexOf(filterString.value) >= 0;
+                return str.includes(filterString.value);
         }
     }
 }

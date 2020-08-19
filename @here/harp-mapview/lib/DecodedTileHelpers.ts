@@ -627,7 +627,7 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
         // Omit base color and related transparency attributes if its defined in technique
         if (
             baseColorPropName === propertyName ||
-            (hasBaseColor && TRANSPARENCY_PROPERTY_KEYS.indexOf(propertyName) !== -1)
+            (hasBaseColor && TRANSPARENCY_PROPERTY_KEYS.includes(propertyName))
         ) {
             return false;
         }

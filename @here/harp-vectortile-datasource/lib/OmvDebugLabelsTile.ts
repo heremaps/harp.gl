@@ -304,7 +304,7 @@ export class OmvDebugLabelsTile extends Tile {
                 const elementIndex = this.preparedTextPaths.indexOf(textPath);
 
                 const createDebugInfo =
-                    (!textFilter || (text && text.indexOf(textFilter) >= 0)) &&
+                    (!textFilter || (text && text.includes(textFilter))) &&
                     (indexFilter === undefined || indexFilter === elementIndex);
 
                 if (createDebugInfo) {

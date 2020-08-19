@@ -115,7 +115,7 @@ export namespace LinesPointsFeaturesExample {
         const featuresList: MapViewFeature[] = [];
         for (const type of Object.keys(features)) {
             for (const featureName of Object.keys(features[type])) {
-                const name = featureName.indexOf("unknown") === -1 ? featureName : undefined;
+                const name = !featureName.includes("unknown") ? featureName : undefined;
                 // snippet:harp_demo_features_linespoints_1.ts
                 const feature = new MapViewLineFeature(features[type][featureName], { name, type });
                 // end:harp_demo_features_linespoints_1.ts

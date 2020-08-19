@@ -480,7 +480,7 @@ export class OmvRestClient implements DataProvider {
 
     private addQueryParams(url: string, queryParams: QueryParameters): string {
         let queryString = "";
-        let sep = url.indexOf("?") !== -1 ? "&" : "?";
+        let sep = url.includes("?") ? "&" : "?";
         for (const prop in queryParams) {
             if (!queryParams.hasOwnProperty(prop)) {
                 continue;

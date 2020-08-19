@@ -80,7 +80,7 @@ export namespace PerformanceUtils {
         const availableExtensions = context.getSupportedExtensions();
         if (
             availableExtensions !== null &&
-            availableExtensions.indexOf("WEBGL_debug_renderer_info") > -1
+            availableExtensions.includes("WEBGL_debug_renderer_info")
         ) {
             const infoExtension = context.getExtension("WEBGL_debug_renderer_info");
             if (infoExtension !== null) {

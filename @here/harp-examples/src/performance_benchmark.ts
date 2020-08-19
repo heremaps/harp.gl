@@ -978,11 +978,7 @@ export namespace PerformanceBenchmark {
         }
 
         let str = value.toFixed(digits);
-        while (
-            str.length > 1 &&
-            str.indexOf(".") >= 0 &&
-            (str.endsWith("0") || str.endsWith("."))
-        ) {
+        while (str.length > 1 && str.includes(".") && (str.endsWith("0") || str.endsWith("."))) {
             str = str.substr(0, str.length - 1);
         }
 

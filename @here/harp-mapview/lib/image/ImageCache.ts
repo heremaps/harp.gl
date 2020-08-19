@@ -97,7 +97,7 @@ export class ImageCache {
     registerImage(mapView: MapView, url: string, imageData?: ImageData | ImageBitmap): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
         if (imageCacheItem !== undefined) {
-            if (mapView !== undefined && imageCacheItem.mapViews.indexOf(mapView) < 0) {
+            if (mapView !== undefined && !imageCacheItem.mapViews.includes(mapView)) {
                 imageCacheItem.mapViews.push(mapView);
             }
             return imageCacheItem.imageItem;
