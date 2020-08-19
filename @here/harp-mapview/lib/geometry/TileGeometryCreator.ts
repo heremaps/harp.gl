@@ -709,7 +709,7 @@ export class TileGeometryCreator {
                 }
 
                 if (
-                    group.createdOffsets!.indexOf(tile.offset) !== -1 ||
+                    group.createdOffsets!.includes(tile.offset) ||
                     technique._kindState === false ||
                     (techniqueFilter !== undefined && !techniqueFilter(technique))
                 ) {

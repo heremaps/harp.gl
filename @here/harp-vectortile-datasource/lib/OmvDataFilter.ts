@@ -669,7 +669,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (item.geometryTypes !== undefined && item.geometryTypes.indexOf(geometryType) >= 0) {
+            if (item.geometryTypes !== undefined && item.geometryTypes.includes(geometryType)) {
                 return true;
             }
         }
@@ -680,7 +680,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (item.geometryTypes !== undefined && item.geometryTypes.indexOf(geometryType) >= 0) {
+            if (item.geometryTypes !== undefined && item.geometryTypes.includes(geometryType)) {
                 return false;
             }
         }

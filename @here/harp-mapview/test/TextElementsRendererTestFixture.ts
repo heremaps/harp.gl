@@ -246,8 +246,8 @@ export class TestFixture {
         for (let i = 0; i < allElements.length; ++i) {
             const element = allElements[i];
             const addElement = elementEnabled[i];
-            const elementPresent = [...tileElementGroups.groups.values()].find(
-                group => group.elements.indexOf(element) !== -1
+            const elementPresent = [...tileElementGroups.groups.values()].find(group =>
+                group.elements.includes(element)
             );
             if (addElement && !elementPresent) {
                 tile.addTextElement(element);

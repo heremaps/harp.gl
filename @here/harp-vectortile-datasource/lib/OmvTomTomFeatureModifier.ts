@@ -154,7 +154,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
     }
 
     private isIndustrial(layer: string): boolean {
-        return layer.indexOf("Industrial") >= 0 || layer === "Airport";
+        return layer.includes("Industrial") || layer === "Airport";
     }
 
     private isPark(layer: string): boolean {
@@ -163,8 +163,8 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
             layer === "City park" ||
             layer === "National park" ||
             layer === "Regional park" ||
-            layer.indexOf("grass") >= 0 ||
-            layer.indexOf("greens") >= 0
+            layer.includes("grass") ||
+            layer.includes("greens")
         );
     }
 
@@ -192,7 +192,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
     }
 
     private isRoadLabel(layer: string): boolean {
-        return layer.indexOf("road label") >= 0;
+        return layer.includes("road label");
     }
 
     private isRoadPath(layer: string): boolean {
@@ -210,31 +210,31 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
 
     private isRoadStreet(layer: string): boolean {
         return (
-            layer.indexOf("Minor local road") >= 0 ||
-            layer.indexOf("minor local road") >= 0 ||
-            layer.indexOf("Toll local road") >= 0 ||
-            layer.indexOf("Local road") >= 0
+            layer.includes("Minor local road") ||
+            layer.includes("minor local road") ||
+            layer.includes("Toll local road") ||
+            layer.includes("Local road")
         );
     }
 
     private isRoadPrimary(layer: string): boolean {
         return (
-            layer.indexOf("Major local road") >= 0 ||
-            layer.indexOf("Major road") >= 0 ||
-            layer.indexOf("major road") >= 0 ||
-            layer.indexOf("Motorway") >= 0 ||
-            layer.indexOf("motorway") >= 0 ||
-            layer.indexOf("International road") >= 0 ||
-            layer.indexOf("international road") >= 0
+            layer.includes("Major local road") ||
+            layer.includes("Major road") ||
+            layer.includes("major road") ||
+            layer.includes("Motorway") ||
+            layer.includes("motorway") ||
+            layer.includes("International road") ||
+            layer.includes("international road")
         );
     }
 
     private isRoadSecondary(layer: string): boolean {
         return (
-            layer.indexOf("connecting road") >= 0 ||
-            layer.indexOf("Connecting road") >= 0 ||
-            layer.indexOf("secondary road") >= 0 ||
-            layer.indexOf("Secondary road") >= 0
+            layer.includes("connecting road") ||
+            layer.includes("Connecting road") ||
+            layer.includes("secondary road") ||
+            layer.includes("Secondary road")
         );
     }
 
@@ -287,9 +287,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
 
     private isPoiLabel(layer: string): boolean {
         return (
-            layer === "National park name" ||
-            layer === "Landmark label" ||
-            layer.indexOf("label") >= 0
+            layer === "National park name" || layer === "Landmark label" || layer.includes("label")
         );
     }
 
@@ -298,14 +296,14 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
     }
 
     private isBuilding(layer: string): boolean {
-        return layer.indexOf("building") >= 0;
+        return layer.includes("building");
     }
 
     private isTunnel(layer: string): boolean {
-        return layer.indexOf("tunnel") >= 0;
+        return layer.includes("tunnel");
     }
 
     private isBridge(layer: string): boolean {
-        return layer.indexOf("bridge") >= 0;
+        return layer.includes("bridge");
     }
 }

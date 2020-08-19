@@ -37,7 +37,7 @@ export class EventDispatcher {
         if (listeners === undefined) {
             return false;
         }
-        return listener !== undefined ? listeners.indexOf(listener) >= 0 : true;
+        return listener !== undefined ? listeners.includes(listener) : true;
     }
 
     /**
@@ -52,7 +52,7 @@ export class EventDispatcher {
             listeners = [];
             this.m_listeners.set(type, listeners);
         }
-        if (listeners.indexOf(listener) === -1) {
+        if (!listeners.includes(listener)) {
             listeners.push(listener);
         }
     }

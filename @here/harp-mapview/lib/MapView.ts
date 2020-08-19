@@ -2207,7 +2207,7 @@ export class MapView extends EventDispatcher {
                 });
             })
             .then(() => {
-                const alreadyRemoved = this.m_tileDataSources.indexOf(dataSource) === -1;
+                const alreadyRemoved = !this.m_tileDataSources.includes(dataSource);
                 if (alreadyRemoved) {
                     return;
                 }
@@ -2963,7 +2963,7 @@ export class MapView extends EventDispatcher {
         }
 
         // Add as datasource if it was not added before
-        const isPresent = this.m_tileDataSources.indexOf(elevationSource) !== -1;
+        const isPresent = this.m_tileDataSources.includes(elevationSource);
         if (!isPresent) {
             await this.addDataSource(elevationSource);
         }

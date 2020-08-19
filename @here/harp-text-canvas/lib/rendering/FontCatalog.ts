@@ -384,7 +384,7 @@ export class FontCatalog {
             if (glyph === undefined) {
                 let glyphPromise = this.m_loadingGlyphs.get(glyphHash);
                 if (glyphPromise === undefined) {
-                    if (font.charset.indexOf(String.fromCodePoint(codePoint)) === -1) {
+                    if (!font.charset.includes(String.fromCodePoint(codePoint))) {
                         const replacementGlyph = this.createReplacementGlyph(codePoint, char, font);
                         fontGlyphMap!.set(codePoint, replacementGlyph);
                         this.m_glyphTextureCache.add(glyphHash, replacementGlyph);

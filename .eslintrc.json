@@ -29,7 +29,6 @@
         "@typescript-eslint/naming-convention": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/dot-notation": "off",
-        "@typescript-eslint/prefer-includes": "off",
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/prefer-optional-chain": "off",
         "@typescript-eslint/no-floating-promises": "off",

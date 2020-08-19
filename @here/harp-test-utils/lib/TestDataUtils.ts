@@ -30,7 +30,7 @@ export const testResourcesRoot =
 export function getTestResourceUrl(module: string, fileName: string) {
     const modulePath = path.dirname(require.resolve(module + "/package.json"));
     const resultPath = path.join(testResourcesRoot, modulePath, fileName);
-    if (resultPath.indexOf("\\") !== -1) {
+    if (resultPath.includes("\\")) {
         // node-fetch on windows, needs proper URL
         return "file://" + resultPath.replace(/\\/g, "/");
     } else {

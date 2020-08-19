@@ -231,11 +231,11 @@ describe("VisibleTileSet", function() {
         dsValid: DataSource[]
     ) => {
         dstl.forEach(dataSourceTileList => {
-            if (dsSkipped.indexOf(dataSourceTileList.dataSource) !== -1) {
+            if (dsSkipped.includes(dataSourceTileList.dataSource)) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     expect(tile["skipRendering"]).is.true;
                 });
-            } else if (dsValid.indexOf(dataSourceTileList.dataSource) !== -1) {
+            } else if (dsValid.includes(dataSourceTileList.dataSource)) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     expect(tile["skipRendering"]).is.false;
                 });
