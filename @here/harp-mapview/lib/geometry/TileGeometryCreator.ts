@@ -38,6 +38,7 @@ import {
     MakeTechniqueAttrs,
     MapEnv,
     needsVertexNormals,
+    setTechniqueRenderOrderOrPriority,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
@@ -1439,53 +1440,8 @@ export class TileGeometryCreator {
             return;
         }
 
-        const { priorities, labelPriorities } = tile.mapView.theme;
-
         decodedTile.techniques.forEach(technique => {
-            if (
-                isTextTechnique(technique) ||
-                isPoiTechnique(technique) ||
-                isLineMarkerTechnique(technique)
-            ) {
-                // for screen-space techniques the `category` is used to assign
-                // priorities.
-                if (labelPriorities && typeof technique._category === "string") {
-                    // override the `priority` when the technique uses `category`.
-                    const priority = labelPriorities.indexOf(technique._category);
-                    if (priority !== -1) {
-                        technique.priority = labelPriorities.length - priority;
-                    }
-                }
-            } else if (priorities && technique._styleSet !== undefined) {
-                // Compute the render order based on the style category and styleSet.
-                const computeRenderOrder = (category: string): number | undefined => {
-                    const priority = priorities?.findIndex(
-                        entry => entry.group === technique._styleSet && entry.category === category
-                    );
-
-                    return priority !== undefined && priority !== -1
-                        ? (priority + 1) * 10
-                        : undefined;
-                };
-
-                if (typeof technique._category === "string") {
-                    // override the renderOrder when the technique is using categories.
-                    const renderOrder = computeRenderOrder(technique._category);
-
-                    if (renderOrder !== undefined) {
-                        technique.renderOrder = renderOrder;
-                    }
-                }
-
-                if (typeof technique._secondaryCategory === "string") {
-                    // override the secondaryRenderOrder when the technique is using categories.
-                    const secondaryRenderOrder = computeRenderOrder(technique._secondaryCategory);
-
-                    if (secondaryRenderOrder !== undefined) {
-                        (technique as any).secondaryRenderOrder = secondaryRenderOrder;
-                    }
-                }
-            }
+            setTechniqueRenderOrderOrPriority(technique, tile.mapView.theme);
         });
     }
 
