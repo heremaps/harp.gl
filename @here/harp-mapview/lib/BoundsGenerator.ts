@@ -121,7 +121,7 @@ export class BoundsGenerator {
                 });
             }
         } else {
-            logger.error("This ProjectionType", this.m_projection, " is not yet supported!");
+            logger.warn("This ProjectionType", this.m_projection, " is not yet supported!");
         }
 
         // 5.) Create the Polygon and set needsSort to `true`as we expect it to be convex and
