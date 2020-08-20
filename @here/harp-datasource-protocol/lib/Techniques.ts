@@ -24,6 +24,7 @@ import {
     TextTechniqueParams,
     TextureCoordinateType
 } from "./TechniqueParams";
+import { Theme } from "./Theme";
 
 /**
  * Names of the supported texture properties.
@@ -484,4 +485,57 @@ export function composeTechniqueTextureName(
         textureName = textureName + technique.imageTexturePostfix;
     }
     return textureName;
+}
+
+/**
+ * Sets a technique's render order (or priority for screen-space techniques) depending on its
+ * category and the priorities specified in a given theme.
+ * @param technique- The technique whose render order or priority will be set.
+ * @param theme - The theme from which the category priorities will be taken.
+ */
+export function setTechniqueRenderOrderOrPriority(technique: IndexedTechnique, theme: Theme) {
+    const { priorities, labelPriorities } = theme;
+
+    if (
+        isTextTechnique(technique) ||
+        isPoiTechnique(technique) ||
+        isLineMarkerTechnique(technique)
+    ) {
+        // for screen-space techniques the `category` is used to assign
+        // priorities.
+        if (labelPriorities && typeof technique._category === "string") {
+            // override the `priority` when the technique uses `category`.
+            const priority = labelPriorities.indexOf(technique._category);
+            if (priority !== -1) {
+                technique.priority = labelPriorities.length - priority;
+            }
+        }
+    } else if (priorities && technique._styleSet !== undefined) {
+        // Compute the render order based on the style category and styleSet.
+        const computeRenderOrder = (category: string): number | undefined => {
+            const priority = priorities?.findIndex(
+                entry => entry.group === technique._styleSet && entry.category === category
+            );
+
+            return priority !== undefined && priority !== -1 ? (priority + 1) * 10 : undefined;
+        };
+
+        if (typeof technique._category === "string") {
+            // override the renderOrder when the technique is using categories.
+            const renderOrder = computeRenderOrder(technique._category);
+
+            if (renderOrder !== undefined) {
+                technique.renderOrder = renderOrder;
+            }
+        }
+
+        if (typeof technique._secondaryCategory === "string") {
+            // override the secondaryRenderOrder when the technique is using categories.
+            const secondaryRenderOrder = computeRenderOrder(technique._secondaryCategory);
+
+            if (secondaryRenderOrder !== undefined) {
+                (technique as any).secondaryRenderOrder = secondaryRenderOrder;
+            }
+        }
+    }
 }
