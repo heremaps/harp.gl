@@ -43,7 +43,6 @@ import {
     VECTOR_TILE_DECODER_SERVICE_TYPE
 } from "./OmvDecoderDefs";
 import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
-import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
 import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
 
@@ -432,8 +431,6 @@ export class VectorTileDecoder extends ThemedTileDecoder {
         featureModifierId?: FeatureModifierId
     ): OmvFeatureModifier {
         switch (featureModifierId) {
-            case FeatureModifierId.tomTom:
-                return new OmvTomTomFeatureModifier(filterDescription);
             case FeatureModifierId.default:
                 return new OmvGenericFeatureModifier(filterDescription);
             default:

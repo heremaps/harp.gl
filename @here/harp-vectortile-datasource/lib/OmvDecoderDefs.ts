@@ -15,11 +15,7 @@ export enum FeatureModifierId {
      * @note You do not need to specify it in [[OmvDataSourceParameters]] as it is added by default
      * if no other feature modifier is used.
      */
-    default,
-    /**
-     * Identifier to use the OmvTomTomFeatureModifier in the OmvDecoder.
-     */
-    tomTom
+    default
 }
 
 /**
