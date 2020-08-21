@@ -228,11 +228,11 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
     }
 
     visitStepExpr(expr: StepExpr, enclosingExpr: Expr | undefined): Expr | undefined {
-        throw new Error("todo");
+        return expr;
     }
 
     visitInterpolateExpr(expr: InterpolateExpr, enclosingExpr: Expr | undefined): Expr | undefined {
-        throw new Error("todo");
+        return expr;
     }
 
     /**
