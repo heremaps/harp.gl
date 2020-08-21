@@ -41,11 +41,13 @@ export interface OlpDataProviderParams {
 /**
  * [[DataProvider]] implementation for OLP catalogs.
  */
-export class OlpDataProvider implements DataProvider {
+export class OlpDataProvider extends DataProvider {
     private m_versionLayerClient: VersionedLayerClient | undefined;
     private m_catalogVersion: number = -1;
 
-    constructor(readonly params: OlpDataProviderParams) {}
+    constructor(readonly params: OlpDataProviderParams) {
+        super();
+    }
 
     /**
      * Connect to the data source. Returns a promise to wait for successful (or failed) connection.

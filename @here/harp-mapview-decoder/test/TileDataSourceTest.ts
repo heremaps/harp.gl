@@ -21,26 +21,22 @@ import * as sinon from "sinon";
 
 import { DataProvider, TileDataSource, TileFactory } from "../index";
 
-function createMockDataProvider() {
-    const mockTemplate: DataProvider = {
-        async connect() {
-            // empty implementation
-        },
-        ready(): boolean {
-            return true;
-        },
-        async getTile(): Promise<ArrayBuffer> {
-            return await Promise.resolve(new ArrayBuffer(5));
-        },
-        /** @override */ dispose() {
-            // Nothing to be done here.
-        }
-    };
-    const mock = sinon.stub(mockTemplate);
-    mock.getTile.callsFake(() => {
-        return Promise.resolve(new ArrayBuffer(5));
-    });
-    return mock;
+class MockDataProvider extends DataProvider {
+    /** @override */ async connect() {
+        // empty implementation
+    }
+
+    ready(): boolean {
+        return true;
+    }
+
+    async getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBuffer> {
+        return await Promise.resolve(new ArrayBuffer(5));
+    }
+
+    /** @override */ dispose() {
+        // Nothing to be done here.
+    }
 }
 
 const fakeGeometry = {};
@@ -93,7 +89,7 @@ describe("TileDataSource", function() {
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
             styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
-            dataProvider: createMockDataProvider(),
+            dataProvider: new MockDataProvider(),
             decoder
         });
 
@@ -111,7 +107,7 @@ describe("TileDataSource", function() {
         const testedDataSource = new TileDataSource(new TileFactory(CustomTile), {
             styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
-            dataProvider: createMockDataProvider(),
+            dataProvider: new MockDataProvider(),
             decoder: createMockTileDecoder()
         });
         testedDataSource.attach(createMockMapView());
@@ -122,11 +118,12 @@ describe("TileDataSource", function() {
     });
 
     it("#updateTile: tile disposing cancels load, skips decode and tile update", async function() {
-        const mockDataProvider = createMockDataProvider();
+        const mockDataProvider = new MockDataProvider();
 
         const abortController = new AbortController();
         let getTileToken = abortController.signal;
-        mockDataProvider.getTile.callsFake((_tileKey: any, cancellationToken: any) => {
+        const getTileStub = sinon.stub(mockDataProvider, "getTile");
+        getTileStub.callsFake((_tileKey: any, cancellationToken: any) => {
             assert(cancellationToken !== undefined);
             assert(cancellationToken instanceof AbortSignal);
             getTileToken = cancellationToken;
@@ -162,14 +159,15 @@ describe("TileDataSource", function() {
 
         assert.notExists(tile.tileLoader);
 
-        assert.equal(mockDataProvider.getTile.callCount, 1);
+        assert.equal(getTileStub.callCount, 1);
         assert.equal(getTileToken.aborted, true);
         assert.equal(mockDecoder.decodeTile.callCount, 0);
         assert.equal(spyTileSetDecodedTile.set.callCount, 0);
     });
 
     it("subsequent, overlapping #updateTile calls load & decode tile once", async function() {
-        const mockDataProvider = createMockDataProvider();
+        const mockDataProvider = new MockDataProvider();
+        const getTileSpy = sinon.spy(mockDataProvider, "getTile");
         const mockDecoder = createMockTileDecoder();
 
         mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
@@ -196,13 +194,13 @@ describe("TileDataSource", function() {
         await tile.tileLoader!.waitSettled();
 
         // assert
-        assert.equal(mockDataProvider.getTile.callCount, 1);
+        assert.equal(getTileSpy.callCount, 1);
         assert.equal(mockDecoder.decodeTile.callCount, 1);
         assert(spyTileSetDecodedTile.set.calledWith(fakeEmptyGeometry));
     });
 
     function getDataSource() {
-        const mockDataProvider = createMockDataProvider();
+        const mockDataProvider = new MockDataProvider();
         const mockDecoder = createMockTileDecoder();
 
         mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
@@ -220,6 +218,7 @@ describe("TileDataSource", function() {
 
     it("subsequent, overlapping #getTile calls don't share TileLoader", async function() {
         const mockedDataSource = getDataSource();
+        const getTileSpy = sinon.spy(mockedDataSource.mockDataProvider, "getTile");
         const tile1 = mockedDataSource.testedDataSource.getTile(
             TileKey.fromRowColumnLevel(0, 0, 0)
         )!;
@@ -235,7 +234,7 @@ describe("TileDataSource", function() {
         // Waiting on the first tileloader doesn't influence the second one.
         await tile1.tileLoader!.waitSettled();
         await tile2.tileLoader!.waitSettled();
-        assert.equal(mockedDataSource.mockDataProvider.getTile.callCount, 2);
+        assert.equal(getTileSpy.callCount, 2);
         // Check that two tiles are decoded.
         assert.equal(mockedDataSource.mockDecoder.decodeTile.callCount, 2);
         assert.equal(spyTileSetDecodedTile1.set.callCount, 1);
@@ -245,7 +244,7 @@ describe("TileDataSource", function() {
     });
 
     it("Empty decoded tiles are ignored", async function() {
-        const mockDataProvider = createMockDataProvider();
+        const mockDataProvider = new MockDataProvider();
         const mockDecoder = createMockTileDecoder();
 
         fakeEmptyGeometry.geometries = [];
@@ -298,7 +297,7 @@ describe("TileDataSource", function() {
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
             styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
-            dataProvider: createMockDataProvider(),
+            dataProvider: new MockDataProvider(),
             decoder: createMockTileDecoder(),
             minZoomLevel: 3,
             maxZoomLevel: 17

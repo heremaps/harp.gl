@@ -7,6 +7,7 @@
 import "@here/harp-fetch";
 
 import { TileKey } from "@here/harp-geoutils";
+import { EventDispatcher } from "three";
 
 /**
  * Interface for all `DataProvider` subclasses.
@@ -16,18 +17,36 @@ import { TileKey } from "@here/harp-geoutils";
  * loader which is only responsible for loading the data of a specific tile,
  * without any relation to displaying or even decoding the data.
  */
-export interface DataProvider {
+export abstract class DataProvider extends EventDispatcher {
+    private readonly m_clients: Set<Object> = new Set();
+
     /**
-     * Connect to the data source. Returns a promise to wait for successful (or failed) connection.
+     * Registers a client to the data provider.
      *
-     * @returns A promise which is resolved when the connection has been established.
+     * @param client - The client to register.
+     * @returns Promise to wait for successful (or failed) connection to the data source.
      */
-    connect(): Promise<void>;
+    register(client: Object): Promise<void> {
+        const result = this.m_clients.size === 0 ? this.connect() : Promise.resolve();
+        this.m_clients.add(client);
+        return result;
+    }
+
+    /**
+     * Unregisters a client from the data provider.
+     *
+     * @param client - The client to unregister.
+     */
+    unregister(client: Object) {
+        if (this.m_clients.delete(client) && this.m_clients.size === 0) {
+            this.dispose();
+        }
+    }
 
     /**
      * Returns `true` if it has been connected successfully.
      */
-    ready(): boolean;
+    abstract ready(): boolean;
 
     /**
      * Load the data of a {@link @here/map-view@Tile} asynchronously.
@@ -36,7 +55,7 @@ export interface DataProvider {
      * @param abortSignal - Optional AbortSignal to cancel the request.
      * @returns A promise delivering the data as an [[ArrayBufferLike]], or any object.
      */
-    getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}>;
+    abstract getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}>;
 
     /**
      * An event which fires when this `DataProvider` is invalidated.
@@ -54,8 +73,15 @@ export interface DataProvider {
     onDidInvalidate?(listener: () => void): () => void;
 
     /**
+     * Connect to the data source. Returns a promise to wait for successful (or failed) connection.
+     *
+     * @returns A promise which is resolved when the connection has been established.
+     */
+    protected abstract connect(): Promise<void>;
+
+    /**
      * Destroys this `DataProvider`. Implementations of `DataProvider` must dispose of
      * asynchronous operations and services here.
      */
-    dispose(): void;
+    protected abstract dispose(): void;
 }

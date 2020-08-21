@@ -73,7 +73,7 @@ export namespace TileDependenciesExample {
         </p>
         <pre id="mouse-picked-result"></pre>
     `;
-    class CustomDataProvider implements DataProvider {
+    class CustomDataProvider extends DataProvider {
         enableTileDependencies: boolean = false;
         connect() {
             // Here you could connect to the service.

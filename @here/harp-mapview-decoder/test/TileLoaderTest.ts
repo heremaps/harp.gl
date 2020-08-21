@@ -37,11 +37,7 @@ class MockDataSource extends DataSource {
     }
 }
 
-class MockDataProvider implements DataProvider {
-    constructor() {
-        // empty implementation
-    }
-
+class MockDataProvider extends DataProvider {
     async connect() {
         // empty implementation
     }
