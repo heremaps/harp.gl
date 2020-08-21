@@ -163,7 +163,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
     dispose() {
         this.m_unregisterClearTileCache?.();
         this.decoder.dispose();
-        this.dataProvider().dispose();
+        this.dataProvider().unregister(this);
     }
 
     /** @override */
@@ -181,7 +181,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
 
     /** @override */
     async connect() {
-        await Promise.all([this.m_options.dataProvider.connect(), this.m_decoder.connect()]);
+        await Promise.all([this.m_options.dataProvider.register(this), this.m_decoder.connect()]);
         this.m_isReady = true;
 
         this.m_decoder.configure(undefined, undefined, undefined, {

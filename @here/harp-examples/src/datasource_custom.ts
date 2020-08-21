@@ -97,7 +97,7 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
 
 export namespace CustomDatasourceExample {
     // snippet:custom_datasource_example_custom_data_provider.ts
-    class CustomDataProvider implements DataProvider
+    class CustomDataProvider extends DataProvider
     // end:custom_datasource_example_custom_data_provider.ts
     {
         connect() {

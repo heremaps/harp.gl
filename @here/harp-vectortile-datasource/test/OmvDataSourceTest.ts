@@ -24,7 +24,7 @@ import {
 import { VectorTileDecoder } from "../index-worker";
 import { GeoJsonDataProvider } from "../lib/GeoJsonDataProvider";
 
-class MockDataProvider implements DataProvider {
+class MockDataProvider extends DataProvider {
     /** Overriding abstract method, in this case doing nothing. */
     async connect(): Promise<void> {
         //do nothing

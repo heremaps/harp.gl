@@ -283,11 +283,12 @@ export interface OmvRestClientParameters {
 /**
  * REST client supporting getting protobuf OMV Tile from REST-based servers.
  */
-export class OmvRestClient implements DataProvider {
+export class OmvRestClient extends DataProvider {
     private readonly downloadManager: ITransferManager;
     private readonly urlParams: { [key: string]: string };
 
     constructor(readonly params: OmvRestClientParameters) {
+        super();
         this.downloadManager =
             params.downloadManager === undefined
                 ? TransferManager.instance()

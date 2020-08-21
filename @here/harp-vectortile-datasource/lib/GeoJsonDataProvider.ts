@@ -11,7 +11,6 @@ import { TileKey } from "@here/harp-geoutils";
 import { ConcurrentTilerFacade } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { LoggerManager } from "@here/harp-utils";
-import { EventDispatcher } from "three";
 
 import { GEOJSON_TILER_SERVICE_TYPE } from "./OmvDecoderDefs";
 
@@ -44,7 +43,7 @@ let missingTilerServiceInfoEmitted: boolean = false;
  * @remarks
  * Automatically handles tiling and simplification of static GeoJson.
  */
-export class GeoJsonDataProvider extends EventDispatcher implements DataProvider {
+export class GeoJsonDataProvider extends DataProvider {
     private readonly m_tiler: ITiler;
     private m_registered = false;
 
