@@ -130,9 +130,10 @@ const getActualDecoderScriptUrl = () => {
         );
     }
     const isMinified = baseScriptUrl && baseScriptUrl.endsWith(".min.js");
+
     const decoderScriptName = !isMinified
         ? DEFAULT_DECODER_SCRIPT_URL
-        : DEFAULT_DECODER_SCRIPT_URL.replace(".js$", ".min.js");
+        : DEFAULT_DECODER_SCRIPT_URL.replace(/\.js$/, ".min.js");
     return bundledUriResolver.resolveUri(decoderScriptName);
 };
 
