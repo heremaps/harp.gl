@@ -625,4 +625,76 @@ describe("StyleSetEvaluator", function() {
         assert.deepStrictEqual(decodedTechnique.offset2, ["make-vector", 10, 20, 30]);
         assert.deepStrictEqual(decodedTechnique.offset3, ["make-vector", 10, 20, 30, 40]);
     });
+
+    describe("allow steps in filter conditions", () => {
+        const sse = new StyleSetEvaluator([
+            {
+                id: "new-style-rule",
+                layer: "buildings",
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "LineString"],
+                    ["step", ["zoom"], false, 15, true]
+                ],
+                technique: "solid-line"
+            },
+            {
+                id: "legacy-style-rule",
+                when: [
+                    "all",
+                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["step", ["zoom"], false, 15, true]
+                ],
+                technique: "fill"
+            },
+
+            {
+                id: "new-style-rule-with-other-layer",
+                layer: "roads",
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "LineString"],
+                    ["step", ["zoom"], false, 15, true]
+                ],
+                technique: "solid-line"
+            },
+            {
+                id: "legacy-style-rule-with-other-layer",
+                when: [
+                    "all",
+                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "roads"],
+                    ["step", ["zoom"], false, 15, true]
+                ],
+                technique: "fill"
+            }
+        ]);
+
+        it("wants rules with zoom level >= 15", () => {
+            const techniques = sse.getMatchingTechniques(
+                new MapEnv({ $layer: "buildings", $geometryType: "line", $zoom: 15 }),
+                "buildings",
+                "line"
+            );
+
+            assert.strictEqual(techniques.length, 2);
+            const solidLineTechnique = techniques[0];
+            assert.strictEqual(solidLineTechnique.name, "solid-line");
+            assert.strictEqual(solidLineTechnique.id, "new-style-rule");
+            const fillTechnique = techniques[1];
+            assert.strictEqual(fillTechnique.name, "fill");
+            assert.strictEqual(fillTechnique.id, "legacy-style-rule");
+        });
+
+        it("rejects rules with zoom level < 15", () => {
+            const techniques = sse.getMatchingTechniques(
+                new MapEnv({ $layer: "buildings", $geometryType: "line", $zoom: 14 }),
+                "buildings",
+                "line"
+            );
+
+            assert.strictEqual(techniques.length, 0);
+        });
+    });
 });
