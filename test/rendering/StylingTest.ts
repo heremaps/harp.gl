@@ -27,7 +27,7 @@ import { LookAtParams, MapAnchor, MapView, MapViewEventNames } from "@here/harp-
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";
 import { getReferenceImageUrl } from "@here/harp-test-utils/lib/rendering/ReferenceImageLocator";
-import { getOptionValue, mergeWithOptions } from "@here/harp-utils";
+import { getOptionValue } from "@here/harp-utils";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
 import { assert } from "chai";
 import * as THREE from "three";
@@ -163,7 +163,7 @@ function mapViewFeaturesRenderingTest(
                 getOptionValue(options.margin, 0.15)
             );
 
-            const lookAt = mergeWithOptions(defaultLookAt, options.lookAt);
+            const lookAt: LookAtParams = { ...defaultLookAt, ...options.lookAt } as any;
 
             mapView.lookAt(lookAt);
             if (options.grid !== undefined) {
