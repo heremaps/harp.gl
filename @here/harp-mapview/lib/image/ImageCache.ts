@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -92,9 +91,15 @@ export class ImageCache {
      *
      * @param mapView - Specifiy which {@link MapView} requests the image.
      * @param url - URL of image.
-     * @param imageData - Optional [ImageData]] containing the image content.
+     * @param imageData - Optional {@link ImageData}containing the image content.
+     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as conten.
      */
-    registerImage(mapView: MapView, url: string, imageData?: ImageData | ImageBitmap): ImageItem {
+    registerImage(
+        mapView: MapView,
+        url: string,
+        imageData?: ImageData | ImageBitmap,
+        htmlElement?: HTMLImageElement | HTMLCanvasElement
+    ): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
         if (imageCacheItem !== undefined) {
             if (mapView !== undefined && !imageCacheItem.mapViews.includes(mapView)) {
@@ -112,6 +117,7 @@ export class ImageCache {
             imageItem: {
                 url,
                 imageData,
+                htmlElement: htmlElement,
                 loaded: false
             },
             mapViews
@@ -128,13 +134,16 @@ export class ImageCache {
      * @param mapView - {@link MapView} requesting the image.
      * @param url - URL of image.
      * @param startLoading - Optional flag. If `true` the image will be loaded in the background.
+     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as content,
+     * if set, `startLoading = true` will start the rendering process in the background.
      */
     addImage(
         mapView: MapView,
         url: string,
-        startLoading = true
+        startLoading = true,
+        htmlElement?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem | Promise<ImageItem | undefined> | undefined {
-        const imageItem = this.registerImage(mapView, url, undefined);
+        const imageItem = this.registerImage(mapView, url, undefined, htmlElement);
         if (imageItem !== undefined && startLoading === true) {
             return this.loadImage(imageItem);
         }
@@ -271,46 +280,63 @@ export class ImageCache {
             return imageItem.loadingPromise;
         }
 
-        const imageLoader = new THREE.ImageLoader();
+        if (imageItem.htmlElement) {
+            imageItem.loadingPromise = new Promise((resolve, reject) => {
+                if (
+                    imageItem.htmlElement instanceof HTMLImageElement &&
+                    !imageItem.htmlElement.complete
+                ) {
+                    imageItem.htmlElement.addEventListener(
+                        "load",
+                        (this.createOnImageLoaded(imageItem, resolve, reject) as unknown) as (
+                            this: HTMLImageElement,
+                            ev: Event
+                        ) => any
+                    );
+                    imageItem.htmlElement.addEventListener("error", err => {
+                        reject(
+                            "The image with src: " +
+                                (imageItem.htmlElement as HTMLImageElement).src +
+                                " could not be loaded: " +
+                                err.message
+                        );
+                    });
+                } else {
+                    this.createOnImageLoaded(
+                        imageItem,
+                        resolve,
+                        reject
+                        // cast to be a HtmlCanvasElement, as undefined and HtmlImageElement are
+                        // already excluded from the conditions above
+                    )(imageItem.htmlElement as HTMLCanvasElement);
+                }
+            });
+        } else {
+            const imageLoader = new THREE.ImageLoader();
 
-        imageItem.loadingPromise = new Promise(resolve => {
-            logger.debug(`Loading image: ${imageItem.url}`);
-            if (imageItem.cancelled === true) {
-                logger.debug(`Cancelled loading image: ${imageItem.url}`);
-                resolve(undefined);
-            } else {
-                imageLoader.load(
-                    imageItem.url,
-                    image => {
-                        logger.debug(`... finished loading image: ${imageItem.url}`);
-                        if (imageItem.cancelled === true) {
-                            logger.debug(`Cancelled loading image: ${imageItem.url}`);
-                            resolve(undefined);
+            imageItem.loadingPromise = new Promise((resolve, reject) => {
+                logger.debug(`Loading image: ${imageItem.url}`);
+                if (imageItem.cancelled === true) {
+                    logger.debug(`Cancelled loading image: ${imageItem.url}`);
+                    resolve(undefined);
+                } else {
+                    imageLoader.load(
+                        imageItem.url,
+                        this.createOnImageLoaded(imageItem, resolve, reject),
+                        undefined,
+                        errorEvent => {
+                            logger.error(
+                                `... loading image failed: ${imageItem.url} : ${errorEvent}`
+                            );
+
+                            imageItem.loadingPromise = undefined;
+                            reject(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
                         }
-                        this.renderImage(imageItem, image)
-                            .then(() => {
-                                imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
-                                    imageItem
-                                );
-                                imageItem.loadingPromise = undefined;
-                                resolve(imageItem);
-                            })
-                            .catch(ex => {
-                                logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
-                                resolve(undefined);
-                            });
-                    },
-                    // Loading events no longer supported
-                    undefined,
-                    errorEvent => {
-                        logger.error(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
+                    );
+                }
+            });
+        }
 
-                        imageItem.loadingPromise = undefined;
-                        resolve(undefined);
-                    }
-                );
-            }
-        });
         return imageItem.loadingPromise;
     }
 
@@ -323,6 +349,31 @@ export class ImageCache {
         this.m_images.forEach(cacheItem => {
             func(cacheItem.imageItem);
         });
+    }
+
+    private createOnImageLoaded(
+        imageItem: ImageItem,
+        onDone: (value?: ImageItem) => void,
+        onError: (value?: ImageItem, errorMessage?: string) => void
+    ): (image: HTMLImageElement | HTMLCanvasElement) => any {
+        return (image: HTMLImageElement | HTMLCanvasElement) => {
+            logger.debug(`... finished loading image: ${imageItem.url}`);
+            if (imageItem.cancelled === true) {
+                logger.debug(`Cancelled loading image: ${imageItem.url}`);
+                onDone(undefined);
+            }
+            this.renderImage(imageItem, image)
+                .then(() => {
+                    imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(imageItem);
+                    imageItem.loadingPromise = undefined;
+                    imageItem.htmlElement = undefined;
+                    onDone(imageItem);
+                })
+                .catch(ex => {
+                    logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
+                    onError(imageItem, `... loading image failed: ${imageItem.url} : ${ex}`);
+                });
+        };
     }
 
     /**
@@ -343,7 +394,7 @@ export class ImageCache {
      */
     private renderImage(
         imageItem: ImageItem,
-        image: HTMLImageElement
+        image: HTMLImageElement | HTMLCanvasElement
     ): Promise<ImageData | ImageBitmap | undefined> {
         return new Promise((resolve, reject) => {
             if (imageItem.cancelled) {
@@ -371,7 +422,7 @@ export class ImageCache {
                     })
                     .catch(ex => {
                         logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
-                        resolve(undefined);
+                        reject(ex);
                     });
             } else {
                 try {
@@ -389,9 +440,14 @@ export class ImageCache {
                     // the client, so it does not rely on the `document`.
 
                     // use the image, e.g. draw part of it on a canvas
-                    const canvas = document.createElement("canvas");
-                    canvas.width = image.width;
-                    canvas.height = image.height;
+                    let canvas: HTMLCanvasElement;
+                    if (image instanceof HTMLCanvasElement) {
+                        canvas = image;
+                    } else {
+                        canvas = document.createElement("canvas");
+                        canvas.width = image.width;
+                        canvas.height = image.height;
+                    }
 
                     const context = canvas.getContext("2d");
                     if (context !== null) {
