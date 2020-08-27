@@ -193,29 +193,45 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
  * @internal
  */
 export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.Mesh) {
-    // Set up depth mesh stencil logic.
-    // Set the depth pre-pass stencil bit for all processed fragments. We use
-    // `THREE.AlwaysStencilFunc` and not `THREE.NotEqualStencilFunc` to force all fragments to pass
-    // the stencil test and write the correct depth value.
-    const depthMaterial = depthMesh.material as MapMeshStandardMaterial;
-    depthMaterial.stencilWrite = true;
-    depthMaterial.stencilFail = THREE.KeepStencilOp;
-    depthMaterial.stencilZFail = THREE.KeepStencilOp;
-    depthMaterial.stencilZPass = THREE.ReplaceStencilOp;
-    depthMaterial.stencilFunc = THREE.AlwaysStencilFunc;
-    depthMaterial.stencilRef = 0xff;
-    (depthMaterial as any).stencilFuncMask = DEPTH_PRE_PASS_STENCIL_MASK;
+    function setupDepthMaterialStencil(depthMeshMaterial: THREE.Material) {
+        // Set up depth mesh stencil logic.
+        // Set the depth pre-pass stencil bit for all processed fragments. We use
+        // `THREE.AlwaysStencilFunc` and not `THREE.NotEqualStencilFunc` to force all fragments to pass
+        // the stencil test and write the correct depth value.
+        const depthMaterial = depthMeshMaterial as MapMeshStandardMaterial;
+        depthMaterial.stencilWrite = true;
+        depthMaterial.stencilFail = THREE.KeepStencilOp;
+        depthMaterial.stencilZFail = THREE.KeepStencilOp;
+        depthMaterial.stencilZPass = THREE.ReplaceStencilOp;
+        depthMaterial.stencilFunc = THREE.AlwaysStencilFunc;
+        depthMaterial.stencilRef = 0xff;
+        (depthMaterial as any).stencilFuncMask = DEPTH_PRE_PASS_STENCIL_MASK;
+    }
 
-    // Set up color mesh stencil logic.
-    // Only write color for pixels with the depth pre-pass stencil bit set. Also, once a pixel is
-    // rendered, set the stencil bit to 0 to prevent subsequent pixels in the same clip position
-    // from rendering color again.
-    const colorMaterial = colorMesh.material as MapMeshStandardMaterial;
-    colorMaterial.stencilWrite = true;
-    colorMaterial.stencilFail = THREE.KeepStencilOp;
-    colorMaterial.stencilZFail = THREE.KeepStencilOp;
-    colorMaterial.stencilZPass = THREE.ZeroStencilOp;
-    colorMaterial.stencilFunc = THREE.EqualStencilFunc;
-    colorMaterial.stencilRef = 0xff;
-    (colorMaterial as any).stencilFuncMask = DEPTH_PRE_PASS_STENCIL_MASK;
+    function setupColorMaterialStencil(colorMeshMaterial: THREE.Material) {
+        // Set up color mesh stencil logic.
+        // Only write color for pixels with the depth pre-pass stencil bit set. Also, once a pixel is
+        // rendered, set the stencil bit to 0 to prevent subsequent pixels in the same clip position
+        // from rendering color again.
+        const colorMaterial = colorMeshMaterial as MapMeshStandardMaterial;
+        colorMaterial.stencilWrite = true;
+        colorMaterial.stencilFail = THREE.KeepStencilOp;
+        colorMaterial.stencilZFail = THREE.KeepStencilOp;
+        colorMaterial.stencilZPass = THREE.ZeroStencilOp;
+        colorMaterial.stencilFunc = THREE.EqualStencilFunc;
+        colorMaterial.stencilRef = 0xff;
+        (colorMaterial as any).stencilFuncMask = DEPTH_PRE_PASS_STENCIL_MASK;
+    }
+
+    if (depthMesh.material instanceof Array) {
+        depthMesh.material.map(setupDepthMaterialStencil);
+    } else {
+        setupDepthMaterialStencil(depthMesh.material);
+    }
+
+    if (colorMesh.material instanceof Array) {
+        colorMesh.material.map(setupColorMaterialStencil);
+    } else {
+        setupColorMaterialStencil(colorMesh.material);
+    }
 }

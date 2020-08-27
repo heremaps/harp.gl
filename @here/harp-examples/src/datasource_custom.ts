@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { Theme } from "@here/harp-datasource-protocol";
 import { DebugTileDataSource } from "@here/harp-debug-datasource";
 import { GeoCoordinates, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
@@ -23,6 +22,7 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
  * 1. Decoding and processing in a web-worker
  * 2. Usage of the styling engine in a custom datasource
  * 3. Creation of three.js objects in a web-worker
+ * 4. Creating data that appears above and below ground level
  *
  * To achieve all this we have to implement a custom decoder:
  * ```typescript
@@ -93,9 +93,20 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
  * ```typescript
  * [[include:custom_datasource_example_custom_decoder_service_start.ts]]
  * ```
+ *
+ * To properly geometry that is considerable higher or lower than the ground level, the bounding
+ * boxes of the [[Tile]]s have to be enlarged to contain that geometry. If that is not done, the
+ * tile may not be rendered at all, or the geometry may be clipped in some circumstances.
+ *
+ * In this example, the line is rendered at an altitude of -100m, making the line appear on
+ * ground level when zoomed out, but increasingly far below ground level when zoomed in.
+ *
  **/
 
 export namespace CustomDatasourceExample {
+    const MAX_GEOMETRY_HEIGHT = 100;
+    const MIN_GEOMETRY_HEIGHT = -100;
+
     // snippet:custom_datasource_example_custom_data_provider.ts
     class CustomDataProvider extends DataProvider
     // end:custom_datasource_example_custom_data_provider.ts
@@ -220,12 +231,15 @@ export namespace CustomDatasourceExample {
     }
 
     // Create a new MapView for the HTMLCanvasElement of the given id.
-    function initializeMapView(id: string): MapView {
+    async function initializeMapView(id: string): Promise<MapView> {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
         const map = new MapView({
             canvas,
             theme: customTheme(),
+            // The geometry below ground can create a large number of tiles at lower levels.
+            // Increasing number of visible tiles to minimize gaps.
+            maxVisibleDataSourceTiles: 300,
             // snippet:custom_datasource_example_map_view_decoder_bundle.ts
             decoderUrl: "decoder.bundle.js"
             // end:custom_datasource_example_map_view_decoder_bundle.ts
@@ -259,7 +273,9 @@ export namespace CustomDatasourceExample {
             // possible.
             // decoder: new CustomDecoder(),
             concurrentDecoderServiceName: CUSTOM_DECODER_SERVICE_TYPE,
-            storageLevelOffset: -1
+            storageLevelOffset: -1,
+            minGeometryHeight: MIN_GEOMETRY_HEIGHT,
+            maxGeometryHeight: MAX_GEOMETRY_HEIGHT
         });
         map.addDataSource(customDatasource);
         // end:custom_datasource_example_custom_data_source_create.ts

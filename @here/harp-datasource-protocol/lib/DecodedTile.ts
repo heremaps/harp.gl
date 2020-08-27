@@ -55,6 +55,12 @@ export interface DecodedTile {
     maxGeometryHeight?: number;
 
     /**
+     * Data sources not defining a bounding box may define alternatively a minimum geometry height
+     * in meters. The bounding box of the resulting tile will be extended to encompass this height.
+     */
+    minGeometryHeight?: number;
+
+    /**
      * Tile data Copyright holder identifiers.
      *
      * `id`s should be unique. It is recommended to build them from unique identifiers like

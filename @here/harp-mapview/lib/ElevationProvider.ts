@@ -3,8 +3,8 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { GeoCoordinates, TileKey, TilingScheme } from "@here/harp-geoutils";
+import * as THREE from "three";
 
 import { TileDisplacementMap } from "./DisplacementMap";
 
@@ -42,14 +42,14 @@ export interface ElevationProvider {
      * is not in the cache a lower level tile will be returned.
      *
      * @param tileKey - The tile to get the displacement map for.
-     * @returns Returns the DisplacmentMap for the given tileKey or a lower level tile. Undefined
+     * @returns Returns the DisplacementMap for the given tileKey or a lower level tile. Undefined
      *          if the tile or no parent is in the cache.
      */
     getDisplacementMap(tileKey: TileKey): TileDisplacementMap | undefined;
 
     /**
-     * @returns the TilingScheme used for the DisplacementMaps returned by [[getDisplacementMap]] or
-     * undefined if there is no elevation {@link DataSource} attached to the {@link MapView}.
+     * @returns the TilingScheme used for the DisplacementMaps returned by [[getDisplacementMap]]
+     * or undefined if there is no elevation {@link DataSource} attached to the {@link MapView}.
      */
     getTilingScheme(): TilingScheme | undefined;
 

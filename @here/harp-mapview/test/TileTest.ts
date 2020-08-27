@@ -216,6 +216,24 @@ describe("Tile", function() {
         expect(tile.boundingBox).deep.equals(expectedBBox);
     });
 
+    it("elevationRange setter elevates bbox if minGeometryHeight is set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const minElevation = 30;
+        const maxElevation = 50;
+        const minGeometryHeight = -100;
+        const expectedGeoBox = tile.geoBox.clone();
+        expectedGeoBox.southWest.altitude = minElevation + minGeometryHeight;
+        expectedGeoBox.northEast.altitude = maxElevation;
+        const expectedBBox = new OrientedBox3();
+        stubDataSource.mapView.projection.projectBox(expectedGeoBox, expectedBBox);
+
+        tile.decodedTile = { techniques: [], geometries: [], minGeometryHeight };
+        tile.elevationRange = { minElevation, maxElevation };
+
+        expect(tile.geoBox).deep.equals(expectedGeoBox);
+        expect(tile.boundingBox).deep.equals(expectedBBox);
+    });
+
     it("decodedTile setter sets decoded tile bbox if defined but does not elevate it", function() {
         const key = new TileKey(5, 5, 5);
         const tile = new Tile(stubDataSource, key);
