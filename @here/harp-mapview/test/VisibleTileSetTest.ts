@@ -353,7 +353,6 @@ describe("VisibleTileSet", function() {
         assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506849);
         assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506848);
         assert.equal(visibleTiles[2].tileKey.mortonCode(), 371506165);
-
         assert.equal(visibleTiles[3].tileKey.mortonCode(), 371506827);
         assert.equal(visibleTiles[4].tileKey.mortonCode(), 371506850);
 

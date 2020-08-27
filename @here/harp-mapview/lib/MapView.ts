@@ -302,7 +302,7 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     enableNativeWebglAntialias?: boolean;
 
     /**
-     * Antialias settings for the map rendering. It is better to disable the native antialising if
+     * Antialias settings for the map rendering. It is better to disable the native antialiasing if
      * the custom antialiasing is enabled.
      */
     customAntialiasSettings?: IMapAntialiasSettings;
@@ -710,9 +710,9 @@ export interface LookAtParams {
      *   visible
      *
      * Note in sphere projection some points are not visible if you specify bounds that span more
-     * than 180 degreess in any direction.
+     * than 180 degrees in any direction.
      *
-     * @see {@link (MapView.lookAt:WITH_PARAMS)} for defails how `bounds`
+     * @see {@link (MapView.lookAt:WITH_PARAMS)} for details on how `bounds`
      *      interact with `target` parameter
      */
     bounds: GeoBox | GeoBoxExtentLike | GeoCoordLike[] | GeoPolygon;
@@ -872,9 +872,9 @@ export class MapView extends EventDispatcher {
     /** Separate scene for overlay map anchors */
     private readonly m_overlayScene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
-    /** Root node of [[m_scene]] that get's cleared every frame. */
+    /** Root node of [[m_scene]] that gets cleared every frame. */
     private readonly m_sceneRoot = new THREE.Object3D();
-    /** Root node of [[m_overlayScene]] that get's cleared every frame. */
+    /** Root node of [[m_overlayScene]] that gets cleared every frame. */
     private readonly m_overlaySceneRoot = new THREE.Object3D();
 
     private readonly m_mapAnchors: MapAnchors = new MapAnchors();
@@ -1406,7 +1406,7 @@ export class MapView extends EventDispatcher {
     }
 
     /**
-     * Specfies whether extended frustum culling is enabled or disabled.
+     * Specifies whether extended frustum culling is enabled or disabled.
      */
     get extendedFrustumCulling(): boolean {
         return this.m_options.extendedFrustumCulling !== undefined
@@ -1738,8 +1738,8 @@ export class MapView extends EventDispatcher {
      * - {@link MapView.tilt}
      * - {@link MapView.heading}
      * could change.
-     * These properties are cached internaly and will only be updated in the next animation frame.
-     * FIXME: Unfortunatley THREE.js is not dispatching any events when camera properties change
+     * These properties are cached internally and will only be updated in the next animation frame.
+     * FIXME: Unfortunately THREE.js is not dispatching any events when camera properties change
      * so we should have an API for enforcing update of cached values.
      */
     get camera(): THREE.PerspectiveCamera {
@@ -1952,7 +1952,7 @@ export class MapView extends EventDispatcher {
      *
      * Images stored in this cache are primarily used for POIs (icons) and they are used with the
      * current theme. Although images can be explicitly added and removed from the cache, it is
-     * adviced not to remove images from this cache. If an image that is part of client code
+     * advised not to remove images from this cache. If an image that is part of client code
      * should be removed at any point other than changing the theme, the {@link useImageCache}
      * should be used instead.
      */
@@ -2331,7 +2331,7 @@ export class MapView extends EventDispatcher {
      *
      * In each case, `lookAt` finds minimum `zoomLevel` that covers given extents or geo points.
      *
-     * With flat projection, if `bounds` represents points on both sides of antimeridian, and
+     * With flat projection, if `bounds` represents points on both sides of anti-meridian, and
      * {@link MapViewOptions.tileWrappingEnabled} is used, `lookAt` will use this knowledge and find
      * minimal view that may cover "next" or "previous" world.
      *
@@ -2745,7 +2745,7 @@ export class MapView extends EventDispatcher {
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
      * @param fallback - Whether to compute a fallback position if the earth surface is not hit.
-     * @returns Unnormalized geo coordinates
+     * @returns Un-normalized geo coordinates
      */
     getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null;
 
@@ -3205,13 +3205,13 @@ export class MapView extends EventDispatcher {
                 throw Error("#lookAt: Invalid 'bounds' value");
             }
             if (
-                // if the points are created from the corners of the geoBox dont cluster them
+                // if the points are created from the corners of the geoBox don't cluster them
                 !(params.bounds instanceof GeoBox || params.bounds instanceof GeoPolygon) &&
                 this.m_tileWrappingEnabled &&
                 this.projection.type === ProjectionType.Planar
             ) {
                 // In flat projection, with wrap around enabled, we should detect clusters of
-                // points around  antimeridian and possible move some points to sibling worlds.
+                // points around  anti-meridian and possible move some points to sibling worlds.
                 //
                 // Here, we fit points into minimal geo box taking world wrapping into account.
                 geoPoints = MapViewUtils.wrapGeoPointsToScreen(geoPoints, target!);
@@ -3274,7 +3274,7 @@ export class MapView extends EventDispatcher {
         );
         this.camera.updateMatrixWorld(true);
 
-        // Make sure to update all properties that are accessable via API (e.g. zoomlevel) b/c
+        // Make sure to update all properties that are accessible via API (e.g. zoomlevel) b/c
         // otherwise they would be updated as recently as in the next animation frame.
         this.updateLookAtSettings();
         this.update();
@@ -3329,13 +3329,20 @@ export class MapView extends EventDispatcher {
             projectionScale *
             this.m_tileDataSources.reduce((r, ds) => Math.max(r, ds.maxGeometryHeight), 0);
 
+        const minGeometryHeightScaled =
+            projectionScale *
+            this.m_tileDataSources.reduce((r, ds) => Math.min(r, ds.minGeometryHeight), 0);
+
         // Copy all properties from new view ranges to our readonly object.
         // This allows to keep all view ranges references valid and keeps up-to-date
         // information within them. Works the same as copping all properties one-by-one.
         Object.assign(
             this.m_viewRanges,
             viewRanges === undefined
-                ? this.m_visibleTiles.updateClipPlanes(maxGeometryHeightScaled)
+                ? this.m_visibleTiles.updateClipPlanes(
+                      maxGeometryHeightScaled,
+                      minGeometryHeightScaled
+                  )
                 : viewRanges
         );
         this.m_camera.near = this.m_viewRanges.near;
@@ -3838,7 +3845,7 @@ export class MapView extends EventDispatcher {
             // FIXME:
             // This will only measure the memory of the rendering and not of the geometry creation.
             // Assuming the garbage collector is not kicking in immediately we will at least see
-            // the geometry creation memory consumption acounted in the next frame.
+            // the geometry creation memory consumption accounted in the next frame.
             stats.addMemoryInfo();
         }
 

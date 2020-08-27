@@ -227,6 +227,13 @@ describe("DataSource", function() {
             });
         });
 
+        describe("minGeometryHeight", function() {
+            it("has getters and setters for min geometry height", function() {
+                dataSource.minGeometryHeight = 223.4;
+                expect(dataSource.minGeometryHeight).to.equal(223.4);
+            });
+        });
+
         describe("setEnableElevationOverlay", function() {
             it("has an empty default implementation", function() {
                 expect(() => dataSource.setEnableElevationOverlay(true)).to.not.throw;

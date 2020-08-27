@@ -26,6 +26,9 @@ import { BoxBufferGeometry, Matrix4, Vector3 } from "three";
 
 import { CUSTOM_DECODER_SERVICE_TYPE } from "./custom_decoder_defs";
 
+// Height of line geometry in this sample.
+const MIN_GEOMETRY_HEIGHT = -100;
+
 export // snippet:custom_datasource_example_custom_decoder.ts
 class CustomDecoder extends ThemedTileDecoder
 // end:custom_datasource_example_custom_decoder.ts
@@ -45,15 +48,32 @@ class CustomDecoder extends ThemedTileDecoder
         const geometries: Geometry[] = [];
 
         const array = new Float32Array(data as ArrayBuffer);
-        this.processLineFeatures(array, tileKey, styleSetEvaluator, projection, geometries);
-        this.processMeshFeatures(tileKey, styleSetEvaluator, geometries);
+        const lineHeightRange = this.processLineFeatures(
+            array,
+            tileKey,
+            styleSetEvaluator,
+            projection,
+            geometries
+        );
+        const meshHeightRange = this.processMeshFeatures(tileKey, styleSetEvaluator, geometries);
+        const minGeometryHeight = Math.min(
+            lineHeightRange.minGeometryHeight,
+            meshHeightRange.minGeometryHeight
+        );
+        const maxGeometryHeight = Math.max(
+            lineHeightRange.maxGeometryHeight,
+            meshHeightRange.maxGeometryHeight
+        );
+
         const dependencies: number[] = [];
         this.processDependencies(array, dependencies);
 
         const decodedTile: DecodedTile = {
             techniques: styleSetEvaluator.techniques,
             geometries,
-            dependencies
+            dependencies,
+            maxGeometryHeight,
+            minGeometryHeight
         };
         return Promise.resolve(decodedTile);
     }
@@ -96,8 +116,8 @@ class CustomDecoder extends ThemedTileDecoder
         styleSetEvaluator: StyleSetEvaluator,
         projection: Projection,
         geometries: Geometry[]
-    ) {
-        // Setup an environment for this "layer". This does normaly come from the data and should
+    ): { minGeometryHeight: number; maxGeometryHeight: number } {
+        // Setup an environment for this "layer". This does normally come from the data and should
         // contain all the attributes of a specific feature, so that it can be styled properly.
         const env = new MapEnv({ layer: "line-layer" });
 
@@ -122,6 +142,8 @@ class CustomDecoder extends ThemedTileDecoder
         for (const technique of techniques) {
             geometries.push(this.createLineGeometry(lineGroup, technique._index));
         }
+
+        return { minGeometryHeight: MIN_GEOMETRY_HEIGHT, maxGeometryHeight: 0 };
     }
 
     private convertToLocalWorldCoordinates(
@@ -143,6 +165,7 @@ class CustomDecoder extends ThemedTileDecoder
             // We add +1 to skip the first entry which has the number of points
             tmpGeoPoint.latitude += data[i + 1];
             tmpGeoPoint.longitude += data[i + 2];
+            tmpGeoPoint.altitude = MIN_GEOMETRY_HEIGHT;
             projection.projectPoint(tmpGeoPoint, tmpWorldPoint);
             tmpWorldPoint.sub(worldCenter).toArray(worldPoints, (i / 2) * 3);
         }
@@ -153,7 +176,7 @@ class CustomDecoder extends ThemedTileDecoder
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
         geometries: Geometry[]
-    ) {
+    ): { minGeometryHeight: number; maxGeometryHeight: number } {
         const env = new MapEnv({ layer: "mesh-layer" });
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
 
@@ -164,6 +187,9 @@ class CustomDecoder extends ThemedTileDecoder
         matrix.makeTranslation(2.0 * scale, 1.0 * scale, 0);
         boxGeometry.applyMatrix4(matrix);
 
+        // box is centered vertically.
+        const geometryHeight = 2.5 * scale;
+
         for (const technique of techniques) {
             const geometry = ThreeBufferUtils.fromThreeBufferGeometry(
                 boxGeometry,
@@ -171,6 +197,8 @@ class CustomDecoder extends ThemedTileDecoder
             );
             geometries.push(geometry);
         }
+
+        return { minGeometryHeight: -geometryHeight, maxGeometryHeight: geometryHeight };
     }
 
     private processDependencies(data: Float32Array, dependencies: number[]) {
