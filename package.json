@@ -41,7 +41,7 @@
         "node-fetch": "^2.2.0",
         "nyc": "^15.0.1",
         "prettier": "^1.19.1",
-        "three": "^0.119.0",
+        "three": "^0.120.0",
         "ts-mocha": "^7.0.0",
         "typedoc": "^0.17.7",
         "typescript": "^3.9.3",
