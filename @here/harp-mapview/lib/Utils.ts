@@ -917,6 +917,8 @@ export namespace MapViewUtils {
             pointOnScreenYinNDC,
             0
         );
+
+        mapView.camera.updateMatrixWorld();
         const cameraPos = cache.vector3[1].copy(mapView.camera.position);
 
         cache.matrix4[0].extractRotation(mapView.camera.matrixWorld);
