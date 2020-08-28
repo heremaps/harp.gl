@@ -1,3 +1,4 @@
+/* eslint-disable simple-import-sort/sort */
 /*
  * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
@@ -17,22 +18,14 @@ import {
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
-import { assert, expect } from "chai";
-import * as sinon from "sinon";
-import * as THREE from "three";
 
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
 
-const cameraMock = {
-    fov: 40,
-    rotation: {
-        z: 0
-    },
-    quaternion: new THREE.Quaternion(),
-    matrixWorld: new THREE.Matrix4()
-};
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
+import * as THREE from "three";
 
 function setCamera(
     camera: THREE.Camera,
@@ -61,11 +54,81 @@ function setCamera(
 }
 
 describe("map-view#Utils", function() {
+    describe("zoomOnTargetPosition", function() {
+        const mapViewMock = {
+            maxZoomLevel: 20,
+            minZoomLevel: 1,
+            camera: new THREE.PerspectiveCamera(40),
+            projection: mercatorProjection,
+            focalLength: 256,
+            pixelRatio: 1.0
+        };
+        const mapView = (mapViewMock as any) as MapView;
+
+        it("only changes zoom on center", () => {
+            const geoTarget = new GeoCoordinates(52.5, 13.5);
+            const worldTarget = mapView.projection.projectPoint(geoTarget, new THREE.Vector3());
+            const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, 10);
+            setCamera(mapView.camera, mapView.projection, geoTarget, 0, 45, distance);
+
+            MapViewUtils.zoomOnTargetPosition(mapView, 0, 0, 11);
+
+            const {
+                target: newWorldTarget,
+                distance: newDistance
+            } = MapViewUtils.getTargetAndDistance(mapView.projection, mapView.camera);
+
+            const newZoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, newDistance);
+            expect(newZoomLevel).to.be.closeTo(11, 1e-13);
+
+            // Make sure the target did not move.
+            expect(worldTarget.distanceTo(newWorldTarget)).to.be.closeTo(0, Number.EPSILON);
+        });
+        it("only changes zoom on center even when tiltig", () => {
+            const geoTarget = new GeoCoordinates(52.5, 13.5);
+            const worldTarget = mapView.projection.projectPoint(geoTarget, new THREE.Vector3());
+            const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, 10);
+            const tilt = 45;
+            setCamera(mapView.camera, mapView.projection, geoTarget, 0, tilt, distance);
+
+            // Change tilt first
+            const newTilt = 50;
+            MapViewUtils.getCameraRotationAtTarget(
+                mapView.projection,
+                geoTarget,
+                0,
+                newTilt,
+                mapView.camera.quaternion
+            );
+            MapViewUtils.getCameraPositionFromTargetCoordinates(
+                geoTarget,
+                distance,
+                0,
+                newTilt,
+                mapView.projection,
+                mapView.camera.position
+            );
+
+            // Now zoom in
+            MapViewUtils.zoomOnTargetPosition(mapView, 0, 0, 11);
+
+            const {
+                target: newWorldTarget,
+                distance: newDistance
+            } = MapViewUtils.getTargetAndDistance(mapView.projection, mapView.camera);
+
+            const newZoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, newDistance);
+            expect(newZoomLevel).to.be.closeTo(11, Number.EPSILON);
+
+            // Make sure the target did not move.
+            expect(worldTarget.distanceTo(newWorldTarget)).to.be.closeTo(0, Number.EPSILON);
+        });
+    });
     describe("calculateZoomLevelFromDistance", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
-            camera: cameraMock,
+            camera: new THREE.PerspectiveCamera(40),
             projection: mercatorProjection,
             focalLength: 256,
             pixelRatio: 1.0
@@ -103,7 +166,7 @@ describe("map-view#Utils", function() {
             center: [10, -10]
         };
         const mapViewMock = {
-            camera: cameraMock,
+            camera: new THREE.PerspectiveCamera(40),
             projection: mercatorProjection,
             focalLength: 256,
             pixelRatio: 1.0
