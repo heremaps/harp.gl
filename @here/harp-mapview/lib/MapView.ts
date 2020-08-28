@@ -1275,6 +1275,7 @@ export class MapView extends EventDispatcher {
             this.m_tileWrappingEnabled = enabled;
             this.m_visibleTiles = this.createVisibleTileSet();
         }
+        this.update();
     }
 
     /**

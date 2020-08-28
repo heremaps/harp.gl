@@ -53,18 +53,14 @@ export class ScreenProjector {
      *
      * @param {(Vector3Like)} source The source vector to project.
      * @param {THREE.Vector2} target The target vector.
-     * @returns {THREE.Vector2} The projected vector (the parameter 'target') or undefined if
-     * outside the near / far plane.
+     * @returns {THREE.Vector2} The projected vector (the parameter 'target')
      */
     project(
         source: Vector3Like,
         target: THREE.Vector2 = new THREE.Vector2()
     ): THREE.Vector2 | undefined {
         const p = this.projectVector(source, ScreenProjector.tempV3);
-        if (p.z > -1 && p.z < 1) {
-            return this.ndcToScreen(p, target);
-        }
-        return undefined;
+        return this.ndcToScreen(p, target);
     }
 
     /**
