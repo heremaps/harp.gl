@@ -28,6 +28,7 @@ describe("MapControls", function() {
     let camera: THREE.Camera;
     let updateStub: sinon.SinonStub<any>;
     let lookAtStub: sinon.SinonStub<any>;
+    let orbitAroundScreenPointSpy: sinon.SinonSpy<any>;
 
     const eventMap: Map<string, EventListener> = new Map();
 
@@ -197,11 +198,16 @@ describe("MapControls", function() {
         updateStub = mapView.update as any;
         lookAtStub = mapView.lookAt as any;
 
+        orbitAroundScreenPointSpy = sandbox.spy(MapViewUtils, "orbitAroundScreenPoint");
+
         sandbox.stub(mapView, "projection").get(() => {
             return mercatorProjection;
         });
         sandbox.stub(mapView, "target").get(() => {
             return GeoCoordinates.fromDegrees(0, 0);
+        });
+        sandbox.stub(mapView, "tilt").get(() => {
+            return 0;
         });
         mapView.minZoomLevel = 0;
         mapView.maxZoomLevel = 20;
@@ -459,7 +465,7 @@ describe("MapControls", function() {
                 return worldTarget;
             });
             // needed to get the initial zoom level from MapView.
-            (mapControls as any).assignZoomAfterTouchZoomRender();
+            mapControls["assignZoomAfterTouchZoomRender"]();
             expect(mapControls.zoomLevelTargeted).to.equal(initialZoomLevel);
         });
 
@@ -508,18 +514,19 @@ describe("MapControls", function() {
 
             it(`tilt interactions can be ${suffix}`, function() {
                 lookAtStub.resetHistory();
+                orbitAroundScreenPointSpy.resetHistory();
                 mapControls.tiltEnabled = enabled;
                 mapControls.enabled = allEnabled;
                 const isEnabled = allEnabled && enabled;
 
                 mapControls.toggleTilt();
-                expect(lookAtStub.called).to.equal(isEnabled);
+                expect(orbitAroundScreenPointSpy.called).to.equal(isEnabled);
 
                 mouseMove(2, domElement.clientWidth / 3, domElement.clientHeight / 3);
-                expect(lookAtStub.called).to.equal(isEnabled);
+                expect(orbitAroundScreenPointSpy.called).to.equal(isEnabled);
 
                 touchMove(3, domElement.clientWidth / 3, domElement.clientHeight / 3);
-                expect(lookAtStub.called).to.equal(isEnabled);
+                expect(orbitAroundScreenPointSpy.called).to.equal(isEnabled);
             });
         }
     });

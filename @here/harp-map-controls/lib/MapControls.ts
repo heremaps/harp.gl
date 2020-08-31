@@ -110,14 +110,14 @@ export class MapControls extends EventDispatcher {
      * mouse pointer position: The result then will be used as an offset to orbit the camera.
      * Default value is `0.1`.
      */
-    orbitingMouseDeltaFactor = 0.1;
+    orbitingMouseDeltaFactor = 0.1 * THREE.MathUtils.DEG2RAD;
 
     /**
      * This factor will be applied to the delta of the current touch pointer position and the last
      * touch pointer position: The result then will be used as an offset to orbit the camera.
      * Default value is `0.1`.
      */
-    orbitingTouchDeltaFactor = 0.1;
+    orbitingTouchDeltaFactor = 0.1 * THREE.MathUtils.DEG2RAD;
 
     /**
      * Set to `true` to enable input handling through this map control, `false` to disable input
@@ -137,7 +137,7 @@ export class MapControls extends EventDispatcher {
     panEnabled = true;
 
     /**
-     * Set to `true` to enable orbiting and tilting through these controls, `false` otherwise.
+     * Set to `true` to enable tilting through these controls, `false` otherwise.
      */
     tiltEnabled = true;
 
@@ -232,6 +232,7 @@ export class MapControls extends EventDispatcher {
     private readonly m_currentViewDirection = new THREE.Vector3();
 
     private readonly m_lastMousePosition = new THREE.Vector2(0, 0);
+    private readonly m_initialMousePosition = new THREE.Vector2(0, 0);
     private readonly m_mouseDelta = new THREE.Vector2(0, 0);
 
     private m_needsRenderLastFrame: boolean = true;
@@ -428,7 +429,14 @@ export class MapControls extends EventDispatcher {
             ).tilt;
             const deltaTilt = tilt - this.m_maxTiltAngle;
             if (deltaTilt > 0) {
-                MapViewUtils.orbitFocusPoint(this.mapView, 0, deltaTilt, this.m_maxTiltAngle);
+                MapViewUtils.orbitAroundScreenPoint(
+                    this.mapView,
+                    0,
+                    0,
+                    0,
+                    deltaTilt,
+                    this.m_maxTiltAngle
+                );
             }
         }
 
@@ -664,9 +672,11 @@ export class MapControls extends EventDispatcher {
 
         const deltaAzimuth = this.m_currentAzimuth - this.m_lastAzimuth;
 
-        MapViewUtils.orbitFocusPoint(
+        MapViewUtils.orbitAroundScreenPoint(
             this.mapView,
-            THREE.MathUtils.radToDeg(deltaAzimuth),
+            0,
+            0,
+            deltaAzimuth,
             0,
             this.m_maxTiltAngle
         );
@@ -713,15 +723,8 @@ export class MapControls extends EventDispatcher {
 
         const initialTilt = this.currentTilt;
         const deltaAngle = this.m_currentTilt - initialTilt;
-        const oldCameraDistance = this.mapView.camera.position.z / Math.cos(initialTilt);
-        const newHeight = Math.cos(initialTilt) * oldCameraDistance;
 
-        MapViewUtils.orbitFocusPoint(
-            this.mapView,
-            newHeight - this.camera.position.z,
-            THREE.MathUtils.radToDeg(deltaAngle),
-            this.m_maxTiltAngle
-        );
+        MapViewUtils.orbitAroundScreenPoint(this.mapView, 0, 0, 0, deltaAngle, this.m_maxTiltAngle);
         this.updateMapView();
     }
 
@@ -970,8 +973,15 @@ export class MapControls extends EventDispatcher {
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
 
         const mousePos = this.getPointerPosition(event);
-        this.m_lastMousePosition.setX(mousePos.x);
-        this.m_lastMousePosition.setY(mousePos.y);
+        this.m_lastMousePosition.copy(mousePos);
+        if (event.altKey === true) {
+            const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
+            this.m_initialMousePosition.copy(
+                utils.calculateNormalizedDeviceCoordinates(mousePos.x, mousePos.y, width, height)
+            );
+        } else {
+            this.m_initialMousePosition.set(0, 0);
+        }
 
         const onMouseMove = this.mouseMove.bind(this);
         const onMouseUp = this.mouseUp.bind(this);
@@ -1018,8 +1028,11 @@ export class MapControls extends EventDispatcher {
             );
         } else if (this.m_state === State.ORBIT) {
             this.stopExistingAnimations();
-            MapViewUtils.orbitFocusPoint(
+
+            MapViewUtils.orbitAroundScreenPoint(
                 this.mapView,
+                this.m_initialMousePosition.x,
+                this.m_initialMousePosition.y,
                 this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
                 -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y,
                 this.m_maxTiltAngle
@@ -1305,8 +1318,10 @@ export class MapControls extends EventDispatcher {
                 firstTouch.lastTouchPoint
             );
             this.stopExistingAnimations();
-            MapViewUtils.orbitFocusPoint(
+            MapViewUtils.orbitAroundScreenPoint(
                 this.mapView,
+                0,
+                0,
                 this.orbitingTouchDeltaFactor * diff.x,
                 -this.orbitingTouchDeltaFactor * diff.y,
                 this.m_maxTiltAngle

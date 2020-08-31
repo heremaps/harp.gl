@@ -6,11 +6,13 @@
 import {
     GeoBox,
     GeoCoordinates,
+    GeoCoordinatesLike,
     MathUtils,
     OrientedBox3,
     Projection,
     ProjectionType,
-    TileKey
+    TileKey,
+    Vector3Like
 } from "@here/harp-geoutils";
 import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
@@ -201,7 +203,7 @@ export namespace MapViewUtils {
             const tilt = extractCameraTilt(camera, projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
-                orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
+                orbitAroundScreenPoint(mapView, 0, 0, 0, deltaTilt, maxTiltAngle);
             }
         }
 
@@ -223,40 +225,62 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Orbits the camera around the focus point of the camera.
+     * Orbits the camera around a given point on the screen.
      *
      * @param mapView - The {@link MapView} instance to manipulate.
-     * @param deltaAzimuthDeg - Delta azimuth in degrees.
-     * @param deltaTiltDeg - Delta tilt in degrees.
-     * @param maxTiltAngleRad - The maximum tilt between the camera and its target in radian.
+     * @param offsetX - Orbit point in NDC space.
+     * @param offsetY - Orbit point in NDC space.
+     * @param deltaAzimuth - Delta azimuth in radians.
+     * @param deltaTil - Delta tilt in radians.
+     * @param maxTiltAngle - The maximum tilt between the camera and its target in radian.
      */
-    export function orbitFocusPoint(
+    export function orbitAroundScreenPoint(
         mapView: MapView,
-        deltaAzimuthDeg: number,
-        deltaTiltDeg: number,
-        maxTiltAngleRad = MAX_TILT_RAD
+        offsetX: number,
+        offsetY: number,
+        deltaAzimuth: number,
+        deltaTilt: number,
+        maxTiltAngle: number
     ) {
-        const target = mapView.target;
-        const sphericalCoordinates = extractSphericalCoordinatesFromLocation(
+        const rotationTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, offsetX, offsetY);
+        if (rotationTargetWorld === null) {
+            return;
+        }
+
+        const headingAxis = mapView.projection.surfaceNormal(rotationTargetWorld, cache.vector3[1]);
+        const headingQuat = cache.quaternions[1].setFromAxisAngle(headingAxis, -deltaAzimuth);
+        mapView.camera.quaternion.premultiply(headingQuat); // applyMatrix4(headingTransform);
+        mapView.camera.position.sub(rotationTargetWorld);
+        mapView.camera.position.applyQuaternion(headingQuat);
+        mapView.camera.position.add(rotationTargetWorld);
+
+        const mapTargetWorld =
+            offsetX === 0 && offsetY === 0
+                ? rotationTargetWorld
+                : MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+        if (mapTargetWorld === null) {
+            return;
+        }
+
+        const { tilt: currentTilt } = MapViewUtils.extractSphericalCoordinatesFromLocation(
             mapView,
             mapView.camera,
-            target
+            mapTargetWorld
         );
-        const tilt = Math.max(
-            Math.min(
-                THREE.MathUtils.radToDeg(maxTiltAngleRad),
-                deltaTiltDeg + THREE.MathUtils.radToDeg(sphericalCoordinates.tilt)
-            ),
-            0
-        );
-        const heading =
-            THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg;
-        mapView.lookAt({
-            target,
-            distance: mapView.targetDistance,
-            tilt,
-            heading
-        });
+
+        //FIXME: For globe tilt in the map center is different from the tilt in the rotation center,
+        //hence the clamped tilt is too conservative.
+        const clampedDeltaTilt =
+            MathUtils.clamp(deltaTilt + currentTilt, 0, maxTiltAngle) - currentTilt;
+        if (Math.abs(clampedDeltaTilt) <= Number.EPSILON) {
+            return;
+        }
+        const tiltAxis = cache.vector3[0].set(1, 0, 0).applyQuaternion(mapView.camera.quaternion);
+        const tiltQuat = cache.quaternions[0].setFromAxisAngle(tiltAxis, clampedDeltaTilt);
+        mapView.camera.quaternion.premultiply(tiltQuat);
+        mapView.camera.position.sub(rotationTargetWorld);
+        mapView.camera.position.applyQuaternion(tiltQuat);
+        mapView.camera.position.add(rotationTargetWorld);
     }
 
     /**
@@ -1001,7 +1025,7 @@ export namespace MapViewUtils {
      * @param maxTiltAngleRad - Max tilt angle in radians.
      */
     export function rotate(
-        mapView: MapView,
+        mapView: { projection: Projection; camera: THREE.PerspectiveCamera },
         deltaYawDeg: number,
         deltaPitchDeg: number = 0,
         maxTiltAngleRad = Math.PI / 4
@@ -1156,12 +1180,17 @@ export namespace MapViewUtils {
      * @param object - The [[THREE.Object3D]] instance to extract the rotations from.
      */
     export function extractAttitude(
-        options: { projection: Projection },
+        mapView: { projection: Projection },
         object: THREE.Object3D
     ): Attitude {
+        // if (projection instanceof MapView) {
+        //     logger.warn("Passing MapView to extractSphericalCoordinatesFromLocation is deprecated");
+        //     projection = projection.projection;
+        // }
+
         // 1. Build the matrix of the tangent space of the object.
         cache.vector3[1].setFromMatrixPosition(object.matrixWorld); // Ensure using world position.
-        options.projection.localTangentSpace(options.projection.unprojectPoint(cache.vector3[1]), {
+        mapView.projection.localTangentSpace(mapView.projection.unprojectPoint(cache.vector3[1]), {
             xAxis: tangentSpace.x,
             yAxis: tangentSpace.y,
             zAxis: tangentSpace.z,
@@ -1219,10 +1248,14 @@ export namespace MapViewUtils {
      * @param location - The reference point.
      */
     export function extractSphericalCoordinatesFromLocation(
-        mapView: MapView,
+        mapView: { projection: Projection },
         object: THREE.Object3D,
-        location: GeoCoordinates
+        location: GeoCoordinatesLike | Vector3Like
     ): { azimuth: number; tilt: number } {
+        // if (projection instanceof MapView) {
+        //     logger.warn("Passing MapView to extractSphericalCoordinatesFromLocation is deprecated");
+        //     projection = projection.projection;
+        // }
         mapView.projection.localTangentSpace(location, {
             xAxis: tangentSpace.x,
             yAxis: tangentSpace.y,
@@ -1377,12 +1410,12 @@ export namespace MapViewUtils {
      * @param options - Subset of necessary {@link MapView} properties.
      */
     export function calculateDistanceToGroundFromZoomLevel(
-        options: { projection: Projection; focalLength: number; camera: THREE.Object3D },
+        mapView: { projection: Projection; focalLength: number; camera: THREE.PerspectiveCamera },
         zoomLevel: number
     ): number {
-        const cameraPitch = extractAttitude(options, options.camera).pitch;
+        const cameraPitch = extractAttitude(mapView, mapView.camera).pitch;
         const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
-        return ((options.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
+        return ((mapView.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
     }
 
     /**
