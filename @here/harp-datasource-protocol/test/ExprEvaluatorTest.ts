@@ -871,6 +871,8 @@ describe("ExprEvaluator", function() {
                 evaluate(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, 2, 2])
             );
 
+            assert.isNotNull(evaluate(["interpolate", ["linear"], 0, 0, 100, 20, 200]));
+
             assert.throws(() => evaluate(["interpolate"]), "expected an interpolation type");
 
             assert.throws(
