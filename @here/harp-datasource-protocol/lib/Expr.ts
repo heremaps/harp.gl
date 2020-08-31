@@ -962,7 +962,7 @@ function parseInterpolateExpr(
     if (mode[0] === "exponential" && typeof mode[1] !== "number") {
         throw new Error("expected the base of the exponential interpolation");
     }
-    const input = node[2] ? parseNode(node[2], referenceResolverState) : undefined;
+    const input = node[2] !== undefined ? parseNode(node[2], referenceResolverState) : undefined;
     if (!Expr.isExpr(input)) {
         throw new Error(`expected the input of the interpolation`);
     }
