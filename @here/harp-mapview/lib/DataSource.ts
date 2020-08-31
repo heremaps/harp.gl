@@ -13,7 +13,6 @@ import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("DataSource");
-const UPDATE_EVENT = { type: "update" };
 
 /**
  * Options for a {@link DataSource}.
@@ -84,6 +83,11 @@ export interface DataSourceOptions {
  * Derive a class from `DataSource` to contribute data and geometries to the {@link MapView}.
  */
 export abstract class DataSource extends THREE.EventDispatcher {
+    /**
+     * Keep the update event here to avoid a global reference to the datasource (and thus prevent garbage collection).
+     */
+    private readonly UPDATE_EVENT = { type: "update" };
+
     /**
      * A counter to generate unique names for each `DataSource`, if no name is provided in the
      * constructor.
@@ -626,6 +630,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Sends a request to the {@link MapView} to redraw the scene.
      */
     requestUpdate() {
-        this.dispatchEvent(UPDATE_EVENT);
+        this.dispatchEvent(this.UPDATE_EVENT);
     }
 }
