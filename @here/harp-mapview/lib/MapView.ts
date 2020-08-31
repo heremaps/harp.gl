@@ -187,36 +187,9 @@ const DEFAULT_STENCIL_VALUE = 1;
  * The type of `RenderEvent`.
  */
 export interface RenderEvent extends THREE.Event {
-    type:
-        | MapViewEventNames.Render
-        | MapViewEventNames.FirstFrame
-        | MapViewEventNames.FrameComplete
-        | MapViewEventNames.ThemeLoaded
-        | MapViewEventNames.AnimationStarted
-        | MapViewEventNames.AnimationFinished
-        | MapViewEventNames.MovementStarted
-        | MapViewEventNames.MovementFinished
-        | MapViewEventNames.ContextLost
-        | MapViewEventNames.ContextRestored
-        | MapViewEventNames.CopyrightChanged;
+    type: MapViewEventNames;
     time?: number;
 }
-
-// Event type: cast needed to workaround wrong THREE.js typings.
-const UPDATE: RenderEvent = { type: MapViewEventNames.Update } as any;
-const RENDER_EVENT: RenderEvent = { type: MapViewEventNames.Render } as any;
-const DID_RENDER_EVENT: RenderEvent = { type: MapViewEventNames.AfterRender } as any;
-const FIRST_FRAME_EVENT: RenderEvent = { type: MapViewEventNames.FirstFrame } as any;
-const FRAME_COMPLETE_EVENT: RenderEvent = { type: MapViewEventNames.FrameComplete } as any;
-const THEME_LOADED_EVENT: RenderEvent = { type: MapViewEventNames.ThemeLoaded } as any;
-const ANIMATION_STARTED_EVENT: RenderEvent = { type: MapViewEventNames.AnimationStarted } as any;
-const ANIMATION_FINISHED_EVENT: RenderEvent = { type: MapViewEventNames.AnimationFinished } as any;
-const MOVEMENT_STARTED_EVENT: RenderEvent = { type: MapViewEventNames.MovementStarted } as any;
-const MOVEMENT_FINISHED_EVENT: RenderEvent = { type: MapViewEventNames.MovementFinished } as any;
-const CONTEXT_LOST_EVENT: RenderEvent = { type: MapViewEventNames.ContextLost } as any;
-const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRestored } as any;
-const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
-const DISPOSE_EVENT: RenderEvent = { type: MapViewEventNames.Dispose } as any;
 
 const cache = {
     vector2: [new THREE.Vector2()],
@@ -780,6 +753,51 @@ export interface LookAtParams {
  */
 export class MapView extends EventDispatcher {
     /**
+     * Keep the events here to avoid a global reference to MapView (and thus prevent garbage collection).
+     */
+    private readonly UPDATE_EVENT: RenderEvent = { type: MapViewEventNames.Update };
+    private readonly RENDER_EVENT: RenderEvent = { type: MapViewEventNames.Render };
+    private readonly DID_RENDER_EVENT: RenderEvent = { type: MapViewEventNames.AfterRender };
+    private readonly FIRST_FRAME_EVENT: RenderEvent = { type: MapViewEventNames.FirstFrame };
+    private readonly FRAME_COMPLETE_EVENT: RenderEvent = {
+        type: MapViewEventNames.FrameComplete
+    };
+
+    private readonly THEME_LOADED_EVENT: RenderEvent = {
+        type: MapViewEventNames.ThemeLoaded
+    };
+
+    private readonly ANIMATION_STARTED_EVENT: RenderEvent = {
+        type: MapViewEventNames.AnimationStarted
+    };
+
+    private readonly ANIMATION_FINISHED_EVENT: RenderEvent = {
+        type: MapViewEventNames.AnimationFinished
+    };
+
+    private readonly MOVEMENT_STARTED_EVENT: RenderEvent = {
+        type: MapViewEventNames.MovementStarted
+    };
+
+    private readonly MOVEMENT_FINISHED_EVENT: RenderEvent = {
+        type: MapViewEventNames.MovementFinished
+    };
+
+    private readonly CONTEXT_LOST_EVENT: RenderEvent = {
+        type: MapViewEventNames.ContextLost
+    };
+
+    private readonly CONTEXT_RESTORED_EVENT: RenderEvent = {
+        type: MapViewEventNames.ContextRestored
+    };
+
+    private readonly COPYRIGHT_CHANGED_EVENT: RenderEvent = {
+        type: MapViewEventNames.CopyrightChanged
+    };
+
+    private readonly DISPOSE_EVENT: RenderEvent = { type: MapViewEventNames.Dispose };
+
+    /**
      * The instance of {@link MapRenderingManager} managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
      * runtime.
@@ -1294,8 +1312,8 @@ export class MapView extends EventDispatcher {
      */
     dispose(freeContext = true) {
         // Enforce listeners that we are about to dispose.
-        DISPOSE_EVENT.time = Date.now();
-        this.dispatchEvent(DISPOSE_EVENT);
+        this.DISPOSE_EVENT.time = Date.now();
+        this.dispatchEvent(this.DISPOSE_EVENT);
 
         this.m_disposed = true;
 
@@ -1532,8 +1550,8 @@ export class MapView extends EventDispatcher {
         for (const dataSource of this.m_tileDataSources) {
             dataSource.setTheme(this.m_theme);
         }
-        THEME_LOADED_EVENT.time = Date.now();
-        this.dispatchEvent(THEME_LOADED_EVENT);
+        this.THEME_LOADED_EVENT.time = Date.now();
+        this.dispatchEvent(this.THEME_LOADED_EVENT);
         this.update();
     }
 
@@ -2474,8 +2492,8 @@ export class MapView extends EventDispatcher {
     beginAnimation() {
         if (this.m_animationCount++ === 0) {
             this.update();
-            ANIMATION_STARTED_EVENT.time = Date.now();
-            this.dispatchEvent(ANIMATION_STARTED_EVENT);
+            this.ANIMATION_STARTED_EVENT.time = Date.now();
+            this.dispatchEvent(this.ANIMATION_STARTED_EVENT);
         }
     }
 
@@ -2488,8 +2506,8 @@ export class MapView extends EventDispatcher {
         }
 
         if (this.m_animationCount === 0) {
-            ANIMATION_FINISHED_EVENT.time = Date.now();
-            this.dispatchEvent(ANIMATION_FINISHED_EVENT);
+            this.ANIMATION_FINISHED_EVENT.time = Date.now();
+            this.dispatchEvent(this.ANIMATION_FINISHED_EVENT);
         }
     }
 
@@ -2842,7 +2860,7 @@ export class MapView extends EventDispatcher {
             return;
         }
 
-        this.dispatchEvent(UPDATE);
+        this.dispatchEvent(this.UPDATE_EVENT);
 
         // Skip if update is already in progress
         if (this.m_updatePending) {
@@ -3570,8 +3588,8 @@ export class MapView extends EventDispatcher {
             return;
         }
 
-        RENDER_EVENT.time = frameStartTime;
-        this.dispatchEvent(RENDER_EVENT);
+        this.RENDER_EVENT.time = frameStartTime;
+        this.dispatchEvent(this.RENDER_EVENT);
 
         this.m_stencilValue = DEFAULT_STENCIL_VALUE;
         this.m_renderOrderStencilValues.clear();
@@ -3773,8 +3791,8 @@ export class MapView extends EventDispatcher {
                 stats.appResults.set("firstFrame", frameStartTime);
             }
 
-            FIRST_FRAME_EVENT.time = frameStartTime;
-            this.dispatchEvent(FIRST_FRAME_EVENT);
+            this.FIRST_FRAME_EVENT.time = frameStartTime;
+            this.dispatchEvent(this.FIRST_FRAME_EVENT);
         }
 
         this.m_visibleTiles.disposePendingTiles();
@@ -3822,8 +3840,8 @@ export class MapView extends EventDispatcher {
             stats.addMemoryInfo();
         }
 
-        DID_RENDER_EVENT.time = frameStartTime;
-        this.dispatchEvent(DID_RENDER_EVENT);
+        this.DID_RENDER_EVENT.time = frameStartTime;
+        this.dispatchEvent(this.DID_RENDER_EVENT);
 
         // After completely rendering this frame, it is checked if this frame was the first complete
         // frame, with no more tiles, geometry and labels waiting to be added, and no animation
@@ -3843,8 +3861,8 @@ export class MapView extends EventDispatcher {
                 }
             }
 
-            FRAME_COMPLETE_EVENT.time = frameStartTime;
-            this.dispatchEvent(FRAME_COMPLETE_EVENT);
+            this.FRAME_COMPLETE_EVENT.time = frameStartTime;
+            this.dispatchEvent(this.FRAME_COMPLETE_EVENT);
         }
     }
 
@@ -4243,15 +4261,15 @@ export class MapView extends EventDispatcher {
     private movementStarted() {
         this.m_textElementsRenderer.movementStarted();
 
-        MOVEMENT_STARTED_EVENT.time = Date.now();
-        this.dispatchEvent(MOVEMENT_STARTED_EVENT);
+        this.MOVEMENT_STARTED_EVENT.time = Date.now();
+        this.dispatchEvent(this.MOVEMENT_STARTED_EVENT);
     }
 
     private movementFinished() {
         this.m_textElementsRenderer.movementFinished();
 
-        MOVEMENT_FINISHED_EVENT.time = Date.now();
-        this.dispatchEvent(MOVEMENT_FINISHED_EVENT);
+        this.MOVEMENT_FINISHED_EVENT.time = Date.now();
+        this.dispatchEvent(this.MOVEMENT_FINISHED_EVENT);
 
         // render at the next possible time.
         if (!this.animating) {
@@ -4326,7 +4344,7 @@ export class MapView extends EventDispatcher {
             }
         }
         this.m_copyrightInfo = newCopyrightInfo;
-        this.dispatchEvent(COPYRIGHT_CHANGED_EVENT);
+        this.dispatchEvent(this.COPYRIGHT_CHANGED_EVENT);
     }
 
     private getRenderedTilesCopyrightInfo(): CopyrightInfo[] {
@@ -4431,7 +4449,7 @@ export class MapView extends EventDispatcher {
      * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
     private readonly onWebGLContextLost = (event: Event) => {
-        this.dispatchEvent(CONTEXT_LOST_EVENT);
+        this.dispatchEvent(this.CONTEXT_LOST_EVENT);
         logger.warn("WebGL context lost", event);
     };
 
@@ -4441,7 +4459,7 @@ export class MapView extends EventDispatcher {
      * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
     private readonly onWebGLContextRestored = (event: Event) => {
-        this.dispatchEvent(CONTEXT_RESTORED_EVENT);
+        this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
             if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {
                 this.m_renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));
