@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Import the gesture handlers from the three.js additional libraries.
-// The controls are not in common.js they explicitly require a
-// global instance of THREE and they must be imported only for their
-// side effect.
-import "three/examples/js/controls/TrackballControls";
-import "three/examples/js/controls/TransformControls";
-
 import { DebugTileDataSource } from "@here/harp-debug-datasource";
 import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
@@ -23,6 +16,8 @@ import {
 } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+import { TransformControls } from "three/examples/jsm/controls/TransformControls";
 
 import { apikey } from "../config";
 
@@ -134,10 +129,7 @@ export namespace FreeCameraAppDebuggingToolExample {
 
             this.mapView.pointOfView = pointOfView;
 
-            const transformControls = new (THREE as any).TransformControls(
-                pointOfView,
-                this.mapView.canvas
-            );
+            const transformControls = new TransformControls(pointOfView, this.mapView.canvas);
             transformControls.setSpace("world");
             transformControls.attach(cameraRelativeToEye);
 
@@ -160,14 +152,12 @@ export namespace FreeCameraAppDebuggingToolExample {
                 cameraRelativeToEye.copy(this.mapView.camera);
                 // Reset RTE camera position to origin.
                 cameraRelativeToEye.position.setScalar(0);
-                transformControls.update();
             };
             applyTransformControls();
 
             const applyMapControls = () => {
                 cameraRelativeToEye.copy(this.mapView.camera, true);
                 cameraRelativeToEye.position.setScalar(0);
-                transformControls.update();
             };
 
             transformControls.addEventListener("mouseDown", () => {
@@ -194,10 +184,7 @@ export namespace FreeCameraAppDebuggingToolExample {
             this.helpers.push(cameraHelper);
 
             // Set up the trackball gesture handler
-            const trackball = new (THREE as any).TrackballControls(
-                pointOfView,
-                this.mapView.canvas
-            );
+            const trackball = new TrackballControls(pointOfView, this.mapView.canvas);
             (trackball.target as THREE.Vector3).set(0, 0, -2000);
             trackball.staticMoving = true;
             trackball.rotateSpeed = 3.0;
