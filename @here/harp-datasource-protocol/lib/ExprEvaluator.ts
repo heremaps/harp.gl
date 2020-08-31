@@ -485,7 +485,12 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
 
                 case "exponential": {
                     const base = expr.mode[1];
-                    t = (Math.pow(base, param - prevKey) - 1) / (Math.pow(base, key - prevKey) - 1);
+                    t =
+                        base === 1
+                            ? (param - prevKey) / (key - prevKey)
+                            : (Math.pow(base, param - prevKey) - 1) /
+                              (Math.pow(base, key - prevKey) - 1);
+
                     break;
                 }
 

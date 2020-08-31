@@ -125,26 +125,57 @@ describe("Interpolation", function() {
         assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
         assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
     });
-    it("Exponential", () => {
-        const numberProperty = makeNumberInterpolation(["exponential", 2]);
-        const colorProperty = makeColorInterpolation(["exponential", 2]);
+    describe("Exponential", () => {
+        it("Exponential interpolation with `base=1` is the same as linear interpolation", () => {
+            const numberProperty = makeNumberInterpolation(["exponential", 1]);
+            const colorProperty = makeColorInterpolation(["exponential", 1]);
 
-        const eps = 1e-2;
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, -Infinity), 0);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 0), 0);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 2.5), 50);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 5), 100);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 7.5), 300);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 10), 500);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, Infinity), 500);
 
-        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, -Infinity), 0);
-        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 0), 0);
-        assert.approximately(evaluateInterpolatedPropertyZoom(numberProperty, 2.5), 15.022, eps);
-        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 5), 100);
-        assert.approximately(evaluateInterpolatedPropertyZoom(numberProperty, 7.5), 160.088, eps);
-        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 10), 500);
-        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, Infinity), 500);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, -Infinity), 0xff0000);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 0), 0xff0000);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 2.5), 0x7f7f00);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 5), 0x00ff00);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 7.5), 0x007f7f);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
+        });
 
-        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, -Infinity), 0xff0000);
-        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 0), 0xff0000);
-        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 2.5), 0xd82600);
-        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 5), 0x00ff00);
-        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 7.5), 0x00d826);
-        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
-        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
+        it("Exponential interpolation with `base=2`", () => {
+            const numberProperty = makeNumberInterpolation(["exponential", 2]);
+            const colorProperty = makeColorInterpolation(["exponential", 2]);
+
+            const eps = 1e-2;
+
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, -Infinity), 0);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 0), 0);
+            assert.approximately(
+                evaluateInterpolatedPropertyZoom(numberProperty, 2.5),
+                15.022,
+                eps
+            );
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 5), 100);
+            assert.approximately(
+                evaluateInterpolatedPropertyZoom(numberProperty, 7.5),
+                160.088,
+                eps
+            );
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 10), 500);
+            assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, Infinity), 500);
+
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, -Infinity), 0xff0000);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 0), 0xff0000);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 2.5), 0xd82600);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 5), 0x00ff00);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 7.5), 0x00d826);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
+            assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
+        });
     });
 });
