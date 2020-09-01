@@ -55,22 +55,7 @@ export namespace TileDependenciesExample {
             #mapCanvas {
               top: 0;
             }
-            #info{
-                color: #fff;
-                width: 80%;
-                left: 50%;
-                position: relative;
-                margin: 10px 0 0 -40%;
-                font-size: 15px;
-            }
-            @media screen and (max-width: 700px) {
-                #info{
-                    font-size:11px;
-                }
-            }
         </style>
-        <p id=info>Click/touch a feature on the map to read its data (Land masses are not features).
-        </p>
         <pre id="mouse-picked-result"></pre>
     `;
     class CustomDataProvider extends DataProvider {
