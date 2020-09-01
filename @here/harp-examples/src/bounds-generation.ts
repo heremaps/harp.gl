@@ -6,7 +6,6 @@
 import {
     FeaturesDataSource,
     MapViewFeature,
-    MapViewMultiLineFeature,
     MapViewMultiPointFeature,
     MapViewPolygonFeature
 } from "@here/harp-features-datasource";
@@ -56,7 +55,11 @@ export namespace BoundsExample {
                 styles: {
                     geojson: [
                         {
-                            when: ["all", ["==", ["geometry-type"], "Polygon"]],
+                            when: [
+                                "all",
+                                ["==", ["geometry-type"], "Polygon"],
+                                ["==", ["get", "name"], "bounds"]
+                            ],
                             technique: "fill",
                             renderOrder: 10003,
                             attr: {
@@ -70,8 +73,8 @@ export namespace BoundsExample {
                         {
                             when: [
                                 "all",
-                                ["==", ["geometry-type"], "LineString"],
-                                ["==", ["get", "name"], "bboxline"]
+                                ["==", ["geometry-type"], "Polygon"],
+                                ["==", ["get", "name"], "bbox"]
                             ],
                             technique: "solid-line",
                             renderOrder: 10005,
@@ -197,7 +200,7 @@ export namespace BoundsExample {
     let viewpoly: MapViewPolygonFeature;
     let cornerpoints: MapViewMultiPointFeature;
     let bboxFeature: MapViewMultiPointFeature;
-    let bboxLineFeature: MapViewMultiLineFeature;
+    let bboxPolygonFeature: MapViewPolygonFeature;
 
     function updateBoundsFeatures(polygon: GeoPolygon, featuresDataSource: FeaturesDataSource) {
         const corners = polygon.coordinates;
@@ -222,7 +225,7 @@ export namespace BoundsExample {
         }
         //add the new polygon
         viewpoly = new MapViewPolygonFeature(polygonArray, {
-            name: "newpoly",
+            name: "bounds",
             height: 10000,
             color: "#ffff00"
         });
@@ -246,8 +249,8 @@ export namespace BoundsExample {
         if (bboxFeature) {
             featuresDataSource?.remove(bboxFeature);
         }
-        if (bboxLineFeature) {
-            featuresDataSource?.remove(bboxLineFeature);
+        if (bboxPolygonFeature) {
+            featuresDataSource?.remove(bboxPolygonFeature);
         }
         if (isVisible) {
             const geoBBox = geoPolygon.getGeoBoundingBox() as GeoBox;
@@ -258,8 +261,7 @@ export namespace BoundsExample {
                 new GeoCoordinates(geoBBox?.south, geoBBox?.east, 70),
                 new GeoCoordinates(geoBBox?.north, geoBBox?.east, 70),
                 new GeoCoordinates(geoBBox?.north, geoBBox?.west, 70),
-                new GeoCoordinates(geoBBox?.south, geoBBox?.west, 70),
-                geoPolygon.getCentroid()
+                new GeoCoordinates(geoBBox?.south, geoBBox?.west, 70)
             ].forEach(point => {
                 if (!point) {
                     return;
@@ -270,14 +272,18 @@ export namespace BoundsExample {
                     point.altitude as number
                 ]);
             });
-            bboxFeature = new MapViewMultiPointFeature(geoBBoxCornerArray, {
+            const centroid = geoPolygon.getCentroid() as GeoCoordinates;
+            bboxFeature = new MapViewMultiPointFeature(
+                [[centroid.longitude, centroid.latitude, 70]].concat(geoBBoxCornerArray),
+                {
+                    name: "bbox"
+                }
+            );
+            featuresDataSource?.add(bboxFeature);
+            bboxPolygonFeature = new MapViewPolygonFeature([geoBBoxCornerArray], {
                 name: "bbox"
             });
-            featuresDataSource?.add(bboxFeature);
-            bboxLineFeature = new MapViewMultiLineFeature([geoBBoxCornerArray], {
-                name: "bboxline"
-            });
-            featuresDataSource?.add(bboxLineFeature);
+            featuresDataSource?.add(bboxPolygonFeature);
         }
     }
 
