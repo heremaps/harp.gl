@@ -145,6 +145,7 @@ export namespace BoundsExample {
 
                     if (bounds !== undefined) {
                         updateBoundsFeatures(bounds, featuresDataSource);
+                        updateBoundingBoxFeatures(bounds, featuresDataSource, showBoundingBox);
                     }
                     break;
                 case "h":
