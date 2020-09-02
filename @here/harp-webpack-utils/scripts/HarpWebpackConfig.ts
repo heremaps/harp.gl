@@ -43,10 +43,9 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
             rules: [{ test: /\.tsx?$/, loader: "ts-loader" }]
         }
     };
-    const mainConfig =
-        mainEntry !== undefined && mainEntry.endsWith(".ts")
-            ? WebpackMerge.smart(baseConfig, typescriptConfig)
-            : baseConfig;
+    const mainConfig = mainEntry?.match(/\.tsx?$/)
+        ? WebpackMerge.smart(baseConfig, typescriptConfig)
+        : baseConfig;
     const bundles = [
         WebpackMerge.smart(
             {
