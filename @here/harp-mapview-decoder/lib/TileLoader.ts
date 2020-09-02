@@ -217,7 +217,10 @@ export class TileLoader implements ITileLoader {
             (payload.constructor === Object && Object.keys(payload).length === 0)
         ) {
             // Object is empty
-            this.onDone(TileLoaderState.Ready);
+            this.onDecoded({
+                geometries: [],
+                techniques: []
+            });
             return;
         }
 
