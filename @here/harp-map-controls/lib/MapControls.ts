@@ -369,85 +369,6 @@ export class MapControls extends EventDispatcher {
     }
 
     /**
-     * Moves the camera along the view direction in meters.
-     * A positive value will move the camera further away from the point where the camera looks at.
-     * A negative value will move the camera near to the point where the camera looks at.
-     *
-     * @param amount - Amount to move along the view direction in meters.
-     */
-    moveAlongTheViewDirection(amount: number) {
-        // TODO: What about zoom disabled?
-        if (amount === 0) {
-            return;
-        }
-        this.camera.getWorldDirection(this.m_currentViewDirection);
-        let maxDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-            this.mapView,
-            this.mapView.minZoomLevel
-        );
-        let minDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-            this.mapView,
-            this.mapView.maxZoomLevel
-        );
-        this.m_currentViewDirection.multiplyScalar(amount);
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            const distance = THREE.MathUtils.clamp(
-                this.camera.position.z + this.m_currentViewDirection.z,
-                minDistance,
-                maxDistance
-            );
-            this.camera.position.z = distance;
-        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            const zOnVertical =
-                Math.cos(this.camera.position.angleTo(this.m_currentViewDirection)) *
-                this.m_currentViewDirection.length();
-            minDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
-            maxDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
-            const distance = THREE.MathUtils.clamp(
-                this.camera.position.length() + zOnVertical,
-                minDistance,
-                maxDistance
-            );
-            this.camera.position.setLength(distance);
-        }
-
-        // In sphere, we may have to also orbit the camera around the position located at the
-        // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
-        // this tilt by changing the camera's height above.
-        if (
-            this.mapView.projection.type === geoUtils.ProjectionType.Spherical &&
-            this.m_maxTiltAngle !== undefined
-        ) {
-            // Use pre-calculated camera target, otherwise we could get it via:
-            // centerScreenTarget = MapViewUtils.getTargetPositionFromCamera(camera, projection)
-            // and convert to geo-coordinates via:
-            // this.mapView.projection.unprojectPoint(centerScreenTarget)
-            const tilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
-                this.mapView,
-                this.camera,
-                this.mapView.target
-            ).tilt;
-            const deltaTilt = tilt - this.m_maxTiltAngle;
-            if (deltaTilt > 0) {
-                MapViewUtils.orbitAroundScreenPoint(
-                    this.mapView,
-                    0,
-                    0,
-                    0,
-                    deltaTilt,
-                    this.m_maxTiltAngle
-                );
-            }
-        }
-
-        this.updateMapView();
-        this.mapView.addEventListener(
-            MapViewEventNames.AfterRender,
-            this.assignZoomAfterTouchZoomRender
-        );
-    }
-
-    /**
      * Reset the camera to looking north, in an orbiting movement around the target point instead
      * of changing the yaw (which would be the camera rotating on itself).
      */
@@ -1297,17 +1218,57 @@ export class MapControls extends EventDispatcher {
             );
         }
 
-        if (this.zoomEnabled && this.m_touchState.touches.length === 2) {
-            const pinchDistance = this.calculatePinchDistanceInWorldSpace();
-            if (Math.abs(pinchDistance) < EPSILON) {
-                return;
+        if (this.m_touchState.touches.length === 2) {
+            const touches = this.m_touchState.touches;
+            const center = new THREE.Vector2();
+
+            if (this.zoomEnabled === true || this.rotateEnabled === true) {
+                const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
+                touches.forEach(touch => {
+                    const ndcPoint = utils.calculateNormalizedDeviceCoordinates(
+                        touch.currentTouchPoint.x,
+                        touch.currentTouchPoint.y,
+                        width,
+                        height
+                    );
+                    center.add(ndcPoint);
+                });
+                center.divideScalar(touches.length);
             }
-            this.updateCurrentRotation();
-            const deltaRotation =
-                this.m_touchState.currentRotation - this.m_touchState.initialRotation;
-            this.stopExistingAnimations();
-            MapViewUtils.rotate(this.mapView, THREE.MathUtils.radToDeg(deltaRotation));
-            this.moveAlongTheViewDirection(pinchDistance);
+            if (this.zoomEnabled) {
+                const pinchDistance = this.calculatePinchDistanceInWorldSpace();
+                if (Math.abs(pinchDistance) < EPSILON) {
+                    return;
+                }
+                const newZL = MapViewUtils.calculateZoomLevelFromDistance(
+                    this.mapView,
+                    this.mapView.targetDistance - pinchDistance
+                );
+
+                MapViewUtils.zoomOnTargetPosition(
+                    this.mapView,
+                    center.x,
+                    center.y,
+                    newZL,
+                    this.maxTiltAngle
+                );
+            }
+
+            if (this.rotateEnabled) {
+                this.updateCurrentRotation();
+                const deltaRotation =
+                    this.m_touchState.currentRotation - this.m_touchState.initialRotation;
+                this.stopExistingAnimations();
+
+                MapViewUtils.orbitAroundScreenPoint(
+                    this.mapView,
+                    center.x,
+                    center.y,
+                    deltaRotation,
+                    0,
+                    this.maxTiltAngle
+                );
+            }
         }
 
         // Tilting
