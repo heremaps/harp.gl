@@ -3,71 +3,81 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { mercatorProjection, TileKey } from "@here/harp-geoutils";
+import { CopyrightInfo, MapView, Tile } from "@here/harp-mapview";
+import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { expect } from "chai";
+import * as sinon from "sinon";
 
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { assert } from "chai";
-
-import { HereTileProvider, HereWebTileDataSource, WebTileDataSource } from "../index";
+import { WebTileDataSource } from "../index";
 
 describe("WebTileDataSource", function() {
+    const fakeWebTileProvider = {
+        getTexture: sinon.spy((tile: Tile) => {
+            return Promise.resolve(([{}, []] as unknown) as [THREE.Texture, CopyrightInfo[]]);
+        })
+    };
+
+    const fakeMapView = {
+        projection: mercatorProjection
+    } as MapView;
+
     it("#createWebTileDataSource has default values", async function() {
-        const apikey = "123";
-        const webTileDataSource = new HereWebTileDataSource({
-            apikey
+        const webTileDataSource = new WebTileDataSource({
+            dataProvider: fakeWebTileProvider
         });
-        assert(webTileDataSource.maxDataLevel === 19);
+
+        expect(webTileDataSource.maxDataLevel).to.equal(20);
+        expect(webTileDataSource.minDataLevel).to.equal(1);
+        expect(webTileDataSource.maxZoomLevel).to.equal(20);
+        expect(webTileDataSource.minZoomLevel).to.equal(1);
+        expect(webTileDataSource.maxDisplayLevel).to.equal(20);
+        expect(webTileDataSource.minDisplayLevel).to.equal(1);
+        expect(webTileDataSource.storageLevelOffset).to.equal(-1);
+        expect(webTileDataSource.resolution).to.equal(
+            WebTileDataSource.resolutionValue.resolution512
+        );
+        //assert(webTileDataSource.renderingOptions === undefined);
     });
-    it("#createWebTileDataSource with token authentication", async function() {
-        const webTileDataSource = new HereWebTileDataSource({
-            authenticationCode: "foo123"
-        });
-        assert(webTileDataSource.maxDataLevel === 19);
-    });
-    it("#createWebTileDataSource with 256px and ppi320", async function() {
-        const apikey = "123";
-        const webTileDataSource = new HereWebTileDataSource({
-            apikey,
-            resolution: WebTileDataSource.resolutionValue.resolution256,
-            ppi: WebTileDataSource.ppiValue.ppi320
-        });
-        assert(webTileDataSource.maxDataLevel === 20);
-    });
-    it("#createWebTileDataSource with satellite.day", async function() {
-        const apikey = "123";
-        const webTileDataSource = new HereWebTileDataSource({
-            apikey,
-            tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE
-        });
-        assert(webTileDataSource.maxDataLevel === 19);
-    });
-    it("#createWebTileDataSource with satellite.day and 256px", async function() {
-        const apikey = "123";
-        const webTileDataSource = new HereWebTileDataSource({
-            apikey,
-            tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE,
+
+    it("#createWebTileDataSource with 256px resolution", async function() {
+        const webTileDataSource = new WebTileDataSource({
+            dataProvider: fakeWebTileProvider,
             resolution: WebTileDataSource.resolutionValue.resolution256
         });
-        assert(webTileDataSource.maxDataLevel === 20);
-    });
-    it("#createWebTileDataSource throws with satellite.day and ppi320", async function() {
-        const apikey = "123";
-        assert.throw(
-            () =>
-                new HereWebTileDataSource({
-                    apikey,
-                    tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE,
-                    ppi: WebTileDataSource.ppiValue.ppi320
-                })
+        expect(webTileDataSource.resolution).to.equal(
+            WebTileDataSource.resolutionValue.resolution256
         );
     });
-    it("#createWebTileDataSource throws w/o auth.", async function() {
-        assert.throw(() => new HereWebTileDataSource({} as any));
+
+    it("#gets Texture for requested Tile", async function() {
+        const webTileDataSource = new WebTileDataSource({
+            dataProvider: fakeWebTileProvider
+        });
+        sinon.stub(webTileDataSource, "mapView").get(() => {
+            return fakeMapView;
+        });
+
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+        const tile = webTileDataSource.getTile(tileKey);
+        expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
     });
-    it("#createWebTileDataSource throws w/ missing appCode", async function() {
-        assert.throw(() => new HereWebTileDataSource({ appId: "42" } as any));
-    });
-    it("#createWebTileDataSource throws w/ missing appId", async function() {
-        assert.throw(() => new HereWebTileDataSource({ appCode: "42" } as any));
+
+    it("#createWebTileDataSource with renderingOptions opacity", async function() {
+        const webTileDataSource = new WebTileDataSource({
+            dataProvider: fakeWebTileProvider,
+            renderingOptions: { opacity: 0.5 }
+        });
+        sinon.stub(webTileDataSource, "mapView").get(() => {
+            return fakeMapView;
+        });
+
+        const creatorSpy = sinon.spy(TileGeometryCreator.instance, "createGroundPlane");
+
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+        const tile = await webTileDataSource.getTile(tileKey);
+        expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
+        expect(creatorSpy.called).to.be.true;
+        expect((creatorSpy.args[0][1] as THREE.MeshBasicMaterial).opacity).to.equal(0.5);
     });
 });
