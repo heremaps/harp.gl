@@ -170,6 +170,8 @@ describe("TileLoader", function() {
                 getTileStub.resolves({});
                 loadPromise = tileLoader.loadAndDecode();
                 expect(loadPromise).to.not.be.undefined;
+                expect(tileLoader.decodedTile!.geometries.length).eq(0);
+                expect(tileLoader.decodedTile?.techniques.length).eq(0);
 
                 return expect(loadPromise).to.eventually.be.fulfilled.then(() => {
                     expect(decodeTileSpy.notCalled).to.be.true;
