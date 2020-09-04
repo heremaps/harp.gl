@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
-import { CopyrightInfo, DataSource, Tile } from "@here/harp-mapview";
+import { CopyrightInfo, DataSource, DataSourceOptions, Tile } from "@here/harp-mapview";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import THREE = require("three");
@@ -20,6 +20,12 @@ export interface WebTileRenderingOptions {
      * @default 1.0
      */
     opacity?: number;
+
+    /**
+     * Force Material to use transparency from texture if available
+     * @default false
+     */
+    transparent?: boolean;
 }
 
 export interface WebTileDataProvider {
@@ -32,7 +38,8 @@ export interface WebTileDataProvider {
 /**
  * Options for [[WebTileDataSource]].
  */
-export interface WebTileDataSourceOptions {
+export interface WebTileDataSourceOptions
+    extends Omit<DataSourceOptions, "enablePicking" | "styleSetName"> {
     /**
      * A DataProvider that will provide the tiles.
      */
@@ -42,16 +49,6 @@ export interface WebTileDataSourceOptions {
      * The resolution of Web Tile images, defaults to 512.
      */
     resolution?: WebTileDataSource.resolutionValue;
-
-    /**
-     * The minimal level Data is available, @defaults 1
-     */
-    minDataLevel?: number;
-
-    /**
-     * The maximal level Data is available, @defaults 20
-     */
-    maxDataLevel?: number;
 
     /**
      * Options affecting the rendering of the web tiles.
@@ -83,11 +80,7 @@ export class WebTileDataSource extends DataSource {
      * @param m_options - Represents the [[WebTileDataSourceParameters]].
      */
     constructor(protected readonly m_options: WebTileDataSourceOptions) {
-        super({
-            name: "webtile",
-            minDataLevel: getOptionValue(m_options.minDataLevel, 1),
-            maxDataLevel: getOptionValue(m_options.maxDataLevel, 20)
-        });
+        super(m_options);
 
         this.dataProvider = this.m_options.dataProvider;
         this.cacheable = true;
@@ -128,8 +121,12 @@ export class WebTileDataSource extends DataSource {
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
                 tile.addOwnedTexture(texture);
+                const transparent =
+                    this.m_options.renderingOptions !== undefined &&
+                    this.m_options.renderingOptions.transparent === true;
                 const opacity =
-                    this.m_options.renderingOptions !== undefined
+                    this.m_options.renderingOptions !== undefined &&
+                    this.m_options.renderingOptions.opacity !== undefined
                         ? this.m_options.renderingOptions.opacity
                         : 1;
                 const material = new THREE.MeshBasicMaterial({
@@ -137,7 +134,7 @@ export class WebTileDataSource extends DataSource {
                     depthTest: false,
                     depthWrite: false,
                     opacity,
-                    transparent: opacity !== undefined && opacity < 1.0 ? true : false
+                    transparent: transparent || (opacity !== undefined && opacity < 1.0)
                 });
                 const mesh = TileGeometryCreator.instance.createGroundPlane(tile, material, true);
                 tile.objects.push(mesh);
