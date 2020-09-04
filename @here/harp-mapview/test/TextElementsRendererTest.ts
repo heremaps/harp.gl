@@ -577,6 +577,25 @@ const tests: TestCase[] = [
             }
         ],
         frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Poi only fades in, if its inside frustum",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder("outside frustum marker").withPosition(
+                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_WIDTH,
+                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_HEIGHT,
+                            WORLD_SCALE * 10
+                        ),
+                        fadedOut(FADE_2_CYCLES.length)
+                    ]
+                ],
+                frames: firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
     }
 ];
 
@@ -612,7 +631,10 @@ describe("TextElementsRenderer", function() {
             return [];
         }
         return inputElements.map((inputElement: InputTextElement) => {
-            expect(frameStates(inputElement).length).equal(frameCount);
+            expect(frameStates(inputElement).length).equal(
+                frameCount,
+                "frameStates of inputElement equals frameCount"
+            );
             // Only used to identify some text elements for testing purposes.
             const dummyUserData = {};
             const element = builder(inputElement)
@@ -637,10 +659,16 @@ describe("TextElementsRenderer", function() {
         // frame states to an array.
         test.tiles.forEach((tile: InputTile, tileIndex: number) => {
             if (tile.frames !== undefined) {
-                expect(tile.frames.length).equal(test.frameTimes.length);
+                expect(tile.frames.length).equal(
+                    test.frameTimes.length,
+                    "frames length is the same"
+                );
             }
             if (tile.terrainFrames !== undefined) {
-                expect(tile.terrainFrames.length).equal(test.frameTimes.length);
+                expect(tile.terrainFrames.length).equal(
+                    test.frameTimes.length,
+                    "terrainFrames length is the same"
+                );
                 enableElevation = true;
             }
             const labels = buildLabels(tile.labels, elementFrameStates, test.frameTimes.length);
