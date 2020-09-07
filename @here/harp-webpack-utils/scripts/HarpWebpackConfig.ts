@@ -33,7 +33,10 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
         performance: {
             hints: false
         },
-        mode
+        mode,
+        externals: {
+            three: "THREE"
+        }
     };
     const typescriptConfig: Configuration = {
         resolve: {
