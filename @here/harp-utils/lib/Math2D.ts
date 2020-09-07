@@ -144,4 +144,84 @@ export namespace Math2D {
         t = Math.max(0, Math.min(1, t));
         return distSquared(px, py, l0x + t * (l1x - l0x), l0y + t * (l1y - l0y));
     }
+
+    /**
+     * Finds the intersections of a line and a circle.
+     *
+     * @param xLine1 - abscissa of first line point.
+     * @param yLine1 - ordinate of second line point.
+     * @param xLine2 - abscissa of second line point.
+     * @param yLine2 - ordinate of second line point.
+     * @param radius - circle radius.
+     * @param xCenter - abscissa of circle center.
+     * @param yCenter - ordinate of circle center.
+     * @returns coordinates of the intersections (1 if the line is tangent to the circle, 2
+     * if it's secant) or undefined if there's no intersection.
+     */
+    export function intersectLineAndCircle(
+        xLine1: number,
+        yLine1: number,
+        xLine2: number,
+        yLine2: number,
+        radius: number,
+        xCenter: number = 0,
+        yCenter: number = 0
+    ): { x1: number; y1: number; x2?: number; y2?: number } | undefined {
+        // Line equation: dy*x - dx*y = c, c = dy*x1 - dx*y1 = x1*y2 - x2*y1
+        // Circle equation: (x-xCenter)^2 + (y-yCenter)^2 = r^2
+
+        // 1. Translate circle center to origin of coordinates:
+        // u = x - xCenter
+        // v = y - yCenter
+        // circle: u^2 + v^2 = r^2
+        // line: dy*u - dx*v = cp, cp = c - dy*xCenter - dx*yCenter
+
+        // 2. Intersections are solutions of a quadratic equation:
+        // ui = (cp*dy +/- sign(dy)*dx*discriminant / dSq
+        // vi = (-cp*dx +/- |dy|*discriminant / dSq
+        // discriminant = r^2*dSq - cp^2, dSq = dx^2 + dy^2
+        // The sign of the discriminant indicates the number of intersections.
+
+        // 3. Translate intersection coordinates back to original space:
+        // xi = xCenter + ui
+        // yi = yCenter + yi
+
+        const epsilon = 1e-10;
+        const dx = xLine2 - xLine1;
+        const dy = yLine2 - yLine1;
+        const dSq = dx * dx + dy * dy;
+        const rSq = radius * radius;
+        const c = xLine1 * yLine2 - xLine2 * yLine1;
+        const cp = c - dy * xCenter + dx * yCenter;
+        const discriminantSquared = rSq * dSq - cp * cp;
+
+        if (discriminantSquared < -epsilon) {
+            // no intersection
+            return undefined;
+        }
+
+        const xMid = cp * dy;
+        const yMid = -cp * dx;
+
+        if (discriminantSquared < epsilon) {
+            // 1 intersection (tangent line)
+            return { x1: xCenter + xMid / dSq, y1: yCenter + yMid / dSq };
+        }
+
+        const discriminant = Math.sqrt(discriminantSquared);
+
+        // 2 intersections (secant line)
+        const signDy = dy < 0 ? -1 : 1;
+        const absDy = Math.abs(dy);
+
+        const xDist = signDy * dx * discriminant;
+        const yDist = absDy * discriminant;
+
+        return {
+            x1: xCenter + (xMid + xDist) / dSq,
+            y1: yCenter + (yMid + yDist) / dSq,
+            x2: xCenter + (xMid - xDist) / dSq,
+            y2: yCenter + (yMid - yDist) / dSq
+        };
+    }
 }
