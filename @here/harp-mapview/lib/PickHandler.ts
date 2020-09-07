@@ -203,6 +203,16 @@ export class PickHandler {
             }
         }
 
+        // Intersect any objects added by the user.
+        intersects.length = 0;
+        for (const child of this.mapView.mapAnchors.children) {
+            rayCaster.intersectObject(child, true, intersects);
+
+            for (const intersect of intersects) {
+                pickListener.addResult(this.createResult(intersect));
+            }
+        }
+
         pickListener.finish();
         return pickListener.results;
     }
