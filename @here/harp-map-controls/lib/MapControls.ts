@@ -56,7 +56,7 @@ const USER_INPUTS_TO_CONSIDER = 5;
 /**
  * The default maximum for the camera tilt. This value avoids seeing the horizon.
  */
-const DEFAULT_MAX_TILT_ANGLE = Math.PI / 4;
+const DEFAULT_MAX_TILT_ANGLE = THREE.MathUtils.degToRad(89);
 
 /**
  * Epsilon value to rule out when a number can be considered 0.
@@ -486,14 +486,17 @@ export class MapControls extends EventDispatcher {
     }
 
     /**
-     * Set camera max tilt angle. The value is clamped between 0 and 90 degrees. In sphere
+     * Set camera max tilt angle. The value is clamped between 0 and 89 degrees. In sphere
      * projection, at runtime, the value is also clamped so that the camera does not look above the
      * horizon.
      *
      * @param angle - Angle in degrees.
      */
     set maxTiltAngle(angle: number) {
-        this.m_maxTiltAngle = Math.max(0, Math.min(90, THREE.MathUtils.degToRad(angle)));
+        this.m_maxTiltAngle = Math.max(
+            0,
+            Math.min(DEFAULT_MAX_TILT_ANGLE, THREE.MathUtils.degToRad(angle))
+        );
     }
 
     /**
@@ -1250,7 +1253,7 @@ export class MapControls extends EventDispatcher {
                     center.x,
                     center.y,
                     newZL,
-                    this.maxTiltAngle
+                    this.m_maxTiltAngle
                 );
             }
 
@@ -1266,7 +1269,7 @@ export class MapControls extends EventDispatcher {
                     center.y,
                     deltaRotation,
                     0,
-                    this.maxTiltAngle
+                    this.m_maxTiltAngle
                 );
             }
         }
