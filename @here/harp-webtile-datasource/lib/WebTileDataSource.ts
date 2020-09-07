@@ -6,6 +6,7 @@
 import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { CopyrightInfo, DataSource, DataSourceOptions, Tile } from "@here/harp-mapview";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { enableBlending } from "@here/harp-materials";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import THREE = require("three");
 
@@ -17,15 +18,21 @@ const logger = LoggerManager.instance.create("MapView");
 export interface WebTileRenderingOptions {
     /**
      * Opacity of the rendered images.
-     * @default 1.0
+     * @defaultValue 1.0
      */
     opacity?: number;
 
     /**
      * Force Material to use transparency from texture if available
-     * @default false
+     * @defaultValue false
      */
     transparent?: boolean;
+
+    /**
+     * RenderOrder for order in which to render WebTileDataSouurces
+     * @defaultValue 0
+     */
+    renderOrder?: number;
 }
 
 export interface WebTileDataProvider {
@@ -84,8 +91,6 @@ export class WebTileDataSource extends DataSource {
 
         this.dataProvider = this.m_options.dataProvider;
         this.cacheable = true;
-        this.enablePicking = false;
-        this.storageLevelOffset = -1;
         this.m_resolution = getOptionValue(
             m_options.resolution,
             WebTileDataSource.resolutionValue.resolution512
@@ -121,23 +126,29 @@ export class WebTileDataSource extends DataSource {
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
                 tile.addOwnedTexture(texture);
-                const transparent =
-                    this.m_options.renderingOptions !== undefined &&
-                    this.m_options.renderingOptions.transparent === true;
-                const opacity =
-                    this.m_options.renderingOptions !== undefined &&
-                    this.m_options.renderingOptions.opacity !== undefined
-                        ? this.m_options.renderingOptions.opacity
-                        : 1;
+
+                let transparent = false;
+                let opacity = 1;
+                let renderOrder = 0;
+                if (this.m_options.renderingOptions !== undefined) {
+                    opacity = this.m_options.renderingOptions.opacity ?? 1;
+                    transparent =
+                        this.m_options.renderingOptions.transparent === true ||
+                        (opacity !== undefined && opacity < 1);
+                    renderOrder = this.m_options.renderingOptions.renderOrder ?? 0;
+                }
                 const material = new THREE.MeshBasicMaterial({
                     map: texture,
-                    depthTest: false,
-                    depthWrite: false,
                     opacity,
-                    transparent: transparent || (opacity !== undefined && opacity < 1.0)
+                    depthTest: false,
+                    depthWrite: false
                 });
+                if (transparent) {
+                    enableBlending(material);
+                }
                 const mesh = TileGeometryCreator.instance.createGroundPlane(tile, material, true);
                 tile.objects.push(mesh);
+                mesh.renderOrder = renderOrder;
                 tile.invalidateResourceInfo();
                 this.requestUpdate();
             })
