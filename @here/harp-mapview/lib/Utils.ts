@@ -242,17 +242,20 @@ export namespace MapViewUtils {
         deltaTilt: number,
         maxTiltAngle: number
     ) {
+        const camera = mapView.camera;
+        const projection = mapView.projection;
+
         const rotationTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, offsetX, offsetY);
         if (rotationTargetWorld === null) {
             return;
         }
 
-        const headingAxis = mapView.projection.surfaceNormal(rotationTargetWorld, cache.vector3[1]);
+        const headingAxis = projection.surfaceNormal(rotationTargetWorld, cache.vector3[1]);
         const headingQuat = cache.quaternions[1].setFromAxisAngle(headingAxis, -deltaAzimuth);
-        mapView.camera.quaternion.premultiply(headingQuat); // applyMatrix4(headingTransform);
-        mapView.camera.position.sub(rotationTargetWorld);
-        mapView.camera.position.applyQuaternion(headingQuat);
-        mapView.camera.position.add(rotationTargetWorld);
+        camera.quaternion.premultiply(headingQuat);
+        camera.position.sub(rotationTargetWorld);
+        camera.position.applyQuaternion(headingQuat);
+        camera.position.add(rotationTargetWorld);
 
         const mapTargetWorld =
             offsetX === 0 && offsetY === 0
@@ -261,26 +264,38 @@ export namespace MapViewUtils {
         if (mapTargetWorld === null) {
             return;
         }
+        const mapTargetNormal = projection.surfaceNormal(mapTargetWorld, new THREE.Vector3());
 
-        const { tilt: currentTilt } = MapViewUtils.extractSphericalCoordinatesFromLocation(
-            mapView,
-            mapView.camera,
-            mapTargetWorld
-        );
+        const dirMapTarget = camera.position
+            .clone()
+            .sub(mapTargetWorld)
+            .normalize();
 
-        //FIXME: For globe tilt in the map center is different from the tilt in the rotation center,
+        const currentTilt = dirMapTarget.angleTo(mapTargetNormal);
+
+        //FIXME(HARP-11926): For globe tilt in the map center is different from the tilt in the rotation center,
         //hence the clamped tilt is too conservative.
         const clampedDeltaTilt =
             MathUtils.clamp(deltaTilt + currentTilt, 0, maxTiltAngle) - currentTilt;
         if (Math.abs(clampedDeltaTilt) <= Number.EPSILON) {
             return;
         }
-        const tiltAxis = cache.vector3[0].set(1, 0, 0).applyQuaternion(mapView.camera.quaternion);
+
+        const posBackup = cache.vector3[1].copy(camera.position);
+        const quatBackup = cache.quaternions[1].copy(camera.quaternion);
+
+        const tiltAxis = cache.vector3[0].set(1, 0, 0).applyQuaternion(camera.quaternion);
         const tiltQuat = cache.quaternions[0].setFromAxisAngle(tiltAxis, clampedDeltaTilt);
-        mapView.camera.quaternion.premultiply(tiltQuat);
-        mapView.camera.position.sub(rotationTargetWorld);
-        mapView.camera.position.applyQuaternion(tiltQuat);
-        mapView.camera.position.add(rotationTargetWorld);
+        camera.quaternion.premultiply(tiltQuat);
+        camera.position.sub(rotationTargetWorld);
+        camera.position.applyQuaternion(tiltQuat);
+        camera.position.add(rotationTargetWorld);
+
+        if (MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0) === null) {
+            logger.warn("Target got invalidated during rotation.");
+            camera.position.copy(posBackup);
+            camera.quaternion.copy(quatBackup);
+        }
     }
 
     /**
@@ -1190,7 +1205,7 @@ export namespace MapViewUtils {
 
         // 1. Build the matrix of the tangent space of the object.
         cache.vector3[1].setFromMatrixPosition(object.matrixWorld); // Ensure using world position.
-        mapView.projection.localTangentSpace(mapView.projection.unprojectPoint(cache.vector3[1]), {
+        mapView.projection.localTangentSpace(cache.vector3[1], {
             xAxis: tangentSpace.x,
             yAxis: tangentSpace.y,
             zAxis: tangentSpace.z,
