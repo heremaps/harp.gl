@@ -1624,7 +1624,12 @@ export namespace MapViewUtils {
         objectSize: MemoryUsage,
         visitedObjects: Map<string, boolean>
     ): void {
-        if (texture === null || texture === undefined || texture.image === undefined) {
+        if (
+            texture === null ||
+            texture === undefined ||
+            texture.image === undefined ||
+            texture.image === null
+        ) {
             return;
         }
 
