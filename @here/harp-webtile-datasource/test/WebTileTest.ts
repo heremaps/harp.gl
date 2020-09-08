@@ -29,15 +29,11 @@ describe("WebTileDataSource", function() {
 
         expect(webTileDataSource.maxDataLevel).to.equal(20);
         expect(webTileDataSource.minDataLevel).to.equal(1);
-        expect(webTileDataSource.maxZoomLevel).to.equal(20);
-        expect(webTileDataSource.minZoomLevel).to.equal(1);
         expect(webTileDataSource.maxDisplayLevel).to.equal(20);
         expect(webTileDataSource.minDisplayLevel).to.equal(1);
-        expect(webTileDataSource.storageLevelOffset).to.equal(-1);
         expect(webTileDataSource.resolution).to.equal(
             WebTileDataSource.resolutionValue.resolution512
         );
-        //assert(webTileDataSource.renderingOptions === undefined);
     });
 
     it("#createWebTileDataSource with 256px resolution", async function() {

@@ -163,12 +163,15 @@ describe("MapView + WebTileData rendering test", function() {
         });
     });
 
-    it("renders 2 layered webTileDataSources", async function() {
+    it("renders 3 layered webTileDataSources with renderOrder", async function() {
         this.timeout(5000);
 
         const runBeforeFinish = async function() {
             const webTileDataSource = new WebTileDataSource({
-                renderingOptions: { transparent: true },
+                renderingOptions: {
+                    renderOrder: 2000,
+                    transparent: true
+                },
                 minDataLevel: 3,
                 dataProvider: {
                     getTexture: (tile: Tile) => {
@@ -178,20 +181,105 @@ describe("MapView + WebTileData rendering test", function() {
                         ]);
                     }
                 },
-                name: "webtile-below"
+                name: "webtile-transparent"
             });
 
             await mapView.addDataSource(webTileDataSource);
+
+            const webTileDataSourcePavement = new WebTileDataSource({
+                renderingOptions: {
+                    renderOrder: 500
+                },
+                dataProvider: {
+                    getTexture: (tile: Tile) => {
+                        return Promise.all([
+                            new TextureLoader().load("../dist/resources/wests_textures/paving.png"),
+                            []
+                        ]);
+                    }
+                },
+                name: "webtile-paving"
+            });
+
+            await mapView.addDataSource(webTileDataSourcePavement);
         };
 
         await webTileTest({
             mochaTest: this,
-            testImageName: "webtile-layered",
+            testImageName: "webtile-layered-order",
             getTexture: (tile: Tile) => {
                 return Promise.all([
                     new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
                     []
                 ]);
+            },
+            webTileOptions: {
+                renderingOptions: {
+                    opacity: 0.5,
+                    renderOrder: 1000
+                },
+                name: "webtile-clover"
+            },
+            runBeforeFinish
+        });
+    });
+
+    it("renders 3 layered webTileDataSources with opaque on top renderOrder", async function() {
+        this.timeout(5000);
+
+        const runBeforeFinish = async function() {
+            const webTileDataSource = new WebTileDataSource({
+                renderingOptions: {
+                    renderOrder: 3,
+                    transparent: true
+                },
+                minDataLevel: 3,
+                dataProvider: {
+                    getTexture: (tile: Tile) => {
+                        return Promise.all([
+                            new TextureLoader().load("../dist/resources/replacementCharacter.png"),
+                            []
+                        ]);
+                    }
+                },
+                name: "webtile-transparent"
+            });
+
+            await mapView.addDataSource(webTileDataSource);
+
+            const webTileDataSourcePavement = new WebTileDataSource({
+                renderingOptions: {
+                    renderOrder: 2
+                },
+                dataProvider: {
+                    getTexture: (tile: Tile) => {
+                        return Promise.all([
+                            new TextureLoader().load("../dist/resources/wests_textures/paving.png"),
+                            []
+                        ]);
+                    }
+                },
+                name: "webtile-paving"
+            });
+
+            await mapView.addDataSource(webTileDataSourcePavement);
+        };
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-layered-render-order-opaque-top",
+            getTexture: (tile: Tile) => {
+                return Promise.all([
+                    new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
+                    []
+                ]);
+            },
+            webTileOptions: {
+                renderingOptions: {
+                    opacity: 0.5,
+                    renderOrder: 1
+                },
+                name: "webtile-clover"
             },
             runBeforeFinish
         });
