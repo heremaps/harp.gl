@@ -55,8 +55,47 @@ describe("WebTileDataSource", function() {
         });
 
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const tile = webTileDataSource.getTile(tileKey);
+        const tile = await webTileDataSource.getTile(tileKey);
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
+        expect(tile.hasGeometry).to.be.true;
+    });
+
+    it("# creates Tile with geometry for resolve with undefined", async function() {
+        const undefinedProvider = {
+            getTexture: sinon.spy((tile: Tile) => {
+                return Promise.resolve(undefined);
+            })
+        };
+        const webTileDataSource = new WebTileDataSource({
+            dataProvider: undefinedProvider
+        });
+        sinon.stub(webTileDataSource, "mapView").get(() => {
+            return fakeMapView;
+        });
+
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+        const tile = await webTileDataSource.getTile(tileKey);
+        expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
+        expect(tile.hasGeometry).to.be.true;
+    });
+
+    it("# disposed tile for rejected Promise", async function() {
+        const noTextureProvider = {
+            getTexture: sinon.spy((tile: Tile) => {
+                return Promise.reject();
+            })
+        };
+        const webTileDataSource = new WebTileDataSource({
+            dataProvider: noTextureProvider
+        });
+        sinon.stub(webTileDataSource, "mapView").get(() => {
+            return fakeMapView;
+        });
+
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+        const tile = await webTileDataSource.getTile(tileKey);
+        expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
+        expect(tile.disposed).to.be.true;
     });
 
     it("#createWebTileDataSource with renderingOptions opacity", async function() {
