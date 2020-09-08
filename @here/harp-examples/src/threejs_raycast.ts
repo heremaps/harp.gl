@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapAnchor, MapView } from "@here/harp-mapview";
 import {
     APIFormat,
     AuthenticationMethod,
@@ -41,7 +41,7 @@ export namespace ThreejsRaycast {
         color: 0x00ff00fe
     });
     // Return a pink cube.
-    function createPinkCube(): THREE.Mesh {
+    function createPinkCube(): MapAnchor {
         const mesh = new THREE.Mesh(geometry, material);
         // Make sure the cube overlaps everything else, is completely arbitrary.
         mesh.renderOrder = Number.MAX_SAFE_INTEGER;
@@ -101,15 +101,8 @@ export namespace ThreejsRaycast {
             // snippet:harp_gl_threejs_raycast_1.ts
 
             const cube = createPinkCube();
-            map.scene.add(cube);
-
-            // Add a callback to execute before the items are rendered.
-            map.addEventListener(MapViewEventNames.Render, () => {
-                // Set the cube position relative to the world center. Note, we don't subtract the
-                // [[worldCenter]] from the worldMousePosition, because we need to keep the cubes
-                // world position untouched.
-                cube.position.copy(worldPoint).sub(map.worldCenter);
-            });
+            cube.anchor = worldPoint;
+            map.mapAnchors.add(cube);
 
             // Force the scene to be rerendered once the cube is added to the scene.
             map.update();
