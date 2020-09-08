@@ -38,8 +38,13 @@ export interface WebTileRenderingOptions {
 export interface WebTileDataProvider {
     /**
      * The method to create the Texture that will be applied to the Tile
+     *
+     * If the Promise is resolved with an undefined Texture, the Tile is considered loaded
+     * and having no data.
+     * If the Promise is rejected, it is considered a temporary failure and the tile will be
+     * disposed and recreated if visible again.
      */
-    getTexture: (tile: Tile) => Promise<[THREE.Texture, CopyrightInfo[]]>;
+    getTexture: (tile: Tile) => Promise<[THREE.Texture | undefined, CopyrightInfo[]] | undefined>;
 }
 
 /**
@@ -116,44 +121,62 @@ export class WebTileDataSource extends DataSource {
         const tile: Tile = new Tile(this, tileKey);
         this.dataProvider
             .getTexture(tile)
-            .then(value => {
-                const [texture, copyrightInfo] = value;
-                if (copyrightInfo !== undefined) {
-                    tile.copyrightInfo = copyrightInfo;
-                }
+            .then(
+                value => {
+                    if (value === undefined || value[0] === undefined) {
+                        tile.forceHasGeometry(true);
+                        return;
+                    }
 
-                texture.minFilter = THREE.LinearFilter;
-                texture.magFilter = THREE.LinearFilter;
-                texture.generateMipmaps = false;
-                tile.addOwnedTexture(texture);
+                    const [texture, copyrightInfo] = value;
+                    if (copyrightInfo !== undefined) {
+                        tile.copyrightInfo = copyrightInfo;
+                    }
 
-                let transparent = false;
-                let opacity = 1;
-                let renderOrder = 0;
-                if (this.m_options.renderingOptions !== undefined) {
-                    opacity = this.m_options.renderingOptions.opacity ?? 1;
-                    transparent =
-                        this.m_options.renderingOptions.transparent === true ||
-                        (opacity !== undefined && opacity < 1);
-                    renderOrder = this.m_options.renderingOptions.renderOrder ?? 0;
+                    texture.minFilter = THREE.LinearFilter;
+                    texture.magFilter = THREE.LinearFilter;
+                    texture.generateMipmaps = false;
+                    tile.addOwnedTexture(texture);
+
+                    let transparent = false;
+                    let opacity = 1;
+                    let renderOrder = 0;
+                    if (this.m_options.renderingOptions !== undefined) {
+                        opacity = this.m_options.renderingOptions.opacity ?? 1;
+                        transparent =
+                            this.m_options.renderingOptions.transparent === true ||
+                            (opacity !== undefined && opacity < 1);
+                        renderOrder = this.m_options.renderingOptions.renderOrder ?? 0;
+                    }
+                    const material = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        opacity,
+                        depthTest: false,
+                        depthWrite: false
+                    });
+                    if (transparent) {
+                        enableBlending(material);
+                    }
+                    const mesh = TileGeometryCreator.instance.createGroundPlane(
+                        tile,
+                        material,
+                        true
+                    );
+                    tile.objects.push(mesh);
+                    mesh.renderOrder = renderOrder;
+                    tile.invalidateResourceInfo();
+                    this.requestUpdate();
+                },
+                error => {
+                    logger.warn(
+                        `texture promise rejected for webtile ${tileKey.mortonCode()}: ${error}`
+                    );
+                    tile.dispose();
                 }
-                const material = new THREE.MeshBasicMaterial({
-                    map: texture,
-                    opacity,
-                    depthTest: false,
-                    depthWrite: false
-                });
-                if (transparent) {
-                    enableBlending(material);
-                }
-                const mesh = TileGeometryCreator.instance.createGroundPlane(tile, material, true);
-                tile.objects.push(mesh);
-                mesh.renderOrder = renderOrder;
-                tile.invalidateResourceInfo();
-                this.requestUpdate();
-            })
+            )
             .catch(error => {
-                logger.error(`failed to load webtile ${tileKey.mortonCode()}: ${error}`);
+                logger.warn(`failed to load webtile ${tileKey.mortonCode()}: ${error}`);
+                tile.dispose();
             });
 
         return tile;
