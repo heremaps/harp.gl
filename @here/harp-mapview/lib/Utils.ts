@@ -1198,11 +1198,6 @@ export namespace MapViewUtils {
         mapView: { projection: Projection },
         object: THREE.Object3D
     ): Attitude {
-        // if (projection instanceof MapView) {
-        //     logger.warn("Passing MapView to extractSphericalCoordinatesFromLocation is deprecated");
-        //     projection = projection.projection;
-        // }
-
         // 1. Build the matrix of the tangent space of the object.
         cache.vector3[1].setFromMatrixPosition(object.matrixWorld); // Ensure using world position.
         mapView.projection.localTangentSpace(cache.vector3[1], {
