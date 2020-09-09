@@ -86,6 +86,10 @@ export class WebTileDataSource extends DataSource {
     protected readonly m_resolution: WebTileDataSource.resolutionValue;
     protected dataProvider: WebTileDataProvider;
 
+    private m_opacity: number = 1;
+    private readonly m_renderOrder: number = 0;
+    private m_transparent: boolean = false;
+
     /**
      * Constructs a new `WebTileDataSource`.
      *
@@ -96,10 +100,38 @@ export class WebTileDataSource extends DataSource {
 
         this.dataProvider = this.m_options.dataProvider;
         this.cacheable = true;
+        this.m_opacity = this.m_options.renderingOptions?.opacity ?? 1;
+        this.m_transparent =
+            this.m_options.renderingOptions?.transparent === true || this.m_opacity < 1;
+        this.m_renderOrder = this.m_options.renderingOptions?.renderOrder ?? 0;
+
         this.m_resolution = getOptionValue(
             m_options.resolution,
             WebTileDataSource.resolutionValue.resolution512
         );
+    }
+
+    /**
+     * Sets the opacity for the WebTileDataSource, will only affect not yet loaded or not cached
+     * tiles.
+     *
+     * Use WebTileDataSource:clearCache and MapView:markTilesDirty to reload all tiles with the
+     * new opacity setting.
+     */
+    set opacity(value: number) {
+        this.m_opacity = value;
+        if (this.m_opacity < 1) {
+            this.m_transparent = true;
+        } else if (this.m_options.renderingOptions?.transparent !== true) {
+            this.m_transparent = false;
+        }
+    }
+
+    /**
+     * Gets the opacity of the WebTileDataSource.
+     */
+    get opacity(): number {
+        return this.m_opacity;
     }
 
     get resolution(): WebTileDataSource.resolutionValue {
@@ -138,23 +170,13 @@ export class WebTileDataSource extends DataSource {
                     texture.generateMipmaps = false;
                     tile.addOwnedTexture(texture);
 
-                    let transparent = false;
-                    let opacity = 1;
-                    let renderOrder = 0;
-                    if (this.m_options.renderingOptions !== undefined) {
-                        opacity = this.m_options.renderingOptions.opacity ?? 1;
-                        transparent =
-                            this.m_options.renderingOptions.transparent === true ||
-                            (opacity !== undefined && opacity < 1);
-                        renderOrder = this.m_options.renderingOptions.renderOrder ?? 0;
-                    }
                     const material = new THREE.MeshBasicMaterial({
                         map: texture,
-                        opacity,
+                        opacity: this.m_opacity,
                         depthTest: false,
                         depthWrite: false
                     });
-                    if (transparent) {
+                    if (this.m_transparent) {
                         enableBlending(material);
                     }
                     const mesh = TileGeometryCreator.instance.createGroundPlane(
@@ -163,7 +185,7 @@ export class WebTileDataSource extends DataSource {
                         true
                     );
                     tile.objects.push(mesh);
-                    mesh.renderOrder = renderOrder;
+                    mesh.renderOrder = this.m_renderOrder;
                     tile.invalidateResourceInfo();
                     this.requestUpdate();
                 },
