@@ -5,8 +5,7 @@
  */
 
 import { mercatorProjection, ProjectionType, sphereProjection } from "@here/harp-geoutils";
-import { MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
-import * as THREE from "three";
+import { MapViewEventNames } from "@here/harp-mapview";
 
 import { MapControls } from "./MapControls";
 
@@ -231,9 +230,7 @@ export class MapControlsUI {
             controls.pointToNorth();
         });
         controls.mapView.addEventListener(MapViewEventNames.AfterRender, () => {
-            compass.style.transform = `rotate(${THREE.MathUtils.radToDeg(
-                MapViewUtils.extractAttitude(controls.mapView, controls.mapView.camera).yaw
-            )}deg)`;
+            compass.style.transform = `rotate(${controls.mapView.heading}deg)`;
         });
 
         this.domElement.className = "harp-gl_controls";
