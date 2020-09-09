@@ -261,6 +261,9 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * Helper object for reducing performance impact.
      */
     protected m_tmpQuaternion: THREE.Quaternion = new THREE.Quaternion();
+
+    protected m_sphere: THREE.Sphere;
+
     private readonly m_minimumViewRange: ViewRanges;
 
     /**
@@ -313,6 +316,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             minimum: this.nearMin,
             maximum: Math.max(nearMin * farMaxRatio, nearMin + nearFarMargin)
         };
+        this.m_sphere = new THREE.Sphere(new THREE.Vector3(), EarthConstants.EQUATORIAL_RADIUS);
     }
 
     /** @override */
@@ -424,8 +428,15 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // which is definitely closer than the tangent point mentioned above.
             const cam = camera as THREE.PerspectiveCamera;
             // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
-            const aspect = cam.aspect > 1 ? cam.aspect : 1 / cam.aspect;
-            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
+
+            let halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
+            // If width > height, then we have to compute the horizontal FOV.
+            if (cam.aspect > 1) {
+                halfFovAngle = MapViewUtils.calculateHorizontalFovByVerticalFov(
+                    THREE.MathUtils.degToRad(cam.fov),
+                    cam.aspect
+                );
+            }
 
             const farTangent = this.getTangentBasedFarPlane(cam, d, r, alpha);
             farPlane =
@@ -655,6 +666,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
  * between camera __look at__ vector and the ground surface normal.
  */
 export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
+    private readonly m_ray = new THREE.Ray();
     /**
      * Calculate the lengths of frustum planes intersection with the ground plane.
      *
@@ -728,10 +740,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const cam = (camera as any) as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
-            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            const aspect = 1;
             // Half fov angle in radians
-            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
+            const halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
             topAngleRad = THREE.MathUtils.clamp(
                 cameraTilt + halfFovAngle,
                 -halfPiLimit,
@@ -798,10 +808,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const cam = camera as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
-            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            const aspect = 1;
             // Half fov angle in radians
-            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
+            const halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
             const cosHalfFov = Math.cos(halfFovAngle);
             // cos(halfFov) = near / bottomDist
             // near = cos(halfFov) * bottomDist
@@ -853,19 +861,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         viewRanges.near = cameraAltitude - this.maxElevation;
 
-        let halfFovAngle: number = 0;
-        if (camera instanceof THREE.PerspectiveCamera) {
-            // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
-            const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            halfFovAngle = THREE.MathUtils.degToRad((camera.fov * aspect) / 2);
-
-            // Now we need to account for camera tilt and frustum volume, so the longest
-            // frustum edge does not intersects with sphere, it takes the worst case
-            // scenario regardless of camera tilt, so may be improved little bit with more
-            // sophisticated algorithm.
-            viewRanges.near *= Math.cos(halfFovAngle);
-        }
-
         // Far plane calculation requires different approaches depending from camera projection:
         // - perspective
         // - orthographic
@@ -874,6 +869,23 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const d = cameraToOrigin.length();
         let farPlane: number;
         if (camera instanceof THREE.PerspectiveCamera) {
+            const halfVerticalFovAngle = THREE.MathUtils.degToRad(camera.fov / 2);
+
+            // Ratio of the depth of the camera compared to the distance between the center of the
+            // screen and the middle of the top of the screen (here set to be value 1). We just need
+            // this to be a ratio because we are interested in just computing the direction of the
+            // upper right corner and not any specific length.
+            const zLength = 1 / Math.tan(halfVerticalFovAngle);
+
+            // Camera space direction vector along the top right frustum edge (of the camera).
+            const upperRightDirection = this.m_tmpVectors[1];
+            upperRightDirection.set(camera.aspect, 1, -zLength);
+
+            // Now we need to account for camera tilt and frustum volume, so the longest
+            // frustum edge does not intersects with sphere, it takes the worst case
+            // scenario regardless of camera tilt, so may be improved little bit with more
+            // sophisticated algorithm.
+            viewRanges.near *= Math.cos(halfVerticalFovAngle);
             // Step-wise calculate angle between camera eye vector and tangent
 
             // Calculate angle between surface normal(below camera position) and tangent.
@@ -882,15 +894,25 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // Calculate angle between look at and surface normal(below camera position)
             const cameraPitch = this.getCameraPitch(cameraToOrigin, camera);
 
-            // Calculate angle between camera eye vector and tangent.
+            // Calculate angle between camera eye vector and tangent (center of the top of the
+            // screen)
             const modifiedAlpha = Math.abs(alpha - cameraPitch);
 
+            // Transform the direction into world space
+            upperRightDirection.applyMatrix4(camera.matrixWorld);
+            upperRightDirection.sub(camera.position);
+            upperRightDirection.normalize();
+
+            this.m_ray.set(camera.position, upperRightDirection);
+            const horizonWithinView = this.m_ray.intersectSphere(
+                this.m_sphere,
+                this.m_tmpVectors[0]
+            );
             // Use tangent based far plane if horizon is within field of view
-            const farTangent = this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha);
             farPlane =
-                halfFovAngle >= modifiedAlpha
-                    ? farTangent
-                    : this.getTiltedFovBasedFarPlane(d, r, halfFovAngle, cameraPitch);
+                horizonWithinView === null
+                    ? this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha)
+                    : this.getTiltedFovBasedFarPlane(d, r, halfVerticalFovAngle, cameraPitch);
         } else {
             farPlane = this.getOrthoBasedFarPlane(d, r);
         }
