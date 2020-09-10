@@ -256,4 +256,16 @@ export class GeoCoordinates implements GeoCoordinatesLike {
             ? [this.longitude, this.latitude, this.altitude]
             : [this.longitude, this.latitude];
     }
+
+    /**
+     * Returns the minimum longitude span from this `GeoCoordinates` to another.
+     *
+     * @param other - The other GeoCoordinatesLike defining the longitude span.
+     */
+    minLongitudeSpanTo(other: GeoCoordinatesLike): number {
+        const minLongitude = Math.min(this.longitude, other.longitude);
+        const maxLongitude = Math.max(this.longitude, other.longitude);
+
+        return Math.min(maxLongitude - minLongitude, 360 + minLongitude - maxLongitude);
+    }
 }

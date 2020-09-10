@@ -18,13 +18,6 @@ import { TileCorners } from "./geometry/TileGeometryCreator";
 import { CanvasSide, SphereHorizon } from "./SphereHorizon";
 import { MapViewUtils } from "./Utils";
 
-function computeLongitudeSpan(geoStart: GeoCoordinates, geoEnd: GeoCoordinates): number {
-    const minLongitude = Math.min(geoStart.longitude, geoEnd.longitude);
-    const maxLongitude = Math.max(geoStart.longitude, geoEnd.longitude);
-
-    return Math.min(maxLongitude - minLongitude, 360 + minLongitude - maxLongitude);
-}
-
 // Rough, empirical rule to compute the number of divisions needed for a geopolygon edge to keep
 // the deviation from the view bound edge it must follow within acceptable values.
 function computeEdgeDivisionsForSphere(geoStart: GeoCoordinates, geoEnd: GeoCoordinates): number {
@@ -32,7 +25,7 @@ function computeEdgeDivisionsForSphere(geoStart: GeoCoordinates, geoEnd: GeoCoor
     const maxLongitudeSpan = 5;
 
     const latitudeSpan = Math.abs(geoEnd.latitude - geoStart.latitude);
-    const longitudeSpan = computeLongitudeSpan(geoStart, geoEnd);
+    const longitudeSpan = geoStart.minLongitudeSpanTo(geoEnd);
     return Math.ceil(Math.max(latitudeSpan / maxLatitudeSpan, longitudeSpan / maxLongitudeSpan));
 }
 
