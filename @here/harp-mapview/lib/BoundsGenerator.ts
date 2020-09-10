@@ -44,32 +44,6 @@ const ccwCanvasCornersNDC: Array<{ x: number; y: number }> = [
     { x: -1, y: 1 } // top left
 ];
 
-// Wrap around coordinates for polygons crossing the antimeridian. Needed for sphere projection.
-function wrapCoordinatesAround(coordinates: GeoCoordinates[]) {
-    const antimerCrossIndex = coordinates.findIndex((val: GeoCoordinates, index: number) => {
-        const prevLonIndex = index === 0 ? coordinates.length - 1 : index - 1;
-        const prevLon = coordinates[prevLonIndex].longitude;
-        const lon = val.longitude;
-
-        return prevLon > 90 && lon < -90;
-    });
-    if (antimerCrossIndex < 0) {
-        return;
-    }
-
-    for (let i = 0; i < coordinates.length; i++) {
-        const index = (antimerCrossIndex + i) % coordinates.length;
-        const currentLon = coordinates[index].longitude;
-        coordinates[index].longitude += 360;
-        const nextLon = coordinates[(index + 1) % coordinates.length].longitude;
-
-        if (currentLon < -90 && nextLon > 90) {
-            // new crossing in opposite direction, stop.
-            break;
-        }
-    }
-}
-
 /**
  * Generates Bounds for a camera view and a projection
  *
@@ -105,10 +79,7 @@ export class BoundsGenerator {
         wrapAround: boolean = false
     ): GeoPolygon | undefined {
         if (coordinates.length > 2) {
-            if (wrapAround) {
-                wrapCoordinatesAround(coordinates);
-            }
-            return new GeoPolygon(coordinates as GeoPolygonCoordinates, sort);
+            return new GeoPolygon(coordinates as GeoPolygonCoordinates, sort, wrapAround);
         }
         return undefined;
     }

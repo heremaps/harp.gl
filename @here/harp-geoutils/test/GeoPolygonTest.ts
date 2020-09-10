@@ -6,7 +6,7 @@
 import { assert } from "chai";
 
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
-import { GeoPolygon } from "../lib/coordinates/GeoPolygon";
+import { GeoPolygon, GeoPolygonCoordinates } from "../lib/coordinates/GeoPolygon";
 
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
@@ -260,6 +260,23 @@ describe("GeoPolygon", function() {
         }
         assert.deepEqual(centroid, new GeoCoordinates(6, -160));
         assert.isTrue(geoBBox.contains(centroid));
+    });
+
+    it("wraps coordinates around if requested", function() {
+        const initialCoords: GeoPolygonCoordinates = [
+            new GeoCoordinates(-10, 170),
+            new GeoCoordinates(-10, -160),
+            new GeoCoordinates(10, -160),
+            new GeoCoordinates(10, 170)
+        ];
+        const geoPolygon = new GeoPolygon(initialCoords, false, true);
+
+        const finalCoords = geoPolygon.coordinates;
+
+        assert.deepEqual(finalCoords[0], initialCoords[0]);
+        assert.deepEqual(finalCoords[1], { latitude: -10, longitude: 200, altitude: undefined });
+        assert.deepEqual(finalCoords[2], { latitude: 10, longitude: 200, altitude: undefined });
+        assert.deepEqual(finalCoords[3], initialCoords[3]);
     });
 
     it("supports antimeridian crossing GeoPolygon", function() {

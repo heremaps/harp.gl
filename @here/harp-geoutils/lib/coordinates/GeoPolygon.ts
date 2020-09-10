@@ -34,13 +34,21 @@ export class GeoPolygon implements GeoPolygonLike {
      * @param coordinates An array of GeoCoordinates acting as the Vertices of the Polygon.
      * @param needsSort  If `true` it will sort the coordinates in ccw order, this will only
      *  result correctly for convex polygons @default false
+     * @param needsWrapping  If `true` it will wrap around coordinates crossing the antemeridian.
      */
-    constructor(coordinates: GeoPolygonCoordinates, needsSort: boolean = false) {
+    constructor(
+        coordinates: GeoPolygonCoordinates,
+        needsSort: boolean = false,
+        needsWrapping: boolean = false
+    ) {
         this.m_coordinates = coordinates.map(coord => {
             return geoCoordLikeToGeoCoordinatesLike(coord);
         }) as MinThreeItemsArray<GeoCoordinatesLike>;
         if (needsSort) {
             this.sortCCW();
+        }
+        if (needsWrapping) {
+            this.wrapCoordinatesAround();
         }
     }
 
@@ -123,6 +131,33 @@ export class GeoPolygon implements GeoPolygonLike {
 
             return vecb.angle() - veca.angle();
         });
+    }
+
+    private wrapCoordinatesAround() {
+        const antimerCrossIndex = this.m_coordinates.findIndex(
+            (val: GeoCoordinatesLike, index: number) => {
+                const prevLonIndex = index === 0 ? this.m_coordinates.length - 1 : index - 1;
+                const prevLon = this.m_coordinates[prevLonIndex].longitude;
+                const lon = val.longitude;
+
+                return prevLon > 90 && lon < -90;
+            }
+        );
+        if (antimerCrossIndex < 0) {
+            return;
+        }
+
+        for (let i = 0; i < this.m_coordinates.length; i++) {
+            const index = (antimerCrossIndex + i) % this.m_coordinates.length;
+            const currentLon = this.m_coordinates[index].longitude;
+            this.m_coordinates[index].longitude += 360;
+            const nextLon = this.m_coordinates[(index + 1) % this.m_coordinates.length].longitude;
+
+            if (currentLon < -90 && nextLon > 90) {
+                // new crossing in opposite direction, stop.
+                break;
+            }
+        }
     }
 
     private getPolyAverageCenter(): GeoCoordinates | undefined {
