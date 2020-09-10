@@ -5,6 +5,7 @@
  */
 
 import * as Jimp from "jimp";
+import * as sharp from "sharp";
 
 import { ColorUtils } from "./ColorUtils";
 import { FileSystem, ImageFormat } from "./FileSystem";
@@ -27,16 +28,14 @@ export class ImageVectorDecoderConstructor implements ImageDecoderConstructor {
     }
 
     async load(filePath: string): Promise<ImageDecoder> {
-        // No @types for this module
-        const svg2png = require("svg2png");
         const fileBuffer: Buffer = await FileSystem.readFile(filePath);
-        const pngBuffer: Buffer = await svg2png(
-            fileBuffer,
-            this.targetWidth !== 0 && this.targetHeight !== 0
-                ? { width: this.targetWidth, height: this.targetHeight }
-                : {}
-        );
-        const bitmap: Jimp = await Jimp.read(pngBuffer);
+        const resize = this.targetWidth !== 0 && this.targetHeight !== 0;
+        const png = resize
+            ? sharp(fileBuffer)
+                  .resize({ width: this.targetWidth, height: this.targetHeight })
+                  .png()
+            : sharp(fileBuffer).png();
+        const bitmap: Jimp = await Jimp.read(await png.toBuffer());
         return new ImageVectorDecoder(fileBuffer, bitmap);
     }
 }
