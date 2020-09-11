@@ -126,7 +126,7 @@ describe("BoundsGenerator", function() {
                 expectedNdcX = -1;
                 break;
             default:
-                assert(false);
+                assert.fail("Canvas side option not supported");
         }
         return coordinates.filter(vertex => {
             const ndcPoint = mapView!.projection
@@ -134,9 +134,10 @@ describe("BoundsGenerator", function() {
                 .project(mapView!.camera);
             if (expectedNdcX !== undefined) {
                 return Math.abs(ndcPoint.x - expectedNdcX) < eps;
-            } else {
-                // expectedNdcY !== undefined
+            } else if (expectedNdcY !== undefined) {
                 return Math.abs(ndcPoint.y - expectedNdcY) < eps;
+            } else {
+                assert.fail("Canvas side option not supported");
             }
         }).length;
     }
