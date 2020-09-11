@@ -230,7 +230,7 @@ export class BoundsGenerator {
         // intersect with the world.
         const horizon = cornerCoordinates.length < 4 ? new SphereHorizon(this.m_camera) : undefined;
 
-        if (cornerCoordinates.length === 0 && horizon!.isFullyVisible()) {
+        if (cornerCoordinates.length === 0 && horizon!.isFullyVisible) {
             // Bounds are generated entirely from equidistant points obtained from the horizon
             // circle.
             horizon!.getDivisionPoints(point => {
