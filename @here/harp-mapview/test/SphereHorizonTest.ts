@@ -155,13 +155,13 @@ describe("SphereHorizon", function() {
     describe("isFullyVisible", function() {
         it("returns true only when globe is fully in view", function() {
             setCamera(3);
-            expect(horizon.isFullyVisible()).to.be.true;
+            expect(horizon.isFullyVisible).to.be.true;
 
             setCamera(3, 80);
-            expect(horizon.isFullyVisible()).to.be.false;
+            expect(horizon.isFullyVisible).to.be.false;
 
             setCamera(4);
-            expect(horizon.isFullyVisible()).to.be.false;
+            expect(horizon.isFullyVisible).to.be.false;
         });
     });
 

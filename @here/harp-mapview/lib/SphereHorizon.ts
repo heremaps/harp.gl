@@ -42,6 +42,7 @@ export class SphereHorizon {
     private readonly m_normalToTangentAngle: number;
     private readonly m_distanceToHorizonCenter: number;
     private readonly m_intersections: number[][] = [];
+    private m_isFullyVisible: boolean = true;
     private m_cameraPitch?: number;
     private m_hFovVertical?: number;
     private m_hFovHorizontal?: number;
@@ -152,16 +153,22 @@ export class SphereHorizon {
      * coordinates as parameter.
      * @param tStart - Angular parameter of the arc's start point [0,1].
      * @param tEnd - Angular parameter of the arc's end point [0,1].
+     * @param maxNumPoints - Number of division points for the whole horizon. Smaller arcs will
+     * be assigned a proportionally smaller number of points.
      */
-    getDivisionPoints(callback: (point: THREE.Vector3) => void, tStart = 0, tEnd = 1) {
-        // 10 divisions for a whole horizon circle.
-        const divisionCount = Math.max(
-            Math.ceil(((tEnd < tStart ? 1 + tEnd : tEnd) - tStart) / 0.1),
+    getDivisionPoints(
+        callback: (point: THREE.Vector3) => void,
+        tStart: number = 0,
+        tEnd: number = 1,
+        maxNumPoints: number = 10
+    ) {
+        const numPoints = Math.max(
+            Math.ceil(((tEnd < tStart ? 1 + tEnd : tEnd) - tStart) * maxNumPoints),
             1
         );
         // Point corresponding to tEnd is omitted, hence the strict less condition in the loop.
-        for (let d = 0; d < divisionCount; d++) {
-            callback(this.getPoint(d / divisionCount, tStart, tEnd));
+        for (let d = 0; d < numPoints; d++) {
+            callback(this.getPoint(d / numPoints, tStart, tEnd));
         }
     }
 
@@ -169,13 +176,8 @@ export class SphereHorizon {
      * Indicates whether the horizon circle is fully visible.
      * @returns 'True' if horizon is fully visible, false otherwise.
      */
-    isFullyVisible(): boolean {
-        // Only need to check either left or right.
-        return (
-            this.isTangentVisible(CanvasSide.Top) &&
-            this.isTangentVisible(CanvasSide.Bottom) &&
-            this.isTangentVisible(CanvasSide.Left)
-        );
+    get isFullyVisible(): boolean {
+        return this.m_isFullyVisible;
     }
 
     /**
@@ -285,6 +287,7 @@ export class SphereHorizon {
             if (this.isTangentVisible(side)) {
                 sideIntersections.push(this.getTangentOnSide(side));
             } else {
+                this.m_isFullyVisible = false;
                 switch (side) {
                     case CanvasSide.Bottom: {
                         const x = Math.sqrt(radiusSq - yBottom * yBottom);
