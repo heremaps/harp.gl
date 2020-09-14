@@ -285,7 +285,7 @@ describe("GeoPolygon", function() {
         assert.equal(geoBBox.north, 10);
         assert.equal(geoBBox.south, -10);
         assert.equal(geoBBox.west, 170);
-        assert.equal(geoBBox.east, -160);
+        assert.equal(geoBBox.east, 200);
 
         assert.approximately(geoBBox?.center.longitude, 185, GEOCOORDS_EPSILON);
         assert.approximately(geoBBox?.center.latitude, 0, GEOCOORDS_EPSILON);
@@ -318,7 +318,7 @@ describe("GeoPolygon", function() {
         assert.equal(geoBBox.north, 10);
         assert.equal(geoBBox.south, -90);
         assert.equal(geoBBox.west, 170);
-        assert.equal(geoBBox.east, -160);
+        assert.equal(geoBBox.east, 200);
 
         assert.approximately(geoBBox?.center.longitude, 185, GEOCOORDS_EPSILON);
         assert.approximately(geoBBox?.center.latitude, -40, GEOCOORDS_EPSILON);

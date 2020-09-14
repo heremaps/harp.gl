@@ -22,7 +22,7 @@ describe("GeoBox", function() {
         );
 
         assert.equal(g.west, 170);
-        assert.equal(g.east, -160);
+        assert.equal(g.east, 200);
         assert.equal(g.north, 10);
         assert.equal(g.south, -10);
 
@@ -40,7 +40,7 @@ describe("GeoBox", function() {
         const g = GeoBox.fromCoordinates(auckland, sanfrancisco);
 
         assert.equal(g.west, auckland.longitude);
-        assert.equal(g.east, sanfrancisco.longitude);
+        assert.equal(g.east, 57.4 + 180, "longitude is wrapped around antimeridian");
         assert.equal(g.north, sanfrancisco.latitude);
         assert.equal(g.south, auckland.latitude);
 
@@ -71,5 +71,28 @@ describe("GeoBox", function() {
         const clone = original.clone();
         expect(clone.southWest).not.equals(original.southWest);
         expect(clone.northEast).not.equals(original.northEast);
+    });
+
+    it("contains works for non normalized coordinates", function() {
+        const g = GeoBox.fromCoordinates(
+            new GeoCoordinates(-10, 170),
+            new GeoCoordinates(10, -160)
+        );
+
+        assert.equal(g.west, 170);
+        assert.equal(g.east, 200);
+        assert.equal(g.north, 10);
+        assert.equal(g.south, -10);
+
+        assert.isTrue(g.contains(new GeoCoordinates(0, 180)));
+        assert.isTrue(g.contains(new GeoCoordinates(0, 190)));
+        assert.isTrue(g.contains(new GeoCoordinates(0, -170)));
+        assert.isTrue(g.contains(new GeoCoordinates(0, -530)));
+        assert.isTrue(g.contains(new GeoCoordinates(0, 540)));
+
+        assert.isFalse(g.contains(new GeoCoordinates(0, -159)));
+        assert.isFalse(g.contains(new GeoCoordinates(0, 201)));
+        assert.isFalse(g.contains(new GeoCoordinates(0, 561)));
+        assert.isFalse(g.contains(new GeoCoordinates(0, -510)));
     });
 });
