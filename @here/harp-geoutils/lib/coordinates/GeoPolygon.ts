@@ -11,6 +11,26 @@ import { GeoCoordinatesLike } from "./GeoCoordinatesLike";
 import { GeoCoordLike, geoCoordLikeToGeoCoordinatesLike } from "./GeoCoordLike";
 import { GeoPolygonLike } from "./GeoPolygonLike";
 
+const computeLonSpanAcrossGreewich = (lonA: number, lonB: number) => {
+    return Math.max(lonA, lonB) - Math.min(lonA, lonB);
+};
+
+const isLeftToRightAntimeridianCrossing = (lonStart: number, lonEnd: number) => {
+    return (
+        Math.sign(lonStart) === 1 &&
+        Math.sign(lonEnd) === -1 &&
+        computeLonSpanAcrossGreewich(lonStart, lonEnd) > 180
+    );
+};
+
+const isRightToLeftAntimeridianCrossing = (lonStart: number, lonEnd: number) => {
+    return (
+        Math.sign(lonStart) === -1 &&
+        Math.sign(lonEnd) === 1 &&
+        computeLonSpanAcrossGreewich(lonStart, lonEnd) > 180
+    );
+};
+
 type MinThreeItemsArray<T> = [T, T, T, ...T[]];
 
 export type GeoPolygonCoordinates = MinThreeItemsArray<
@@ -35,6 +55,8 @@ export class GeoPolygon implements GeoPolygonLike {
      * @param needsSort  If `true` it will sort the coordinates in ccw order, this will only
      *  result correctly for convex polygons @default false
      * @param needsWrapping  If `true` it will wrap around coordinates crossing the antemeridian.
+     * Only supported for polygons with sides that don't span more than 180 degrees longitude.
+     * @default false
      */
     constructor(
         coordinates: GeoPolygonCoordinates,
@@ -134,28 +156,33 @@ export class GeoPolygon implements GeoPolygonLike {
     }
 
     private wrapCoordinatesAround() {
-        const antimerCrossIndex = this.m_coordinates.findIndex(
+        const firstAntimerCrossIndex = this.m_coordinates.findIndex(
             (val: GeoCoordinatesLike, index: number) => {
                 const prevLonIndex = index === 0 ? this.m_coordinates.length - 1 : index - 1;
                 const prevLon = this.m_coordinates[prevLonIndex].longitude;
                 const lon = val.longitude;
 
-                return prevLon > 90 && lon < -90;
+                return isLeftToRightAntimeridianCrossing(prevLon, lon);
             }
         );
-        if (antimerCrossIndex < 0) {
+        if (firstAntimerCrossIndex < 0) {
             return;
         }
 
+        let wrapAround = true;
         for (let i = 0; i < this.m_coordinates.length; i++) {
-            const index = (antimerCrossIndex + i) % this.m_coordinates.length;
+            const index = (firstAntimerCrossIndex + i) % this.m_coordinates.length;
             const currentLon = this.m_coordinates[index].longitude;
-            this.m_coordinates[index].longitude += 360;
             const nextLon = this.m_coordinates[(index + 1) % this.m_coordinates.length].longitude;
 
-            if (currentLon < -90 && nextLon > 90) {
-                // new crossing in opposite direction, stop.
-                break;
+            if (wrapAround) {
+                this.m_coordinates[index].longitude += 360;
+            }
+
+            if (isRightToLeftAntimeridianCrossing(currentLon, nextLon)) {
+                wrapAround = false;
+            } else if (isLeftToRightAntimeridianCrossing(currentLon, nextLon)) {
+                wrapAround = true;
             }
         }
     }

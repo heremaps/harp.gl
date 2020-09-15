@@ -264,19 +264,66 @@ describe("GeoPolygon", function() {
 
     it("wraps coordinates around if requested", function() {
         const initialCoords: GeoPolygonCoordinates = [
-            new GeoCoordinates(-10, 170),
+            new GeoCoordinates(-10, 80),
             new GeoCoordinates(-10, -160),
             new GeoCoordinates(10, -160),
-            new GeoCoordinates(10, 170)
+            new GeoCoordinates(10, 80)
         ];
         const geoPolygon = new GeoPolygon(initialCoords, false, true);
 
         const finalCoords = geoPolygon.coordinates;
 
-        assert.deepEqual(finalCoords[0], initialCoords[0]);
-        assert.deepEqual(finalCoords[1], { latitude: -10, longitude: 200, altitude: undefined });
-        assert.deepEqual(finalCoords[2], { latitude: 10, longitude: 200, altitude: undefined });
-        assert.deepEqual(finalCoords[3], initialCoords[3]);
+        assert.sameDeepOrderedMembers(finalCoords, [
+            finalCoords[0],
+            {
+                latitude: -10,
+                longitude: 200,
+                altitude: undefined
+            },
+            { latitude: 10, longitude: 200, altitude: undefined },
+            finalCoords[3]
+        ]);
+    });
+
+    it("wrapping supports multiple antimeridian crossings for concave polygons", function() {
+        const initialCoords: GeoPolygonCoordinates = [
+            new GeoCoordinates(-10, 150),
+            new GeoCoordinates(-20, -170),
+            new GeoCoordinates(-5, -170),
+            new GeoCoordinates(0, 160),
+            new GeoCoordinates(5, -170),
+            new GeoCoordinates(20, -170),
+            new GeoCoordinates(10, 150)
+        ];
+        const geoPolygon = new GeoPolygon(initialCoords, false, true);
+
+        const finalCoords = geoPolygon.coordinates;
+
+        assert.sameDeepOrderedMembers(finalCoords, [
+            finalCoords[0],
+            {
+                latitude: finalCoords[1].latitude,
+                longitude: 190,
+                altitude: undefined
+            },
+            {
+                latitude: finalCoords[2].latitude,
+                longitude: 190,
+                altitude: undefined
+            },
+            finalCoords[3],
+            {
+                latitude: finalCoords[4].latitude,
+                longitude: 190,
+                altitude: undefined
+            },
+            {
+                latitude: finalCoords[5].latitude,
+                longitude: 190,
+                altitude: undefined
+            },
+            finalCoords[6]
+        ]);
     });
 
     it("supports antimeridian crossing GeoPolygon", function() {
