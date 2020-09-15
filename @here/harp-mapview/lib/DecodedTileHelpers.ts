@@ -499,15 +499,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
             return baseProps;
         }
         case "fill":
-            return pick(technique, [
-                "color",
-                "transparent",
-                "opacity",
-                "polygonOffset",
-                "polygonOffsetFactor",
-                "polygonOffsetUnits",
-                ...automaticAttributes
-            ]);
+            return pick(technique, automaticAttributes);
         case "standard":
         case "terrain":
         case "extruded-polygon": {
