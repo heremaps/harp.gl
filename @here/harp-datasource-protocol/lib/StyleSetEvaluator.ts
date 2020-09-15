@@ -33,7 +33,7 @@ import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedPropertyDefs";
-import { AttrScope, techniqueDescriptors } from "./TechniqueDescriptors";
+import { AttrScope, getTechniqueAttributeDescriptor } from "./TechniqueDescriptors";
 import { IndexedTechnique, Technique } from "./Techniques";
 import { Definitions, Style, StyleSet } from "./Theme";
 
@@ -60,9 +60,10 @@ function getStyleAttributeScope(style: InternalStyle, attrName: string): AttrSco
         }
     }
 
-    const techniqueDescriptor: any = techniqueDescriptors[style.technique as Technique["name"]];
-
-    return techniqueDescriptor.attrScopes?.[attrName] ?? DEFAULT_TECHNIQUE_ATTR_SCOPE;
+    return (
+        getTechniqueAttributeDescriptor(style.technique, attrName)?.scope ??
+        DEFAULT_TECHNIQUE_ATTR_SCOPE
+    );
 }
 
 interface StyleInternalParams {
