@@ -797,16 +797,7 @@ export class TileGeometryCreator {
                     bufferGeometry.setIndex(attachment.getBufferAttribute(index));
                 }
 
-                // Geometry with edges are typically buildings. If they are buildings, the outline
-                // effect may be applied to it, which needs the normals.
-                const isBuilding =
-                    isExtrudedPolygonTechnique(technique) &&
-                    attachment.info.edgeIndex !== undefined;
-
-                if (
-                    !bufferGeometry.getAttribute("normal") &&
-                    (isBuilding || needsVertexNormals(technique))
-                ) {
+                if (!bufferGeometry.getAttribute("normal") && needsVertexNormals(technique)) {
                     bufferGeometry.computeVertexNormals();
                 }
 
@@ -964,8 +955,11 @@ export class TileGeometryCreator {
                 });
                 objects.push(object);
 
-                // Add the extruded building edges as a separate geometry.
-                if (isBuilding) {
+                // Add the extruded polygon edges as a separate geometry.
+                if (
+                    isExtrudedPolygonTechnique(technique) &&
+                    attachment.info.edgeIndex !== undefined
+                ) {
                     // When the source geometry is split in groups, we
                     // should create objects with an array of materials.
                     const hasEdgeFeatureGroups =

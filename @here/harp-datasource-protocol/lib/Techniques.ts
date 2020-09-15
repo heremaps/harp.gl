@@ -421,6 +421,7 @@ export function isLabelRejectionLineTechnique(
  */
 export function needsVertexNormals(technique: Technique): boolean {
     return (
+        isExtrudedPolygonTechnique(technique) ||
         isFillTechnique(technique) ||
         isStandardTechnique(technique) ||
         isTerrainTechnique(technique) ||
