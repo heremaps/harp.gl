@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     BaseTechniqueParams,
     PointTechniqueParams,
@@ -13,6 +12,7 @@ import {
     CirclesTechnique,
     ExtrudedPolygonTechnique,
     FillTechnique,
+    IndexedTechnique,
     LineMarkerTechnique,
     LineTechnique,
     ShaderTechnique,
@@ -69,19 +69,36 @@ export enum AttrScope {
  */
 type TechniquePropNames<T> = T extends { name: any } ? keyof Omit<T, "name"> : keyof T;
 
-type TechniquePropScopes<T> = {
-    [P in TechniquePropNames<T>]?: AttrScope;
+interface AttrDescriptor {
+    /**
+     * The evaluation scope of this attribute.
+     */
+    scope?: AttrScope;
+
+    /**
+     * Mark this attribute as automatic.
+     *
+     * @remarks
+     * When set to `true`, the underlying material property
+     * associated with this attribute is automatically kept in sync
+     * with the value of the technique attribute.
+     */
+    automatic?: boolean;
+}
+
+type TechniqueAttrDescriptors<T> = {
+    [P in TechniquePropNames<T>]?: AttrScope | AttrDescriptor;
 };
 
 export interface TechniqueDescriptor<T = Technique> {
     attrTransparencyColor?: string;
-    attrScopes: TechniquePropScopes<T>;
+    attrDescriptors: TechniqueAttrDescriptors<T>;
 }
 
 type OneThatMatches<T, P> = T extends P ? T : never;
 type TechniqueByName<K extends Technique["name"]> = OneThatMatches<Technique, { name: K }>;
 
-export type TechniqueDescriptorRegistry = {
+type TechniqueDescriptorRegistry = {
     [P in Technique["name"]]?: TechniqueDescriptor<TechniqueByName<P>>;
 };
 
@@ -92,14 +109,14 @@ function mergeTechniqueDescriptor<T>(
     ...descriptors: Array<Partial<TechniqueDescriptor<T>>>
 ): TechniqueDescriptor<T> {
     const result: TechniqueDescriptor<T> = {
-        attrScopes: {}
+        attrDescriptors: {}
     };
     for (const descriptor of descriptors) {
         if (descriptor.attrTransparencyColor !== undefined) {
             result.attrTransparencyColor = descriptor.attrTransparencyColor;
         }
-        if (descriptor.attrScopes !== undefined) {
-            result.attrScopes = { ...result.attrScopes, ...descriptor.attrScopes };
+        if (descriptor.attrDescriptors !== undefined) {
+            result.attrDescriptors = { ...result.attrDescriptors, ...descriptor.attrDescriptors };
         }
     }
     return result;
@@ -109,7 +126,7 @@ const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = 
     // TODO: Choose which techniques should support color with transparency.
     // For now we chosen all, but it maybe not suitable for text or line marker techniques.
     attrTransparencyColor: "color",
-    attrScopes: {
+    attrDescriptors: {
         enabled: AttrScope.FeatureGeometry,
         fadeFar: AttrScope.TechniqueRendering,
         fadeNear: AttrScope.TechniqueRendering
@@ -119,7 +136,7 @@ const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = 
 const pointTechniquePropTypes = mergeTechniqueDescriptor<PointTechniqueParams>(
     baseTechniqueParamsDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             color: AttrScope.TechniqueRendering,
             transparent: AttrScope.TechniqueRendering
         }
@@ -139,7 +156,7 @@ const circlesTechniquePropTypes = mergeTechniqueDescriptor<CirclesTechnique>(
 const lineMarkerTechniquePropTypes = mergeTechniqueDescriptor<LineMarkerTechnique>(
     baseTechniqueParamsDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             text: AttrScope.FeatureGeometry,
             label: AttrScope.FeatureGeometry,
             useAbbreviation: AttrScope.FeatureGeometry,
@@ -159,7 +176,7 @@ const lineMarkerTechniquePropTypes = mergeTechniqueDescriptor<LineMarkerTechniqu
 );
 
 const polygonalTechniqueDescriptor: TechniqueDescriptor<PolygonalTechniqueParams> = {
-    attrScopes: {
+    attrDescriptors: {
         polygonOffset: AttrScope.TechniqueRendering,
         polygonOffsetFactor: AttrScope.TechniqueRendering,
         polygonOffsetUnits: AttrScope.TechniqueRendering,
@@ -173,7 +190,7 @@ const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTechnique
     baseTechniqueParamsDescriptor,
     polygonalTechniqueDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             color: AttrScope.TechniqueRendering,
             opacity: AttrScope.TechniqueRendering,
             transparent: AttrScope.TechniqueRendering,
@@ -189,7 +206,7 @@ const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTechnique
 const lineTechniqueDescriptor = mergeTechniqueDescriptor<LineTechnique>(
     baseTechniqueParamsDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             // TODO, check, which are really dynamic !
             color: AttrScope.TechniqueRendering,
             opacity: AttrScope.TechniqueRendering,
@@ -203,7 +220,7 @@ const fillTechniqueDescriptor = mergeTechniqueDescriptor<FillTechnique>(
     baseTechniqueParamsDescriptor,
     polygonalTechniqueDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             color: AttrScope.TechniqueRendering,
             opacity: AttrScope.TechniqueRendering,
             transparent: AttrScope.TechniqueRendering,
@@ -215,7 +232,7 @@ const fillTechniqueDescriptor = mergeTechniqueDescriptor<FillTechnique>(
 const standardTechniqueDescriptor = mergeTechniqueDescriptor<StandardTechnique>(
     baseTechniqueParamsDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             color: AttrScope.FeatureGeometry,
             vertexColors: AttrScope.FeatureGeometry,
             wireframe: AttrScope.TechniqueRendering,
@@ -236,7 +253,7 @@ const extrudedPolygonTechniqueDescriptor = mergeTechniqueDescriptor<ExtrudedPoly
     baseTechniqueParamsDescriptor,
     standardTechniqueDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             height: AttrScope.FeatureGeometry,
             floorHeight: AttrScope.FeatureGeometry,
             color: AttrScope.FeatureGeometry,
@@ -260,7 +277,7 @@ const extrudedPolygonTechniqueDescriptor = mergeTechniqueDescriptor<ExtrudedPoly
 const textTechniqueDescriptor = mergeTechniqueDescriptor<TextTechnique>(
     baseTechniqueParamsDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             text: AttrScope.FeatureGeometry,
             label: AttrScope.FeatureGeometry,
             useAbbreviation: AttrScope.FeatureGeometry,
@@ -279,14 +296,13 @@ const textTechniqueDescriptor = mergeTechniqueDescriptor<TextTechnique>(
 const shaderTechniqueDescriptor = mergeTechniqueDescriptor<ShaderTechnique>(
     baseTechniqueParamsDescriptor,
     {
-        attrScopes: {
+        attrDescriptors: {
             params: AttrScope.TechniqueRendering
         }
     }
 );
 
-/** @internal  */
-export const techniqueDescriptors: TechniqueDescriptorRegistry = {
+const techniqueDescriptors: TechniqueDescriptorRegistry = {
     "extruded-polygon": extrudedPolygonTechniqueDescriptor,
     "line-marker": lineMarkerTechniquePropTypes,
     "labeled-icon": lineMarkerTechniquePropTypes,
@@ -300,3 +316,69 @@ export const techniqueDescriptors: TechniqueDescriptorRegistry = {
     text: textTechniqueDescriptor,
     shader: shaderTechniqueDescriptor
 };
+
+export function getTechniqueDescriptor(
+    technique: string | IndexedTechnique | Technique
+): TechniqueDescriptor | undefined {
+    if (typeof technique !== "string") {
+        technique = technique.name;
+    }
+    return (techniqueDescriptors as any)[technique];
+}
+
+export function getTechniqueAttributeDescriptor(
+    technique: string | IndexedTechnique | Technique,
+    attrName: string
+): AttrDescriptor | undefined {
+    const techniqueDescriptor = getTechniqueDescriptor(technique);
+    const attrDescriptors = techniqueDescriptor?.attrDescriptors;
+    const descriptor = attrDescriptors?.[attrName];
+    if (typeof descriptor === undefined) {
+        return undefined;
+    } else if (typeof descriptor === "object") {
+        return descriptor;
+    }
+    return { scope: descriptor };
+}
+
+const automaticAttributeCache: Map<string, string[]> = new Map();
+
+export function getTechniqueAutomaticAttrs(
+    technique: string | IndexedTechnique | Technique
+): string[] {
+    if (typeof technique !== "string") {
+        technique = technique.name;
+    }
+
+    if (automaticAttributeCache.has(technique)) {
+        return automaticAttributeCache.get(technique)!;
+    }
+
+    const descriptors: string[] = [];
+
+    const attrDescriptors = getTechniqueDescriptor(technique)?.attrDescriptors;
+
+    if (attrDescriptors === undefined) {
+        return descriptors;
+    }
+
+    for (const attrName in attrDescriptors) {
+        if (!attrDescriptors.hasOwnProperty(attrName)) {
+            continue;
+        }
+
+        const descr = attrDescriptors[attrName];
+
+        if (descr === undefined || typeof descr === "number") {
+            continue;
+        }
+
+        if (descr.automatic === true) {
+            descriptors.push(attrName);
+        }
+    }
+
+    automaticAttributeCache.set(technique, descriptors);
+
+    return descriptors;
+}

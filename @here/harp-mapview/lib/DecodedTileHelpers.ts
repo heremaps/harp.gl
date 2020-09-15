@@ -24,7 +24,10 @@ import {
     TRANSPARENCY_PROPERTY_KEYS,
     Value
 } from "@here/harp-datasource-protocol";
-import { techniqueDescriptors } from "@here/harp-datasource-protocol/lib/TechniqueDescriptors";
+import {
+    getTechniqueAutomaticAttrs,
+    getTechniqueDescriptor
+} from "@here/harp-datasource-protocol/lib/TechniqueDescriptors";
 import {
     CirclePointsMaterial,
     disableBlending,
@@ -458,6 +461,8 @@ export function getMaterialConstructor(
  * [[MapObjectAdapter]].
  */
 function getMainMaterialStyledProps(technique: Technique): StyledProperties {
+    const automaticAttributes: any[] = getTechniqueAutomaticAttrs(technique);
+
     switch (technique.name) {
         case "dashed-line":
         case "solid-line": {
@@ -474,7 +479,8 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
                 "polygonOffset",
                 "polygonOffsetFactor",
                 "polygonOffsetUnits",
-                "depthTest"
+                "depthTest",
+                ...automaticAttributes
             ]);
             baseProps.lineWidth = buildMetricValueEvaluator(
                 technique.lineWidth ?? 0, // Compatibility: `undefined` lineWidth means hidden.
@@ -499,7 +505,8 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
                 "opacity",
                 "polygonOffset",
                 "polygonOffsetFactor",
-                "polygonOffsetUnits"
+                "polygonOffsetUnits",
+                ...automaticAttributes
             ]);
         case "standard":
         case "terrain":
@@ -516,7 +523,8 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
                 "emissive",
                 "emissiveIntensity",
                 "refractionRatio",
-                "normalMapType"
+                "normalMapType",
+                ...automaticAttributes
                 // All texture related properties are skipped as for now as they are handled by
                 // [[createMaterial]] directly without possibility for them to be dynamic.
                 // TODO: move handling of texture-like params to [[MapMaterialAdapter]] with proper
@@ -529,7 +537,13 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
         }
         case "circles":
         case "squares":
-            return pick(technique, ["color", "size", "opacity", "transparent"]);
+            return pick(technique, [
+                "color",
+                "size",
+                "opacity",
+                "transparent",
+                ...automaticAttributes
+            ]);
         case "extruded-line":
             return pick(technique, [
                 "color",
@@ -538,11 +552,12 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
                 "opacity",
                 "polygonOffset",
                 "polygonOffsetFactor",
-                "polygonOffsetUnits"
+                "polygonOffsetUnits",
+                ...automaticAttributes
             ]);
         case "line":
         case "segments":
-            return pick(technique, ["color", "transparent", "opacity"]);
+            return pick(technique, ["color", "transparent", "opacity", ...automaticAttributes]);
         default:
             return {};
     }
@@ -856,8 +871,7 @@ function getBaseColorProp(technique: Technique): any {
 }
 
 function getBaseColorPropName(technique: Technique): string | undefined {
-    const techDescriptor = techniqueDescriptors[technique.name];
-    return techDescriptor !== undefined ? techDescriptor.attrTransparencyColor : undefined;
+    return getTechniqueDescriptor(technique)?.attrTransparencyColor;
 }
 
 function getTextureBuffer(
