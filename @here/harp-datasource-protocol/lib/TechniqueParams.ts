@@ -241,6 +241,16 @@ export interface BaseTechniqueParams {
      * @see Picking example
      */
     enabled?: DynamicProperty<boolean>;
+
+    /**
+     * Set to 'true' if line should appear transparent.
+     *
+     * @remarks
+     * Rendering transparent lines may come with a
+     * slight performance impact.
+     * See https://threejs.org/docs/#api/en/materials/Material.transparent.
+     */
+    transparent?: DynamicProperty<boolean>;
 }
 
 export enum TextureCoordinateType {
@@ -316,13 +326,7 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * Skip rendering clobbered pixels.
      * See https://threejs.org/docs/#api/en/materials/Material.depthTest.
      */
-    depthTest?: boolean;
-    /**
-     * Set to 'true' if line should appear transparent. Rendering transparent lines may come with a
-     * slight performance impact.
-     * See https://threejs.org/docs/#api/en/materials/Material.transparent.
-     */
-    transparent?: boolean;
+    depthTest?: DynamicProperty<boolean>;
     /**
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
@@ -429,11 +433,6 @@ export interface PointTechniqueParams extends BaseTechniqueParams {
      * URL of a texture image to be loaded.
      */
     texture?: string;
-    /**
-     * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
-     * slight performance impact.
-     */
-    transparent?: boolean;
     /**
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
@@ -839,14 +838,6 @@ export interface LineTechniqueParams extends BaseTechniqueParams {
      */
     color: DynamicProperty<StyleColor>;
     /**
-     * Set to true if line should appear transparent.
-     *
-     * @remarks
-     * Rendering transparent lines may come with a
-     * slight performance impact.
-     */
-    transparent?: boolean;
-    /**
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
@@ -867,11 +858,6 @@ export interface SegmentsTechniqueParams extends BaseTechniqueParams {
      * @format color-hex
      */
     color: DynamicProperty<StyleColor>;
-    /**
-     * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
-     * slight performance impact.
-     */
-    transparent?: boolean;
     /**
      * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
      * opaque.
@@ -922,6 +908,13 @@ export interface PolygonalTechniqueParams {
     polygonOffsetUnits?: DynamicProperty<number>;
 
     /**
+     * Skip rendering clobbered pixels.
+     * See https://threejs.org/docs/#api/en/materials/Material.depthTest.
+     * @defaultValue `false`
+     */
+    depthTest?: DynamicProperty<boolean>;
+
+    /**
      * Sets the polygon outline color.
      * @format color-hex
      */
@@ -938,6 +931,25 @@ export interface PolygonalTechniqueParams {
      * transparent. A value of <= 0.0 disables fading.
      */
     lineFadeFar?: DynamicProperty<number>;
+
+    /**
+     * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
+     * slight performance impact.
+     */
+    transparent?: DynamicProperty<boolean>;
+
+    /**
+     * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
+     * opaque.
+     */
+    opacity?: DynamicProperty<number>;
+
+    /**
+     * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
+     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
+     */
+    color?: DynamicProperty<StyleColor>;
 }
 
 /**
@@ -956,25 +968,6 @@ export interface BasicExtrudedLineTechniqueParams
      * `"standard"`: Elaborate shading, with metalness, and roughness.
      */
     shading?: "basic";
-    /**
-     * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
-     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
-     * @format color-hex
-     */
-    color: DynamicProperty<StyleColor>;
-    /**
-     * Set to `true` if line should appear transparent.\
-     *
-     * @remarks
-     * Rendering transparent lines may come with a
-     * slight performance impact.
-     */
-    transparent?: boolean;
-    /**
-     * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
-     * opaque.
-     */
-    opacity?: DynamicProperty<number>;
     /**
      * Width of line in meters for different zoom levels.
      */
@@ -1035,16 +1028,6 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * @format color-hex
      */
     outlineColor?: DynamicProperty<StyleColor>;
-    /**
-     * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
-     * slight performance impact.
-     */
-    transparent?: boolean;
-    /**
-     * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
-     * opaque.
-     */
-    opacity?: DynamicProperty<number>;
     /**
      * @deprecated Specify metrics units as part of the value instead.
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
@@ -1124,37 +1107,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Size in world units how far to offset the line perpendicular to its direction.
      */
     offset?: DynamicProperty<number>;
-    /**
-     * Skip rendering clobbered pixels.
-     * See https://threejs.org/docs/#api/en/materials/Material.depthTest.
-     * @defaultValue `false`
-     */
-    depthTest?: boolean;
 }
 
 /**
  * Technique used to draw filled polygons.
  */
 export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechniqueParams {
-    /**
-     * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
-     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
-     * @format color-hex
-     */
-    color?: DynamicProperty<StyleColor>;
-    /**
-     * Set to `true` if line should appear transparent.
-     *
-     * @renarks
-     * Rendering transparent lines may come with a
-     * slight performance impact.
-     */
-    transparent?: boolean;
-    /**
-     * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
-     * opaque.
-     */
-    opacity?: DynamicProperty<number>;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      */
@@ -1293,16 +1251,6 @@ export interface ShaderTechniqueParams extends BaseTechniqueParams {
      * Type of primitive for the shader technique.
      */
     primitive: "point" | "line" | "segments" | "mesh";
-
-    /**
-     * Set to 'true' if line should appear transparent.
-     *
-     * @remarks
-     * Rendering transparent lines may come with a
-     * slight performance impact.
-     * See https://threejs.org/docs/#api/en/materials/Material.transparent.
-     */
-    transparent?: boolean;
 
     [name: string]: any;
 }
