@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     AttributeMap,
     BufferAttribute,
@@ -1324,11 +1323,11 @@ export class VectorTileDataEmitter {
         const isSpherical = this.m_decodeInfo.targetProjection.type === ProjectionType.Spherical;
 
         const edgeWidth = isExtruded
-            ? extrudedPolygonTechnique.lineWidth || 0.0
+            ? extrudedPolygonTechnique.lineWidth ?? 0.0
             : isFilled
             ? fillTechnique.lineWidth ?? 0.0
             : 0.0;
-        const hasEdges = edgeWidth > 0.0;
+        const hasEdges = typeof edgeWidth === "number" ? edgeWidth > 0.0 : true;
 
         let color: THREE.Color | undefined;
         if (isExtrudedPolygonTechnique(technique)) {
