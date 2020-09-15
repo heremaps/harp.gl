@@ -466,22 +466,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
     switch (technique.name) {
         case "dashed-line":
         case "solid-line": {
-            const baseProps: StyledProperties = pick(technique, [
-                "color",
-                "outlineColor",
-                "transparent",
-                "opacity",
-                "caps",
-                "drawRangeStart",
-                "drawRangeEnd",
-                "dashes",
-                "dashColor",
-                "polygonOffset",
-                "polygonOffsetFactor",
-                "polygonOffsetUnits",
-                "depthTest",
-                ...automaticAttributes
-            ]);
+            const baseProps = pick(technique, automaticAttributes);
             baseProps.lineWidth = buildMetricValueEvaluator(
                 technique.lineWidth ?? 0, // Compatibility: `undefined` lineWidth means hidden.
                 technique.metricUnit
@@ -549,7 +534,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
             ]);
         case "line":
         case "segments":
-            return pick(technique, ["color", "transparent", "opacity", ...automaticAttributes]);
+            return pick(technique, automaticAttributes);
         default:
             return {};
     }

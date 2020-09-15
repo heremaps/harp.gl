@@ -129,7 +129,8 @@ const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = 
     attrDescriptors: {
         enabled: AttrScope.FeatureGeometry,
         fadeFar: AttrScope.TechniqueRendering,
-        fadeNear: AttrScope.TechniqueRendering
+        fadeNear: AttrScope.TechniqueRendering,
+        transparent: { scope: AttrScope.TechniqueRendering, automatic: true }
     }
 };
 
@@ -180,6 +181,10 @@ const polygonalTechniqueDescriptor: TechniqueDescriptor<PolygonalTechniqueParams
         polygonOffset: { scope: AttrScope.TechniqueRendering, automatic: true },
         polygonOffsetFactor: { scope: AttrScope.TechniqueRendering, automatic: true },
         polygonOffsetUnits: { scope: AttrScope.TechniqueRendering, automatic: true },
+        depthTest: { scope: AttrScope.TechniqueRendering, automatic: true },
+        transparent: { scope: AttrScope.TechniqueRendering, automatic: true },
+        opacity: { scope: AttrScope.TechniqueRendering, automatic: true },
+        color: { scope: AttrScope.TechniqueRendering, automatic: true },
         lineColor: AttrScope.TechniqueRendering,
         lineFadeFar: AttrScope.TechniqueRendering,
         lineFadeNear: AttrScope.TechniqueRendering
@@ -191,14 +196,17 @@ const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTechnique
     polygonalTechniqueDescriptor,
     {
         attrDescriptors: {
-            color: AttrScope.TechniqueRendering,
-            opacity: AttrScope.TechniqueRendering,
-            transparent: AttrScope.TechniqueRendering,
             lineWidth: AttrScope.TechniqueRendering,
             secondaryWidth: AttrScope.TechniqueRendering,
             secondaryColor: AttrScope.TechniqueRendering,
             dashSize: AttrScope.TechniqueRendering,
-            gapSize: AttrScope.TechniqueRendering
+            gapSize: AttrScope.TechniqueRendering,
+            outlineColor: { scope: AttrScope.TechniqueRendering, automatic: true },
+            caps: { scope: AttrScope.TechniqueRendering, automatic: true },
+            drawRangeStart: { scope: AttrScope.TechniqueRendering, automatic: true },
+            drawRangeEnd: { scope: AttrScope.TechniqueRendering, automatic: true },
+            dashes: { scope: AttrScope.TechniqueRendering, automatic: true },
+            dashColor: { scope: AttrScope.TechniqueRendering, automatic: true }
         }
     }
 );
@@ -208,9 +216,8 @@ const lineTechniqueDescriptor = mergeTechniqueDescriptor<LineTechnique>(
     {
         attrDescriptors: {
             // TODO, check, which are really dynamic !
-            color: AttrScope.TechniqueRendering,
-            opacity: AttrScope.TechniqueRendering,
-            transparent: AttrScope.TechniqueRendering,
+            color: { scope: AttrScope.TechniqueRendering, automatic: true },
+            opacity: { scope: AttrScope.TechniqueRendering, automatic: true },
             lineWidth: AttrScope.FeatureGeometry
         }
     }
@@ -312,6 +319,7 @@ const techniqueDescriptors: TechniqueDescriptorRegistry = {
     squares: squaresTechniquePropTypes,
     circles: circlesTechniquePropTypes,
     line: lineTechniqueDescriptor,
+    segments: lineTechniqueDescriptor,
     fill: fillTechniqueDescriptor,
     text: textTechniqueDescriptor,
     shader: shaderTechniqueDescriptor
