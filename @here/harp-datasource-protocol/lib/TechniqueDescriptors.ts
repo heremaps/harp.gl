@@ -177,9 +177,9 @@ const lineMarkerTechniquePropTypes = mergeTechniqueDescriptor<LineMarkerTechniqu
 
 const polygonalTechniqueDescriptor: TechniqueDescriptor<PolygonalTechniqueParams> = {
     attrDescriptors: {
-        polygonOffset: AttrScope.TechniqueRendering,
-        polygonOffsetFactor: AttrScope.TechniqueRendering,
-        polygonOffsetUnits: AttrScope.TechniqueRendering,
+        polygonOffset: { scope: AttrScope.TechniqueRendering, automatic: true },
+        polygonOffsetFactor: { scope: AttrScope.TechniqueRendering, automatic: true },
+        polygonOffsetUnits: { scope: AttrScope.TechniqueRendering, automatic: true },
         lineColor: AttrScope.TechniqueRendering,
         lineFadeFar: AttrScope.TechniqueRendering,
         lineFadeNear: AttrScope.TechniqueRendering
@@ -221,9 +221,9 @@ const fillTechniqueDescriptor = mergeTechniqueDescriptor<FillTechnique>(
     polygonalTechniqueDescriptor,
     {
         attrDescriptors: {
-            color: AttrScope.TechniqueRendering,
-            opacity: AttrScope.TechniqueRendering,
-            transparent: AttrScope.TechniqueRendering,
+            color: { scope: AttrScope.TechniqueRendering, automatic: true },
+            opacity: { scope: AttrScope.TechniqueRendering, automatic: true },
+            transparent: { scope: AttrScope.TechniqueRendering, automatic: true },
             lineWidth: AttrScope.TechniqueRendering
         }
     }
