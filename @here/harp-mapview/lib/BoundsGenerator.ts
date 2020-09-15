@@ -153,9 +153,8 @@ export class BoundsGenerator {
 
         if (geoStartCorner) {
             // Generate polygon vertices from intersections of this canvas side with the world
-            // from its starting corner till the intersections of the horizon.
+            // from its starting corner till the last intersection with the horizon.
 
-            // There should only be one horizon intersection, if there's 2 take the last one.
             const worldHorizonPoint = horizon.getPoint(
                 horizonIntersections[horizonIntersections.length - 1]
             );
