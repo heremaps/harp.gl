@@ -488,25 +488,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
         case "standard":
         case "terrain":
         case "extruded-polygon": {
-            const baseProps: StyledProperties = pick(technique, [
-                "vertexColors",
-                "wireframe",
-                "roughness",
-                "metalness",
-                "alphaTest",
-                "depthTest",
-                "transparent",
-                "opacity",
-                "emissive",
-                "emissiveIntensity",
-                "refractionRatio",
-                "normalMapType",
-                ...automaticAttributes
-                // All texture related properties are skipped as for now as they are handled by
-                // [[createMaterial]] directly without possibility for them to be dynamic.
-                // TODO: move handling of texture-like params to [[MapMaterialAdapter]] with proper
-                // support for dynamic params
-            ]);
+            const baseProps = pick(technique, automaticAttributes);
             if (technique.vertexColors !== true) {
                 baseProps.color = technique.color;
             }
@@ -514,13 +496,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
         }
         case "circles":
         case "squares":
-            return pick(technique, [
-                "color",
-                "size",
-                "opacity",
-                "transparent",
-                ...automaticAttributes
-            ]);
+            return pick(technique, automaticAttributes);
         case "extruded-line":
             return pick(technique, [
                 "color",

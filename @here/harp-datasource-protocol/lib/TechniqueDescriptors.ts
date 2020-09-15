@@ -138,8 +138,9 @@ const pointTechniquePropTypes = mergeTechniqueDescriptor<PointTechniqueParams>(
     baseTechniqueParamsDescriptor,
     {
         attrDescriptors: {
-            color: AttrScope.TechniqueRendering,
-            transparent: AttrScope.TechniqueRendering
+            color: { scope: AttrScope.TechniqueRendering, automatic: true },
+            size: { scope: AttrScope.TechniqueRendering, automatic: true },
+            opacity: { scope: AttrScope.TechniqueRendering, automatic: true }
         }
     }
 );
@@ -241,17 +242,18 @@ const standardTechniqueDescriptor = mergeTechniqueDescriptor<StandardTechnique>(
     {
         attrDescriptors: {
             color: AttrScope.FeatureGeometry,
-            vertexColors: AttrScope.FeatureGeometry,
-            wireframe: AttrScope.TechniqueRendering,
-            roughness: AttrScope.TechniqueRendering,
-            metalness: AttrScope.TechniqueRendering,
-            alphaTest: AttrScope.TechniqueRendering,
-            depthTest: AttrScope.TechniqueRendering,
-            transparent: AttrScope.TechniqueRendering,
-            opacity: AttrScope.TechniqueRendering,
-            emissive: AttrScope.TechniqueRendering,
-            emissiveIntensity: AttrScope.TechniqueRendering,
-            refractionRatio: AttrScope.TechniqueRendering
+            vertexColors: { scope: AttrScope.TechniqueRendering, automatic: true },
+            wireframe: { scope: AttrScope.TechniqueRendering, automatic: true },
+            roughness: { scope: AttrScope.TechniqueRendering, automatic: true },
+            metalness: { scope: AttrScope.TechniqueRendering, automatic: true },
+            alphaTest: { scope: AttrScope.TechniqueRendering, automatic: true },
+            depthTest: { scope: AttrScope.TechniqueRendering, automatic: true },
+            transparent: { scope: AttrScope.TechniqueRendering, automatic: true },
+            opacity: { scope: AttrScope.TechniqueRendering, automatic: true },
+            emissive: { scope: AttrScope.TechniqueRendering, automatic: true },
+            emissiveIntensity: { scope: AttrScope.TechniqueRendering, automatic: true },
+            refractionRatio: { scope: AttrScope.TechniqueRendering, automatic: true },
+            normalMapType: { scope: AttrScope.TechniqueRendering, automatic: true }
         }
     }
 );
@@ -271,8 +273,6 @@ const extrudedPolygonTechniqueDescriptor = mergeTechniqueDescriptor<ExtrudedPoly
             footprint: AttrScope.FeatureGeometry,
             maxSlope: AttrScope.FeatureGeometry,
             animateExtrusion: AttrScope.TechniqueRendering,
-            opacity: AttrScope.TechniqueRendering,
-            transparent: AttrScope.TechniqueRendering,
             lineWidth: AttrScope.TechniqueRendering,
             lineFadeNear: AttrScope.TechniqueRendering,
             lineFadeFar: AttrScope.TechniqueRendering,
@@ -315,6 +315,7 @@ const techniqueDescriptors: TechniqueDescriptorRegistry = {
     "labeled-icon": lineMarkerTechniquePropTypes,
     "solid-line": solidLineTechniqueDescriptor,
     "dashed-line": solidLineTechniqueDescriptor,
+    terrain: standardTechniqueDescriptor,
     standard: standardTechniqueDescriptor,
     squares: squaresTechniquePropTypes,
     circles: circlesTechniquePropTypes,
