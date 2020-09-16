@@ -160,7 +160,7 @@ export class SphereHorizon {
         callback: (point: THREE.Vector3) => void,
         tStart: number = 0,
         tEnd: number = 1,
-        maxNumPoints: number = 10
+        maxNumPoints: number = 40
     ) {
         const numPoints = Math.max(
             Math.ceil(((tEnd < tStart ? 1 + tEnd : tEnd) - tStart) * maxNumPoints),

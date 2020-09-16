@@ -11,25 +11,28 @@ import { GeoCoordinatesLike } from "./GeoCoordinatesLike";
 import { GeoCoordLike, geoCoordLikeToGeoCoordinatesLike } from "./GeoCoordLike";
 import { GeoPolygonLike } from "./GeoPolygonLike";
 
-const computeLonSpanAcrossGreewich = (lonA: number, lonB: number) => {
+function computeLonSpanAcrossGreewich(lonA: number, lonB: number) {
     return Math.max(lonA, lonB) - Math.min(lonA, lonB);
-};
+}
 
-const isLeftToRightAntimeridianCrossing = (lonStart: number, lonEnd: number) => {
+function isLeftToRightAntimeridianCrossing(lonStart: number, lonEnd: number) {
     return (
         Math.sign(lonStart) === 1 &&
         Math.sign(lonEnd) === -1 &&
         computeLonSpanAcrossGreewich(lonStart, lonEnd) > 180
     );
-};
+}
 
-const isRightToLeftAntimeridianCrossing = (lonStart: number, lonEnd: number) => {
+function isRightToLeftAntimeridianCrossing(lonStart: number, lonEnd: number) {
+    return isLeftToRightAntimeridianCrossing(lonEnd, lonStart);
+}
+
+export function isAntimeridianCrossing(lonStart: number, lonEnd: number) {
     return (
-        Math.sign(lonStart) === -1 &&
-        Math.sign(lonEnd) === 1 &&
+        Math.sign(lonStart) === -Math.sign(lonEnd) &&
         computeLonSpanAcrossGreewich(lonStart, lonEnd) > 180
     );
-};
+}
 
 type MinThreeItemsArray<T> = [T, T, T, ...T[]];
 

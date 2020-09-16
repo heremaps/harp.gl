@@ -372,6 +372,51 @@ describe("BoundsGenerator", function() {
                 assert.closeTo(Math.abs(cameraRay.angleTo(worldPoint)), Math.PI / 2, 1e-5);
             }
         });
+
+        // Pole wrapping
+        it("bounds wrap around the north pole", function() {
+            mapView!.lookAt({ zoomLevel: 6, target: new GeoCoordinates(90, 0) });
+            mapView!.renderSync(); // render once to update camera parameter
+            const polygon = (boundsGenerator as BoundsGenerator).generate();
+            const coordinates = polygon?.coordinates;
+            assert.isDefined(polygon);
+            assert.isNotEmpty(coordinates);
+            assert.isAtLeast(coordinates!.length, 4);
+
+            checkCanvasCorners(coordinates!, CanvasSides.All);
+
+            // centroid should be above all polygon vertices (except those added at lat 90 to wrap
+            // the polygon around the pole)
+            const centroid = polygon!.getCentroid();
+            assert.isDefined(centroid);
+            for (const coords of coordinates!.filter(value => {
+                return value.latitude !== 90;
+            })) {
+                assert.isBelow(coords.latitude, centroid!.latitude);
+            }
+        });
+
+        it("bounds wrap around the south pole", function() {
+            mapView!.lookAt({ zoomLevel: 6, target: new GeoCoordinates(-90, 0) });
+            mapView!.renderSync(); // render once to update camera parameter
+            const polygon = (boundsGenerator as BoundsGenerator).generate();
+            const coordinates = polygon?.coordinates;
+            assert.isDefined(polygon);
+            assert.isNotEmpty(coordinates);
+            assert.isAtLeast(coordinates!.length, 4);
+
+            checkCanvasCorners(coordinates!, CanvasSides.All);
+
+            // centroid should be above all polygon vertices (except those added at lat -90 to wrap
+            // the polygon around the pole)
+            const centroid = polygon!.getCentroid();
+            assert.isDefined(centroid);
+            for (const coords of coordinates!.filter(value => {
+                return value.latitude !== -90;
+            })) {
+                assert.isAbove(coords.latitude, centroid!.latitude);
+            }
+        });
     });
 
     describe("Mercator Projection", function() {
