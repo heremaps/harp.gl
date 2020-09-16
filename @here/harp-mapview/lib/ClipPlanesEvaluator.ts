@@ -878,7 +878,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const zLength = 1 / Math.tan(halfVerticalFovAngle);
 
             // Camera space direction vector along the top right frustum edge (of the camera).
-            const upperRightDirection = this.m_tmpVectors[1];
+            const upperRightDirection = this.m_tmpVectors[2];
             upperRightDirection.set(camera.aspect, 1, -zLength);
 
             // Now we need to account for camera tilt and frustum volume, so the longest
@@ -898,21 +898,27 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // screen)
             const modifiedAlpha = Math.abs(alpha - cameraPitch);
 
-            // Transform the direction into world space
+            // Transform the vector to world space
             upperRightDirection.applyMatrix4(camera.matrixWorld);
+            // Transform the vector to be relative from the camera
             upperRightDirection.sub(camera.position);
+            // Ray must be given normalized vector, otherwise it won't work
             upperRightDirection.normalize();
 
             this.m_ray.set(camera.position, upperRightDirection);
-            const horizonWithinView = this.m_ray.intersectSphere(
+            // World space intersection with sphere or null
+            const worldSpaceFrustumSphereIntersection = this.m_ray.intersectSphere(
                 this.m_sphere,
                 this.m_tmpVectors[0]
             );
             // Use tangent based far plane if horizon is within field of view
             farPlane =
-                horizonWithinView === null
+                worldSpaceFrustumSphereIntersection === null
                     ? this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha)
-                    : this.getTiltedFovBasedFarPlane(d, r, halfVerticalFovAngle, cameraPitch);
+                    : this.getFarPlaneBasedOnFovIntersection(
+                          worldSpaceFrustumSphereIntersection,
+                          camera
+                      );
         } else {
             farPlane = this.getOrthoBasedFarPlane(d, r);
         }
@@ -946,54 +952,21 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         return viewRanges;
     }
 
-    protected getTiltedFovBasedFarPlane(
-        d: number,
-        r: number,
-        halfFovAngle: number,
-        cameraPitch: number
+    // Computes the far plane given the point where the upper right edg of the FOV intersects with
+    // the earth's sphere projected (dot product) along the camera's view direction.
+    protected getFarPlaneBasedOnFovIntersection(
+        worldSpaceIntersection: THREE.Vector3,
+        camera: THREE.PerspectiveCamera
     ) {
-        // Find intersection point that is closer to tangent point.
-        //
-        //         , - ~ ~ ~ - ,
-        //     , '               ' ,
-        //   ,           .           ,
-        //  ,            .     r     ,' T1
-        // ,             .     ,  '  / ,
-        // ,             . O.'  a   /  ,
-        // ,             | .  `  . /   ,
-        //  ,            |   .  r / TA,
-        //   ,           |    .  /   ,
-        //     ,         |     ./  ,'_____ far
-        //       ' -_, _ | _ , /' T0
-        //     near      |    /
-        //               |   / t
-        //             d | /
-        //               |/
-        //               C
-        //
-        // See:
-        // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+        const toIntersection = this.m_tmpVectors[1];
+        toIntersection.copy(worldSpaceIntersection);
+        toIntersection.sub(camera.position);
 
-        // compute length of t (distance to fov intersection with sphere)
-        // with law of cosines:
-        // r² = d² + t² - 2dt * cos(alpha)
-        // solved for t:
-        // t0 = d * cos(alpha) - sqrt(d²*cos²(alpha) - d² + r²)  <-- first intersection
-        // t1 = d * cos(alpha) + sqrt(d²*cos²(alpha) - d² + r²)  <-- second intersection
-        // Use first intersection:
-        const cosAlpha = Math.cos(cameraPitch + halfFovAngle);
-        const dSqr = d * d;
-        const t = d * cosAlpha - Math.sqrt(dSqr * cosAlpha * cosAlpha - dSqr + r * r);
+        const cameraDirection = this.m_tmpVectors[2];
+        camera.getWorldDirection(cameraDirection);
+        cameraDirection.normalize();
 
-        assert(
-            !isNaN(t),
-            "Field of view does not intersect sphere. Use tangent based far plane instead."
-        );
-
-        // project t onto camera fwd vector
-        const far = Math.cos(halfFovAngle) * t;
-
-        return far;
+        return toIntersection.dot(cameraDirection);
     }
 
     private getCameraPitch(cameraToOrigin: THREE.Vector3, camera: THREE.PerspectiveCamera) {
