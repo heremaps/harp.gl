@@ -229,6 +229,7 @@ const fillTechniqueDescriptor = mergeTechniqueDescriptor<FillTechnique>(
     polygonalTechniqueDescriptor,
     {
         attrDescriptors: {
+            wireframe: { scope: AttrScope.TechniqueRendering, automatic: true },
             color: { scope: AttrScope.TechniqueRendering, automatic: true },
             opacity: { scope: AttrScope.TechniqueRendering, automatic: true },
             transparent: { scope: AttrScope.TechniqueRendering, automatic: true },
