@@ -1042,7 +1042,19 @@ export class TileGeometryCreator {
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
                         objectColor: buildingTechnique.color,
-                        opacity: buildingTechnique.opacity
+                        opacity: buildingTechnique.opacity,
+                        lineWidth: (frameMapView: MapAdapterUpdateEnv) => {
+                            // lineWidth for ExtrudedPolygonEdges only supports 0 or 1
+                            const value = getPropertyValue(
+                                buildingTechnique.lineWidth,
+                                frameMapView.env
+                            );
+                            if (typeof value === "number") {
+                                return THREE.MathUtils.clamp(value, 0, 1);
+                            } else {
+                                return 0;
+                            }
+                        }
                     });
                     objects.push(edgeObj);
                 }
