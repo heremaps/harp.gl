@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     BufferAttribute,
     ColorUtils,
@@ -12,6 +11,7 @@ import {
     getPropertyValue,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
+    isFillTechnique,
     isShaderTechnique,
     isStandardTechnique,
     isTerrainTechnique,
@@ -124,7 +124,7 @@ export function createMaterial(
         material.name = technique.id;
     }
 
-    if (isExtrudedPolygonTechnique(technique)) {
+    if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
         material.flatShading = true;
     }
 
