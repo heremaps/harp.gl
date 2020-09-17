@@ -247,6 +247,24 @@ export class EdgeMaterial extends RawShaderMaterial
         this.uniforms.edgeColor.value.copy(value);
     }
 
+    get lineWidth(): number {
+        return this.linewidth;
+    }
+
+    /**
+     * Only lineWidth of 0 and 1 is supported.
+     * lineWidth <= 0 will result in not visible lines, everything else into lines
+     * visible with lineWidth 1
+     */
+    set lineWidth(value: number) {
+        this.linewidth = value;
+        if (this.linewidth <= 0) {
+            this.visible = false;
+        } else {
+            this.visible = true;
+        }
+    }
+
     /**
      * Color mix value. Mixes between vertexColors and edgeColor.
      */
