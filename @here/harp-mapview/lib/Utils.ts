@@ -791,7 +791,8 @@ export namespace MapViewUtils {
         cameraPos.copy(camera.position);
 
         const halfVertFov = THREE.MathUtils.degToRad(camera.fov / 2);
-        const halfHorzFov = THREE.MathUtils.degToRad((camera.fov / 2) * camera.aspect);
+        const halfHorzFov =
+            MapViewUtils.calculateHorizontalFovByVerticalFov(2 * halfVertFov, camera.aspect) / 2;
 
         // tan(fov/2)
         const halfVertFovTan = 1 / Math.tan(halfVertFov);
