@@ -466,6 +466,48 @@ describe("VisibleTileSet", function() {
         assert(parentDisposeSpy.calledOnce);
     });
 
+    it("#markTilesDirty properly uses passed filter", async function() {
+        setupBerlinCenterCameraFromSamples();
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const offset = 0;
+        const frameNumber = 42;
+
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+
+        // fill cache with additional arbitrary not visible tile
+        // that shall be disposed() in this test
+        const parentTileKey = TileKey.parentMortonCode(371506851);
+        const parentTile = fixture.vts.getTile(
+            fixture.ds[0],
+            TileKey.fromMortonCode(parentTileKey),
+            offset,
+            frameNumber
+        ) as Tile;
+        const parentDisposeSpy = sinon.spy(parentTile, "dispose");
+        const parentReloadSpy = sinon.spy(parentTile, "load");
+
+        const visibleTileDisposeSpies = dataSourceTileList[0].visibleTiles.map(tile =>
+            sinon.spy(tile, "dispose")
+        );
+
+        const visibleTileReloadSpies = dataSourceTileList[0].visibleTiles.map(tile =>
+            sinon.spy(tile, "load")
+        );
+
+        fixture.vts.markTilesDirty(undefined, tile => tile.tileKey.equals(parentTile.tileKey));
+
+        // only visible should be updated
+        assert(visibleTileReloadSpies[0].notCalled);
+        assert(visibleTileReloadSpies[1].notCalled);
+        assert(parentReloadSpy.notCalled);
+
+        // check that dispose was called correctly
+        assert(visibleTileDisposeSpies[0].notCalled);
+        assert(visibleTileDisposeSpies[1].notCalled);
+        assert(parentDisposeSpy.calledOnce);
+    });
+
     it("caches frustum intersection for data sources with same tiling scheme", async function() {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
