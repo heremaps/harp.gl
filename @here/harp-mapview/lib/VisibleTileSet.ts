@@ -886,18 +886,19 @@ export class VisibleTileSet {
      *
      * @param dataSource - If passed, only the tiles from this {@link DataSource} instance
      *      are processed. If `undefined`, tiles from all {@link DataSource}s are processed.
+     * @param filter Optional tile filter
      */
-    markTilesDirty(dataSource?: DataSource) {
+    markTilesDirty(dataSource?: DataSource, filter?: (tile: Tile) => boolean) {
         if (dataSource === undefined) {
             this.dataSourceTileList.forEach(renderListEntry => {
-                this.markDataSourceTilesDirty(renderListEntry);
+                this.markDataSourceTilesDirty(renderListEntry, filter);
             });
         } else {
             const renderListEntry = this.dataSourceTileList.find(e => e.dataSource === dataSource);
             if (renderListEntry === undefined) {
                 return;
             }
-            this.markDataSourceTilesDirty(renderListEntry);
+            this.markDataSourceTilesDirty(renderListEntry, filter);
         }
     }
 
@@ -1233,7 +1234,10 @@ export class VisibleTileSet {
         });
     }
 
-    private markDataSourceTilesDirty(renderListEntry: DataSourceTileList) {
+    private markDataSourceTilesDirty(
+        renderListEntry: DataSourceTileList,
+        filter?: (tile: Tile) => boolean
+    ) {
         const dataSourceCache = this.m_dataSourceCache;
         const retainedTiles: Set<TileCacheId> = new Set();
 
@@ -1254,14 +1258,18 @@ export class VisibleTileSet {
         }
 
         renderListEntry.visibleTiles.forEach(tile => {
-            markTileDirty(tile, this.m_tileGeometryManager);
+            if (filter === undefined || filter(tile)) {
+                markTileDirty(tile, this.m_tileGeometryManager);
+            }
         });
         renderListEntry.renderedTiles.forEach(tile => {
-            markTileDirty(tile, this.m_tileGeometryManager);
+            if (filter === undefined || filter(tile)) {
+                markTileDirty(tile, this.m_tileGeometryManager);
+            }
         });
 
         dataSourceCache.forEach((tile, key) => {
-            if (!retainedTiles.has(key)) {
+            if ((filter === undefined || filter(tile)) && !retainedTiles.has(key)) {
                 dataSourceCache.deleteByKey(key);
                 tile.dispose();
             }

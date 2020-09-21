@@ -2950,9 +2950,10 @@ export class MapView extends EventDispatcher {
      *
      * @param dataSource - If passed, only the tiles from this {@link DataSource} instance
      * are processed. If `undefined`, tiles from all {@link DataSource}s are processed.
+     * @param filter Optional tile filter
      */
-    markTilesDirty(dataSource?: DataSource) {
-        this.m_visibleTiles.markTilesDirty(dataSource);
+    markTilesDirty(dataSource?: DataSource, filter?: (tile: Tile) => boolean) {
+        this.m_visibleTiles.markTilesDirty(dataSource, filter);
     }
 
     /**

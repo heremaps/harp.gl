@@ -36,6 +36,7 @@ import { MapObjectAdapter } from "../lib/MapObjectAdapter";
 import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
+import { VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 //    expect-type assertions are unused expressions and are perfectly valid
@@ -1715,5 +1716,15 @@ describe("MapView", function() {
             mapView.update();
             return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
+    });
+
+    it("markTilesDirty proxies call to VisibleTileSet", () => {
+        const markTilesDirtySpy = sinon.spy(VisibleTileSet.prototype, "markTilesDirty");
+        mapView = new MapView({ canvas });
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
+        const tileFilter = () => true;
+        mapView.markTilesDirty(dataSource, tileFilter);
+
+        expect(markTilesDirtySpy.calledWith(dataSource, tileFilter)).to.be.true;
     });
 });
