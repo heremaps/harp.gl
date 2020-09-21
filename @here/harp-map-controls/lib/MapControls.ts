@@ -874,7 +874,7 @@ export class MapControls extends EventDispatcher {
             return;
         }
 
-        if (event.shiftKey || event.ctrlKey) {
+        if (event.shiftKey) {
             return;
         }
 
@@ -884,11 +884,12 @@ export class MapControls extends EventDispatcher {
             return;
         }
 
-        if (event.button === 0 && this.panEnabled) {
+        // Support mac users who press ctrl key when wanting to right click
+        if (event.button === 0 && !event.ctrlKey && this.panEnabled) {
             this.m_state = State.PAN;
         } else if (event.button === 1) {
             this.m_state = State.ROTATE;
-        } else if (event.button === 2 && this.tiltEnabled) {
+        } else if ((event.button === 2 || event.ctrlKey) && this.tiltEnabled) {
             this.m_state = State.ORBIT;
         } else {
             return;
