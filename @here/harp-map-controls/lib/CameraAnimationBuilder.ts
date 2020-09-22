@@ -117,7 +117,7 @@ export class CameraAnimationBuilder {
         );
 
         //calculate two ControlPoints on the maximal altitude in between the start and target points
-        const midCoord0 = this.geoCoordLerp(
+        const midCoord0 = GeoCoordinates.lerp(
             startControlPoint.target as GeoCoordinates,
             targetControlPoint.target as GeoCoordinates,
             0.25
@@ -138,7 +138,7 @@ export class CameraAnimationBuilder {
             )
         });
         controlPoints.push(midPoint0);
-        const midCoord1 = this.geoCoordLerp(
+        const midCoord1 = GeoCoordinates.lerp(
             startControlPoint.target as GeoCoordinates,
             targetControlPoint.target as GeoCoordinates,
             0.75
@@ -193,16 +193,5 @@ export class CameraAnimationBuilder {
         }
 
         return { controlPoints };
-    }
-
-    private static geoCoordLerp(
-        g0: GeoCoordinates,
-        g1: GeoCoordinates,
-        factor: number
-    ): GeoCoordinates {
-        const v0 = new THREE.Vector3(g0.lat, g0.longitude, g0.altitude);
-        const v1 = new THREE.Vector3(g1.lat, g1.longitude, g1.altitude);
-        v0.lerp(v1, factor);
-        return new GeoCoordinates(v0.x, v0.y, v0.z);
     }
 }

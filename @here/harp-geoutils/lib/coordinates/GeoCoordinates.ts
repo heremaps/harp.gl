@@ -15,6 +15,9 @@ export const MIN_LATITUDE = -90;
 export const MAX_LONGITUDE = 180;
 export const MIN_LONGITUDE = -180;
 
+const tmpV0 = new THREE.Vector3();
+const tmpV1 = new THREE.Vector3();
+
 /**
  * `GeoCoordinates` is used to represent geo positions.
  */
@@ -105,6 +108,44 @@ export class GeoCoordinates implements GeoCoordinatesLike {
         }
 
         throw new Error("Invalid input coordinate format.");
+    }
+
+    /**
+     * Returns a `GeoCoordinates` resulting from the linear interpolation of other two.
+     * @param geoCoords0 - One of the `GeoCoordinates` used for interpolation.
+     * @param geoCoords1 - The other `GeoCoordinates` used for interpolation.
+     * @param factor - Interpolation factor. If `0` result will be equal to `geoCoords0`, if `1`
+     * it'll be equal to `geoCoords1`.
+     * @param wrap - If `true`, interpolation will be done across the antimeridian, otherwise it's
+     * done across the Greenwich meridian. Supported only if longitude span is less than 360 deg.
+     * @default false
+     * @param normalize - If `true`, interpolation result will be normalized. @default false
+     */
+    static lerp(
+        geoCoords0: GeoCoordinates,
+        geoCoords1: GeoCoordinates,
+        factor: number,
+        wrap: boolean = false,
+        normalize: boolean = false
+    ): GeoCoordinates {
+        if (wrap) {
+            if (geoCoords0.lng < geoCoords1.lng) {
+                const geoCoordsEnd = geoCoords0.clone();
+                geoCoordsEnd.longitude += 360;
+                return this.lerp(geoCoords1, geoCoordsEnd, 1 - factor);
+            } else {
+                const geoCoordsEnd = geoCoords1.clone();
+                geoCoordsEnd.longitude += 360;
+                return this.lerp(geoCoords0, geoCoordsEnd, factor);
+            }
+        }
+
+        const v0 = tmpV0.set(geoCoords0.lat, geoCoords0.lng, geoCoords0.altitude ?? 0);
+        const v1 = tmpV1.set(geoCoords1.lat, geoCoords1.lng, geoCoords1.altitude ?? 0);
+        v0.lerp(v1, factor);
+        const result = new GeoCoordinates(v0.x, v0.y, v0.z);
+
+        return normalize ? result.normalized() : result;
     }
 
     /**
