@@ -16,11 +16,7 @@ function computeLonSpanAcrossGreewich(lonA: number, lonB: number) {
 }
 
 function isLeftToRightAntimeridianCrossing(lonStart: number, lonEnd: number) {
-    return (
-        Math.sign(lonStart) === 1 &&
-        Math.sign(lonEnd) === -1 &&
-        computeLonSpanAcrossGreewich(lonStart, lonEnd) > 180
-    );
+    return lonStart > 0 && lonEnd < 0 && computeLonSpanAcrossGreewich(lonStart, lonEnd) > 180;
 }
 
 function isRightToLeftAntimeridianCrossing(lonStart: number, lonEnd: number) {

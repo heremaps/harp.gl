@@ -288,17 +288,19 @@ export class BoundsGenerator {
         // Create first wrapping vertex (number 1 in the diagram above).
         const camLon = this.m_projection.unprojectPoint(this.m_camera.position).lng;
         const wrapLat = northPoleInView ? 90 : -90;
-        const wrapLon = camLon + 180;
-        const geoCoordsWrapTopRight = new GeoCoordinates(wrapLat, wrapLon).normalized();
+        const wrapLon = northPoleInView ? camLon + 180 : camLon - 180;
+        const geoWrapTopRight = new GeoCoordinates(wrapLat, wrapLon);
+        const geoWrapTopRightNorm = geoWrapTopRight.normalized();
 
         // Find the polygon side crossing the camera antimeridian.
-        const crossLon = geoCoordsWrapTopRight.lng;
+        const crossLon = geoWrapTopRightNorm.lng;
         let prevLon = coordinates[coordinates.length - 1].lng;
-
-        const hemisphereCrossEndIndex = coordinates.findIndex((value: GeoCoordinates) => {
+        // whether the crossing also crosses greenwich antimerdian.
+        let isGwAntimeridianCrossing = false;
+        const hSphereCrossEndIndex = coordinates.findIndex((value: GeoCoordinates) => {
             if (isAntimeridianCrossing(prevLon, value.lng)) {
-                const absCrossLon = Math.abs(crossLon);
-                if (absCrossLon > Math.abs(value.lng) && absCrossLon > Math.abs(prevLon)) {
+                if (Math.sign(crossLon - value.lng) === Math.sign(crossLon - prevLon)) {
+                    isGwAntimeridianCrossing = true;
                     return true;
                 }
             } else if (Math.sign(crossLon - value.lng) !== Math.sign(crossLon - prevLon)) {
@@ -309,7 +311,7 @@ export class BoundsGenerator {
             return false;
         });
 
-        if (hemisphereCrossEndIndex < 0) {
+        if (hSphereCrossEndIndex < 0) {
             // No polygon side crosses the camera antimeridian, meaning that the polygon doesn't
             // actually go above the pole to the other side of the world, no wrapping needed.
             return;
@@ -321,42 +323,53 @@ export class BoundsGenerator {
 
         // Added to ensure antimeridian crossing detection when coordinates are wrapped around it by
         // GeoPolygon (all polygon sides must have longitude spans smaller than 180 degrees).
-        const geoCoordsWrapRight = new GeoCoordinates(
-            wrapLat,
-            camLon + wrapSideOffset
-        ).normalized();
-
-        const geoCoordsWrapBottom = new GeoCoordinates(wrapLat, camLon).normalized();
+        const geoWrapRight = new GeoCoordinates(wrapLat, camLon + wrapSideOffset).normalized();
+        const geoWrapBottom = new GeoCoordinates(wrapLat, camLon).normalized();
 
         // Added to ensure antimeridian crossing detection when coordinates are wrapped around it by
         // GeoPolygon (all polygon sides must have longitude spans smaller than 180 degrees).
-        const geoCoordsWrapLeft = new GeoCoordinates(wrapLat, camLon - wrapSideOffset).normalized();
+        const geoWrapLeft = new GeoCoordinates(wrapLat, camLon - wrapSideOffset).normalized();
+        const geoWrapTopLeft = new GeoCoordinates(wrapLat, wrapLon + wrapCornerOffset).normalized();
 
-        const geoCoordsWrapTopLeft = new GeoCoordinates(
-            wrapLat,
-            wrapLon + wrapCornerOffset
-        ).normalized();
-
-        const hemisphereCrossStartIndex =
-            (hemisphereCrossEndIndex + coordinates.length - 1) % coordinates.length;
-        const crossEndVertex = coordinates[hemisphereCrossEndIndex];
-        const crossStartVertex = coordinates[hemisphereCrossStartIndex];
+        const hSphereCrossStartIndex =
+            (hSphereCrossEndIndex + coordinates.length - 1) % coordinates.length;
+        const crossEndVertex = coordinates[hSphereCrossEndIndex];
+        const crossStartVertex = coordinates[hSphereCrossStartIndex];
 
         // Last wrapping vertex (number 6) is linearly interpolated at the polygon side crossing the
         // camera antimeridian.
-        const crossMiddleLat = MathUtils.lerp(crossStartVertex.lat, crossEndVertex.lat, 0.01);
-        const crossMiddleLon = MathUtils.lerp(crossStartVertex.lng, crossEndVertex.lng, 0.01);
-        const crossMiddleVertex = new GeoCoordinates(crossMiddleLat, crossMiddleLon);
+        let crossStartLon = crossStartVertex.lng;
+        let crossStartLat = crossStartVertex.lat;
+        let crossEndLon = crossEndVertex.lng;
+        let crossEndLat = crossEndVertex.lat;
+        let interpolationFactor = 0.01;
+        if (isGwAntimeridianCrossing) {
+            if (crossStartLon < 0) {
+                crossStartLon += 360;
+                // swap start and end
+                [crossStartLon, crossEndLon] = [crossEndLon, crossStartLon];
+                [crossStartLat, crossEndLat] = [crossEndLat, crossStartLat];
+                interpolationFactor = 1 - interpolationFactor;
+            } else {
+                crossEndLon += 360;
+            }
+        }
+        const crossMiddleLat = MathUtils.lerp(crossStartLat, crossEndLat, interpolationFactor);
+        const crossMiddleLon = MathUtils.lerp(crossStartLon, crossEndLon, interpolationFactor);
+        const crossMiddleVertex =
+            isGwAntimeridianCrossing && northPoleInView
+                ? new GeoCoordinates(crossMiddleLat, crossMiddleLon - 360)
+                : new GeoCoordinates(crossMiddleLat, crossMiddleLon).normalized();
 
         // Add the wrapping vertices to the array in the proper order (see diagram above).
         coordinates.splice(
-            hemisphereCrossEndIndex,
+            hSphereCrossEndIndex,
             0,
-            geoCoordsWrapTopRight, // 1
-            geoCoordsWrapRight, // 2
-            geoCoordsWrapBottom, // 3
-            geoCoordsWrapLeft, // 4
-            geoCoordsWrapTopLeft, // 5
+            wrapLon < -180 ? geoWrapTopRight : geoWrapTopRightNorm, // 1
+            geoWrapRight, // 2
+            geoWrapBottom, // 3
+            geoWrapLeft, // 4
+            geoWrapTopLeft, // 5
             crossMiddleVertex // 6
         );
     }
