@@ -173,13 +173,13 @@ describe("MapViewUtils", function() {
 
                 expect(oldWorldTarget.distanceTo(newWorldTarget)).to.be.closeTo(
                     0,
-                    projection === sphereProjection ? 2e-10 : Number.EPSILON
+                    projection === sphereProjection ? 1e-9 : Number.EPSILON
                 );
                 expect(oldDistance).to.be.closeTo(newDistance, 1e-9);
 
                 // Also check that we did not introduce any roll
                 const { roll } = MapViewUtils.extractAttitude(mapView, mapView.camera);
-                expect(roll).to.be.closeTo(0, Number.EPSILON);
+                expect(roll).to.be.closeTo(0, 1e-15);
             });
             it("limits tilt when orbiting around center", function() {
                 setCamera(

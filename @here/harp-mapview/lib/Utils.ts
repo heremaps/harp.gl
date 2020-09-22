@@ -266,12 +266,15 @@ export namespace MapViewUtils {
         }
         const mapTargetNormal = projection.surfaceNormal(mapTargetWorld, new THREE.Vector3());
 
-        const dirMapTarget = camera.position
-            .clone()
-            .sub(mapTargetWorld)
-            .normalize();
+        camera.updateMatrixWorld(true);
+        const dir = cache.vector3[1].setFromMatrixColumn(camera.matrixWorld, 2);
+        const up = cache.vector3[2].setFromMatrixColumn(camera.matrixWorld, 1);
 
-        const currentTilt = dirMapTarget.angleTo(mapTargetNormal);
+        // Due to inaccuracies it can happen that the tilt angle gets less than 0.
+        // Using the dot product of the direction vector and the surface normal alone does not give us the sign.
+        const tiltSign = Math.sign(up.dot(mapTargetNormal));
+
+        const currentTilt = (tiltSign === 0 ? 1 : tiltSign) * dir.angleTo(mapTargetNormal);
 
         //FIXME(HARP-11926): For globe tilt in the map center is different from the tilt in the rotation center,
         //hence the clamped tilt is too conservative.
