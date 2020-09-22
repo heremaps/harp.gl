@@ -15,6 +15,7 @@ import {
 } from "@here/harp-text-canvas";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
 
 /**

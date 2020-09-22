@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import { TileKey } from "@here/harp-geoutils";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -24,7 +25,6 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { TileKey } from "@here/harp-geoutils";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { overlayTextElement } from "../geometry/overlayOnElevation";
@@ -149,6 +149,7 @@ class TextElementLists {
         // All text element lists here have the same priority.
         return this.lists[0].group.priority;
     }
+
     /**
      * Sum up the number of elements in all lists.
      */
@@ -1736,7 +1737,9 @@ export class TextElementsRenderer {
             this.m_tmpVector3
         );
         // Only process labels frustum-clipped labels
-        if (this.m_screenProjector.project(worldPosition, tempScreenPosition) === undefined) {
+        if (
+            this.m_screenProjector.projectOnScreen(worldPosition, tempScreenPosition) === undefined
+        ) {
             return false;
         }
         // Add this POI as a point label.
@@ -1790,7 +1793,9 @@ export class TextElementsRenderer {
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
                 // Only process labels frustum-clipped labels
-                if (this.m_screenProjector.project(point, tempScreenPosition) !== undefined) {
+                if (
+                    this.m_screenProjector.projectOnScreen(point, tempScreenPosition) !== undefined
+                ) {
                     // Find a suitable location for the lineMarker to be placed at.
                     let tooClose = false;
                     for (let j = 0; j < shieldGroup.length; j += 2) {
@@ -1831,7 +1836,9 @@ export class TextElementsRenderer {
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
                 // Only process labels frustum-clipped labels
-                if (this.m_screenProjector.project(point, tempScreenPosition) !== undefined) {
+                if (
+                    this.m_screenProjector.projectOnScreen(point, tempScreenPosition) !== undefined
+                ) {
                     this.addPointLabel(
                         labelState,
                         point,

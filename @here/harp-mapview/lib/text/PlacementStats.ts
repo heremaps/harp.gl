@@ -35,6 +35,7 @@ export class PlacementStats {
         this.numPoiTextsInvisible = 0;
         this.numRenderedTextElements = 0;
     }
+
     log() {
         const numNotRendered =
             this.uninitialized +

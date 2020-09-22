@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as THREE from "three";
 
 import {
     IBloomEffect,
@@ -12,6 +11,8 @@ import {
     IVignetteEffect
 } from "@here/harp-datasource-protocol";
 import { SepiaShader, VignetteShader } from "@here/harp-materials";
+import * as THREE from "three";
+
 import { IPassManager } from "./IPassManager";
 import { LowResRenderPass } from "./LowResRenderPass";
 import { MSAARenderPass, MSAASampling } from "./MSAARenderPass";
@@ -154,6 +155,7 @@ export class MapRenderingManager implements IMapRenderingManager {
         radius: 0.4,
         threshold: 0.85
     };
+
     outline = {
         enabled: false,
         thickness: 0.005,
@@ -161,11 +163,13 @@ export class MapRenderingManager implements IMapRenderingManager {
         ghostExtrudedPolygons: false,
         needsUpdate: false
     };
+
     vignette = {
         enabled: false,
         offset: 1.0,
         darkness: 1.0
     };
+
     sepia = {
         enabled: false,
         amount: 0.5

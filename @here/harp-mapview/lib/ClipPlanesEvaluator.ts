@@ -8,6 +8,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { ElevationProvider } from "./ElevationProvider";
 import { MapViewUtils } from "./Utils";
 
@@ -71,6 +72,7 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         new THREE.Vector3(),
         new THREE.Vector3()
     ];
+
     protected m_tmpQuaternion: THREE.Quaternion = new THREE.Quaternion();
 
     constructor(
@@ -85,7 +87,6 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         this.farMin = nearMin * nearFarMultiplier + farOffset;
     }
 
-    // tslint:disable-next-line: no-empty
     set minElevation(elevation: number) {}
 
     get minElevation(): number {
@@ -93,7 +94,6 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         return 0;
     }
 
-    // tslint:disable-next-line: no-empty
     set maxElevation(elevation: number) {}
 
     get maxElevation(): number {
@@ -256,10 +256,14 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         new THREE.Vector3(),
         new THREE.Vector3()
     ];
+
     /**
      * Helper object for reducing performance impact.
      */
     protected m_tmpQuaternion: THREE.Quaternion = new THREE.Quaternion();
+
+    protected m_sphere: THREE.Sphere;
+
     private readonly m_minimumViewRange: ViewRanges;
 
     /**
@@ -312,6 +316,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             minimum: this.nearMin,
             maximum: Math.max(nearMin * farMaxRatio, nearMin + nearFarMargin)
         };
+        this.m_sphere = new THREE.Sphere(new THREE.Vector3(), EarthConstants.EQUATORIAL_RADIUS);
     }
 
     /** @override */
@@ -423,8 +428,15 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // which is definitely closer than the tangent point mentioned above.
             const cam = camera as THREE.PerspectiveCamera;
             // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
-            const aspect = cam.aspect > 1 ? cam.aspect : 1 / cam.aspect;
-            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
+
+            let halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
+            // If width > height, then we have to compute the horizontal FOV.
+            if (cam.aspect > 1) {
+                halfFovAngle = MapViewUtils.calculateHorizontalFovByVerticalFov(
+                    THREE.MathUtils.degToRad(cam.fov),
+                    cam.aspect
+                );
+            }
 
             const farTangent = this.getTangentBasedFarPlane(cam, d, r, alpha);
             farPlane =
@@ -560,7 +572,6 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         //               C
         //
         // See:
-        // tslint:disable-next-line: max-line-length
         // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 
         // Vector from camera to world center
@@ -655,6 +666,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
  * between camera __look at__ vector and the ground surface normal.
  */
 export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
+    private readonly m_ray = new THREE.Ray();
     /**
      * Calculate the lengths of frustum planes intersection with the ground plane.
      *
@@ -714,7 +726,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // opposite to elevating ground level.
         const halfPiLimit = Math.PI / 2 - epsilon;
         const cameraAltitude = this.getCameraAltitude(camera, projection);
-        // tslint:disable-next-line: deprecation
         const cameraTilt = MapViewUtils.extractCameraTilt(camera, projection);
         // Angle between z and c2
         let topAngleRad: number;
@@ -729,10 +740,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const cam = (camera as any) as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
-            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            const aspect = 1;
             // Half fov angle in radians
-            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
+            const halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
             topAngleRad = THREE.MathUtils.clamp(
                 cameraTilt + halfFovAngle,
                 -halfPiLimit,
@@ -799,10 +808,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const cam = camera as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
-            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            const aspect = 1;
             // Half fov angle in radians
-            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
+            const halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
             const cosHalfFov = Math.cos(halfFovAngle);
             // cos(halfFov) = near / bottomDist
             // near = cos(halfFov) * bottomDist
@@ -818,7 +825,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         }
 
         // Compute target (focus) point distance.
-        // tslint:disable-next-line: deprecation
         const { distance } = MapViewUtils.getTargetAndDistance(
             projection,
             camera,
@@ -855,19 +861,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         viewRanges.near = cameraAltitude - this.maxElevation;
 
-        let halfFovAngle: number = 0;
-        if (camera instanceof THREE.PerspectiveCamera) {
-            // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
-            const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            halfFovAngle = THREE.MathUtils.degToRad((camera.fov * aspect) / 2);
-
-            // Now we need to account for camera tilt and frustum volume, so the longest
-            // frustum edge does not intersects with sphere, it takes the worst case
-            // scenario regardless of camera tilt, so may be improved little bit with more
-            // sophisticated algorithm.
-            viewRanges.near *= Math.cos(halfFovAngle);
-        }
-
         // Far plane calculation requires different approaches depending from camera projection:
         // - perspective
         // - orthographic
@@ -876,6 +869,23 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const d = cameraToOrigin.length();
         let farPlane: number;
         if (camera instanceof THREE.PerspectiveCamera) {
+            const halfVerticalFovAngle = THREE.MathUtils.degToRad(camera.fov / 2);
+
+            // Ratio of the depth of the camera compared to the distance between the center of the
+            // screen and the middle of the top of the screen (here set to be value 1). We just need
+            // this to be a ratio because we are interested in just computing the direction of the
+            // upper right corner and not any specific length.
+            const zLength = 1 / Math.tan(halfVerticalFovAngle);
+
+            // Camera space direction vector along the top right frustum edge (of the camera).
+            const upperRightDirection = this.m_tmpVectors[2];
+            upperRightDirection.set(camera.aspect, 1, -zLength);
+
+            // Now we need to account for camera tilt and frustum volume, so the longest
+            // frustum edge does not intersects with sphere, it takes the worst case
+            // scenario regardless of camera tilt, so may be improved little bit with more
+            // sophisticated algorithm.
+            viewRanges.near *= Math.cos(halfVerticalFovAngle);
             // Step-wise calculate angle between camera eye vector and tangent
 
             // Calculate angle between surface normal(below camera position) and tangent.
@@ -884,15 +894,31 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // Calculate angle between look at and surface normal(below camera position)
             const cameraPitch = this.getCameraPitch(cameraToOrigin, camera);
 
-            // Calculate angle between camera eye vector and tangent.
+            // Calculate angle between camera eye vector and tangent (center of the top of the
+            // screen)
             const modifiedAlpha = Math.abs(alpha - cameraPitch);
 
+            // Transform the vector to world space
+            upperRightDirection.applyMatrix4(camera.matrixWorld);
+            // Transform the vector to be relative from the camera
+            upperRightDirection.sub(camera.position);
+            // Ray must be given normalized vector, otherwise it won't work
+            upperRightDirection.normalize();
+
+            this.m_ray.set(camera.position, upperRightDirection);
+            // World space intersection with sphere or null
+            const worldSpaceFrustumSphereIntersection = this.m_ray.intersectSphere(
+                this.m_sphere,
+                this.m_tmpVectors[0]
+            );
             // Use tangent based far plane if horizon is within field of view
-            const farTangent = this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha);
             farPlane =
-                halfFovAngle >= modifiedAlpha
-                    ? farTangent
-                    : this.getTiltedFovBasedFarPlane(d, r, halfFovAngle, cameraPitch);
+                worldSpaceFrustumSphereIntersection === null
+                    ? this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha)
+                    : this.getFarPlaneBasedOnFovIntersection(
+                          worldSpaceFrustumSphereIntersection,
+                          camera
+                      );
         } else {
             farPlane = this.getOrthoBasedFarPlane(d, r);
         }
@@ -900,7 +926,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
 
         // Compute the focus point (target) distance for current camera and projection setup,
         // in a same way the MapView component does.
-        // tslint:disable-next-line: deprecation
         const { distance } = MapViewUtils.getTargetAndDistance(
             projection,
             camera,
@@ -927,55 +952,21 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         return viewRanges;
     }
 
-    protected getTiltedFovBasedFarPlane(
-        d: number,
-        r: number,
-        halfFovAngle: number,
-        cameraPitch: number
+    // Computes the far plane given the point where the upper right edg of the FOV intersects with
+    // the earth's sphere projected (dot product) along the camera's view direction.
+    protected getFarPlaneBasedOnFovIntersection(
+        worldSpaceIntersection: THREE.Vector3,
+        camera: THREE.PerspectiveCamera
     ) {
-        // Find intersection point that is closer to tangent point.
-        //
-        //         , - ~ ~ ~ - ,
-        //     , '               ' ,
-        //   ,           .           ,
-        //  ,            .     r     ,' T1
-        // ,             .     ,  '  / ,
-        // ,             . O.'  a   /  ,
-        // ,             | .  `  . /   ,
-        //  ,            |   .  r / TA,
-        //   ,           |    .  /   ,
-        //     ,         |     ./  ,'_____ far
-        //       ' -_, _ | _ , /' T0
-        //     near      |    /
-        //               |   / t
-        //             d | /
-        //               |/
-        //               C
-        //
-        // See:
-        // tslint:disable-next-line: max-line-length
-        // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+        const toIntersection = this.m_tmpVectors[1];
+        toIntersection.copy(worldSpaceIntersection);
+        toIntersection.sub(camera.position);
 
-        // compute length of t (distance to fov intersection with sphere)
-        // with law of cosines:
-        // r² = d² + t² - 2dt * cos(alpha)
-        // solved for t:
-        // t0 = d * cos(alpha) - sqrt(d²*cos²(alpha) - d² + r²)  <-- first intersection
-        // t1 = d * cos(alpha) + sqrt(d²*cos²(alpha) - d² + r²)  <-- second intersection
-        // Use first intersection:
-        const cosAlpha = Math.cos(cameraPitch + halfFovAngle);
-        const dSqr = d * d;
-        const t = d * cosAlpha - Math.sqrt(dSqr * cosAlpha * cosAlpha - dSqr + r * r);
+        const cameraDirection = this.m_tmpVectors[2];
+        camera.getWorldDirection(cameraDirection);
+        cameraDirection.normalize();
 
-        assert(
-            !isNaN(t),
-            "Field of view does not intersect sphere. Use tangent based far plane instead."
-        );
-
-        // project t onto camera fwd vector
-        const far = Math.cos(halfFovAngle) * t;
-
-        return far;
+        return toIntersection.dot(cameraDirection);
     }
 
     private getCameraPitch(cameraToOrigin: THREE.Vector3, camera: THREE.PerspectiveCamera) {
@@ -1018,7 +1009,6 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
         this.invalidatePlanes(this.m_nearPlane, fixedFar);
     }
 
-    // tslint:disable-next-line: no-empty
     set minElevation(elevation: number) {}
 
     get minElevation(): number {
@@ -1026,7 +1016,6 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
         return 0;
     }
 
-    // tslint:disable-next-line: no-empty
     set maxElevation(elevation: number) {}
 
     get maxElevation(): number {

@@ -4,12 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "chai";
 import * as fs from "fs";
 import * as path from "path";
-
-import { assert } from "chai";
-
-// tslint:disable:only-arrow-functions
 
 describe("YarnLockFile", function() {
     it("Contains only public paths", function() {

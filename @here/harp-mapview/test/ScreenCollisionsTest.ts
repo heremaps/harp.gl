@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { Math2D } from "@here/harp-utils";
+import { assert } from "chai";
+import * as THREE from "three";
 
 import {
     CollisionBox,
@@ -16,9 +17,6 @@ import {
     LineWithBound,
     ScreenCollisions
 } from "../lib/ScreenCollisions";
-
-import { assert } from "chai";
-import * as THREE from "three";
 
 const tempGlyphBox2D = new Math2D.Box();
 
@@ -43,7 +41,6 @@ describe("ScreenCollisions", function() {
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
         // Box around the center
-        // tslint:disable-next-line: no-string-literal
         const intersectsLineWithBoxAtCenter = sc["intersectsLine"](
             new CollisionBox({
                 minX: -10,
@@ -67,7 +64,6 @@ describe("ScreenCollisions", function() {
         };
 
         // Box around shifted right
-        // tslint:disable-next-line: no-string-literal
         const intersectsLineWithShiftedBox = sc["intersectsLine"](
             new CollisionBox({
                 minX: 10,
@@ -91,7 +87,6 @@ describe("ScreenCollisions", function() {
         };
 
         // Box around center
-        // tslint:disable-next-line: no-string-literal
         const intersectsLineWithShiftedBox = sc["intersectsLine"](
             new CollisionBox({
                 minX: -10,
@@ -121,7 +116,6 @@ describe("ScreenCollisions", function() {
             maxX: 10,
             maxY: 10
         });
-        // tslint:disable-next-line: no-string-literal
         const intersectsLineWithShiftedBox = sc["intersectsLine"](box, line);
         assert.isTrue(intersectsLineWithShiftedBox);
     });

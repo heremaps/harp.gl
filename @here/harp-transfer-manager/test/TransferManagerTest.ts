@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:completed-docs
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import "@here/harp-fetch";
+
 import { assert } from "chai";
 import * as sinon from "sinon";
+
 import { TransferManager } from "../index";
 
 describe("TransferManager", function() {

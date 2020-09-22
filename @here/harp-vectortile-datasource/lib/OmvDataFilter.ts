@@ -5,6 +5,7 @@
  */
 import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
+
 import {
     OmvFeatureFilterDescription,
     OmvFilterDescription,
@@ -668,7 +669,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (item.geometryTypes !== undefined && item.geometryTypes.indexOf(geometryType) >= 0) {
+            if (item.geometryTypes !== undefined && item.geometryTypes.includes(geometryType)) {
                 return true;
             }
         }
@@ -679,7 +680,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (item.geometryTypes !== undefined && item.geometryTypes.indexOf(geometryType) >= 0) {
+            if (item.geometryTypes !== undefined && item.geometryTypes.includes(geometryType)) {
                 return false;
             }
         }
@@ -710,24 +711,28 @@ export class ComposedDataFilter implements OmvFeatureFilter {
             true
         );
     }
+
     wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsPointFeature(layer, geometryType, level),
             true
         );
     }
+
     wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsLineFeature(layer, geometryType, level),
             true
         );
     }
+
     wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsPolygonFeature(layer, geometryType, level),
             true
         );
     }
+
     wantsKind(kind: string | string[]): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsKind(kind),

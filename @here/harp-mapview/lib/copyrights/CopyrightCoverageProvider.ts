@@ -6,12 +6,12 @@
 
 import { GeoBox } from "@here/harp-geoutils";
 import { getOptionValue, ILogger, LoggerManager } from "@here/harp-utils";
+
 import { CopyrightInfo } from "./CopyrightInfo";
 import { CopyrightProvider } from "./CopyrightProvider";
 
 declare const require: any;
 
-// tslint:disable-next-line:no-var-requires
 const RBush = require("rbush");
 
 /**

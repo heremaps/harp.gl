@@ -14,6 +14,7 @@ import {
     Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
+
 import { Env } from "./Expr";
 import { AttrEvaluationContext, evaluateTechniqueAttr } from "./TechniqueAttr";
 import {
@@ -52,6 +53,12 @@ export interface DecodedTile {
      * in meters. The bounding box of the resulting tile will be extended to encompass this height.
      */
     maxGeometryHeight?: number;
+
+    /**
+     * Data sources not defining a bounding box may define alternatively a minimum geometry height
+     * in meters. The bounding box of the resulting tile will be extended to encompass this height.
+     */
+    minGeometryHeight?: number;
 
     /**
      * Tile data Copyright holder identifiers.
@@ -423,17 +430,13 @@ export function getFeatureText(
         if (technique.text !== undefined) {
             return evaluateTechniqueAttr(context, technique.text);
         }
-        // tslint:disable-next-line: deprecation
         if (technique.label !== undefined) {
-            // tslint:disable-next-line: deprecation
             propName = evaluateTechniqueAttr(context, technique.label)!;
             if (typeof propName !== "string") {
                 return undefined;
             }
         }
-        // tslint:disable-next-line: deprecation
         useAbbreviation = technique.useAbbreviation;
-        // tslint:disable-next-line: deprecation
         useIsoCode = technique.useIsoCode;
     }
 

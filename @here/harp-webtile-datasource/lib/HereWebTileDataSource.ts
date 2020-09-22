@@ -30,7 +30,6 @@ const textureLoader = new TextureLoader();
  * Options for {@link HereWebTileDataSource}.
  */
 interface HereWebTileDataSourceOptions {
-    // tslint:disable:max-line-length
     /**
      * Base URL.
      *
@@ -68,7 +67,6 @@ interface HereWebTileDataSourceOptions {
      * @see [[HereTileProvider.TILE_TRAFFIC_NORMAL]]
      */
     tileBaseAddress?: string;
-    // tslint:enable:max-line-length
 
     /**
      * The resolution of Web Tile images, defaults to 512.
@@ -193,6 +191,7 @@ export class HereTileProvider implements WebTileDataProvider {
      */
     static readonly TILE_BASE_NORMAL =
         "base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day";
+
     /**
      * Base address for Aerial Map rendered using `hybrid.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-hybrid-map.html
@@ -265,7 +264,7 @@ export class HereTileProvider implements WebTileDataProvider {
             }/png8` +
             `${this.getImageRequestParams()}`;
 
-        return this.getRequestHeaders().then(headers => {
+        return await this.getRequestHeaders().then(headers => {
             return Promise.all([
                 textureLoader.load(url, headers),
                 this.getTileCopyright(tile, headers)
@@ -310,7 +309,7 @@ export class HereTileProvider implements WebTileDataProvider {
         }
 
         this.m_copyrightProvider.setRequestHeaders(requestHeaders);
-        return this.m_copyrightProvider.getCopyrights(tile.geoBox, tile.tileKey.level);
+        return await this.m_copyrightProvider.getCopyrights(tile.geoBox, tile.tileKey.level);
     }
 
     private parseBaseUrl(url: string): MapTileParams {

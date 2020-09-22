@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { hereTilingScheme, mercatorTilingScheme } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as sinon from "sinon";
+
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { MapView } from "../lib/MapView";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
@@ -48,7 +48,6 @@ describe("BackgroundDataSource", function() {
             backgroundDataSource.attach((mapViewStub as unknown) as MapView);
         });
 
-        // tslint:disable-next-line: max-line-length
         it("Sets storageLevelOffset to maximum value of matching datasources", function() {
             backgroundDataSource.setTilingScheme(fakeDataSource2.getTilingScheme());
             backgroundDataSource.updateStorageLevelOffset();

@@ -198,7 +198,6 @@ class PoiRenderBuffer {
         const batchKey = imageTexture.image;
         let batchSet = this.m_batchMap.get(batchKey);
         let mappedIndex: number | undefined;
-        let bufferBatch: PoiRenderBufferBatch;
 
         if (batchSet === undefined) {
             batchSet = new Map<number, number>();
@@ -217,7 +216,7 @@ class PoiRenderBuffer {
             layer = this.textCanvas.getLayer(renderOrder);
         }
 
-        bufferBatch = new PoiRenderBufferBatch(
+        const bufferBatch = new PoiRenderBufferBatch(
             this.mapView,
             layer!.storage.scene,
             imageItem,
@@ -392,6 +391,7 @@ export class PoiRenderer {
 
         return screenBox;
     }
+
     // keep track of the missing textures, but only warn once
     private static readonly m_missingTextureName: Map<string, boolean> = new Map();
 

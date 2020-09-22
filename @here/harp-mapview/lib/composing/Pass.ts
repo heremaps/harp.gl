@@ -75,11 +75,10 @@ export interface IPass {
 export class Pass implements IPass {
     enabled: boolean = false;
     renderToScreen: boolean = false;
-    // tslint:disable-next-line:no-unused-variable
     setSize(width: number, height: number) {
         // Implemented in sub-classes.
     }
-    // tslint:disable:no-unused-variable
+
     render(
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
@@ -90,7 +89,6 @@ export class Pass implements IPass {
     ) {
         // Implemented in sub-classes.
     }
-    // tslint:enable:no-unused-variable
 }
 
 /**
@@ -138,6 +136,7 @@ export class ShaderPass extends Pass {
         }
         this.fsQuad = new FullScreenQuad(this.material);
     }
+
     /** @override */
     render(
         renderer: THREE.WebGLRenderer,
@@ -164,12 +163,15 @@ class FullScreenQuad {
         const geometry = new THREE.PlaneBufferGeometry(2, 2);
         this.m_mesh = new THREE.Mesh(geometry, material);
     }
+
     get material(): THREE.Material {
         return this.m_mesh.material as THREE.Material;
     }
+
     set material(value: THREE.Material) {
         this.m_mesh.material = value;
     }
+
     render(renderer: THREE.WebGLRenderer) {
         renderer.render((this.m_mesh as any) as THREE.Scene, this.m_camera);
     }

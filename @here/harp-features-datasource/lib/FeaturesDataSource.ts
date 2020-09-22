@@ -19,6 +19,7 @@ import {
     VectorTileDataSource,
     VectorTileDataSourceParameters
 } from "@here/harp-vectortile-datasource";
+
 import { MapViewFeature } from "./Features";
 
 const logger = LoggerManager.instance.create("FeaturesDataSource");
@@ -147,6 +148,7 @@ export class FeaturesDataSource extends VectorTileDataSource {
             await this.update();
         }
     }
+
     /**
      * Override [[DataSource.attach]] to know if we're really connected to [[MapView]].
      * @param mapView -
@@ -175,7 +177,7 @@ export class FeaturesDataSource extends VectorTileDataSource {
     getGeoBox(): GeoBox | undefined {
         let result: GeoBox | undefined;
         const addPoint = (geoJsonCoords: number[]) => {
-            // NOTE: GeoJson coordinates are in [longitute, latitute] order!
+            // NOTE: GeoJson coordinates are in [longitude, latitude] order!
             const coords = new GeoCoordinates(geoJsonCoords[1], geoJsonCoords[0]);
             if (result === undefined) {
                 result = new GeoBox(coords, coords.clone());

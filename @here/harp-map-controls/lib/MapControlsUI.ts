@@ -5,8 +5,8 @@
  */
 
 import { mercatorProjection, ProjectionType, sphereProjection } from "@here/harp-geoutils";
-import { MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
-import * as THREE from "three";
+import { MapViewEventNames } from "@here/harp-mapview";
+
 import { MapControls } from "./MapControls";
 
 /**
@@ -230,9 +230,7 @@ export class MapControlsUI {
             controls.pointToNorth();
         });
         controls.mapView.addEventListener(MapViewEventNames.AfterRender, () => {
-            compass.style.transform = `rotate(${THREE.MathUtils.radToDeg(
-                MapViewUtils.extractAttitude(controls.mapView, controls.mapView.camera).yaw
-            )}deg)`;
+            compass.style.transform = `rotate(${controls.mapView.heading}deg)`;
         });
 
         this.domElement.className = "harp-gl_controls";
@@ -410,7 +408,6 @@ function getTextStyle() {
     `;
 }
 
-// tslint:disable:max-line-length
 function getFlatMapSVG() {
     return `
     <svg style="margin-top:5px;" class="harp-gl_controls_switch_svg" width="25" height="25" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">

@@ -4,16 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LoggerManager } from "@here/harp-utils";
 import { assert } from "chai";
 import * as querystring from "querystring";
+import * as THREE from "three";
 import { UAParser } from "ua-parser-js";
 
-import * as THREE from "three";
-
-import { LoggerManager } from "@here/harp-utils";
-import { DomReporter } from "./DomReporter";
-
 import { canvasToImageData, compareImages, loadImageData } from "./DomImageUtils";
+import { DomReporter } from "./DomReporter";
 import { Reporter, TestImageProps } from "./Interface";
 import { getReferenceImageUrl } from "./ReferenceImageLocator";
 import { RenderingTestResultReporter } from "./RenderingTestResultReporter";
@@ -132,6 +130,7 @@ export class RenderingTestHelper {
         this.preloadedImageCache.set(url, p);
         return p;
     }
+
     private static readonly preloadedImageCache = new Map<string, Promise<ImageData>>();
 
     constructor(public mochaTest: Mocha.Context, public baseImageProps: TestImageProps) {}

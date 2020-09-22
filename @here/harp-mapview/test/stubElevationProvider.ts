@@ -6,6 +6,7 @@
 
 import { GeoCoordinates, mercatorTilingScheme, TileKey, TilingScheme } from "@here/harp-geoutils";
 import * as THREE from "three";
+
 import { DisplacementMap, TileDisplacementMap } from "../lib/DisplacementMap";
 import { ElevationProvider } from "../lib/ElevationProvider";
 

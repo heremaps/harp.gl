@@ -3,11 +3,11 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import * as THREE from "three";
 
 import { GeoBoxExtentLike } from "./GeoBoxExtentLike";
-import { GeoCoordinates } from "./GeoCoordinates";
-
-import * as THREE from "three";
+import { GeoCoordinates, MAX_LONGITUDE } from "./GeoCoordinates";
+import { GeoCoordinatesLike } from "./GeoCoordinatesLike";
 
 /**
  * `GeoBox` is used to represent a bounding box in geo coordinates.
@@ -48,7 +48,11 @@ export class GeoBox implements GeoBoxExtentLike {
      * @param southWest - The south west position in geo coordinates.
      * @param northEast - The north east position in geo coordinates.
      */
-    constructor(readonly southWest: GeoCoordinates, readonly northEast: GeoCoordinates) {}
+    constructor(readonly southWest: GeoCoordinates, readonly northEast: GeoCoordinates) {
+        if (this.west > this.east) {
+            this.northEast.longitude += 360;
+        }
+    }
 
     /**
      * Returns the minimum altitude or `undefined`.
@@ -223,7 +227,7 @@ export class GeoBox implements GeoBoxExtentLike {
      *
      * @param point - The point that may expand the bounding box.
      */
-    growToContain(point: GeoCoordinates) {
+    growToContain(point: GeoCoordinatesLike) {
         this.southWest.latitude = Math.min(this.southWest.latitude, point.latitude);
         this.southWest.longitude = Math.min(this.southWest.longitude, point.longitude);
         this.southWest.altitude =
@@ -254,10 +258,19 @@ export class GeoBox implements GeoBoxExtentLike {
 
         const { west, east } = this;
 
-        if (east > west) {
-            return point.longitude >= west && point.longitude < east;
+        let longitude = point.longitude;
+        if (east > MAX_LONGITUDE) {
+            while (longitude < west) {
+                longitude = longitude + 360;
+            }
         }
 
-        return point.longitude > east || point.longitude <= west;
+        if (longitude > east) {
+            while (longitude > west + 360) {
+                longitude = longitude - 360;
+            }
+        }
+
+        return longitude >= west && longitude < east;
     }
 }

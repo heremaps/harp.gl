@@ -4,15 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "chai";
 import * as fs from "fs";
 import * as glob from "glob";
 import * as path from "path";
-
-import { assert } from "chai";
-
-// tslint:disable:only-arrow-functions
-// tslint:disable:forin
-// tslint:disable:max-line-length
 
 // these dependencies are ok to include in files using node.js
 const nodeDependencyWhitelist: { [moduleName: string]: boolean } = {
@@ -104,7 +99,6 @@ function checkImports() {
 
         // iterate through all matched imported modules
         let matches;
-        // tslint:disable-next-line:no-conditional-assignment
         while ((matches = importRE.exec(contents)) != null) {
             const beginningOfLine = matches[1] || "";
 
@@ -201,7 +195,6 @@ function checkImports() {
             stack.push(module);
             module.onStack = true;
 
-            // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < module.dependencies.length; i++) {
                 const successorName = module.dependencies[i];
 

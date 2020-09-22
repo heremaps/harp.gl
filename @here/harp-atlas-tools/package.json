@@ -37,14 +37,15 @@
     ],
     "dependencies": {
         "@types/mkpath": "^0.1.29",
+        "@types/sharp": "^0.25.1",
         "commander": "^5.1.0",
         "glob": "^7.1.4",
         "jimp": "^0.2.28",
         "mkpath": "^1.0.0",
         "path": "^0.12.7",
         "promise-limit": "^2.6.0",
-        "spritesmith": "^3.3.0",
-        "svg2png": "^4.1.1"
+        "sharp": "^0.26.0",
+        "spritesmith": "^3.3.0"
     },
     "devDependencies": {
         "ts-node": "^8.10.1",

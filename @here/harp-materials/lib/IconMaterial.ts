@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { RawShaderMaterial } from "./RawShaderMaterial";
 
 const vertexSource: string = `
@@ -64,7 +65,6 @@ export class IconMaterial extends RawShaderMaterial {
      * @param params - `IconMaterial` parameters.
      */
     constructor(params: IconMaterialParameters) {
-        // tslint:disable-next-line: deprecation
         const shaderParams: THREE.ShaderMaterialParameters = {
             name: "IconMaterial",
             vertexShader: vertexSource,

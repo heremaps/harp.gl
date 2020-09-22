@@ -8,11 +8,11 @@ import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("DataSource");
-const UPDATE_EVENT = { type: "update" };
 
 /**
  * Options for a {@link DataSource}.
@@ -64,7 +64,7 @@ export interface DataSourceOptions {
      * available (and in some cases, the tiles can overlap, i.e. for example when a child is next
      * to a parent, the parent is rendered beneath the child), however for some datasources (those
      * that produce transparent tiles for example), this gives bad results, and as such, it should
-     * be disabled to reduce flickening. Another way to put it is that loading tiles are replaced
+     * be disabled to reduce flickering. Another way to put it is that loading tiles are replaced
      * with cached tiles and we then fall (back/forward) to the next appropriate zoom level.
      * @default true
      */
@@ -77,12 +77,40 @@ export interface DataSourceOptions {
      * @default true
      */
     enablePicking?: boolean;
+
+    /**
+     * Maximum geometry height above ground level this {@link DataSource} can produce.
+     *
+     * @remarks
+     * Used in first stage of frustum culling before {@link Tile#maxGeometryHeight} data is
+     * available.
+     *
+     * @default [[EarthConstants.MAX_BUILDING_HEIGHT]].
+     */
+    maxGeometryHeight?: number;
+
+    /**
+     * Minimum geometry height below ground level this {@link DataSource} can produce. Negative
+     * values describe height below ground.
+     *
+     * @remarks
+     * Used in first stage of frustum culling before {@link Tile#minGeometryHeight} data is
+     * available.
+     *
+     * @default `0`.
+     */
+    minGeometryHeight?: number;
 }
 
 /**
  * Derive a class from `DataSource` to contribute data and geometries to the {@link MapView}.
  */
 export abstract class DataSource extends THREE.EventDispatcher {
+    /**
+     * Keep the update event here to avoid a global reference to the datasource (and thus prevent garbage collection).
+     */
+    private readonly UPDATE_EVENT = { type: "update" };
+
     /**
      * A counter to generate unique names for each `DataSource`, if no name is provided in the
      * constructor.
@@ -163,6 +191,11 @@ export abstract class DataSource extends THREE.EventDispatcher {
     private m_maxGeometryHeight = 0;
 
     /**
+     * Current value of [[minGeometryHeight]] property.
+     */
+    private m_minGeometryHeight = 0;
+
+    /**
      * Storage level offset applied to this `DataSource`.
      */
     private m_storageLevelOffset: number = 0;
@@ -179,9 +212,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
         let { name } = options;
         const {
             styleSetName,
-            // tslint:disable-next-line: deprecation
             minZoomLevel,
-            // tslint:disable-next-line: deprecation
             maxZoomLevel,
             minDataLevel,
             maxDataLevel,
@@ -189,7 +220,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
             maxDisplayLevel,
             storageLevelOffset,
             allowOverlappingTiles,
-            enablePicking
+            enablePicking,
+            minGeometryHeight,
+            maxGeometryHeight
         } = options;
         if (name === undefined || name.length === 0) {
             name = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
@@ -205,11 +238,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
             this.maxDataLevel = maxDataLevel;
         }
         if (minZoomLevel !== undefined) {
-            // tslint:disable-next-line: deprecation
             this.minZoomLevel = minZoomLevel;
         }
         if (maxZoomLevel !== undefined) {
-            // tslint:disable-next-line: deprecation
             this.maxZoomLevel = maxZoomLevel;
         }
         if (minDisplayLevel !== undefined) {
@@ -227,6 +258,13 @@ export abstract class DataSource extends THREE.EventDispatcher {
 
         if (enablePicking !== undefined) {
             this.enablePicking = enablePicking;
+        }
+
+        if (minGeometryHeight !== undefined) {
+            this.minGeometryHeight = minGeometryHeight;
+        }
+        if (maxGeometryHeight !== undefined) {
+            this.maxGeometryHeight = maxGeometryHeight;
         }
     }
 
@@ -308,7 +346,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Boolean which says whether a {@link DataSource} produces
      * tiles that fully cover the tile, i.e.
      * tiles underneath are completely hidden. Must be
-     * overriden for {@link DataSource}'s that don't
+     * overridden for {@link DataSource}'s that don't
      * have a ground plane, but which still fully
      * cover the tile, e.g. web tiles.
      */
@@ -349,7 +387,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * This method is called when the `DataSource` is added to a {@link MapView}. Reimplement this
+     * This method is called when the `DataSource` is added to a {@link MapView}. Override this
      * method to provide any custom initialization, such as, to establish a network connection,
      * or to initialize complex data structures.
      */
@@ -365,7 +403,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * This method is called when this `DataSource` is added to a {@link MapView}.
      *
-     * Reimplementations of this method must invoke the definition of the super class.
+     * Overrides of this method must invoke the definition of the super class.
      *
      * @param mapView - The instance of the {@link MapView}.
      */
@@ -376,13 +414,21 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * This method is called when this `DataSource` is removed from a {@link MapView}.
      *
-     * Reimplementations of this method must invoke the definition of the super class.
+     * Overrides of this method must invoke the definition of the super class.
      *
      * @param mapView - The instance of the {@link MapView}.
      */
     detach(mapView: MapView) {
         assert(this.m_mapView === mapView);
         this.m_mapView = undefined;
+    }
+
+    /**
+     * @return Whether this `DataSource` is detached from the `MapView`
+     */
+
+    isDetached() {
+        return this.m_mapView === undefined;
     }
 
     /**
@@ -397,7 +443,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @param styleSet - The new theme that {@link MapView} uses.
      * @param languages - An optional list of languages for the `DataSource`.
      */
-    // tslint:disable-next-line:no-unused-variable
     setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
         // to be overwritten by subclasses
     }
@@ -452,7 +497,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * @param tile - The {@link Tile} to update.
      */
-    // tslint:disable-next-line:no-unused-variable
     updateTile(tile: Tile) {
         // to be overloaded by subclasses
     }
@@ -517,15 +561,33 @@ export abstract class DataSource extends THREE.EventDispatcher {
     get maxGeometryHeight() {
         return this.m_maxGeometryHeight;
     }
+
     set maxGeometryHeight(value: number) {
         this.m_maxGeometryHeight = value;
+    }
+
+    /**
+     * Minimum geometry height below ground level this `DataSource` can produce. A negative number
+     * specifies a value below ground level.
+     *
+     * Used in first stage of frustum culling before
+     * {@link Tile.minGeometryHeight} data is available.
+     *
+     * @default 0.
+     */
+    get minGeometryHeight() {
+        return this.m_minGeometryHeight;
+    }
+
+    set minGeometryHeight(value: number) {
+        this.m_minGeometryHeight = value;
     }
 
     /**
      * The difference between storage level and display level of tile.
      *
      * Storage level offset is a value applied (added) to current zoom level giving
-     * a final tile level being displayed. This way we may differentate current
+     * a final tile level being displayed. This way we may differentiate current
      * zoom level from the storage level that is displayed, giving fine grained
      * control over the tiles being decoded an displayed.
      */
@@ -614,7 +676,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @returns `true` if the text elements created for the
      *          given {@link @here/harp-geoutils#TileKey} should be rendered.
      */
-    // tslint:disable-next-line:no-unused-variable
     shouldRenderText(zoomLevel: number, tileKey: TileKey): boolean {
         return true;
     }
@@ -623,6 +684,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Sends a request to the {@link MapView} to redraw the scene.
      */
     requestUpdate() {
-        this.dispatchEvent(UPDATE_EVENT);
+        this.dispatchEvent(this.UPDATE_EVENT);
     }
 }

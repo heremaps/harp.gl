@@ -1,5 +1,5 @@
 {
-    "plugins": ["@typescript-eslint", "prettier"],
+    "plugins": ["@typescript-eslint", "prettier", "simple-import-sort"],
     "extends": ["standard-with-typescript", "prettier/@typescript-eslint"],
     "parserOptions": {
         "project": "./tsconfig.json"
@@ -7,8 +7,11 @@
     "rules": {
         "prettier/prettier": "error",
 
-        "@typescript-eslint/no-for-in-array": "off",
-        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            { "varsIgnorePattern": "^_", "args": "none" }
+        ],
+
         "@typescript-eslint/default-param-last": "off",
         "@typescript-eslint/prefer-reduce-type-parameter": "off",
         "@typescript-eslint/prefer-ts-expect-error": "off",
@@ -26,8 +29,6 @@
         "@typescript-eslint/naming-convention": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "@typescript-eslint/dot-notation": "off",
-        "@typescript-eslint/return-await": "off",
-        "@typescript-eslint/prefer-includes": "off",
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/prefer-optional-chain": "off",
         "@typescript-eslint/no-floating-promises": "off",
@@ -35,11 +36,29 @@
         "@typescript-eslint/restrict-template-expressions": "off",
         "@typescript-eslint/no-unnecessary-type-assertion": "off",
         "@typescript-eslint/method-signature-style": "off",
-        "@typescript-eslint/lines-between-class-members": "off",
         "@typescript-eslint/no-unused-expressions": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
+
+        "simple-import-sort/sort": "error",
+        "sort-imports": "off",
+        "import/order": "off",
+
+        "max-len": [
+            "error",
+            {
+                "code": 100,
+                "tabWidth": 4,
+                "ignoreStrings": true,
+                "ignoreTemplateLiterals": true,
+                "ignoreRegExpLiterals": true,
+                "ignoreUrls": true,
+                "ignoreComments": true
+            }
+        ],
+
+        "no-console": ["error"],
 
         "accessor-pairs": "off",
         "generator-star-spacing": "off",
@@ -67,8 +86,8 @@
         "no-useless-computed-key": "off",
         "no-useless-escape": "off",
         "no-useless-return": "off",
+        "no-return-await": "off",
         "operator-linebreak": "off",
-        "prefer-const": "off",
         "prefer-promise-reject-errors": "off",
         "promise/param-names": "off",
         "quote-props": "off",

@@ -94,7 +94,7 @@ export namespace WorkerServiceProtocol {
      * Test if `error` thrown by [[CreateServiceRequest]] was caused by unknown type of service.
      */
     export function isUnknownServiceError(error: Error): boolean {
-        return /unknown targetServiceType requested: /.test(error.message);
+        return error.message.includes("unknown targetServiceType requested: ");
     }
 
     /**

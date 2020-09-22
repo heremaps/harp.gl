@@ -8,8 +8,8 @@ import { GeoBox, GeoCoordinates, GeoPointLike } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
-import { apikey } from "../config";
 
+import { apikey } from "../config";
 import * as geojson from "../resources/polygon.json";
 
 export namespace GeoJsonCustomShaderExample {
@@ -114,7 +114,6 @@ export namespace GeoJsonCustomShaderExample {
             window.addEventListener("resize", adjustSize);
         }
 
-        // tslint:disable-next-line: no-empty
         start() {}
 
         private addBaseMap() {

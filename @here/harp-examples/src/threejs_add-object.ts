@@ -7,6 +7,7 @@
 import { LongPressHandler } from "@here/harp-map-controls";
 import { MapAnchor, MapView } from "@here/harp-mapview";
 import * as THREE from "three";
+
 import { HelloWorldExample } from "./getting-started_hello-world_npm";
 
 /**
@@ -75,7 +76,6 @@ export namespace ThreejsAddSimpleObject {
         const canvas = mapView.canvas;
         mapView.zoomLevel = 15.5;
 
-        // tslint:disable:no-unused-expression
         new LongPressHandler(canvas, event => {
             // snippet:harp_gl_threejs_add_simple_object_1.ts
             // Get the position of the mouse in geo space.

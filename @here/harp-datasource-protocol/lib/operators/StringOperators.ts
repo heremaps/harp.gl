@@ -31,7 +31,7 @@ const operators = {
             const left = context.evaluate(call.args[0]);
             const right = context.evaluate(call.args[1]);
             if (typeof left === "string" && typeof right === "string") {
-                return left.indexOf(right) !== -1;
+                return left.includes(right);
             }
             return false;
         }

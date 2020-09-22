@@ -5,6 +5,7 @@
  */
 
 import { GeoBox } from "@here/harp-geoutils";
+
 import { CopyrightInfo } from "./CopyrightInfo";
 
 /**

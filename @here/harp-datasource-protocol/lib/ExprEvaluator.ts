@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -24,7 +26,6 @@ import {
     Value,
     VarExpr
 } from "./Expr";
-
 import { ArrayOperators } from "./operators/ArrayOperators";
 import { CastOperators } from "./operators/CastOperators";
 import { ColorOperators } from "./operators/ColorOperators";
@@ -38,10 +39,8 @@ import { ObjectOperators } from "./operators/ObjectOperators";
 import { StringOperators } from "./operators/StringOperators";
 import { TypeOperators } from "./operators/TypeOperators";
 import { VectorOperators } from "./operators/VectorOperators";
-import { RGBA } from "./RGBA";
-
-import * as THREE from "three";
 import { Pixels } from "./Pixels";
+import { RGBA } from "./RGBA";
 
 export interface OperatorDescriptor {
     /**
@@ -326,7 +325,6 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             if (firstDynamicCondition !== -1) {
                 let branches: Array<[Expr, Expr]> | undefined;
 
-                // tslint:disable-next-line: prefer-for-of
                 for (let i = 0; i < match.branches.length; ++i) {
                     const [condition, body] = match.branches[i];
 
@@ -413,7 +411,6 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             return new StepExpr(
                 context.wrapValue(input),
                 context.wrapValue(defaultValue),
-                // tslint:disable-next-line: no-shadowed-variable
                 expr.stops.map(([key, value]) => {
                     const v = context.evaluate(value);
                     return [key, context.wrapValue(v)];
@@ -488,7 +485,12 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
 
                 case "exponential": {
                     const base = expr.mode[1];
-                    t = (Math.pow(base, param - prevKey) - 1) / (Math.pow(base, key - prevKey) - 1);
+                    t =
+                        base === 1
+                            ? (param - prevKey) / (key - prevKey)
+                            : (Math.pow(base, param - prevKey) - 1) /
+                              (Math.pow(base, key - prevKey) - 1);
+
                     break;
                 }
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable-next-line:no-implicit-dependencies
 import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
@@ -13,9 +12,9 @@ import {
     AuthenticationMethod,
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
+
 import { apikey, copyrightInfo } from "../../@here/harp-examples/config";
 
-// tslint:disable-next-line:no-var-requires
 const theme = require("../resources/theme.json");
 
 import "../css/index.css";

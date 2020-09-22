@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
-
 import { mercatorProjection } from "@here/harp-geoutils";
 import { SolidLineMaterial, SolidLineMaterialParameters } from "@here/harp-materials";
 import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
+
 import { createLineGeometry, LineGroup } from "../../lib/Lines";
 
 function createFakeDisplacementMap(sideSize: number): THREE.DataTexture {
@@ -341,7 +340,6 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "solid-lines-outline", lineStyle);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("renders dashed lines with outline - outlineWidth: 3, dashSize: 4", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 8,
@@ -367,7 +365,6 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-outline-alpha", lineStyle);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("renders dashed lines - lineWidth: 2, gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 2, color: "#FFF", gapSize: 2, dashSize: 2 };
         await renderLines(linesConfig, this, "dashed-lines-1px", lineStyle);
@@ -384,7 +381,6 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-color", lineStyle);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("renders dashed lines - lineWidth: 20,gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 40, color: "#FFF", gapSize: 2, dashSize: 2 };
         await renderLines(linesConfig, this, "dashed-lines-20px", lineStyle);
@@ -407,7 +403,6 @@ describe("Rendering lines: ", function() {
         await renderLines(checkOverDrawLines, this, "dashed-lines-overdraw-20px", lineStyle);
     });
 
-    // tslint:disable-next-line: max-line-length
     it("renders dashed lines with round dashes - no outline, dashSize: 16", async function(this: Mocha.Context) {
         const lineStyle = {
             dashes: "Round",
@@ -425,7 +420,6 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    // tslint:disable-next-line: max-line-length
     it("renders dashed lines with round dashes - outlineWidth: 3, dashSize: 16", async function(this: Mocha.Context) {
         const lineStyle = {
             dashes: "Round",
@@ -445,7 +439,6 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    // tslint:disable-next-line: max-line-length
     it("renders dashed lines with diamond dashes - no outline, dashSize: 16", async function(this: Mocha.Context) {
         const lineStyle = {
             dashes: "Diamond",
@@ -463,7 +456,6 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    // tslint:disable-next-line: max-line-length
     it("renders dashed lines w/ diamond dashes - outlineWidth: 3, dashSize: 16", async function(this: Mocha.Context) {
         const lineStyle = {
             dashes: "Diamond",

@@ -72,7 +72,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
      */
     async getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]> {
         if (this.m_cachedCopyrightResponse !== undefined) {
-            return this.m_cachedCopyrightResponse;
+            return await this.m_cachedCopyrightResponse;
         }
 
         try {
@@ -94,7 +94,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
             const json = await partition.json();
             this.m_cachedCopyrightResponse = json[this.m_params.baseScheme ?? "normal"];
             if (this.m_cachedCopyrightResponse !== undefined) {
-                return this.m_cachedCopyrightResponse;
+                return await this.m_cachedCopyrightResponse;
             }
         } catch (error) {
             this.logger.error(error);

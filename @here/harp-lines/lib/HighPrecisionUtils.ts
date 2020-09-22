@@ -384,7 +384,6 @@ export namespace HighPrecisionUtils {
     ): HPP.HighPrecisionPoints {
         const indices: number[] = [];
 
-        // tslint:disable-next-line:prefer-for-of - pointPositions doesn't have iterable interface
         for (let i = 0; i < pointPositions.length; i++) {
             indices.push(indices.length / 3);
         }

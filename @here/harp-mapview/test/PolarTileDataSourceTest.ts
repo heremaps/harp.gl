@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { Style } from "@here/harp-datasource-protocol";
@@ -18,6 +17,7 @@ import {
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { MapView } from "../lib/MapView";
 import { PolarTileDataSource } from "../lib/PolarTileDataSource";
 import { Tile } from "../lib/Tile";
@@ -225,7 +225,6 @@ describe("PolarTileDataSource", function() {
             const minLevel = 1; // at zoomLevel 0 there's no hole at the poles
             const maxLevel = 8;
             for (let level = minLevel; level <= maxLevel; level++) {
-                // tslint:disable-next-line:no-bitwise
                 const size = 1 << level;
 
                 let tilesHit = 0;
@@ -282,12 +281,10 @@ describe("PolarTileDataSource", function() {
             dataSource.geometryLevelOffset = offset;
 
             for (let level = minLevel; level <= maxLevel; level++) {
-                // tslint:disable:no-bitwise
                 const displayLevel = dataSource.getDataZoomLevel(level);
                 const displaySize = 1 << displayLevel;
                 const offsetLevel = level + offset;
                 const offsetSize = 1 << offsetLevel;
-                // tslint:enable:no-bitwise
 
                 const northPolePoints = [];
                 const southPolePoints = [];

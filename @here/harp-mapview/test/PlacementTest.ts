@@ -4,22 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { expect } from "chai";
-import * as path from "path";
-import * as sinon from "sinon";
-import * as THREE from "three";
+import "@here/harp-fetch";
 
 import { Env } from "@here/harp-datasource-protocol";
-import "@here/harp-fetch";
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import {
     FontCatalog,
@@ -39,13 +32,13 @@ import {
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
+import { expect } from "chai";
+import * as path from "path";
+import * as sinon from "sinon";
+import * as THREE from "three";
+
 import { ScreenCollisions } from "../lib/ScreenCollisions";
-import {
-    persistentPointLabelTextMargin,
-    placeIcon,
-    PlacementResult,
-    placePointLabel
-} from "../lib/text/Placement";
+import { placeIcon, PlacementResult, placePointLabel } from "../lib/text/Placement";
 import { RenderState } from "../lib/text/RenderState";
 import { LoadingState, TextElement } from "../lib/text/TextElement";
 import { TextElementState } from "../lib/text/TextElementState";
@@ -183,8 +176,6 @@ describe("Placement", function() {
     const appBaseUrl = getAppBaseUrl();
     // Canvas padding - padding applied in bounds calculated on TextCanvas.measureText()
     const cPadding = new THREE.Vector2(2, 2);
-    // Additional margin for any point label text - persistent one.
-    const tMargin = persistentPointLabelTextMargin.clone();
 
     before(async function() {
         if (inNodeContext) {
@@ -237,7 +228,7 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Left,
                         verticalAlignment: VerticalAlignment.Below
                     },
-                    outPosition: new THREE.Vector2(cPadding.x + tMargin.x, -cPadding.y - tMargin.y)
+                    outPosition: new THREE.Vector2(cPadding.x, -cPadding.y)
                 },
                 {
                     it: "places text center-below alignment",
@@ -245,7 +236,7 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Center,
                         verticalAlignment: VerticalAlignment.Below
                     },
-                    outPosition: new THREE.Vector2(0, -cPadding.y - tMargin.y)
+                    outPosition: new THREE.Vector2(0, -cPadding.y)
                 },
                 {
                     it: "places text right-below alignment",
@@ -253,10 +244,7 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Right,
                         verticalAlignment: VerticalAlignment.Below
                     },
-                    outPosition: new THREE.Vector2(
-                        -cPadding.x / 2 - tMargin.x,
-                        -cPadding.y - tMargin.y
-                    )
+                    outPosition: new THREE.Vector2(-cPadding.x / 2, -cPadding.y)
                 },
                 {
                     it: "places text with left-center alignment",
@@ -264,7 +252,7 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Left,
                         verticalAlignment: VerticalAlignment.Center
                     },
-                    outPosition: new THREE.Vector2(cPadding.x + tMargin.x, 0.25)
+                    outPosition: new THREE.Vector2(cPadding.x, 0.25)
                 },
                 {
                     it: "places text center-center alignment",
@@ -280,7 +268,7 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Right,
                         verticalAlignment: VerticalAlignment.Center
                     },
-                    outPosition: new THREE.Vector2(-cPadding.x / 2 - tMargin.x, 0.25)
+                    outPosition: new THREE.Vector2(-cPadding.x / 2, 0.25)
                 },
                 {
                     it: "places text with left-above alignment",
@@ -288,10 +276,7 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Left,
                         verticalAlignment: VerticalAlignment.Above
                     },
-                    outPosition: new THREE.Vector2(
-                        cPadding.x + tMargin.x,
-                        0.5 + cPadding.y + tMargin.y
-                    )
+                    outPosition: new THREE.Vector2(cPadding.x, 0.5 + cPadding.y)
                 },
                 {
                     it: "places text center-above alignment",
@@ -299,7 +284,7 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Center,
                         verticalAlignment: VerticalAlignment.Above
                     },
-                    outPosition: new THREE.Vector2(0, 0.5 + cPadding.y + tMargin.y)
+                    outPosition: new THREE.Vector2(0, 0.5 + cPadding.y)
                 },
                 {
                     it: "places text right-above alignment",
@@ -307,34 +292,28 @@ describe("Placement", function() {
                         horizontalAlignment: HorizontalAlignment.Right,
                         verticalAlignment: VerticalAlignment.Above
                     },
-                    outPosition: new THREE.Vector2(
-                        -cPadding.x / 2 - tMargin.x,
-                        0.5 + cPadding.y + tMargin.y
-                    )
+                    outPosition: new THREE.Vector2(-cPadding.x / 2, 0.5 + cPadding.y)
                 },
                 {
                     it: "places text below aligned (left by default) ",
                     layout: {
                         verticalAlignment: VerticalAlignment.Below
                     },
-                    outPosition: new THREE.Vector2(cPadding.x + tMargin.x, -cPadding.y - tMargin.y)
+                    outPosition: new THREE.Vector2(cPadding.x, -cPadding.y)
                 },
                 {
                     it: "places text center aligned (left by default) ",
                     layout: {
                         verticalAlignment: VerticalAlignment.Center
                     },
-                    outPosition: new THREE.Vector2(cPadding.x + tMargin.x, 0.25)
+                    outPosition: new THREE.Vector2(cPadding.x, 0.25)
                 },
                 {
                     it: "places text aligned above (left by default)",
                     layout: {
                         verticalAlignment: VerticalAlignment.Above
                     },
-                    outPosition: new THREE.Vector2(
-                        cPadding.x + tMargin.x,
-                        0.5 + cPadding.y + tMargin.y
-                    )
+                    outPosition: new THREE.Vector2(cPadding.x, 0.5 + cPadding.y)
                 },
                 {
                     it: "places text with left-below alignment and offset",
@@ -344,10 +323,7 @@ describe("Placement", function() {
                     },
                     xOffset: 5,
                     yOffset: 5,
-                    outPosition: new THREE.Vector2(
-                        5 + cPadding.x + tMargin.x,
-                        5 - cPadding.y - tMargin.y
-                    )
+                    outPosition: new THREE.Vector2(5 + cPadding.x, 5 - cPadding.y)
                 },
                 {
                     it: "places text with right-below alignment and offset",
@@ -357,10 +333,7 @@ describe("Placement", function() {
                     },
                     xOffset: 5,
                     yOffset: 5,
-                    outPosition: new THREE.Vector2(
-                        5 - cPadding.x / 2 - tMargin.x,
-                        5 - cPadding.y - tMargin.y
-                    )
+                    outPosition: new THREE.Vector2(5 - cPadding.x / 2, 5 - cPadding.y)
                 }
             ];
             runs.forEach(function(run) {
@@ -436,8 +409,8 @@ describe("Placement", function() {
                 );
 
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(cPadding.x + tMargin.x);
-                expect(position.y).to.equal(-cPadding.y - tMargin.y);
+                expect(position.x).to.equal(cPadding.x);
+                expect(position.y).to.equal(-cPadding.y);
             });
 
             it("places text center", async function() {
@@ -470,7 +443,7 @@ describe("Placement", function() {
                 );
 
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(cPadding.x + tMargin.x);
+                expect(position.x).to.equal(cPadding.x);
                 expect(position.y).to.equal(76 + 0.25);
             });
 
@@ -504,8 +477,8 @@ describe("Placement", function() {
                 );
 
                 expect(result).to.equal(PlacementResult.Ok);
-                expect(position.x).to.equal(cPadding.x + tMargin.x);
-                expect(position.y).to.equal(152 + 0.5 + cPadding.y + tMargin.y);
+                expect(position.x).to.equal(cPadding.x);
+                expect(position.y).to.equal(152 + 0.5 + cPadding.y);
             });
 
             it("places text with offset", async function() {
@@ -542,7 +515,7 @@ describe("Placement", function() {
 
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(position.x).to.equal(5);
-                expect(position.y).to.equal(5 + 19 + 0.5 + cPadding.y + tMargin.y);
+                expect(position.y).to.equal(5 + 19 + 0.5 + cPadding.y);
             });
 
             it("scales offsets", async function() {
@@ -579,7 +552,7 @@ describe("Placement", function() {
 
                 expect(result).to.equal(PlacementResult.Ok);
                 expect(position.x).to.equal(0.8 * 5);
-                expect(position.y).to.equal(0.8 * (5 + 19 + 0.5 + cPadding.y + tMargin.y));
+                expect(position.y).to.equal(0.8 * (5 + 19 + 0.5 + cPadding.y));
             });
         });
 
@@ -1061,7 +1034,7 @@ describe("Placement", function() {
                 const inPositions = [new THREE.Vector2(-offset, 0), new THREE.Vector2(offset, 0)];
                 const outPositions = [new THREE.Vector3(), new THREE.Vector3()];
                 const marginX = -cPadding.x / 2;
-                const marginY = -cPadding.y - tMargin.y;
+                const marginY = -cPadding.y;
 
                 const env = new Env();
 
@@ -1083,7 +1056,7 @@ describe("Placement", function() {
                     const textPlacement = states[i].textPlacement;
                     expect(textPlacement.h).to.be.equal(HorizontalPlacement.Left);
                     expect(textPlacement.v).to.be.equal(VerticalPlacement.Bottom);
-                    expect(inPositions[i].x).to.equal(outPositions[i].x - marginX);
+                    expect(inPositions[i].x).to.equal(outPositions[i].x + marginX);
                     expect(inPositions[i].y).to.equal(outPositions[i].y - marginY);
                 }
                 // First element allocated, second collides, because it's a new label
@@ -1111,7 +1084,7 @@ describe("Placement", function() {
                     );
                 }
                 // First element has placement unchanged.
-                expect(inPositions[0].x).to.equal(outPositions[0].x - marginX);
+                expect(inPositions[0].x).to.equal(outPositions[0].x + marginX);
                 expect(inPositions[0].y).to.equal(outPositions[0].y - marginY);
                 // Second occupies alternative placement.
                 expect(
@@ -1199,7 +1172,7 @@ describe("Placement", function() {
                 const inPositions = [new THREE.Vector2(-offset, 0), new THREE.Vector2(offset, 0)];
                 const outPositions = [new THREE.Vector3(), new THREE.Vector3()];
                 const marginX = -cPadding.x / 2;
-                const marginY = -cPadding.y - tMargin.y;
+                const marginY = -cPadding.y;
 
                 const env = new Env();
 
@@ -1219,7 +1192,7 @@ describe("Placement", function() {
                         outPositions[i],
                         false
                     );
-                    expect(inPositions[0].x).to.equal(outPositions[0].x - marginX);
+                    expect(inPositions[0].x).to.equal(outPositions[0].x + marginX);
                     expect(inPositions[0].y).to.equal(outPositions[0].y - marginY);
                 }
                 // First element allocated, second collides, because it's a new label
@@ -1260,7 +1233,7 @@ describe("Placement", function() {
                     );
                 }
                 // First element has placement unchanged.
-                expect(inPositions[0].x).to.equal(outPositions[0].x - marginX);
+                expect(inPositions[0].x).to.equal(outPositions[0].x + marginX);
                 expect(inPositions[0].y).to.equal(outPositions[0].y - marginY);
                 // Second occupies alternative placement.
                 expect(outPositions[1].x === inPositions[1].x - marginX).to.be.false;
@@ -1303,7 +1276,7 @@ describe("Placement", function() {
                     );
                 }
                 // First element has placement unchanged.
-                expect(inPositions[0].x).to.equal(outPositions[0].x - marginX);
+                expect(inPositions[0].x).to.equal(outPositions[0].x + marginX);
                 expect(inPositions[0].y).to.equal(outPositions[0].y - marginY);
                 // Second element has to stay at the same placement - for fading.
                 expect(alternativePos.x).to.equal(outPositions[1].x);

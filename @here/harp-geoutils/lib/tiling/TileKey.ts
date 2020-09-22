@@ -115,7 +115,6 @@ export class TileKey {
         const level = quadkey.length;
         let row = 0;
         let column = 0;
-        // tslint:disable:no-bitwise
         for (let i = 0; i < quadkey.length; ++i) {
             const mask = 1 << i;
             const d = parseInt(quadkey.charAt(level - i - 1), 10);
@@ -126,9 +125,9 @@ export class TileKey {
                 row |= mask;
             }
         }
-        // tslint:enable:no-bitwise
         return TileKey.fromRowColumnLevel(row, column, level);
     }
+
     /**
      * Creates a tile key from a numeric Morton code representation.
      *
@@ -142,7 +141,6 @@ export class TileKey {
         let row = 0;
         let column = 0;
         let quadKey = quadKey64;
-        // tslint:disable:no-bitwise
         while (quadKey > 1) {
             const mask: number = 1 << level;
 
@@ -156,7 +154,6 @@ export class TileKey {
             level++;
             quadKey = (quadKey - (quadKey & 0x3)) / 4;
         }
-        // tslint:enable:no-bitwise
         const result = TileKey.fromRowColumnLevel(row, column, level);
         result.m_mortonCode = quadKey64;
         return result;
@@ -261,7 +258,6 @@ export class TileKey {
         if (this.level === 0) {
             throw new Error("Cannot get the parent of the root tile key");
         }
-        // tslint:disable-next-line:no-bitwise
         return TileKey.fromRowColumnLevel(this.row >>> 1, this.column >>> 1, this.level - 1);
     }
 
@@ -279,7 +275,6 @@ export class TileKey {
         let row = this.row;
         let column = this.column;
 
-        // tslint:disable:no-bitwise
         if (delta >= 0) {
             row <<= delta;
             column <<= delta;
@@ -287,7 +282,6 @@ export class TileKey {
             row >>>= -delta;
             column >>>= -delta;
         }
-        // tslint:enable:no-bitwise
         return TileKey.fromRowColumnLevel(row, column, level);
     }
 
@@ -318,7 +312,6 @@ export class TileKey {
             let column = this.column;
             let row = this.row;
 
-            // tslint:disable:no-bitwise
             let result = powerOfTwo[this.level << 1];
             for (let i = 0; i < this.level; ++i) {
                 if (column & 0x1) {
@@ -330,7 +323,6 @@ export class TileKey {
                 column >>>= 1;
                 row >>>= 1;
             }
-            // tslint:enable:no-bitwise
 
             this.m_mortonCode = result;
         }
@@ -365,7 +357,6 @@ export class TileKey {
     toQuadKey(): string {
         let result: string = "";
 
-        // tslint:disable:no-bitwise
         for (let i = this.level; i > 0; --i) {
             const mask = 1 << (i - 1);
 
@@ -382,7 +373,6 @@ export class TileKey {
                 result += "0";
             }
         }
-        // tslint:enable:no-bitwise
 
         return result;
     }
@@ -449,10 +439,8 @@ export class TileKey {
      */
     getSubHereTile(delta: number): string {
         const key = this.mortonCode();
-        // tslint:disable-next-line:no-bitwise
         const msb = 1 << (delta * 2);
         const mask = msb - 1;
-        // tslint:disable-next-line:no-bitwise
         const result = (key & mask) | msb;
         return result.toString();
     }

@@ -72,11 +72,9 @@ export class ContextLogger implements IContextLogger {
 
     // They, are public member functions it's just tslint who doesn't understand this.
 
-    // tslint:disable:member-ordering
     warn = this.createLogMethod("warn");
     info = this.createLogMethod("info");
     error = this.createLogMethod("error");
-    // tslint:enable:member-ordering
 
     private createLogMethod(severity: "warn" | "info" | "error") {
         return (message: string, ...rest: any[]) => {

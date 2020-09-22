@@ -6,11 +6,11 @@
 
 import { LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { debugContext } from "./DebugContext";
 
 declare const require: any;
 
-// tslint:disable-next-line:no-var-requires
 const RBush = require("rbush");
 
 const logger = LoggerManager.instance.create("ScreenCollissions");
@@ -40,27 +40,35 @@ export class CollisionBox extends Math2D.Box implements IBox {
         }
         return this;
     }
+
     get minX(): number {
         return this.x;
     }
+
     set minX(minX: number) {
         this.x = minX;
     }
+
     get maxX(): number {
         return this.x + this.w;
     }
+
     set maxX(maxX: number) {
         this.w = maxX - this.x;
     }
+
     get minY(): number {
         return this.y;
     }
+
     set minY(minY: number) {
         this.y = minY;
     }
+
     get maxY(): number {
         return this.y + this.h;
     }
+
     set maxY(maxY: number) {
         this.h = maxY - this.y;
     }
@@ -298,7 +306,6 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
     update(width: number, height: number) {
         if (this.m_renderingEnabled) {
             logger.log(
-                // tslint:disable-next-line: max-line-length
                 `Allocations: ${this.m_numAllocations} Successful Tests: ${this.m_numSuccessfulTests} Failed Tests: ${this.m_numFailedTests}  Successful Visibility Tests: ${this.m_numSuccessfulVisibilityTests}  Failed Visibility Tests: ${this.m_numFailedVisibilityTests} `
             );
         }

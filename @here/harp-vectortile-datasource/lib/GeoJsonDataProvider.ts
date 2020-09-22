@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoJson, ITiler, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
+
+import { GeoJson, ITiler, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { ConcurrentTilerFacade } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { LoggerManager } from "@here/harp-utils";
 
-import { EventDispatcher } from "three";
 import { GEOJSON_TILER_SERVICE_TYPE } from "./OmvDecoderDefs";
 
 const logger = LoggerManager.instance.create("GeoJsonDataProvider");
@@ -43,7 +43,7 @@ let missingTilerServiceInfoEmitted: boolean = false;
  * @remarks
  * Automatically handles tiling and simplification of static GeoJson.
  */
-export class GeoJsonDataProvider extends EventDispatcher implements DataProvider {
+export class GeoJsonDataProvider extends DataProvider {
     private readonly m_tiler: ITiler;
     private m_registered = false;
 
@@ -102,7 +102,7 @@ export class GeoJsonDataProvider extends EventDispatcher implements DataProvider
     }
 
     async getTile(tileKey: TileKey): Promise<{}> {
-        return this.m_tiler.getTile(this.name, tileKey);
+        return await this.m_tiler.getTile(this.name, tileKey);
     }
 
     onDidInvalidate(listener: () => void) {

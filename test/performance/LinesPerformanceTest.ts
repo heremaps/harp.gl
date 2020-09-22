@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
-
 import { mercatorProjection } from "@here/harp-geoutils";
 import { createLineGeometry } from "@here/harp-lines";
 import { measureThroughputSync } from "@here/harp-test-utils/lib/ProfileHelper";

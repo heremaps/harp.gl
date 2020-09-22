@@ -7,6 +7,7 @@ import { DecodedTile, GeometryType, TextPathGeometry } from "@here/harp-datasour
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationRange } from "./ElevationRangeSource";
@@ -316,13 +317,16 @@ export class Tile implements CachedResource {
     // It's `Undefined` when no text content has been added yet.
     private m_textElementsChanged: boolean | undefined;
 
-    // Center of the tile's unelevated bounding box world coordinates.
+    // Center of the tile's un-elevated bounding box world coordinates.
     private readonly m_worldCenter = new THREE.Vector3();
     private m_visibleArea: number = 0;
     // Tile elevation range in meters
     private readonly m_elevationRange: ElevationRange = { minElevation: 0, maxElevation: 0 };
     // Maximum height of geometry on this tile above ground level.
     private m_maxGeometryHeight?: number;
+    // Minimum height of geometry on this tile below ground level. Should be negative for values
+    // below ground.
+    private m_minGeometryHeight?: number;
 
     private m_resourceInfo: TileResourceInfo | undefined;
 
@@ -708,9 +712,9 @@ export class Tile implements CachedResource {
         this.m_elevationRange.calculationStatus = elevationRange.calculationStatus;
         this.elevateGeoBox();
 
-        // Only update bounding box if tile has already been decoded and a maximum geometry height
-        // is provided by the data source.
-        if (this.m_maxGeometryHeight !== undefined) {
+        // Only update bounding box if tile has already been decoded and a maximum/minimum geometry
+        // height is provided by the data source.
+        if (this.m_maxGeometryHeight !== undefined || this.m_minGeometryHeight !== undefined) {
             assert(this.decodedTile?.boundingBox === undefined);
             this.updateBoundingBox();
         }
@@ -749,6 +753,9 @@ export class Tile implements CachedResource {
         this.m_maxGeometryHeight = decodedTile.boundingBox
             ? undefined
             : decodedTile.maxGeometryHeight ?? 0;
+        this.m_minGeometryHeight = decodedTile.boundingBox
+            ? undefined
+            : decodedTile.minGeometryHeight ?? 0;
         this.elevateGeoBox();
         this.updateBoundingBox(decodedTile.boundingBox);
 
@@ -792,7 +799,6 @@ export class Tile implements CachedResource {
      * @param object - The object that references the geometry.
      * @returns `true` if the geometry can be disposed.
      */
-    // tslint:disable-next-line:no-unused-variable
     shouldDisposeObjectGeometry(object: TileObject): boolean {
         return true;
     }
@@ -804,7 +810,6 @@ export class Tile implements CachedResource {
      * @param object - The object referencing the geometry.
      * @returns `true` if the material can be disposed.
      */
-    // tslint:disable-next-line:no-unused-variable
     shouldDisposeObjectMaterial(object: TileObject): boolean {
         return true;
     }
@@ -845,21 +850,12 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * `True` if the basic geometry has been loaded, and the `Tile` is ready  for display.
-     */
-    get basicGeometryLoaded(): boolean {
-        return this.m_tileGeometryLoader === undefined
-            ? this.hasGeometry
-            : this.m_tileGeometryLoader.basicGeometryLoaded || this.m_tileGeometryLoader.isFinished;
-    }
-
-    /**
      * `True` if all geometry of the `Tile` has been loaded.
      */
     get allGeometryLoaded(): boolean {
         return this.m_tileGeometryLoader === undefined
             ? this.hasGeometry
-            : this.m_tileGeometryLoader.allGeometryLoaded || this.m_tileGeometryLoader.isFinished;
+            : this.m_tileGeometryLoader.isFinished;
     }
 
     /**
@@ -918,10 +914,10 @@ export class Tile implements CachedResource {
     async load(): Promise<void> {
         const tileLoader = this.tileLoader;
         if (tileLoader === undefined) {
-            return Promise.resolve();
+            return await Promise.resolve();
         }
 
-        return tileLoader
+        return await tileLoader
             .loadAndDecode()
             .then(tileLoaderState => {
                 assert(tileLoaderState === TileLoaderState.Ready);
@@ -1111,7 +1107,8 @@ export class Tile implements CachedResource {
      * Elevates the tile's geo box using the elevation range and maximum geometry height.
      */
     private elevateGeoBox() {
-        this.geoBox.southWest.altitude = this.m_elevationRange.minElevation;
+        this.geoBox.southWest.altitude =
+            this.m_elevationRange.minElevation + (this.m_minGeometryHeight ?? 0);
         this.geoBox.northEast.altitude =
             this.m_elevationRange.maxElevation + (this.m_maxGeometryHeight ?? 0);
     }

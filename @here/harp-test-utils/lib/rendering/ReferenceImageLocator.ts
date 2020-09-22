@@ -5,6 +5,7 @@
  */
 
 import * as querystring from "querystring";
+
 import { TestImageProps } from "./Interface";
 
 let referenceImageResovler: (imageProps: TestImageProps) => string = defaultReferenceImageResolver;

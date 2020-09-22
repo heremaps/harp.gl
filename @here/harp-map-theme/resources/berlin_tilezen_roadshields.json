@@ -22,12 +22,12 @@
                 "hAlignment": "Center",
                 "textIsOptional": false,
                 "iconIsOptional": false,
-                "textMayOverlap": true,
-                "textReserveSpace": false,
-                "iconMayOverlap": true,
-                "iconReserveSpace": false,
-                "renderTextDuringMovements": false,
-                "color": "#00a0a0",
+                "textMayOverlap": false,
+                "textReserveSpace": true,
+                "iconMayOverlap": false,
+                "iconReserveSpace": true,
+                "renderTextDuringMovements": true,
+                "color": "#000",
                 "showOnMap": true
             }
         ]

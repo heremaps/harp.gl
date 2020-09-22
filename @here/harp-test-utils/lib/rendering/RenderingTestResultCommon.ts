@@ -9,6 +9,7 @@
 import * as fs from "fs";
 import * as glob from "glob";
 import * as util from "util";
+
 import { ImageTestResultLocal, TestImageProps } from "./Interface";
 
 const promisedGlob = util.promisify(glob);

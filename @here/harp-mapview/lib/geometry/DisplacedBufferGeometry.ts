@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { DisplacedBufferAttribute } from "./DisplacedBufferAttribute";
 
 const tmpV1 = new THREE.Vector3();
@@ -105,7 +106,6 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
     }
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
     computeBoundingBox(): void {
         // Calculate a coarse approximation of the displaced geometry bbox by displacing the
         // original bbox and enlarging it to cover the whole displacement range.
@@ -128,7 +128,6 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
     }
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
     computeBoundingSphere(): void {
         // Use as coarse approximation the sphere bounding the bbox.
         if (this.boundingBox === null) {

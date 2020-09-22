@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
 import { ColorUtils, Expr, getPropertyValue, Value } from "@here/harp-datasource-protocol";
 import { disableBlending, enableBlending } from "@here/harp-materials";
+import * as THREE from "three";
+
 import { evaluateColorProperty } from "./DecodedTileHelpers";
 import { MapView } from "./MapView";
 

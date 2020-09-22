@@ -10,6 +10,7 @@ import { TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { ScreenProjector } from "../lib/ScreenProjector";
@@ -34,13 +35,10 @@ import { stubPoiRenderer, stubPoiRendererFactory } from "./stubPoiRenderer";
 import { stubTextCanvas, stubTextCanvasFactory } from "./stubTextCanvas";
 import { FadeState } from "./TextElementsRendererTestUtils";
 
-// tslint:disable:no-unused-expression
 //    expect-type assertions are unused expressions and are perfectly valid
 
-// tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox): ViewState {
@@ -248,8 +246,8 @@ export class TestFixture {
         for (let i = 0; i < allElements.length; ++i) {
             const element = allElements[i];
             const addElement = elementEnabled[i];
-            const elementPresent = [...tileElementGroups.groups.values()].find(
-                group => group.elements.indexOf(element) !== -1
+            const elementPresent = [...tileElementGroups.groups.values()].find(group =>
+                group.elements.includes(element)
             );
             if (addElement && !elementPresent) {
                 tile.addTextElement(element);
@@ -306,6 +304,7 @@ export class TestFixture {
     setElevationProvider(enabled: boolean) {
         this.m_viewState.elevationProvider = enabled ? this.m_elevationProviderStub : undefined;
     }
+
     private checkTextElementRendered(
         textElement: TextElement,
         opacityMatcher: OpacityMatcher | undefined

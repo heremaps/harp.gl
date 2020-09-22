@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
@@ -12,6 +11,7 @@ import { MapView, MapViewUtils } from "@here/harp-mapview";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { MapControls } from "../lib/MapControls";
 
 declare const global: any;
@@ -28,6 +28,7 @@ describe("MapControls", function() {
     let camera: THREE.Camera;
     let updateStub: sinon.SinonStub<any>;
     let lookAtStub: sinon.SinonStub<any>;
+    let orbitAroundScreenPointSpy: sinon.SinonSpy<any>;
 
     const eventMap: Map<string, EventListener> = new Map();
 
@@ -156,10 +157,8 @@ describe("MapControls", function() {
     before(function() {
         if (inNodeContext) {
             const theGlobal: any = global;
-            // tslint:disable-next-line:no-empty
             theGlobal.requestAnimationFrame = () => {};
             theGlobal.performance = {
-                // tslint:disable-next-line:no-empty
                 now: () => {}
             };
             (global as any).window = {
@@ -197,14 +196,18 @@ describe("MapControls", function() {
         mapView = sandbox.createStubInstance(MapView) as any;
         sandbox.stub(mapView, "renderer").get(() => ({ domElement }));
         updateStub = mapView.update as any;
-        // tslint:disable-next-line: deprecation
         lookAtStub = mapView.lookAt as any;
+
+        orbitAroundScreenPointSpy = sandbox.spy(MapViewUtils, "orbitAroundScreenPoint");
 
         sandbox.stub(mapView, "projection").get(() => {
             return mercatorProjection;
         });
         sandbox.stub(mapView, "target").get(() => {
             return GeoCoordinates.fromDegrees(0, 0);
+        });
+        sandbox.stub(mapView, "tilt").get(() => {
+            return 0;
         });
         mapView.minZoomLevel = 0;
         mapView.maxZoomLevel = 20;
@@ -327,7 +330,6 @@ describe("MapControls", function() {
         }
 
         function computeZoomLevel() {
-            // tslint:disable-next-line: deprecation
             const distance = MapViewUtils.getTargetAndDistance(mapView.projection, camera).distance;
             return MapViewUtils.calculateZoomLevelFromDistance(mapView, distance);
         }
@@ -375,7 +377,6 @@ describe("MapControls", function() {
                         mapControls.maxTiltAngle = 90;
 
                         mapControls.zoomOnTargetPosition(0, 0.1, 6);
-                        // tslint:disable-next-line: deprecation
                         const oldTarget = MapViewUtils.getTargetAndDistance(projection, camera)
                             .target;
                         const expAzimuth = MapViewUtils.extractSphericalCoordinatesFromLocation(
@@ -384,7 +385,6 @@ describe("MapControls", function() {
                             projection.unprojectPoint(oldTarget)
                         ).azimuth;
                         mapControls.zoomOnTargetPosition(0, 0.2, 7);
-                        // tslint:disable-next-line: deprecation
                         const newTarget = MapViewUtils.getTargetAndDistance(projection, camera)
                             .target;
                         const actualAzimuth = MapViewUtils.extractSphericalCoordinatesFromLocation(
@@ -465,7 +465,7 @@ describe("MapControls", function() {
                 return worldTarget;
             });
             // needed to get the initial zoom level from MapView.
-            (mapControls as any).assignZoomAfterTouchZoomRender();
+            mapControls["assignZoomAfterTouchZoomRender"]();
             expect(mapControls.zoomLevelTargeted).to.equal(initialZoomLevel);
         });
 
@@ -514,18 +514,19 @@ describe("MapControls", function() {
 
             it(`tilt interactions can be ${suffix}`, function() {
                 lookAtStub.resetHistory();
+                orbitAroundScreenPointSpy.resetHistory();
                 mapControls.tiltEnabled = enabled;
                 mapControls.enabled = allEnabled;
                 const isEnabled = allEnabled && enabled;
 
                 mapControls.toggleTilt();
-                expect(lookAtStub.called).to.equal(isEnabled);
+                expect(orbitAroundScreenPointSpy.called).to.equal(isEnabled);
 
                 mouseMove(2, domElement.clientWidth / 3, domElement.clientHeight / 3);
-                expect(lookAtStub.called).to.equal(isEnabled);
+                expect(orbitAroundScreenPointSpy.called).to.equal(isEnabled);
 
                 touchMove(3, domElement.clientWidth / 3, domElement.clientHeight / 3);
-                expect(lookAtStub.called).to.equal(isEnabled);
+                expect(orbitAroundScreenPointSpy.called).to.equal(isEnabled);
             });
         }
     });

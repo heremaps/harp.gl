@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import * as THREE from "three";
+
 import { RawShaderMaterial } from "./RawShaderMaterial";
 import AtmosphereShaderChunks from "./ShaderChunks/AtmosphereChunks";
 import { setShaderDefine, setShaderMaterialDefine } from "./Utils";

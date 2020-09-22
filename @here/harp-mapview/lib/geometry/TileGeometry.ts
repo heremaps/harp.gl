@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
 import { GeometryType } from "@here/harp-datasource-protocol";
 import { reconstructLineWidth } from "@here/harp-lines";
 import { assert, LoggerManager } from "@here/harp-utils";
+import * as THREE from "three";
 
 const logger = LoggerManager.instance.create("TileGeometry");
 
@@ -385,9 +384,7 @@ export abstract class IndexedBufferedGeometryAccessor extends BufferedGeometryAc
         readonly object: THREE.Mesh,
         readonly geometryType: GeometryType,
         protected readonly bufferGeometry: THREE.BufferGeometry,
-        // tslint:disable-next-line:no-unused-variable
         start?: number,
-        // tslint:disable-next-line:no-unused-variable
         end?: number
     ) {
         super(object, geometryType, bufferGeometry);

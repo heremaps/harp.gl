@@ -3,6 +3,9 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/* eslint-disable no-console */
+
 import {
     AtlasOptions,
     generateSprites,
@@ -13,9 +16,7 @@ import * as os from "os";
 import * as path from "path";
 
 // Allow to use console output, script runs in a shell (node), not in the browser.
-// tslint:disable:no-console
 
-// tslint:disable-next-line: no-var-requires
 const tmp = require("tmp");
 
 function downloadMakiIcons(targetDir: string): Promise<string> {

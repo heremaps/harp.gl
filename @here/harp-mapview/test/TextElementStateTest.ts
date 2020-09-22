@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable: no-unused-expression
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { expect } from "chai";
 
 import { TextBufferObject } from "@here/harp-text-canvas";
 import {
@@ -17,6 +13,8 @@ import {
     VerticalAlignment,
     VerticalPlacement
 } from "@here/harp-text-canvas/lib/rendering/TextStyle";
+import { expect } from "chai";
+
 import { TextElementState } from "../lib/text/TextElementState";
 import { TextElementType } from "../lib/text/TextElementType";
 
@@ -195,7 +193,6 @@ describe("TextElementState", function() {
             const predecessorText = predecessorState.textRenderState!;
             const predecessorIcon = predecessorState.iconRenderState!;
             // Need to access private member in via object's map, just for test.
-            // tslint:disable-next-line: no-string-literal
             const predecessorLayout = predecessorState["m_textLayoutState"];
 
             const textElementState = new TextElementState({
@@ -213,12 +210,10 @@ describe("TextElementState", function() {
             textElementState.replace(predecessorState);
             expect(predecessorState.textRenderState).to.be.undefined;
             expect(predecessorState.iconRenderState).to.be.undefined;
-            // tslint:disable-next-line: no-string-literal
             expect(predecessorState["m_textLayoutState"]).to.be.undefined;
 
             expect(textElementState.textRenderState).to.equal(predecessorText);
             expect(textElementState.iconRenderState).to.equal(predecessorIcon);
-            // tslint:disable-next-line: no-string-literal
             expect(textElementState["m_textLayoutState"]).to.equal(predecessorLayout);
         });
 

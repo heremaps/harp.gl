@@ -116,23 +116,24 @@ const bundledUriResolver = new BundledUriResolver();
 const getActualDecoderScriptUrl = () => {
     const baseScriptUrl = getBundleScriptUrl();
     if (!baseScriptUrl) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.error(
             `harp.js: Unable to determine default location of 'harp-decoders(min).js'. ` +
                 `See https://github.com/heremaps/harp.gl/@here/harp.gl.`
         );
     }
     if (!WorkerLoader.dependencyUrlMapping.three) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.error(
             `harp.js: Unable to determine location of 'three(.min).js'. ` +
                 "`See https://github.com/heremaps/harp.gl/@here/harp.gl.`"
         );
     }
     const isMinified = baseScriptUrl && baseScriptUrl.endsWith(".min.js");
+
     const decoderScriptName = !isMinified
         ? DEFAULT_DECODER_SCRIPT_URL
-        : DEFAULT_DECODER_SCRIPT_URL.replace(".js$", ".min.js");
+        : DEFAULT_DECODER_SCRIPT_URL.replace(/\.js$/, ".min.js");
     return bundledUriResolver.resolveUri(decoderScriptName);
 };
 

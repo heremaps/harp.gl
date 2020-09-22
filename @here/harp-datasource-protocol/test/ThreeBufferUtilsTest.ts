@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert, expect } from "chai";
 import * as THREE from "three";
+
 import { BufferAttribute, Geometry } from "../lib/DecodedTile";
 import { ThreeBufferUtils } from "../lib/ThreeBufferUtils";
 

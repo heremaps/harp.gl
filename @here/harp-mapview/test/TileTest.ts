@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { assert, expect } from "chai";
 
 import { DecodedTile } from "@here/harp-datasource-protocol";
 import {
@@ -16,7 +13,9 @@ import {
     TileKey,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+import { assert, expect } from "chai";
 import * as THREE from "three";
+
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
 import { TextElement } from "../lib/text/TextElement";
@@ -167,7 +166,6 @@ describe("Tile", function() {
     it("setting skipping will cause willRender to return false", function() {
         const tile = new Tile(stubDataSource, tileKey);
         tile.skipRendering = true;
-        // tslint:disable: no-unused-expression
         expect(tile.willRender(0)).is.false;
         tile.skipRendering = false;
         expect(tile.willRender(0)).is.true;
@@ -212,6 +210,24 @@ describe("Tile", function() {
         stubDataSource.mapView.projection.projectBox(expectedGeoBox, expectedBBox);
 
         tile.decodedTile = { techniques: [], geometries: [], maxGeometryHeight };
+        tile.elevationRange = { minElevation, maxElevation };
+
+        expect(tile.geoBox).deep.equals(expectedGeoBox);
+        expect(tile.boundingBox).deep.equals(expectedBBox);
+    });
+
+    it("elevationRange setter elevates bbox if minGeometryHeight is set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const minElevation = 30;
+        const maxElevation = 50;
+        const minGeometryHeight = -100;
+        const expectedGeoBox = tile.geoBox.clone();
+        expectedGeoBox.southWest.altitude = minElevation + minGeometryHeight;
+        expectedGeoBox.northEast.altitude = maxElevation;
+        const expectedBBox = new OrientedBox3();
+        stubDataSource.mapView.projection.projectBox(expectedGeoBox, expectedBBox);
+
+        tile.decodedTile = { techniques: [], geometries: [], minGeometryHeight };
         tile.elevationRange = { minElevation, maxElevation };
 
         expect(tile.geoBox).deep.equals(expectedGeoBox);

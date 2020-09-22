@@ -4,13 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { loadTestResource } from "../index";
 
-// tslint:disable:only-arrow-functions
+import { loadTestResource } from "../index";
 
 describe("@here/harp-test-utils", function() {
     describe("#loadTestResource", function() {

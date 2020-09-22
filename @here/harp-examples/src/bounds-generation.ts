@@ -9,7 +9,14 @@ import {
     MapViewMultiPointFeature,
     MapViewPolygonFeature
 } from "@here/harp-features-datasource";
-import { GeoCoordinates, mercatorProjection } from "@here/harp-geoutils";
+import {
+    GeoBox,
+    GeoCoordinates,
+    GeoPolygon,
+    mercatorProjection,
+    sphereProjection
+} from "@here/harp-geoutils";
+import { geoCoordLikeToGeoPointLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { BoundsGenerator, CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
@@ -18,12 +25,20 @@ import { apikey } from "../config";
 
 export namespace BoundsExample {
     const message = document.createElement("div");
-    message.innerHTML = ' Press "space" to generate and draw a bounds polygon of the current view ';
+    message.innerHTML = `
+  <br />  Press "space" to generate and draw a bounds polygon of the current view
+  <br />  Press "h" to look at the last created Polygon's BoundingBox
+  <br />  Press "g" to look at the last created Polygon
+  <br />  Press "b" to show the boundingbox of the Polygon
+  <br />  Press "p" to toggle the projection
+  <br />  Press "w" to toggle tile wrapping in planar projection`;
 
     message.style.position = "absolute";
     message.style.cssFloat = "right";
     message.style.top = "10px";
     message.style.right = "10px";
+    message.style.textAlign = "left";
+    message.style.textShadow = "0px 0px 2px gray";
     document.body.appendChild(message);
 
     // Create a new MapView for the HTMLCanvasElement of the given id.
@@ -41,15 +56,45 @@ export namespace BoundsExample {
                 styles: {
                     geojson: [
                         {
-                            when: ["all", ["==", ["geometry-type"], "Polygon"]],
+                            when: [
+                                "all",
+                                ["==", ["geometry-type"], "Polygon"],
+                                ["==", ["get", "name"], "bounds"]
+                            ],
                             technique: "fill",
                             renderOrder: 10003,
                             attr: {
                                 color: ["get", "color"], // "#77ccff",
-                                opacity: 0.5,
+                                opacity: 0.2,
                                 lineWidth: 1,
                                 lineColor: "#ff0000",
                                 enabled: true
+                            }
+                        },
+                        {
+                            when: [
+                                "all",
+                                ["==", ["geometry-type"], "Polygon"],
+                                ["==", ["get", "name"], "bbox"]
+                            ],
+                            technique: "solid-line",
+                            renderOrder: 10005,
+                            attr: {
+                                color: "#0ff",
+                                lineWidth: "5px"
+                            }
+                        },
+                        {
+                            when: [
+                                "all",
+                                ["==", ["geometry-type"], "Point"],
+                                ["==", ["get", "name"], "bbox"]
+                            ],
+                            technique: "circles",
+                            renderOrder: 10006,
+                            attr: {
+                                color: "#00f",
+                                size: 20
                             }
                         },
                         {
@@ -86,63 +131,47 @@ export namespace BoundsExample {
         });
 
         addVectorTileDataSource(map);
-        const featureList: MapViewFeature[] = []; //createFeatureList();
-        let featuresDataSource: FeaturesDataSource | undefined;
-        //@ts-ignore
-        featuresDataSource = addFeaturesDataSource(map, featureList);
-        let viewpoly: MapViewPolygonFeature;
-        let cornerpoints: MapViewMultiPointFeature;
+        const featuresDataSource = addFeaturesDataSource(map, []);
         const boundsGenerator = new BoundsGenerator(
             map.camera,
             map.projection,
             map.tileWrappingEnabled
         );
 
+        let bounds: GeoPolygon | undefined;
+        let showBoundingBox: boolean = false;
+
         window.addEventListener("keyup", event => {
             switch (event.key) {
                 case " ":
                     // Generate the the bounds  of the current view and add them as a feature
-                    const corners = boundsGenerator.generate();
-                    // tslint:disable-next-line: no-console
-                    console.log(corners);
-                    if (corners && corners.length > 0) {
-                        //add starting vertex to the end to close the polygon
-                        corners.push(corners[0].clone());
-                    }
-                    //convert the array to an array usable for the MapViewPolygonFeature
-                    const polygonArray: number[][][] = [];
-                    const pointArray: number[][] = [];
-                    polygonArray.push(pointArray);
-                    corners.forEach(corner => {
-                        if (corner === null) {
-                            return;
-                        }
-                        pointArray.push([corner.longitude, corner.latitude, 50]);
-                    });
+                    bounds = boundsGenerator.generate();
 
-                    if (viewpoly) {
-                        //remove the former polygon
-                        featuresDataSource?.remove(viewpoly);
+                    if (bounds !== undefined) {
+                        updateBoundsFeatures(bounds, featuresDataSource);
+                        updateBoundingBoxFeatures(bounds, featuresDataSource, showBoundingBox);
                     }
-                    //add the new polygon
-                    viewpoly = new MapViewPolygonFeature(polygonArray, {
-                        name: "newpoly",
-                        height: 10000,
-                        color: "#ffff00"
-                    });
-                    featuresDataSource?.add(viewpoly);
-
-                    // add circles at the corner points
-                    if (cornerpoints) {
-                        featuresDataSource?.remove(cornerpoints);
+                    break;
+                case "h":
+                    map.lookAt({ bounds: bounds?.getGeoBoundingBox() });
+                    break;
+                case "g":
+                    map.lookAt({ bounds });
+                    break;
+                case "p":
+                    boundsGenerator.projection = map.projection =
+                        map.projection === mercatorProjection
+                            ? sphereProjection
+                            : mercatorProjection;
+                    break;
+                case "b":
+                    if (bounds) {
+                        showBoundingBox = showBoundingBox ? false : true;
+                        updateBoundingBoxFeatures(bounds, featuresDataSource, showBoundingBox);
                     }
-                    cornerpoints = new MapViewMultiPointFeature(pointArray, {
-                        name: "cornerpoints"
-                    });
-                    featuresDataSource?.add(cornerpoints);
                     break;
                 case "l":
-                    // tslint:disable-next-line: no-console
+                    // eslint-disable-next-line no-console
                     console.log(
                         "target: ",
                         map.target,
@@ -161,12 +190,107 @@ export namespace BoundsExample {
                         map.camera.far
                     );
                     break;
+                case "w":
+                    mapView.tileWrappingEnabled = !mapView.tileWrappingEnabled;
+                    boundsGenerator.tileWrappingEnabled = mapView.tileWrappingEnabled;
+                    mapView.update();
+                    break;
                 default:
                     break;
             }
         });
 
         return map;
+    }
+
+    let viewpoly: MapViewPolygonFeature;
+    let cornerpoints: MapViewMultiPointFeature;
+    let bboxFeature: MapViewMultiPointFeature;
+    let bboxPolygonFeature: MapViewPolygonFeature;
+
+    function updateBoundsFeatures(polygon: GeoPolygon, featuresDataSource: FeaturesDataSource) {
+        const corners = polygon.coordinates;
+        if (corners && corners.length > 0) {
+            //add starting vertex to the end to close the polygon
+            corners.push((corners[0] as GeoCoordinates).clone());
+        }
+        //convert the array to an array usable for the MapViewPolygonFeature
+        const polygonArray: number[][][] = [];
+        const pointArray: number[][] = [];
+        polygonArray.push(pointArray);
+        corners.forEach(corner => {
+            if (corner === null) {
+                return;
+            }
+            pointArray.push(geoCoordLikeToGeoPointLike(corner) as number[]);
+        });
+
+        if (viewpoly) {
+            //remove the former polygon
+            featuresDataSource?.remove(viewpoly);
+        }
+        //add the new polygon
+        viewpoly = new MapViewPolygonFeature(polygonArray, {
+            name: "bounds",
+            height: 10000,
+            color: "#ffff00"
+        });
+        featuresDataSource?.add(viewpoly);
+
+        // add circles at the corner points
+        if (cornerpoints) {
+            featuresDataSource?.remove(cornerpoints);
+        }
+        cornerpoints = new MapViewMultiPointFeature(pointArray, {
+            name: "cornerpoints"
+        });
+        featuresDataSource?.add(cornerpoints);
+    }
+
+    function updateBoundingBoxFeatures(
+        geoPolygon: GeoPolygon,
+        featuresDataSource: FeaturesDataSource,
+        isVisible: boolean = true
+    ) {
+        if (bboxFeature) {
+            featuresDataSource?.remove(bboxFeature);
+        }
+        if (bboxPolygonFeature) {
+            featuresDataSource?.remove(bboxPolygonFeature);
+        }
+        if (isVisible) {
+            const geoBBox = geoPolygon.getGeoBoundingBox() as GeoBox;
+
+            const geoBBoxCornerArray: number[][] = [];
+            [
+                new GeoCoordinates(geoBBox?.south, geoBBox?.west, 70),
+                new GeoCoordinates(geoBBox?.south, geoBBox?.east, 70),
+                new GeoCoordinates(geoBBox?.north, geoBBox?.east, 70),
+                new GeoCoordinates(geoBBox?.north, geoBBox?.west, 70),
+                new GeoCoordinates(geoBBox?.south, geoBBox?.west, 70)
+            ].forEach(point => {
+                if (!point) {
+                    return;
+                }
+                geoBBoxCornerArray.push([
+                    point.longitude,
+                    point.latitude,
+                    point.altitude as number
+                ]);
+            });
+            const centroid = geoPolygon.getCentroid() as GeoCoordinates;
+            bboxFeature = new MapViewMultiPointFeature(
+                [[centroid.longitude, centroid.latitude, 70]].concat(geoBBoxCornerArray),
+                {
+                    name: "bbox"
+                }
+            );
+            featuresDataSource?.add(bboxFeature);
+            bboxPolygonFeature = new MapViewPolygonFeature([geoBBoxCornerArray], {
+                name: "bbox"
+            });
+            featuresDataSource?.add(bboxPolygonFeature);
+        }
     }
 
     function addVectorTileDataSource(map: MapView) {
@@ -180,7 +304,7 @@ export namespace BoundsExample {
         return map;
     }
 
-    function addFeaturesDataSource(map: MapView, featureList: [MapViewFeature]) {
+    function addFeaturesDataSource(map: MapView, featureList: MapViewFeature[]) {
         const featuresDataSource = new FeaturesDataSource({
             name: "featureDataSource",
             styleSetName: "geojson",

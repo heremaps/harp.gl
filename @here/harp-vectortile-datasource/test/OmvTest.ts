@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+import { MapEnv, Value } from "@here/harp-datasource-protocol/index-decoder";
+import { assert } from "chai";
 
 import {
     OmvFeatureFilter,
@@ -16,9 +18,6 @@ import {
     OmvGenericFeatureModifier,
     OmvGeometryType
 } from "../index";
-
-import { MapEnv, Value } from "@here/harp-datasource-protocol/index-decoder";
-import { assert } from "chai";
 
 /**
  * Until we have some proper mock datasources, the OmvFeatureFilter/OmvFeatureModifier tests here
@@ -64,9 +63,7 @@ export class RoadFeatureFilter implements OmvFeatureModifier {
     doProcessLineFeature(_layer: string, env: MapEnv): boolean {
         const roadClass = env.lookup("class");
         const isRoad =
-            roadClass !== undefined &&
-            roadClass !== null &&
-            roadClass.toString().indexOf("rail") < 0;
+            roadClass !== undefined && roadClass !== null && !roadClass.toString().includes("rail");
         return isRoad;
     }
 

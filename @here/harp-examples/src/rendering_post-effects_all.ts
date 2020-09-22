@@ -13,6 +13,7 @@ import {
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
 import { GUI } from "dat.gui";
+
 import { apikey, copyrightInfo } from "../config";
 
 /**

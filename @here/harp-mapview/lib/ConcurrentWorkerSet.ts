@@ -11,10 +11,9 @@ import {
     LogLevel,
     WORKERCHANNEL_MSG_TYPE
 } from "@here/harp-utils";
+import * as THREE from "three";
 
 import { WorkerLoader } from "./workers/WorkerLoader";
-
-import * as THREE from "three";
 
 const logger = LoggerManager.instance.create("ConcurrentWorkerSet");
 
@@ -286,7 +285,7 @@ export class ConcurrentWorkerSet {
     async connect(serviceId: string): Promise<void> {
         this.ensureStarted();
         await Promise.all(this.m_workerPromises);
-        return this.getReadyPromise(serviceId).promise as Promise<void>;
+        return await this.getReadyPromise(serviceId).promise;
     }
 
     /**

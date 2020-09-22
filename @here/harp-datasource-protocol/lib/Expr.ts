@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 import { Env, Value } from "./Env";
 import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprEvaluator";
 import { ExprInstantiator, InstantiationContext } from "./ExprInstantiator";
@@ -13,11 +15,9 @@ import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedPropertyDefs";
-import { Definitions } from "./Theme";
-
-import * as THREE from "three";
 import { Pixels } from "./Pixels";
 import { RGBA } from "./RGBA";
+import { Definitions } from "./Theme";
 
 export * from "./Env";
 
@@ -216,13 +216,11 @@ export enum ExprScope {
     Dynamic
 }
 
-// tslint:disable:max-line-length
 /**
  * Abstract class representing the
  * {@link https://github.com/heremaps/harp.gl/blob/master/%40here/harp-datasource-protocol/StyleExpressions.md | style expressions}
  * used in {@link Theme}.
  */
-// tslint:enable:max-line-length
 export abstract class Expr {
     /**
      * Tests of given value is an {@link Expr}.
@@ -246,7 +244,6 @@ export abstract class Expr {
         return expr;
     }
 
-    // tslint:disable:max-line-length
     /**
      * Creates a style expression from JSON.
      *
@@ -266,7 +263,6 @@ export abstract class Expr {
      * ]);
      * ```
      */
-    // tslint:enable:max-line-length
     static fromJSON(
         json: JsonValue,
         definitions?: Definitions,
@@ -966,7 +962,7 @@ function parseInterpolateExpr(
     if (mode[0] === "exponential" && typeof mode[1] !== "number") {
         throw new Error("expected the base of the exponential interpolation");
     }
-    const input = node[2] ? parseNode(node[2], referenceResolverState) : undefined;
+    const input = node[2] !== undefined ? parseNode(node[2], referenceResolverState) : undefined;
     if (!Expr.isExpr(input)) {
         throw new Error(`expected the input of the interpolation`);
     }

@@ -41,11 +41,13 @@ export interface OlpDataProviderParams {
 /**
  * [[DataProvider]] implementation for OLP catalogs.
  */
-export class OlpDataProvider implements DataProvider {
+export class OlpDataProvider extends DataProvider {
     private m_versionLayerClient: VersionedLayerClient | undefined;
     private m_catalogVersion: number = -1;
 
-    constructor(readonly params: OlpDataProviderParams) {}
+    constructor(readonly params: OlpDataProviderParams) {
+        super();
+    }
 
     /**
      * Connect to the data source. Returns a promise to wait for successful (or failed) connection.
@@ -108,7 +110,7 @@ export class OlpDataProvider implements DataProvider {
             if (response.status !== 200) {
                 throw new Error(response.statusText);
             }
-            return response.arrayBuffer();
+            return await response.arrayBuffer();
         } catch (error) {
             if (error.name === "AbortError" || error.message === "AbortError: Aborted") {
                 // Rethrow abort errors as they shall be handled on higher level.

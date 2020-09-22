@@ -24,7 +24,7 @@ import {
     GeoBox,
     GeoBoxExtentLike,
     GeoCoordinates,
-    GeoCoordLike,
+    GeoPolygon,
     isGeoBoxExtentLike,
     isGeoCoordinatesLike,
     isVector3Like,
@@ -35,6 +35,7 @@ import {
     TilingScheme,
     Vector3Like
 } from "@here/harp-geoutils";
+import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { SolidLineMaterial } from "@here/harp-materials";
 import {
     assert,
@@ -186,36 +187,9 @@ const DEFAULT_STENCIL_VALUE = 1;
  * The type of `RenderEvent`.
  */
 export interface RenderEvent extends THREE.Event {
-    type:
-        | MapViewEventNames.Render
-        | MapViewEventNames.FirstFrame
-        | MapViewEventNames.FrameComplete
-        | MapViewEventNames.ThemeLoaded
-        | MapViewEventNames.AnimationStarted
-        | MapViewEventNames.AnimationFinished
-        | MapViewEventNames.MovementStarted
-        | MapViewEventNames.MovementFinished
-        | MapViewEventNames.ContextLost
-        | MapViewEventNames.ContextRestored
-        | MapViewEventNames.CopyrightChanged;
+    type: MapViewEventNames;
     time?: number;
 }
-
-// Event type: cast needed to workaround wrong THREE.js typings.
-const UPDATE: RenderEvent = { type: MapViewEventNames.Update } as any;
-const RENDER_EVENT: RenderEvent = { type: MapViewEventNames.Render } as any;
-const DID_RENDER_EVENT: RenderEvent = { type: MapViewEventNames.AfterRender } as any;
-const FIRST_FRAME_EVENT: RenderEvent = { type: MapViewEventNames.FirstFrame } as any;
-const FRAME_COMPLETE_EVENT: RenderEvent = { type: MapViewEventNames.FrameComplete } as any;
-const THEME_LOADED_EVENT: RenderEvent = { type: MapViewEventNames.ThemeLoaded } as any;
-const ANIMATION_STARTED_EVENT: RenderEvent = { type: MapViewEventNames.AnimationStarted } as any;
-const ANIMATION_FINISHED_EVENT: RenderEvent = { type: MapViewEventNames.AnimationFinished } as any;
-const MOVEMENT_STARTED_EVENT: RenderEvent = { type: MapViewEventNames.MovementStarted } as any;
-const MOVEMENT_FINISHED_EVENT: RenderEvent = { type: MapViewEventNames.MovementFinished } as any;
-const CONTEXT_LOST_EVENT: RenderEvent = { type: MapViewEventNames.ContextLost } as any;
-const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRestored } as any;
-const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
-const DISPOSE_EVENT: RenderEvent = { type: MapViewEventNames.Dispose } as any;
 
 const cache = {
     vector2: [new THREE.Vector2()],
@@ -328,7 +302,7 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     enableNativeWebglAntialias?: boolean;
 
     /**
-     * Antialias settings for the map rendering. It is better to disable the native antialising if
+     * Antialias settings for the map rendering. It is better to disable the native antialiasing if
      * the custom antialiasing is enabled.
      */
     customAntialiasSettings?: IMapAntialiasSettings;
@@ -724,6 +698,9 @@ export interface LookAtParams {
      *   use {@link LookAtParams.target} or `bounds.target` and
      *   ensure whole box is visible
      *
+     * * if `bounds` is {@link @here/harp-geoutils#GeoPolygon}, then `lookAt`
+     *   use `bounds.getCentroid()` and ensure whole polygon is visible
+     *
      * * if `bounds` is {@link @here/harp-geoutils#GeoBoxExtentLike},
      *   then `lookAt` will use {@link LookAtParams.target} or
      *   current {@link MapView.target} and ensure whole extents are visible
@@ -733,12 +710,12 @@ export interface LookAtParams {
      *   visible
      *
      * Note in sphere projection some points are not visible if you specify bounds that span more
-     * than 180 degreess in any direction.
+     * than 180 degrees in any direction.
      *
-     * @see {@link (MapView.lookAt:WITH_PARAMS)} for defails how `bounds`
+     * @see {@link (MapView.lookAt:WITH_PARAMS)} for details on how `bounds`
      *      interact with `target` parameter
      */
-    bounds: GeoBox | GeoBoxExtentLike | GeoCoordLike[];
+    bounds: GeoBox | GeoBoxExtentLike | GeoCoordLike[] | GeoPolygon;
 
     /**
      * Camera distance to the target point in world units.
@@ -775,6 +752,51 @@ export interface LookAtParams {
  * linked to datasources.
  */
 export class MapView extends EventDispatcher {
+    /**
+     * Keep the events here to avoid a global reference to MapView (and thus prevent garbage collection).
+     */
+    private readonly UPDATE_EVENT: RenderEvent = { type: MapViewEventNames.Update };
+    private readonly RENDER_EVENT: RenderEvent = { type: MapViewEventNames.Render };
+    private readonly DID_RENDER_EVENT: RenderEvent = { type: MapViewEventNames.AfterRender };
+    private readonly FIRST_FRAME_EVENT: RenderEvent = { type: MapViewEventNames.FirstFrame };
+    private readonly FRAME_COMPLETE_EVENT: RenderEvent = {
+        type: MapViewEventNames.FrameComplete
+    };
+
+    private readonly THEME_LOADED_EVENT: RenderEvent = {
+        type: MapViewEventNames.ThemeLoaded
+    };
+
+    private readonly ANIMATION_STARTED_EVENT: RenderEvent = {
+        type: MapViewEventNames.AnimationStarted
+    };
+
+    private readonly ANIMATION_FINISHED_EVENT: RenderEvent = {
+        type: MapViewEventNames.AnimationFinished
+    };
+
+    private readonly MOVEMENT_STARTED_EVENT: RenderEvent = {
+        type: MapViewEventNames.MovementStarted
+    };
+
+    private readonly MOVEMENT_FINISHED_EVENT: RenderEvent = {
+        type: MapViewEventNames.MovementFinished
+    };
+
+    private readonly CONTEXT_LOST_EVENT: RenderEvent = {
+        type: MapViewEventNames.ContextLost
+    };
+
+    private readonly CONTEXT_RESTORED_EVENT: RenderEvent = {
+        type: MapViewEventNames.ContextRestored
+    };
+
+    private readonly COPYRIGHT_CHANGED_EVENT: RenderEvent = {
+        type: MapViewEventNames.CopyrightChanged
+    };
+
+    private readonly DISPOSE_EVENT: RenderEvent = { type: MapViewEventNames.Dispose };
+
     /**
      * The instance of {@link MapRenderingManager} managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
@@ -839,6 +861,7 @@ export class MapView extends EventDispatcher {
         minimum: DEFAULT_CAM_NEAR_PLANE,
         maximum: DEFAULT_CAM_FAR_PLANE
     };
+
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_pixelToWorld?: number;
@@ -849,9 +872,9 @@ export class MapView extends EventDispatcher {
     /** Separate scene for overlay map anchors */
     private readonly m_overlayScene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
-    /** Root node of [[m_scene]] that get's cleared every frame. */
+    /** Root node of [[m_scene]] that gets cleared every frame. */
     private readonly m_sceneRoot = new THREE.Object3D();
-    /** Root node of [[m_overlayScene]] that get's cleared every frame. */
+    /** Root node of [[m_overlayScene]] that gets cleared every frame. */
     private readonly m_overlaySceneRoot = new THREE.Object3D();
 
     private readonly m_mapAnchors: MapAnchors = new MapAnchors();
@@ -1270,6 +1293,7 @@ export class MapView extends EventDispatcher {
             this.m_tileWrappingEnabled = enabled;
             this.m_visibleTiles = this.createVisibleTileSet();
         }
+        this.update();
     }
 
     /**
@@ -1289,8 +1313,8 @@ export class MapView extends EventDispatcher {
      */
     dispose(freeContext = true) {
         // Enforce listeners that we are about to dispose.
-        DISPOSE_EVENT.time = Date.now();
-        this.dispatchEvent(DISPOSE_EVENT);
+        this.DISPOSE_EVENT.time = Date.now();
+        this.dispatchEvent(this.DISPOSE_EVENT);
 
         this.m_disposed = true;
 
@@ -1382,7 +1406,7 @@ export class MapView extends EventDispatcher {
     }
 
     /**
-     * Specfies whether extended frustum culling is enabled or disabled.
+     * Specifies whether extended frustum culling is enabled or disabled.
      */
     get extendedFrustumCulling(): boolean {
         return this.m_options.extendedFrustumCulling !== undefined
@@ -1527,8 +1551,8 @@ export class MapView extends EventDispatcher {
         for (const dataSource of this.m_tileDataSources) {
             dataSource.setTheme(this.m_theme);
         }
-        THEME_LOADED_EVENT.time = Date.now();
-        this.dispatchEvent(THEME_LOADED_EVENT);
+        this.THEME_LOADED_EVENT.time = Date.now();
+        this.dispatchEvent(this.THEME_LOADED_EVENT);
         this.update();
     }
 
@@ -1658,7 +1682,6 @@ export class MapView extends EventDispatcher {
     addEventListener(type: MapViewEventNames, listener: (event: RenderEvent) => void): void;
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     addEventListener(type: string, listener: any): void {
         super.addEventListener(type, listener);
     }
@@ -1680,7 +1703,6 @@ export class MapView extends EventDispatcher {
     removeEventListener(type: MapViewEventNames, listener?: (event: RenderEvent) => void): void;
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     removeEventListener(type: string, listener?: any): void {
         super.removeEventListener(type, listener);
     }
@@ -1716,8 +1738,8 @@ export class MapView extends EventDispatcher {
      * - {@link MapView.tilt}
      * - {@link MapView.heading}
      * could change.
-     * These properties are cached internaly and will only be updated in the next animation frame.
-     * FIXME: Unfortunatley THREE.js is not dispatching any events when camera properties change
+     * These properties are cached internally and will only be updated in the next animation frame.
+     * FIXME: Unfortunately THREE.js is not dispatching any events when camera properties change
      * so we should have an API for enforcing update of cached values.
      */
     get camera(): THREE.PerspectiveCamera {
@@ -1930,7 +1952,7 @@ export class MapView extends EventDispatcher {
      *
      * Images stored in this cache are primarily used for POIs (icons) and they are used with the
      * current theme. Although images can be explicitly added and removed from the cache, it is
-     * adviced not to remove images from this cache. If an image that is part of client code
+     * advised not to remove images from this cache. If an image that is part of client code
      * should be removed at any point other than changing the theme, the {@link useImageCache}
      * should be used instead.
      */
@@ -2204,7 +2226,7 @@ export class MapView extends EventDispatcher {
                 });
             })
             .then(() => {
-                const alreadyRemoved = this.m_tileDataSources.indexOf(dataSource) === -1;
+                const alreadyRemoved = !this.m_tileDataSources.includes(dataSource);
                 if (alreadyRemoved) {
                     return;
                 }
@@ -2287,7 +2309,6 @@ export class MapView extends EventDispatcher {
         this.m_textElementsRenderer.clearOverlayText();
     }
 
-    // tslint:disable: max-line-length
     /**
      * Adjusts the camera to look at a given geo coordinate with tilt and heading angles.
      *
@@ -2310,7 +2331,7 @@ export class MapView extends EventDispatcher {
      *
      * In each case, `lookAt` finds minimum `zoomLevel` that covers given extents or geo points.
      *
-     * With flat projection, if `bounds` represents points on both sides of antimeridian, and
+     * With flat projection, if `bounds` represents points on both sides of anti-meridian, and
      * {@link MapViewOptions.tileWrappingEnabled} is used, `lookAt` will use this knowledge and find
      * minimal view that may cover "next" or "previous" world.
      *
@@ -2337,7 +2358,6 @@ export class MapView extends EventDispatcher {
      * {@labels WITH_PARAMS}
      */
     lookAt(params: Partial<LookAtParams>): void;
-    // tslint:enable: max-line-length
 
     /**
      * The method that sets the camera to the desired angle (`tiltDeg`) and `distance` (in meters)
@@ -2473,8 +2493,8 @@ export class MapView extends EventDispatcher {
     beginAnimation() {
         if (this.m_animationCount++ === 0) {
             this.update();
-            ANIMATION_STARTED_EVENT.time = Date.now();
-            this.dispatchEvent(ANIMATION_STARTED_EVENT);
+            this.ANIMATION_STARTED_EVENT.time = Date.now();
+            this.dispatchEvent(this.ANIMATION_STARTED_EVENT);
         }
     }
 
@@ -2487,8 +2507,8 @@ export class MapView extends EventDispatcher {
         }
 
         if (this.m_animationCount === 0) {
-            ANIMATION_FINISHED_EVENT.time = Date.now();
-            this.dispatchEvent(ANIMATION_FINISHED_EVENT);
+            this.ANIMATION_FINISHED_EVENT.time = Date.now();
+            this.dispatchEvent(this.ANIMATION_FINISHED_EVENT);
         }
     }
 
@@ -2703,8 +2723,10 @@ export class MapView extends EventDispatcher {
         return worldPos;
     }
 
+    /**
+     * Same as {@link MapView.getGeoCoordinatesAt} but always returning a geo coordinate.
+     */
     getGeoCoordinatesAt(x: number, y: number, fallback: true): GeoCoordinates;
-    getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null;
 
     /**
      * Returns the {@link @here/harp-geoutils#GeoCoordinates} from the
@@ -2715,11 +2737,18 @@ export class MapView extends EventDispatcher {
      * and the given `(x, y)` value is not intersecting the ground plane.
      * If `fallback === true` the return value will always exist but it might not be on the earth
      * surface.
+     * If {@link MapView.tileWrappingEnabled} is `true` the returned geo coordinates will have a
+     * longitude clamped to [-180,180] degrees.
+     * The returned geo coordinates are not normalized so that a map object placed at that position
+     * will be below the (x,y) screen coordinates, regardless which world repetition was on screen.
      *
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
      * @param fallback - Whether to compute a fallback position if the earth surface is not hit.
+     * @returns Un-normalized geo coordinates
      */
+    getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null;
+
     getGeoCoordinatesAt(x: number, y: number, fallback?: boolean): GeoCoordinates | null {
         const worldPosition = this.getWorldPositionAt(x, y, fallback);
         if (!worldPosition) {
@@ -2731,7 +2760,7 @@ export class MapView extends EventDispatcher {
             // When the map is not wrapped we clamp the longitude
             geoPos.longitude = THREE.MathUtils.clamp(geoPos.longitude, -180, 180);
         }
-        return geoPos.normalized();
+        return geoPos;
     }
 
     /**
@@ -2832,7 +2861,7 @@ export class MapView extends EventDispatcher {
             return;
         }
 
-        this.dispatchEvent(UPDATE);
+        this.dispatchEvent(this.UPDATE_EVENT);
 
         // Skip if update is already in progress
         if (this.m_updatePending) {
@@ -2921,9 +2950,10 @@ export class MapView extends EventDispatcher {
      *
      * @param dataSource - If passed, only the tiles from this {@link DataSource} instance
      * are processed. If `undefined`, tiles from all {@link DataSource}s are processed.
+     * @param filter Optional tile filter
      */
-    markTilesDirty(dataSource?: DataSource) {
-        this.m_visibleTiles.markTilesDirty(dataSource);
+    markTilesDirty(dataSource?: DataSource, filter?: (tile: Tile) => boolean) {
+        this.m_visibleTiles.markTilesDirty(dataSource, filter);
     }
 
     /**
@@ -2953,7 +2983,7 @@ export class MapView extends EventDispatcher {
         }
 
         // Add as datasource if it was not added before
-        const isPresent = this.m_tileDataSources.indexOf(elevationSource) !== -1;
+        const isPresent = this.m_tileDataSources.includes(elevationSource);
         if (!isPresent) {
             await this.addDataSource(elevationSource);
         }
@@ -3159,6 +3189,9 @@ export class MapView extends EventDispatcher {
                     ? GeoCoordinates.fromObject(params.target)
                     : params.bounds.center;
                 geoPoints = MapViewUtils.geoBoxToGeoPoints(params.bounds);
+            } else if (params.bounds instanceof GeoPolygon) {
+                target = params.bounds.getCentroid();
+                geoPoints = params.bounds.coordinates;
             } else if (isGeoBoxExtentLike(params.bounds)) {
                 target = params.target ? GeoCoordinates.fromObject(params.target) : this.target;
                 const box = GeoBox.fromCenterAndExtents(target, params.bounds);
@@ -3171,9 +3204,14 @@ export class MapView extends EventDispatcher {
             } else {
                 throw Error("#lookAt: Invalid 'bounds' value");
             }
-            if (this.m_tileWrappingEnabled && this.projection.type === ProjectionType.Planar) {
+            if (
+                // if the points are created from the corners of the geoBox don't cluster them
+                !(params.bounds instanceof GeoBox || params.bounds instanceof GeoPolygon) &&
+                this.m_tileWrappingEnabled &&
+                this.projection.type === ProjectionType.Planar
+            ) {
                 // In flat projection, with wrap around enabled, we should detect clusters of
-                // points around  antimeridian and possible move some points to sibling worlds.
+                // points around  anti-meridian and possible move some points to sibling worlds.
                 //
                 // Here, we fit points into minimal geo box taking world wrapping into account.
                 geoPoints = MapViewUtils.wrapGeoPointsToScreen(geoPoints, target!);
@@ -3236,7 +3274,7 @@ export class MapView extends EventDispatcher {
         );
         this.camera.updateMatrixWorld(true);
 
-        // Make sure to update all properties that are accessable via API (e.g. zoomlevel) b/c
+        // Make sure to update all properties that are accessible via API (e.g. zoomlevel) b/c
         // otherwise they would be updated as recently as in the next animation frame.
         this.updateLookAtSettings();
         this.update();
@@ -3291,13 +3329,20 @@ export class MapView extends EventDispatcher {
             projectionScale *
             this.m_tileDataSources.reduce((r, ds) => Math.max(r, ds.maxGeometryHeight), 0);
 
+        const minGeometryHeightScaled =
+            projectionScale *
+            this.m_tileDataSources.reduce((r, ds) => Math.min(r, ds.minGeometryHeight), 0);
+
         // Copy all properties from new view ranges to our readonly object.
         // This allows to keep all view ranges references valid and keeps up-to-date
         // information within them. Works the same as copping all properties one-by-one.
         Object.assign(
             this.m_viewRanges,
             viewRanges === undefined
-                ? this.m_visibleTiles.updateClipPlanes(maxGeometryHeightScaled)
+                ? this.m_visibleTiles.updateClipPlanes(
+                      maxGeometryHeightScaled,
+                      minGeometryHeightScaled
+                  )
                 : viewRanges
         );
         this.m_camera.near = this.m_viewRanges.near;
@@ -3329,7 +3374,6 @@ export class MapView extends EventDispatcher {
      * Derive the look at settings (i.e. target, zoom, ...) from the current camera.
      */
     private updateLookAtSettings() {
-        // tslint:disable-next-line: deprecation
         let { target, distance } = MapViewUtils.getTargetAndDistance(
             this.projection,
             this.camera,
@@ -3504,7 +3548,6 @@ export class MapView extends EventDispatcher {
         }
 
         // Continue rendering if update is pending or animation is running
-        // tslint:disable-next-line: prefer-conditional-expression
         if (this.m_updatePending || this.animating) {
             this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
         } else {
@@ -3554,8 +3597,8 @@ export class MapView extends EventDispatcher {
             return;
         }
 
-        RENDER_EVENT.time = frameStartTime;
-        this.dispatchEvent(RENDER_EVENT);
+        this.RENDER_EVENT.time = frameStartTime;
+        this.dispatchEvent(this.RENDER_EVENT);
 
         this.m_stencilValue = DEFAULT_STENCIL_VALUE;
         this.m_renderOrderStencilValues.clear();
@@ -3757,8 +3800,8 @@ export class MapView extends EventDispatcher {
                 stats.appResults.set("firstFrame", frameStartTime);
             }
 
-            FIRST_FRAME_EVENT.time = frameStartTime;
-            this.dispatchEvent(FIRST_FRAME_EVENT);
+            this.FIRST_FRAME_EVENT.time = frameStartTime;
+            this.dispatchEvent(this.FIRST_FRAME_EVENT);
         }
 
         this.m_visibleTiles.disposePendingTiles();
@@ -3802,12 +3845,12 @@ export class MapView extends EventDispatcher {
             // FIXME:
             // This will only measure the memory of the rendering and not of the geometry creation.
             // Assuming the garbage collector is not kicking in immediately we will at least see
-            // the geometry creation memory consumption acounted in the next frame.
+            // the geometry creation memory consumption accounted in the next frame.
             stats.addMemoryInfo();
         }
 
-        DID_RENDER_EVENT.time = frameStartTime;
-        this.dispatchEvent(DID_RENDER_EVENT);
+        this.DID_RENDER_EVENT.time = frameStartTime;
+        this.dispatchEvent(this.DID_RENDER_EVENT);
 
         // After completely rendering this frame, it is checked if this frame was the first complete
         // frame, with no more tiles, geometry and labels waiting to be added, and no animation
@@ -3827,8 +3870,8 @@ export class MapView extends EventDispatcher {
                 }
             }
 
-            FRAME_COMPLETE_EVENT.time = frameStartTime;
-            this.dispatchEvent(FRAME_COMPLETE_EVENT);
+            this.FRAME_COMPLETE_EVENT.time = frameStartTime;
+            this.dispatchEvent(this.FRAME_COMPLETE_EVENT);
         }
     }
 
@@ -4065,9 +4108,7 @@ export class MapView extends EventDispatcher {
 
         this.m_themeIsLoading = true;
         Promise.resolve<string | Theme>(theme)
-            // tslint:disable-next-line: no-shadowed-variable
             .then(theme => ThemeLoader.load(theme, { uriResolver: this.m_uriResolver }))
-            // tslint:disable-next-line: no-shadowed-variable
             .then(theme => {
                 this.m_themeIsLoading = false;
                 this.theme = theme;
@@ -4203,7 +4244,6 @@ export class MapView extends EventDispatcher {
                 const light = createLight(lightDescription);
                 if (!light) {
                     logger.warn(
-                        // tslint:disable-next-line: max-line-length
                         `MapView: failed to create light ${lightDescription.name} of type ${lightDescription.type}`
                     );
                     return;
@@ -4230,15 +4270,15 @@ export class MapView extends EventDispatcher {
     private movementStarted() {
         this.m_textElementsRenderer.movementStarted();
 
-        MOVEMENT_STARTED_EVENT.time = Date.now();
-        this.dispatchEvent(MOVEMENT_STARTED_EVENT);
+        this.MOVEMENT_STARTED_EVENT.time = Date.now();
+        this.dispatchEvent(this.MOVEMENT_STARTED_EVENT);
     }
 
     private movementFinished() {
         this.m_textElementsRenderer.movementFinished();
 
-        MOVEMENT_FINISHED_EVENT.time = Date.now();
-        this.dispatchEvent(MOVEMENT_FINISHED_EVENT);
+        this.MOVEMENT_FINISHED_EVENT.time = Date.now();
+        this.dispatchEvent(this.MOVEMENT_FINISHED_EVENT);
 
         // render at the next possible time.
         if (!this.animating) {
@@ -4313,7 +4353,7 @@ export class MapView extends EventDispatcher {
             }
         }
         this.m_copyrightInfo = newCopyrightInfo;
-        this.dispatchEvent(COPYRIGHT_CHANGED_EVENT);
+        this.dispatchEvent(this.COPYRIGHT_CHANGED_EVENT);
     }
 
     private getRenderedTilesCopyrightInfo(): CopyrightInfo[] {
@@ -4372,7 +4412,6 @@ export class MapView extends EventDispatcher {
     }
 
     private setupStats(enable: boolean) {
-        // tslint:disable-next-line:no-unused-expression
         new PerformanceStatistics(enable, 1000);
     }
 
@@ -4419,7 +4458,7 @@ export class MapView extends EventDispatcher {
      * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
     private readonly onWebGLContextLost = (event: Event) => {
-        this.dispatchEvent(CONTEXT_LOST_EVENT);
+        this.dispatchEvent(this.CONTEXT_LOST_EVENT);
         logger.warn("WebGL context lost", event);
     };
 
@@ -4429,7 +4468,7 @@ export class MapView extends EventDispatcher {
      * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
     private readonly onWebGLContextRestored = (event: Event) => {
-        this.dispatchEvent(CONTEXT_RESTORED_EVENT);
+        this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
             if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {
                 this.m_renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));

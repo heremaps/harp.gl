@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 // Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import {
@@ -23,6 +22,7 @@ import {
 } from "@here/harp-geoutils";
 import { assert } from "chai";
 import { Vector2, Vector3 } from "three";
+
 import { DecodeInfo } from "../lib/DecodeInfo";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
 import { world2tile } from "../lib/OmvUtils";

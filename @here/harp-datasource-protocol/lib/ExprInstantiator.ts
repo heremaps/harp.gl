@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Env } from "./Env";
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -23,8 +24,6 @@ import {
     StringLiteralExpr,
     VarExpr
 } from "./Expr";
-
-import { Env } from "./Env";
 
 export interface InstantiationContext {
     /**

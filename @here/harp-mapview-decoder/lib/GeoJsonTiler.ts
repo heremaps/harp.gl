@@ -6,7 +6,6 @@
 
 import { GeoJson, ITiler } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
-
 // @ts-ignore
 import * as geojsonvtExport from "geojson-vt";
 
@@ -19,7 +18,6 @@ const EXTENT = 4096;
 const BUFFER_FACTOR = 0.05;
 
 // align the buffer to the next integer multiple of 2.
-// tslint:disable-next-line: no-bitwise
 const BUFFER = -(-Math.ceil(EXTENT * BUFFER_FACTOR) & -2);
 
 interface GeoJsonVtIndex {
@@ -39,14 +37,14 @@ export class GeoJsonTiler implements ITiler {
     }
 
     async connect(): Promise<void> {
-        return Promise.resolve();
+        return await Promise.resolve();
     }
 
     async registerIndex(indexId: string, input: URL | GeoJson): Promise<void> {
         if (this.indexes.has(indexId)) {
             return;
         }
-        return this.updateIndex(indexId, input);
+        return await this.updateIndex(indexId, input);
     }
 
     async updateIndex(indexId: string, input: URL | GeoJson): Promise<void> {

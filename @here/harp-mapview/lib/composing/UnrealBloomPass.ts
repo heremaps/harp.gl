@@ -6,6 +6,7 @@
 
 import { CopyShader, LuminosityHighPassShader } from "@here/harp-materials";
 import * as THREE from "three";
+
 import { Pass } from "./Pass";
 
 const BlurDirectionX = new THREE.Vector2(1.0, 0.0);
@@ -37,6 +38,7 @@ export class BloomPass extends Pass {
         0,
         1
     );
+
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private m_basic = new THREE.MeshBasicMaterial();
     private m_quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2));
@@ -92,7 +94,6 @@ export class BloomPass extends Pass {
 
         this.m_highPassUniforms = THREE.UniformsUtils.clone(LuminosityHighPassShader.uniforms);
 
-        // tslint:disable:no-string-literal
         this.m_highPassUniforms["luminosityThreshold"].value = threshold;
         this.m_highPassUniforms["smoothWidth"].value = 0.01;
 
@@ -144,7 +145,6 @@ export class BloomPass extends Pass {
 
         this.m_copyUniforms = THREE.UniformsUtils.clone(CopyShader.uniforms);
         this.m_copyUniforms["opacity"].value = 1.0;
-        // tslint:enable:no-string-literal
 
         this.m_materialCopy = new THREE.ShaderMaterial({
             uniforms: this.m_copyUniforms,
@@ -156,6 +156,7 @@ export class BloomPass extends Pass {
             transparent: true
         });
     }
+
     dispose() {
         for (const rt of this.m_renderTargetsHorizontal) {
             rt.dispose();
@@ -165,6 +166,7 @@ export class BloomPass extends Pass {
         }
         this.m_renderTargetBright.dispose();
     }
+
     /** @override */
     setSize(width: number, height: number) {
         let resx = Math.round(width / 2);
@@ -173,7 +175,6 @@ export class BloomPass extends Pass {
         for (let i = 0; i < this.m_nMips; i++) {
             this.m_renderTargetsHorizontal[i].setSize(resx, resy);
             this.m_renderTargetsVertical[i].setSize(resx, resy);
-            // tslint:disable-next-line:no-string-literal
             this.m_separableBlurMaterials[i].uniforms["texSize"].value = new THREE.Vector2(
                 resx,
                 resy
@@ -182,6 +183,7 @@ export class BloomPass extends Pass {
             resy = Math.round(resy / 2);
         }
     }
+
     /** @override */
     render(
         renderer: THREE.WebGLRenderer,
@@ -190,8 +192,6 @@ export class BloomPass extends Pass {
         writeBuffer: THREE.WebGLRenderTarget | null,
         readBuffer: THREE.WebGLRenderTarget
     ) {
-        // tslint:disable:no-string-literal
-
         // Render input to screen
         if (this.renderToScreen) {
             this.m_quad.material = this.m_basic;
@@ -255,7 +255,6 @@ export class BloomPass extends Pass {
             renderer.setRenderTarget(readBuffer);
             renderer.render(this.m_scene, this.m_camera);
         }
-        // tslint:enable:no-string-literal
     }
 
     getSeperableBlurMaterial(kernelRadius: number): THREE.ShaderMaterial {

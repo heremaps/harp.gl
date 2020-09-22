@@ -33,7 +33,7 @@ import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedPropertyDefs";
-import { AttrScope, techniqueDescriptors } from "./TechniqueDescriptors";
+import { AttrScope, getTechniqueAttributeDescriptor } from "./TechniqueDescriptors";
 import { IndexedTechnique, Technique } from "./Techniques";
 import { Definitions, Style, StyleSet } from "./Theme";
 
@@ -60,9 +60,10 @@ function getStyleAttributeScope(style: InternalStyle, attrName: string): AttrSco
         }
     }
 
-    const techniqueDescriptor: any = techniqueDescriptors[style.technique as Technique["name"]];
-
-    return techniqueDescriptor.attrScopes?.[attrName] ?? DEFAULT_TECHNIQUE_ATTR_SCOPE;
+    return (
+        getTechniqueAttributeDescriptor(style.technique, attrName)?.scope ??
+        DEFAULT_TECHNIQUE_ATTR_SCOPE
+    );
 }
 
 interface StyleInternalParams {
@@ -228,11 +229,11 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
     }
 
     visitStepExpr(expr: StepExpr, enclosingExpr: Expr | undefined): Expr | undefined {
-        throw new Error("todo");
+        return expr;
     }
 
     visitInterpolateExpr(expr: InterpolateExpr, enclosingExpr: Expr | undefined): Expr | undefined {
-        throw new Error("todo");
+        return expr;
     }
 
     /**
@@ -314,7 +315,6 @@ class OptimizedSubSetKey {
 
     private updateKey() {
         if (this.layer !== undefined) {
-            // tslint:disable-next-line:prefer-conditional-expression
             if (this.geometryType !== undefined) {
                 this.key = `${this.layer}:${this.geometryType}`;
             } else {
@@ -530,8 +530,7 @@ export class StyleSetEvaluator {
             try {
                 style._whenExpr = Array.isArray(style.when)
                     ? Expr.fromJSON(style.when, this.m_definitions, this.m_definitionExprCache)
-                    : // tslint:disable-next-line: deprecation
-                      Expr.parse(style.when);
+                    : Expr.parse(style.when);
 
                 // search for usages of '$layer' and any other
                 // special symbol that can be used to speed up the evaluation

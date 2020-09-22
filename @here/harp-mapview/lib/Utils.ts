@@ -3,22 +3,23 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import * as THREE from "three";
-
 import {
     GeoBox,
     GeoCoordinates,
-    GeoCoordLike,
+    GeoCoordinatesLike,
     MathUtils,
     OrientedBox3,
     Projection,
     ProjectionType,
-    TileKey
+    TileKey,
+    Vector3Like
 } from "@here/harp-geoutils";
+import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
+import * as THREE from "three";
+
 import { ElevationProvider } from "./ElevationProvider";
 import { LodMesh } from "./geometry/LodMesh";
 import { MapView } from "./MapView";
@@ -166,7 +167,6 @@ export namespace MapViewUtils {
 
         // Compute current camera target, it may not be the one set in MapView, e.g. when this
         // function is called multiple times between frames.
-        // tslint:disable-next-line: deprecation
         const cameraTarget = MapViewUtils.getTargetAndDistance(
             projection,
             camera,
@@ -200,11 +200,10 @@ export namespace MapViewUtils {
         if (projection.type === ProjectionType.Spherical) {
             // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
             // changes.
-            // tslint:disable-next-line: deprecation
             const tilt = extractCameraTilt(camera, projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
-                orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
+                orbitAroundScreenPoint(mapView, 0, 0, 0, deltaTilt, maxTiltAngle);
             }
         }
 
@@ -226,40 +225,80 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Orbits the camera around the focus point of the camera.
+     * Orbits the camera around a given point on the screen.
      *
      * @param mapView - The {@link MapView} instance to manipulate.
-     * @param deltaAzimuthDeg - Delta azimuth in degrees.
-     * @param deltaTiltDeg - Delta tilt in degrees.
-     * @param maxTiltAngleRad - The maximum tilt between the camera and its target in radian.
+     * @param offsetX - Orbit point in NDC space.
+     * @param offsetY - Orbit point in NDC space.
+     * @param deltaAzimuth - Delta azimuth in radians.
+     * @param deltaTil - Delta tilt in radians.
+     * @param maxTiltAngle - The maximum tilt between the camera and its target in radian.
      */
-    export function orbitFocusPoint(
+    export function orbitAroundScreenPoint(
         mapView: MapView,
-        deltaAzimuthDeg: number,
-        deltaTiltDeg: number,
-        maxTiltAngleRad = MAX_TILT_RAD
+        offsetX: number,
+        offsetY: number,
+        deltaAzimuth: number,
+        deltaTilt: number,
+        maxTiltAngle: number
     ) {
-        const target = mapView.target;
-        const sphericalCoordinates = extractSphericalCoordinatesFromLocation(
-            mapView,
-            mapView.camera,
-            target
-        );
-        const tilt = Math.max(
-            Math.min(
-                THREE.MathUtils.radToDeg(maxTiltAngleRad),
-                deltaTiltDeg + THREE.MathUtils.radToDeg(sphericalCoordinates.tilt)
-            ),
-            0
-        );
-        const heading =
-            THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg;
-        mapView.lookAt({
-            target,
-            distance: mapView.targetDistance,
-            tilt,
-            heading
-        });
+        const camera = mapView.camera;
+        const projection = mapView.projection;
+
+        const rotationTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, offsetX, offsetY);
+        if (rotationTargetWorld === null) {
+            return;
+        }
+
+        const headingAxis = projection.surfaceNormal(rotationTargetWorld, cache.vector3[1]);
+        const headingQuat = cache.quaternions[1].setFromAxisAngle(headingAxis, -deltaAzimuth);
+        camera.quaternion.premultiply(headingQuat);
+        camera.position.sub(rotationTargetWorld);
+        camera.position.applyQuaternion(headingQuat);
+        camera.position.add(rotationTargetWorld);
+
+        const mapTargetWorld =
+            offsetX === 0 && offsetY === 0
+                ? rotationTargetWorld
+                : MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+        if (mapTargetWorld === null) {
+            return;
+        }
+        const mapTargetNormal = projection.surfaceNormal(mapTargetWorld, new THREE.Vector3());
+
+        camera.updateMatrixWorld(true);
+        const dir = cache.vector3[1].setFromMatrixColumn(camera.matrixWorld, 2);
+        const up = cache.vector3[2].setFromMatrixColumn(camera.matrixWorld, 1);
+
+        // Due to inaccuracies it can happen that the tilt angle gets less than 0.
+        // Using the dot product of the direction vector and the surface normal alone does not give us the sign.
+        const tiltSign = Math.sign(up.dot(mapTargetNormal));
+
+        const currentTilt = (tiltSign === 0 ? 1 : tiltSign) * dir.angleTo(mapTargetNormal);
+
+        //FIXME(HARP-11926): For globe tilt in the map center is different from the tilt in the rotation center,
+        //hence the clamped tilt is too conservative.
+        const clampedDeltaTilt =
+            MathUtils.clamp(deltaTilt + currentTilt, 0, maxTiltAngle) - currentTilt;
+        if (Math.abs(clampedDeltaTilt) <= Number.EPSILON) {
+            return;
+        }
+
+        const posBackup = cache.vector3[1].copy(camera.position);
+        const quatBackup = cache.quaternions[1].copy(camera.quaternion);
+
+        const tiltAxis = cache.vector3[0].set(1, 0, 0).applyQuaternion(camera.quaternion);
+        const tiltQuat = cache.quaternions[0].setFromAxisAngle(tiltAxis, clampedDeltaTilt);
+        camera.quaternion.premultiply(tiltQuat);
+        camera.position.sub(rotationTargetWorld);
+        camera.position.applyQuaternion(tiltQuat);
+        camera.position.add(rotationTargetWorld);
+
+        if (MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0) === null) {
+            logger.warn("Target got invalidated during rotation.");
+            camera.position.copy(posBackup);
+            camera.quaternion.copy(quatBackup);
+        }
     }
 
     /**
@@ -281,7 +320,6 @@ export namespace MapViewUtils {
         // This function does almost the same as:
         // rayCastGeoCoordinates(mapView, 0, 0)
         // but in more gentle and performance wise manner
-        // tslint:disable-next-line: deprecation
         const targetWorldPos = getWorldTargetFromCamera(camera, projection, elevation);
         if (targetWorldPos !== null) {
             return projection.unprojectPoint(targetWorldPos);
@@ -514,8 +552,7 @@ export namespace MapViewUtils {
         // infinity.
         const target =
             cameraPitch < MAX_TILT_RAD
-                ? // tslint:disable-next-line: deprecation
-                  getWorldTargetFromCamera(camera, projection, elevation)
+                ? getWorldTargetFromCamera(camera, projection, elevation)
                 : null;
         if (target !== null) {
             const distance = camera.position.distanceTo(target);
@@ -757,7 +794,8 @@ export namespace MapViewUtils {
         cameraPos.copy(camera.position);
 
         const halfVertFov = THREE.MathUtils.degToRad(camera.fov / 2);
-        const halfHorzFov = THREE.MathUtils.degToRad((camera.fov / 2) * camera.aspect);
+        const halfHorzFov =
+            MapViewUtils.calculateHorizontalFovByVerticalFov(2 * halfVertFov, camera.aspect) / 2;
 
         // tan(fov/2)
         const halfVertFovTan = 1 / Math.tan(halfVertFov);
@@ -922,6 +960,8 @@ export namespace MapViewUtils {
             pointOnScreenYinNDC,
             0
         );
+
+        mapView.camera.updateMatrixWorld();
         const cameraPos = cache.vector3[1].copy(mapView.camera.position);
 
         cache.matrix4[0].extractRotation(mapView.camera.matrixWorld);
@@ -1004,7 +1044,7 @@ export namespace MapViewUtils {
      * @param maxTiltAngleRad - Max tilt angle in radians.
      */
     export function rotate(
-        mapView: MapView,
+        mapView: { projection: Projection; camera: THREE.PerspectiveCamera },
         deltaYawDeg: number,
         deltaPitchDeg: number = 0,
         maxTiltAngleRad = Math.PI / 4
@@ -1128,7 +1168,6 @@ export namespace MapViewUtils {
         } else {
             // Sanity check if new projection type is introduced.
             assert(projection.type === ProjectionType.Spherical);
-            // tslint:disable-next-line: deprecation
             const targetGeoCoords = MapViewUtils.getGeoTargetFromCamera(camera, projection);
             // If focus point is lost we then expose maximum allowable tilt value.
             if (targetGeoCoords !== null) {
@@ -1160,12 +1199,12 @@ export namespace MapViewUtils {
      * @param object - The [[THREE.Object3D]] instance to extract the rotations from.
      */
     export function extractAttitude(
-        options: { projection: Projection },
+        mapView: { projection: Projection },
         object: THREE.Object3D
     ): Attitude {
         // 1. Build the matrix of the tangent space of the object.
         cache.vector3[1].setFromMatrixPosition(object.matrixWorld); // Ensure using world position.
-        options.projection.localTangentSpace(options.projection.unprojectPoint(cache.vector3[1]), {
+        mapView.projection.localTangentSpace(cache.vector3[1], {
             xAxis: tangentSpace.x,
             yAxis: tangentSpace.y,
             zAxis: tangentSpace.z,
@@ -1223,10 +1262,14 @@ export namespace MapViewUtils {
      * @param location - The reference point.
      */
     export function extractSphericalCoordinatesFromLocation(
-        mapView: MapView,
+        mapView: { projection: Projection },
         object: THREE.Object3D,
-        location: GeoCoordinates
+        location: GeoCoordinatesLike | Vector3Like
     ): { azimuth: number; tilt: number } {
+        // if (projection instanceof MapView) {
+        //     logger.warn("Passing MapView to extractSphericalCoordinatesFromLocation is deprecated");
+        //     projection = projection.projection;
+        // }
         mapView.projection.localTangentSpace(location, {
             xAxis: tangentSpace.x,
             yAxis: tangentSpace.y,
@@ -1381,12 +1424,12 @@ export namespace MapViewUtils {
      * @param options - Subset of necessary {@link MapView} properties.
      */
     export function calculateDistanceToGroundFromZoomLevel(
-        options: { projection: Projection; focalLength: number; camera: THREE.Object3D },
+        mapView: { projection: Projection; focalLength: number; camera: THREE.PerspectiveCamera },
         zoomLevel: number
     ): number {
-        const cameraPitch = extractAttitude(options, options.camera).pitch;
+        const cameraPitch = extractAttitude(mapView, mapView.camera).pitch;
         const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
-        return ((options.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
+        return ((mapView.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
     }
 
     /**
@@ -1607,12 +1650,33 @@ export namespace MapViewUtils {
         return isLoading;
     }
 
+    export function closeToFrustum(
+        point: THREE.Vector3,
+        camera: THREE.Camera,
+        eps: number = 1e-13
+    ): boolean {
+        const ndcPoint = new THREE.Vector3().copy(point).project(camera);
+        if (
+            Math.abs(ndcPoint.x) - eps < 1 &&
+            Math.abs(ndcPoint.y) - eps < 1 &&
+            Math.abs(ndcPoint.z) - eps < 1
+        ) {
+            return true;
+        }
+        return false;
+    }
+
     function estimateTextureSize(
         texture: THREE.Texture | null,
         objectSize: MemoryUsage,
         visitedObjects: Map<string, boolean>
     ): void {
-        if (texture === null || texture === undefined || texture.image === undefined) {
+        if (
+            texture === null ||
+            texture === undefined ||
+            texture.image === undefined ||
+            texture.image === null
+        ) {
             return;
         }
 
@@ -2012,14 +2076,12 @@ export namespace TileOffsetUtils {
         }
         // Offset is now a number between >= 0 and < totalOffsetsToStore
         for (let i = 0; i < offsetBits && offset > 0; i++) {
-            // tslint:disable: no-bitwise
             // 53 is used because 2^53-1 is the biggest number that Javascript can represent as an
             // integer safely.
             if (offset & 0x1) {
                 result += powerOfTwo[53 - offsetBits + i];
             }
             offset >>>= 1;
-            // tslint:enable: no-bitwise
         }
         assert(offset === 0);
         return result;

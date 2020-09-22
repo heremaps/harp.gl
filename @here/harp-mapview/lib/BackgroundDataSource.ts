@@ -6,6 +6,7 @@
 
 import { Theme } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
+
 import { DataSource } from "./DataSource";
 import { TileGeometryCreator } from "./geometry/TileGeometryCreator";
 import { Tile } from "./Tile";

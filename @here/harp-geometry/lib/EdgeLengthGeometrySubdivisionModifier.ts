@@ -7,6 +7,7 @@
 import { Box3Like, GeoBox, Projection, ProjectionType } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import { Vector3 } from "three";
+
 import { SubdivisionModifier } from "./SubdivisionModifier";
 
 const VERTEX_POSITION_CACHE = [new Vector3(), new Vector3()];

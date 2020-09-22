@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
@@ -13,8 +15,6 @@ import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
-
-import * as THREE from "three";
 
 class EquirectangularProjection extends Projection {
     static geoToWorldScale: number = 1.0 / (2.0 * Math.PI);
@@ -52,17 +52,6 @@ class EquirectangularProjection extends Projection {
         result?: WorldCoordinates
     ): WorldCoordinates {
         if (result === undefined) {
-            /*
-             * The following tslint:disable is due to the fact that the [[WorldCoordinates]]
-             * might be a concrete class which is not available at runtime.
-             * Consider the following example:
-             *
-             *  const x: THREE.Vector3 = new THREE.Vector3(0,0,0);
-             *  const result = EquirectangularProjection.projectPoint<THREE.Vector3>(x);
-             *
-             * Note: type of `result` is Vector3Like and not as expected: THREE.Vector3!
-             */
-            // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
         result.x =

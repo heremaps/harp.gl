@@ -4,16 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 // Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { expect } from "chai";
-import * as sinon from "sinon";
 
 import { GeoBox, GeoCoordinates } from "@here/harp-geoutils";
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import { TransferManager } from "@here/harp-transfer-manager";
 import { LoggerManager } from "@here/harp-utils";
+import { expect } from "chai";
+import * as sinon from "sinon";
+
 import { CopyrightInfo } from "../lib/copyrights/CopyrightInfo";
 import { UrlCopyrightProvider } from "../lib/copyrights/UrlCopyrightProvider";
 
@@ -21,7 +20,7 @@ describe("CopyrightProviders", function() {
     describe("#UrlCopyrightProvider", function() {
         async function getCopyrights(geoBox: GeoBox, level: number): Promise<CopyrightInfo[]> {
             const provider = new UrlCopyrightProvider("", "normal");
-            return provider.getCopyrights(geoBox, level);
+            return await provider.getCopyrights(geoBox, level);
         }
 
         describe("#init", function() {

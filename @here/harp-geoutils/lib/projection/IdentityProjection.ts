@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
@@ -12,8 +14,6 @@ import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { Projection, ProjectionType } from "./Projection";
-
-import * as THREE from "three";
 
 class IdentityProjection extends Projection {
     /** @override */
@@ -48,7 +48,6 @@ class IdentityProjection extends Projection {
         result?: WorldCoordinates
     ): WorldCoordinates {
         if (!result) {
-            // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
         result.x = THREE.MathUtils.degToRad(geoPoint.longitude);

@@ -24,7 +24,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "node-fetch": "^2.2.0"
+        "node-fetch": "^2.6.1"
     },
     "devDependencies": {
         "@types/chai": "^4.2.11",

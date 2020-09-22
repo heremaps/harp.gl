@@ -6,8 +6,6 @@
 
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { applyMixinsWithoutProperties, assert, chainCallbacks } from "@here/harp-utils";
-import { disableBlending, enableBlending, insertShaderInclude, setShaderDefine } from "./Utils";
-
 import * as THREE from "three";
 
 import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";
@@ -15,6 +13,7 @@ import { ExtrusionFeatureDefs } from "./MapMeshMaterialsDefs";
 import extrusionShaderChunk from "./ShaderChunks/ExtrusionChunks";
 import fadingShaderChunk from "./ShaderChunks/FadingChunks";
 import { simpleLightingShadowChunk } from "./ShaderChunks/ShadowChunks";
+import { disableBlending, enableBlending, insertShaderInclude, setShaderDefine } from "./Utils";
 
 const emptyTexture = new THREE.Texture();
 
@@ -373,6 +372,7 @@ export class DisplacementFeatureMixin implements DisplacementFeature, MixinShade
             DisplacementFeature.updateDisplacementFeature(this);
         }
     }
+
     /**
      * The mixin class should call this method to register the property [[displacementMap]]
      */
@@ -602,7 +602,6 @@ export namespace FadingFeature {
             material: THREE.Material & FadingFeature
         ) => void
     ) {
-        // tslint:disable-next-line:no-unused-variable
         object.onBeforeRender = chainCallbacks(
             object.onBeforeRender,
             (
@@ -656,6 +655,7 @@ export class FadingFeatureMixin implements FadingFeature {
     protected getFadeNear(): number {
         return this.m_fadeNear;
     }
+
     /**
      * @see [[FadingFeature#fadeNear]]
      */
@@ -673,6 +673,7 @@ export class FadingFeatureMixin implements FadingFeature {
     protected getFadeFar(): number {
         return this.m_fadeFar;
     }
+
     /**
      * @see [[FadingFeature#fadeFar]]
      */
@@ -891,6 +892,7 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
     protected getExtrusionRatio(): number {
         return this.m_extrusion;
     }
+
     /**
      * @see [[ExtrusionFeature#extrusion]]
      */
@@ -1002,13 +1004,11 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     clone(): this {
         return new MapMeshBasicMaterial().copy(this);
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     copy(source: this): any {
         super.copy(source);
         this.copyFadingParameters(source);
@@ -1028,7 +1028,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     get fadeNear(): number {
         return FadingFeature.DEFAULT_FADE_NEAR;
     }
-    // tslint:disable-next-line:no-unused-variable
+
     set fadeNear(value: number) {
         // to be overridden
     }
@@ -1036,7 +1036,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     get fadeFar(): number {
         return FadingFeature.DEFAULT_FADE_FAR;
     }
-    // tslint:disable-next-line:no-unused-variable
+
     set fadeFar(value: number) {
         // to be overridden
     }
@@ -1044,7 +1044,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     get extrusionRatio(): number {
         return ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     }
-    // tslint:disable-next-line:no-unused-variable
+
     set extrusionRatio(value: number) {
         // to be overridden
     }
@@ -1053,12 +1053,10 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         return null;
     }
 
-    // tslint:disable-next-line:no-unused-variable
     set displacementMap(value: THREE.Texture | null) {
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     setDisplacementMap(value: THREE.Texture | null) {
         // to be overridden
     }
@@ -1067,12 +1065,10 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected applyFadingParameters(params?: FadingFeatureParameters) {
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected copyFadingParameters(source: FadingFeature) {
         // to be overridden
     }
@@ -1081,12 +1077,10 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected copyExtrusionParameters(source: FadingFeature) {
         // to be overridden
     }
@@ -1095,12 +1089,10 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected applyDisplacementParameters(params?: DisplacementFeatureParameters) {
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected copyDisplacementParameters(source: DisplacementFeature) {
         // to be overridden
     }
@@ -1132,7 +1124,7 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
     get extrusionRatio(): number {
         return ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     }
-    // tslint:disable-next-line:no-unused-variable
+
     set extrusionRatio(value: number) {
         // to be overridden
     }
@@ -1141,12 +1133,10 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected copyExtrusionParameters(source: FadingFeature) {
         // to be overridden
     }
@@ -1201,13 +1191,11 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     clone(): this {
         return new MapMeshStandardMaterial().copy(this);
     }
 
     // overrides with THREE.js base classes are not recognized by tslint.
-    // tslint:disable-next-line: explicit-override
     copy(source: this): any {
         super.copy(source);
         this.copyFadingParameters(source);
@@ -1247,7 +1235,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get fadeNear(): number {
         return FadingFeature.DEFAULT_FADE_NEAR;
     }
-    // tslint:disable-next-line:no-unused-variable
+
     set fadeNear(value: number) {
         // to be overridden
     }
@@ -1255,7 +1243,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get fadeFar(): number {
         return FadingFeature.DEFAULT_FADE_FAR;
     }
-    // tslint:disable-next-line:no-unused-variable
+
     set fadeFar(value: number) {
         // to be overridden
     }
@@ -1263,7 +1251,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get extrusionRatio(): number {
         return ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     }
-    // tslint:disable-next-line:no-unused-variable
+
     set extrusionRatio(value: number) {
         // to be overridden
     }
@@ -1278,6 +1266,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     get removeDiffuseLight(): boolean {
         return false;
     }
+
     /** @internal */
     set removeDiffuseLight(val: boolean) {
         // Stays empty.
@@ -1287,12 +1276,10 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected applyFadingParameters(params?: FadingFeatureParameters) {
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected copyFadingParameters(source: FadingFeature) {
         // to be overridden
     }
@@ -1301,12 +1288,10 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
         // to be overridden
     }
 
-    // tslint:disable-next-line:no-unused-variable
     protected copyExtrusionParameters(source: FadingFeature) {
         // to be overridden
     }

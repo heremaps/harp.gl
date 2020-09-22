@@ -5,6 +5,7 @@
  */
 
 import { expect } from "chai";
+
 import { sampleBilinear } from "../lib/SampleBilinear";
 
 describe("sampleBilinearTest", () => {

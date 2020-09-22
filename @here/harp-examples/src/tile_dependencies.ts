@@ -16,6 +16,7 @@ import {
     TileFactory
 } from "@here/harp-mapview-decoder";
 import { GUI } from "dat.gui";
+
 import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
 
 /**
@@ -54,25 +55,10 @@ export namespace TileDependenciesExample {
             #mapCanvas {
               top: 0;
             }
-            #info{
-                color: #fff;
-                width: 80%;
-                left: 50%;
-                position: relative;
-                margin: 10px 0 0 -40%;
-                font-size: 15px;
-            }
-            @media screen and (max-width: 700px) {
-                #info{
-                    font-size:11px;
-                }
-            }
         </style>
-        <p id=info>Click/touch a feature on the map to read its data (Land masses are not features).
-        </p>
         <pre id="mouse-picked-result"></pre>
     `;
-    class CustomDataProvider implements DataProvider {
+    class CustomDataProvider extends DataProvider {
         enableTileDependencies: boolean = false;
         connect() {
             // Here you could connect to the service.
@@ -91,7 +77,6 @@ export namespace TileDependenciesExample {
 
             const data = new Array<number>();
             // Do some scaling so that the data fits into the tile.
-            // tslint:disable-next-line: no-bitwise
             const scale = 10.0 / (1 << tileKey.level);
             data.push(0.0, 0.0);
             for (let t = 0.0; t < Math.PI * 4; t += 0.1) {

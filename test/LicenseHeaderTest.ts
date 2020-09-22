@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "chai";
 import * as fs from "fs";
 import * as glob from "glob";
 import * as path from "path";
-
-import { assert } from "chai";
-
-// tslint:disable:only-arrow-functions
 
 const licenseRegEx = /\/\*\n \* Copyright \(C\) (\d\d\d\d)-?(\d\d\d\d)? HERE Europe.B\.V\.\n \* Licensed under Apache 2\.0\, see full license in LICENSE\n \* SPDX\-License\-Identifier\: Apache\-2\.0\n \*\//;
 

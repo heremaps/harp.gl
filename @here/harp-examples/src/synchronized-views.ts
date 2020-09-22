@@ -12,6 +12,7 @@ import {
     AuthenticationMethod,
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
+
 import { apikey, copyrightInfo } from "../config";
 
 /**

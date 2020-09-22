@@ -25,6 +25,7 @@ import {
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
+
 import { apikey, copyrightInfo } from "../config";
 import { PerformanceTestData } from "./PerformanceConfig";
 
@@ -79,7 +80,7 @@ export namespace PerformanceUtils {
         const availableExtensions = context.getSupportedExtensions();
         if (
             availableExtensions !== null &&
-            availableExtensions.indexOf("WEBGL_debug_renderer_info") > -1
+            availableExtensions.includes("WEBGL_debug_renderer_info")
         ) {
             const infoExtension = context.getExtension("WEBGL_debug_renderer_info");
             if (infoExtension !== null) {
@@ -155,7 +156,7 @@ export namespace PerformanceUtils {
         // Set to `true` to visualize the text placement collisions
         debugContext.setValue("DEBUG_SCREEN_COLLISIONS", false);
 
-        return new Promise<MapViewApp>((resolve, reject) => {
+        return await new Promise<MapViewApp>((resolve, reject) => {
             const dataSourceInitialized = connectDataSources(
                 mapViewApp,
                 dataSourceType,
@@ -243,9 +244,9 @@ export namespace PerformanceUtils {
 
         if (force === true) {
             await delay(0);
-            return setMapCenter(mapViewApp, lat, long, cameraHeight, false);
+            return await setMapCenter(mapViewApp, lat, long, cameraHeight, false);
         } else {
-            return new Promise<void>((resolve, reject) => {
+            return await new Promise<void>((resolve, reject) => {
                 resolve();
             });
         }
@@ -265,7 +266,7 @@ export namespace PerformanceUtils {
 
         const currentFrame = mapView.frameNumber;
 
-        return new Promise<FrameResults>((resolve, reject) => {
+        return await new Promise<FrameResults>((resolve, reject) => {
             const renderCallback = (event: RenderEvent) => {
                 mapView.removeEventListener(MapViewEventNames.AfterRender, renderCallback);
                 const renderedFrames = mapView.frameNumber - currentFrame;
@@ -306,7 +307,7 @@ export namespace PerformanceUtils {
             waitForFinish !== true || !MapViewUtils.mapViewIsLoading(mapViewApp.mapView);
 
         if (numFrames > 1 || !isFinished) {
-            return new Promise<FrameResults>((resolve, reject) => {
+            return await new Promise<FrameResults>((resolve, reject) => {
                 recordFrames(mapViewApp, numFrames - 1, waitForFinish)
                     .then(results => {
                         resolve(results);
@@ -338,7 +339,7 @@ export namespace PerformanceUtils {
             frameResults.renderedFrames = numFrames;
         }
 
-        return new Promise<FrameResults>((resolve, reject) => {
+        return await new Promise<FrameResults>((resolve, reject) => {
             resolve(frameResults);
         });
     }
@@ -406,7 +407,7 @@ export namespace PerformanceUtils {
         height: number,
         showLabels: boolean
     ): Promise<SimpleFrameStatistics> {
-        return new Promise<SimpleFrameStatistics>((resolve, reject) => {
+        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
             setMapCenter(mapViewApp, lat, long, height, true).then(() => {
                 applyDataFilter(mapViewApp.mapView, showLabels);
 
@@ -476,7 +477,7 @@ export namespace PerformanceUtils {
         tilt: number,
         showLabels: boolean
     ): Promise<SimpleFrameStatistics> {
-        return new Promise<SimpleFrameStatistics>((resolve, reject) => {
+        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
             ensureRenderFinished(mapViewApp).then(() => {
                 PerformanceStatistics.instance.clear();
                 mapViewApp.mapView.clearTileCache();
@@ -501,7 +502,7 @@ export namespace PerformanceUtils {
     ): Promise<SimpleFrameStatistics> {
         applyDataFilter(mapViewApp.mapView, showLabels);
 
-        return new Promise<SimpleFrameStatistics>(async (resolve, reject) => {
+        return await new Promise<SimpleFrameStatistics>(async (resolve, reject) => {
             const mapView = mapViewApp.mapView;
 
             const zoomLevelResults: SimpleFrameStatistics = {
@@ -598,7 +599,7 @@ export namespace PerformanceUtils {
         );
         const startTime = PerformanceTimer.now();
 
-        return new Promise<SimpleFrameStatistics>((resolve, reject) => {
+        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
             const renderCallback = () => {
                 if (isCancelled !== undefined && isCancelled()) {
                     mapView.endAnimation();
@@ -661,7 +662,7 @@ export namespace PerformanceUtils {
     async function ensureRenderFinished(mapViewApp: MapViewApp): Promise<void> {
         const mapView = mapViewApp.mapView;
 
-        return new Promise<void>((resolve, reject) => {
+        return await new Promise<void>((resolve, reject) => {
             const renderCallback = () => {
                 if (
                     mapViewApp.mapView.isDynamicFrame ||
@@ -726,7 +727,7 @@ export namespace PerformanceUtils {
 
         applyDataFilter(mapViewApp.mapView, showLabels);
 
-        return new Promise<SimpleFrameStatistics>((resolve, reject) => {
+        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
             const numberOfDrawPoints =
                 numFramesOverride !== undefined ? numFramesOverride : spline.numberOfDrawPoints;
             const segments = Math.ceil(numberOfDrawPoints / (spline.controlPoints.length / 2 - 1));

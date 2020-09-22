@@ -45,6 +45,7 @@ class PoiTableEntry implements PoiTableEntryDef {
 
         if (isOK && jsonEntry.altNames !== undefined) {
             const altNames = jsonEntry.altNames as string[];
+            // eslint-disable-next-line @typescript-eslint/no-for-in-array
             for (const str in altNames) {
                 if (typeof str !== "string") {
                     isOK = false;

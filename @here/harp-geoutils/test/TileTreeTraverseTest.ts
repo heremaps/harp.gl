@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
@@ -21,12 +20,15 @@ class TestSubdivisionScheme implements SubdivisionScheme {
     getSubdivisionX(level: number): number {
         return 0;
     }
+
     getSubdivisionY(level: number): number {
         return 0;
     }
+
     getLevelDimensionX(level: number): number {
         return 0;
     }
+
     getLevelDimensionY(level: number): number {
         return 0;
     }
@@ -82,12 +84,10 @@ describe("TileTreeTraverse", function() {
     });
 
     it("get tiles of 2x1 subdivison", function() {
-        // tslint:disable:no-bitwise
         subdivisionScheme.getSubdivisionX.returns(2);
         subdivisionScheme.getSubdivisionY.returns(1);
         subdivisionScheme.getLevelDimensionX.callsFake((level: number) => 1 << level);
         subdivisionScheme.getLevelDimensionY.returns(1);
-        // tslint:enable:no-bitwise
 
         const result1 = getSubTileArray(0, 0, 0);
         assert.equal(result1.length, 2);
@@ -111,12 +111,10 @@ describe("TileTreeTraverse", function() {
     });
 
     it("get tiles of 1x2 subdivison", function() {
-        // tslint:disable:no-bitwise
         subdivisionScheme.getSubdivisionX.returns(1);
         subdivisionScheme.getSubdivisionY.returns(2);
         subdivisionScheme.getLevelDimensionX.returns(1);
         subdivisionScheme.getLevelDimensionY.callsFake((level: number) => 1 << level);
-        // tslint:enable:no-bitwise
 
         const result1 = getSubTileArray(0, 0, 0);
         assert.equal(result1.length, 2);
@@ -140,12 +138,10 @@ describe("TileTreeTraverse", function() {
     });
 
     it("get tiles of 2x2 subdivison", function() {
-        // tslint:disable:no-bitwise
         subdivisionScheme.getSubdivisionX.returns(2);
         subdivisionScheme.getSubdivisionY.returns(2);
         subdivisionScheme.getLevelDimensionX.callsFake((level: number) => 1 << level);
         subdivisionScheme.getLevelDimensionY.callsFake((level: number) => 1 << level);
-        // tslint:enable:no-bitwise
 
         const result1 = getSubTileArray(0, 0, 0);
         assert.equal(result1.length, 4);
@@ -163,12 +159,10 @@ describe("TileTreeTraverse", function() {
     });
 
     it("get tiles of double umbrella subdivison", function() {
-        // tslint:disable:no-bitwise
         subdivisionScheme.getSubdivisionX.returns(2);
         subdivisionScheme.getSubdivisionY.callsFake((level: number) => (level === 0 ? 2 : 1));
         subdivisionScheme.getLevelDimensionX.callsFake((level: number) => 1 << level);
         subdivisionScheme.getLevelDimensionY.callsFake((level: number) => (level === 0 ? 1 : 2));
-        // tslint:enable:no-bitwise
 
         const result1 = getSubTileArray(0, 0, 0);
         assert.equal(result1.length, 4);

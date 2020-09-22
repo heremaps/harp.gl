@@ -19,12 +19,15 @@ import {
     parseStringEncodedColor,
     ShaderTechnique,
     Technique,
-    TextureProperties,
     TEXTURE_PROPERTY_KEYS,
+    TextureProperties,
     TRANSPARENCY_PROPERTY_KEYS,
     Value
 } from "@here/harp-datasource-protocol";
-import { techniqueDescriptors } from "@here/harp-datasource-protocol/lib/TechniqueDescriptors";
+import {
+    getTechniqueAutomaticAttrs,
+    getTechniqueDescriptor
+} from "@here/harp-datasource-protocol/lib/TechniqueDescriptors";
 import {
     CirclePointsMaterial,
     disableBlending,
@@ -36,6 +39,7 @@ import {
 } from "@here/harp-materials";
 import { assert, LoggerManager, pick } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { DisplacedMesh } from "./geometry/DisplacedMesh";
 import { SolidLineMesh } from "./geometry/SolidLineMesh";
 import { MapAdapterUpdateEnv, MapMaterialAdapter, StyledProperties } from "./MapMaterialAdapter";
@@ -457,81 +461,34 @@ export function getMaterialConstructor(
  * [[MapObjectAdapter]].
  */
 function getMainMaterialStyledProps(technique: Technique): StyledProperties {
+    const automaticAttributes: any[] = getTechniqueAutomaticAttrs(technique);
+
     switch (technique.name) {
         case "dashed-line":
         case "solid-line": {
-            const baseProps: StyledProperties = pick(technique, [
-                "color",
-                "outlineColor",
-                "transparent",
-                "opacity",
-                "caps",
-                "drawRangeStart",
-                "drawRangeEnd",
-                "dashes",
-                "dashColor",
-                "polygonOffset",
-                "polygonOffsetFactor",
-                "polygonOffsetUnits",
-                "depthTest"
-            ]);
+            const baseProps = pick(technique, automaticAttributes);
             baseProps.lineWidth = buildMetricValueEvaluator(
                 technique.lineWidth ?? 0, // Compatibility: `undefined` lineWidth means hidden.
-                // tslint:disable-next-line: deprecation
                 technique.metricUnit
             );
             baseProps.outlineWidth = buildMetricValueEvaluator(
                 technique.outlineWidth,
-                // tslint:disable-next-line: deprecation
                 technique.metricUnit
             );
             baseProps.dashSize = buildMetricValueEvaluator(
                 technique.dashSize,
-                // tslint:disable-next-line: deprecation
                 technique.metricUnit
             );
-            baseProps.gapSize = buildMetricValueEvaluator(
-                technique.gapSize,
-                // tslint:disable-next-line: deprecation
-                technique.metricUnit
-            );
-            baseProps.offset = buildMetricValueEvaluator(
-                technique.offset,
-                // tslint:disable-next-line: deprecation
-                technique.metricUnit
-            );
+            baseProps.gapSize = buildMetricValueEvaluator(technique.gapSize, technique.metricUnit);
+            baseProps.offset = buildMetricValueEvaluator(technique.offset, technique.metricUnit);
             return baseProps;
         }
         case "fill":
-            return pick(technique, [
-                "color",
-                "transparent",
-                "opacity",
-                "polygonOffset",
-                "polygonOffsetFactor",
-                "polygonOffsetUnits"
-            ]);
+            return pick(technique, automaticAttributes);
         case "standard":
         case "terrain":
         case "extruded-polygon": {
-            const baseProps: StyledProperties = pick(technique, [
-                "vertexColors",
-                "wireframe",
-                "roughness",
-                "metalness",
-                "alphaTest",
-                "depthTest",
-                "transparent",
-                "opacity",
-                "emissive",
-                "emissiveIntensity",
-                "refractionRatio",
-                "normalMapType"
-                // All texture related properties are skipped as for now as they are handled by
-                // [[createMaterial]] directly without possibility for them to be dynamic.
-                // TODO: move handling of texture-like params to [[MapMaterialAdapter]] with proper
-                // support for dynamic params
-            ]);
+            const baseProps = pick(technique, automaticAttributes);
             if (technique.vertexColors !== true) {
                 baseProps.color = technique.color;
             }
@@ -539,7 +496,7 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
         }
         case "circles":
         case "squares":
-            return pick(technique, ["color", "size", "opacity", "transparent"]);
+            return pick(technique, automaticAttributes);
         case "extruded-line":
             return pick(technique, [
                 "color",
@@ -548,11 +505,12 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
                 "opacity",
                 "polygonOffset",
                 "polygonOffsetFactor",
-                "polygonOffsetUnits"
+                "polygonOffsetUnits",
+                ...automaticAttributes
             ]);
         case "line":
         case "segments":
-            return pick(technique, ["color", "transparent", "opacity"]);
+            return pick(technique, automaticAttributes);
         default:
             return {};
     }
@@ -637,7 +595,7 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
         // Omit base color and related transparency attributes if its defined in technique
         if (
             baseColorPropName === propertyName ||
-            (hasBaseColor && TRANSPARENCY_PROPERTY_KEYS.indexOf(propertyName) !== -1)
+            (hasBaseColor && TRANSPARENCY_PROPERTY_KEYS.includes(propertyName))
         ) {
             return false;
         }
@@ -866,8 +824,7 @@ function getBaseColorProp(technique: Technique): any {
 }
 
 function getBaseColorPropName(technique: Technique): string | undefined {
-    const techDescriptor = techniqueDescriptors[technique.name];
-    return techDescriptor !== undefined ? techDescriptor.attrTransparencyColor : undefined;
+    return getTechniqueDescriptor(technique)?.attrTransparencyColor;
 }
 
 function getTextureBuffer(

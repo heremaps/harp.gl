@@ -12,6 +12,7 @@ import {
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+
 import { DataSource, DataSourceOptions } from "../lib/DataSource";
 import { ITileLoader, Tile, TileLoaderState } from "../lib/Tile";
 
@@ -57,6 +58,7 @@ export class FakeOmvDataSource extends DataSource {
     getTilingScheme(): TilingScheme {
         return webMercatorTilingScheme;
     }
+
     /** @override */
     getTile(tileKey: TileKey): Tile {
         const tile = new Tile(this, tileKey);
@@ -64,6 +66,7 @@ export class FakeOmvDataSource extends DataSource {
         tile.load();
         return tile;
     }
+
     /** @override */
     canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (tileKey.level > 14) {

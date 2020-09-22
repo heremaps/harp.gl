@@ -1,10 +1,10 @@
+/* eslint-disable simple-import-sort/sort */
 /*
  * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import {
@@ -18,21 +18,15 @@ import {
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
-import { assert, expect } from "chai";
-import * as sinon from "sinon";
-import * as THREE from "three";
+
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
 
-const cameraMock = {
-    fov: 40,
-    rotation: {
-        z: 0
-    },
-    quaternion: new THREE.Quaternion(),
-    matrixWorld: new THREE.Matrix4()
-};
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
+import * as THREE from "three";
+import { getProjectionName } from "@here/harp-datasource-protocol";
 
 function setCamera(
     camera: THREE.Camera,
@@ -60,12 +54,262 @@ function setCamera(
     camera.updateMatrixWorld(true);
 }
 
-describe("map-view#Utils", function() {
+describe("MapViewUtils", function() {
+    describe("zoomOnTargetPosition", function() {
+        const mapViewMock = {
+            maxZoomLevel: 20,
+            minZoomLevel: 1,
+            camera: new THREE.PerspectiveCamera(40),
+            projection: mercatorProjection,
+            focalLength: 256,
+            pixelRatio: 1.0
+        };
+        const mapView = (mapViewMock as any) as MapView;
+
+        it("only changes zoom on center", () => {
+            const geoTarget = new GeoCoordinates(52.5, 13.5);
+            const worldTarget = mapView.projection.projectPoint(geoTarget, new THREE.Vector3());
+            const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, 10);
+            setCamera(mapView.camera, mapView.projection, geoTarget, 0, 45, distance);
+
+            MapViewUtils.zoomOnTargetPosition(mapView, 0, 0, 11);
+
+            const {
+                target: newWorldTarget,
+                distance: newDistance
+            } = MapViewUtils.getTargetAndDistance(mapView.projection, mapView.camera);
+
+            const newZoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, newDistance);
+            expect(newZoomLevel).to.be.closeTo(11, 1e-13);
+
+            // Make sure the target did not move.
+            expect(worldTarget.distanceTo(newWorldTarget)).to.be.closeTo(0, Number.EPSILON);
+        });
+        it("only changes zoom on center even when tiltig", () => {
+            const geoTarget = new GeoCoordinates(52.5, 13.5);
+            const worldTarget = mapView.projection.projectPoint(geoTarget, new THREE.Vector3());
+            const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, 10);
+            const tilt = 45;
+            setCamera(mapView.camera, mapView.projection, geoTarget, 0, tilt, distance);
+
+            // Change tilt first
+            const newTilt = 50;
+            MapViewUtils.getCameraRotationAtTarget(
+                mapView.projection,
+                geoTarget,
+                0,
+                newTilt,
+                mapView.camera.quaternion
+            );
+            MapViewUtils.getCameraPositionFromTargetCoordinates(
+                geoTarget,
+                distance,
+                0,
+                newTilt,
+                mapView.projection,
+                mapView.camera.position
+            );
+
+            // Now zoom in
+            MapViewUtils.zoomOnTargetPosition(mapView, 0, 0, 11);
+
+            const {
+                target: newWorldTarget,
+                distance: newDistance
+            } = MapViewUtils.getTargetAndDistance(mapView.projection, mapView.camera);
+
+            const newZoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, newDistance);
+            expect(newZoomLevel).to.be.closeTo(11, Number.EPSILON);
+
+            // Make sure the target did not move.
+            expect(worldTarget.distanceTo(newWorldTarget)).to.be.closeTo(0, Number.EPSILON);
+        });
+    });
+    [mercatorProjection, sphereProjection].forEach(projection => {
+        describe(`orbitAroundScreenPoint ${getProjectionName(projection)}`, function() {
+            const mapViewMock = {
+                maxZoomLevel: 20,
+                minZoomLevel: 1,
+                camera: new THREE.PerspectiveCamera(40),
+                projection,
+                focalLength: 256,
+                pixelRatio: 1.0
+            };
+            const mapView = (mapViewMock as any) as MapView;
+            const target = new GeoCoordinates(52.5, 13.5);
+            const tiltLimit = THREE.MathUtils.degToRad(45);
+
+            it("keeps look at target when orbiting around center", function() {
+                const target = new GeoCoordinates(52.5, 13.5);
+                setCamera(
+                    mapView.camera,
+                    mapView.projection,
+                    target,
+                    0, //heading
+                    0, //tilt
+                    MapViewUtils.calculateDistanceFromZoomLevel(mapView, 10)
+                );
+
+                const {
+                    target: oldWorldTarget,
+                    distance: oldDistance
+                } = MapViewUtils.getTargetAndDistance(mapView.projection, mapView.camera);
+
+                const deltaTilt = THREE.MathUtils.degToRad(45);
+                const deltaHeading = THREE.MathUtils.degToRad(42);
+                MapViewUtils.orbitAroundScreenPoint(
+                    mapView,
+                    0,
+                    0,
+                    deltaHeading,
+                    deltaTilt,
+                    tiltLimit
+                );
+
+                const {
+                    target: newWorldTarget,
+                    distance: newDistance
+                } = MapViewUtils.getTargetAndDistance(mapView.projection, mapView.camera);
+
+                expect(oldWorldTarget.distanceTo(newWorldTarget)).to.be.closeTo(
+                    0,
+                    projection === sphereProjection ? 1e-9 : Number.EPSILON
+                );
+                expect(oldDistance).to.be.closeTo(newDistance, 1e-9);
+
+                // Also check that we did not introduce any roll
+                const { roll } = MapViewUtils.extractAttitude(mapView, mapView.camera);
+                expect(roll).to.be.closeTo(0, 1e-15);
+            });
+            it("limits tilt when orbiting around center", function() {
+                setCamera(
+                    mapView.camera,
+                    mapView.projection,
+                    target,
+                    0, // heading
+                    0, // tilt
+                    MapViewUtils.calculateDistanceFromZoomLevel(mapView, 4)
+                );
+
+                const deltaTilt = THREE.MathUtils.degToRad(80);
+                const deltaHeading = 0;
+                MapViewUtils.orbitAroundScreenPoint(
+                    mapView,
+                    0,
+                    0,
+                    deltaHeading,
+                    deltaTilt,
+                    tiltLimit
+                );
+
+                const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+                expect(mapTargetWorld).to.not.be.null;
+
+                const { tilt } = MapViewUtils.extractSphericalCoordinatesFromLocation(
+                    mapView,
+                    mapView.camera,
+                    mapTargetWorld!
+                );
+                expect(tilt).to.be.closeTo(
+                    tiltLimit,
+                    projection === sphereProjection
+                        ? 1e-7 // FIXME: Is this huge error expected?
+                        : Number.EPSILON
+                );
+            });
+            it("limits tilt when orbiting around screen point", function() {
+                setCamera(
+                    mapView.camera,
+                    mapView.projection,
+                    target,
+                    0, // heading
+                    0, // tilt
+                    MapViewUtils.calculateDistanceFromZoomLevel(mapView, 4)
+                );
+
+                const deltaTilt = THREE.MathUtils.degToRad(46);
+                const deltaHeading = 0;
+                const offsetX = 0.2;
+                const offsetY = 0.5;
+
+                MapViewUtils.orbitAroundScreenPoint(
+                    mapView,
+                    offsetX,
+                    offsetY,
+                    deltaHeading,
+                    deltaTilt,
+                    tiltLimit
+                );
+
+                const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+                expect(mapTargetWorld).to.not.be.null;
+
+                const { tilt } = MapViewUtils.extractSphericalCoordinatesFromLocation(
+                    mapView,
+                    mapView.camera,
+                    mapTargetWorld!
+                );
+                if (projection === sphereProjection) {
+                    //FIXME(HARP-11926): For globe tilt in the map center is different from the tilt
+                    // in the rotation center, hence the clamped tilt is too conservative.
+                    expect(tilt).to.be.lessThan(tiltLimit);
+                } else {
+                    expect(tilt).to.be.closeTo(tiltLimit, Number.EPSILON);
+                }
+            });
+            it("keeps rotation target when orbiting around screen point", function() {
+                const offsetX = 0.2;
+                const offsetY = 0.2;
+                setCamera(
+                    mapView.camera,
+                    mapView.projection,
+                    target,
+                    0, //heading
+                    0, //tilt
+                    MapViewUtils.calculateDistanceFromZoomLevel(mapView, 10)
+                );
+
+                const oldRotationTarget = MapViewUtils.rayCastWorldCoordinates(
+                    mapView,
+                    offsetX,
+                    offsetY
+                );
+                expect(oldRotationTarget).to.be.not.null;
+
+                const deltaTilt = THREE.MathUtils.degToRad(45);
+                const deltaHeading = THREE.MathUtils.degToRad(42);
+                MapViewUtils.orbitAroundScreenPoint(
+                    mapView,
+                    offsetX,
+                    offsetY,
+                    deltaHeading,
+                    deltaTilt,
+                    tiltLimit
+                );
+
+                const newRoationTarget = MapViewUtils.rayCastWorldCoordinates(
+                    mapView,
+                    offsetX,
+                    offsetY
+                );
+                expect(newRoationTarget).to.be.not.null;
+
+                expect(oldRotationTarget!.distanceTo(newRoationTarget!)).to.be.closeTo(
+                    0,
+                    projection === sphereProjection ? 1e-9 : Number.EPSILON
+                );
+
+                // Also check that we did not introduce any roll
+                const { roll } = MapViewUtils.extractAttitude(mapView, mapView.camera);
+                expect(roll).to.be.closeTo(0, Number.EPSILON);
+            });
+        });
+    });
     describe("calculateZoomLevelFromDistance", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
-            camera: cameraMock,
+            camera: new THREE.PerspectiveCamera(40),
             projection: mercatorProjection,
             focalLength: 256,
             pixelRatio: 1.0
@@ -103,7 +347,7 @@ describe("map-view#Utils", function() {
             center: [10, -10]
         };
         const mapViewMock = {
-            camera: cameraMock,
+            camera: new THREE.PerspectiveCamera(40),
             projection: mercatorProjection,
             focalLength: 256,
             pixelRatio: 1.0
@@ -112,7 +356,6 @@ describe("map-view#Utils", function() {
         const cameraHeight =
             MapViewUtils.calculateDistanceToGroundFromZoomLevel(mapView, xyzView.zoom) /
             Math.cos(THREE.MathUtils.degToRad(xyzView.pitch));
-        // tslint:disable-next-line: deprecation
         const cameraCoordinates = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
             new GeoCoordinates(xyzView.center[0], xyzView.center[1]),
             cameraHeight,
@@ -263,7 +506,6 @@ describe("map-view#Utils", function() {
         expect(objSize.gpuSize).to.be.equal(1584); // see previous test
     });
 
-    // tslint:disable-next-line: max-line-length
     it("estimate size of world with 1000 cubes (BufferGeometry)", async function(this: Mocha.Context) {
         this.timeout(4000);
         const scene: THREE.Scene = new THREE.Scene();
@@ -394,7 +636,6 @@ describe("map-view#Utils", function() {
                 it("camera target and distance are offset by elevation", function() {
                     elevationProvider.getHeight = sandbox.stub().returns(0);
 
-                    // tslint:disable-next-line: deprecation
                     const resultNoElevation = MapViewUtils.getTargetAndDistance(
                         projection,
                         camera,
@@ -410,7 +651,6 @@ describe("map-view#Utils", function() {
                     const elevation = 42;
                     elevationProvider.getHeight = sandbox.stub().returns(elevation);
 
-                    // tslint:disable-next-line: deprecation
                     const resultElevation = MapViewUtils.getTargetAndDistance(
                         projection,
                         camera,

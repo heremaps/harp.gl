@@ -6,6 +6,7 @@
 
 import { TextLayoutParameters, TextRenderParameters } from "@here/harp-text-canvas";
 import * as THREE from "three";
+
 import { TextElement } from "../lib/text/TextElement";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 
@@ -119,6 +120,7 @@ export class TextElementBuilder {
         this.m_mayOverlap = mayOverlap;
         return this;
     }
+
     build(): TextElement {
         const textElement = new TextElement(
             this.m_text,

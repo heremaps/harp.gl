@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console */
+
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import { execSync } from "child_process";
 import * as fs from "fs";
@@ -43,10 +45,8 @@ async function main() {
     const packages = Object.keys(workspaces).filter(p => !skipPackages.includes(p));
 
     packages.forEach(packageName => {
-        // tslint:disable-next-line: no-implicit-dependencies
         const packageJson = require(`${packageName}/package.json`) as any;
 
-        // tslint:disable-next-line: no-console
         console.log(
             execSync("yarn build", {
                 cwd: path.resolve(`${packageName}`)
@@ -90,7 +90,6 @@ async function main() {
                     }
                     loc += " ";
                 }
-                // tslint:disable-next-line: no-console
                 console.warn(`${loc}(${message.category}) ${message.text} (${message.messageId})`);
             }
         });
@@ -99,7 +98,6 @@ async function main() {
         }
     });
 
-    // tslint:disable-next-line: no-console
     console.log(execSync("yarn exec api-documenter markdown").toString());
 }
 

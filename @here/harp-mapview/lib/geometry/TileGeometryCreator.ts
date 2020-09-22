@@ -38,6 +38,7 @@ import {
     MakeTechniqueAttrs,
     MapEnv,
     needsVertexNormals,
+    setTechniqueRenderOrderOrPriority,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
@@ -49,7 +50,6 @@ import {
     ExprEvaluatorContext,
     OperatorDescriptor
 } from "@here/harp-datasource-protocol/lib/ExprEvaluator";
-// tslint:disable:max-line-length
 import {
     EdgeLengthGeometrySubdivisionModifier,
     SubdivisionMode
@@ -78,6 +78,7 @@ import {
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import {
     applyBaseColorToMaterial,
     buildMetricValueEvaluator,
@@ -266,7 +267,6 @@ export class TileGeometryCreator {
         disabledKinds?: GeometryKindSet | undefined
     ) {
         for (const technique of decodedTile.techniques) {
-            // tslint:disable-next-line: deprecation
             const kind = technique.kind;
 
             // No info about kind, no way to filter it.
@@ -570,7 +570,6 @@ export class TileGeometryCreator {
                         : DEFAULT_TEXT_DISTANCE_SCALE;
                 textElement.mayOverlap = technique.mayOverlap === true;
                 textElement.reserveSpace = technique.reserveSpace !== false;
-                // tslint:disable-next-line: deprecation
                 textElement.kind = technique.kind;
                 // Get the userData for text element picking.
                 textElement.userData = textPath.objInfos;
@@ -657,7 +656,6 @@ export class TileGeometryCreator {
                             : mapView.maxZoomLevel;
                     textElement.mayOverlap = technique.mayOverlap === true;
                     textElement.reserveSpace = technique.reserveSpace !== false;
-                    // tslint:disable-next-line: deprecation
                     textElement.kind = technique.kind;
 
                     textElement.fadeNear = fadeNear;
@@ -712,7 +710,7 @@ export class TileGeometryCreator {
                 }
 
                 if (
-                    group.createdOffsets!.indexOf(tile.offset) !== -1 ||
+                    group.createdOffsets!.includes(tile.offset) ||
                     technique._kindState === false ||
                     (techniqueFilter !== undefined && !techniqueFilter(technique))
                 ) {
@@ -772,7 +770,6 @@ export class TileGeometryCreator {
                     materials[techniqueIndex] = material;
                 }
 
-                // tslint:disable-next-line: deprecation
                 const techniqueKind = technique.kind;
 
                 // Modify the standard textured shader to support height-based coloring.
@@ -800,16 +797,7 @@ export class TileGeometryCreator {
                     bufferGeometry.setIndex(attachment.getBufferAttribute(index));
                 }
 
-                // Geometry with edges are typically buildings. If they are buildings, the outline
-                // effect may be applied to it, which needs the normals.
-                const isBuilding =
-                    isExtrudedPolygonTechnique(technique) &&
-                    attachment.info.edgeIndex !== undefined;
-
-                if (
-                    !bufferGeometry.getAttribute("normal") &&
-                    (isBuilding || needsVertexNormals(technique))
-                ) {
+                if (!bufferGeometry.getAttribute("normal") && needsVertexNormals(technique)) {
                     bufferGeometry.computeVertexNormals();
                 }
 
@@ -863,7 +851,6 @@ export class TileGeometryCreator {
                     (isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
                     technique.enablePicking !== undefined
                 ) {
-                    // tslint:disable-next-line:max-line-length
                     (object as MapViewPoints).enableRayTesting = technique.enablePicking!;
                 }
 
@@ -968,8 +955,11 @@ export class TileGeometryCreator {
                 });
                 objects.push(object);
 
-                // Add the extruded building edges as a separate geometry.
-                if (isBuilding) {
+                // Add the extruded polygon edges as a separate geometry.
+                if (
+                    isExtrudedPolygonTechnique(technique) &&
+                    attachment.info.edgeIndex !== undefined
+                ) {
                     // When the source geometry is split in groups, we
                     // should create objects with an array of materials.
                     const hasEdgeFeatureGroups =
@@ -1052,7 +1042,19 @@ export class TileGeometryCreator {
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
                         objectColor: buildingTechnique.color,
-                        opacity: buildingTechnique.opacity
+                        opacity: buildingTechnique.opacity,
+                        lineWidth: (frameMapView: MapAdapterUpdateEnv) => {
+                            // lineWidth for ExtrudedPolygonEdges only supports 0 or 1
+                            const value = getPropertyValue(
+                                buildingTechnique.lineWidth,
+                                frameMapView.env
+                            );
+                            if (typeof value === "number") {
+                                return THREE.MathUtils.clamp(value, 0, 1);
+                            } else {
+                                return 0;
+                            }
+                        }
                     });
                     objects.push(edgeObj);
                 }
@@ -1166,7 +1168,6 @@ export class TileGeometryCreator {
 
                     const secondaryWidth = buildMetricValueEvaluator(
                         outlineTechnique.secondaryWidth,
-                        // tslint:disable-next-line: deprecation
                         outlineTechnique.metricUnit
                     );
                     this.registerTileObject(tile, outlineObj, techniqueKind, { technique });
@@ -1445,53 +1446,8 @@ export class TileGeometryCreator {
             return;
         }
 
-        const { priorities, labelPriorities } = tile.mapView.theme;
-
         decodedTile.techniques.forEach(technique => {
-            if (
-                isTextTechnique(technique) ||
-                isPoiTechnique(technique) ||
-                isLineMarkerTechnique(technique)
-            ) {
-                // for screen-space techniques the `category` is used to assign
-                // priorities.
-                if (labelPriorities && typeof technique._category === "string") {
-                    // override the `priority` when the technique uses `category`.
-                    const priority = labelPriorities.indexOf(technique._category);
-                    if (priority !== -1) {
-                        technique.priority = labelPriorities.length - priority;
-                    }
-                }
-            } else if (priorities && technique._styleSet !== undefined) {
-                // Compute the render order based on the style category and styleSet.
-                const computeRenderOrder = (category: string): number | undefined => {
-                    const priority = priorities?.findIndex(
-                        entry => entry.group === technique._styleSet && entry.category === category
-                    );
-
-                    return priority !== undefined && priority !== -1
-                        ? (priority + 1) * 10
-                        : undefined;
-                };
-
-                if (typeof technique._category === "string") {
-                    // override the renderOrder when the technique is using categories.
-                    const renderOrder = computeRenderOrder(technique._category);
-
-                    if (renderOrder !== undefined) {
-                        technique.renderOrder = renderOrder;
-                    }
-                }
-
-                if (typeof technique._secondaryCategory === "string") {
-                    // override the secondaryRenderOrder when the technique is using categories.
-                    const secondaryRenderOrder = computeRenderOrder(technique._secondaryCategory);
-
-                    if (secondaryRenderOrder !== undefined) {
-                        (technique as any).secondaryRenderOrder = secondaryRenderOrder;
-                    }
-                }
-            }
+            setTechniqueRenderOrderOrPriority(technique, tile.mapView.theme);
         });
     }
 

@@ -5,13 +5,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* eslint-disable no-console */
+
 import { ThemeLoader } from "@here/harp-mapview";
 import * as program from "commander";
 import * as fs from "fs";
 import * as glob from "glob";
 import * as path from "path";
-
-// tslint:disable: no-console
 
 const version = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"))
     .version;

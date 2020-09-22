@@ -36,7 +36,6 @@ import {
 } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 class FakeMapView {
@@ -205,6 +204,7 @@ describe("VisibleTileSet", function() {
         constructor(private readonly tilingScheme?: TilingScheme) {
             super();
         }
+
         /** @override */
         getTilingScheme(): TilingScheme {
             return this.tilingScheme ?? webMercatorTilingScheme;
@@ -224,7 +224,6 @@ describe("VisibleTileSet", function() {
     }
 
     // Needed for chai expect.
-    // tslint:disable: no-unused-expression
 
     const compareDataSources = (
         dstl: DataSourceTileList[],
@@ -232,14 +231,12 @@ describe("VisibleTileSet", function() {
         dsValid: DataSource[]
     ) => {
         dstl.forEach(dataSourceTileList => {
-            if (dsSkipped.indexOf(dataSourceTileList.dataSource) !== -1) {
+            if (dsSkipped.includes(dataSourceTileList.dataSource)) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
-                    // tslint:disable-next-line: no-string-literal
                     expect(tile["skipRendering"]).is.true;
                 });
-            } else if (dsValid.indexOf(dataSourceTileList.dataSource) !== -1) {
+            } else if (dsValid.includes(dataSourceTileList.dataSource)) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
-                    // tslint:disable-next-line: no-string-literal
                     expect(tile["skipRendering"]).is.false;
                 });
             }
@@ -274,7 +271,6 @@ describe("VisibleTileSet", function() {
 
         // Test where we have 2 actually visible tiles (in the sense that they are in the frustum,
         // see visibleTileKeys below) and one visible tile because it is a dependency.
-        // tslint:disable-next-line: no-string-literal
         fixture.vts["getVisibleTileKeysForDataSources"] = sinon.stub().returns({
             tileKeys: [
                 {
@@ -357,7 +353,6 @@ describe("VisibleTileSet", function() {
         assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506849);
         assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506848);
         assert.equal(visibleTiles[2].tileKey.mortonCode(), 371506165);
-
         assert.equal(visibleTiles[3].tileKey.mortonCode(), 371506827);
         assert.equal(visibleTiles[4].tileKey.mortonCode(), 371506850);
 
@@ -470,6 +465,48 @@ describe("VisibleTileSet", function() {
         assert(parentDisposeSpy.calledOnce);
     });
 
+    it("#markTilesDirty properly uses passed filter", async function() {
+        setupBerlinCenterCameraFromSamples();
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const offset = 0;
+        const frameNumber = 42;
+
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+
+        // fill cache with additional arbitrary not visible tile
+        // that shall be disposed() in this test
+        const parentTileKey = TileKey.parentMortonCode(371506851);
+        const parentTile = fixture.vts.getTile(
+            fixture.ds[0],
+            TileKey.fromMortonCode(parentTileKey),
+            offset,
+            frameNumber
+        ) as Tile;
+        const parentDisposeSpy = sinon.spy(parentTile, "dispose");
+        const parentReloadSpy = sinon.spy(parentTile, "load");
+
+        const visibleTileDisposeSpies = dataSourceTileList[0].visibleTiles.map(tile =>
+            sinon.spy(tile, "dispose")
+        );
+
+        const visibleTileReloadSpies = dataSourceTileList[0].visibleTiles.map(tile =>
+            sinon.spy(tile, "load")
+        );
+
+        fixture.vts.markTilesDirty(undefined, tile => tile.tileKey.equals(parentTile.tileKey));
+
+        // only visible should be updated
+        assert(visibleTileReloadSpies[0].notCalled);
+        assert(visibleTileReloadSpies[1].notCalled);
+        assert(parentReloadSpy.notCalled);
+
+        // check that dispose was called correctly
+        assert(visibleTileDisposeSpies[0].notCalled);
+        assert(visibleTileDisposeSpies[1].notCalled);
+        assert(parentDisposeSpy.calledOnce);
+    });
+
     it("caches frustum intersection for data sources with same tiling scheme", async function() {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
@@ -569,7 +606,6 @@ describe("VisibleTileSet", function() {
         const result = updateRenderList(zoomLevel, storageLevel);
         result.tileList.forEach(dataSourceTileList => {
             dataSourceTileList.visibleTiles.forEach(tile => {
-                // tslint:disable-next-line: no-string-literal
                 expect(tile["skipRendering"]).is.false;
             });
         });

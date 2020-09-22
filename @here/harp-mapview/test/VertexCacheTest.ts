@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { expect } from "chai";
+
 import { VertexCache } from "../lib/geometry/VertexCache";
 
 describe("VertexCache", function() {

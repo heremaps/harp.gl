@@ -242,8 +242,27 @@ export class EdgeMaterial extends RawShaderMaterial
     get color(): THREE.Color {
         return this.uniforms.edgeColor.value as THREE.Color;
     }
+
     set color(value: THREE.Color) {
         this.uniforms.edgeColor.value.copy(value);
+    }
+
+    get lineWidth(): number {
+        return this.linewidth;
+    }
+
+    /**
+     * Only lineWidth of 0 and 1 is supported.
+     * lineWidth <= 0 will result in not visible lines, everything else into lines
+     * visible with lineWidth 1
+     */
+    set lineWidth(value: number) {
+        this.linewidth = value;
+        if (this.linewidth <= 0) {
+            this.visible = false;
+        } else {
+            this.visible = true;
+        }
     }
 
     /**
@@ -252,6 +271,7 @@ export class EdgeMaterial extends RawShaderMaterial
     get colorMix(): number {
         return this.uniforms.edgeColorMix.value as number;
     }
+
     set colorMix(value: number) {
         if (this.uniforms.edgeColorMix.value === value) {
             return;
@@ -262,6 +282,7 @@ export class EdgeMaterial extends RawShaderMaterial
     get fadeNear(): number {
         return this.uniforms.fadeNear.value as number;
     }
+
     set fadeNear(value: number) {
         this.uniforms.fadeNear.value = value;
     }
@@ -269,6 +290,7 @@ export class EdgeMaterial extends RawShaderMaterial
     get fadeFar(): number {
         return this.uniforms.fadeFar.value as number;
     }
+
     set fadeFar(value: number) {
         if (this.uniforms.fadeFar.value === value) {
             return;
@@ -280,6 +302,7 @@ export class EdgeMaterial extends RawShaderMaterial
     get extrusionRatio(): number {
         return this.uniforms.extrusionRatio.value as number;
     }
+
     set extrusionRatio(value: number) {
         if (this.uniforms.extrusionRatio.value === value) {
             return;

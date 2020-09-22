@@ -21,13 +21,11 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 class FakeVisibleTileSet {
-    // tslint:disable-next-line: no-empty
     disposeTile(tile: Tile) {}
 }
 
@@ -47,6 +45,7 @@ class FakeTileLoader implements ITileLoader {
     updatePriority(area: number): void {
         // do nothing.
     }
+
     cancel(): void {
         // do nothing.
     }
@@ -71,7 +70,6 @@ class MockDataSource extends DataSource {
 function createFakeMapView() {
     return ({
         projection: webMercatorProjection,
-        // tslint:disable-next-line:no-empty
         getDataSourceByName() {},
         statistics: new Statistics(),
         frameNumber: 5, // must be higher then 0, for tile visibility check
@@ -108,6 +106,9 @@ describe("TileGeometryLoader", function() {
     });
 
     beforeEach(function() {
+        if (dataSource.isDetached()) {
+            dataSource.attach(mapView);
+        }
         tile = dataSource.getTile(tileKey)!;
         geometryLoader = new TileGeometryLoader(tile, mapView.taskQueue);
         tile.tileGeometryLoader = geometryLoader;
@@ -120,30 +121,24 @@ describe("TileGeometryLoader", function() {
 
     describe("tile preprocessing", function() {
         it("should not load geometry before update", function() {
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.basicGeometryLoaded).to.be.false;
+            expect(geometryLoader.tile.hasGeometry).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.allGeometryLoaded).to.be.false;
-
-            // tslint:disable-next-line: no-unused-expression
-            return expect(geometryLoader.isFinished).to.be.false;
+            expect(geometryLoader.isFinished).to.be.false;
         });
 
         it("should not load geometry before tile is decoded", function() {
-            geometryLoader.update(undefined, undefined);
-            geometryLoader.update(undefined, undefined);
+            //TODO: Review what this was supposed to do
+            geometryLoader.update();
+            geometryLoader.update();
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.geometryCreationPending).to.be.false;
+            expect(geometryLoader.hasDecodedTile).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.basicGeometryLoaded).to.be.false;
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(0);
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.allGeometryLoaded).to.be.false;
+            expect(geometryLoader.tile.hasGeometry).to.be.false;
 
-            // tslint:disable-next-line: no-unused-expression
+            expect(geometryLoader.tile.allGeometryLoaded).to.be.false;
+
             return expect(geometryLoader.isFinished).to.be.false;
         });
 
@@ -151,18 +146,16 @@ describe("TileGeometryLoader", function() {
             // Mimic the tile is being decoded.
             tile.decodedTile = createFakeDecodedTile();
 
-            // tslint:disable-next-line: no-unused-expression
             expect(geometryLoader.isFinished).to.be.false;
 
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.geometryCreationPending).to.be.true;
+            expect(geometryLoader.hasDecodedTile).to.be.true;
 
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(1);
             mapView.taskQueue.processNext(TileTaskGroups.CREATE);
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -172,14 +165,13 @@ describe("TileGeometryLoader", function() {
             tile.decodedTile = createFakeDecodedTile();
             tile.isVisible = false;
 
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.geometryCreationPending).to.be.false;
+            expect(geometryLoader.hasDecodedTile).to.be.false;
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(0);
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
-                expect(geometryLoader.isFinished).to.be.true;
+                expect(geometryLoader.isFinished).to.be.false;
             });
         });
 
@@ -188,33 +180,31 @@ describe("TileGeometryLoader", function() {
             tile.decodedTile = createFakeDecodedTile();
             tile.dispose();
 
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.geometryCreationPending).to.be.false;
+            expect(geometryLoader.hasDecodedTile).to.be.false;
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(0);
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
-                expect(geometryLoader.isFinished).to.be.true;
+                expect(geometryLoader.isFinished).to.be.false;
             });
         });
 
         it("should not start geometry loading for empty tile", async function() {
             tile.tileLoader!.isFinished = true;
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.geometryCreationPending).to.be.false;
+            expect(geometryLoader.hasDecodedTile).to.be.false;
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(0);
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
     });
 
     describe("tile geometry creation", function() {
-        it("should not start geometry creation for invisible tile", async function() {
+        it("should not start geometry creation for invisible tile", function() {
             tile.decodedTile = createFakeDecodedTile();
             tile.isVisible = false;
 
@@ -225,21 +215,16 @@ describe("TileGeometryLoader", function() {
             expect(spyProcessTechniques.callCount).equal(0);
             expect(spyCreateGeometries.callCount).equal(0);
 
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
 
             expect(spyProcessTechniques.callCount).equal(0);
             expect(spyCreateGeometries.callCount).equal(0);
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.geometryCreationPending).to.be.false;
-
-            await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
-                expect(geometryLoader.isFinished).to.be.true;
-            });
+            expect(geometryLoader.hasDecodedTile).to.be.false;
+            expect(geometryLoader.isFinished).to.be.false;
         });
 
-        it("should not start geometry creation for disposed tile", async function() {
+        it("should not start geometry creation for disposed tile", function() {
             tile.decodedTile = createFakeDecodedTile();
             tile.dispose();
 
@@ -250,18 +235,13 @@ describe("TileGeometryLoader", function() {
             expect(spyProcessTechniques.callCount).equal(0);
             expect(spyCreateGeometries.callCount).equal(0);
 
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
 
             expect(spyProcessTechniques.callCount).equal(0);
             expect(spyCreateGeometries.callCount).equal(0);
 
-            // tslint:disable-next-line: no-unused-expression
-            expect(geometryLoader.geometryCreationPending).to.be.false;
-
-            await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
-                expect(geometryLoader.isFinished).to.be.true;
-            });
+            expect(geometryLoader.hasDecodedTile).to.be.false;
+            expect(geometryLoader.isFinished).to.be.false;
         });
 
         it("should start processing geometry for decoded tile only once", async function() {
@@ -274,11 +254,11 @@ describe("TileGeometryLoader", function() {
             expect(spySetDecodedTile.callCount).equal(0);
 
             // Mimic multiple frame updates.
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             await wait();
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             await wait();
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             await wait();
 
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
@@ -289,7 +269,6 @@ describe("TileGeometryLoader", function() {
             expect(spyProcessTechniques.callCount).equal(1);
 
             await willEventually(() => {
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -304,11 +283,11 @@ describe("TileGeometryLoader", function() {
             expect(spyProcessTechniques.callCount).equal(0);
 
             // Mimic multiple frame updates.
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             await wait();
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             await wait();
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             await wait();
 
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
@@ -318,12 +297,11 @@ describe("TileGeometryLoader", function() {
             await willEventually(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(1);
-                // tslint:disable-next-line: no-unused-expression
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
 
-        it("should not create geometry for invisible tile ", async function() {
+        it("should not create geometry for invisible tile", async function() {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -332,27 +310,21 @@ describe("TileGeometryLoader", function() {
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
 
             tile.isVisible = false;
 
-            //should remove expired task
-            mapView.taskQueue.update();
-
-            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(0);
-
-            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(false);
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
             await willEventually(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
-                expect(spyCreateGeometries.callCount).equal(0);
-                // tslint:disable-next-line: no-unused-expression
-                expect(geometryLoader.isFinished).to.be.true;
+                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+                expect(geometryLoader.isFinished).to.be.false;
             });
         });
 
-        it("should not create geometry for disposed tile while in timeout", async function() {
+        it("should not create geometry for disposed tile ", async function() {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -361,23 +333,81 @@ describe("TileGeometryLoader", function() {
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 
-            geometryLoader!.update(undefined, undefined);
+            geometryLoader!.update();
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
 
             // Make immediately disposed
             tile.dispose();
 
-            //should remove expired task
-            mapView.taskQueue.update();
-
-            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(0);
-
-            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(false);
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
             await willEventually(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
-                expect(spyCreateGeometries.callCount).equal(0);
-                // tslint:disable-next-line: no-unused-expression
+                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+                expect(geometryLoader.isFinished).to.be.false;
+            });
+        });
+
+        it("should not create geometry for tile with detached datasource", async function() {
+            tile.decodedTile = createFakeDecodedTile();
+
+            const geometryCreator = TileGeometryCreator.instance;
+            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            expect(spyCreateGeometries.callCount).equal(0);
+            expect(spyProcessTechniques.callCount).equal(0);
+
+            geometryLoader!.update();
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+
+            // This MUST be after the update call above, because the update call needs it (it calls
+            // discardsNeedlessTile, which needs the DataSource attached and the tile visible).
+            dataSource.detach(mapView);
+
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+            await willEventually(() => {
+                expect(spyProcessTechniques.callCount).equal(1);
+                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+                // The geometry loader doesn't finish, because we expect the task to expire
+                expect(geometryLoader.isFinished).to.be.false;
+            });
+        });
+
+        it("should create geometry for tile which was invisible but now visible", async function() {
+            tile.decodedTile = createFakeDecodedTile();
+
+            const geometryCreator = TileGeometryCreator.instance;
+            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            expect(spyCreateGeometries.callCount).equal(0);
+            expect(spyProcessTechniques.callCount).equal(0);
+
+            geometryLoader!.update();
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+
+            tile.isVisible = false;
+
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(0);
+
+            await willEventually(() => {
+                expect(spyProcessTechniques.callCount).equal(1);
+                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+                // The geometry loader doesn't finish, because we expect the task to expire
+                expect(geometryLoader.isFinished).to.be.false;
+            });
+
+            tile.isVisible = true;
+
+            geometryLoader!.update();
+
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+            await willEventually(() => {
+                expect(spyProcessTechniques.callCount).equal(1);
+                expect(spyCreateGeometries.callCount).equal(1, "should create geometry now");
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });

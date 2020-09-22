@@ -92,6 +92,7 @@ export class DomReporter {
 
         return parent;
     }
+
     private addHeaderIfNeeded() {
         if (this.m_headerReported) {
             return;

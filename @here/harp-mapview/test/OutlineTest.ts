@@ -9,7 +9,6 @@ import * as THREE from "three";
 
 import { OutlineEffect } from "../lib/composing/Outline";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 const cameraMock: any = {

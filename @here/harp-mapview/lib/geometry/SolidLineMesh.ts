@@ -8,6 +8,7 @@ import { OrientedBox3 } from "@here/harp-geoutils";
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { displaceBox, DisplacedBufferGeometry, DisplacementRange } from "./DisplacedBufferGeometry";
 
 const tmpSphere = new THREE.Sphere();
@@ -33,6 +34,62 @@ function isSolidLineMaterial(material: THREE.Material | THREE.Material[]): boole
     return Array.isArray(material)
         ? material.every(mat => mat instanceof SolidLineMaterial)
         : material instanceof SolidLineMaterial;
+}
+
+/**
+ * Identify the position attribute that has been used to create the bounding volumes.
+ * Also store version info to be able to detect changes to the data.
+ */
+interface AttributeInfo {
+    /** Attribute used for bounding volume creation. */
+    data: THREE.BufferAttribute | THREE.InterleavedBuffer;
+
+    /** Version of attribute at time of bounding volume creation. */
+    version: number | undefined;
+}
+
+/**
+ * Create an [[AttributeInfo]] for the specified attribute.
+ * @param attribute The attribute to retrieve version info from.
+ * @returns The [[AttributeInfo]] containing a reference and version of the attribute's data.
+ */
+function getAttributeInfo(
+    attribute: THREE.BufferAttribute | THREE.InterleavedBufferAttribute
+): AttributeInfo {
+    const isBufferAttribute = (attribute as THREE.BufferAttribute).isBufferAttribute === true;
+
+    const data = isBufferAttribute
+        ? (attribute as THREE.BufferAttribute)
+        : (attribute as THREE.InterleavedBufferAttribute).data;
+
+    return {
+        data,
+        version: data.version
+    };
+}
+
+/**
+ * Check if an attribute has changed compared to the version info.
+ * @param attribute Attribute to check.
+ * @param attrInfo Attribute version info.
+ * @returns `true` if the attribute is the same, `false` otherwise.
+ */
+function attributeChanged(
+    attribute: THREE.BufferAttribute | THREE.InterleavedBufferAttribute,
+    attrInfo: AttributeInfo
+): boolean {
+    const isBufferAttribute = (attribute as THREE.BufferAttribute).isBufferAttribute === true;
+
+    const data = isBufferAttribute
+        ? (attribute as THREE.BufferAttribute)
+        : (attribute as THREE.InterleavedBufferAttribute).data;
+
+    return (
+        attrInfo === undefined ||
+        attrInfo.data !== data ||
+        ((attribute as THREE.BufferAttribute).isBufferAttribute &&
+            attrInfo.version !== data.version)
+    );
 }
 
 /**
@@ -150,7 +207,7 @@ function intersectClosestEndCap(ray: THREE.Ray, line: THREE.Line3, hWidth: numbe
  * @param hWidthSq - The line's extrusion half width squared.
  * @param plane - The extrusion plane.
  * @param interPlane - The intersection of the ray with the extrusion plane.
- * @param outInterLine - The ray intersetion with the extruded line.
+ * @param outInterLine - The ray intersection with the extruded line.
  * @returns true if ray intersects the extruded line, false otherwise.
  */
 function intersectLine(
@@ -387,12 +444,24 @@ export class SolidLineMesh extends THREE.Mesh {
         const localRay = tmpRay.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix);
 
         // Test intersection of ray with each of the features within the mesh.
-        if (!mesh.userData.feature) {
+        if (mesh.userData.feature === undefined) {
             mesh.userData.feature = {};
         }
-        if (!mesh.userData.feature.boundingVolumes) {
+
+        const positionAttribute = geometry.attributes["position"];
+        const attributeInfo: AttributeInfo | undefined = mesh.userData.feature
+            .attributeInfo as AttributeInfo;
+
+        // Rebuild bounding volumes if geometry has been modified.
+        if (
+            attributeInfo === undefined ||
+            mesh.userData.feature.boundingVolumes === undefined ||
+            attributeChanged(positionAttribute, attributeInfo)
+        ) {
             mesh.userData.feature.boundingVolumes = [];
+            mesh.userData.feature.attributeInfo = getAttributeInfo(positionAttribute);
         }
+
         const indices = geometry.index!.array;
 
         if (Array.isArray(mesh.material)) {
@@ -434,7 +503,6 @@ export class SolidLineMesh extends THREE.Mesh {
     }
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
-    // tslint:disable-next-line: explicit-override
     raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
         SolidLineMesh.raycast(this, raycaster, intersects);
     }

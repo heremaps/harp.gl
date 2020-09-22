@@ -79,7 +79,7 @@ export namespace PolygonsFeaturesExample {
     setCaption();
 
     function getJoiningDate(j: number) {
-        let joiningDate = steps.find(year => EU.steps[year].joining.indexOf(j) > -1)!;
+        let joiningDate = steps.find(year => EU.steps[year].joining.includes(j))!;
         const actualDate = EU.steps[joiningDate].actualJoining;
         if (actualDate !== undefined) {
             joiningDate = actualDate;
@@ -94,11 +94,11 @@ export namespace PolygonsFeaturesExample {
             const features: MapViewFeature[] = [];
             let age = steps.length;
             let k = 0;
-            while (EU.steps[steps[k]].joining.indexOf(j) === -1) {
+            while (!EU.steps[steps[k]].joining.includes(j)) {
                 age--;
                 k++;
             }
-            if (stateGroup.indexOf("germany") > -1) {
+            if (stateGroup.includes("germany")) {
                 age = steps.length;
             }
 
@@ -152,17 +152,17 @@ export namespace PolygonsFeaturesExample {
             if (step !== steps[currentStep]) {
                 dataSourcesToReShow.push(...EU.steps[step].joining);
                 for (const leaving of EU.steps[step].leaving) {
-                    if (dataSourcesToReShow.indexOf(leaving) > -1) {
+                    if (dataSourcesToReShow.includes(leaving)) {
                         dataSourcesToReShow.splice(dataSourcesToReShow.indexOf(leaving), 1);
                     }
                 }
             } else {
                 dataSourcesToShow.push(...EU.steps[step].joining);
                 for (const leaving of EU.steps[step].leaving) {
-                    if (dataSourcesToReShow.indexOf(leaving) > -1) {
+                    if (dataSourcesToReShow.includes(leaving)) {
                         dataSourcesToReShow.splice(dataSourcesToReShow.indexOf(leaving), 1);
                     }
-                    if (dataSourcesToShow.indexOf(leaving) > -1) {
+                    if (dataSourcesToShow.includes(leaving)) {
                         dataSourcesToShow.splice(dataSourcesToShow.indexOf(leaving), 1);
                     }
                 }
@@ -171,14 +171,14 @@ export namespace PolygonsFeaturesExample {
         }
         dataSourcesToReShow.forEach(value => {
             const datasource = featuresDataSources[value];
-            if (displayedDataSourceCache.indexOf(datasource) < 0) {
+            if (!displayedDataSourceCache.includes(datasource)) {
                 map.addDataSource(datasource);
                 displayedDataSourceCache.push(datasource);
             }
         });
         dataSourcesToShow.forEach(value => {
             const datasource = featuresDataSources[value];
-            if (displayedDataSourceCache.indexOf(datasource) < 0) {
+            if (!displayedDataSourceCache.includes(datasource)) {
                 map.addDataSource(datasource);
                 displayedDataSourceCache.push(datasource);
             }

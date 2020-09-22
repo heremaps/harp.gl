@@ -7,6 +7,7 @@
 import * as geoUtils from "@here/harp-geoutils";
 import { EventDispatcher, MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import * as THREE from "three";
+
 import * as utils from "./Utils";
 
 enum State {
@@ -55,7 +56,7 @@ const USER_INPUTS_TO_CONSIDER = 5;
 /**
  * The default maximum for the camera tilt. This value avoids seeing the horizon.
  */
-const DEFAULT_MAX_TILT_ANGLE = Math.PI / 4;
+const DEFAULT_MAX_TILT_ANGLE = THREE.MathUtils.degToRad(89);
 
 /**
  * Epsilon value to rule out when a number can be considered 0.
@@ -109,14 +110,14 @@ export class MapControls extends EventDispatcher {
      * mouse pointer position: The result then will be used as an offset to orbit the camera.
      * Default value is `0.1`.
      */
-    orbitingMouseDeltaFactor = 0.1;
+    orbitingMouseDeltaFactor = 0.1 * THREE.MathUtils.DEG2RAD;
 
     /**
      * This factor will be applied to the delta of the current touch pointer position and the last
      * touch pointer position: The result then will be used as an offset to orbit the camera.
      * Default value is `0.1`.
      */
-    orbitingTouchDeltaFactor = 0.1;
+    orbitingTouchDeltaFactor = 0.1 * THREE.MathUtils.DEG2RAD;
 
     /**
      * Set to `true` to enable input handling through this map control, `false` to disable input
@@ -136,7 +137,7 @@ export class MapControls extends EventDispatcher {
     panEnabled = true;
 
     /**
-     * Set to `true` to enable orbiting and tilting through these controls, `false` otherwise.
+     * Set to `true` to enable tilting through these controls, `false` otherwise.
      */
     tiltEnabled = true;
 
@@ -231,6 +232,7 @@ export class MapControls extends EventDispatcher {
     private readonly m_currentViewDirection = new THREE.Vector3();
 
     private readonly m_lastMousePosition = new THREE.Vector2(0, 0);
+    private readonly m_initialMousePosition = new THREE.Vector2(0, 0);
     private readonly m_mouseDelta = new THREE.Vector2(0, 0);
 
     private m_needsRenderLastFrame: boolean = true;
@@ -254,6 +256,7 @@ export class MapControls extends EventDispatcher {
         0,
         0
     ];
+
     private m_currentPanDistanceOrAngleIndex: number = 0;
 
     // Internal variables for animating zoom.
@@ -363,78 +366,6 @@ export class MapControls extends EventDispatcher {
             pitch: THREE.MathUtils.radToDeg(attitude.pitch),
             roll: THREE.MathUtils.radToDeg(attitude.roll)
         };
-    }
-
-    /**
-     * Moves the camera along the view direction in meters.
-     * A positive value will move the camera further away from the point where the camera looks at.
-     * A negative value will move the camera near to the point where the camera looks at.
-     *
-     * @param amount - Amount to move along the view direction in meters.
-     */
-    moveAlongTheViewDirection(amount: number) {
-        // TODO: What about zoom disabled?
-        if (amount === 0) {
-            return;
-        }
-        this.camera.getWorldDirection(this.m_currentViewDirection);
-        let maxDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-            this.mapView,
-            this.mapView.minZoomLevel
-        );
-        let minDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-            this.mapView,
-            this.mapView.maxZoomLevel
-        );
-        this.m_currentViewDirection.multiplyScalar(amount);
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            const distance = THREE.MathUtils.clamp(
-                this.camera.position.z + this.m_currentViewDirection.z,
-                minDistance,
-                maxDistance
-            );
-            this.camera.position.z = distance;
-        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            const zOnVertical =
-                Math.cos(this.camera.position.angleTo(this.m_currentViewDirection)) *
-                this.m_currentViewDirection.length();
-            minDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
-            maxDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
-            const distance = THREE.MathUtils.clamp(
-                this.camera.position.length() + zOnVertical,
-                minDistance,
-                maxDistance
-            );
-            this.camera.position.setLength(distance);
-        }
-
-        // In sphere, we may have to also orbit the camera around the position located at the
-        // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
-        // this tilt by changing the camera's height above.
-        if (
-            this.mapView.projection.type === geoUtils.ProjectionType.Spherical &&
-            this.m_maxTiltAngle !== undefined
-        ) {
-            // Use pre-calculated camera target, otherwise we could get it via:
-            // centerScreenTarget = MapViewUtils.getTargetPositionFromCamera(camera, projection)
-            // and convert to geo-coordinates via:
-            // this.mapView.projection.unprojectPoint(centerScreenTarget)
-            const tilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
-                this.mapView,
-                this.camera,
-                this.mapView.target
-            ).tilt;
-            const deltaTilt = tilt - this.m_maxTiltAngle;
-            if (deltaTilt > 0) {
-                MapViewUtils.orbitFocusPoint(this.mapView, 0, deltaTilt, this.m_maxTiltAngle);
-            }
-        }
-
-        this.updateMapView();
-        this.mapView.addEventListener(
-            MapViewEventNames.AfterRender,
-            this.assignZoomAfterTouchZoomRender
-        );
     }
 
     /**
@@ -555,14 +486,17 @@ export class MapControls extends EventDispatcher {
     }
 
     /**
-     * Set camera max tilt angle. The value is clamped between 0 and 90 degrees. In sphere
+     * Set camera max tilt angle. The value is clamped between 0 and 89 degrees. In sphere
      * projection, at runtime, the value is also clamped so that the camera does not look above the
      * horizon.
      *
      * @param angle - Angle in degrees.
      */
     set maxTiltAngle(angle: number) {
-        this.m_maxTiltAngle = Math.max(0, Math.min(90, THREE.MathUtils.degToRad(angle)));
+        this.m_maxTiltAngle = Math.max(
+            0,
+            Math.min(DEFAULT_MAX_TILT_ANGLE, THREE.MathUtils.degToRad(angle))
+        );
     }
 
     /**
@@ -662,9 +596,11 @@ export class MapControls extends EventDispatcher {
 
         const deltaAzimuth = this.m_currentAzimuth - this.m_lastAzimuth;
 
-        MapViewUtils.orbitFocusPoint(
+        MapViewUtils.orbitAroundScreenPoint(
             this.mapView,
-            THREE.MathUtils.radToDeg(deltaAzimuth),
+            0,
+            0,
+            deltaAzimuth,
             0,
             this.m_maxTiltAngle
         );
@@ -711,15 +647,8 @@ export class MapControls extends EventDispatcher {
 
         const initialTilt = this.currentTilt;
         const deltaAngle = this.m_currentTilt - initialTilt;
-        const oldCameraDistance = this.mapView.camera.position.z / Math.cos(initialTilt);
-        const newHeight = Math.cos(initialTilt) * oldCameraDistance;
 
-        MapViewUtils.orbitFocusPoint(
-            this.mapView,
-            newHeight - this.camera.position.z,
-            THREE.MathUtils.radToDeg(deltaAngle),
-            this.m_maxTiltAngle
-        );
+        MapViewUtils.orbitAroundScreenPoint(this.mapView, 0, 0, 0, deltaAngle, this.m_maxTiltAngle);
         this.updateMapView();
     }
 
@@ -945,7 +874,7 @@ export class MapControls extends EventDispatcher {
             return;
         }
 
-        if (event.shiftKey || event.ctrlKey) {
+        if (event.shiftKey) {
             return;
         }
 
@@ -955,11 +884,12 @@ export class MapControls extends EventDispatcher {
             return;
         }
 
-        if (event.button === 0 && this.panEnabled) {
+        // Support mac users who press ctrl key when wanting to right click
+        if (event.button === 0 && !event.ctrlKey && this.panEnabled) {
             this.m_state = State.PAN;
         } else if (event.button === 1) {
             this.m_state = State.ROTATE;
-        } else if (event.button === 2 && this.tiltEnabled) {
+        } else if ((event.button === 2 || event.ctrlKey) && this.tiltEnabled) {
             this.m_state = State.ORBIT;
         } else {
             return;
@@ -968,8 +898,15 @@ export class MapControls extends EventDispatcher {
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
 
         const mousePos = this.getPointerPosition(event);
-        this.m_lastMousePosition.setX(mousePos.x);
-        this.m_lastMousePosition.setY(mousePos.y);
+        this.m_lastMousePosition.copy(mousePos);
+        if (event.altKey === true) {
+            const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
+            this.m_initialMousePosition.copy(
+                utils.calculateNormalizedDeviceCoordinates(mousePos.x, mousePos.y, width, height)
+            );
+        } else {
+            this.m_initialMousePosition.set(0, 0);
+        }
 
         const onMouseMove = this.mouseMove.bind(this);
         const onMouseUp = this.mouseUp.bind(this);
@@ -1016,8 +953,11 @@ export class MapControls extends EventDispatcher {
             );
         } else if (this.m_state === State.ORBIT) {
             this.stopExistingAnimations();
-            MapViewUtils.orbitFocusPoint(
+
+            MapViewUtils.orbitAroundScreenPoint(
                 this.mapView,
+                this.m_initialMousePosition.x,
+                this.m_initialMousePosition.y,
                 this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
                 -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y,
                 this.m_maxTiltAngle
@@ -1210,7 +1150,6 @@ export class MapControls extends EventDispatcher {
         this.m_touchState.touches = [];
 
         // TouchList doesn't conform to iterator interface so we cannot use 'for of'
-        // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < touches.length; ++i) {
             const touchState = this.convertTouchPoint(touches[i]);
             if (touchState !== undefined) {
@@ -1283,17 +1222,57 @@ export class MapControls extends EventDispatcher {
             );
         }
 
-        if (this.zoomEnabled && this.m_touchState.touches.length === 2) {
-            const pinchDistance = this.calculatePinchDistanceInWorldSpace();
-            if (Math.abs(pinchDistance) < EPSILON) {
-                return;
+        if (this.m_touchState.touches.length === 2) {
+            const touches = this.m_touchState.touches;
+            const center = new THREE.Vector2();
+
+            if (this.zoomEnabled === true || this.rotateEnabled === true) {
+                const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
+                touches.forEach(touch => {
+                    const ndcPoint = utils.calculateNormalizedDeviceCoordinates(
+                        touch.currentTouchPoint.x,
+                        touch.currentTouchPoint.y,
+                        width,
+                        height
+                    );
+                    center.add(ndcPoint);
+                });
+                center.divideScalar(touches.length);
             }
-            this.updateCurrentRotation();
-            const deltaRotation =
-                this.m_touchState.currentRotation - this.m_touchState.initialRotation;
-            this.stopExistingAnimations();
-            MapViewUtils.rotate(this.mapView, THREE.MathUtils.radToDeg(deltaRotation));
-            this.moveAlongTheViewDirection(pinchDistance);
+            if (this.zoomEnabled) {
+                const pinchDistance = this.calculatePinchDistanceInWorldSpace();
+                if (Math.abs(pinchDistance) < EPSILON) {
+                    return;
+                }
+                const newZL = MapViewUtils.calculateZoomLevelFromDistance(
+                    this.mapView,
+                    this.mapView.targetDistance - pinchDistance
+                );
+
+                MapViewUtils.zoomOnTargetPosition(
+                    this.mapView,
+                    center.x,
+                    center.y,
+                    newZL,
+                    this.m_maxTiltAngle
+                );
+            }
+
+            if (this.rotateEnabled) {
+                this.updateCurrentRotation();
+                const deltaRotation =
+                    this.m_touchState.currentRotation - this.m_touchState.initialRotation;
+                this.stopExistingAnimations();
+
+                MapViewUtils.orbitAroundScreenPoint(
+                    this.mapView,
+                    center.x,
+                    center.y,
+                    deltaRotation,
+                    0,
+                    this.m_maxTiltAngle
+                );
+            }
         }
 
         // Tilting
@@ -1304,8 +1283,10 @@ export class MapControls extends EventDispatcher {
                 firstTouch.lastTouchPoint
             );
             this.stopExistingAnimations();
-            MapViewUtils.orbitFocusPoint(
+            MapViewUtils.orbitAroundScreenPoint(
                 this.mapView,
+                0,
+                0,
                 this.orbitingTouchDeltaFactor * diff.x,
                 -this.orbitingTouchDeltaFactor * diff.y,
                 this.m_maxTiltAngle

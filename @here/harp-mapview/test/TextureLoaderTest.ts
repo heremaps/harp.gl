@@ -4,19 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
-
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import * as chai from "chai";
 import * as chai_as_promised from "chai-as-promised";
 chai.use(chai_as_promised);
 const { expect } = chai;
-import * as THREE from "three";
-
 import "@here/harp-fetch";
-import { getTestResourceUrl } from "@here/harp-test-utils";
+
+import * as THREE from "three";
 
 import { TextureLoader } from "../lib/TextureLoader";
 

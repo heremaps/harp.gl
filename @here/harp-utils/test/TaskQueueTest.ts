@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { Task, TaskQueue } from "../lib/TaskQueue";
 
 describe("TaskQueue", function() {
@@ -123,7 +123,20 @@ describe("TaskQueue", function() {
             }
         });
 
-        assert.equal(taskQueue.numItemsLeft(), 3);
+        taskQueue.add({
+            execute: () => {
+                testValue = 9;
+            },
+            group: "group1",
+            getPriority: () => {
+                return 8;
+            },
+            isExpired: () => {
+                return true;
+            }
+        });
+
+        assert.equal(taskQueue.numItemsLeft(), 4);
         taskQueue.update();
         assert.equal(taskQueue.numItemsLeft(), 1);
         assert.equal(taskQueue.processNext("group1"), true);

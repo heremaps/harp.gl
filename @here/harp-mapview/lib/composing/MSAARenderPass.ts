@@ -57,9 +57,11 @@ export class MSAARenderPass extends Pass {
         0,
         1
     );
+
     private readonly m_quadScene: THREE.Scene = new THREE.Scene();
     private readonly m_quadUniforms: { [uniformName: string]: THREE.IUniform } =
         CopyShader.uniforms;
+
     private readonly m_quadMaterial: THREE.ShaderMaterial = new MSAAMaterial(this.m_quadUniforms);
     private readonly m_quad: THREE.Mesh = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(2, 2),
@@ -229,14 +231,11 @@ export class MSAARenderPass extends Pass {
         }
     }
 
-    // tslint:disable:max-line-length
     /**
      * The list of offsets to apply to the camera, per sampling level, adapted from :
      *
      * @see https://msdn.microsoft.com/en-us/library/windows/desktop/ff476218%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
      */
-    // tslint:enable:max-line-length
-    // tslint:disable-next-line:member-ordering
     static readonly OffsetVectors: number[][][] = [
         [[0, 0]],
         [

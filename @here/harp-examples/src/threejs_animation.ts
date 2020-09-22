@@ -8,6 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapAnchor, MapViewEventNames, RenderEvent } from "@here/harp-mapview";
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+
 import { HelloWorldExample } from "./getting-started_hello-world_npm";
 
 /**

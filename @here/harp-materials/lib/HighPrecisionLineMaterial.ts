@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+
 import { RawShaderMaterial } from "./RawShaderMaterial";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
@@ -123,6 +124,7 @@ export class HighPrecisionLineMaterial extends RawShaderMaterial {
     get color(): THREE.Color {
         return this.uniforms.diffuse.value as THREE.Color;
     }
+
     set color(value: THREE.Color) {
         this.uniforms.diffuse.value.copy(value);
     }

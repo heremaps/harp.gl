@@ -7,6 +7,7 @@
 import { Vector3Like } from "@here/harp-geoutils";
 import { sampleBilinear } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { VertexCache } from "./VertexCache";
 
 /**
@@ -73,9 +74,11 @@ export class DisplacedBufferAttribute extends THREE.BufferAttribute {
     getX(index: number): number {
         return this.getDisplacedCoordinate(index).x;
     }
+
     getY(index: number): number {
         return this.getDisplacedCoordinate(index).y;
     }
+
     getZ(index: number): number {
         return this.getDisplacedCoordinate(index).z;
     }
@@ -85,6 +88,7 @@ export class DisplacedBufferAttribute extends THREE.BufferAttribute {
         this.m_textureWidth = displacementMap.image.width;
         this.m_textureHeight = displacementMap.image.height;
     }
+
     private getDisplacedCoordinate(bufferIndex: number): Vector3Like {
         if (bufferIndex === this.m_lastBufferIndex) {
             return this.m_lastPos;
@@ -97,6 +101,7 @@ export class DisplacedBufferAttribute extends THREE.BufferAttribute {
         this.m_cache.set(bufferIndex, this.m_lastPos);
         return this.m_lastPos;
     }
+
     private displacePosition(bufferIndex: number) {
         this.m_lastPos.fromBufferAttribute(
             this.originalAttribute as THREE.BufferAttribute,

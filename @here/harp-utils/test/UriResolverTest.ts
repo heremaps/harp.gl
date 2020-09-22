@@ -5,9 +5,9 @@
  */
 
 import { assert } from "chai";
+
 import { PrefixMapUriResolver, RelativeUriResolver } from "../lib/UriResolver";
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 describe("UriResolver", function() {

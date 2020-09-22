@@ -5,6 +5,7 @@
  */
 
 import { IChannel } from "@here/harp-utils";
+
 import { PrePlacementResult } from "./Placement";
 
 export class UpdateStats {
@@ -25,6 +26,7 @@ export class UpdateStats {
         this.totalLabels = 0;
         this.results.fill(0);
     }
+
     log() {
         this.m_logger.debug("Tiles", this.tiles);
         this.m_logger.debug("Total groups", this.totalGroups);

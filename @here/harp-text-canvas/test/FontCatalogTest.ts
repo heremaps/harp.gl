@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
-import { getTestResourceUrl } from "@here/harp-test-utils";
 import { FontCatalog, FontStyle, GlyphData, TextRenderStyle } from "../index";
 
 async function loadTexture(url: string): Promise<THREE.Texture> {
-    return new Promise(resolve => {
+    return await new Promise(resolve => {
         new THREE.TextureLoader().load(url, resolve);
-    }) as Promise<THREE.Texture>;
+    });
 }
 
 async function loadJSON(url: string): Promise<any> {

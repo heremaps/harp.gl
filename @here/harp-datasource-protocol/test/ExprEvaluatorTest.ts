@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+import * as THREE from "three";
+
 import {
     Env,
     Expr,
@@ -20,8 +21,6 @@ import {
     ValueMap
 } from "../lib/Expr";
 import { getPropertyValue } from "../lib/PropertyValue";
-
-import * as THREE from "three";
 
 const EPSILON = 1e-8;
 
@@ -871,6 +870,8 @@ describe("ExprEvaluator", function() {
             assert.isNotNull(
                 evaluate(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, 2, 2])
             );
+
+            assert.isNotNull(evaluate(["interpolate", ["linear"], 0, 0, 100, 20, 200]));
 
             assert.throws(() => evaluate(["interpolate"]), "expected an interpolation type");
 

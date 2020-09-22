@@ -29,6 +29,7 @@ export class LayoutState {
     constructor(placement: TextPlacement) {
         this.textPlacement = placement;
     }
+
     /**
      * Set layout based on theme style defined and optional text placement.
      *

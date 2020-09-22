@@ -5,6 +5,8 @@
  */
 
 import { assert } from "chai";
+import * as THREE from "three";
+
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { Box3Like } from "../lib/math/Box3Like";
@@ -23,9 +25,6 @@ import { polarTilingScheme } from "../lib/tiling/PolarTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 
-import * as THREE from "three";
-
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 const EPSILON = 1e-6;
@@ -386,12 +385,10 @@ describe("Reprojection", function() {
     projections.forEach(([targetProjectionName, targetProjection]) => {
         projections.forEach(([sourceProjectionName, sourceProjection]) => {
             geoPoints.forEach(geoPos => {
-                // tslint:disable-next-line: max-line-length
                 const altitudeDescr = geoPos.altitude !== undefined ? `, ${geoPos.altitude}` : "";
 
                 const pointDescr = `(${geoPos.latitude}, ${geoPos.longitude}${altitudeDescr})`;
 
-                // tslint:disable-next-line: max-line-length
                 const descr = `reproject ${pointDescr} from ${sourceProjectionName} to ${targetProjectionName}`;
 
                 it(descr, function() {

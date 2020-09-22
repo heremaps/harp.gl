@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { FeatureCollection, GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
@@ -245,6 +244,112 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         });
     });
+
+    it("renders extruded polygons with height, without outline", async function() {
+        this.timeout(5000);
+
+        const ourStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Polygon"],
+                technique: "extruded-polygon",
+                attr: {
+                    vertexColors: false,
+                    lineWidth: 0,
+                    lineColor: "#172023",
+                    lineColorMix: 0.6,
+                    metalness: 0.5,
+                    roughness: 0.5
+                }
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-extruded-polygon-with-height-no-outline",
+            theme: { lights, styles: { geojson: ourStyle } },
+            geoJson: "../dist/resources/basic_polygon.json",
+            lookAt: {
+                tilt: 45,
+                heading: 30
+            }
+        });
+    });
+
+    it(
+        "renders extruded polygons with height, with lineWidth Expression," + " resulting in 0",
+        async function() {
+            this.timeout(5000);
+
+            const ourStyle: StyleSet = [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    attr: {
+                        vertexColors: false,
+                        lineWidth: {
+                            interpolation: "Discrete",
+                            zoomLevels: [9, 12],
+                            values: [0.0, 1.0]
+                        },
+                        lineColor: "#172023",
+                        lineColorMix: 0.6,
+                        metalness: 0.5,
+                        roughness: 0.5
+                    }
+                }
+            ];
+
+            await geoJsonTest({
+                mochaTest: this,
+                testImageName: "geojson-extruded-polygon-linewidth-expression-to-zero",
+                theme: { lights, styles: { geojson: ourStyle } },
+                geoJson: "../dist/resources/basic_polygon.json",
+                lookAt: {
+                    tilt: 45,
+                    heading: 30,
+                    zoomLevel: 9
+                }
+            });
+        }
+    );
+
+    it(
+        "renders extruded polygons with height, with lineWidth Expression," + " resulting in 1",
+        async function() {
+            this.timeout(5000);
+
+            const ourStyle: StyleSet = [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    attr: {
+                        vertexColors: false,
+                        lineWidth: {
+                            interpolation: "Discrete",
+                            zoomLevels: [9, 12],
+                            values: [1.0, 0.0]
+                        },
+                        lineColor: "#172023",
+                        lineColorMix: 0.6,
+                        metalness: 0.5,
+                        roughness: 0.5
+                    }
+                }
+            ];
+
+            await geoJsonTest({
+                mochaTest: this,
+                testImageName: "geojson-extruded-polygon-linewidth-expression-to-one",
+                theme: { lights, styles: { geojson: ourStyle } },
+                geoJson: "../dist/resources/basic_polygon.json",
+                lookAt: {
+                    tilt: 45,
+                    heading: 30,
+                    zoomLevel: 9
+                }
+            });
+        }
+    );
 
     it("renders multi line strings", async function() {
         this.timeout(5000);

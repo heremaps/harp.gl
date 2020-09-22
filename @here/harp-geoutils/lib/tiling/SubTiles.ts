@@ -34,7 +34,6 @@ export namespace SubTiles {
     }
 
     export function* ZCurveIterator(parentKey: TileKey): Iterator<TileKey> {
-        // tslint:disable:no-bitwise
         for (let i = 0; i < 4; i++) {
             yield TileKey.fromRowColumnLevel(
                 (parentKey.row << 1) | (i >> 1),
@@ -42,6 +41,5 @@ export namespace SubTiles {
                 parentKey.level + 1
             );
         }
-        // tslint:enableno-bitwise
     }
 }

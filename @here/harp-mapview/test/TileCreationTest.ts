@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 import { MapEnv, ShaderTechnique, Technique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, expect } from "chai";
 import * as THREE from "three";
+
 import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
 import { buildObject, createMaterial, usesObject3D } from "./../lib/DecodedTileHelpers";
 import { Tile } from "./../lib/Tile";

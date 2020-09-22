@@ -26,6 +26,7 @@ import { MapMeshBasicMaterial } from "@here/harp-materials";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
 import { DataSource } from "../lib/DataSource";
 import { isDepthPrePassMesh } from "../lib/DepthPrePass";
 import { DisplacementMap } from "../lib/DisplacementMap";
@@ -66,13 +67,13 @@ class MockDataSource extends DataSource {
     getTilingScheme(): TilingScheme {
         throw new Error("Method not implemented.");
     }
+
     /** @override */
     getTile(tileKey: TileKey): Tile | undefined {
         throw new Error("Method not implemented.");
     }
 }
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 describe("TileGeometryCreator", () => {

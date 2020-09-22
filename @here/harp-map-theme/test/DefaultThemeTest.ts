@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
+/* eslint-disable no-console */
+
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assert } from "chai";
-
+import { Definitions, Theme } from "@here/harp-datasource-protocol";
 import {
     Expr,
     isJsonExpr,
@@ -16,9 +16,8 @@ import {
     StyleSetEvaluator
 } from "@here/harp-datasource-protocol/index-decoder";
 import { loadTestResource } from "@here/harp-test-utils";
-
-import { Definitions, Theme } from "@here/harp-datasource-protocol";
 import * as Ajv from "ajv";
+import { assert } from "chai";
 import * as path from "path";
 
 function assertExprValid(
@@ -78,19 +77,15 @@ describe("Berlin Theme", function() {
             it(`complies with JSON schema`, async function() {
                 const valid = schemaValidator(theme);
                 if (!valid && schemaValidator.errors) {
-                    // tslint:disable-next-line:no-console
                     console.log("validation errors", schemaValidator.errors.length);
-                    // tslint:disable-next-line:no-console
                     console.log(schemaValidator.errors);
                 }
                 assert.isTrue(valid);
             });
 
             it(`works with StyleSetEvaluator`, async function() {
-                // tslint:disable-next-line:forin
                 for (const styleSetName in theme.styles) {
                     const styleSet = theme.styles[styleSetName];
-                    // tslint:disable-next-line:no-unused-expression
                     new StyleSetEvaluator(styleSet, theme.definitions);
                 }
             });
@@ -102,15 +97,11 @@ describe("Berlin Theme", function() {
                         const style = styleSet[i];
                         const location = `${styleSetName}[${i}]`;
                         if (typeof style.when === "string") {
-                            assert.doesNotThrow(() =>
-                                // tslint:disable-next-line: deprecation
-                                Expr.parse(style.when as string)
-                            );
+                            assert.doesNotThrow(() => Expr.parse(style.when as string));
                         } else if (style.when !== undefined) {
                             assertExprValid(style.when, theme.definitions, `${location}.when`);
                         }
 
-                        // tslint:disable-next-line:forin
                         for (const attrName in style.attr) {
                             const attrValue = (style.attr as any)[attrName];
                             if (!isJsonExpr(attrValue)) {

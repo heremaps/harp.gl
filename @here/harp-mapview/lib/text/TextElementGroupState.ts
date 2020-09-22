@@ -6,6 +6,7 @@
 
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
+
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementState } from "./TextElementState";
 

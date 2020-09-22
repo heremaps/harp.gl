@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { assert } from "chai";
 
 import { Theme } from "@here/harp-datasource-protocol";
 import { SolidLineMaterial } from "@here/harp-materials";
+import { assert } from "chai";
 import { BoxGeometry, Fog, Mesh, Scene } from "three";
+
 import { MapViewFog } from "../lib/MapViewFog";
 
 describe("MapViewFog", function() {

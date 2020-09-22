@@ -4,16 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import * as geo from "@here/harp-geoutils";
 import { assert } from "chai";
-
-import { SphericalGeometrySubdivisionModifier } from "../lib/SphericalGeometrySubdivisionModifier";
-
 import * as THREE from "three";
 
-import * as geo from "@here/harp-geoutils";
+import { SphericalGeometrySubdivisionModifier } from "../lib/SphericalGeometrySubdivisionModifier";
 
 describe("SphericalGeometrySubdivisionModifier", function() {
     it("SubdivideTileBounds", function() {

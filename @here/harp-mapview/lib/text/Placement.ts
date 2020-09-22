@@ -19,6 +19,7 @@ import {
 } from "@here/harp-text-canvas";
 import { assert, Math2D, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { CollisionBox, DetailedCollisionBox, IBox, ScreenCollisions } from "../ScreenCollisions";
@@ -184,6 +185,7 @@ export function checkReadyForPlacement(
     poiManager: PoiManager,
     maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
+    // eslint-disable-next-line prefer-const
     let viewDistance: number | undefined;
 
     if (!textElement.visible) {
@@ -690,16 +692,16 @@ function placePointLabelAtAnchor(
         tmpMeasurementParams.letterCaseArray = label.glyphCaseArray!;
         // Compute label bounds according to layout settings.
         textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
-        // Apply additional persistent margin, keep in mind that text bounds just calculated
-        // are not (0, 0, w, h) based, so their coords usually are also non-zero.
-        // TODO: Make the margin configurable
-        label.bounds.expandByVector(persistentPointLabelTextMargin);
     }
 
     // Compute text offset from the anchor point
     const textOffset = computePointTextOffset(label, placement, scale, env, tmpTextOffset);
     textOffset.add(screenPosition);
     tmpBox.copy(label.bounds!);
+    // Apply additional persistent margin, keep in mind that text bounds just calculated
+    // are not (0, 0, w, h) based, so their coords usually are also non-zero.
+    // TODO: Make the margin configurable
+    tmpBox.expandByVector(persistentPointLabelTextMargin);
     tmpBox.translate(textOffset);
 
     tmpBox.getCenter(tmpCenter);

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../lib/coordinates/GeoCoordinatesLike";
@@ -83,7 +83,7 @@ describe("TransverseMercatorProjection", function() {
     });
 
     samples.forEach(([geoPoint, expectedWorldPoint]) => {
-        // tslint:disable-next-line: max-line-length
+        // eslint-disable-next-line max-len
         it(`ProjectPoint (${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude})`, function() {
             const worldPoint = transverseMercatorProjection.projectPoint(geoPoint);
 
@@ -134,7 +134,7 @@ describe("TransverseMercatorProjection", function() {
         ];
 
         insidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             it(`ProjectBox contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = transverseMercatorProjection.projectPoint(geoPoint);
                 assert.isTrue(contains(worldBox, p));
@@ -142,7 +142,7 @@ describe("TransverseMercatorProjection", function() {
         });
 
         outsidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             it(`ProjectBox !contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = transverseMercatorProjection.projectPoint(geoPoint);
                 assert.isFalse(contains(worldBox, p));
@@ -178,7 +178,7 @@ describe("TransverseMercatorProjection", function() {
         ];
 
         insidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             it(`ProjectBigBox contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = transverseMercatorProjection.projectPoint(geoPoint);
                 assert.isTrue(contains(worldBox, p));
@@ -186,7 +186,7 @@ describe("TransverseMercatorProjection", function() {
         });
 
         outsidePoints.forEach(geoPoint => {
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             it(`ProjectBigBox !contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
                 const p = transverseMercatorProjection.projectPoint(geoPoint);
                 assert.isFalse(contains(worldBox, p));

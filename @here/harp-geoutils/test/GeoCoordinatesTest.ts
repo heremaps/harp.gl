@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { GeoPointLike, isGeoPointLike } from "../lib/coordinates/GeoPointLike";
 
@@ -100,6 +100,59 @@ describe("GeoCoordinates", function() {
                     }
                 );
             }
+        );
+    });
+    it("minLongitudeSpanTo returns minimum span between two geocoordinates", function() {
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, -50).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, 100)
+            ),
+            150
+        );
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, 100).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, -50)
+            ),
+            150
+        );
+
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, -170).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, 160)
+            ),
+            30
+        );
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, 160).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, -170)
+            ),
+            30
+        );
+
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, -180).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, 180)
+            ),
+            0
+        );
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, 180).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, -180)
+            ),
+            0
+        );
+
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, -180).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, 0)
+            ),
+            180
+        );
+        assert.equal(
+            GeoCoordinates.fromDegrees(0, 0).minLongitudeSpanTo(
+                GeoCoordinates.fromDegrees(0, -180)
+            ),
+            180
         );
     });
 });

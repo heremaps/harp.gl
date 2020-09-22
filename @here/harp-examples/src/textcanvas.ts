@@ -6,11 +6,6 @@
 
 declare function require(module: any): any;
 
-import { GUI } from "dat.gui";
-// tslint:disable-next-line:no-var-requires
-const Stats = require("stats.js");
-import * as THREE from "three";
-
 import {
     ContextualArabicConverter,
     FontCatalog,
@@ -20,7 +15,9 @@ import {
     TextCanvas,
     TextRenderStyle
 } from "@here/harp-text-canvas";
-
+import { GUI } from "dat.gui";
+import * as Stats from "stats.js";
+import * as THREE from "three";
 /**
  * This example showcases how [[TextCanvas]] can handle dynamic loading of multiple [[FontCatalog]]
  * assets, as well as dynamic real-time text styling.

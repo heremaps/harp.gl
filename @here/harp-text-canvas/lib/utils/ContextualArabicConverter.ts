@@ -32,10 +32,12 @@ export class ContextualArabicConverter {
         number,
         ReadonlyArray<number | undefined>
     > = new Map();
+
     private readonly m_combinedCharactersMap: Map<
         number,
         Map<number, ReadonlyArray<number | undefined>>
     > = new Map();
+
     private readonly m_neutralCharacters: number[];
 
     private constructor() {

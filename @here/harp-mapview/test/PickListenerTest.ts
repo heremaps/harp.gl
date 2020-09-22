@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-// tslint:disable:no-unused-expression
 //    Chai uses properties instead of functions for some expect checks.
 
 import { expect } from "chai";
 import * as THREE from "three";
+
 import { PickObjectType, PickResult } from "../lib/PickHandler";
 import { PickListener } from "../lib/PickListener";
 

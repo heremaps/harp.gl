@@ -6,6 +6,7 @@
 
 import { ITiler, WorkerTilerProtocol } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
+
 import { GeoJsonTiler } from "./GeoJsonTiler";
 import { WorkerService, WorkerServiceResponse } from "./WorkerService";
 
@@ -32,6 +33,7 @@ export class TilerService extends WorkerService {
     static start(serviceId: string) {
         return new TilerService(serviceId);
     }
+
     tiler: ITiler = new GeoJsonTiler();
 
     /**

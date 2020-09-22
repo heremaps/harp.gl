@@ -5,10 +5,8 @@
  */
 
 import { assert } from "chai";
-import { ColorUtils } from "../lib/ColorUtils";
 
-// tslint:disable:only-arrow-functions
-// tslint:disable:no-bitwise
+import { ColorUtils } from "../lib/ColorUtils";
 
 describe("ColorUtils", function() {
     it("support rgba in signed int range", function() {

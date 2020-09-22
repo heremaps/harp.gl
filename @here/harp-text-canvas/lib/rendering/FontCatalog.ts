@@ -138,9 +138,9 @@ export class FontCatalog {
     }
 
     static async loadTexture(url: string): Promise<THREE.Texture> {
-        return new Promise(resolve => {
+        return await new Promise(resolve => {
             new THREE.TextureLoader().load(url, resolve);
-        }) as Promise<THREE.Texture>;
+        });
     }
 
     static async loadJSON(url: string): Promise<any> {
@@ -301,7 +301,7 @@ export class FontCatalog {
                     this.m_loadingJson.delete(jsonPath);
                     this.m_loadedJson.set(jsonPath, json);
                 } catch (e) {
-                    // tslint:disable-next-line:no-console
+                    // eslint-disable-next-line no-console
                     console.error(e);
                     this.m_loadingJson.delete(jsonPath);
                 }
@@ -384,7 +384,7 @@ export class FontCatalog {
             if (glyph === undefined) {
                 let glyphPromise = this.m_loadingGlyphs.get(glyphHash);
                 if (glyphPromise === undefined) {
-                    if (font.charset.indexOf(String.fromCodePoint(codePoint)) === -1) {
+                    if (!font.charset.includes(String.fromCodePoint(codePoint))) {
                         const replacementGlyph = this.createReplacementGlyph(codePoint, char, font);
                         fontGlyphMap!.set(codePoint, replacementGlyph);
                         this.m_glyphTextureCache.add(glyphHash, replacementGlyph);

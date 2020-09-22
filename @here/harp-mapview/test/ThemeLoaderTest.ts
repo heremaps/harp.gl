@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assert } from "chai";
 import * as path from "path";
 import * as nodeUrl from "url";
 
@@ -22,6 +20,8 @@ import {
     resolveReferenceUri,
     UriResolver
 } from "@here/harp-utils";
+import { assert } from "chai";
+
 import { ThemeLoader } from "../lib/ThemeLoader";
 
 function makeUrlRelative(baseUrl: string, url: string) {
@@ -169,7 +169,6 @@ describe("ThemeLoader", function() {
             const contextLogger = new ContextLogger(console, "theme");
 
             // Hack to access private members with type safety
-            // tslint:disable-next-line: no-string-literal
             const r = ThemeLoader["resolveStyleSet"](
                 theme.styles!.tilezen,
                 theme.definitions,
@@ -206,7 +205,6 @@ describe("ThemeLoader", function() {
             };
             const contextLogger = new ContextLogger(console, "test theme: ");
             // Hack to access private members with type safety
-            // tslint:disable-next-line: no-string-literal
             const r = ThemeLoader["resolveStyleSet"](
                 theme.styles!.tilezen,
                 theme.definitions,
@@ -244,7 +242,6 @@ describe("ThemeLoader", function() {
             };
             const contextLogger = new ContextLogger(console, "test theme: ");
             // Hack to access private members with type safety
-            // tslint:disable-next-line: no-string-literal
             const r = ThemeLoader["resolveStyleSet"](
                 theme.styles!.tilezen,
                 theme.definitions,
@@ -305,7 +302,6 @@ describe("ThemeLoader", function() {
             };
 
             // Hack to access private members with type safety
-            // tslint:disable-next-line: no-string-literal
             const result = await ThemeLoader["resolveBaseThemes"](inheritedTheme);
 
             assert.exists(result.definitions);
@@ -329,7 +325,6 @@ describe("ThemeLoader", function() {
             };
 
             // Hack to access private members with type safety
-            // tslint:disable-next-line: no-string-literal
             const result = await ThemeLoader["resolveBaseThemes"](inheritedTheme);
 
             assert.exists(result.definitions);

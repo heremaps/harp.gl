@@ -65,7 +65,6 @@ export async function genHtmlReport(
         };
     });
 
-    // tslint:disable-next-line:no-var-keyword
     function cssClassName(key: string) {
         return key.replace(/\./g, "-");
     }

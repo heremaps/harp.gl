@@ -22,6 +22,7 @@ import {
     TileLoaderState
 } from "@here/harp-mapview";
 import { ILogger, LoggerManager } from "@here/harp-utils";
+
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
 
@@ -127,16 +128,16 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         super({
             name: m_options.name,
             styleSetName: m_options.styleSetName,
-            // tslint:disable-next-line: deprecation
             minZoomLevel: m_options.minZoomLevel,
-            // tslint:disable-next-line: deprecation
             maxZoomLevel: m_options.maxZoomLevel,
             minDataLevel: m_options.minDataLevel,
             maxDataLevel: m_options.maxDataLevel,
             minDisplayLevel: m_options.minDisplayLevel,
             maxDisplayLevel: m_options.maxDisplayLevel,
             storageLevelOffset: m_options.storageLevelOffset,
-            allowOverlappingTiles: m_options.allowOverlappingTiles
+            allowOverlappingTiles: m_options.allowOverlappingTiles,
+            minGeometryHeight: m_options.minGeometryHeight,
+            maxGeometryHeight: m_options.maxGeometryHeight
         });
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
@@ -164,7 +165,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
     dispose() {
         this.m_unregisterClearTileCache?.();
         this.decoder.dispose();
-        this.dataProvider().dispose();
+        this.dataProvider().unregister(this);
     }
 
     /** @override */
@@ -182,7 +183,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
 
     /** @override */
     async connect() {
-        await Promise.all([this.m_options.dataProvider.connect(), this.m_decoder.connect()]);
+        await Promise.all([this.m_options.dataProvider.register(this), this.m_decoder.connect()]);
         this.m_isReady = true;
 
         this.m_decoder.configure(undefined, undefined, undefined, {

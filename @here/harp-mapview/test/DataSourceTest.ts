@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// tslint:disable:no-unused-expression
-// tslint:disable:only-arrow-functions
 // Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import * as chai from "chai";
 const { expect } = chai;
 import * as chai_as_promised from "chai-as-promised";
 chai.use(chai_as_promised);
 import * as sinon from "sinon";
 
-import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
@@ -150,6 +148,7 @@ describe("DataSource", function() {
             it("returns a mapview if attached", function() {
                 dataSource.attach(mapView);
                 expect(dataSource.mapView).to.equal(mapView);
+                expect(dataSource.isDetached()).to.be.false;
             });
 
             it("throws an error if not attached", function() {
@@ -161,6 +160,7 @@ describe("DataSource", function() {
             it("returns mapview projection", function() {
                 dataSource.attach(mapView);
                 expect(dataSource.projection).to.equal(mapView.projection);
+                expect(dataSource.isDetached()).to.be.false;
             });
 
             it("throws an error if not attached", function() {
@@ -178,6 +178,7 @@ describe("DataSource", function() {
             it("sets mapview", function() {
                 dataSource.attach(mapView);
                 expect(dataSource.mapView).to.equal(mapView);
+                expect(dataSource.isDetached()).to.be.false;
             });
         });
 
@@ -186,6 +187,7 @@ describe("DataSource", function() {
                 dataSource.attach(mapView);
                 dataSource.detach(mapView);
                 expect(dataSource).to.have.property("m_mapView").that.is.undefined;
+                expect(dataSource.isDetached()).to.be.true;
             });
 
             it("throws if different mapview is passed", function() {
@@ -222,6 +224,13 @@ describe("DataSource", function() {
             it("has getters and setters for max geometry height", function() {
                 dataSource.maxGeometryHeight = 123.4;
                 expect(dataSource.maxGeometryHeight).to.equal(123.4);
+            });
+        });
+
+        describe("minGeometryHeight", function() {
+            it("has getters and setters for min geometry height", function() {
+                dataSource.minGeometryHeight = 223.4;
+                expect(dataSource.minGeometryHeight).to.equal(223.4);
             });
         });
 
