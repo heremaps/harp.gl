@@ -118,7 +118,8 @@ export class FontCatalog {
             1.0,
             1.0,
             replacementTexture,
-            replacementFont!
+            replacementFont!,
+            true
         );
 
         const fontCatalogInfo = new FontCatalog(
@@ -160,6 +161,9 @@ export class FontCatalog {
     private readonly m_loadedJson: Map<string, any>;
     private readonly m_loadedPages: Map<string, THREE.Texture>;
     private readonly m_loadedGlyphs: Map<string, Map<number, GlyphData>>;
+
+    /** If `true`, a replacement glyph is returned for every missing glyph. */
+    public showReplacementGlyphs = false;
 
     /**
      * @hidden
@@ -462,7 +466,10 @@ export class FontCatalog {
                 const codePoint = char.codePointAt(0)!;
                 const font = this.getFont(codePoint, fontName);
                 const glyphData = this.getGlyph(codePoint, font, fontStyle);
-                if (glyphData !== undefined) {
+                if (
+                    glyphData !== undefined &&
+                    (!glyphData.isReplacement || this.showReplacementGlyphs)
+                ) {
                     result.push(glyphData);
                     if (letterCaseArray !== undefined) {
                         letterCaseArray.push(char !== character);

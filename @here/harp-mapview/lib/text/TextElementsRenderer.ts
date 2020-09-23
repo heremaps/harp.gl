@@ -398,6 +398,24 @@ export class TextElementsRenderer {
     }
 
     /**
+     * If `true`, a replacement glyph ("?") is rendered for every missing glyph.
+     */
+    get showReplacementGlyphs() {
+        return this.m_options.showReplacementGlyphs === true;
+    }
+
+    /**
+     * If `true`, a replacement glyph ("?") is rendered for every missing glyph.
+     */
+    set showReplacementGlyphs(value: boolean) {
+        this.m_options.showReplacementGlyphs = value;
+
+        this.m_textRenderers.forEach(textRenderer => {
+            textRenderer.textCanvas.fontCatalog.showReplacementGlyphs = value;
+        });
+    }
+
+    /**
      * Render the text using the specified camera into the current canvas.
      *
      * @param camera - Orthographic camera to use.
@@ -901,7 +919,7 @@ export class TextElementsRenderer {
     ): boolean {
         // Trigger the glyph load if needed.
         if (textElement.loadingState === LoadingState.Initialized) {
-            return true;
+            return textElement.glyphs !== undefined;
         }
 
         assert(textElementStyle.textCanvas !== undefined);
@@ -977,6 +995,8 @@ export class TextElementsRenderer {
     private async initializeTextCanvases(): Promise<void> {
         const catalogCallback = (name: string, catalog: FontCatalog) => {
             const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog);
+
+            catalog.showReplacementGlyphs = this.showReplacementGlyphs;
 
             this.m_textRenderers.push({
                 fontCatalog: name,

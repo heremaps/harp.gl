@@ -216,6 +216,39 @@ describe("FontCatalog", () => {
         }
         assert(true);
     });
+
+    it("Retrieves replacement glyph data.", () => {
+        const char = "L";
+
+        const codePoint = char.codePointAt(0)!;
+        const font = fontCatalog.getFont(codePoint);
+        assert.isTrue(
+            fontCatalog!.getGlyph(char.codePointAt(0)!, font, FontStyle.Regular) !== undefined
+        );
+
+        const glyph = fontCatalog.getGlyph(codePoint, font, FontStyle.Regular);
+        const renderStyle = new TextRenderStyle();
+        try {
+            // Make this glyph a replacement, which should lead to the glyph not being rendered on
+            // production. Normally, the property `isReplacement` is only true for the replacement
+            // glyph, the "<?>".
+            (glyph as any).isReplacement = true;
+            fontCatalog.showReplacementGlyphs = false;
+
+            // should be undefined in production...
+            assert.isUndefined(fontCatalog.getGlyphs(char, renderStyle));
+
+            // enable debugging
+            fontCatalog.showReplacementGlyphs = true;
+            assert.isDefined(fontCatalog.getGlyphs(char, renderStyle));
+            // should NOT be empty now...
+            assert.strictEqual(fontCatalog.getGlyphs(char, renderStyle)!.length, 1);
+            assert.strictEqual(fontCatalog.getGlyphs(char, renderStyle)![0], glyph);
+        } finally {
+            (glyph as any).isReplacement = false;
+        }
+    });
+
     it("Is cleared, and fails on glyph data retrieval.", () => {
         fontCatalog.clear();
         for (const sample of textSamples) {
@@ -230,6 +263,7 @@ describe("FontCatalog", () => {
         }
         assert(true);
     });
+
     it("Is disposed, and fails on asset loading.", async () => {
         fontCatalog.dispose();
         assert.strictEqual(fontCatalog.fonts.length, 0);
