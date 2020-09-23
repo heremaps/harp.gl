@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-datasource-protocol",
-    "version": "0.20.0",
+    "version": "0.20.1",
     "description": "Components used for the decoding and styling of data that is used by the Datasources.",
     "main": "index.js",
     "typings": "index",
