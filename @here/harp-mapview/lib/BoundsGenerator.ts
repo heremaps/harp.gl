@@ -8,6 +8,7 @@ import {
     GeoCoordinates,
     GeoPolygon,
     GeoPolygonCoordinates,
+    isAntimeridianCrossing,
     Projection,
     ProjectionType
 } from "@here/harp-geoutils";
@@ -247,10 +248,120 @@ export class BoundsGenerator {
         return coordinates;
     }
 
+    private wrapAroundPoles(coordinates: GeoCoordinates[]) {
+        // If one of the poles is inside the view bounds, the polygon would have to cover the pole,
+        // which is not possible in geo space. Instead, additional vertices (numbered in order from
+        // 1 to 6 in the diagram below) are added to the polygon so that it wraps around the pole,
+        // covering the same area(except for the pole circle that cannot be mapped to geospace).
+        // The globe is cut in two hemispheres by the meridians at the camera longitude (camLon) and
+        // its antimeridian (at camLon+180). Then, the polygon side crossing the camera antimeridian
+        // is found, and the new pole wrapping vertices are inserted between its start and end
+        // vertices.
+        //
+        //    (end) hem.crossing side (start)
+        //        \|<-------------->|/
+        // x-------x------6!--------x--------x
+        // |         , - ~5!1 ~ -,           |
+        // |     , '       !       ' ,       |
+        // |   ,           !           ,     |
+        // |  ,            !            ,    |
+        // | ,             !             ,   |
+        // | 4           POLE            2   | <- Bounds polygon
+        // | ,             !             ,   |
+        // |  ,            !            ,    |
+        // |   ,           !           ,     |
+        // |     ,         !         ,'      |
+        // |       ' -_, _ ! _ ,_ -'         |
+        // |               3                 |
+        // x---------------!-----------------x
+        //                 ! <- hemisphere partition
+
+        const northPoleCenter = new Vector3(0, 0, EarthConstants.EQUATORIAL_RADIUS);
+        const southPoleCenter = new Vector3(0, 0, -EarthConstants.EQUATORIAL_RADIUS);
+        const northPoleInView = MapViewUtils.closeToFrustum(northPoleCenter, this.m_camera);
+        const southPoleInView = MapViewUtils.closeToFrustum(southPoleCenter, this.m_camera);
+
+        if (!northPoleInView && !southPoleInView) {
+            return;
+        }
+
+        // Create first wrapping vertex (number 1 in the diagram above).
+        const camLon = this.m_projection.unprojectPoint(this.m_camera.position).lng;
+        const wrapLat = northPoleInView ? 90 : -90;
+        const wrapLon = northPoleInView ? camLon + 180 : camLon - 180;
+        const geoWrapTopRight = new GeoCoordinates(wrapLat, wrapLon);
+        const geoWrapTopRightNorm = geoWrapTopRight.normalized();
+
+        // Find the polygon side crossing the camera antimeridian.
+        const crossLon = geoWrapTopRightNorm.lng;
+        let prevLon = coordinates[coordinates.length - 1].lng;
+        // Check whether the camera antimeridian crossing also crosses greenwich antimerdian.
+        let isGwAntimerCross = false;
+        const hSphereCrossEndIndex = coordinates.findIndex((value: GeoCoordinates) => {
+            const crossesAntimer = isAntimeridianCrossing(prevLon, value.lng);
+            const sameSign = Math.sign(crossLon - value.lng) === Math.sign(crossLon - prevLon);
+            if (sameSign === crossesAntimer) {
+                isGwAntimerCross = crossesAntimer;
+                return true;
+            }
+            prevLon = value.lng;
+            return false;
+        });
+
+        if (hSphereCrossEndIndex < 0) {
+            // No polygon side crosses the camera antimeridian, meaning that the polygon doesn't
+            // actually go above the pole to the other side of the world, no wrapping needed.
+            return;
+        }
+
+        // Create rest of wrapping vertices at pole's latitude (vertices 2-5 in diagram above).
+        const wrapSideOffset = northPoleInView ? 90 : -90;
+        const wrapCornerOffset = northPoleInView ? 0.00001 : -0.00001;
+
+        // Added to ensure antimeridian crossing detection when coordinates are wrapped around it by
+        // GeoPolygon (all polygon sides must have longitude spans smaller than 180 degrees).
+        const geoWrapRight = new GeoCoordinates(wrapLat, camLon + wrapSideOffset).normalized();
+        const geoWrapBottom = new GeoCoordinates(wrapLat, camLon).normalized();
+
+        // Added to ensure antimeridian crossing detection when coordinates are wrapped around it by
+        // GeoPolygon (all polygon sides must have longitude spans smaller than 180 degrees).
+        const geoWrapLeft = new GeoCoordinates(wrapLat, camLon - wrapSideOffset).normalized();
+        const geoWrapTopLeft = new GeoCoordinates(wrapLat, wrapLon + wrapCornerOffset).normalized();
+
+        const hSphereCrossStartIndex =
+            (hSphereCrossEndIndex + coordinates.length - 1) % coordinates.length;
+        const crossStart = coordinates[hSphereCrossStartIndex];
+        const crossEnd = coordinates[hSphereCrossEndIndex];
+
+        // Last wrapping vertex (number 6) is linearly interpolated at the polygon side crossing the
+        // camera antimeridian.
+        let crossLerp = GeoCoordinates.lerp(crossStart, crossEnd, 0.01, isGwAntimerCross);
+        if (isGwAntimerCross && northPoleInView) {
+            crossLerp.longitude -= 360;
+        } else {
+            crossLerp = crossLerp.normalized();
+        }
+
+        // Add the wrapping vertices to the array in the proper order (see diagram above).
+        coordinates.splice(
+            hSphereCrossEndIndex,
+            0,
+            wrapLon < -180 ? geoWrapTopRight : geoWrapTopRightNorm, // 1
+            geoWrapRight, // 2
+            geoWrapBottom, // 3
+            geoWrapLeft, // 4
+            geoWrapTopLeft, // 5
+            crossLerp // 6
+        );
+    }
+
     private generateOnSphere(): GeoPolygon | undefined {
         assert(this.m_projection.type === ProjectionType.Spherical);
 
         const coordinates = this.findBoundsIntersectionsOnSphere();
+
+        this.wrapAroundPoles(coordinates);
+
         return this.createPolygon(coordinates, false, true);
     }
 

@@ -155,4 +155,49 @@ describe("GeoCoordinates", function() {
             180
         );
     });
+
+    describe("lerp", function() {
+        it("returns first coords if factor is 0", function() {
+            const start = new GeoCoordinates(10, 50, 1000);
+            const end = new GeoCoordinates(20, 5, 500);
+            assert.deepEqual(GeoCoordinates.lerp(start, end, 0), start);
+        });
+        it("returns second coords if factor is 1", function() {
+            const start = new GeoCoordinates(10, 50, 1000);
+            const end = new GeoCoordinates(20, 5, 500);
+            assert.deepEqual(GeoCoordinates.lerp(start, end, 1), end);
+        });
+        it("interpolates given coords if factor >0 and <1", function() {
+            const start = new GeoCoordinates(10, 50, 1000);
+            const end = new GeoCoordinates(20, 10, 500);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.25),
+                new GeoCoordinates(12.5, 40, 875)
+            );
+        });
+        it("normalizes result if requested", function() {
+            const start = new GeoCoordinates(10, 180);
+            const end = new GeoCoordinates(20, 190);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.5, false, true),
+                new GeoCoordinates(15, -175, 0)
+            );
+        });
+        it("wraps coordinates if requested", function() {
+            const start = new GeoCoordinates(10, 170, 1000);
+            const end = new GeoCoordinates(20, -140, 500);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.25, true),
+                new GeoCoordinates(12.5, 182.5, 875)
+            );
+        });
+        it("reverses interpolation direction when wrapping if needed", function() {
+            const start = new GeoCoordinates(20, -140, 500);
+            const end = new GeoCoordinates(10, 170, 1000);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.25, true),
+                new GeoCoordinates(17.5, 207.5, 625)
+            );
+        });
+    });
 });
