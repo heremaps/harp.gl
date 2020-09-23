@@ -56,6 +56,7 @@ describe("BoundsGenerator", function() {
             theGlobal.requestAnimationFrame = (callback: (time: DOMHighResTimeStamp) => void) => {
                 setTimeout(callback, 0);
             };
+            theGlobal.performance = { now: Date.now };
         }
         addEventListenerSpy = sinon.stub();
         removeEventListenerSpy = sinon.stub();
