@@ -159,6 +159,16 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
      * Default is true (i.e. if not defined it is taken to be true)
      */
     addGroundPlane?: boolean;
+
+    /**
+     * Indicates whether the decoder is allowed to adjust the coordinates to
+     * avoid possible glitches at the 180th meridian.
+     *
+     * @defaultValue `true` if the data service is
+     *               `https://vector.hereapi.com/v2/vectortiles/base/mc`,
+     *               `false` otherwise.
+     */
+    roundUpCoordinatesIfNeeded?: boolean;
 }
 
 /**
@@ -287,6 +297,15 @@ export class VectorTileDataSource extends TileDataSource {
         this.addGroundPlane =
             m_params.addGroundPlane === undefined || m_params.addGroundPlane === true;
 
+        let roundUpCoordinatesIfNeeded = m_params.roundUpCoordinatesIfNeeded;
+
+        if (
+            roundUpCoordinatesIfNeeded === undefined &&
+            (m_params as Partial<OmvWithRestClientParams>)?.baseUrl === hereVectorTileBaseUrl
+        ) {
+            roundUpCoordinatesIfNeeded = true;
+        }
+
         this.m_decoderOptions = {
             showMissingTechniques: this.m_params.showMissingTechniques === true,
             filterDescription: this.m_params.filterDescr,
@@ -297,7 +316,8 @@ export class VectorTileDataSource extends TileDataSource {
             politicalView: this.m_params.politicalView,
             skipShortLabels: this.m_params.skipShortLabels,
             storageLevelOffset: m_params.storageLevelOffset ?? -1,
-            enableElevationOverlay: this.m_params.enableElevationOverlay === true
+            enableElevationOverlay: this.m_params.enableElevationOverlay === true,
+            roundUpCoordinatesIfNeeded
         };
 
         this.maxGeometryHeight = getOptionValue(

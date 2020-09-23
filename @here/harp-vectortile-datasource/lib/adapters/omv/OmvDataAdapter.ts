@@ -177,6 +177,22 @@ function checkWinding(multipolygon: IPolygonGeometry[]) {
     }
 }
 
+function roundUpCoordinates(coordinates: Vector2[], layerExtents: number) {
+    coordinates.forEach(p => {
+        if (p.x === layerExtents - 1) {
+            p.x = layerExtents;
+        }
+    });
+}
+
+function roundUpPolygonCoordinates(geometry: IPolygonGeometry[], layerExtents: number) {
+    geometry.forEach(polygon => polygon.rings.forEach(r => roundUpCoordinates(r, layerExtents)));
+}
+
+function roundUpLineCoordinates(geometry: ILineGeometry[], layerExtents: number) {
+    geometry.forEach(line => roundUpCoordinates(line.positions, layerExtents));
+}
+
 /**
  * The class `OmvDataAdapter` converts OMV protobuf geo data
  * to geometries for the given `IGeometryProcessor`.
@@ -192,6 +208,8 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
 
     private m_tileKey!: TileKey;
     private m_layer!: com.mapbox.pb.Tile.ILayer;
+
+    public roundUpCoordinatesIfNeeded: boolean = false;
 
     /**
      * Constructs a new [[OmvProtobufDataAdapter]].
@@ -350,6 +368,10 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             return;
         }
 
+        if (this.mustRoundUpCoordinates) {
+            roundUpLineCoordinates(geometry, layerExtents);
+        }
+
         const env = createFeatureEnv(
             this.m_layer,
             feature,
@@ -410,6 +432,10 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             return;
         }
 
+        if (this.mustRoundUpCoordinates) {
+            roundUpPolygonCoordinates(geometry, layerExtents);
+        }
+
         checkWinding(geometry);
 
         const env = createFeatureEnv(
@@ -427,6 +453,14 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             geometry,
             env,
             storageLevel
+        );
+    }
+
+    private get mustRoundUpCoordinates(): boolean {
+        return (
+            this.roundUpCoordinatesIfNeeded &&
+            this.m_tileKey.level < 5 &&
+            this.m_tileKey.column === this.m_tileKey.columnCount() - 1
         );
     }
 }
