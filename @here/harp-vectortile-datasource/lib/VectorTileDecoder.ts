@@ -64,14 +64,20 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
         private readonly m_enableElevationOverlay = false,
+        private readonly m_roundUpCoordinatesIfNeeded = false,
         private readonly m_languages?: string[]
     ) {
         const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
         const dataPreFilter = m_dataFilter
             ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
             : styleSetDataFilter;
+
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvDataAdapter(this, dataPreFilter, logger));
+
+        const omvDataAdapter = new OmvDataAdapter(this, dataPreFilter, logger);
+        omvDataAdapter.roundUpCoordinatesIfNeeded = m_roundUpCoordinatesIfNeeded;
+        this.m_dataAdapters.push(omvDataAdapter);
+
         this.m_dataAdapters.push(new GeoJsonVtDataAdapter(this, dataPreFilter, logger));
         this.m_dataAdapters.push(new GeoJsonDataAdapter(this, dataPreFilter, logger));
     }
@@ -301,6 +307,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     private m_gatherFeatureAttributes: boolean = false;
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
+    private m_roundUpCoordinatesIfNeeded: boolean = false;
 
     /** @override */
     connect(): Promise<void> {
@@ -326,6 +333,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
+            this.m_roundUpCoordinatesIfNeeded,
             this.languages
         );
 
@@ -419,6 +427,9 @@ export class VectorTileDecoder extends ThemedTileDecoder {
             }
             if (omvOptions.enableElevationOverlay !== undefined) {
                 this.m_enableElevationOverlay = omvOptions.enableElevationOverlay;
+            }
+            if (omvOptions.roundUpCoordinatesIfNeeded !== undefined) {
+                this.m_roundUpCoordinatesIfNeeded = omvOptions.roundUpCoordinatesIfNeeded;
             }
         }
         if (languages !== undefined) {
