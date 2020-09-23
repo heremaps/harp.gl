@@ -107,6 +107,12 @@ export interface TextElementsRendererOptions {
      * @default `true`
      */
     delayLabelsUntilMovementFinished?: boolean;
+
+    /**
+     * If `true`, a replacement glyph ("?") is rendered for every missing glyph.
+     * @default `false`
+     */
+    showReplacementGlyphs?: boolean;
 }
 
 /**
@@ -150,5 +156,9 @@ export function initializeDefaultOptions(options: TextElementsRendererOptions) {
 
     if (options.delayLabelsUntilMovementFinished === undefined) {
         options.delayLabelsUntilMovementFinished = true;
+    }
+
+    if (options.showReplacementGlyphs === undefined) {
+        options.showReplacementGlyphs = false;
     }
 }

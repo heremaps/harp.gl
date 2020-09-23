@@ -24,9 +24,8 @@ export function stubFontCatalogLoader(
     sandbox.stub(fontCatalogLoaderStub, "loading").get(() => {
         return false;
     });
-    fontCatalogLoaderStub.loadCatalogs
-        .yields([DEFAULT_FONT_CATALOG_NAME, fontCatalog])
-        .resolves([]);
+
+    fontCatalogLoaderStub.loadCatalogs.yields(DEFAULT_FONT_CATALOG_NAME, fontCatalog).resolves([]);
 
     return (fontCatalogLoaderStub as unknown) as FontCatalogLoader;
 }
