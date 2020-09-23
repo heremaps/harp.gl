@@ -206,6 +206,8 @@ export interface OmvDecoderOptions {
     politicalView?: string;
 
     enableElevationOverlay?: boolean;
+
+    roundUpCoordinatesIfNeeded?: boolean;
 }
 
 /**
