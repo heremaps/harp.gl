@@ -2235,6 +2235,7 @@ export class MapView extends EventDispatcher {
                 });
 
                 dataSource.setTheme(this.m_theme);
+                dataSource.setLanguages(this.m_languages);
 
                 this.m_connectedDataSources.add(dataSource.name);
 
