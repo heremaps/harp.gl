@@ -19,6 +19,18 @@ const tmpV0 = new THREE.Vector3();
 const tmpV1 = new THREE.Vector3();
 
 /**
+ * Compute the modulo.
+ *
+ * @internal
+ */
+function mod(dividend: number, divisor: number): number {
+    const modulo = dividend % divisor;
+    const modulo_sign = modulo < 0;
+    const divisor_sign = divisor < 0;
+    return modulo_sign === divisor_sign ? modulo : modulo + divisor;
+}
+
+/**
  * `GeoCoordinates` is used to represent geo positions.
  */
 export class GeoCoordinates implements GeoCoordinatesLike {
@@ -213,40 +225,13 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      */
     normalized(): GeoCoordinates {
         let { latitude, longitude } = this;
-
         if (isNaN(latitude) || isNaN(longitude)) {
             return this;
         }
-
-        if (latitude > MAX_LATITUDE) {
-            let wrapped = (latitude + MAX_LATITUDE) % 360;
-            if (wrapped >= MAX_LONGITUDE) {
-                longitude += MAX_LONGITUDE;
-                wrapped = 360 - wrapped;
-            }
-
-            latitude = wrapped - 90;
+        if (longitude < -180 || longitude > 180) {
+            longitude = mod(longitude + 180, 360) - 180;
         }
-
-        if (latitude < MIN_LATITUDE) {
-            let wrapped = (latitude + MIN_LATITUDE) % 360;
-            if (wrapped <= MIN_LONGITUDE) {
-                longitude += MAX_LONGITUDE;
-                wrapped = -360 - wrapped;
-            }
-
-            latitude = wrapped + 90;
-        }
-
-        if (longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE) {
-            const sign = Math.sign(longitude);
-            longitude = (((longitude % 360) + 180 * sign) % 360) - 180 * sign;
-        }
-
-        if (latitude === this.latitude && longitude === this.longitude) {
-            return this;
-        }
-
+        latitude = THREE.MathUtils.clamp(latitude, -90, 90);
         return new GeoCoordinates(latitude, longitude, this.altitude);
     }
 
