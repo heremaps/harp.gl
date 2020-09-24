@@ -1476,6 +1476,30 @@ describe("MapView", function() {
         expect(updateStorageOffsetSpy.called);
     });
 
+    it("languages set in MapView are also set in datasources", async function() {
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
+        mapView = new MapView({ canvas, theme: {} });
+
+        await mapView.addDataSource(dataSource);
+        mapView.languages = ["Goblin"];
+
+        assert.isDefined(dataSource.getLanguages());
+        assert.equal(dataSource.getLanguages()!.length, 1, "No language set in datasource");
+        assert.equal(dataSource.getLanguages()![0], "Goblin", "Wrong language set in datasource");
+    });
+
+    it("languages set in MapView are also set in datasources added later", async function() {
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
+        mapView = new MapView({ canvas, theme: {} });
+
+        mapView.languages = ["Goblin"];
+        await mapView.addDataSource(dataSource);
+
+        assert.isDefined(dataSource.getLanguages());
+        assert.equal(dataSource.getLanguages()!.length, 1, "No language set in datasource");
+        assert.equal(dataSource.getLanguages()![0], "Goblin", "Wrong language set in datasource");
+    });
+
     describe("elevation source", function() {
         let fakeElevationSource: DataSource;
         let fakeElevationRangeSource: ElevationRangeSource;

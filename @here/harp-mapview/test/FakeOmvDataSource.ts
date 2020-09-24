@@ -44,6 +44,8 @@ export class FakeTileLoader implements ITileLoader {
     }
 }
 export class FakeOmvDataSource extends DataSource {
+    private m_languages: String[] | undefined;
+
     constructor(options: DataSourceOptions) {
         super(options);
         this.cacheable = true;
@@ -76,5 +78,14 @@ export class FakeOmvDataSource extends DataSource {
             return true;
         }
         return super.canGetTile(zoomLevel, tileKey);
+    }
+
+    /** @override */
+    setLanguages(languages?: string[]): void {
+        this.m_languages = languages;
+    }
+
+    getLanguages(): String[] | undefined {
+        return this.m_languages;
     }
 }
