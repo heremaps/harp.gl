@@ -86,7 +86,7 @@ export interface MaterialOptions {
     /**
      * Version of GLSL to use for materials
      */
-    glslVersion: Number;
+    glslVersion?: Number;
 }
 
 /**
