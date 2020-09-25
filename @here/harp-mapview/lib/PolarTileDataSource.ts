@@ -116,7 +116,11 @@ export class PolarTileDataSource extends DataSource {
             return undefined;
         }
         const technique = techniques[0];
-        const material = createMaterial({ technique, env: this.mapView.env });
+        const material = createMaterial({
+            technique,
+            env: this.mapView.env,
+            glslVersion: this.mapView.glslVersion
+        });
         if (!material) {
             return undefined;
         }

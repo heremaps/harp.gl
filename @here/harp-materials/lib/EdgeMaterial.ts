@@ -131,6 +131,11 @@ export interface EdgeMaterialParameters
      * @defaultValue false
      */
     vertexColors?: boolean;
+
+    /**
+     * GLSL version
+     */
+    glslVersion?: number;
 }
 
 /**
@@ -164,7 +169,8 @@ export class EdgeMaterial extends RawShaderMaterial
         if (params?.vertexColors === true) {
             setShaderDefine(defines, "USE_COLOR", true);
         }
-        const shaderParams = {
+
+        const shaderParams: THREE.ShaderMaterialParameters = {
             name: "EdgeMaterial",
             vertexShader: vertexSource,
             fragmentShader: fragmentSource,
@@ -182,6 +188,9 @@ export class EdgeMaterial extends RawShaderMaterial
             depthWrite: false,
             defines
         };
+        if (params?.glslVersion === 3.0) {
+            shaderParams.glslVersion = THREE.GLSL3;
+        }
         super(shaderParams);
         enforceBlending(this);
 
