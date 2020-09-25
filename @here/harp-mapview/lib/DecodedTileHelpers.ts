@@ -82,6 +82,11 @@ export interface MaterialOptions {
      * Whether shadows are enabled or not, this is required because we change the material used.
      */
     shadowsEnabled?: boolean;
+
+    /**
+     * Version of GLSL to use for materials
+     */
+    glslVersion: Number;
 }
 
 /**
@@ -108,11 +113,11 @@ export function createMaterial(
         return undefined;
     }
 
-    if (
-        Constructor.prototype instanceof THREE.RawShaderMaterial &&
-        Constructor !== HighPrecisionLineMaterial
-    ) {
-        settings.fog = options.fog;
+    if (Constructor.prototype instanceof THREE.RawShaderMaterial) {
+        settings.glslVersion = options.glslVersion;
+        if (Constructor !== HighPrecisionLineMaterial) {
+            settings.fog = options.fog;
+        }
     }
     if (options.shadowsEnabled === true && technique.name === "fill") {
         settings.removeDiffuseLight = true;

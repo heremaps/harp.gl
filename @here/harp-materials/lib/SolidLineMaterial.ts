@@ -400,6 +400,11 @@ export interface SolidLineMaterialParameters
      * How much to offset in world units.
      */
     offset?: number;
+
+    /**
+     * GLSL version
+     */
+    glslVersion?: number;
 }
 
 /**
@@ -502,6 +507,9 @@ export class SolidLineMaterial extends RawShaderMaterial
             fog: fogParam,
             opacity: opacityParam
         };
+        if (params?.glslVersion === 3.0) {
+            shaderParams.glslVersion = THREE.GLSL3;
+        }
         super(shaderParams);
         // Required to satisfy compiler error if fields has no initializer or are not definitely
         // assigned in the constructor, this also mimics ShaderMaterial set of defaults
