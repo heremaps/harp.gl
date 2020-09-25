@@ -834,6 +834,7 @@ export class Tile implements CachedResource {
 
     /**
      * Gets the [[TileGeometryLoader]] that manages this tile.
+     * @internal
      */
     get tileGeometryLoader(): TileGeometryLoader | undefined {
         return this.m_tileGeometryLoader;
@@ -844,6 +845,7 @@ export class Tile implements CachedResource {
      *
      * @param tileGeometryLoader - A [[TileGeometryLoader]] instance to manage the geometry creation
      *      for this tile.
+     * @internal
      */
     set tileGeometryLoader(tileGeometryLoader: TileGeometryLoader | undefined) {
         this.m_tileGeometryLoader = tileGeometryLoader;

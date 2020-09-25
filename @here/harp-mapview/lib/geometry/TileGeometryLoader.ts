@@ -113,8 +113,16 @@ export class TileGeometryLoader {
     private m_disabledKinds: GeometryKindSet | undefined;
     private m_priority: number = 0;
     private m_state: TileGeometryLoaderState = TileGeometryLoaderState.Initialized;
+    private m_finishedPromise: Promise<void>;
+    private m_resolveFinishedPromise?: () => void;
+    private m_rejectFinishedPromise?: () => void;
 
-    constructor(private readonly m_tile: Tile, private readonly m_taskQueue: TaskQueue) {}
+    constructor(private readonly m_tile: Tile, private readonly m_taskQueue: TaskQueue) {
+        this.m_finishedPromise = new Promise((resolve, reject) => {
+            this.m_resolveFinishedPromise = resolve;
+            this.m_rejectFinishedPromise = reject;
+        });
+    }
 
     set priority(value: number) {
         this.m_priority = value;
@@ -144,6 +152,15 @@ export class TileGeometryLoader {
      */
     get isFinished(): boolean {
         return this.m_state === TileGeometryLoaderState.Finished;
+    }
+
+    /**
+     * Returns a promise resolved when this `TileGeometryLoader` is in
+     * `TileGeometryLoaderState.Finished` state, or rejected when it's in
+     * `TileGeometryLoaderState.Cancelled` or `TileGeometryLoaderState.Disposed` states.
+     */
+    waitFinished(): Promise<void> {
+        return this.m_finishedPromise;
     }
 
     /**
@@ -225,20 +242,35 @@ export class TileGeometryLoader {
      * Dispose of any resources.
      */
     dispose(): void {
-        this.reset();
+        this.clear();
         this.m_state = TileGeometryLoaderState.Disposed;
+        this.m_rejectFinishedPromise?.();
     }
 
     /**
      * Reset the loader to its initial state and cancels any asynchronous work.
      */
     reset(): void {
+        this.clear();
+
+        if (
+            this.m_state === TileGeometryLoaderState.Finished ||
+            this.m_state === TileGeometryLoaderState.Canceled ||
+            this.m_state === TileGeometryLoaderState.Disposed
+        ) {
+            this.m_finishedPromise = new Promise((resolve, reject) => {
+                this.m_resolveFinishedPromise = resolve;
+                this.m_rejectFinishedPromise = reject;
+            });
+        }
+        this.m_state = TileGeometryLoaderState.Initialized;
+    }
+
+    private clear() {
         this.m_availableGeometryKinds?.clear();
         this.m_enabledKinds?.clear();
         this.m_disabledKinds?.clear();
-
         this.m_decodedTile = undefined;
-        this.m_state = TileGeometryLoaderState.Initialized;
     }
 
     private finish() {
@@ -247,10 +279,12 @@ export class TileGeometryLoader {
 
         this.m_decodedTile = undefined;
         this.m_state = TileGeometryLoaderState.Finished;
+        this.m_resolveFinishedPromise?.();
     }
 
     private cancel() {
         this.m_state = TileGeometryLoaderState.Canceled;
+        this.m_rejectFinishedPromise?.();
     }
 
     private queueGeometryCreation(
