@@ -36,6 +36,11 @@ export interface OlpDataProviderParams {
      * @default Latest catalog version
      */
     version?: number;
+
+    /** OLP environment
+     * @default "here"
+     */
+    env?: string;
 }
 
 /**
@@ -56,7 +61,7 @@ export class OlpDataProvider extends DataProvider {
      */
     async connect(): Promise<void> {
         const settings = new OlpClientSettings({
-            environment: "here",
+            environment: this.params.env ?? "here",
             getToken: this.params.getToken
         });
 
