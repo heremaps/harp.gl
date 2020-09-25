@@ -137,15 +137,11 @@ export class OmvDebugLabelsTile extends Tile {
         super(dataSource, tileKey);
     }
 
-    /** @override */
-    loadingFinished() {
-        this.addLabelDebugInfo();
-    }
-
     /**
-     * Create [[TextElement]] objects from the given decoded [[Tile]] and list of materials.
+     * @override
+     * Create [[TextElement]] objects for label debugging.
      */
-    private addLabelDebugInfo() {
+    loadingFinished() {
         // activate in the browser with:
         // window.__debugContext.setValue("DEBUG_TEXT_PATHS", true)
         const debugTextPaths = debugContext.getValue("DEBUG_TEXT_PATHS");
@@ -162,12 +158,10 @@ export class OmvDebugLabelsTile extends Tile {
 
         const tileGeometryCreator = TileGeometryCreator.instance;
         const decodedTile = this.decodedTile!;
-
-        tileGeometryCreator.createTextElements(this, decodedTile);
-
         const colorMap = new Map<number, THREE.Color>();
 
-        // allow limiting to specific names and/or index. There can be many paths with the same text
+        // allow limiting to specific names and/or index. There can be many paths with the
+        // same text
         const textFilter = debugContext.getValue("DEBUG_TEXT_PATHS.FILTER.TEXT");
         const indexFilter = debugContext.getValue("DEBUG_TEXT_PATHS.FILTER.INDEX");
         const env = this.mapView.env;

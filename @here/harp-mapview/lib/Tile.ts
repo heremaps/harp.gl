@@ -747,6 +747,16 @@ export class Tile implements CachedResource {
             this.forceHasGeometry(true);
         }
 
+        this.m_tileGeometryLoader
+            ?.waitFinished()
+            .then(() => {
+                this.loadingFinished();
+                this.removeDecodedTile();
+            })
+            .catch(() => {
+                /* ignore */
+            });
+
         // If the decoder provides a more accurate bounding box than the one we computed from
         // the flat geo box we take it instead. Otherwise, if an elevation range was set, elevate
         // bounding box to match the elevated geometry.
@@ -770,26 +780,6 @@ export class Tile implements CachedResource {
         }
 
         this.dataSource.requestUpdate();
-    }
-
-    /**
-     * Remove the decodedTile when no longer needed.
-     */
-    removeDecodedTile() {
-        this.m_decodedTile = undefined;
-        this.invalidateResourceInfo();
-    }
-
-    /**
-     * Called by the {@link @here/harp-mapview-decoder#TileLoader}
-     *
-     * @remarks
-     * after the `Tile` has finished loading its map data. Can be used
-     * to add content to the `Tile`.
-     * The {@link @here/harp-datasource-protocol#DecodedTile} should still be available.
-     */
-    loadingFinished() {
-        // To be used in subclasses.
     }
 
     /**
@@ -1089,6 +1079,25 @@ export class Tile implements CachedResource {
      */
     get boundingBox(): OrientedBox3 {
         return this.m_boundingBox;
+    }
+
+    /**
+     * Called when {@link TileGeometryLoader} is finished.
+     *
+     * @remarks
+     * It may be used to add content to the `Tile`.
+     * The {@link @here/harp-datasource-protocol#DecodedTile} is still available.
+     */
+    protected loadingFinished() {
+        // To be used in subclasses.
+    }
+
+    /**
+     * Remove the decodedTile when no longer needed.
+     */
+    private removeDecodedTile() {
+        this.m_decodedTile = undefined;
+        this.invalidateResourceInfo();
     }
 
     /**
