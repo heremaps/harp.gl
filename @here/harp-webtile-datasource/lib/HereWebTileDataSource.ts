@@ -216,6 +216,7 @@ export class HereTileProvider implements WebTileDataProvider {
     /** Copyright provider instance. */
     private readonly m_copyrightProvider: UrlCopyrightProvider;
     private readonly m_ppi: WebTileDataSource.ppiValue;
+    private readonly m_resolution: WebTileDataSource.resolutionValue;
     private readonly m_tileBaseAddress: string;
     private m_languages?: string[];
 
@@ -229,6 +230,10 @@ export class HereTileProvider implements WebTileDataProvider {
 
     constructor(private readonly m_options: HereWebTileDataSourceParameters) {
         this.m_ppi = getOptionValue(m_options.ppi, WebTileDataSource.ppiValue.ppi72);
+        this.m_resolution = getOptionValue(
+            m_options.resolution,
+            WebTileDataSource.resolutionValue.resolution512
+        );
         this.m_tileBaseAddress = m_options.tileBaseAddress ?? HereTileProvider.TILE_BASE_NORMAL;
         if (
             this.m_tileBaseAddress === HereTileProvider.TILE_AERIAL_SATELLITE &&
@@ -259,9 +264,7 @@ export class HereTileProvider implements WebTileDataProvider {
 
         const url =
             `https://${server}.${this.m_tileBaseAddress}/` +
-            `${level}/${column}/${row}/${
-                (tile.dataSource as HereWebTileDataSource).resolution
-            }/png8` +
+            `${level}/${column}/${row}/${this.m_resolution}/png8` +
             `${this.getImageRequestParams()}`;
 
         return await this.getRequestHeaders().then(headers => {

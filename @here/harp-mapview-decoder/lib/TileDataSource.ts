@@ -99,8 +99,15 @@ export class TileFactory<TileType extends Tile> {
      * @param dataSource - [[Datasource]] this class belongs to.
      * @param tileKey - Quadtree address of the [[Tile]].
      */
-    create(dataSource: DataSource, tileKey: TileKey): TileType {
-        return new this.m_modelConstructor(dataSource, tileKey);
+    create(dataSource: TileDataSource<TileType>, tileKey: TileKey): TileType {
+        const tile = new this.m_modelConstructor(dataSource, tileKey);
+        tile.tileLoader = new TileLoader(
+            dataSource,
+            tileKey,
+            dataSource.dataProvider(),
+            dataSource.decoder
+        );
+        return tile;
     }
 }
 
@@ -238,7 +245,6 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
      */
     getTile(tileKey: TileKey, delayLoad: boolean = false): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);
-        tile.tileLoader = new TileLoader(this, tileKey, this.m_options.dataProvider, this.decoder);
         tile.copyrightInfo = this.m_options.copyrightInfo;
         if (this.m_options.copyrightProvider !== undefined) {
             this.m_options.copyrightProvider
