@@ -16,6 +16,7 @@ export interface SdfTextMaterialParameters {
     isBackground?: boolean;
     vertexSource?: string;
     fragmentSource?: string;
+    glslVersion?: number;
 }
 
 /**
@@ -35,6 +36,7 @@ export function createSdfTextMaterial(params: SdfTextMaterialParameters): SdfTex
         isMsdf: params.fontCatalog.type === "msdf",
         isBackground: params.isBackground === true,
         vertexSource: params.vertexSource,
-        fragmentSource: params.fragmentSource
+        fragmentSource: params.fragmentSource,
+        glslVersion: params.glslVersion
     });
 }

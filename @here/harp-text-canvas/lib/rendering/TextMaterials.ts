@@ -244,6 +244,7 @@ export interface SdfTextMaterialParameters {
     isBackground: boolean;
     vertexSource?: string;
     fragmentSource?: string;
+    glslVersion?: number;
 }
 
 /**
@@ -284,6 +285,9 @@ export class SdfTextMaterial extends THREE.RawShaderMaterial {
             side: THREE.DoubleSide,
             transparent: true
         };
+        if (params?.glslVersion === 3.0) {
+            shaderParams.glslVersion = THREE.GLSL3;
+        }
         super(shaderParams);
         this.extensions.derivatives = true;
     }
