@@ -15,7 +15,6 @@ import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometr
 import { TileGeometryLoader } from "@here/harp-mapview/lib/geometry/TileGeometryLoader";
 import { TileTaskGroups } from "@here/harp-mapview/lib/MapView";
 import { ITileLoader, TileLoaderState } from "@here/harp-mapview/lib/Tile";
-import { willEventually } from "@here/harp-test-utils";
 import { TaskQueue } from "@here/harp-utils";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
@@ -25,6 +24,8 @@ import * as sinon from "sinon";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
+chai.should();
+
 class FakeVisibleTileSet {
     disposeTile(tile: Tile) {}
 }
@@ -155,7 +156,7 @@ describe("TileGeometryLoader", function() {
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(1);
             mapView.taskQueue.processNext(TileTaskGroups.CREATE);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.fulfilled.then(() => {
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -170,7 +171,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.hasDecodedTile).to.be.false;
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(0);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
                 expect(geometryLoader.isFinished).to.be.false;
             });
         });
@@ -185,7 +186,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.hasDecodedTile).to.be.false;
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(0);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
                 expect(geometryLoader.isFinished).to.be.false;
             });
         });
@@ -197,7 +198,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.hasDecodedTile).to.be.false;
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).to.equal(0);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.fulfilled.then(() => {
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -268,7 +269,7 @@ describe("TileGeometryLoader", function() {
             expect(spySetDecodedTile.callCount).equal(1);
             expect(spyProcessTechniques.callCount).equal(1);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.fulfilled.then(() => {
                 expect(geometryLoader.isFinished).to.be.true;
             });
         });
@@ -294,7 +295,7 @@ describe("TileGeometryLoader", function() {
 
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.fulfilled.then(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(1);
                 expect(geometryLoader.isFinished).to.be.true;
@@ -317,7 +318,7 @@ describe("TileGeometryLoader", function() {
 
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
                 expect(geometryLoader.isFinished).to.be.false;
@@ -341,7 +342,7 @@ describe("TileGeometryLoader", function() {
 
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
                 expect(geometryLoader.isFinished).to.be.false;
@@ -366,7 +367,7 @@ describe("TileGeometryLoader", function() {
 
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
                 // The geometry loader doesn't finish, because we expect the task to expire
@@ -391,7 +392,7 @@ describe("TileGeometryLoader", function() {
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(0);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
                 // The geometry loader doesn't finish, because we expect the task to expire
@@ -405,10 +406,109 @@ describe("TileGeometryLoader", function() {
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            await willEventually(() => {
+            geometryLoader.waitFinished().should.be.fulfilled.then(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(1, "should create geometry now");
                 expect(geometryLoader.isFinished).to.be.true;
+            });
+        });
+
+        it("should reload geometry for already loaded tile that was reset", async function() {
+            tile.decodedTile = createFakeDecodedTile();
+
+            const geometryCreator = TileGeometryCreator.instance;
+            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            expect(spyCreateGeometries.callCount).equal(0);
+            expect(spyProcessTechniques.callCount).equal(0);
+
+            geometryLoader!.update();
+
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+            geometryLoader.waitFinished().should.be.fulfilled.then(() => {
+                expect(spyProcessTechniques.callCount).equal(1);
+                expect(spyCreateGeometries.callCount).equal(1);
+                expect(geometryLoader.isFinished).to.be.true;
+
+                geometryLoader.reset();
+                expect(geometryLoader.isFinished).to.be.false;
+
+                expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+                expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+                geometryLoader.waitFinished().should.be.fulfilled.then(() => {
+                    expect(spyProcessTechniques.callCount).equal(2);
+                    expect(spyCreateGeometries.callCount).equal(2);
+                    expect(geometryLoader.isFinished).to.be.true;
+                });
+            });
+        });
+
+        it("should load geometry for canceled tile that was reset", async function() {
+            tile.decodedTile = createFakeDecodedTile();
+
+            const geometryCreator = TileGeometryCreator.instance;
+            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            expect(spyCreateGeometries.callCount).equal(0);
+            expect(spyProcessTechniques.callCount).equal(0);
+
+            geometryLoader!.update();
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+
+            tile.isVisible = false;
+
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
+                expect(spyProcessTechniques.callCount).equal(1);
+                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+                expect(geometryLoader.isFinished).to.be.false;
+
+                geometryLoader.reset();
+
+                expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+                expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+                geometryLoader.waitFinished().should.be.fulfilled.then(() => {
+                    expect(spyProcessTechniques.callCount).equal(2);
+                    expect(spyCreateGeometries.callCount).equal(1);
+                    expect(geometryLoader.isFinished).to.be.true;
+                });
+            });
+        });
+
+        it("should load geometry for disposed tile that was reset", async function() {
+            tile.decodedTile = createFakeDecodedTile();
+
+            const geometryCreator = TileGeometryCreator.instance;
+            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            expect(spyCreateGeometries.callCount).equal(0);
+            expect(spyProcessTechniques.callCount).equal(0);
+
+            geometryLoader!.update();
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+
+            tile.dispose();
+
+            geometryLoader.waitFinished().should.be.rejected.then(() => {
+                expect(spyProcessTechniques.callCount).equal(1);
+                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+                expect(geometryLoader.isFinished).to.be.false;
+
+                geometryLoader.reset();
+
+                expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+                expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+                geometryLoader.waitFinished().should.be.fulfilled.then(() => {
+                    expect(spyProcessTechniques.callCount).equal(2);
+                    expect(spyCreateGeometries.callCount).equal(1);
+                    expect(geometryLoader.isFinished).to.be.true;
+                });
             });
         });
     });
