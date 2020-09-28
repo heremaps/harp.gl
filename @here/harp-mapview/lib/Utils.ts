@@ -1631,7 +1631,7 @@ export namespace MapViewUtils {
                 if (tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
                     numTilesLoading++;
                 }
-                if (tile.tileGeometryLoader !== undefined && !tile.tileGeometryLoader.isFinished) {
+                if (!tile.allGeometryLoaded) {
                     numTilesLoading++;
                 }
             }

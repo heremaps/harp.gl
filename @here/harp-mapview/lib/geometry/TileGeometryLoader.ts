@@ -39,6 +39,7 @@ export enum TileGeometryLoaderState {
 
 /**
  * Loads the geometry for its {@link Tile}. Loads all geometry in a single step.
+ * @internal
  */
 export class TileGeometryLoader {
     /**
@@ -155,6 +156,13 @@ export class TileGeometryLoader {
     }
 
     /**
+     * `True` if loader is finished, canceled or disposed.
+     */
+    get isSettled(): boolean {
+        return this.isFinished || this.isCanceled || this.isDisposed;
+    }
+
+    /**
      * Returns a promise resolved when this `TileGeometryLoader` is in
      * `TileGeometryLoaderState.Finished` state, or rejected when it's in
      * `TileGeometryLoaderState.Cancelled` or `TileGeometryLoaderState.Disposed` states.
@@ -257,11 +265,7 @@ export class TileGeometryLoader {
     reset(): void {
         this.clear();
 
-        if (
-            this.m_state === TileGeometryLoaderState.Finished ||
-            this.m_state === TileGeometryLoaderState.Canceled ||
-            this.m_state === TileGeometryLoaderState.Disposed
-        ) {
+        if (this.isSettled) {
             this.m_finishedPromise = new Promise((resolve, reject) => {
                 this.m_resolveFinishedPromise = resolve;
                 this.m_rejectFinishedPromise = reject;
@@ -511,6 +515,13 @@ export class TileGeometryLoader {
         }
         // No difference found.
         return true;
+    }
+
+    /**
+     * `True` if TileGeometryLoader was canceled
+     */
+    private get isCanceled(): boolean {
+        return this.m_state === TileGeometryLoaderState.Canceled;
     }
 
     /**

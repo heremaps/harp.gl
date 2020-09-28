@@ -103,6 +103,7 @@ describe("TileGeometryLoader", function() {
         tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         mapView = createFakeMapView();
         dataSource = new MockDataSource();
+        dataSource.useGeometryLoader = true;
         dataSource.attach(mapView);
     });
 
@@ -111,8 +112,7 @@ describe("TileGeometryLoader", function() {
             dataSource.attach(mapView);
         }
         tile = dataSource.getTile(tileKey)!;
-        geometryLoader = new TileGeometryLoader(tile, mapView.taskQueue);
-        tile.tileGeometryLoader = geometryLoader;
+        geometryLoader = (tile as any).m_tileGeometryLoader!;
         sandbox = sinon.createSandbox();
     });
 

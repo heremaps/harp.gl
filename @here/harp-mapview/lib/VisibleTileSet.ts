@@ -1213,7 +1213,6 @@ export class VisibleTileSet {
             tile.offset = offset;
             touchTile(tile);
             tileCache.set(tileKey.mortonCode(), offset, dataSource, tile);
-            this.m_tileGeometryManager.initTile(tile);
         }
         return tile;
     }
@@ -1241,30 +1240,25 @@ export class VisibleTileSet {
         const dataSourceCache = this.m_dataSourceCache;
         const retainedTiles: Set<TileCacheId> = new Set();
 
-        function markTileDirty(tile: Tile, tileGeometryManager: TileGeometryManager) {
+        function markTileDirty(tile: Tile) {
             const tileKey = DataSourceCache.getKeyForTile(tile);
             if (!retainedTiles.has(tileKey)) {
                 retainedTiles.add(tileKey);
-                if (tile.tileGeometryLoader !== undefined) {
-                    tile.tileGeometryLoader.reset();
-                }
-
                 // Prevent label rendering issues when the style set is changing. Prevent Text
                 // element rendering that depends on cleaned font catalog data.
                 tile.clearTextElements();
-
                 tile.load();
             }
         }
 
         renderListEntry.visibleTiles.forEach(tile => {
             if (filter === undefined || filter(tile)) {
-                markTileDirty(tile, this.m_tileGeometryManager);
+                markTileDirty(tile);
             }
         });
         renderListEntry.renderedTiles.forEach(tile => {
             if (filter === undefined || filter(tile)) {
-                markTileDirty(tile, this.m_tileGeometryManager);
+                markTileDirty(tile);
             }
         });
 
