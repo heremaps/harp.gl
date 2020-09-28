@@ -249,6 +249,10 @@ export class TileGeometryLoader {
 
     /**
      * Reset the loader to its initial state and cancels any asynchronous work.
+     * @remarks
+     * This method prepares the loader to reload new geometry. Since the loader does not transition
+     * to a final state, the promise returned by {@link TileGeometryLoader.waitFinished} is not
+     * settled.
      */
     reset(): void {
         this.clear();
