@@ -250,7 +250,7 @@ export class HereTileProvider implements WebTileDataProvider {
     }
 
     /** @override */
-    async getTexture(tile: Tile): Promise<[Texture, CopyrightInfo[]]> {
+    async getTexture(tile: Tile, abortSignal?: AbortSignal): Promise<[Texture, CopyrightInfo[]]> {
         const column = tile.tileKey.column;
         const row = tile.tileKey.row;
         const level = tile.tileKey.level;
@@ -266,8 +266,8 @@ export class HereTileProvider implements WebTileDataProvider {
 
         return await this.getRequestHeaders().then(headers => {
             return Promise.all([
-                textureLoader.load(url, headers),
-                this.getTileCopyright(tile, headers)
+                textureLoader.load(url, headers, abortSignal),
+                this.getTileCopyright(tile, headers, abortSignal)
             ]);
         });
     }
@@ -302,7 +302,8 @@ export class HereTileProvider implements WebTileDataProvider {
 
     private async getTileCopyright(
         tile: Tile,
-        requestHeaders: RequestHeaders | undefined
+        requestHeaders: RequestHeaders | undefined,
+        abortSignal?: AbortSignal
     ): Promise<CopyrightInfo[]> {
         if (this.m_options.gatherCopyrightInfo === false) {
             return [this.HERE_COPYRIGHT_INFO];

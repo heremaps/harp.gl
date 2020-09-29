@@ -18,6 +18,7 @@ import { DataSource } from "./DataSource";
 import { ElevationRange } from "./ElevationRangeSource";
 import { LodMesh } from "./geometry/LodMesh";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
+import { ITileLoader, TileLoaderState } from "./ITileLoader";
 import { MapView } from "./MapView";
 import { PathBlockingElement } from "./PathBlockingElement";
 import { PerformanceStatistics } from "./Statistics";
@@ -98,39 +99,6 @@ export function getFeatureDataSize(featureData: TileFeatureData): number {
     }
 
     return numBytes;
-}
-
-/**
- * The state the {@link ITileLoader}.
- */
-export enum TileLoaderState {
-    Initialized,
-    Loading,
-    Loaded,
-    Decoding,
-    Ready,
-    Canceled,
-    Failed
-}
-
-/**
- * The interface for managing tile loading.
- */
-export interface ITileLoader {
-    state: TileLoaderState;
-    payload?: ArrayBufferLike | {};
-    decodedTile?: DecodedTile;
-
-    isFinished: boolean;
-
-    priority: number;
-
-    loadAndDecode(): Promise<TileLoaderState>;
-    waitSettled(): Promise<TileLoaderState>;
-
-    updatePriority(area: number): void;
-
-    cancel(): void;
 }
 
 /**
@@ -697,7 +665,7 @@ export class Tile implements CachedResource {
     set visibleArea(area: number) {
         this.m_visibleArea = area;
         if (this.tileLoader !== undefined) {
-            this.tileLoader.updatePriority(area);
+            this.tileLoader.priority = area;
         }
     }
 
@@ -914,10 +882,9 @@ export class Tile implements CachedResource {
                 });
             })
             .catch(tileLoaderState => {
-                if (
-                    tileLoaderState !== TileLoaderState.Canceled &&
-                    tileLoaderState !== TileLoaderState.Failed
-                ) {
+                if (tileLoaderState === TileLoaderState.Failed) {
+                    this.dispose();
+                } else if (tileLoaderState !== TileLoaderState.Canceled) {
                     logger.error("Unknown error" + tileLoaderState);
                 }
             });

@@ -20,9 +20,10 @@ import * as THREE from "three";
 
 import { DataSource } from "../lib/DataSource";
 import { TileGeometryLoader } from "../lib/geometry/TileGeometryLoader";
+import { ITileLoader, TileLoaderState } from "../lib/ITileLoader";
 import { MapView, TileTaskGroups } from "../lib/MapView";
 import { TextElement } from "../lib/text/TextElement";
-import { ITileLoader, Tile, TileLoaderState } from "../lib/Tile";
+import { Tile } from "../lib/Tile";
 
 class FakeTileLoader implements ITileLoader {
     state: TileLoaderState = TileLoaderState.Ready;
@@ -35,10 +36,6 @@ class FakeTileLoader implements ITileLoader {
 
     waitSettled(): Promise<TileLoaderState> {
         return new Promise(() => this.state);
-    }
-
-    updatePriority(area: number): void {
-        // do nothing.
     }
 
     cancel(): void {

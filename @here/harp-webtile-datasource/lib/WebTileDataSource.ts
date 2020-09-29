@@ -5,12 +5,9 @@
  */
 import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { CopyrightInfo, DataSource, DataSourceOptions, Tile } from "@here/harp-mapview";
-import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
-import { enableBlending } from "@here/harp-materials";
-import { getOptionValue, LoggerManager } from "@here/harp-utils";
+import { getOptionValue } from "@here/harp-utils";
 import THREE = require("three");
-
-const logger = LoggerManager.instance.create("MapView");
+import { WebTileLoader } from "./WebTileLoader";
 
 /**
  * An interface for the rendering options that can be passed to the [[WebTileDataSource]].
@@ -43,8 +40,13 @@ export interface WebTileDataProvider {
      * and having no data.
      * If the Promise is rejected, it is considered a temporary failure and the tile will be
      * disposed and recreated if visible again.
+     * @param tile - Tile to which the texture will be applied.
+     * @param abortSignal - Optional AbortSignal to cancel the request.
      */
-    getTexture: (tile: Tile) => Promise<[THREE.Texture | undefined, CopyrightInfo[]] | undefined>;
+    getTexture: (
+        tile: Tile,
+        abortSignal?: AbortSignal
+    ) => Promise<[THREE.Texture | undefined, CopyrightInfo[]] | undefined>;
 }
 
 /**
@@ -138,6 +140,20 @@ export class WebTileDataSource extends DataSource {
         return this.m_resolution as WebTileDataSource.resolutionValue;
     }
 
+    /**
+     * Gets the renderOrder of the WebTileDataSource.
+     */
+    get renderOrder(): number {
+        return this.m_renderOrder;
+    }
+
+    /**
+     * Gets whether tiles of this WebTileDataSource are transparent.
+     */
+    get transparent(): boolean {
+        return this.m_transparent;
+    }
+
     /** @override */
     shouldPreloadTiles(): boolean {
         return true;
@@ -151,56 +167,7 @@ export class WebTileDataSource extends DataSource {
     /** @override */
     getTile(tileKey: TileKey) {
         const tile: Tile = new Tile(this, tileKey);
-        this.dataProvider
-            .getTexture(tile)
-            .then(
-                value => {
-                    if (value === undefined || value[0] === undefined) {
-                        tile.forceHasGeometry(true);
-                        return;
-                    }
-
-                    const [texture, copyrightInfo] = value;
-                    if (copyrightInfo !== undefined) {
-                        tile.copyrightInfo = copyrightInfo;
-                    }
-
-                    texture.minFilter = THREE.LinearFilter;
-                    texture.magFilter = THREE.LinearFilter;
-                    texture.generateMipmaps = false;
-                    tile.addOwnedTexture(texture);
-
-                    const material = new THREE.MeshBasicMaterial({
-                        map: texture,
-                        opacity: this.m_opacity,
-                        depthTest: false,
-                        depthWrite: false
-                    });
-                    if (this.m_transparent) {
-                        enableBlending(material);
-                    }
-                    const mesh = TileGeometryCreator.instance.createGroundPlane(
-                        tile,
-                        material,
-                        true
-                    );
-                    tile.objects.push(mesh);
-                    mesh.renderOrder = this.m_renderOrder;
-                    tile.invalidateResourceInfo();
-                    this.requestUpdate();
-                },
-                error => {
-                    logger.warn(
-                        `texture promise rejected for webtile ${tileKey.mortonCode()}: ${error}`
-                    );
-                    tile.dispose();
-                }
-            )
-            .catch(error => {
-                logger.warn(`failed to load webtile ${tileKey.mortonCode()}: ${error}`);
-                tile.dispose();
-            });
-
+        tile.tileLoader = new WebTileLoader(this, tile, this.dataProvider);
         return tile;
     }
 
