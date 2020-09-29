@@ -47,12 +47,18 @@ If an interface has data member, it's no longer abstract. Derived classes can't 
 1. Although we are using an object oriented approach still use it in a Typescript/Javascript way:
     - i.e. In Type/Javascript not everything needs to be a class,  if defining a singleton use a namespace or module instead of a class, so it cannot be instantiated and you can provide your create method
 1. Avoid adding additional libraries, we want to keep the `sdk` as slim as possible.
-1. Avoid truthy/falsy Statements. To avoid the scary mess of JavaScript truthy and falsy statements [read more here](https://www.sitepoint.com/javascript-truthy-falsy/) or [here](https://basarat.gitbooks.io/typescript/docs/tips/truthy.html)
-    - This improves safety, the impression that we know what kind of type the operator has and the impression on the reader that we are not lazy.
-    - When choosing between: _converting to real Boolean values_ to _using strict equality (===) or inequality (!==)_ on more complex objects use the former.
+1. Avoid [truthy/falsy Statements](https://www.sitepoint.com/javascript-truthy-falsy/).
+    - For primitive types, use strict comparisons _(===, !==)_ to convert to boolean explicitly.
     ```typescript
-    if (someNonBooleanVariable !== undefined)
+    if (stringVariable !== undefined)
     ```
+    - For object types, implicit boolean conversion is preferred over checking explicitely for `undefined` or `null`.
+    ```typescript
+    if (myObject)
+    if (!myArray)
+    if (myFunction)
+    ```
+
 1. *Do not use !! in the code*. The !!_trick_ is just a way to make a truthy operation a boolean one, but the issue with truthiness is *not solved*, but *hidden*. Consider the following example:
 
     ```typescript
