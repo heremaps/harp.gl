@@ -50,8 +50,8 @@ function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox
         zoomLevel: 20,
         env: new MapEnv({ $zoom: 20 }),
         frameNumber: 0,
-        lookAtVector: new THREE.Vector3(0, 0, -1),
-        lookAtDistance: 0,
+        lookAtVector: new THREE.Vector3(0, 0, 1),
+        lookAtDistance: 10,
         isDynamic: false,
         hiddenGeometryKinds: undefined,
         renderedTilesChanged: false,
@@ -125,6 +125,7 @@ export class TestFixture {
         this.m_poiRendererStub = stubPoiRenderer(this.sandbox, this.m_renderPoiSpy);
         this.m_elevationProviderStub = stubElevationProvider(this.sandbox);
         this.m_screenProjector = createScreenProjector();
+        this.syncCamera();
     }
 
     /**
@@ -568,5 +569,13 @@ export class TestFixture {
         // of the next frame.
         const currentFrame = this.m_viewState.frameNumber - 2;
         return "Frame " + currentFrame + ", label '" + textElement.text + "': ";
+    }
+
+    private syncCamera() {
+        this.m_camera.lookAt(
+            this.m_camera.position.add(
+                this.m_viewState.lookAtVector.multiplyScalar(this.m_viewState.lookAtDistance)
+            )
+        );
     }
 }

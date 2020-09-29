@@ -586,8 +586,27 @@ const tests: TestCase[] = [
                     [
                         poiBuilder("outside frustum marker").withPosition(
                             (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_WIDTH,
+                            (WORLD_SCALE * (40 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_HEIGHT,
+                            -WORLD_SCALE * 10
+                        ),
+                        fadedOut(FADE_2_CYCLES.length)
+                    ]
+                ],
+                frames: firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Poi only fades in, if in front of camera",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder("behind camera marker").withPosition(
+                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_WIDTH,
                             (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_HEIGHT,
-                            WORLD_SCALE * 10
+                            -1
                         ),
                         fadedOut(FADE_2_CYCLES.length)
                     ]
