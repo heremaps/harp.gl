@@ -1025,11 +1025,12 @@ export class Tile implements CachedResource {
             this.m_tileLoader.cancel();
             this.m_tileLoader = undefined;
         }
-        this.m_tileGeometryLoader?.dispose();
         this.clear();
-        this.m_disposed = true;
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
+        this.m_disposed = true;
+        this.m_tileGeometryLoader?.dispose();
+
         if (this.m_disposeCallback) {
             this.m_disposeCallback(this);
         }
@@ -1048,6 +1049,7 @@ export class Tile implements CachedResource {
     /**
      * Update tile for current map view zoom level
      * @param zoomLevel - Zoom level of the map view
+     * @internal
      */
     update(zoomLevel: number): void {
         for (const object of this.objects) {
@@ -1080,7 +1082,7 @@ export class Tile implements CachedResource {
     ): boolean {
         if (this.m_tileGeometryLoader) {
             if (priority !== undefined) {
-                this.m_tileGeometryLoader.priority;
+                this.m_tileGeometryLoader.priority = priority;
             }
             this.m_tileGeometryLoader.update(enabledKinds, disabledKinds);
             return true;
@@ -1115,7 +1117,13 @@ export class Tile implements CachedResource {
                 this.removeDecodedTile();
             })
             .catch(() => {
-                /* ignore */
+                if (this.disposed) {
+                    return;
+                }
+                // Loader was canceled, dispose tile.
+                if (!this.dataSource.isDetached()) {
+                    this.mapView.visibleTileSet.disposeTile(this);
+                }
             });
     }
 

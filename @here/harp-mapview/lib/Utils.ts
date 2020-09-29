@@ -1628,9 +1628,6 @@ export namespace MapViewUtils {
             numTilesLoading += tileList.numTilesLoading;
 
             for (const tile of tileList.visibleTiles) {
-                if (tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
-                    numTilesLoading++;
-                }
                 if (!tile.allGeometryLoaded) {
                     numTilesLoading++;
                 }

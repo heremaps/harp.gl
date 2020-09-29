@@ -659,7 +659,7 @@ export class VisibleTileSet {
             // Remove all tiles that are still being loaded, but are no longer visible. They have to
             // be reloaded when they become visible again. Hopefully, they are still in the browser
             // cache by then.
-            if (!tile.isVisible && tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
+            if (!tile.isVisible && !tile.allGeometryLoaded) {
                 // The internal TileLoader is cancelled automatically when the Tile is disposed.
                 this.disposeTile(tile);
             }

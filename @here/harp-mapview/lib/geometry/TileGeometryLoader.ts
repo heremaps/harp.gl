@@ -25,6 +25,21 @@ import { PerformanceStatistics } from "../Statistics";
 import { Tile } from "../Tile";
 import { TileGeometryCreator } from "./TileGeometryCreator";
 
+function addDiscardedTileToStats(tile: Tile) {
+    const stats = PerformanceStatistics.instance;
+    if (stats.enabled) {
+        const name = tile.dataSource.name;
+        const level = tile.tileKey.level;
+        const col = tile.tileKey.column;
+        const row = tile.tileKey.row;
+        const reason = tile.disposed ? `disposed` : `invisible`;
+
+        stats.currentFrame.addMessage(
+            `Decoded tile: ${name} # lvl=${level} col=${col} row=${row} DISCARDED - ${reason}`
+        );
+    }
+}
+
 /**
  * The state the {@link TileGeometryLoader}.
  */
@@ -215,8 +230,7 @@ export class TileGeometryLoader {
         // If the tile is not ready for display, or if it has become invisible while being loaded,
         // for example by moving the camera, the tile is not finished and its geometry is not
         // created. This is an optimization for fast camera movements and zooms.
-        if (this.discardNeedlessTile(tile)) {
-            this.cancel();
+        if (this.cancelNeedlessTile(tile)) {
             return;
         }
 
@@ -333,8 +347,7 @@ export class TileGeometryLoader {
             return;
         }
 
-        if (this.discardNeedlessTile(tile)) {
-            this.cancel();
+        if (this.cancelNeedlessTile(tile)) {
             return;
         }
 
@@ -397,33 +410,14 @@ export class TileGeometryLoader {
         );
     }
 
-    private discardNeedlessTile(tile: Tile): boolean {
-        // If the tile has become invisible while being loaded, for example by moving the
-        // camera, the tile is not finished and its geometry is not created. This is an
-        // optimization for fast camera movements and zooms.
-        if (!tile.isVisible) {
-            // Dispose the tile from the visible set, so it can be reloaded properly next time
-            // it is needed.
-            if (!tile.dataSource.isDetached()) {
-                tile.mapView.visibleTileSet.disposeTile(tile);
-            }
-
-            const stats = PerformanceStatistics.instance;
-            if (stats.enabled) {
-                stats.currentFrame.addMessage(
-                    `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - invisible`
-                );
-            }
-            return true;
-        }
-        // Tile already disposed (this may potentially happen in timeout callback).
-        else if (tile.disposed) {
-            const stats = PerformanceStatistics.instance;
-            if (stats.enabled) {
-                stats.currentFrame.addMessage(
-                    `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - disposed`
-                );
-            }
+    private cancelNeedlessTile(tile: Tile): boolean {
+        // If the tile has become invisible  or disposed (this may potentially happen in timeout
+        // callback) while being loaded, for example by moving the camera, the tile is not finished
+        // and its geometry is not created.This is an optimization for fast camera movements
+        // and zooms.
+        if (!tile.isVisible || tile.disposed) {
+            addDiscardedTileToStats(tile);
+            this.cancel();
             return true;
         }
         return false;
