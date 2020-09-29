@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-features-datasource",
-    "version": "0.20.1",
+    "version": "0.20.2",
     "description": "Provides support for custom features",
     "main": "index.js",
     "typings": "index",
@@ -23,7 +23,7 @@
         "@here/harp-geoutils": "^0.20.0",
         "@here/harp-mapview": "^0.20.1",
         "@here/harp-utils": "^0.20.0",
-        "@here/harp-vectortile-datasource": "^0.20.1"
+        "@here/harp-vectortile-datasource": "^0.20.2"
     },
     "devDependencies": {
         "@types/chai": "^4.2.11",

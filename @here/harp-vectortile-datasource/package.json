@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-vectortile-datasource",
-    "version": "0.20.1",
+    "version": "0.20.2",
     "description": "HERE Vector Tile Data Source",
     "main": "index.js",
     "typings": "index",
