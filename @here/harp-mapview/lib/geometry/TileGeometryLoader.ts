@@ -221,25 +221,6 @@ export class TileGeometryLoader {
     update(enabledKinds?: GeometryKindSet, disabledKinds?: GeometryKindSet): void {
         const tile = this.tile;
 
-        // Cheap sanity check, do it first so no longer processing is needed.
-        if (this.isFinished || this.isDisposed) {
-            return;
-        }
-
-        // Check if tile should be already discarded (invisible, disposed).
-        // If the tile is not ready for display, or if it has become invisible while being loaded,
-        // for example by moving the camera, the tile is not finished and its geometry is not
-        // created. This is an optimization for fast camera movements and zooms.
-        if (this.cancelNeedlessTile(tile)) {
-            return;
-        }
-
-        // Finish loading if tile has no data.
-        if (tile.tileLoader?.isFinished && tile.decodedTile === undefined) {
-            this.finish();
-            return;
-        }
-
         // Geometry kinds have changed but some is already created, so reset
         if (this.tile.hasGeometry && !this.compareGeometryKinds(enabledKinds, disabledKinds)) {
             this.reset();
@@ -258,6 +239,15 @@ export class TileGeometryLoader {
             }
             this.queueGeometryCreation(enabledKinds, disabledKinds);
         }
+    }
+
+    /**
+     * Cancel geometry loading.
+     */
+    cancel() {
+        addDiscardedTileToStats(this.tile);
+        this.m_state = TileGeometryLoaderState.Canceled;
+        this.m_rejectFinishedPromise?.();
     }
 
     /**
@@ -288,22 +278,20 @@ export class TileGeometryLoader {
         this.m_state = TileGeometryLoaderState.Initialized;
     }
 
-    private clear() {
-        this.m_availableGeometryKinds?.clear();
-        this.m_enabledKinds?.clear();
-        this.m_disabledKinds?.clear();
-        this.m_decodedTile = undefined;
-    }
-
-    private finish() {
+    /**
+     * Finish geometry loading.
+     */
+    finish() {
         this.m_decodedTile = undefined;
         this.m_state = TileGeometryLoaderState.Finished;
         this.m_resolveFinishedPromise?.();
     }
 
-    private cancel() {
-        this.m_state = TileGeometryLoaderState.Canceled;
-        this.m_rejectFinishedPromise?.();
+    private clear() {
+        this.m_availableGeometryKinds?.clear();
+        this.m_enabledKinds?.clear();
+        this.m_disabledKinds?.clear();
+        this.m_decodedTile = undefined;
     }
 
     private queueGeometryCreation(
@@ -319,7 +307,14 @@ export class TileGeometryLoader {
             group: TileTaskGroups.CREATE,
             getPriority: this.getPriority.bind(this),
             isExpired: () => {
-                return this.m_state !== TileGeometryLoaderState.CreationQueued;
+                if (this.m_state !== TileGeometryLoaderState.CreationQueued) {
+                    return true;
+                }
+                if (!this.tile.isVisible || this.tile.disposed) {
+                    this.cancel();
+                    return true;
+                }
+                return false;
             },
             estimatedProcessTime: () => {
                 //TODO: this seems to be close in many cases, but take some measures to confirm
@@ -344,10 +339,6 @@ export class TileGeometryLoader {
         // Just a sanity check that satisfies compiler check below.
         if (decodedTile === undefined) {
             this.finish();
-            return;
-        }
-
-        if (this.cancelNeedlessTile(tile)) {
             return;
         }
 
@@ -408,19 +399,6 @@ export class TileGeometryLoader {
             // tslint:disable-next-line: max-line-length
             `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row}`
         );
-    }
-
-    private cancelNeedlessTile(tile: Tile): boolean {
-        // If the tile has become invisible  or disposed (this may potentially happen in timeout
-        // callback) while being loaded, for example by moving the camera, the tile is not finished
-        // and its geometry is not created.This is an optimization for fast camera movements
-        // and zooms.
-        if (!tile.isVisible || tile.disposed) {
-            addDiscardedTileToStats(tile);
-            this.cancel();
-            return true;
-        }
-        return false;
     }
 
     /**

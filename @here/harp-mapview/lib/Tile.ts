@@ -1067,12 +1067,12 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Start with or continue with loading geometry for tiles requiring this step. Called repeatedly
-     * until loading is finished.
+     * Start with or continue with loading geometry for tiles requiring this step. Called
+     * repeatedly until loading is finished.
      * @param priority - Priority assigned to asynchronous tasks doing the geometry update.
      * @param enabledKinds - {@link GeometryKind}s that will be created.
      * @param disabledKinds - {@link GeometryKind}s that will not be created.
-     * @return `true` if geometry update was done, `false` otherwise.
+     * @return `true` if tile uses a geometry loader, `false` otherwise.
      * @internal
      */
     updateGeometry(
@@ -1080,14 +1080,33 @@ export class Tile implements CachedResource {
         enabledKinds?: GeometryKindSet,
         disabledKinds?: GeometryKindSet
     ): boolean {
-        if (this.m_tileGeometryLoader) {
-            if (priority !== undefined) {
-                this.m_tileGeometryLoader.priority = priority;
-            }
-            this.m_tileGeometryLoader.update(enabledKinds, disabledKinds);
+        if (!this.m_tileGeometryLoader) {
+            return false;
+        }
+
+        if (this.m_tileGeometryLoader.isSettled) {
             return true;
         }
-        return false;
+
+        if (this.tileLoader) {
+            if (!this.tileLoader.isFinished) {
+                return true;
+            } else if (!this.decodedTile) {
+                // Finish loading if tile has no data.
+                this.m_tileGeometryLoader.finish();
+                return true;
+            }
+        }
+
+        if (!this.isVisible) {
+            this.m_tileGeometryLoader.cancel();
+            return true;
+        }
+        if (priority !== undefined) {
+            this.m_tileGeometryLoader.priority = priority;
+        }
+        this.m_tileGeometryLoader.update(enabledKinds, disabledKinds);
+        return true;
     }
 
     /**
