@@ -7,6 +7,8 @@
 import { execSync } from "child_process";
 import { writeFileSync } from "fs";
 import { copySync, ensureDirSync, removeSync } from "fs-extra";
+import { glob } from "glob";
+import { gt } from "semver";
 
 const fetch = require("node-fetch");
 
@@ -57,13 +59,20 @@ interface Release {
 
 if (branch !== "master") {
     const now = new Date();
-    const dateString = `${now.getDate()}-${now.getMonth()}-${now.getFullYear()}`;
-    const mapviewPackage = require("@here/harp-mapview/package.json");
+    // WARNING, dates are 0 indexed, hence +1
+    const dateString = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+    const allPackages = glob.sync("@here/*/package.json");
     const newRelease: Release = {
         date: dateString,
         hash: commitHash,
-        version: mapviewPackage.version
+        version: ""
     };
+    for (const testPackage of allPackages) {
+        const mapviewPackage = require(testPackage);
+        if (newRelease.version === "" || gt(mapviewPackage.version, newRelease.version)) {
+            newRelease.version = mapviewPackage.version;
+        }
+    }
 
     fetch("https://www.harp.gl/releases.json")
         .then((res: Response) => {
