@@ -325,15 +325,39 @@ describe("Tile", function() {
         });
     });
 
-    it("doesnt throw on isVisble if not attached to a MapView", function() {
-        const tile = new Tile(stubDataSource, tileKey);
-        mapView.frameNumber = 2;
-        tile.frameNumLastRequested = 2;
-        expect(tile.isVisible).not.throw;
-        expect(tile.isVisible).is.true;
-        stubDataSource.detach(mapView as MapView);
-        expect(tile.isVisible).not.throw;
-        expect(tile.isVisible).is.false;
+    describe("isVisible", function() {
+        it("doesn't throw on isVisible if not attached to a MapView", function() {
+            const tile = new Tile(stubDataSource, tileKey);
+            mapView.frameNumber = 2;
+            tile.frameNumLastRequested = 2;
+            expect(tile.isVisible).not.throw;
+            expect(tile.isVisible).is.true;
+            stubDataSource.detach(mapView as MapView);
+            expect(tile.isVisible).not.throw;
+            expect(tile.isVisible).is.false;
+        });
+
+        it("cancels geometry loader if tile is made invisible", function() {
+            stubDataSource.useGeometryLoader = true;
+            const tile = stubDataSource.getTile(tileKey);
+            const geometryLoader = (tile as any).m_tileGeometryLoader;
+            const cancelSpy: sinon.SinonSpy = sandbox.spy(geometryLoader, "cancel");
+
+            tile.isVisible = false;
+
+            expect(cancelSpy.called).be.true;
+        });
+
+        it("does not cancel geometry loader if tile is made visible", function() {
+            stubDataSource.useGeometryLoader = true;
+            const tile = stubDataSource.getTile(tileKey);
+            const geometryLoader = (tile as any).m_tileGeometryLoader;
+            const cancelSpy: sinon.SinonSpy = sandbox.spy(geometryLoader, "cancel");
+
+            tile.isVisible = true;
+
+            expect(cancelSpy.called).be.false;
+        });
     });
 
     describe("updateGeometry", function() {
@@ -366,19 +390,32 @@ describe("Tile", function() {
             expect(geometryLoader.isFinished).be.true;
         });
 
-        it("cancels geometry loader for invisible tile", function() {
+        it("does not update geometry loader if it's canceled", function() {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
-            const geometryLoader = (tile as any).m_tileGeometryLoader;
+            const geometryLoader: TileGeometryLoader = (tile as any).m_tileGeometryLoader;
+            geometryLoader.cancel();
             (tile.tileLoader as FakeTileLoader).isFinished = true;
             tile.decodedTile = { techniques: [], geometries: [] };
-            tile.isVisible = false;
+            const updateSpy: sinon.SinonSpy = sandbox.spy(geometryLoader, "update");
+
+            expect(tile.updateGeometry()).be.true;
+            expect(updateSpy.called).be.false;
+        });
+
+        it("cancels geometry loader if data source is detached from map view", function() {
+            stubDataSource.useGeometryLoader = true;
+            const tile = stubDataSource.getTile(tileKey);
+            const geometryLoader: TileGeometryLoader = (tile as any).m_tileGeometryLoader;
+            (tile.tileLoader as FakeTileLoader).isFinished = true;
+            tile.decodedTile = { techniques: [], geometries: [] };
+            stubDataSource.detach(mapView);
             const updateSpy: sinon.SinonSpy = sandbox.spy(geometryLoader, "update");
             const cancelSpy: sinon.SinonSpy = sandbox.spy(geometryLoader, "cancel");
 
             expect(tile.updateGeometry()).be.true;
-            expect(cancelSpy.called).be.true;
             expect(updateSpy.called).be.false;
+            expect(cancelSpy.called).be.true;
         });
 
         it("does not update geometry loader for disposed tile", function() {

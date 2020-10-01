@@ -254,6 +254,7 @@ export class TileGeometryLoader {
      * Dispose of any resources.
      */
     dispose(): void {
+        addDiscardedTileToStats(this.tile);
         this.clear();
         this.m_state = TileGeometryLoaderState.Disposed;
         this.m_rejectFinishedPromise?.();
@@ -307,14 +308,7 @@ export class TileGeometryLoader {
             group: TileTaskGroups.CREATE,
             getPriority: this.getPriority.bind(this),
             isExpired: () => {
-                if (this.m_state !== TileGeometryLoaderState.CreationQueued) {
-                    return true;
-                }
-                if (!this.tile.isVisible || this.tile.disposed) {
-                    this.cancel();
-                    return true;
-                }
-                return false;
+                return this.m_state !== TileGeometryLoaderState.CreationQueued;
             },
             estimatedProcessTime: () => {
                 //TODO: this seems to be close in many cases, but take some measures to confirm

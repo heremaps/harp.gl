@@ -391,8 +391,16 @@ export class Tile implements CachedResource {
         }
     }
 
+    /**
+     * Sets the tile visibility status.
+     * @param visible - `True` to mark the tile as visible, `False` otherwise.
+     */
     set isVisible(visible: boolean) {
         this.frameNumLastRequested = visible ? this.dataSource.mapView.frameNumber : -1;
+
+        if (!visible && this.m_tileGeometryLoader && !this.m_tileGeometryLoader.isSettled) {
+            this.m_tileGeometryLoader.cancel();
+        }
     }
 
     /**
@@ -1088,6 +1096,11 @@ export class Tile implements CachedResource {
             return true;
         }
 
+        if (this.dataSource.isDetached()) {
+            this.m_tileGeometryLoader.cancel();
+            return true;
+        }
+
         if (this.tileLoader) {
             if (!this.tileLoader.isFinished) {
                 return true;
@@ -1098,10 +1111,6 @@ export class Tile implements CachedResource {
             }
         }
 
-        if (!this.isVisible) {
-            this.m_tileGeometryLoader.cancel();
-            return true;
-        }
         if (priority !== undefined) {
             this.m_tileGeometryLoader.priority = priority;
         }

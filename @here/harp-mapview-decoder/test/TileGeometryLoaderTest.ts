@@ -101,16 +101,13 @@ describe("TileGeometryLoader", function() {
 
     before(function() {
         tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+    });
+
+    beforeEach(function() {
         mapView = createFakeMapView();
         dataSource = new MockDataSource();
         dataSource.useGeometryLoader = true;
         dataSource.attach(mapView);
-    });
-
-    beforeEach(function() {
-        if (dataSource.isDetached()) {
-            dataSource.attach(mapView);
-        }
         tile = dataSource.getTile(tileKey)!;
         geometryLoader = (tile as any).m_tileGeometryLoader!;
         sandbox = sinon.createSandbox();
@@ -259,32 +256,6 @@ describe("TileGeometryLoader", function() {
             geometryLoader.waitFinished().should.be.rejected.then(() => {
                 expect(spyProcessTechniques.callCount).equal(1);
                 expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
-                expect(geometryLoader.isFinished).to.be.false;
-            });
-        });
-
-        it("should not create geometry for tile with detached datasource", async function() {
-            tile.decodedTile = createFakeDecodedTile();
-
-            const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
-            expect(spyCreateGeometries.callCount).equal(0);
-            expect(spyProcessTechniques.callCount).equal(0);
-
-            geometryLoader!.update();
-            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
-
-            // This MUST be after the update call above, because the update call needs it (it calls
-            // discardsNeedlessTile, which needs the DataSource attached and the tile visible).
-            dataSource.detach(mapView);
-
-            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
-
-            geometryLoader.waitFinished().should.be.rejected.then(() => {
-                expect(spyProcessTechniques.callCount).equal(1);
-                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
-                // The geometry loader doesn't finish, because we expect the task to expire
                 expect(geometryLoader.isFinished).to.be.false;
             });
         });
