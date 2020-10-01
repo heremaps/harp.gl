@@ -119,7 +119,6 @@ describe("TextCanvas", function() {
                     }
                 });
                 await fontCatalog.loadCharset("ß\n", renderingStyle);
-                fontCatalog.showReplacementGlyphs = true;
                 textCanvas.textRenderStyle = renderingStyle;
                 textCanvas.textLayoutStyle = new TextLayoutStyle({
                     horizontalAlignment: HorizontalAlignment.Center
@@ -153,7 +152,6 @@ describe("TextCanvas", function() {
                     }
                 });
                 await fontCatalog.loadCharset("ß-\n", renderingStyle);
-                fontCatalog.showReplacementGlyphs = true;
                 textCanvas.textRenderStyle = renderingStyle;
                 textCanvas.textLayoutStyle = new TextLayoutStyle({
                     horizontalAlignment: HorizontalAlignment.Center
