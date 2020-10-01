@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import { TilingScheme } from "@here/harp-geoutils";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 

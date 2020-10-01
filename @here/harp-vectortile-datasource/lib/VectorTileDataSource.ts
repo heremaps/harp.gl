@@ -98,7 +98,7 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
     /**
      * A description for the feature filter that can be safely passed down to the web workers.
      *
-     * @remarks
+     * @reamrks
      * It has to be generated with the help of the [[OmvFeatureFilterDescriptionBuilder]]
      * (to guarantee correctness). This parameter gets applied to the decoder used in the
      * {@link VectorTileDataSource} which might be shared between
@@ -146,6 +146,16 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
     copyrightProvider?: CopyrightProvider;
 
     /**
+     * Maximum geometry height above groud level this `OmvDataSource` can produce.
+     *
+     * @renarks
+     * Used in first stage of frustum culling before [[Tile.maxGeometryHeight]] data is available.
+     *
+     * @default [[EarthConstants.MAX_BUILDING_HEIGHT]].
+     */
+    maxGeometryHeight?: number;
+
+    /**
      * Indicates whether overlay on elevation is enabled. Defaults to `false`.
      */
     enableElevationOverlay?: boolean;
@@ -153,7 +163,7 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
     /**
      * Indicates whether to add a ground plane to cover the tile completely.
      *
-     * @remarks
+     * @renarks
      * This is necessary for the fallback logic, such that the parent fall back tiles don't
      * overlap the children tiles.
      * Default is true (i.e. if not defined it is taken to be true)
@@ -206,7 +216,7 @@ const hereVectorTileBaseUrl = "https://vector.hereapi.com/v2/vectortiles/base/mc
 /**
  * Default options for the HERE Vector Tile service.
  */
-const hereVectorTileDefaultOptions: OmvWithRestClientParams = {
+const hereVectoTileDefaultOptions: OmvWithRestClientParams = {
     baseUrl: hereVectorTileBaseUrl,
     apiFormat: APIFormat.XYZOMV,
     styleSetName: "tilezen",
@@ -225,7 +235,7 @@ const hereVectorTileDefaultOptions: OmvWithRestClientParams = {
 };
 
 const defaultOptions = new Map<string, OmvWithRestClientParams>([
-    [hereVectorTileBaseUrl, hereVectorTileDefaultOptions]
+    [hereVectorTileBaseUrl, hereVectoTileDefaultOptions]
 ]);
 
 /**
@@ -273,7 +283,7 @@ function completeDataSourceParameters(
  *
  * @example
  * ```typescript
- *    const dataSource = new VectorTileDataSource({
+ *    const dataSource = new VectorTielDataSource({
  *        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
  *        authenticationCode: apikey
  *    });
@@ -324,8 +334,6 @@ export class VectorTileDataSource extends TileDataSource {
             m_params.maxGeometryHeight,
             EarthConstants.MAX_BUILDING_HEIGHT
         );
-
-        this.minGeometryHeight = getOptionValue(m_params.minGeometryHeight, 0);
     }
 
     /** @override */
