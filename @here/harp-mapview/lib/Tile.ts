@@ -3,7 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { DecodedTile, GeometryType, TextPathGeometry } from "@here/harp-datasource-protocol";
+import {
+    DecodedTile,
+    GeometryKindSet,
+    GeometryType,
+    TextPathGeometry
+} from "@here/harp-datasource-protocol";
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
@@ -290,6 +295,7 @@ export class Tile implements CachedResource {
      * Prepared text geometries optimized for display.
      */
     protected preparedTextPaths: TextPathGeometry[] | undefined;
+    protected readonly m_tileGeometryLoader?: TileGeometryLoader;
 
     /**
      * The bounding box of this `Tile` in world coordinates.
@@ -304,7 +310,6 @@ export class Tile implements CachedResource {
 
     private m_tileLoader?: ITileLoader;
     private m_decodedTile?: DecodedTile;
-    private m_tileGeometryLoader?: TileGeometryLoader;
 
     // Used for {@link TextElement}s that are stored in the data, and that are placed explicitly,
     // fading in and out.
@@ -360,6 +365,10 @@ export class Tile implements CachedResource {
         this.m_textStyleCache = new TileTextStyleCache(this);
         this.m_offset = offset;
         this.m_uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(this.tileKey, this.offset);
+        if (dataSource.useGeometryLoader) {
+            this.m_tileGeometryLoader = new TileGeometryLoader(this, this.mapView.taskQueue);
+            this.attachGeometryLoadedCallback();
+        }
     }
 
     /**
@@ -382,8 +391,16 @@ export class Tile implements CachedResource {
         }
     }
 
+    /**
+     * Sets the tile visibility status.
+     * @param visible - `True` to mark the tile as visible, `False` otherwise.
+     */
     set isVisible(visible: boolean) {
         this.frameNumLastRequested = visible ? this.dataSource.mapView.frameNumber : -1;
+
+        if (!visible && this.m_tileGeometryLoader && !this.m_tileGeometryLoader.isSettled) {
+            this.m_tileGeometryLoader.cancel();
+        }
     }
 
     /**
@@ -747,16 +764,6 @@ export class Tile implements CachedResource {
             this.forceHasGeometry(true);
         }
 
-        this.m_tileGeometryLoader
-            ?.waitFinished()
-            .then(() => {
-                this.loadingFinished();
-                this.removeDecodedTile();
-            })
-            .catch(() => {
-                /* ignore */
-            });
-
         // If the decoder provides a more accurate bounding box than the one we computed from
         // the flat geo box we take it instead. Otherwise, if an elevation range was set, elevate
         // bounding box to match the elevated geometry.
@@ -823,31 +830,10 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Gets the [[TileGeometryLoader]] that manages this tile.
-     * @internal
-     */
-    get tileGeometryLoader(): TileGeometryLoader | undefined {
-        return this.m_tileGeometryLoader;
-    }
-
-    /**
-     * Sets the [[TileGeometryLoader]] to manage this tile.
-     *
-     * @param tileGeometryLoader - A [[TileGeometryLoader]] instance to manage the geometry creation
-     *      for this tile.
-     * @internal
-     */
-    set tileGeometryLoader(tileGeometryLoader: TileGeometryLoader | undefined) {
-        this.m_tileGeometryLoader = tileGeometryLoader;
-    }
-
-    /**
      * `True` if all geometry of the `Tile` has been loaded.
      */
     get allGeometryLoaded(): boolean {
-        return this.m_tileGeometryLoader === undefined
-            ? this.hasGeometry
-            : this.m_tileGeometryLoader.isFinished;
+        return this.m_tileGeometryLoader?.isFinished ?? this.hasGeometry;
     }
 
     /**
@@ -907,6 +893,14 @@ export class Tile implements CachedResource {
         const tileLoader = this.tileLoader;
         if (tileLoader === undefined) {
             return await Promise.resolve();
+        }
+
+        if (this.m_tileGeometryLoader) {
+            const wasSettled = this.m_tileGeometryLoader.isSettled;
+            this.m_tileGeometryLoader.reset();
+            if (wasSettled) {
+                this.attachGeometryLoadedCallback();
+            }
         }
 
         return await tileLoader
@@ -1039,14 +1033,12 @@ export class Tile implements CachedResource {
             this.m_tileLoader.cancel();
             this.m_tileLoader = undefined;
         }
-        if (this.m_tileGeometryLoader !== undefined) {
-            this.m_tileGeometryLoader.dispose();
-            this.m_tileGeometryLoader = undefined;
-        }
         this.clear();
-        this.m_disposed = true;
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
+        this.m_disposed = true;
+        this.m_tileGeometryLoader?.dispose();
+
         if (this.m_disposeCallback) {
             this.m_disposeCallback(this);
         }
@@ -1065,6 +1057,7 @@ export class Tile implements CachedResource {
     /**
      * Update tile for current map view zoom level
      * @param zoomLevel - Zoom level of the map view
+     * @internal
      */
     update(zoomLevel: number): void {
         for (const object of this.objects) {
@@ -1082,6 +1075,58 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Start with or continue with loading geometry for tiles requiring this step. Called
+     * repeatedly until loading is finished.
+     * @param priority - Priority assigned to asynchronous tasks doing the geometry update.
+     * @param enabledKinds - {@link GeometryKind}s that will be created.
+     * @param disabledKinds - {@link GeometryKind}s that will not be created.
+     * @return `true` if tile uses a geometry loader, `false` otherwise.
+     * @internal
+     */
+    updateGeometry(
+        priority?: number,
+        enabledKinds?: GeometryKindSet,
+        disabledKinds?: GeometryKindSet
+    ): boolean {
+        if (!this.m_tileGeometryLoader) {
+            return false;
+        }
+
+        if (this.m_tileGeometryLoader.isSettled) {
+            return true;
+        }
+
+        if (this.dataSource.isDetached()) {
+            this.m_tileGeometryLoader.cancel();
+            return true;
+        }
+
+        if (this.tileLoader) {
+            if (!this.tileLoader.isFinished) {
+                return true;
+            } else if (!this.decodedTile) {
+                // Finish loading if tile has no data.
+                this.m_tileGeometryLoader.finish();
+                return true;
+            }
+        }
+
+        if (priority !== undefined) {
+            this.m_tileGeometryLoader.priority = priority;
+        }
+        this.m_tileGeometryLoader.update(enabledKinds, disabledKinds);
+        return true;
+    }
+
+    /**
+     * Gets a set of the {@link GeometryKind}s that were loaded (if any).
+     * @internal
+     */
+    get loadedGeometryKinds(): GeometryKindSet | undefined {
+        return this.m_tileGeometryLoader?.availableGeometryKinds;
+    }
+
+    /**
      * Called when {@link TileGeometryLoader} is finished.
      *
      * @remarks
@@ -1090,6 +1135,24 @@ export class Tile implements CachedResource {
      */
     protected loadingFinished() {
         // To be used in subclasses.
+    }
+
+    private attachGeometryLoadedCallback() {
+        assert(this.m_tileGeometryLoader !== undefined);
+        this.m_tileGeometryLoader!.waitFinished()
+            .then(() => {
+                this.loadingFinished();
+                this.removeDecodedTile();
+            })
+            .catch(() => {
+                if (this.disposed) {
+                    return;
+                }
+                // Loader was canceled, dispose tile.
+                if (!this.dataSource.isDetached()) {
+                    this.mapView.visibleTileSet.disposeTile(this);
+                }
+            });
     }
 
     /**

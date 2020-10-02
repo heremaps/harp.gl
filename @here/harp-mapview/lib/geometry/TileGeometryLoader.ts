@@ -25,6 +25,21 @@ import { PerformanceStatistics } from "../Statistics";
 import { Tile } from "../Tile";
 import { TileGeometryCreator } from "./TileGeometryCreator";
 
+function addDiscardedTileToStats(tile: Tile) {
+    const stats = PerformanceStatistics.instance;
+    if (stats.enabled) {
+        const name = tile.dataSource.name;
+        const level = tile.tileKey.level;
+        const col = tile.tileKey.column;
+        const row = tile.tileKey.row;
+        const reason = tile.disposed ? `disposed` : `invisible`;
+
+        stats.currentFrame.addMessage(
+            `Decoded tile: ${name} # lvl=${level} col=${col} row=${row} DISCARDED - ${reason}`
+        );
+    }
+}
+
 /**
  * The state the {@link TileGeometryLoader}.
  */
@@ -39,6 +54,7 @@ export enum TileGeometryLoaderState {
 
 /**
  * Loads the geometry for its {@link Tile}. Loads all geometry in a single step.
+ * @internal
  */
 export class TileGeometryLoader {
     /**
@@ -155,6 +171,13 @@ export class TileGeometryLoader {
     }
 
     /**
+     * `True` if loader is finished, canceled or disposed.
+     */
+    get isSettled(): boolean {
+        return this.isFinished || this.isCanceled || this.isDisposed;
+    }
+
+    /**
      * Returns a promise resolved when this `TileGeometryLoader` is in
      * `TileGeometryLoaderState.Finished` state, or rejected when it's in
      * `TileGeometryLoaderState.Cancelled` or `TileGeometryLoaderState.Disposed` states.
@@ -198,26 +221,6 @@ export class TileGeometryLoader {
     update(enabledKinds?: GeometryKindSet, disabledKinds?: GeometryKindSet): void {
         const tile = this.tile;
 
-        // Cheap sanity check, do it first so no longer processing is needed.
-        if (this.isFinished || this.isDisposed) {
-            return;
-        }
-
-        // Check if tile should be already discarded (invisible, disposed).
-        // If the tile is not ready for display, or if it has become invisible while being loaded,
-        // for example by moving the camera, the tile is not finished and its geometry is not
-        // created. This is an optimization for fast camera movements and zooms.
-        if (this.discardNeedlessTile(tile)) {
-            this.cancel();
-            return;
-        }
-
-        // Finish loading if tile has no data.
-        if (tile.tileLoader?.isFinished && tile.decodedTile === undefined) {
-            this.finish();
-            return;
-        }
-
         // Geometry kinds have changed but some is already created, so reset
         if (this.tile.hasGeometry && !this.compareGeometryKinds(enabledKinds, disabledKinds)) {
             this.reset();
@@ -239,9 +242,19 @@ export class TileGeometryLoader {
     }
 
     /**
+     * Cancel geometry loading.
+     */
+    cancel() {
+        addDiscardedTileToStats(this.tile);
+        this.m_state = TileGeometryLoaderState.Canceled;
+        this.m_rejectFinishedPromise?.();
+    }
+
+    /**
      * Dispose of any resources.
      */
     dispose(): void {
+        addDiscardedTileToStats(this.tile);
         this.clear();
         this.m_state = TileGeometryLoaderState.Disposed;
         this.m_rejectFinishedPromise?.();
@@ -257,11 +270,7 @@ export class TileGeometryLoader {
     reset(): void {
         this.clear();
 
-        if (
-            this.m_state === TileGeometryLoaderState.Finished ||
-            this.m_state === TileGeometryLoaderState.Canceled ||
-            this.m_state === TileGeometryLoaderState.Disposed
-        ) {
+        if (this.isSettled) {
             this.m_finishedPromise = new Promise((resolve, reject) => {
                 this.m_resolveFinishedPromise = resolve;
                 this.m_rejectFinishedPromise = reject;
@@ -270,22 +279,20 @@ export class TileGeometryLoader {
         this.m_state = TileGeometryLoaderState.Initialized;
     }
 
-    private clear() {
-        this.m_availableGeometryKinds?.clear();
-        this.m_enabledKinds?.clear();
-        this.m_disabledKinds?.clear();
-        this.m_decodedTile = undefined;
-    }
-
-    private finish() {
+    /**
+     * Finish geometry loading.
+     */
+    finish() {
         this.m_decodedTile = undefined;
         this.m_state = TileGeometryLoaderState.Finished;
         this.m_resolveFinishedPromise?.();
     }
 
-    private cancel() {
-        this.m_state = TileGeometryLoaderState.Canceled;
-        this.m_rejectFinishedPromise?.();
+    private clear() {
+        this.m_availableGeometryKinds?.clear();
+        this.m_enabledKinds?.clear();
+        this.m_disabledKinds?.clear();
+        this.m_decodedTile = undefined;
     }
 
     private queueGeometryCreation(
@@ -326,11 +333,6 @@ export class TileGeometryLoader {
         // Just a sanity check that satisfies compiler check below.
         if (decodedTile === undefined) {
             this.finish();
-            return;
-        }
-
-        if (this.discardNeedlessTile(tile)) {
-            this.cancel();
             return;
         }
 
@@ -391,38 +393,6 @@ export class TileGeometryLoader {
             // tslint:disable-next-line: max-line-length
             `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row}`
         );
-    }
-
-    private discardNeedlessTile(tile: Tile): boolean {
-        // If the tile has become invisible while being loaded, for example by moving the
-        // camera, the tile is not finished and its geometry is not created. This is an
-        // optimization for fast camera movements and zooms.
-        if (!tile.isVisible) {
-            // Dispose the tile from the visible set, so it can be reloaded properly next time
-            // it is needed.
-            if (!tile.dataSource.isDetached()) {
-                tile.mapView.visibleTileSet.disposeTile(tile);
-            }
-
-            const stats = PerformanceStatistics.instance;
-            if (stats.enabled) {
-                stats.currentFrame.addMessage(
-                    `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - invisible`
-                );
-            }
-            return true;
-        }
-        // Tile already disposed (this may potentially happen in timeout callback).
-        else if (tile.disposed) {
-            const stats = PerformanceStatistics.instance;
-            if (stats.enabled) {
-                stats.currentFrame.addMessage(
-                    `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - disposed`
-                );
-            }
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -511,6 +481,13 @@ export class TileGeometryLoader {
         }
         // No difference found.
         return true;
+    }
+
+    /**
+     * `True` if TileGeometryLoader was canceled
+     */
+    private get isCanceled(): boolean {
+        return this.m_state === TileGeometryLoaderState.Canceled;
     }
 
     /**

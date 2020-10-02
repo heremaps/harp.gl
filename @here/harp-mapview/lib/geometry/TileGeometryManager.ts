@@ -9,7 +9,6 @@ import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { MapObjectAdapter } from "../MapObjectAdapter";
 import { MapView } from "../MapView";
 import { Tile } from "../Tile";
-import { TileGeometryLoader } from "./TileGeometryLoader";
 
 type TileUpdateCallback = (tile: Tile) => void;
 
@@ -81,35 +80,21 @@ export class TileGeometryManager {
     constructor(protected mapView: MapView) {}
 
     /**
-     * Initialize the {@link Tile} with the TileGeometryManager.
-     */
-    initTile(tile: Tile): void {
-        if (tile.dataSource.useGeometryLoader) {
-            tile.tileGeometryLoader = new TileGeometryLoader(tile, this.mapView.taskQueue);
-        }
-    }
-
-    /**
      * Process the {@link Tile}s for rendering. May alter the content of the tile per frame.
      */
     updateTiles(tiles: Tile[]): void {
         let prio = 0;
         for (const tile of tiles) {
-            const geometryLoader = tile.tileGeometryLoader;
-            if (geometryLoader) {
-                //this assumes the tiles are ordered by priority, this is currently done in
-                // the visible tile set with 0 as the highest priority
-                geometryLoader.priority = prio++;
-            }
-
-            if (geometryLoader !== undefined) {
-                geometryLoader.update(
-                    this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
-                    this.enableFilterByKind ? this.disabledGeometryKinds : undefined
-                );
-                if (this.m_tileUpdateCallback) {
-                    this.m_tileUpdateCallback(tile);
-                }
+            //this assumes the tiles are ordered by priority, this is currently done in
+            // the visible tile set with 0 as the highest priority
+            const tilePriority = prio++;
+            const updateDone = tile.updateGeometry(
+                tilePriority,
+                this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
+                this.enableFilterByKind ? this.disabledGeometryKinds : undefined
+            );
+            if (updateDone && this.m_tileUpdateCallback) {
+                this.m_tileUpdateCallback(tile);
             }
         }
 
@@ -201,13 +186,10 @@ export class TileGeometryManager {
     getAvailableKinds(tiles: IterableIterator<Tile>): GeometryKindSet {
         const visibleKinds: GeometryKindSet = new GeometryKindSet();
         for (const tile of tiles) {
-            const geometryLoader = tile.tileGeometryLoader;
-            if (geometryLoader !== undefined) {
-                const tileKinds = geometryLoader.availableGeometryKinds;
-                if (tileKinds !== undefined) {
-                    for (const kind of tileKinds) {
-                        visibleKinds.add(kind);
-                    }
+            const tileKinds = tile.loadedGeometryKinds;
+            if (tileKinds !== undefined) {
+                for (const kind of tileKinds) {
+                    visibleKinds.add(kind);
                 }
             }
         }
