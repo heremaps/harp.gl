@@ -27,6 +27,7 @@ import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { getProjectionName } from "@here/harp-datasource-protocol";
+import { Camera, Vector3 } from "three";
 
 function setCamera(
     camera: THREE.Camera,
@@ -55,6 +56,7 @@ function setCamera(
 }
 
 describe("MapViewUtils", function() {
+    const EPS = 0.00000001;
     describe("zoomOnTargetPosition", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
@@ -254,7 +256,30 @@ describe("MapViewUtils", function() {
                     // in the rotation center, hence the clamped tilt is too conservative.
                     expect(tilt).to.be.lessThan(tiltLimit);
                 } else {
-                    expect(tilt).to.be.closeTo(tiltLimit, Number.EPSILON);
+                    const rotationTargetWorld = MapViewUtils.rayCastWorldCoordinates(
+                        mapView,
+                        offsetX,
+                        offsetY
+                    );
+                    const toRotationTargetWorld = new Vector3();
+                    toRotationTargetWorld
+                        .copy(rotationTargetWorld!)
+                        .sub(mapView.camera.position)
+                        .normalize();
+                    const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+                    const toMapTargetWorld = new Vector3();
+                    toMapTargetWorld
+                        .copy(mapTargetWorld!)
+                        .sub(mapView.camera.position)
+                        .normalize();
+                    const angleBetweenRotationAndTarget = toRotationTargetWorld.angleTo(
+                        toMapTargetWorld
+                    );
+                    // We expect that the tilt at the screen center is the overall tilt limit minus
+                    // the angle between the vector to the target and the rotation points, read the
+                    // comment in the orbitAroundScreenPoint function above the
+                    // `dirToRotationTarget` variable assignment for a better explanation.
+                    expect(tilt).to.be.closeTo(tiltLimit - angleBetweenRotationAndTarget, EPS);
                 }
             });
             it("keeps rotation target when orbiting around screen point", function() {
@@ -287,21 +312,19 @@ describe("MapViewUtils", function() {
                     tiltLimit
                 );
 
-                const newRoationTarget = MapViewUtils.rayCastWorldCoordinates(
+                const newRotationTarget = MapViewUtils.rayCastWorldCoordinates(
                     mapView,
                     offsetX,
                     offsetY
                 );
-                expect(newRoationTarget).to.be.not.null;
+                expect(newRotationTarget).to.be.not.null;
 
-                expect(oldRotationTarget!.distanceTo(newRoationTarget!)).to.be.closeTo(
-                    0,
-                    projection === sphereProjection ? 1e-9 : Number.EPSILON
-                );
+                const distance = oldRotationTarget!.distanceTo(newRotationTarget!);
+                expect(distance).to.be.closeTo(0, EPS);
 
                 // Also check that we did not introduce any roll
                 const { roll } = MapViewUtils.extractAttitude(mapView, mapView.camera);
-                expect(roll).to.be.closeTo(0, Number.EPSILON);
+                expect(roll).to.be.closeTo(0, EPS);
             });
         });
     });
