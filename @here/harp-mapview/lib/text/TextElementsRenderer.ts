@@ -263,7 +263,7 @@ function shouldRenderPointText(
     const visibleAtDistance =
         label.ignoreDistance === true ||
         labelState.viewDistance === undefined ||
-        labelState.viewDistance < poiTextMaxDistance;
+        (labelState.viewDistance < poiTextMaxDistance && labelState.viewDistance > 0);
     if (!visibleAtDistance) {
         return false;
     }
@@ -801,7 +801,7 @@ export class TextElementsRenderer {
                 }
                 continue;
             }
-            if (textElementState.viewDistance === undefined) {
+            if (textElementState.viewDistance === undefined || textElementState.viewDistance < 0) {
                 if (placementStats) {
                     ++placementStats.tooFar;
                 }
