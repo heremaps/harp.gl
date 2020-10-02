@@ -3,10 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as THREE from "three";
 
 import { MemoryUsage } from "../TextCanvas";
+import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { GlyphData } from "./GlyphData";
 import { GlyphTextureCache } from "./GlyphTextureCache";
 import { FontStyle, FontVariant, TextRenderStyle } from "./TextStyle";
@@ -544,6 +544,8 @@ export class FontCatalog {
         (replacementGlyph as any).codePoint = codePoint;
         (replacementGlyph as any).character = char;
         (replacementGlyph as any).font = font;
+        // Glyphs for ASCII control characters and such are not really replacement glyphs.
+        (replacementGlyph as any).isReplacement = UnicodeUtils.isPrintable(codePoint);
         return replacementGlyph;
     }
 
