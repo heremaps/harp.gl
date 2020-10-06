@@ -23,6 +23,7 @@ function assertLogsError(testCode: () => void, errorMessagePattern: string | Reg
 
 describe("DecodedTileHelpers", function() {
     const env = new MapEnv({ $zoom: 10, $pixelToMeters: 2 });
+    const rendererCapabilities = { isWebGL2: false } as any;
     describe("#createMaterial", function() {
         it("supports #rgba in base material colors", function() {
             const technique: SolidLineTechnique = {
@@ -31,7 +32,10 @@ describe("DecodedTileHelpers", function() {
                 renderOrder: 0,
                 color: "#f0f7"
             };
-            const material = createMaterial({ technique, env })! as SolidLineMaterial;
+            const material = createMaterial(rendererCapabilities, {
+                technique,
+                env
+            })! as SolidLineMaterial;
             assert.exists(material);
 
             assert.approximately(material.opacity, 7 / 15, 0.00001);
@@ -47,7 +51,10 @@ describe("DecodedTileHelpers", function() {
                 color: "#f0f",
                 secondaryColor: "#f0f7"
             };
-            const material = createMaterial({ technique, env })! as SolidLineMaterial;
+            const material = createMaterial(rendererCapabilities, {
+                technique,
+                env
+            })! as SolidLineMaterial;
             assert.exists(material);
 
             assert.equal(material.opacity, 1);
@@ -63,7 +70,10 @@ describe("DecodedTileHelpers", function() {
                 color: "not-a-color"
             };
             assertLogsError(() => {
-                const material = createMaterial({ technique, env })! as SolidLineMaterial;
+                const material = createMaterial(rendererCapabilities, {
+                    technique,
+                    env
+                })! as SolidLineMaterial;
                 assert.exists(material);
             }, /Unsupported color format/);
         });
@@ -75,7 +85,10 @@ describe("DecodedTileHelpers", function() {
                 renderOrder: 0,
                 color: "#f0f7"
             };
-            const material = createMaterial({ technique, env })! as SolidLineMaterial;
+            const material = createMaterial(rendererCapabilities, {
+                technique,
+                env
+            })! as SolidLineMaterial;
             assert.exists(material);
             assert.isFalse(material.depthTest);
         });
@@ -88,7 +101,10 @@ describe("DecodedTileHelpers", function() {
                 color: "#f0f7",
                 depthTest: true
             };
-            const material = createMaterial({ technique, env })! as SolidLineMaterial;
+            const material = createMaterial(rendererCapabilities, {
+                technique,
+                env
+            })! as SolidLineMaterial;
             assert.exists(material);
             assert.isTrue(material.depthTest);
         });

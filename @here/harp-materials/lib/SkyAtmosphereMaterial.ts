@@ -5,7 +5,11 @@
  */
 import * as THREE from "three";
 
-import { RawShaderMaterial } from "./RawShaderMaterial";
+import {
+    RawShaderMaterial,
+    RawShaderMaterialParameters,
+    RendererMaterialParameters
+} from "./RawShaderMaterial";
 import AtmosphereShaderChunks from "./ShaderChunks/AtmosphereChunks";
 import { setShaderDefine, setShaderMaterialDefine } from "./Utils";
 
@@ -253,24 +257,37 @@ export const SkyAtmosphereShader: THREE.Shader = {
     `
 };
 
-export class SkyAtmosphereMaterial extends RawShaderMaterial {
-    constructor(params?: any) {
-        // Import shader chunks
-        const defines: { [key: string]: any } = {};
-        defines.CAMERA_IN_SPACE = "";
+export interface SkyAtmosphereMaterialParameters extends RendererMaterialParameters {}
 
-        const shaderParams = {
-            name: "SkyAtmosphereMaterial",
-            vertexShader: SkyAtmosphereShader.vertexShader,
-            fragmentShader: SkyAtmosphereShader.fragmentShader,
-            uniforms: SkyAtmosphereShader.uniforms,
-            transparent: true,
-            depthTest: true,
-            depthWrite: false,
-            side: THREE.BackSide,
-            blending: THREE.NormalBlending,
-            fog: false
-        };
+export class SkyAtmosphereMaterial extends RawShaderMaterial {
+    /**
+     * Constructs a new `SkyAtmosphereMaterial`.
+     *
+     * @param params - `SkyAtmosphereMaterial` parameters. Always required except when cloning
+     * another material.
+     */
+    constructor(params?: SkyAtmosphereMaterialParameters) {
+        let shaderParams: RawShaderMaterialParameters | undefined;
+
+        if (params) {
+            // Import shader chunks
+            const defines: { [key: string]: any } = {};
+            defines.CAMERA_IN_SPACE = "";
+
+            shaderParams = {
+                name: "SkyAtmosphereMaterial",
+                vertexShader: SkyAtmosphereShader.vertexShader,
+                fragmentShader: SkyAtmosphereShader.fragmentShader,
+                uniforms: SkyAtmosphereShader.uniforms,
+                transparent: true,
+                depthTest: true,
+                depthWrite: false,
+                side: THREE.BackSide,
+                blending: THREE.NormalBlending,
+                fog: false,
+                rendererCapabilities: params.rendererCapabilities
+            };
+        }
         super(shaderParams);
     }
 

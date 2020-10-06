@@ -257,7 +257,7 @@ export class TextCanvas {
             this.m_ownsMaterial = true;
             this.m_material = createSdfTextMaterial({
                 fontCatalog: params.fontCatalog,
-                glslVersion: this.m_renderer.capabilities.isWebGL2 ? 3.0 : undefined
+                rendererCapabilities: this.m_renderer.capabilities
             });
         } else {
             this.m_ownsMaterial = false;
@@ -268,7 +268,7 @@ export class TextCanvas {
             this.m_bgMaterial = createSdfTextMaterial({
                 fontCatalog: params.fontCatalog,
                 isBackground: true,
-                glslVersion: this.m_renderer.capabilities.isWebGL2 ? 3.0 : undefined
+                rendererCapabilities: this.m_renderer.capabilities
             });
         } else {
             this.m_ownsBgMaterial = false;

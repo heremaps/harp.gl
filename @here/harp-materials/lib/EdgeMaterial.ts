@@ -14,7 +14,11 @@ import {
     FadingFeatureParameters
 } from "./MapMeshMaterials";
 import { ExtrusionFeatureDefs } from "./MapMeshMaterialsDefs";
-import { RawShaderMaterial } from "./RawShaderMaterial";
+import {
+    RawShaderMaterial,
+    RawShaderMaterialParameters,
+    RendererMaterialParameters
+} from "./RawShaderMaterial";
 import { enforceBlending, setShaderDefine, setShaderMaterialDefine } from "./Utils";
 
 const vertexSource: string = `
@@ -116,7 +120,8 @@ void main() {
 export interface EdgeMaterialParameters
     extends FadingFeatureParameters,
         DisplacementFeatureParameters,
-        ExtrusionFeatureParameters {
+        ExtrusionFeatureParameters,
+        RendererMaterialParameters {
     /**
      * Edge color.
      */
@@ -131,11 +136,6 @@ export interface EdgeMaterialParameters
      * @defaultValue false
      */
     vertexColors?: boolean;
-
-    /**
-     * GLSL version
-     */
-    glslVersion?: number;
 }
 
 /**
@@ -150,46 +150,45 @@ export class EdgeMaterial extends RawShaderMaterial
     /**
      * Constructs a new `EdgeMaterial`.
      *
-     * @param params - `EdgeMaterial` parameters.
+     * @param params - `EdgeMaterial` parameters. Always required except when cloning another
+     * material.
      */
     constructor(params?: EdgeMaterialParameters) {
-        const defines: { [key: string]: any } = {};
-        const hasDisplacementMap = params !== undefined && params.displacementMap !== undefined;
-        const hasExtrusion =
-            params !== undefined &&
-            params.extrusionRatio !== undefined &&
-            params.extrusionRatio >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN &&
-            params.extrusionRatio < ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
-        if (hasDisplacementMap) {
-            setShaderDefine(defines, "USE_DISPLACEMENTMAP", true);
-        }
-        if (hasExtrusion) {
-            setShaderDefine(defines, "USE_EXTRUSION", true);
-        }
-        if (params?.vertexColors === true) {
-            setShaderDefine(defines, "USE_COLOR", true);
-        }
-
-        const shaderParams: THREE.ShaderMaterialParameters = {
-            name: "EdgeMaterial",
-            vertexShader: vertexSource,
-            fragmentShader: fragmentSource,
-            uniforms: {
-                color: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
-                edgeColor: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
-                edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
-                fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
-                fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
-                extrusionRatio: new THREE.Uniform(ExtrusionFeatureDefs.DEFAULT_RATIO_MAX),
-                displacementMap: new THREE.Uniform(
-                    hasDisplacementMap ? params!.displacementMap : new THREE.Texture()
-                )
-            },
-            depthWrite: false,
-            defines
-        };
-        if (params?.glslVersion === 3.0) {
-            shaderParams.glslVersion = THREE.GLSL3;
+        let shaderParams: RawShaderMaterialParameters | undefined;
+        if (params) {
+            const defines: { [key: string]: any } = {};
+            const hasExtrusion =
+                params.extrusionRatio !== undefined &&
+                params.extrusionRatio >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN &&
+                params.extrusionRatio < ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
+            if (params.displacementMap) {
+                setShaderDefine(defines, "USE_DISPLACEMENTMAP", true);
+            }
+            if (hasExtrusion) {
+                setShaderDefine(defines, "USE_EXTRUSION", true);
+            }
+            if (params.vertexColors === true) {
+                setShaderDefine(defines, "USE_COLOR", true);
+            }
+            shaderParams = {
+                name: "EdgeMaterial",
+                vertexShader: vertexSource,
+                fragmentShader: fragmentSource,
+                uniforms: {
+                    color: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
+                    edgeColor: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
+                    edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
+                    fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
+                    fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
+                    extrusionRatio: new THREE.Uniform(ExtrusionFeatureDefs.DEFAULT_RATIO_MAX),
+                    displacementMap: new THREE.Uniform(
+                        params.displacementMap ?? new THREE.Texture()
+                    )
+                },
+                depthWrite: false,
+                defines,
+                rendererCapabilities: params.rendererCapabilities
+            };
         }
         super(shaderParams);
         enforceBlending(this);

@@ -33,7 +33,8 @@ describe("Tile Creation", function() {
             renderOrder: 0
         };
         const env = new MapEnv({ $zoom: 14 });
-        const shaderMaterial = createMaterial({ technique, env });
+        const rendererCapabilities: THREE.WebGLCapabilities = { isWebGL2: false } as any;
+        const shaderMaterial = createMaterial(rendererCapabilities, { technique, env });
         assert.isTrue(
             shaderMaterial instanceof THREE.ShaderMaterial,
             "expected a THREE.ShaderMaterial"

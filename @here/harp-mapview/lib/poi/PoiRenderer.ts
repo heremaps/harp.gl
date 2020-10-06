@@ -141,6 +141,7 @@ class PoiRenderBufferBatch {
         texture.needsUpdate = true;
 
         this.m_material = new IconMaterial({
+            rendererCapabilities: this.mapView.renderer.capabilities,
             map: texture
         });
 

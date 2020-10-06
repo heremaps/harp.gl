@@ -5,7 +5,11 @@
  */
 import * as THREE from "three";
 
-import { RawShaderMaterial } from "./RawShaderMaterial";
+import {
+    RawShaderMaterial,
+    RawShaderMaterialParameters,
+    RendererMaterialParameters
+} from "./RawShaderMaterial";
 import AtmosphereShaderChunks from "./ShaderChunks/AtmosphereChunks";
 import { setShaderDefine, setShaderMaterialDefine } from "./Utils";
 
@@ -337,23 +341,35 @@ export const GroundAtmosphereShader: THREE.Shader = {
     `
 };
 
-export class GroundAtmosphereMaterial extends RawShaderMaterial {
-    constructor(params?: any) {
-        const defines: { [key: string]: any } = {};
-        defines.CAMERA_IN_SPACE = "";
+export interface GroundAtmosphereMaterialParameters extends RendererMaterialParameters {}
 
-        const shaderParams = {
-            name: "GroundAtmosphereMaterial",
-            vertexShader: GroundAtmosphereShader.vertexShader,
-            fragmentShader: GroundAtmosphereShader.fragmentShader,
-            uniforms: GroundAtmosphereShader.uniforms,
-            transparent: true,
-            depthTest: false,
-            depthWrite: false,
-            side: THREE.FrontSide,
-            blending: THREE.NormalBlending,
-            fog: false
-        };
+export class GroundAtmosphereMaterial extends RawShaderMaterial {
+    /**
+     * Constructs a new `GroundAtmosphereMaterial`.
+     *
+     * @param params - `GroundAtmosphereMaterial` parameters. Always required except when cloning
+     * another material.
+     */
+    constructor(params?: GroundAtmosphereMaterialParameters) {
+        let shaderParams: RawShaderMaterialParameters | undefined;
+        if (params) {
+            const defines: { [key: string]: any } = {};
+            defines.CAMERA_IN_SPACE = "";
+
+            shaderParams = {
+                name: "GroundAtmosphereMaterial",
+                vertexShader: GroundAtmosphereShader.vertexShader,
+                fragmentShader: GroundAtmosphereShader.fragmentShader,
+                uniforms: GroundAtmosphereShader.uniforms,
+                transparent: true,
+                depthTest: false,
+                depthWrite: false,
+                side: THREE.FrontSide,
+                blending: THREE.NormalBlending,
+                fog: false,
+                rendererCapabilities: params.rendererCapabilities
+            };
+        }
         super(shaderParams);
     }
 

@@ -35,7 +35,7 @@ export function stubTextCanvas(
     fontCatalog: FontCatalog,
     textWidthHeight: number
 ): TextCanvas {
-    const renderer = ({} as unknown) as THREE.WebGLRenderer;
+    const renderer = ({ capabilities: { isWebGL2: false } } as any) as THREE.WebGLRenderer;
     const textCanvas = new TextCanvas({
         renderer,
         fontCatalog,

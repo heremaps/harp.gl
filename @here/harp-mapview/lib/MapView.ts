@@ -2146,13 +2146,6 @@ export class MapView extends EventDispatcher {
     }
 
     /**
-     * Returns the glsl version compatible with the MapView's renderer
-     */
-    get glslVersion(): number {
-        return this.m_renderer.capabilities.isWebGL2 ? 3.0 : 1.0;
-    }
-
-    /**
      * Set's the way in which the fov is calculated on the map view.
      *
      * @remarks
