@@ -6,6 +6,7 @@
 
 import {
     HighPrecisionLineMaterial,
+    HighPrecisionLineMaterialParameters,
     HighPrecisionPointMaterial,
     isHighPrecisionPointMaterial
 } from "@here/harp-materials";
@@ -13,14 +14,12 @@ import {
     BufferAttribute,
     BufferGeometry,
     Camera,
-    Color,
     Float32BufferAttribute,
     InterleavedBuffer,
     InterleavedBufferAttribute,
     Matrix4,
     PointsMaterialParameters,
     ShaderMaterial,
-    ShaderMaterialParameters,
     Vector3
 } from "three";
 
@@ -84,12 +83,7 @@ export namespace HighPrecisionUtils {
      * Describes different properties used when creating a [[HighPrecisionLine]] or
      * a [[HighPrecisionWireFrameLine]].
      */
-    export interface HighPrecisionLineParams extends ShaderMaterialParameters {
-        /**
-         * Color of the rendered line.
-         */
-        color?: number | string | Color;
-
+    export interface HighPrecisionLineParams extends HighPrecisionLineMaterialParameters {
         /**
          * Width of the rendered line (specified in world units).
          */
@@ -99,11 +93,6 @@ export namespace HighPrecisionUtils {
          * Add rounded caps to the extremes of the line if set to `true`.
          */
         addCircles?: boolean;
-
-        /**
-         * Opacity of the rendered line.
-         */
-        opacity?: number;
 
         /**
          * Renders a wireframe line if set to `true`.

@@ -6,7 +6,11 @@
 
 import * as THREE from "three";
 
-import { RawShaderMaterial } from "./RawShaderMaterial";
+import {
+    RawShaderMaterial,
+    RawShaderMaterialParameters,
+    RendererMaterialParameters
+} from "./RawShaderMaterial";
 
 const vertexSource: string = `
 attribute vec4 position;
@@ -47,7 +51,7 @@ void main() {
 /**
  * Parameters used when constructing a new {@link IconMaterial}.
  */
-export interface IconMaterialParameters {
+export interface IconMaterialParameters extends RendererMaterialParameters {
     /**
      * Texture map.
      */
@@ -62,23 +66,27 @@ export class IconMaterial extends RawShaderMaterial {
     /**
      * Constructs a new `IconMaterial`.
      *
-     * @param params - `IconMaterial` parameters.
+     * @param params - `IconMaterial` parameters. Always required except when cloning another
+     * material.
      */
-    constructor(params: IconMaterialParameters) {
-        const shaderParams: THREE.ShaderMaterialParameters = {
-            name: "IconMaterial",
-            vertexShader: vertexSource,
-            fragmentShader: fragmentSource,
-            uniforms: {
-                map: new THREE.Uniform(params.map)
-            },
-            depthTest: true,
-            depthWrite: false,
-            transparent: true,
+    constructor(params?: IconMaterialParameters) {
+        const shaderParams: RawShaderMaterialParameters | undefined = params
+            ? {
+                  name: "IconMaterial",
+                  vertexShader: vertexSource,
+                  fragmentShader: fragmentSource,
+                  uniforms: {
+                      map: new THREE.Uniform(params.map)
+                  },
+                  depthTest: true,
+                  depthWrite: false,
+                  transparent: true,
 
-            vertexColors: true,
-            premultipliedAlpha: true
-        };
+                  vertexColors: true,
+                  premultipliedAlpha: true,
+                  rendererCapabilities: params.rendererCapabilities
+              }
+            : undefined;
         super(shaderParams);
     }
 

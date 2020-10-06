@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 import { FontCatalog } from "../rendering/FontCatalog";
 import { SdfTextMaterial } from "../rendering/TextMaterials";
 
@@ -13,10 +15,10 @@ import { SdfTextMaterial } from "../rendering/TextMaterials";
  */
 export interface SdfTextMaterialParameters {
     fontCatalog: FontCatalog;
+    rendererCapabilities: THREE.WebGLCapabilities;
     isBackground?: boolean;
     vertexSource?: string;
     fragmentSource?: string;
-    glslVersion?: number;
 }
 
 /**
@@ -37,6 +39,6 @@ export function createSdfTextMaterial(params: SdfTextMaterialParameters): SdfTex
         isBackground: params.isBackground === true,
         vertexSource: params.vertexSource,
         fragmentSource: params.fragmentSource,
-        glslVersion: params.glslVersion
+        rendererCapabilities: params.rendererCapabilities
     });
 }

@@ -753,12 +753,12 @@ export class TileGeometryCreator {
                         }
                     };
                     material = createMaterial(
+                        mapView.renderer.capabilities,
                         {
                             technique,
                             env: mapView.env,
                             fog: mapView.scene.fog !== null,
-                            shadowsEnabled: mapView.shadowsEnabled,
-                            glslVersion: mapView.glslVersion
+                            shadowsEnabled: mapView.shadowsEnabled
                         },
                         onMaterialUpdated
                     );
@@ -1012,7 +1012,7 @@ export class TileGeometryCreator {
                         fadeFar: fadingParams.lineFadeFar,
                         extrusionRatio: extrusionAnimationEnabled ? 0 : undefined,
                         vertexColors: bufferGeometry.getAttribute("color") ? true : false,
-                        glslVersion: mapView.glslVersion
+                        rendererCapabilities: mapView.renderer.capabilities
                     };
                     const edgeMaterial = new EdgeMaterial(materialParams);
                     const edgeObj = new THREE.LineSegments(
@@ -1097,7 +1097,7 @@ export class TileGeometryCreator {
                         fadeNear: fadingParams.lineFadeNear,
                         fadeFar: fadingParams.lineFadeFar,
                         vertexColors: bufferGeometry.getAttribute("color") ? true : false,
-                        glslVersion: mapView.glslVersion
+                        rendererCapabilities: mapView.renderer.capabilities
                     };
                     const outlineMaterial = new EdgeMaterial(materialParams);
                     const outlineObj = new THREE.LineSegments(

@@ -173,7 +173,8 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
 class SolidLineMeshBuilder {
     private static readonly DEFAULT_MATERIAL = new SolidLineMaterial({
         lineWidth: 1,
-        outlineWidth: 1
+        outlineWidth: 1,
+        rendererCapabilities: { isWebGL2: false } as any
     });
 
     readonly geometryBuilder: SolidLineGeometryBuilder;
@@ -535,7 +536,14 @@ describe("SolidLineMesh", function() {
         const mesh = new SolidLineMeshBuilder([0, 0, 0, 1, 0, 0, 2, 0, 0], [0, 1, 0])
             .addFeature([5, 5, 5, 7, 7, 7], [-1, 1, 1])
             .addGroup(0, 1)
-            .addGroup(1, 2, new SolidLineMaterial({ lineWidth: 5 }))
+            .addGroup(
+                1,
+                2,
+                new SolidLineMaterial({
+                    lineWidth: 5,
+                    rendererCapabilities: { isWebGL2: false } as any
+                })
+            )
             .build();
         const intersects: THREE.Intersection[] = [];
         const { raycaster, distance } = buildRayTo([5, 5, 5], [5, 5, 7]);

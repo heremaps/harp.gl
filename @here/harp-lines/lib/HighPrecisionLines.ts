@@ -53,27 +53,14 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
      *
      * @param geometry - [[BufferGeometry]] used to render this object.
      * @param material - [[HighPrecisionLineMaterial]] used to render this object.
-     *     instances.
      * @param positions - Array of 2D/3D positions.
-     * @param color - Color of the rendered line.
-     * @param opacity - Opacity of the rendered line.
      */
     constructor(
-        geometry?: THREE.BufferGeometry,
-        material?: HighPrecisionLineMaterial,
-        positions?: number[] | THREE.Vector3[],
-        color?: THREE.Color,
-        opacity?: number
+        geometry: THREE.BufferGeometry,
+        material: HighPrecisionLineMaterial,
+        positions?: number[] | THREE.Vector3[]
     ) {
-        super(geometry === undefined ? new THREE.BufferGeometry() : geometry, material);
-
-        if (material === undefined) {
-            material = new HighPrecisionLineMaterial({
-                color: color ? color : HighPrecisionLineMaterial.DEFAULT_COLOR,
-                opacity: opacity !== undefined ? opacity : HighPrecisionLineMaterial.DEFAULT_OPACITY
-            });
-        }
-
+        super(geometry, material);
         this.matrixWorldInverse = new THREE.Matrix4();
 
         if (positions) {
@@ -128,26 +115,14 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
      *
      * @param geometry - [[BufferGeometry]] used to render this object.
      * @param material - [[HighPrecisionLineMaterial]] used to render this object.
-     *     instances.
      * @param positions - Array of 2D/3D positions.
-     * @param color - Color of the rendered line.
-     * @param opacity - Opacity of the rendered line.
      */
     constructor(
-        geometry?: THREE.BufferGeometry,
-        material?: HighPrecisionLineMaterial,
-        positions?: number[] | THREE.Vector3[],
-        color?: THREE.Color,
-        opacity?: number
+        geometry: THREE.BufferGeometry,
+        material: HighPrecisionLineMaterial,
+        positions?: number[] | THREE.Vector3[]
     ) {
-        super(geometry === undefined ? new THREE.BufferGeometry() : geometry, material);
-
-        if (material === undefined) {
-            material = new HighPrecisionLineMaterial({
-                color: color ? color : HighPrecisionLineMaterial.DEFAULT_COLOR,
-                opacity: opacity !== undefined ? opacity : HighPrecisionLineMaterial.DEFAULT_OPACITY
-            });
-        }
+        super(geometry, material);
 
         this.matrixWorldInverse = new THREE.Matrix4();
 

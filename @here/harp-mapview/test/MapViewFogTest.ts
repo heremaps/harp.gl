@@ -51,7 +51,10 @@ describe("MapViewFog", function() {
 
     it("handles RawShaderMaterial fog", function() {
         const scene = new Scene();
-        const box = new Mesh(new BoxGeometry(1, 1, 1), new SolidLineMaterial());
+        const box = new Mesh(
+            new BoxGeometry(1, 1, 1),
+            new SolidLineMaterial({ rendererCapabilities: { isWebGL2: false } as any })
+        );
         scene.fog = new Fog(0x000000);
         scene.add(box);
         const fog = new MapViewFog(scene);

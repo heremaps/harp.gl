@@ -35,6 +35,7 @@ import {
     HighPrecisionLineMaterial,
     MapMeshBasicMaterial,
     MapMeshStandardMaterial,
+    RawShaderMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
 import { assert, LoggerManager, pick } from "@here/harp-utils";
@@ -82,16 +83,12 @@ export interface MaterialOptions {
      * Whether shadows are enabled or not, this is required because we change the material used.
      */
     shadowsEnabled?: boolean;
-
-    /**
-     * Version of GLSL to use for materials
-     */
-    glslVersion?: Number;
 }
 
 /**
  * Create a material, depending on the rendering technique provided in the options.
  *
+ * @param rendererCapabilities - The capabilities of the renderer that will use the material.
  * @param options - The material options the subsequent functions need.
  * @param materialUpdateCallback - Optional callback when the material gets updated,
  *                               e.g. after texture loading.
@@ -101,6 +98,7 @@ export interface MaterialOptions {
  * @internal
  */
 export function createMaterial(
+    rendererCapabilities: THREE.WebGLCapabilities,
     options: MaterialOptions,
     textureReadyCallback?: (texture: THREE.Texture) => void
 ): THREE.Material | undefined {
@@ -113,8 +111,8 @@ export function createMaterial(
         return undefined;
     }
 
-    if (Constructor.prototype instanceof THREE.RawShaderMaterial) {
-        settings.glslVersion = options.glslVersion;
+    if (Constructor.prototype instanceof RawShaderMaterial) {
+        settings.rendererCapabilities = rendererCapabilities;
         if (Constructor !== HighPrecisionLineMaterial) {
             settings.fog = options.fog;
         }
@@ -400,7 +398,7 @@ export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = ["name", "id", "renderOrder", "
  * Generic material type constructor.
  * @internal
  */
-export type MaterialConstructor = new (params?: {}) => THREE.Material;
+export type MaterialConstructor = new (params: any) => THREE.Material;
 
 /**
  * Returns a `MaterialConstructor` basing on provided technique object.

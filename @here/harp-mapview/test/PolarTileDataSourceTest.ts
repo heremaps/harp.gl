@@ -41,6 +41,7 @@ describe("PolarTileDataSource", function() {
 
     const theme_both: Style[] = [north_style, south_style];
     const theme_south: Style[] = [south_style];
+    const renderer = { capabilities: { isWebGL2: false } };
 
     describe("should", function() {
         it("#canGetTile()", function() {
@@ -133,6 +134,9 @@ describe("PolarTileDataSource", function() {
             sinon.stub(mapViewStub, "projection").get(function() {
                 return sphereProjection;
             });
+            sinon.stub(mapViewStub, "renderer").get(function() {
+                return renderer;
+            });
             dataSource.attach((mapViewStub as unknown) as MapView);
         });
 
@@ -207,6 +211,9 @@ describe("PolarTileDataSource", function() {
             mapViewStub = sinon.createStubInstance(MapView);
             sinon.stub(mapViewStub, "projection").get(function() {
                 return sphereProjection;
+            });
+            sinon.stub(mapViewStub, "renderer").get(function() {
+                return renderer;
             });
             dataSource.attach((mapViewStub as unknown) as MapView);
             dataSource.setStyleSet(theme_both);

@@ -158,10 +158,44 @@ const sdfTextFragmentSource: string = `
         gl_FragColor = color;
     }`;
 
-function convertShader(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
-    if (renderer.capabilities.isWebGL2) {
-        shader.vertexShader = convertVertexShaderToWebGL2(shader.vertexShader);
-        shader.fragmentShader = convertFragmentShaderToWebGL2(shader.fragmentShader);
+interface RendererMaterialParameters {
+    rendererCapabilities: THREE.WebGLCapabilities;
+}
+
+interface RawShaderMaterialParameters extends THREE.ShaderMaterialParameters {
+    rendererCapabilities: THREE.WebGLCapabilities;
+}
+
+class RawShaderMaterial extends THREE.RawShaderMaterial {
+    /**
+     * The constructor of `RawShaderMaterial`.
+     *
+     * @param params - `RawShaderMaterial` parameters.  Always required except when cloning
+     * another material.
+     */
+    constructor(params?: RawShaderMaterialParameters) {
+        const isWebGL2 = params?.rendererCapabilities.isWebGL2 === true;
+
+        const shaderParams: THREE.ShaderMaterialParameters | undefined = params
+            ? {
+                  ...params,
+                  glslVersion: isWebGL2 ? THREE.GLSL3 : THREE.GLSL1,
+                  vertexShader:
+                      isWebGL2 && params.vertexShader
+                          ? convertVertexShaderToWebGL2(params.vertexShader)
+                          : params.vertexShader,
+                  fragmentShader:
+                      isWebGL2 && params.fragmentShader
+                          ? convertFragmentShaderToWebGL2(params.fragmentShader)
+                          : params.fragmentShader
+              }
+            : undefined;
+        // Remove properties that are not in THREE.ShaderMaterialParameters, otherwise THREE.js
+        // will log warnings.
+        if (shaderParams) {
+            delete (shaderParams as any).rendererCapabilities;
+        }
+        super(shaderParams);
     }
 }
 
@@ -169,27 +203,26 @@ function convertShader(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
  * @hidden
  * Material used for clearing glyphs from a [[GlyphTextureCache]].
  */
-export class GlyphClearMaterial extends THREE.RawShaderMaterial {
+export class GlyphClearMaterial extends RawShaderMaterial {
     /**
      * Creates a new `GlyphClearMaterial`.
-     *
+     * @param params - Material parameters. Always required except when cloning another
+     * material.
      * @returns New `GlyphClearMaterial`.
      */
-    constructor() {
-        const shaderParams: THREE.ShaderMaterialParameters = {
-            name: "GlyphClearMaterial",
-            vertexShader: clearVertexSource,
-            fragmentShader: clearFragmentSource,
-            uniforms: {},
-            depthTest: false,
-            depthWrite: false
-        };
+    constructor(params?: RendererMaterialParameters) {
+        const shaderParams: RawShaderMaterialParameters | undefined = params
+            ? {
+                  name: "GlyphClearMaterial",
+                  vertexShader: clearVertexSource,
+                  fragmentShader: clearFragmentSource,
+                  uniforms: {},
+                  depthTest: false,
+                  depthWrite: false,
+                  rendererCapabilities: params.rendererCapabilities
+              }
+            : undefined;
         super(shaderParams);
-    }
-
-    // overrides with THREE.js base classes are not recognized by tslint.
-    onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
-        convertShader(shader, renderer);
     }
 }
 
@@ -197,37 +230,36 @@ export class GlyphClearMaterial extends THREE.RawShaderMaterial {
  * @hidden
  * Material used for copying glyphs into a [[GlyphTextureCache]].
  */
-export class GlyphCopyMaterial extends THREE.RawShaderMaterial {
+export class GlyphCopyMaterial extends RawShaderMaterial {
     /**
      * Creates a new `GlyphCopyMaterial`.
-     *
+     * @param params - Material parameters. Always required except when cloning another
+     * material.
      * @returns New `GlyphCopyMaterial`.
      */
-    constructor() {
-        const shaderParams: THREE.ShaderMaterialParameters = {
-            name: "GlyphCopyMaterial",
-            vertexShader: copyVertexSource,
-            fragmentShader: copyFragmentSource,
-            uniforms: {
-                pageOffset: new THREE.Uniform(0.0),
-                page0: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
-                page1: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
-                page2: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
-                page3: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
-                page4: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
-                page5: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
-                page6: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
-                page7: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE)
-            },
-            depthTest: false,
-            depthWrite: false
-        };
+    constructor(params?: RawShaderMaterialParameters) {
+        const shaderParams: RawShaderMaterialParameters | undefined = params
+            ? {
+                  name: "GlyphCopyMaterial",
+                  vertexShader: copyVertexSource,
+                  fragmentShader: copyFragmentSource,
+                  uniforms: {
+                      pageOffset: new THREE.Uniform(0.0),
+                      page0: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
+                      page1: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
+                      page2: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
+                      page3: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
+                      page4: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
+                      page5: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
+                      page6: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE),
+                      page7: new THREE.Uniform(THREE.Texture.DEFAULT_IMAGE)
+                  },
+                  depthTest: false,
+                  depthWrite: false,
+                  rendererCapabilities: params.rendererCapabilities
+              }
+            : undefined;
         super(shaderParams);
-    }
-
-    // overrides with THREE.js base classes are not recognized by tslint.
-    onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
-        convertShader(shader, renderer);
     }
 }
 
@@ -235,7 +267,7 @@ export class GlyphCopyMaterial extends THREE.RawShaderMaterial {
  * @hidden
  * Material parameters passed on [[SdfTextMaterial]] creation.
  */
-export interface SdfTextMaterialParameters {
+export interface SdfTextMaterialParameters extends RendererMaterialParameters {
     texture: THREE.Texture;
     textureSize: THREE.Vector2;
     size: number;
@@ -244,56 +276,52 @@ export interface SdfTextMaterialParameters {
     isBackground: boolean;
     vertexSource?: string;
     fragmentSource?: string;
-    glslVersion?: number;
 }
 
 /**
  * Material designed to render transformable, high quality SDF text.
  */
-export class SdfTextMaterial extends THREE.RawShaderMaterial {
+export class SdfTextMaterial extends RawShaderMaterial {
     /**
      * Creates a new `SdfTextMaterial`.
      *
-     * @param params - Material parameters.
-     *
+     * @param params - Material parameters. Always required except when cloning another
+     * material.
      * @returns New `SdfTextMaterial`.
      */
-    constructor(params: SdfTextMaterialParameters) {
-        const shaderParams: THREE.ShaderMaterialParameters = {
-            name: "SdfTextMaterial",
-            vertexShader:
-                params.vertexSource !== undefined ? params.vertexSource : sdfTextVertexSource,
-            fragmentShader:
-                params.fragmentSource !== undefined ? params.fragmentSource : sdfTextFragmentSource,
-            uniforms: {
-                sdfTexture: new THREE.Uniform(params.texture),
-                sdfParams: new THREE.Uniform(
-                    new THREE.Vector4(
-                        params.textureSize.x,
-                        params.textureSize.y,
-                        params.size,
-                        params.distanceRange
-                    )
-                )
-            },
-            defines: {
-                MSDF: params.isMsdf ? 1.0 : 0.0,
-                BG_TEXT: params.isBackground ? 1.0 : 0.0
-            },
-            depthTest: true,
-            depthWrite: false,
-            side: THREE.DoubleSide,
-            transparent: true
-        };
-        if (params?.glslVersion === 3.0) {
-            shaderParams.glslVersion = THREE.GLSL3;
-        }
+    constructor(params?: SdfTextMaterialParameters) {
+        const shaderParams: RawShaderMaterialParameters | undefined = params
+            ? {
+                  name: "SdfTextMaterial",
+                  vertexShader:
+                      params.vertexSource !== undefined ? params.vertexSource : sdfTextVertexSource,
+                  fragmentShader:
+                      params.fragmentSource !== undefined
+                          ? params.fragmentSource
+                          : sdfTextFragmentSource,
+                  uniforms: {
+                      sdfTexture: new THREE.Uniform(params.texture),
+                      sdfParams: new THREE.Uniform(
+                          new THREE.Vector4(
+                              params.textureSize.x,
+                              params.textureSize.y,
+                              params.size,
+                              params.distanceRange
+                          )
+                      )
+                  },
+                  defines: {
+                      MSDF: params.isMsdf ? 1.0 : 0.0,
+                      BG_TEXT: params.isBackground ? 1.0 : 0.0
+                  },
+                  depthTest: true,
+                  depthWrite: false,
+                  side: THREE.DoubleSide,
+                  transparent: true,
+                  rendererCapabilities: params.rendererCapabilities
+              }
+            : undefined;
         super(shaderParams);
         this.extensions.derivatives = true;
-    }
-
-    // overrides with THREE.js base classes are not recognized by tslint.
-    onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
-        convertShader(shader, renderer);
     }
 }

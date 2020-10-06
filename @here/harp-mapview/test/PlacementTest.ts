@@ -130,7 +130,7 @@ async function createTextCanvas(): Promise<TextCanvas> {
     );
 
     return new TextCanvas({
-        renderer: {},
+        renderer: { capabilities: { isWebGL2: false } },
         fontCatalog,
         minGlyphCount: 16,
         maxGlyphCount: 255

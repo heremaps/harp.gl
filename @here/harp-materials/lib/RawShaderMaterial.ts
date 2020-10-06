@@ -7,24 +7,48 @@ import { convertFragmentShaderToWebGL2, convertVertexShaderToWebGL2 } from "@her
 import * as THREE from "three";
 
 /**
- * Material that converts webgl1 shaders to webgl2 compatible code when renderer uses a WebGL2
- * context.
+ * [[RawShaderMaterial]] parameters.
+ */
+export interface RendererMaterialParameters {
+    rendererCapabilities: THREE.WebGLCapabilities;
+}
+
+export interface RawShaderMaterialParameters
+    extends RendererMaterialParameters,
+        THREE.ShaderMaterialParameters {}
+
+/**
+ * Base class for all raw shader materials. Ensures WebGL2 compatibility for WebGL1 shaders.
  */
 export class RawShaderMaterial extends THREE.RawShaderMaterial {
     /**
-     * The constructor of `WebGL1RawShaderMaterial`.
+     * The constructor of `RawShaderMaterial`.
      *
-     * @param params - Optional material parameters.
+     * @param params - `RawShaderMaterial` parameters.  Always required except when cloning
+     * another material.
      */
-    constructor(params?: THREE.ShaderMaterialParameters) {
-        super(params);
-    }
+    constructor(params?: RawShaderMaterialParameters) {
+        const isWebGL2 = params?.rendererCapabilities.isWebGL2 === true;
 
-    // overrides with THREE.js base classes are not recognized by tslint.
-    onBeforeCompile(shader: THREE.Shader, renderer: THREE.WebGLRenderer) {
-        if (renderer.capabilities.isWebGL2) {
-            shader.vertexShader = convertVertexShaderToWebGL2(shader.vertexShader);
-            shader.fragmentShader = convertFragmentShaderToWebGL2(shader.fragmentShader);
+        const shaderParams: THREE.ShaderMaterialParameters | undefined = params
+            ? {
+                  ...params,
+                  glslVersion: isWebGL2 ? THREE.GLSL3 : THREE.GLSL1,
+                  vertexShader:
+                      isWebGL2 && params.vertexShader
+                          ? convertVertexShaderToWebGL2(params.vertexShader)
+                          : params.vertexShader,
+                  fragmentShader:
+                      isWebGL2 && params.fragmentShader
+                          ? convertFragmentShaderToWebGL2(params.fragmentShader)
+                          : params.fragmentShader
+              }
+            : undefined;
+        // Remove properties that are not in THREE.ShaderMaterialParameters, otherwise THREE.js
+        // will log warnings.
+        if (shaderParams) {
+            delete (shaderParams as any).rendererCapabilities;
         }
+        super(shaderParams);
     }
 }

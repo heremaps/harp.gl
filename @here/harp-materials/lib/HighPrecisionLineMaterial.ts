@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 
-import { RawShaderMaterial } from "./RawShaderMaterial";
+import { RawShaderMaterial, RawShaderMaterialParameters } from "./RawShaderMaterial";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
 const vertexSource: string = `
@@ -57,7 +57,7 @@ void main() {
 /**
  * Parameters used when constructing a new {@link HighPrecisionLineMaterial}.
  */
-export interface HighPrecisionLineMaterialParameters {
+export interface HighPrecisionLineMaterialParameters extends RawShaderMaterialParameters {
     /**
      * Line color.
      */
@@ -80,25 +80,29 @@ export class HighPrecisionLineMaterial extends RawShaderMaterial {
     /**
      * Constructs a new `HighPrecisionLineMaterial`.
      *
-     * @param params - `HighPrecisionLineMaterial` parameters.
+     * @param params - `HighPrecisionLineMaterial` parameters.  Always required except when cloning
+     * another material.
      */
     constructor(params?: HighPrecisionLineMaterialParameters) {
         Object.assign(THREE.ShaderChunk, linesShaderChunk);
 
-        const shaderParams = {
-            name: "HighPrecisionLineMaterial",
-            vertexShader: vertexSource,
-            fragmentShader: fragmentSource,
-            uniforms: {
-                diffuse: new THREE.Uniform(
-                    new THREE.Color(HighPrecisionLineMaterial.DEFAULT_COLOR)
-                ),
-                opacity: new THREE.Uniform(HighPrecisionLineMaterial.DEFAULT_OPACITY),
-                u_mvp: new THREE.Uniform(new THREE.Matrix4()),
-                u_eyepos: new THREE.Uniform(new THREE.Vector3()),
-                u_eyepos_lowpart: new THREE.Uniform(new THREE.Vector3())
-            }
-        };
+        const shaderParams: RawShaderMaterialParameters | undefined = params
+            ? {
+                  name: "HighPrecisionLineMaterial",
+                  vertexShader: vertexSource,
+                  fragmentShader: fragmentSource,
+                  uniforms: {
+                      diffuse: new THREE.Uniform(
+                          new THREE.Color(HighPrecisionLineMaterial.DEFAULT_COLOR)
+                      ),
+                      opacity: new THREE.Uniform(HighPrecisionLineMaterial.DEFAULT_OPACITY),
+                      u_mvp: new THREE.Uniform(new THREE.Matrix4()),
+                      u_eyepos: new THREE.Uniform(new THREE.Vector3()),
+                      u_eyepos_lowpart: new THREE.Uniform(new THREE.Vector3())
+                  },
+                  rendererCapabilities: params.rendererCapabilities
+              }
+            : undefined;
         Object.assign(shaderParams, params);
         super(shaderParams);
 
@@ -106,7 +110,7 @@ export class HighPrecisionLineMaterial extends RawShaderMaterial {
         this.isHighPrecisionLineMaterial = true;
 
         // Apply initial parameter values.
-        if (params !== undefined) {
+        if (params) {
             if (params.color !== undefined) {
                 this.color.set(params.color as any);
             }

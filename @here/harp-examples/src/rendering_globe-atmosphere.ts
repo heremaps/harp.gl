@@ -80,7 +80,13 @@ export namespace GlobeAtmosphereExample {
 
         const { camera, projection, mapAnchors } = map;
         const updateCallback = () => map.update();
-        const atmosphere = new MapViewAtmosphere(mapAnchors, camera, projection, updateCallback);
+        const atmosphere = new MapViewAtmosphere(
+            mapAnchors,
+            camera,
+            projection,
+            map.renderer.capabilities,
+            updateCallback
+        );
         atmosphere.lightMode = AtmosphereLightMode.LightDynamic;
 
         const coords = new GeoCoordinates(10.0, -10.0);

@@ -37,6 +37,7 @@ export function getWebGLRendererStub(sandbox: sinon.SinonSandbox, clearColorStub
         dispose: () => undefined,
         forceContextLoss: () => undefined,
         info: { autoReset: true, reset: () => undefined },
-        debug: { checkShaderErrors: true }
+        debug: { checkShaderErrors: true },
+        capabilities: { isWebGL2: false }
     };
 }
