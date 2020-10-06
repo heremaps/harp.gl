@@ -56,7 +56,7 @@ function setCamera(
 }
 
 describe("MapViewUtils", function() {
-    const EPS = 0.00000001;
+    const EPS = 1e-8;
     describe("zoomOnTargetPosition", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
@@ -220,66 +220,47 @@ describe("MapViewUtils", function() {
                 );
             });
             it("limits tilt when orbiting around screen point", function() {
-                setCamera(
-                    mapView.camera,
-                    mapView.projection,
-                    target,
-                    0, // heading
-                    0, // tilt
-                    MapViewUtils.calculateDistanceFromZoomLevel(mapView, 4)
-                );
+                for (const startTilt of [0, 20, 45]) {
+                    setCamera(
+                        mapView.camera,
+                        mapView.projection,
+                        target,
+                        0, // heading
+                        startTilt, // tilt
+                        MapViewUtils.calculateDistanceFromZoomLevel(mapView, 4)
+                    );
 
-                const deltaTilt = THREE.MathUtils.degToRad(46);
-                const deltaHeading = 0;
-                const offsetX = 0.2;
-                const offsetY = 0.5;
+                    const deltaTilt = THREE.MathUtils.degToRad(46);
+                    const deltaHeading = 0;
+                    // OffsetX must be 0 for this to work for Sphere & Mercator, when this is non-zero,
+                    // it works for planar, but not sphere.
+                    const offsetX = 0.1;
+                    const offsetY = 0.1;
 
-                MapViewUtils.orbitAroundScreenPoint(
-                    mapView,
-                    offsetX,
-                    offsetY,
-                    deltaHeading,
-                    deltaTilt,
-                    tiltLimit
-                );
-
-                const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-                expect(mapTargetWorld).to.not.be.null;
-
-                const { tilt } = MapViewUtils.extractSphericalCoordinatesFromLocation(
-                    mapView,
-                    mapView.camera,
-                    mapTargetWorld!
-                );
-                if (projection === sphereProjection) {
-                    //FIXME(HARP-11926): For globe tilt in the map center is different from the tilt
-                    // in the rotation center, hence the clamped tilt is too conservative.
-                    expect(tilt).to.be.lessThan(tiltLimit);
-                } else {
-                    const rotationTargetWorld = MapViewUtils.rayCastWorldCoordinates(
+                    MapViewUtils.orbitAroundScreenPoint(
                         mapView,
                         offsetX,
-                        offsetY
+                        offsetY,
+                        deltaHeading,
+                        // Delta is past the tilt limit.
+                        deltaTilt,
+                        tiltLimit
                     );
-                    const toRotationTargetWorld = new Vector3();
-                    toRotationTargetWorld
-                        .copy(rotationTargetWorld!)
-                        .sub(mapView.camera.position)
-                        .normalize();
-                    const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-                    const toMapTargetWorld = new Vector3();
-                    toMapTargetWorld
-                        .copy(mapTargetWorld!)
-                        .sub(mapView.camera.position)
-                        .normalize();
-                    const angleBetweenRotationAndTarget = toRotationTargetWorld.angleTo(
-                        toMapTargetWorld
+                    const mapTargetWorldNew = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+
+                    const afterTilt = MapViewUtils.extractTiltAngleFromLocation(
+                        mapView.projection,
+                        mapView.camera,
+                        mapTargetWorldNew!
                     );
-                    // We expect that the tilt at the screen center is the overall tilt limit minus
-                    // the angle between the vector to the target and the rotation points, read the
-                    // comment in the orbitAroundScreenPoint function above the
-                    // `dirToRotationTarget` variable assignment for a better explanation.
-                    expect(tilt).to.be.closeTo(tiltLimit - angleBetweenRotationAndTarget, EPS);
+                    if (projection === sphereProjection) {
+                        // Please read the comments in orbitAroundScreenPoint for why this is
+                        // difficult to compute accurately on globe.
+                        expect(afterTilt).to.be.lte(tiltLimit);
+                    } else {
+                        // Use a custom EPS, Number.Epsilon is too strict for such maths
+                        expect(afterTilt).to.be.closeTo(tiltLimit, EPS);
+                    }
                 }
             });
             it("keeps rotation target when orbiting around screen point", function() {
