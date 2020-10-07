@@ -63,7 +63,7 @@ describe("ScreenProjector", () => {
         });
     });
 
-    describe("projectOnScreen", () => {
+    describe("projectToScreen", () => {
         let result: THREE.Vector2;
         const halfScreenSize: number = screenSize / 2;
 
@@ -86,46 +86,49 @@ describe("ScreenProjector", () => {
 
         it("returns projected vector for coordinates within frustum", () => {
             assert.exists(
-                sp.projectOnScreen(new THREE.Vector3(-halfScreenSize + eps, 0, -near - eps), result)
+                sp.projectToScreen(new THREE.Vector3(-halfScreenSize + eps, 0, -near - eps), result)
             );
             expect(result).not.deep.equal(new THREE.Vector2());
             assert.exists(
-                sp.projectOnScreen(new THREE.Vector3(halfScreenSize - eps, 0, -far + eps), result)
+                sp.projectToScreen(new THREE.Vector3(halfScreenSize - eps, 0, -far + eps), result)
             );
         });
 
         it("returns projected vector for coordinates within near/far planes on other frustum\
         planes", () => {
             assert.exists(
-                sp.projectOnScreen(
+                sp.projectToScreen(
                     new THREE.Vector3(-halfScreenSize, halfScreenSize, -near - eps),
                     result
                 )
             );
             expect(result).not.deep.equal(new THREE.Vector2());
             assert.exists(
-                sp.projectOnScreen(
+                sp.projectToScreen(
                     new THREE.Vector3(halfScreenSize, -halfScreenSize, -far + eps),
                     result
                 )
             );
         });
 
-        it("returns undefined for coordinates within near/far planes but outside of\
+        it("returns projected vector for coordinates within near/far planes but outside of\
         frustum", () => {
-            assert.isUndefined(
-                sp.projectOnScreen(new THREE.Vector3(-halfScreenSize - eps, 0, -near - eps), result)
+            assert.exists(
+                sp.projectToScreen(new THREE.Vector3(-halfScreenSize - eps, 0, -near - eps), result)
             );
-            expect(result).deep.equal(new THREE.Vector2());
-            assert.isUndefined(
-                sp.projectOnScreen(new THREE.Vector3(halfScreenSize + eps, 0, -near - eps), result)
+            expect(result).not.deep.equal(new THREE.Vector2());
+            assert.exists(
+                sp.projectToScreen(new THREE.Vector3(halfScreenSize + eps, 0, -near - eps), result)
             );
-            assert.isUndefined(
-                sp.projectOnScreen(new THREE.Vector3(0, -halfScreenSize - eps, -near - eps), result)
+            expect(result).not.deep.equal(new THREE.Vector2());
+            assert.exists(
+                sp.projectToScreen(new THREE.Vector3(0, -halfScreenSize - eps, -near - eps), result)
             );
-            assert.isUndefined(
-                sp.projectOnScreen(new THREE.Vector3(0, halfScreenSize + eps, -near - eps), result)
+            expect(result).not.deep.equal(new THREE.Vector2());
+            assert.exists(
+                sp.projectToScreen(new THREE.Vector3(0, halfScreenSize + eps, -near - eps), result)
             );
+            expect(result).not.deep.equal(new THREE.Vector2());
         });
     });
 });

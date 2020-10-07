@@ -42,6 +42,18 @@ export namespace Math2D {
         }
 
         /**
+         * Copy values from another box.
+         *
+         * @param box - Another box.
+         */
+        copy(box: Box) {
+            this.x = box.x;
+            this.y = box.y;
+            this.w = box.w;
+            this.h = box.h;
+        }
+
+        /**
          * Test box for inclusion of point.
          *
          * @param x - X coordinate of point.

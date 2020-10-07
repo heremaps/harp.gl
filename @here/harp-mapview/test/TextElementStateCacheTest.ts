@@ -154,8 +154,12 @@ describe("TextElementStateCache", function() {
             const textElementStateX2 = new TextElementState(label0Compatible);
             textElementStateX2.update(100);
             textElementStateX2.iconRenderState!.startFadeIn(0);
-            expect(textElementStateX2.visible).to.be.true;
+            expect(textElementStateX2.visible).to.be.false;
+            expect(textElementStateX2.iconRenderState!.isFadingIn()).to.be.true;
+            expect(textElementStateX2.iconRenderState!.isFadedIn()).to.be.false;
 
+            textElementStateX2.updateFading(1, true);
+            expect(textElementStateX2.visible).to.be.true;
             const didReplace = cache.replaceElement(0, textElementStateX2);
             expect(didReplace).to.be.true;
         });
@@ -185,6 +189,8 @@ describe("TextElementStateCache", function() {
             const textElementStateX2 = new TextElementState(label0Compatible);
             textElementStateX2.update(100);
             textElementStateX2.iconRenderState!.startFadeIn(0);
+            expect(textElementStateX2.visible).to.be.false;
+            textElementStateX2.updateFading(1, true);
             expect(textElementStateX2.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, textElementStateX2);
@@ -215,6 +221,8 @@ describe("TextElementStateCache", function() {
             const poiState1 = new TextElementState(poiLabel1);
             poiState1.update(100);
             poiState1.iconRenderState!.startFadeIn(0);
+            expect(poiState1.visible).to.be.false;
+            poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, poiState1);
@@ -245,6 +253,8 @@ describe("TextElementStateCache", function() {
             const poiState1 = new TextElementState(poiLabel1);
             poiState1.update(100);
             poiState1.iconRenderState!.startFadeIn(0);
+            expect(poiState1.visible).to.be.false;
+            poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, poiState1);
@@ -275,6 +285,8 @@ describe("TextElementStateCache", function() {
             const poiState1 = new TextElementState(poiLabel1);
             poiState1.update(100);
             poiState1.iconRenderState!.startFadeIn(0);
+            expect(poiState1.visible).to.be.false;
+            poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, poiState1);
@@ -311,6 +323,8 @@ describe("TextElementStateCache", function() {
             expect(poiState1.iconRenderStates).to.not.be.undefined;
             expect(poiState1.iconRenderStates!.length).to.equal(1);
             poiState1.iconRenderStates![0].startFadeIn(0);
+            expect(poiState1.visible).to.be.false;
+            poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, poiState1);
@@ -348,6 +362,8 @@ describe("TextElementStateCache", function() {
             expect(poiState1.iconRenderStates!.length).to.equal(2);
             poiState1.iconRenderStates![0].startFadeIn(0);
             poiState1.iconRenderStates![1].startFadeIn(0);
+            expect(poiState1.visible).to.be.false;
+            poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, poiState1);
@@ -383,6 +399,8 @@ describe("TextElementStateCache", function() {
             expect(poiState1.iconRenderStates!.length).to.equal(2);
             poiState1.iconRenderStates![0].startFadeIn(0);
             poiState1.iconRenderStates![1].startFadeIn(0);
+            expect(poiState1.visible).to.be.false;
+            poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, poiState1);
