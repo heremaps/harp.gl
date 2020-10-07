@@ -16,6 +16,15 @@ function isOnScreen(ndc: THREE.Vector3) {
 }
 
 /**
+ * Determines whether a position in NDC (Normalized Device Coordinates) is between the near
+ * and far plane.
+ * @param ndc - The position to check.
+ */
+function isInRange(ndc: THREE.Vector3) {
+    return ndc.z > -1 && ndc.z < 1;
+}
+
+/**
  * @hidden
  * Handles the projection of world coordinates to screen coordinates.
  */
@@ -70,14 +79,14 @@ export class ScreenProjector {
      * @param {(Vector3Like)} source The source vector to project.
      * @param {THREE.Vector2} target The target vector.
      * @returns {THREE.Vector2} The projected vector (the parameter 'target') or undefined if
-     * outside the screen.
+     * outside of the near/far plane. The point may be outside the screen.
      */
-    projectOnScreen(
+    projectToScreen(
         source: Vector3Like,
         target: THREE.Vector2 = new THREE.Vector2()
     ): THREE.Vector2 | undefined {
         const p = this.projectVector(source, ScreenProjector.tempV3);
-        if (isOnScreen(p)) {
+        if (isInRange(p)) {
             return this.ndcToScreen(p, target);
         }
         return undefined;

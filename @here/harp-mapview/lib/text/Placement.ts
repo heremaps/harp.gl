@@ -348,6 +348,7 @@ const tmpCollisionBox = new CollisionBox();
 const tmpScreenPosition = new THREE.Vector2();
 const tmpTextOffset = new THREE.Vector2();
 const tmp2DBox = new Math2D.Box();
+const tmp2DBox2 = new Math2D.Box();
 const tmpCenter = new THREE.Vector2();
 const tmpSize = new THREE.Vector2();
 
@@ -398,10 +399,7 @@ export function placeIcon(
     const iconSpaceAvailable =
         poiInfo.mayOverlap === true || !screenCollisions.isAllocated(tmp2DBox);
 
-    if (!iconSpaceAvailable) {
-        return iconRenderState.isVisible() ? PlacementResult.Rejected : PlacementResult.Invisible;
-    }
-    return PlacementResult.Ok;
+    return !iconSpaceAvailable ? PlacementResult.Rejected : PlacementResult.Ok;
 }
 
 /**
@@ -421,10 +419,8 @@ export function placeIcon(
  * @param multiAnchor - The parameter decides if multi-anchor placement algorithm should be
  * used, be default [[false]] meaning try to place label using current alignment settings only.
  * @returns `PlacementResult.Ok` if point __label can be placed__ at the base or any optional
- * anchor point. `PlacementResult.Rejected` if there's a collision for all placements or it's
- * __persistent label with icon rejected and text visible__. Finally `PlacementResult.Invisible`
- * if it's text is not visible at any placement position or it's __new label with text or icon__
- * __rejected__.
+ * anchor point. `PlacementResult.Rejected` if there's a collision for all placements. Finally
+ * `PlacementResult.Invisible` if it's text is not visible at any placement position.
  */
 export function placePointLabel(
     labelState: TextElementState,
@@ -442,10 +438,9 @@ export function placePointLabel(
     const layoutStyle = labelState.element.layoutStyle!;
 
     // For the new labels with rejected icons we don't need to go further.
-    // Make them invisible.
     const newLabel = !labelState.visible;
     if (isRejected && newLabel) {
-        return PlacementResult.Invisible;
+        return PlacementResult.Rejected;
     }
     // Check if alternative placements have been provided.
     multiAnchor =
@@ -697,6 +692,15 @@ function placePointLabelAtAnchor(
     // Compute text offset from the anchor point
     const textOffset = computePointTextOffset(label, placement, scale, env, tmpTextOffset);
     textOffset.add(screenPosition);
+
+    // Update output screen position.
+    outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
+
+    // Check if icon's label was already rejected.
+    if (isRejected) {
+        return PlacementResult.Rejected;
+    }
+
     tmpBox.copy(label.bounds!);
     // Apply additional persistent margin, keep in mind that text bounds just calculated
     // are not (0, 0, w, h) based, so their coords usually are also non-zero.
@@ -710,28 +714,13 @@ function placePointLabelAtAnchor(
     tmpSize.multiplyScalar(scale);
     tmp2DBox.set(tmpCenter.x - tmpSize.x / 2, tmpCenter.y - tmpSize.y / 2, tmpSize.x, tmpSize.y);
 
-    // Update output screen position.
-    outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
-
-    // Check the text visibility if invisible finish immediately
-    // regardless of the persistence state - no fading required.
-    if (!screenCollisions.isVisible(tmp2DBox)) {
-        return PlacementResult.Invisible;
-    }
-
-    const persistent = labelState.visible;
-    // Check if icon's label was already rejected.
-    if (isRejected) {
-        // Allows to fade out persistent label and simply ignore new one.
-        // NOTE:
-        // It might be changed if we would like to render text without icon (at border, etc.).
-        return persistent ? PlacementResult.Rejected : PlacementResult.Invisible;
-    }
+    // Save original bounds for visibility check
+    tmp2DBox2.copy(tmp2DBox);
 
     if (measureText) {
-        // Up-scaled label bounds are used only for new labels and after visibility check, this is
-        // intentional to avoid processing labels out of the screen due to increased bounds, such
-        // labels would be again invisible in the next frame.
+        // Up-scaled label bounds are used only for new labels and only for collision check, this
+        // is intentional to avoid processing labels out of the screen due to increased bounds,
+        // such labels would be again invisible in the next frame.
         tmpBox.getSize(tmpSize);
         tmpSize.multiplyScalar(scale * (1 + newPointLabelTextMarginPercent));
         tmp2DBox.set(
@@ -742,33 +731,39 @@ function placePointLabelAtAnchor(
         );
     }
 
-    // Check label's text collision.
+    // Check label's text collision. Collision is more important than visibility (now), because for
+    // icon/text combinations the icon should be rendered if the text is out of bounds, but it may
+    // _not_ be rendered if the text is colliding with another label.
     if (!label.textMayOverlap && screenCollisions.isAllocated(tmp2DBox)) {
-        // Allows to fade persistent and ignore new label.
-        return persistent ? PlacementResult.Rejected : PlacementResult.Invisible;
+        return PlacementResult.Rejected;
     }
 
-    // Don't allocate space for rejected text. When zooming, this allows placement of a
-    // lower priority text element that was displaced by a higher priority one (not
-    // present in the new zoom level) before an even lower priority one takes the space.
-    // Otherwise the lowest priority text will fade in and back out.
-    // TODO: Add a unit test for this scenario.
-    if (label.textReservesSpace) {
-        screenCollisions.allocate(tmp2DBox);
+    // Visibility check with non-enlarged bounds
+    if (screenCollisions.isVisible(tmp2DBox2)) {
+        // Don't allocate space for rejected text. When zooming, this allows placement of a
+        // lower priority text element that was displaced by a higher priority one (not
+        // present in the new zoom level) before an even lower priority one takes the space.
+        // Otherwise the lowest priority text will fade in and back out.
+        // TODO: Add a unit test for this scenario.
+        if (label.textReservesSpace) {
+            screenCollisions.allocate(tmp2DBox);
+        }
+
+        // Glyphs arrangement have been changed remove text buffer object which needs to be
+        // re-created.
+        if (measureText) {
+            label.textBufferObject = undefined;
+        }
+
+        // Save current placement in label state.
+        // TextElementState creates layout snapshot solely for alternative placements which saves
+        // memory that could be wasted on unnecessary objects construction.
+        labelState.textPlacement = placement;
+
+        return PlacementResult.Ok;
     }
 
-    // Glyphs arrangement have been changed remove text buffer object which needs to be
-    // re-created.
-    if (measureText) {
-        label.textBufferObject = undefined;
-    }
-
-    // Save current placement in label state.
-    // TextElementState creates layout snapshot solely for alternative placements which saves
-    // memory that could be wasted on unnecessary objects construction.
-    labelState.textPlacement = placement;
-
-    return PlacementResult.Ok;
+    return PlacementResult.Invisible;
 }
 
 /**
@@ -828,8 +823,6 @@ export function placePathLabel(
         checkGlyphCollision = candidateBoxes.length > 0;
     }
 
-    const checkGlyphVisible = !screenCollisions.isFullyVisible(tmpCollisionBox);
-
     // Perform per-character collision checks.
     tmpCollisionBoxes.length = tmpBoxes.length;
     for (let i = 0; i < tmpBoxes.length; ++i) {
@@ -840,9 +833,6 @@ export function placePathLabel(
             tmpCollisionBoxes[i] = collisionBox;
         } else {
             collisionBox.copy(glyphBox);
-        }
-        if (checkGlyphVisible && !screenCollisions.isVisible(collisionBox)) {
-            return PlacementResult.Invisible;
         }
 
         if (
@@ -884,7 +874,7 @@ export function isPathLabelTooSmall(
         // Skip invisible points at the beginning of the path.
         const screenPoint = anyPointVisible
             ? screenProjector.project(pt, tmpScreenPosition)
-            : screenProjector.projectOnScreen(pt, tmpScreenPosition);
+            : screenProjector.projectToScreen(pt, tmpScreenPosition);
         if (screenPoint === undefined) {
             continue;
         }

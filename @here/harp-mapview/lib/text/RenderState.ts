@@ -113,10 +113,15 @@ export class RenderState {
     }
 
     /**
-     * @returns `true` if state is neither faded out nor undefined.
+     * @returns `true` if state is neither faded out nor undefined and the opacity is larger
+     * than 0.
      */
     isVisible(): boolean {
-        return this.m_state !== FadingState.FadedOut && this.m_state !== FadingState.Undefined;
+        return (
+            this.m_state !== FadingState.FadedOut &&
+            this.m_state !== FadingState.Undefined &&
+            this.opacity > 0
+        );
     }
 
     /**

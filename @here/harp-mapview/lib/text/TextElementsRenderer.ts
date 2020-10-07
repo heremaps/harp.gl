@@ -1616,7 +1616,7 @@ export class TextElementsRenderer {
             this.m_viewState.lookAtDistance
         );
         const iconReady = renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.env);
-
+        let iconInvisible = false;
         if (iconReady) {
             const result = placeIcon(
                 iconRenderState,
@@ -1626,18 +1626,11 @@ export class TextElementsRenderer {
                 this.m_viewState.env,
                 this.m_screenCollisions
             );
-            if (result === PlacementResult.Invisible) {
-                iconRenderState.reset();
-
-                if (placementStats) {
-                    ++placementStats.numNotVisible;
-                }
-                return false;
-            }
+            iconInvisible = result === PlacementResult.Invisible;
             iconRejected = result === PlacementResult.Rejected;
         } else if (renderIcon && poiInfo!.isValid !== false) {
             // Ensure that text elements still loading icons get a chance to be rendered if
-            // there's no text element updates in the next frames.
+            // there are no text element updates in the next frames.
             this.m_forceNewLabelsPass = true;
         }
 
@@ -1668,12 +1661,14 @@ export class TextElementsRenderer {
                 if (placementStats) {
                     placementStats.numPoiTextsInvisible++;
                 }
-                labelState.reset();
-                return false;
+                if (!renderIcon || iconInvisible) {
+                    labelState.reset();
+                    return false;
+                }
             }
 
             const textRejected = placeResult === PlacementResult.Rejected;
-            if (!iconRejected) {
+            if (!iconRejected && !iconInvisible) {
                 const textIsOptional: boolean =
                     pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
                 iconRejected = textRejected && !textIsOptional;
@@ -1708,9 +1703,15 @@ export class TextElementsRenderer {
             }
         }
         // ... and render the icon (if any).
-        if (iconReady) {
+        if (iconReady && !iconInvisible) {
             if (iconRejected) {
-                iconRenderState!.startFadeOut(renderParams.time);
+                if (iconRenderState.isVisible()) {
+                    iconRenderState.startFadeOut(renderParams.time);
+                } else if (!iconRenderState.isFadingOut()) {
+                    // Reset the icon and keep it from popping up before fading in.
+                    iconRenderState.reset();
+                    iconRenderState.opacity = 0;
+                }
             } else {
                 iconRenderState!.startFadeIn(renderParams.time, this.m_options.disableFading);
             }
@@ -1756,10 +1757,14 @@ export class TextElementsRenderer {
             this.m_viewState.env,
             this.m_tmpVector3
         );
-        // Only process labels frustum-clipped labels
-        if (
-            this.m_screenProjector.projectOnScreen(worldPosition, tempScreenPosition) === undefined
-        ) {
+
+        const projectionResult = this.m_screenProjector.projectToScreen(
+            worldPosition,
+            tempScreenPosition
+        );
+
+        // Only process labels that are potentially within the frustum.
+        if (projectionResult === undefined) {
             return false;
         }
         // Add this POI as a point label.
@@ -1812,10 +1817,14 @@ export class TextElementsRenderer {
         if (minDistanceSqr > 0 && shieldGroup !== undefined) {
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.projectOnScreen(point, tempScreenPosition) !== undefined
-                ) {
+
+                // Only process potentially visible labels
+                const projectionResult = this.m_screenProjector.projectToScreen(
+                    point,
+                    tempScreenPosition
+                );
+
+                if (projectionResult !== undefined) {
                     // Find a suitable location for the lineMarker to be placed at.
                     let tooClose = false;
                     for (let j = 0; j < shieldGroup.length; j += 2) {
@@ -1855,10 +1864,12 @@ export class TextElementsRenderer {
         else {
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.projectOnScreen(point, tempScreenPosition) !== undefined
-                ) {
+                // Only process potentially visible labels
+                const projectionResult = this.m_screenProjector.projectToScreen(
+                    point,
+                    tempScreenPosition
+                );
+                if (projectionResult !== undefined) {
                     this.addPointLabel(
                         labelState,
                         point,
