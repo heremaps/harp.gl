@@ -15,7 +15,7 @@ import { Vector2 } from "three";
  *
  * @internal
  */
-abstract class ClippingEdge {
+export abstract class ClippingEdge {
     /**
      * Tests if the given point is inside this clipping edge.
      *
