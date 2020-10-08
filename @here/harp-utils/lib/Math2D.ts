@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+interface Vec2Like {
+    x: number;
+    y: number;
+}
+
 export namespace Math2D {
     /**
      * Alternative 2D box object with less memory impact (four numbers instead of two min/max
@@ -223,5 +228,45 @@ export namespace Math2D {
             x2: xCenter + (xMid - xDist) / dSq,
             y2: yCenter + (yMid - yDist) / dSq
         };
+    }
+
+    /**
+     * Computes the intersection point between two lines.
+     *
+     * @remarks
+     * This functions computes the
+     * {@link https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+     *    | line-line intersection} of two lines given two points on each line.
+     *
+     * @param x1 - x coordinate of the first point of the first line.
+     * @param y1 - y coordinate of the first point of the first line.
+     * @param x2 - x coordinate of the second point of the first line.
+     * @param y2 - y coordinate of the second point of the first line.
+     * @param x3 - x coordinate of the first point of the second line.
+     * @param y3 - y coordinate of the first point of the second line.
+     * @param x4 - x coordinate of the second point of the second line.
+     * @param y4 - y coordinate of the second point of the second line.
+     * @param result - The resulting point.
+     */
+    export function intersectLines(
+        x1: number,
+        y1: number,
+        x2: number,
+        y2: number,
+        x3: number,
+        y3: number,
+        x4: number,
+        y4: number,
+        result: Vec2Like = { x: 0, y: 0 }
+    ): Vec2Like | undefined {
+        const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (d === 0) {
+            return undefined;
+        }
+        const px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
+        const py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
+        result.x = px;
+        result.y = py;
+        return result;
     }
 }

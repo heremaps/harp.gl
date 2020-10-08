@@ -130,4 +130,34 @@ describe("Math2D", () => {
             });
         });
     });
+
+    describe("line-line intersection", () => {
+        it("intersect a line with 45 degrees slope with a vertical line", () => {
+            const p = Math2D.intersectLines(0, 0, 100, 100, 50, 50, 50, 100);
+            expect(p?.x).to.be.equal(50);
+            expect(p?.y).to.be.equal(50);
+        });
+
+        it("intersect a line with 45 degrees slope with a horozontal line", () => {
+            const p = Math2D.intersectLines(0, 0, 100, 100, 50, 50, 100, 50);
+            expect(p?.x).to.be.equal(50);
+            expect(p?.y).to.be.equal(50);
+        });
+
+        it("non intersecting vertical lines", () => {
+            const p = Math2D.intersectLines(0, 0, 0, 100, 50, 50, 50, 100);
+            expect(p).to.be.undefined;
+        });
+
+        it("non intersecting horizontal lines", () => {
+            const p = Math2D.intersectLines(0, 0, 100, 0, 50, 50, 100, 50);
+            expect(p).to.be.undefined;
+        });
+
+        it("intersect a line with 45 degrees slope with a vertical line", () => {
+            const p = Math2D.intersectLines(-10, -20, 30, 25, 0, 10, 20, 15);
+            expect(p?.x).to.be.closeTo(21.428571428571427, 1e5);
+            expect(p?.y).to.be.closeTo(15.357142857142858, 1e5);
+        });
+    });
 });
