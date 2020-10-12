@@ -94,7 +94,7 @@ const commonConfig = {
     stats: {
         all: false,
         timings: true,
-        exclude: "/resources/",
+        exclude: "resources/",
         errors: true,
         entrypoints: true,
         warnings: true
