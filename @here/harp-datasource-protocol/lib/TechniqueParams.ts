@@ -251,6 +251,12 @@ export interface BaseTechniqueParams {
      * See https://threejs.org/docs/#api/en/materials/Material.transparent.
      */
     transparent?: DynamicProperty<boolean>;
+
+    /**
+     * Defines which side of faces will be rendered - front, back or both.
+     * See https://threejs.org/docs/#api/en/materials/Material.side.
+     */
+    side?: DynamicProperty<number>;
 }
 
 export enum TextureCoordinateType {
