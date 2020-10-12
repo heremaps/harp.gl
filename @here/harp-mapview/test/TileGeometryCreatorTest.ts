@@ -538,4 +538,46 @@ describe("TileGeometryCreator", () => {
         assert.equal(northWestGeo.longitude, -180);
         assert.equal(northWestGeo.altitude, 0);
     });
+
+    describe("test side of the geometry", () => {
+        const techniques: Array<IndexedTechnique["name"]> = [
+            "solid-line",
+            "fill",
+            "standard",
+            "extruded-polygon"
+        ];
+
+        techniques.forEach(technique => {
+            it(`side of the geometry - technique ${technique}`, () => {
+                const decodedTile: DecodedTile = {
+                    geometries: [
+                        {
+                            type: GeometryType.Polygon,
+                            vertexAttributes: [],
+                            groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }]
+                        }
+                    ],
+                    techniques: [
+                        {
+                            name: technique,
+                            color: "red",
+                            lineWidth: 1,
+                            renderOrder: 0,
+                            _index: 0,
+                            _styleSetIndex: 0,
+                            side: THREE.DoubleSide
+                        } as any
+                    ]
+                };
+                tgc.createObjects(newTile, decodedTile);
+                assert.equal(newTile.objects.length, 1);
+                const object = newTile.objects[0] as THREE.Mesh;
+                assert.isTrue(object.isMesh);
+                const material = object.material as THREE.Material;
+                assert.isObject(material);
+                assert.isTrue(material.isMaterial);
+                assert.strictEqual(material.side, THREE.DoubleSide);
+            });
+        });
+    });
 });

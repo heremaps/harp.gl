@@ -130,7 +130,8 @@ const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = 
         enabled: AttrScope.FeatureGeometry,
         fadeFar: AttrScope.TechniqueRendering,
         fadeNear: AttrScope.TechniqueRendering,
-        transparent: { scope: AttrScope.TechniqueRendering, automatic: true }
+        transparent: { scope: AttrScope.TechniqueRendering, automatic: true },
+        side: { scope: AttrScope.TechniqueRendering, automatic: true }
     }
 };
 
