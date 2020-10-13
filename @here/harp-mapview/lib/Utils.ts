@@ -248,6 +248,14 @@ export namespace MapViewUtils {
             return;
         }
 
+        const mapTargetWorld =
+            offsetX === 0 && offsetY === 0
+                ? rotationTargetWorld
+                : MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+        if (mapTargetWorld === null) {
+            return;
+        }
+
         applyAzimuthAroundTarget(mapView, rotationTargetWorld, -deltaAzimuth);
 
         const clampedDeltaTilt = computeClampedDeltaTilt(
@@ -256,6 +264,7 @@ export namespace MapViewUtils {
             offsetY,
             deltaTilt,
             maxTiltAngle,
+            mapTargetWorld,
             rotationTargetWorld
         );
 
@@ -289,7 +298,9 @@ export namespace MapViewUtils {
      * @internal
      *
      * Clamps the supplied `deltaTilt` to the `maxTiltAngle` supplied. Note, when a non-zero offset
-     * is applied, we apply
+     * is applied, we apply another max angle of 89 degrees to the rotation center to prevent some
+     * corner cases where the angle at the rotation center is 90 degrees and therefore intersects
+     * the geometry with the near plane.
      */
     function computeClampedDeltaTilt(
         mapView: MapView,
@@ -297,38 +308,25 @@ export namespace MapViewUtils {
         offsetY: number,
         deltaTilt: number,
         maxTiltAngle: number,
+        mapTargetWorld: THREE.Vector3,
         rotationTargetWorld: THREE.Vector3
     ): number {
         const camera = mapView.camera;
         const projection = mapView.projection;
 
-        const mapTargetWorld =
-            offsetX === 0 && offsetY === 0
-                ? rotationTargetWorld
-                : MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-        if (mapTargetWorld === null) {
-            return 0;
+        const tilt = extractTiltAngleFromLocation(projection, camera, mapTargetWorld);
+        if (tilt + deltaTilt < 0) {
+            // Clamp the final tilt to 0
+            return -tilt;
+        } else if (deltaTilt <= 0) {
+            // Reducing the tilt isn't clamped (apart from above).
+            return deltaTilt;
         }
 
-        let currentTilt = 0;
-        {
-            const mapTargetNormal = projection.surfaceNormal(mapTargetWorld, cache.vector3[0]);
-            camera.updateMatrixWorld(true);
-
-            const dir = cache.vector3[1].setFromMatrixColumn(camera.matrixWorld, 2);
-            const up = cache.vector3[2].setFromMatrixColumn(camera.matrixWorld, 1);
-
-            // Due to inaccuracies it can happen that the tilt angle gets less than 0.
-            // Using the dot product of the direction vector and the surface normal alone does not give us the sign.
-            const tiltSign = Math.sign(up.dot(mapTargetNormal));
-            currentTilt = (tiltSign === 0 ? 1 : tiltSign) * dir.angleTo(mapTargetNormal);
-        }
-
-        const currentTiltRotationCenter = MapViewUtils.extractTiltAngleFromLocation(
-            mapView.projection,
-            mapView.camera,
-            rotationTargetWorld!
-        );
+        const rotationCenterTilt =
+            offsetX === 0 && offsetX === offsetY
+                ? tilt
+                : extractTiltAngleFromLocation(projection, camera, rotationTargetWorld!);
 
         // This is used to find the max tilt angle, because the difference in normals is needed
         // to correct the triangle used to find the max tilt angle at the rotation center, please
@@ -344,65 +342,59 @@ export namespace MapViewUtils {
         }
 
         const ninetyRad = THREE.MathUtils.degToRad(90);
-        // This calculates the angle between the direction vector to the rotation center from the
-        // camera and the direction vector to the map view center (offsetX and offsetY == 0). This
-        // value stays constant when tilting but using the same X & Y offsets. We use the triangle
-        // with these two vectors from the camera position and the intersection of the flat plane.
-        // We know two angles, and the third is easy to compute (just 180 minus the sum of the
-        // rest). the first angle is 90 degrees + the current tilt, i.e. the tilt at the map
-        // center. The second angle is 90 - the tilt at the rotation center. Note, this doesn't work
-        // for sphere, it would have to be fixed for that.
+        // The following terminology will be used:
+        // R = rotation target, i.e. the point about which we are rotating: `rotationTargetWorld`
+        // C = camera position
+        // M = map target, i.e. the point which the camera is looking at: `mapTargetWorld`
+        // The following variable `angleBetweenRotationTargetAndMapTarget` is the angle between the
+        // two rays C->R and C->M, i.e. the angle RCM. This angle remains constant when tilting with
+        // a fixed `offsetX` and `offsetY`. It is calculated by using the intersection of the two
+        // ways with the earth. Where:
+        // MRC is 90 + `angleBetweenNormals` - tilt at R.
+        // CMR is 90 + `tilt`
+        // RCM is 180 - CRM - RMC, aka `angleBetweenRotationTargetAndMapTarget`
+        // Note the use of `angleBetweenNormals` to ensure this works for spherical projections.
         const angleBetweenRotationTargetAndMapTarget =
             ninetyRad * 2 -
-            (ninetyRad + angleBetweenNormals - currentTiltRotationCenter + ninetyRad + currentTilt);
+            (ninetyRad + angleBetweenNormals - rotationCenterTilt + ninetyRad + tilt);
 
-        // This uses the same formula as above, just we change `currentTilt` to the maxTiltAngle,
+        // This uses the same formula as above, just we change `tilt` to the maxTiltAngle,
         // i.e we want to find the greatest angle at the rotation target that gives us the max
         // angle at the map center target.
+        // i.e. CMR is 90 + `maxTiltAngle`
         const maxRotationTargetAngle =
             ninetyRad * 2 - angleBetweenRotationTargetAndMapTarget - ninetyRad - maxTiltAngle;
 
-        // We compute the max tilt based on the angle of the inner triangle, note, for sphere
-        // projection this is just an approximation, in order to compute this exactly, we would
-        // need to shift the camera to the new position, compute the new normal at the map center
-        // and use this to then compute the angleBetweenNormals, it would then actually need to be
-        // done iteratively, because when shifting the camera, it is possible that we move it to a
-        // position which is outside the max tilt given the new normal. Because the `deltaTilt` is
-        // generally small, the difference in normals should be for most cases very small and the
-        // extra computation required to compute such a small value isn't worth it. The value we
-        // compute is anyway conservative, so we don't risk computing something that will put the
-        // camera outside the valid range.
+        // Converting the `maxRotationTargetAngle` back to a tilt is as easy as subtracting it from
+        // 90 and the `angleBetweenNormals`, i.e. this gives us the maximum allowed tilt at R
+        // that satisfies the `maxTiltAngle` constraint.
         const maxTilt = ninetyRad + angleBetweenNormals - maxRotationTargetAngle;
 
         const clampedDeltaTiltMapTarget =
-            MathUtils.clamp(deltaTilt + currentTiltRotationCenter, 0, maxTilt) -
-            currentTiltRotationCenter;
+            MathUtils.clamp(deltaTilt + rotationCenterTilt, 0, maxTilt) - rotationCenterTilt;
 
         const maxRotationTiltAngle = THREE.MathUtils.degToRad(89);
-        // Here we clamp to 89 degrees, to prevent it intersecting with the world at 90, note, we
-        // don't use the `maxTiltAngle`, because then special handling needs to be applied when for
-        // example the tilt at the rotation center is more than that at the map target, then the
-        // tilt feels different at the center / offset positions. Using 89 gives the most natual
-        // feeling when applying the tilt angle.
+        // Here we clamp to 89 degrees, to prevent it intersecting with the world at 90. This is
+        // possible for example when the R position is near the horizon. If the angle RCM is say 5
+        // degrees, then an angle of say 89 degrees at R, plus 5 degrees means the tilt at M would
+        // be 84 degrees. If the `maxTiltAngle` is however 89, then we still have what seems like 5
+        // degrees at M, so, without this check, we would go to 90 degrees.
         const clampedDeltaTiltRotationTarget =
-            MathUtils.clamp(deltaTilt + currentTiltRotationCenter, 0, maxRotationTiltAngle) -
-            currentTiltRotationCenter;
+            MathUtils.clamp(deltaTilt + rotationCenterTilt, 0, maxRotationTiltAngle) -
+            rotationCenterTilt;
 
         // Math.min doesn't work, because we need to keep the sign of the delta as well.
-        const clampedDeltaTilt =
-            Math.abs(clampedDeltaTiltMapTarget) < Math.abs(clampedDeltaTiltRotationTarget)
-                ? clampedDeltaTiltMapTarget
-                : clampedDeltaTiltRotationTarget;
+        const clampedDeltaTilt = Math.min(
+            clampedDeltaTiltMapTarget,
+            clampedDeltaTiltRotationTarget
+        );
 
         // It can happen in some cases that the maxRotationTiltAngle is exceeded because the
         // `clampedDeltaTilt` is taken from the smaller value clampedDeltaTiltMapTarget. We check
         // that we don't exceed 0, because otherwise it will snap to 89, so we let the user ease
         // back to 89, but not any further.
-        if (
-            currentTiltRotationCenter + clampedDeltaTilt >= maxRotationTiltAngle &&
-            clampedDeltaTilt > 0
-        ) {
-            return maxRotationTiltAngle - currentTiltRotationCenter;
+        if (rotationCenterTilt + clampedDeltaTilt >= maxRotationTiltAngle) {
+            return maxRotationTiltAngle - rotationCenterTilt;
         }
 
         return clampedDeltaTilt;
@@ -420,10 +412,10 @@ export namespace MapViewUtils {
         deltaTilt: number
     ) {
         const camera = mapView.camera;
-        // We use index 2, because these values are required if the method: rayCastWorldCoordinates
-        // fails, which itself uses indexes 0 and 1.
-        const posBackup = cache.vector3[2].copy(camera.position);
-        const quatBackup = cache.quaternions[1].copy(camera.quaternion);
+        // Consider to use the cache if necessary, but beware, because the `rayCastWorldCoordinates`
+        // also uses this cache.
+        const posBackup = camera.position.clone();
+        const quatBackup = camera.quaternion.clone();
 
         const tiltAxis = cache.vector3[0].set(1, 0, 0).applyQuaternion(camera.quaternion);
         const tiltQuat = cache.quaternions[0].setFromAxisAngle(tiltAxis, deltaTilt);
