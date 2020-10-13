@@ -4211,6 +4211,7 @@ export class MapView extends EventDispatcher {
         }
         if (this.m_skyBackground !== undefined) {
             this.m_skyBackground.updateTexture(sky, this.projection.type);
+            this.m_scene.background = this.m_skyBackground?.texture;
         }
     }
 
