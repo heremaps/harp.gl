@@ -260,6 +260,7 @@ export namespace MapViewUtils {
 
         const clampedDeltaTilt = computeClampedDeltaTilt(
             mapView,
+            offsetY,
             deltaTilt,
             maxTiltAngle,
             mapTargetWorld,
@@ -302,6 +303,7 @@ export namespace MapViewUtils {
      */
     function computeClampedDeltaTilt(
         mapView: MapView,
+        offsetY: number,
         deltaTilt: number,
         maxTiltAngle: number,
         mapTargetWorld: THREE.Vector3,
@@ -317,8 +319,9 @@ export namespace MapViewUtils {
         } else if (deltaTilt <= 0) {
             // Reducing the tilt isn't clamped (apart from above).
             return deltaTilt;
-        } else if (mapTargetWorld.equals(rotationTargetWorld)) {
-            // When the rotation target is the center, then we have a simple formula
+        } else if (mapTargetWorld.equals(rotationTargetWorld) || offsetY < 0) {
+            // When the rotation target is the center, or the offsetY is < 0, i.e. the angle at the
+            // `mapTargetWorld` is always bigger, then we have a simple formula
             return MathUtils.clamp(deltaTilt + tilt, 0, maxTiltAngle) - tilt;
         }
 
@@ -364,6 +367,8 @@ export namespace MapViewUtils {
         // CMR is 90 + `tilt`
         // RCM is 180 - CRM - RMC, aka `angleBetweenRotationTargetAndMapTarget`
         // Note the use of `angleBetweenNormals` to ensure this works for spherical projections.
+        // Note, also, the above calculation only works when the tilt at the M is less than the tilt
+        // at R, otherwise the above formula won't work.
         const angleBetweenRotationTargetAndMapTarget =
             ninetyRad * 2 -
             (ninetyRad + angleBetweenNormals - rotationCenterTilt + ninetyRad + tilt);
