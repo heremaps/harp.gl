@@ -3,9 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { assert } from "chai";
+import { assert, expect } from "chai";
 
+import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
+import { GeoCoordLike } from "../lib/coordinates/GeoCoordLike";
+import { GeoPointLike } from "../lib/coordinates/GeoPointLike";
 import { GeoPolygon, GeoPolygonCoordinates } from "../lib/coordinates/GeoPolygon";
 
 // tslint:disable:only-arrow-functions
@@ -441,5 +444,48 @@ describe("GeoPolygon", function() {
         }
         assert.deepEqual(centroid, new GeoCoordinates(6, 30));
         assert.isTrue(geoBBox.contains(centroid));
+    });
+
+    it("get the bounding box of a GeoPolygon", () => {
+        function geoBoxFromCoordinates(coords: GeoCoordLike[]): GeoBox | undefined {
+            if (!Array.isArray(coords) || coords.length === 0) {
+                return undefined;
+            }
+            const geoBox = new GeoBox(
+                GeoCoordinates.fromObject(coords[0]),
+                GeoCoordinates.fromObject(coords[0])
+            );
+            const reduce = (geoBox: GeoBox, coord: GeoCoordLike) => {
+                geoBox.growToContain(GeoCoordinates.fromObject(coord));
+                return geoBox;
+            };
+            return coords.reduce(reduce, geoBox);
+        }
+
+        const coordinates: GeoPointLike[] = [
+            [-8.4375, 73.72659470212253],
+            [-58.35937499999999, 58.81374171570782],
+            [-11.25, 29.84064389983441],
+            [40.078125, 48.22467264956519],
+            [47.8125, 24.206889622398023],
+            [75.234375, 49.38237278700955],
+            [47.4609375, 64.16810689799152],
+            [29.8828125, 69.53451763078358],
+            [23.90625, 75.49715731893085],
+            [10.546875, 75.58493740869223],
+            [-8.4375, 73.72659470212253]
+        ];
+
+        const polygon = new GeoPolygon(coordinates as any);
+
+        const geoBox1 = polygon.getGeoBoundingBox();
+        const geoBox2 = geoBoxFromCoordinates(coordinates)!;
+
+        const eps = 0.001;
+
+        expect(geoBox1.north).to.be.approximately(geoBox2.north, eps);
+        expect(geoBox1.south).to.be.approximately(geoBox2.south, eps);
+        expect(geoBox1.east).to.be.approximately(geoBox2.east, eps);
+        expect(geoBox1.west).to.be.approximately(geoBox2.west, eps);
     });
 });
