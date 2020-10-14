@@ -328,6 +328,16 @@ export namespace MapViewUtils {
             rotationTargetWorld!
         );
 
+        const maxRotationTiltAngle = THREE.MathUtils.degToRad(89);
+
+        // The rotationCenterTilt may exceed 89 degrees when for example the user has tilted to 89
+        // at the mapTargetWorld, then choose a rotation center target above the mapTargetWorld,
+        // i.e. offsetY > 0. In such case, we just return 0, i.e. we don't let the user increase
+        // the tilt (but it can decrease, see check above for "deltaTilt <= 0").
+        if (rotationCenterTilt > maxRotationTiltAngle) {
+            return 0;
+        }
+
         // This is used to find the max tilt angle, because the difference in normals is needed
         // to correct the triangle used to find the max tilt angle at the rotation center, please
         // read the comment above `maxTilt` below to understand why this is just an approximation.
@@ -370,33 +380,18 @@ export namespace MapViewUtils {
         // that satisfies the `maxTiltAngle` constraint.
         const maxTilt = ninetyRad + angleBetweenNormals - maxRotationTargetAngle;
 
-        const clampedDeltaTiltMapTarget =
-            MathUtils.clamp(deltaTilt + rotationCenterTilt, 0, maxTilt) - rotationCenterTilt;
-
-        const maxRotationTiltAngle = THREE.MathUtils.degToRad(89);
-        // Here we clamp to 89 degrees, to prevent it intersecting with the world at 90. This is
-        // possible for example when the R position is near the horizon. If the angle RCM is say 5
-        // degrees, then an angle of say 89 degrees at R, plus 5 degrees means the tilt at M would
-        // be 84 degrees. If the `maxTiltAngle` is however 89, then we still have what seems like 5
-        // degrees at M, so, without this check, we would go to 90 degrees.
-        const clampedDeltaTiltRotationTarget =
-            MathUtils.clamp(deltaTilt + rotationCenterTilt, 0, maxRotationTiltAngle) -
-            rotationCenterTilt;
-
-        // The deltas are positive, because we filter out the negative values above, hence
-        // Math.min is appropriate, as opposed to using the absolute of the values.
-        const clampedDeltaTilt = Math.min(
-            clampedDeltaTiltMapTarget,
-            clampedDeltaTiltRotationTarget
-        );
-
-        // It can happen in some cases that the maxRotationTiltAngle is exceeded because the
-        // `clampedDeltaTilt` is taken from the smaller value clampedDeltaTiltMapTarget. We check
-        // that we don't exceed 0, because otherwise it will snap to 89, so we let the user ease
-        // back to 89, but not any further.
-        if (rotationCenterTilt + clampedDeltaTilt >= maxRotationTiltAngle) {
-            return maxRotationTiltAngle - rotationCenterTilt;
-        }
+        // Here we clamp to the min of `maxTilt` and 89 degrees. The check for 89 is to prevent it
+        // intersecting with the world at 90. This is possible for example when the R position is
+        // near the horizon. If the angle RCM is say 5 degrees, then an angle of say 89 degrees at
+        // R, plus 5 degrees means the tilt at M would be 84 degrees. If the `maxTiltAngle` is
+        // however 89, then we still have 5 degrees at M, so, without this check, we would go to 90
+        // degrees.
+        const clampedDeltaTilt =
+            MathUtils.clamp(
+                deltaTilt + rotationCenterTilt,
+                0,
+                Math.min(maxTilt, maxRotationTiltAngle)
+            ) - rotationCenterTilt;
 
         return clampedDeltaTilt;
     }
