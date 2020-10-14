@@ -260,8 +260,6 @@ export namespace MapViewUtils {
 
         const clampedDeltaTilt = computeClampedDeltaTilt(
             mapView,
-            offsetX,
-            offsetY,
             deltaTilt,
             maxTiltAngle,
             mapTargetWorld,
@@ -304,8 +302,6 @@ export namespace MapViewUtils {
      */
     function computeClampedDeltaTilt(
         mapView: MapView,
-        offsetX: number,
-        offsetY: number,
         deltaTilt: number,
         maxTiltAngle: number,
         mapTargetWorld: THREE.Vector3,
@@ -321,12 +317,16 @@ export namespace MapViewUtils {
         } else if (deltaTilt <= 0) {
             // Reducing the tilt isn't clamped (apart from above).
             return deltaTilt;
+        } else if (mapTargetWorld.equals(rotationTargetWorld)) {
+            // When the rotation target is the center, then we have a simple formula
+            return MathUtils.clamp(deltaTilt + tilt, 0, maxTiltAngle) - tilt;
         }
 
-        const rotationCenterTilt =
-            offsetX === 0 && offsetX === offsetY
-                ? tilt
-                : extractTiltAngleFromLocation(projection, camera, rotationTargetWorld!);
+        const rotationCenterTilt = extractTiltAngleFromLocation(
+            projection,
+            camera,
+            rotationTargetWorld!
+        );
 
         // This is used to find the max tilt angle, because the difference in normals is needed
         // to correct the triangle used to find the max tilt angle at the rotation center, please
@@ -383,7 +383,8 @@ export namespace MapViewUtils {
             MathUtils.clamp(deltaTilt + rotationCenterTilt, 0, maxRotationTiltAngle) -
             rotationCenterTilt;
 
-        // Math.min doesn't work, because we need to keep the sign of the delta as well.
+        // The deltas are positive, because we filter out the negative values above, hence
+        // Math.min is appropriate, as opposed to using the absolute of the values.
         const clampedDeltaTilt = Math.min(
             clampedDeltaTiltMapTarget,
             clampedDeltaTiltRotationTarget
