@@ -4017,16 +4017,9 @@ export class MapView extends EventDispatcher {
             return true;
         }
 
-        const index = geometry.getIndex()!;
-        if (index === null) {
-            //something went wrong with the geometry
-            logger.error(
-                "Something went wrong with this geometry: ",
-                geometry,
-                " there is no index"
-            );
-            return true;
-        }
+        // ExtrudeBufferGeometry for example doesn't have an index, hence we get the final index
+        // from the number of vertices.
+        const finalIndex = geometry.getIndex()?.count ?? geometry.attributes.position.count;
 
         // clear the groups.
         geometry.clearGroups();
@@ -4065,7 +4058,7 @@ export class MapView extends EventDispatcher {
             }
 
             const start = starts[featureIndex];
-            const end = starts[featureIndex + 1] ?? index.count;
+            const end = starts[featureIndex + 1] ?? finalIndex;
             const count = end - start;
 
             if (start === endOfLastGroup) {
