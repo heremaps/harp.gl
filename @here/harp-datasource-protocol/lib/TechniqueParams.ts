@@ -457,7 +457,7 @@ export interface PointTechniqueParams extends BaseTechniqueParams {
     /**
      * Size of point in pixels.
      */
-    size?: number;
+    size?: DynamicProperty<number>;
     /**
      * Whether to enable picking on these points.
      */
