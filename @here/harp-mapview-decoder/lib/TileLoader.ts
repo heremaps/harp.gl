@@ -29,16 +29,6 @@ const logger = LoggerManager.instance.create("TileLoader");
  */
 export class TileLoader extends BaseTileLoader {
     /**
-     * Current state of `TileLoader`.
-     */
-    state: TileLoaderState = TileLoaderState.Initialized;
-
-    /**
-     * Error object if loading or decoding failed.
-     */
-    error?: Error;
-
-    /**
      * The binary data in form of [[ArrayBufferLike]], or any object.
      */
     payload?: ArrayBufferLike | {};
@@ -49,29 +39,9 @@ export class TileLoader extends BaseTileLoader {
     decodedTile?: DecodedTile;
 
     /**
-     * The abort controller notifying the [[DataProvider]] to cancel loading.
-     */
-    protected loadAbortController = new AbortController();
-
-    /**
      * The  notifying the [[ITileDecoder]] to cancel decoding.
      */
     protected requestController?: RequestController;
-
-    /**
-     * The promise which is resolved when loading and decoding have finished.
-     */
-    protected donePromise?: Promise<TileLoaderState>;
-
-    /**
-     * The internal function that is called when loading and decoding have finished successfully.
-     */
-    protected resolveDonePromise?: (state: TileLoaderState) => void;
-
-    /**
-     * The internal function that is called when loading and decoding failed.
-     */
-    protected rejectedDonePromise?: (state: TileLoaderState) => void;
 
     /**
      * Set up loading of a single [[Tile]].
@@ -176,8 +146,7 @@ export class TileLoader extends BaseTileLoader {
                     return;
                 }
 
-                this.decodedTile = decodedTile;
-                onDone(TileLoaderState.Ready);
+                this.onDecoded(decodedTile, onDone);
             })
             .catch(error => {
                 // Handle abort messages from fetch and also our own.

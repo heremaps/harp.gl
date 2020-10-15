@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DecodedTile } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { LoggerManager } from "@here/harp-utils";
 
@@ -20,33 +19,32 @@ const logger = LoggerManager.instance.create("BaseTileLoader");
 export abstract class BaseTileLoader implements ITileLoader {
     state: TileLoaderState = TileLoaderState.Initialized;
 
+    /**
+     * Error object if loading or decoding failed.
+     */
     error?: Error;
-
-    payload?: ArrayBufferLike | {};
-
-    decodedTile?: DecodedTile;
 
     protected m_priority: number = 0;
 
     /**
      * The abort controller notifying the [[DataProvider]] to cancel loading.
      */
-    protected loadAbortController = new AbortController();
+    private loadAbortController = new AbortController();
 
     /**
      * The promise which is resolved when loading and decoding have finished.
      */
-    protected donePromise?: Promise<TileLoaderState>;
+    private donePromise?: Promise<TileLoaderState>;
 
     /**
      * The internal function that is called when loading and decoding have finished successfully.
      */
-    protected resolveDonePromise?: (state: TileLoaderState) => void;
+    private resolveDonePromise?: (state: TileLoaderState) => void;
 
     /**
      * The internal function that is called when loading and decoding failed.
      */
-    protected rejectedDonePromise?: (state: TileLoaderState) => void;
+    private rejectedDonePromise?: (state: TileLoaderState) => void;
 
     /**
      * Set up loading of a single [[Tile]].
