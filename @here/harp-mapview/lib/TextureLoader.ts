@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import * as THREE from "three";
 
 export interface RequestHeaders {
@@ -19,11 +20,13 @@ export class TextureLoader {
      * Load an image from url and create a texture
      * @param url - URL to the image
      * @param requestHeaders - Optional request headers to load image(e.g. Authorization)
+     * @param abortSignal - Optional AbortSignal to cancel the load.
      * @param crossOrigin - Enable/disable CORS
      */
     async load(
         url: string,
         requestHeaders?: RequestHeaders | undefined,
+        abortSignal?: AbortSignal,
         crossOrigin: boolean = true
     ): Promise<THREE.Texture> {
         // Use THREE.js texture loader directly if no request header is set
@@ -34,6 +37,7 @@ export class TextureLoader {
         // Load image with fetch API if request header is set
         const response = await fetch(url, {
             headers: requestHeaders,
+            signal: abortSignal,
             mode: crossOrigin ? "cors" : "no-cors"
         });
         const blob = await response.blob();

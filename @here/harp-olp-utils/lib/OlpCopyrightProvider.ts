@@ -70,7 +70,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
      * @inheritdoc
      * @override
      */
-    async getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]> {
+    async getCopyrightCoverageData(abortSignal?: AbortSignal): Promise<AreaCopyrightInfo[]> {
         if (this.m_cachedCopyrightResponse !== undefined) {
             return await this.m_cachedCopyrightResponse;
         }
@@ -89,7 +89,8 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
             const partition = await client.getData(
                 new DataRequest()
                     .withPartitionId(this.m_params.partition ?? DEFAULT_PARTITION)
-                    .withVersion(this.m_params.version)
+                    .withVersion(this.m_params.version),
+                abortSignal
             );
             const json = await partition.json();
             this.m_cachedCopyrightResponse = json[this.m_params.baseScheme ?? "normal"];

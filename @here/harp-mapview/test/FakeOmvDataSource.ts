@@ -14,7 +14,8 @@ import {
 } from "@here/harp-geoutils";
 
 import { DataSource, DataSourceOptions } from "../lib/DataSource";
-import { ITileLoader, Tile, TileLoaderState } from "../lib/Tile";
+import { ITileLoader, TileLoaderState } from "../lib/ITileLoader";
+import { Tile } from "../lib/Tile";
 
 export class FakeTileLoader implements ITileLoader {
     state: TileLoaderState = TileLoaderState.Initialized;
@@ -33,10 +34,6 @@ export class FakeTileLoader implements ITileLoader {
 
     waitSettled(): Promise<TileLoaderState> {
         return Promise.resolve(TileLoaderState.Ready);
-    }
-
-    updatePriority(area: number): void {
-        // Not covered with tests yet
     }
 
     cancel(): void {

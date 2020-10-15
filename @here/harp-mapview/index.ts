@@ -13,6 +13,7 @@
  */
 
 export * from "./lib/AnimatedExtrusionHandler";
+export * from "./lib/BaseTileLoader";
 export * from "./lib/BoundsGenerator";
 export * from "./lib/CameraMovementDetector";
 export * from "./lib/ClipPlanesEvaluator";
@@ -33,6 +34,7 @@ export * from "./lib/DepthPrePass";
 export * from "./lib/DisplacementMap";
 export * from "./lib/ElevationProvider";
 export * from "./lib/ElevationRangeSource";
+export * from "./lib/ITileLoader";
 export * from "./lib/image/Image";
 export * from "./lib/image/ImageCache";
 export * from "./lib/image/MapViewImageCache";

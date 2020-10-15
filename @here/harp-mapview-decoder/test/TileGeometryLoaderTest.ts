@@ -10,11 +10,17 @@ import {
     webMercatorProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { DataSource, MapView, Statistics, Tile } from "@here/harp-mapview";
+import {
+    DataSource,
+    ITileLoader,
+    MapView,
+    Statistics,
+    Tile,
+    TileLoaderState
+} from "@here/harp-mapview";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { TileGeometryLoader } from "@here/harp-mapview/lib/geometry/TileGeometryLoader";
 import { TileTaskGroups } from "@here/harp-mapview/lib/MapView";
-import { ITileLoader, TileLoaderState } from "@here/harp-mapview/lib/Tile";
 import { TaskQueue } from "@here/harp-utils";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
@@ -32,7 +38,7 @@ class FakeVisibleTileSet {
 
 class FakeTileLoader implements ITileLoader {
     state: TileLoaderState = TileLoaderState.Ready;
-    isFinished: boolean = false;
+    isFinished: boolean = true;
     priority: number = 0;
 
     loadAndDecode(): Promise<TileLoaderState> {
@@ -41,10 +47,6 @@ class FakeTileLoader implements ITileLoader {
 
     waitSettled(): Promise<TileLoaderState> {
         return new Promise(() => this.state);
-    }
-
-    updatePriority(area: number): void {
-        // do nothing.
     }
 
     cancel(): void {
@@ -143,7 +145,6 @@ describe("TileGeometryLoader", function() {
         });
 
         it("should not start geometry loading for empty tile", async function() {
-            tile.tileLoader!.isFinished = true;
             geometryLoader!.update();
 
             expect(geometryLoader.hasDecodedTile).to.be.false;

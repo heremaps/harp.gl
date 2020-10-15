@@ -55,7 +55,8 @@ describe("WebTileDataSource", function() {
         });
 
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const tile = await webTileDataSource.getTile(tileKey);
+        const tile = webTileDataSource.getTile(tileKey);
+        await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(tile.hasGeometry).to.be.true;
     });
@@ -74,7 +75,8 @@ describe("WebTileDataSource", function() {
         });
 
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const tile = await webTileDataSource.getTile(tileKey);
+        const tile = webTileDataSource.getTile(tileKey);
+        await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(tile.hasGeometry).to.be.true;
     });
@@ -93,7 +95,8 @@ describe("WebTileDataSource", function() {
         });
 
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const tile = await webTileDataSource.getTile(tileKey);
+        const tile = webTileDataSource.getTile(tileKey);
+        await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(tile.disposed).to.be.true;
     });
@@ -110,7 +113,8 @@ describe("WebTileDataSource", function() {
         const creatorSpy = sinon.spy(TileGeometryCreator.instance, "createGroundPlane");
 
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const tile = await webTileDataSource.getTile(tileKey);
+        const tile = webTileDataSource.getTile(tileKey);
+        await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(creatorSpy.called).to.be.true;
         expect((creatorSpy.args[0][1] as THREE.MeshBasicMaterial).opacity).to.equal(0.5);
