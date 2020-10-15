@@ -61,7 +61,7 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
      *
      * @remarks
      * This property is used together with [[Theme.priorities]] to compute the render
-     * order of this mao object.
+     * order of this map object.
      */
     category?: string;
 
