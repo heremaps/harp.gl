@@ -59,13 +59,15 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         geoJson: string | GeoJson;
 
         lookAt?: Partial<LookAtParams>;
+        width?: number;
+        height?: number;
     }
 
     async function geoJsonTest(options: GeoJsoTestOptions) {
         const ibct = new RenderingTestHelper(options.mochaTest, { module: "mapview" });
         const canvas = document.createElement("canvas");
-        canvas.width = 400;
-        canvas.height = 300;
+        canvas.width = options.width ?? 400;
+        canvas.height = options.height ?? 300;
 
         mapView = new MapView({
             canvas,
@@ -103,6 +105,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             styleSetName: "geojson"
         });
 
+        mapView.setDynamicProperty("enabled", true);
         mapView.addDataSource(geoJsonDataSource);
 
         await waitForEvent(mapView, MapViewEventNames.FrameComplete);
@@ -164,6 +167,34 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
+    it("renders japanese flag with enabled as dynamic expression", async function() {
+        this.timeout(50000);
+        const greenStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Point"],
+                technique: "circles",
+                renderOrder: 10000,
+                attr: {
+                    // select the color based on the the value of the dynamic property `correct`.
+                    color: "#BC002D",
+                    // Japanese flag's point is 3/5 the height, 200*0.6==120.
+                    size: 120,
+                    // This causes the bug HARP-12247
+                    enabled: ["get", "enabled", ["dynamic-properties"]]
+                }
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-polygon-fill",
+            theme: { lights, styles: { geojson: greenStyle } },
+            geoJson: "../dist/resources/basic_polygon.json",
+            // Width / Height / Point size to display the Japanese flag
+            width: 300,
+            height: 200
+        });
+    });
     it("renders extruded polygons with height", async function() {
         this.timeout(5000);
 

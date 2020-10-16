@@ -4057,7 +4057,12 @@ export class MapView extends EventDispatcher {
                 return;
             }
 
-            const start = starts[featureIndex];
+            // HARP-12247, geometry with no featureStarts would set start to `undefined`, in this
+            // case, `endOfLastGroup` is also undefined (first execution in this loop), so it would
+            // try to change the count of a group which hasn't yet been added, `addGroup` wasn't yet
+            // called, hence we use the `??` operator and fall back to 0. Because featureStarts are
+            // optional, we need to have a fallback.
+            const start = starts[featureIndex] ?? 0;
             const end = starts[featureIndex + 1] ?? finalIndex;
             const count = end - start;
 

@@ -58,6 +58,16 @@
                     ]
                 ]
             }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "point"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [15.0, 53.2]
+            }
         }
     ]
 }
