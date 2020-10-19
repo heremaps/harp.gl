@@ -384,6 +384,7 @@ export class PolarTileDataSource extends DataSource {
         }
 
         MapObjectAdapter.create(mesh, {
+            dataSource: this,
             technique: techniqueEntry.technique,
             kind: [isNorthPole ? StandardGeometryKind.Water : StandardGeometryKind.Background]
         });

@@ -38,6 +38,7 @@ export function getWebGLRendererStub(sandbox: sinon.SinonSandbox, clearColorStub
         forceContextLoss: () => undefined,
         info: { autoReset: true, reset: () => undefined },
         debug: { checkShaderErrors: true },
-        capabilities: { isWebGL2: false }
+        capabilities: { isWebGL2: false },
+        setOpaqueSort: (sort: any) => undefined
     };
 }
