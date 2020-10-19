@@ -7,14 +7,16 @@
 import { GeometryKind, getPropertyValue, MapEnv, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
+import { DataSource } from "./DataSource";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "./MapMaterialAdapter";
 
 /**
  * @hidden
  *
- * Construction params of [[MapObjectAdapter]].
+ * Construction params of `MapObjectAdapter`.
  */
 export interface MapObjectAdapterParams {
+    dataSource?: DataSource;
     technique?: Technique;
     kind?: GeometryKind[];
     pickable?: boolean;
@@ -28,7 +30,7 @@ export interface MapObjectAdapterParams {
  *
  * {@link MapView} specific data assigned to `THREE.Object3D` instance in installed in `userData`.
  *
- * [[MapObjectAdapter]] is registered in `usedData.mapAdapter` property of `THREE.Object3D`.
+ * `MapObjectAdapter` is registered in `usedData.mapAdapter` property of `THREE.Object3D`.
  */
 export class MapObjectAdapter {
     /**
@@ -70,6 +72,8 @@ export class MapObjectAdapter {
      */
     readonly kind: GeometryKind[] | undefined;
 
+    readonly dataSource?: DataSource;
+
     private readonly m_pickable: boolean;
     private m_lastUpdateFrameNumber = -1;
     private m_notCompletlyTransparent = true;
@@ -78,6 +82,7 @@ export class MapObjectAdapter {
         this.object = object;
         this.technique = params.technique;
         this.kind = params.kind;
+        this.dataSource = params.dataSource;
         this.m_pickable = params.pickable ?? true;
         this.m_notCompletlyTransparent = this.getObjectMaterials().some(
             material => material.opacity > 0

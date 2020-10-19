@@ -171,6 +171,18 @@ export abstract class DataSource extends THREE.EventDispatcher {
     enablePicking: boolean = true;
 
     /**
+     * Overrides the default rendering order of this `DataSource`.
+     *
+     * @remarks
+     * When `dataSourceOrder` is defined, all the objects created by this `DataSource`
+     * will be rendered on top of the objects created by other `DataSource`s with
+     * lower `dataSourceOrder` values.
+     *
+     * @defaultValue undefined
+     */
+    dataSourceOrder?: number;
+
+    /**
      * @internal
      * @hidden
      */
