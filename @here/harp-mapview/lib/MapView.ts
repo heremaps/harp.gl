@@ -36,7 +36,6 @@ import {
     Vector3Like
 } from "@here/harp-geoutils";
 import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
-import { SolidLineMaterial } from "@here/harp-materials";
 import {
     assert,
     getOptionValue,
@@ -62,6 +61,7 @@ import { ElevationRangeSource } from "./ElevationRangeSource";
 import { EventDispatcher } from "./EventDispatcher";
 import { FrustumIntersection } from "./FrustumIntersection";
 import { overlayOnElevation } from "./geometry/overlayOnElevation";
+import { SolidLineMesh } from "./geometry/SolidLineMesh";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { IntersectParams } from "./IntersectParams";
@@ -3885,11 +3885,7 @@ export class MapView extends EventDispatcher {
                     continue;
                 }
 
-                // TODO: acquire a new style value of if transparent
-                const material: SolidLineMaterial | undefined = (object as any).material;
-                if (object.renderOrder !== undefined && material instanceof SolidLineMaterial) {
-                    material.stencilRef = this.getStencilValue(object.renderOrder);
-                }
+                this.updateStencilRef(object);
 
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
@@ -3906,6 +3902,20 @@ export class MapView extends EventDispatcher {
                 this.m_sceneRoot.add(object);
             }
             tile.didRender();
+        }
+    }
+
+    private updateStencilRef(object: TileObject) {
+        // TODO: acquire a new style value of if transparent
+        if (object.renderOrder !== undefined && object instanceof SolidLineMesh) {
+            const material = object.material;
+            if (Array.isArray(material)) {
+                material.forEach(
+                    mat => (mat.stencilRef = this.getStencilValue(object.renderOrder))
+                );
+            } else {
+                material.stencilRef = this.getStencilValue(object.renderOrder);
+            }
         }
     }
 
