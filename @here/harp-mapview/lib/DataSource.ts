@@ -101,6 +101,12 @@ export interface DataSourceOptions {
      * @default `0`.
      */
     minGeometryHeight?: number;
+
+    /**
+     * Number used to order [DataSource]'s relative to each other, see
+     * {@link DataSource.dataSourceOrder}
+     */
+    dataSourceOrder?: number;
 }
 
 /**
@@ -180,7 +186,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * @defaultValue undefined
      */
-    dataSourceOrder?: number;
+    dataSourceOrder: number = 0;
 
     /**
      * @internal
@@ -235,7 +241,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
             allowOverlappingTiles,
             enablePicking,
             minGeometryHeight,
-            maxGeometryHeight
+            maxGeometryHeight,
+            dataSourceOrder
         } = options;
         if (name === undefined || name.length === 0) {
             name = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
@@ -278,6 +285,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
         }
         if (maxGeometryHeight !== undefined) {
             this.maxGeometryHeight = maxGeometryHeight;
+        }
+        if (dataSourceOrder) {
+            this.dataSourceOrder = dataSourceOrder;
         }
     }
 

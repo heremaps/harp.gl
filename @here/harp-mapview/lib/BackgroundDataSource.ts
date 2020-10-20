@@ -15,6 +15,7 @@ import { Tile } from "./Tile";
  * Provides background geometry for all tiles.
  */
 export class BackgroundDataSource extends DataSource {
+    static readonly GROUND_RENDER_ORDER = Number.MIN_SAFE_INTEGER;
     private static readonly DEFAULT_TILING_SCHEME = webMercatorTilingScheme;
     private m_tilingScheme: TilingScheme = BackgroundDataSource.DEFAULT_TILING_SCHEME;
 
@@ -76,7 +77,7 @@ export class BackgroundDataSource extends DataSource {
     getTile(tileKey: TileKey): Tile | undefined {
         const tile = new Tile(this, tileKey);
         tile.forceHasGeometry(true);
-        TileGeometryCreator.instance.addGroundPlane(tile, Number.MIN_SAFE_INTEGER);
+        TileGeometryCreator.instance.addGroundPlane(tile, BackgroundDataSource.GROUND_RENDER_ORDER);
 
         return tile;
     }
