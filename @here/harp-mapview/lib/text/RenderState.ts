@@ -162,13 +162,17 @@ export class RenderState {
 
     /**
      * Updates the state to [[FadingState.FadingOut]].
-     * If previous state is [[FadingState.FadingOut]] or [[FadingState.FadedOut]] it remains
-     * unchanged.
+     * If previous state is [[FadingState.FadingOut]], [[FadingState.FadedOut]] or
+     * [[FadingState.Undefined]] it remains unchanged.
      *
      * @param time - Current time.
      */
     startFadeOut(time: number) {
-        if (this.m_state === FadingState.FadingOut || this.m_state === FadingState.FadedOut) {
+        if (
+            this.m_state === FadingState.FadingOut ||
+            this.m_state === FadingState.FadedOut ||
+            this.m_state === FadingState.Undefined
+        ) {
             return;
         }
 

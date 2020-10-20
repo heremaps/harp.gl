@@ -238,14 +238,15 @@ describe("RenderState", function() {
             const renderState = new RenderState();
             renderState.startFadeOut(100);
 
-            expect(renderState.isFadingOut()).to.be.true;
-            expect(renderState.startTime).to.equal(100);
+            expect(renderState.isFadingOut()).to.be.false;
+            expect(renderState.startTime).to.equal(0);
             expect(renderState.value).to.equal(0.0);
             expect(renderState.opacity).to.equal(1.0);
         });
 
         it("does not change an already fading out state", function() {
             const renderState = new RenderState();
+            renderState.startFadeIn(100, true);
             renderState.startFadeOut(100);
             renderState.startFadeOut(200);
 
@@ -377,6 +378,7 @@ describe("RenderState", function() {
 
         it("updates fading out states", function() {
             const renderState = new RenderState();
+            renderState.startFadeIn(100, false);
             renderState.startFadeOut(100);
             renderState.updateFading(200, false);
 
@@ -388,6 +390,7 @@ describe("RenderState", function() {
 
         it("switches to faded out after fading time passed", function() {
             const renderState = new RenderState();
+            renderState.startFadeIn(100, false);
             renderState.startFadeOut(100);
             renderState.updateFading(100 + DEFAULT_FADE_TIME, false);
 
@@ -399,6 +402,7 @@ describe("RenderState", function() {
 
         it("skips fading out when fading is disabled", function() {
             const renderState = new RenderState();
+            renderState.startFadeIn(100, false);
             renderState.startFadeOut(100);
             renderState.updateFading(200, true);
 
