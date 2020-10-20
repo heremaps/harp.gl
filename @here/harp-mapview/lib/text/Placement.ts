@@ -348,7 +348,6 @@ const tmpCollisionBox = new CollisionBox();
 const tmpScreenPosition = new THREE.Vector2();
 const tmpTextOffset = new THREE.Vector2();
 const tmp2DBox = new Math2D.Box();
-const tmp2DBox2 = new Math2D.Box();
 const tmpCenter = new THREE.Vector2();
 const tmpSize = new THREE.Vector2();
 
@@ -710,9 +709,6 @@ function placePointLabelAtAnchor(
         return PlacementResult.Invisible;
     }
 
-    // Save original bounds for visibility check
-    tmp2DBox2.copy(tmp2DBox);
-
     if (measureText) {
         // Up-scaled label bounds are used only for new labels and only for collision check, this
         // is intentional to avoid processing labels out of the screen due to increased bounds,
@@ -734,32 +730,27 @@ function placePointLabelAtAnchor(
         return PlacementResult.Rejected;
     }
 
-    // Visibility check with non-enlarged bounds
-    if (screenCollisions.isVisible(tmp2DBox2)) {
-        // Don't allocate space for rejected text. When zooming, this allows placement of a
-        // lower priority text element that was displaced by a higher priority one (not
-        // present in the new zoom level) before an even lower priority one takes the space.
-        // Otherwise the lowest priority text will fade in and back out.
-        // TODO: Add a unit test for this scenario.
-        if (label.textReservesSpace) {
-            screenCollisions.allocate(tmp2DBox);
-        }
-
-        // Glyphs arrangement have been changed remove text buffer object which needs to be
-        // re-created.
-        if (measureText) {
-            label.textBufferObject = undefined;
-        }
-
-        // Save current placement in label state.
-        // TextElementState creates layout snapshot solely for alternative placements which saves
-        // memory that could be wasted on unnecessary objects construction.
-        labelState.textPlacement = placement;
-
-        return PlacementResult.Ok;
+    // Don't allocate space for rejected text. When zooming, this allows placement of a
+    // lower priority text element that was displaced by a higher priority one (not
+    // present in the new zoom level) before an even lower priority one takes the space.
+    // Otherwise the lowest priority text will fade in and back out.
+    // TODO: Add a unit test for this scenario.
+    if (label.textReservesSpace) {
+        screenCollisions.allocate(tmp2DBox);
     }
 
-    return PlacementResult.Invisible;
+    // Glyphs arrangement have been changed remove text buffer object which needs to be
+    // re-created.
+    if (measureText) {
+        label.textBufferObject = undefined;
+    }
+
+    // Save current placement in label state.
+    // TextElementState creates layout snapshot solely for alternative placements which saves
+    // memory that could be wasted on unnecessary objects construction.
+    labelState.textPlacement = placement;
+
+    return PlacementResult.Ok;
 }
 
 /**
