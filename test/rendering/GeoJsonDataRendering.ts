@@ -59,15 +59,13 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         geoJson: string | GeoJson;
 
         lookAt?: Partial<LookAtParams>;
-        width?: number;
-        height?: number;
     }
 
     async function geoJsonTest(options: GeoJsoTestOptions) {
         const ibct = new RenderingTestHelper(options.mochaTest, { module: "mapview" });
         const canvas = document.createElement("canvas");
-        canvas.width = options.width ?? 400;
-        canvas.height = options.height ?? 300;
+        canvas.width = 400;
+        canvas.height = 300;
 
         mapView = new MapView({
             canvas,
@@ -177,8 +175,6 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 attr: {
                     // select the color based on the the value of the dynamic property `correct`.
                     color: "#BC002D",
-                    // Japanese flag's point is 3/5 the height, 200*0.6==120.
-                    size: 120,
                     // This causes the bug HARP-12247
                     enabled: ["get", "enabled", ["dynamic-properties"]]
                 }
@@ -187,12 +183,9 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
         await geoJsonTest({
             mochaTest: this,
-            testImageName: "geojson-polygon-fill",
+            testImageName: "geojson-point-enabled-as-dynamic-expression",
             theme: { lights, styles: { geojson: greenStyle } },
-            geoJson: "../dist/resources/basic_polygon.json",
-            // Width / Height / Point size to display the Japanese flag
-            width: 300,
-            height: 200
+            geoJson: "../dist/resources/basic_polygon.json"
         });
     });
     it("renders extruded polygons with height", async function() {
