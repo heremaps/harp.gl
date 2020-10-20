@@ -43,7 +43,7 @@ export class RenderState {
     /**
      * Computed opacity depending on value.
      */
-    opacity: number = 1.0;
+    opacity: number = 0.0;
 
     private m_state = FadingState.Undefined;
 
@@ -61,7 +61,7 @@ export class RenderState {
         this.m_state = FadingState.Undefined;
         this.value = 0.0;
         this.startTime = 0.0;
-        this.opacity = 1.0;
+        this.opacity = 0.0;
     }
 
     /**
