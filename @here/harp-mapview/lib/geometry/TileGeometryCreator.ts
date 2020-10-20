@@ -99,7 +99,6 @@ import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { Tile, TileFeatureData } from "../Tile";
-import { FALLBACK_RENDER_ORDER_OFFSET } from "../TileObjectsRenderer";
 import { LodMesh } from "./LodMesh";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
@@ -324,15 +323,10 @@ export class TileGeometryCreator {
 
         // HARP-7899, disable ground plane for globe
         if (tile.dataSource.addGroundPlane && tile.projection.type === ProjectionType.Planar) {
-            // The ground plane is required for when we change the zoom back and we fall back to the
-            // parent, in that case we reduce the renderOrder of the parent tile and this ground
-            // place ensures that parent doesn't come through. This value must be above the
-            // renderOrder of all objects in the fallback tile, otherwise there won't be a proper
-            // covering of the parent tile by the children, hence dividing by 2. To put a bit more
-            // concretely, we assume all objects are rendered with a renderOrder between 0 and
-            // FALLBACK_RENDER_ORDER_OFFSET / 2, i.e. 10000. The ground plane is put at -10000, and
-            // the fallback tiles have their renderOrder set between -20000 and -10000
-            TileGeometryCreator.instance.addGroundPlane(tile, -FALLBACK_RENDER_ORDER_OFFSET / 2);
+            // The ground plane is required for when we zoom in and we fall back to the parent
+            // (whilst the new tiles are loading), in that case the ground plane ensures that the
+            // parent's geometry doesn't show through.
+            TileGeometryCreator.instance.addGroundPlane(tile, -1);
         }
     }
 
@@ -420,6 +414,7 @@ export class TileGeometryCreator {
         MapObjectAdapter.create(object, {
             dataSource: tile.dataSource,
             kind,
+            level: tile.tileKey.level,
             ...mapAdapterParams
         });
 

@@ -77,19 +77,6 @@ import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "
 
 declare const process: any;
 
-/*
- * Interface to represent the items of three.js render lists.
- */
-interface RenderItem {
-    groupOrder: number;
-    renderOrder: number;
-    program: { id: number };
-    material: { id: number };
-    z: number;
-    id: number;
-    object: THREE.Object3D;
-}
-
 // Cache value, because access to process.env.NODE_ENV is SLOW!
 const isProduction = process.env.NODE_ENV === "production";
 if (isProduction) {
@@ -1069,7 +1056,8 @@ export class MapView extends EventDispatcher {
         // correct rendering data from ThreeJS.
         this.m_renderer.info.autoReset = false;
 
-        this.setupRenderer();
+        this.m_tileObjectRenderer = new TileObjectRenderer(this.m_env, this.m_renderer);
+        this.setupRenderer(this.m_tileObjectRenderer);
 
         this.m_options.fovCalculation =
             this.m_options.fovCalculation === undefined
@@ -1102,7 +1090,6 @@ export class MapView extends EventDispatcher {
         // setup camera with initial position
         this.setupCamera();
 
-        this.m_tileObjectRenderer = new TileObjectRenderer(this.m_env);
         this.m_raycaster = new PickingRaycaster(width, height, this.m_env);
 
         this.m_movementDetector = new CameraMovementDetector(
@@ -3868,40 +3855,13 @@ export class MapView extends EventDispatcher {
         new PerformanceStatistics(enable, 1000);
     }
 
-    private setupRenderer() {
+    private setupRenderer(tileObjectRenderer: TileObjectRenderer) {
         this.m_scene.add(this.m_sceneRoot);
         this.m_overlayScene.add(this.m_overlaySceneRoot);
 
         this.shadowsEnabled = this.m_options.enableShadows ?? false;
 
-        const painterSortStable = (a: RenderItem, b: RenderItem): number => {
-            const dataSourceOrder = MapObjectAdapter.get(a.object)?.dataSource?.dataSourceOrder;
-
-            const otherDataSourceOrder = MapObjectAdapter.get(b.object)?.dataSource
-                ?.dataSourceOrder;
-
-            if (
-                dataSourceOrder !== undefined &&
-                otherDataSourceOrder !== undefined &&
-                dataSourceOrder !== otherDataSourceOrder
-            ) {
-                return dataSourceOrder - otherDataSourceOrder;
-            } else if (a.groupOrder !== b.groupOrder) {
-                return a.groupOrder - b.groupOrder;
-            } else if (a.renderOrder !== b.renderOrder) {
-                return a.renderOrder - b.renderOrder;
-            } else if (a.program !== b.program) {
-                return a.program.id - b.program.id;
-            } else if (a.material.id !== b.material.id) {
-                return a.material.id - b.material.id;
-            } else if (a.z !== b.z) {
-                return a.z - b.z;
-            } else {
-                return a.id - b.id;
-            }
-        };
-
-        this.m_renderer.setOpaqueSort(painterSortStable);
+        tileObjectRenderer.setupRenderer();
     }
 
     private createTextRenderer(theme: Theme = {}): TextElementsRenderer {

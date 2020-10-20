@@ -35,14 +35,6 @@ export type TileObject = THREE.Object3D & {
      * Distance of this object from the {@link Tile}'s center.
      */
     displacement?: THREE.Vector3;
-
-    /**
-     * This stores the THREE.Object3D renderOrder property, we need to back it up because we need to
-     * reduce it if the tile is used as fall back. When it is used normally, the renderOrder needs
-     * to be reset.
-     * @hidden
-     */
-    _backupRenderOrder?: number;
 };
 
 interface DisposableObject {

@@ -168,8 +168,8 @@ describe("MapView + WebTileData rendering test", function() {
 
         const runBeforeFinish = async function() {
             const webTileDataSource = new WebTileDataSource({
+                dataSourceOrder: 2000,
                 renderingOptions: {
-                    renderOrder: 2000,
                     transparent: true
                 },
                 minDataLevel: 3,
@@ -187,9 +187,7 @@ describe("MapView + WebTileData rendering test", function() {
             await mapView.addDataSource(webTileDataSource);
 
             const webTileDataSourcePavement = new WebTileDataSource({
-                renderingOptions: {
-                    renderOrder: 500
-                },
+                dataSourceOrder: 0,
                 dataProvider: {
                     getTexture: (tile: Tile) => {
                         return Promise.all([
@@ -215,9 +213,9 @@ describe("MapView + WebTileData rendering test", function() {
             },
             webTileOptions: {
                 renderingOptions: {
-                    opacity: 0.5,
-                    renderOrder: 1000
+                    opacity: 0.5
                 },
+                dataSourceOrder: 1000,
                 name: "webtile-clover"
             },
             runBeforeFinish

@@ -107,7 +107,6 @@ export class WebTileDataSource extends DataSource {
         this.m_transparent =
             this.m_options.renderingOptions?.transparent === true || this.m_opacity < 1;
         this.m_renderOrder = this.m_options.renderingOptions?.renderOrder ?? 0;
-
         this.m_resolution = getOptionValue(
             m_options.resolution,
             WebTileDataSource.resolutionValue.resolution512
