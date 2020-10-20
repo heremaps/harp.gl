@@ -1628,6 +1628,9 @@ export class TextElementsRenderer {
             );
             iconInvisible = result === PlacementResult.Invisible;
             iconRejected = result === PlacementResult.Rejected;
+            if (iconInvisible) {
+                iconRenderState.reset();
+            }
         } else if (renderIcon && poiInfo!.isValid !== false) {
             // Ensure that text elements still loading icons get a chance to be rendered if
             // there are no text element updates in the next frames.
@@ -1657,7 +1660,8 @@ export class TextElementsRenderer {
                 tempPosition,
                 iconIndex === undefined
             );
-            if (placeResult === PlacementResult.Invisible) {
+            const textInvisible = placeResult === PlacementResult.Invisible;
+            if (textInvisible) {
                 if (placementStats) {
                     placementStats.numPoiTextsInvisible++;
                 }
@@ -1665,6 +1669,7 @@ export class TextElementsRenderer {
                     labelState.reset();
                     return false;
                 }
+                textRenderState!.reset();
             }
 
             const textRejected = placeResult === PlacementResult.Rejected;
@@ -1679,8 +1684,9 @@ export class TextElementsRenderer {
             }
 
             const textNeedsDraw =
-                (!textRejected && shouldRenderPoiText(labelState, this.m_viewState)) ||
-                textRenderState!.isFading();
+                !textInvisible &&
+                ((!textRejected && shouldRenderPoiText(labelState, this.m_viewState)) ||
+                    textRenderState!.isFading());
 
             if (textNeedsDraw) {
                 if (!textRejected) {
@@ -1705,13 +1711,7 @@ export class TextElementsRenderer {
         // ... and render the icon (if any).
         if (iconReady && !iconInvisible) {
             if (iconRejected) {
-                if (iconRenderState.isVisible()) {
-                    iconRenderState.startFadeOut(renderParams.time);
-                } else if (!iconRenderState.isFadingOut()) {
-                    // Reset the icon and keep it from popping up before fading in.
-                    iconRenderState.reset();
-                    iconRenderState.opacity = 0;
-                }
+                iconRenderState.startFadeOut(renderParams.time);
             } else {
                 iconRenderState!.startFadeIn(renderParams.time, this.m_options.disableFading);
             }

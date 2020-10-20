@@ -454,7 +454,6 @@ export function placePointLabel(
             textCanvas,
             env,
             screenCollisions,
-            isRejected,
             outScreenPosition
         );
     }
@@ -536,7 +535,6 @@ function placePointLabelChoosingAnchor(
             textCanvas,
             env,
             screenCollisions,
-            false,
             !isLastPlacement,
             outScreenPosition
         );
@@ -609,7 +607,6 @@ function placePointLabelAtCurrentAnchor(
     textCanvas: TextCanvas,
     env: Env,
     screenCollisions: ScreenCollisions,
-    isRejected: boolean,
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
     assert(labelState.element.layoutStyle !== undefined);
@@ -624,7 +621,6 @@ function placePointLabelAtCurrentAnchor(
         textCanvas,
         env,
         screenCollisions,
-        isRejected,
         !labelState.visible,
         outScreenPosition
     );
@@ -663,7 +659,6 @@ function placePointLabelAtAnchor(
     textCanvas: TextCanvas,
     env: Env,
     screenCollisions: ScreenCollisions,
-    isRejected: boolean,
     forceInvalidation: boolean,
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
@@ -696,11 +691,6 @@ function placePointLabelAtAnchor(
     // Update output screen position.
     outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
 
-    // Check if icon's label was already rejected.
-    if (isRejected) {
-        return PlacementResult.Rejected;
-    }
-
     tmpBox.copy(label.bounds!);
     // Apply additional persistent margin, keep in mind that text bounds just calculated
     // are not (0, 0, w, h) based, so their coords usually are also non-zero.
@@ -713,6 +703,12 @@ function placePointLabelAtAnchor(
 
     tmpSize.multiplyScalar(scale);
     tmp2DBox.set(tmpCenter.x - tmpSize.x / 2, tmpCenter.y - tmpSize.y / 2, tmpSize.x, tmpSize.y);
+
+    // Check the text visibility if invisible finish immediately
+    // regardless of the persistence state - no fading required.
+    if (!screenCollisions.isVisible(tmp2DBox)) {
+        return PlacementResult.Invisible;
+    }
 
     // Save original bounds for visibility check
     tmp2DBox2.copy(tmp2DBox);
