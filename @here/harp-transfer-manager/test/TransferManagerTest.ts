@@ -58,19 +58,14 @@ describe("TransferManager", function() {
         // Act
         const downloadResponse = downloadMgr.download(fakeDataUrl);
 
-        const resp = await downloadResponse.then(response => {
-            return response;
+        await downloadResponse.catch(err => {
+            expect(err.message).contains("Max number of retries reached");
         });
-
-        const data = await resp.json();
 
         // Assert
         assert(fetchStub.called);
-        assert(fetchStub.callCount === 1);
+        assert(fetchStub.callCount === 5);
         assert(fetchStub.getCall(0).args[0] === fakeDataUrl);
-        assert.isFalse(resp.ok);
-        assert.equal(resp.status, 404);
-        assert.deepEqual(data, { version: "4" });
     });
 
     it("#downloadJson handles HTTP 503 status response with max retries", async function() {

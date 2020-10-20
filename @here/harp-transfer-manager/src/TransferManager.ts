@@ -13,6 +13,7 @@
 import "@here/harp-fetch";
 
 import { DeferredPromise } from "./DeferredPromise";
+import { LoggerManager } from "@here/harp-utils";
 
 /**
  * Abstract interface for a transfer manager.
@@ -76,6 +77,8 @@ export class TransferManager implements ITransferManager {
         return TransferManager.defaultInstance;
     }
 
+    private static readonly logger = LoggerManager.instance.create("MapView");
+
     private static readonly defaultInstance = new TransferManager();
     private static async fetchRepeatedly(
         fetchFunction: typeof fetch,
@@ -87,8 +90,13 @@ export class TransferManager implements ITransferManager {
         try {
             if (retryCount < maxRetries) {
                 const response = await fetchFunction(url, init);
-                if (response.status !== 503) {
+                if (response.ok) {
                     return response;
+                } else {
+                    this.logger.warn(
+                        `Fetch failed with code: ${response.status} attempt number: ${retryCount +
+                            1} of ${maxRetries}`
+                    );
                 }
             } else {
                 throw new Error("Max number of retries reached");
