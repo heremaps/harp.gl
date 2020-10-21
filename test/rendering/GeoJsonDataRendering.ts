@@ -172,12 +172,11 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 when: ["==", ["geometry-type"], "Point"],
                 technique: "circles",
                 renderOrder: 10000,
-                attr: {
-                    // select the color based on the the value of the dynamic property `correct`.
-                    color: "#BC002D",
-                    // This causes the bug HARP-12247
-                    enabled: ["get", "enabled", ["dynamic-properties"]]
-                }
+                // select the color based on the the value of the dynamic property `correct`.
+                color: "#BC002D",
+                // This causes the bug HARP-12247
+                enabled: ["get", "enabled", ["dynamic-properties"]],
+                size: 150
             }
         ];
 
