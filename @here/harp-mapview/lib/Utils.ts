@@ -346,16 +346,14 @@ export namespace MapViewUtils {
         }
 
         // This is used to find the max tilt angle, because the difference in normals is needed
-        // to correct the triangle used to find the max tilt angle at the rotation center, please
-        // read the comment above `maxTilt` below to understand why this is just an approximation.
+        // to correct the triangle used to find the max tilt angle at the rotation center.
         let angleBetweenNormals = 0;
         if (projection === sphereProjection) {
-            const rotationTargetNormal = projection.surfaceNormal(
-                rotationTargetWorld,
-                cache.vector3[0]
-            );
+            const projectedRotationTargetNormal = projection
+                .surfaceNormal(rotationTargetWorld, cache.vector3[0])
+                .projectOnPlane(tiltAxis);
             const mapTargetNormal = projection.surfaceNormal(mapTargetWorld, cache.vector3[1]);
-            angleBetweenNormals = rotationTargetNormal.angleTo(mapTargetNormal);
+            angleBetweenNormals = projectedRotationTargetNormal.angleTo(mapTargetNormal);
         }
 
         const ninetyRad = THREE.MathUtils.degToRad(90);
@@ -390,8 +388,12 @@ export namespace MapViewUtils {
             ninetyRad * 2 - angleBetweenRotationTargetAndMapTarget - ninetyRad - maxTiltAngle;
 
         // Converting the `maxRotationTargetAngle` back to a tilt is as easy as subtracting it from
-        // 90 and the `angleBetweenNormals`, i.e. this gives us the maximum allowed tilt at R
-        // that satisfies the `maxTiltAngle` constraint.
+        // 90 and the `angleBetweenNormals`, i.e. this gives us the maximum allowed tilt at R that
+        // satisfies the `maxTiltAngle` constraint. Note, for globe projection, this is just an
+        // approximation, because once we move the camera by delta, the map target changes, and
+        // therefore the normal also changes, this would need to be applied iteratively until the
+        // difference in normals is reduced to some epsilon. I don't apply this because it is
+        // computationally expensive and the user would never notice this in practice.
         const maxTilt = ninetyRad + angleBetweenNormals - maxRotationTargetAngle;
 
         // Here we clamp to the min of `maxTilt` and 89 degrees. The check for 89 is to prevent it
