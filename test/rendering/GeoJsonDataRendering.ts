@@ -103,6 +103,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             styleSetName: "geojson"
         });
 
+        mapView.setDynamicProperty("enabled", true);
         mapView.addDataSource(geoJsonDataSource);
 
         await waitForEvent(mapView, MapViewEventNames.FrameComplete);
@@ -164,6 +165,28 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
+    it("renders japanese flag with enabled as dynamic expression", async function() {
+        this.timeout(50000);
+        const greenStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Point"],
+                technique: "circles",
+                renderOrder: 10000,
+                // select the color based on the the value of the dynamic property `correct`.
+                color: "#BC002D",
+                // This causes the bug HARP-12247
+                enabled: ["get", "enabled", ["dynamic-properties"]],
+                size: 150
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-point-enabled-as-dynamic-expression",
+            theme: { lights, styles: { geojson: greenStyle } },
+            geoJson: "../dist/resources/basic_polygon.json"
+        });
+    });
     it("renders extruded polygons with height", async function() {
         this.timeout(5000);
 
