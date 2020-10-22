@@ -1240,16 +1240,16 @@ export class VisibleTileSet {
         const dataSourceCache = this.m_dataSourceCache;
         const retainedTiles: Set<TileCacheId> = new Set();
 
-        function markTileDirty(tile: Tile) {
+        const markTileDirty = (tile: Tile) => {
             const tileKey = DataSourceCache.getKeyForTile(tile);
             if (!retainedTiles.has(tileKey)) {
                 retainedTiles.add(tileKey);
                 // Prevent label rendering issues when the style set is changing. Prevent Text
                 // element rendering that depends on cleaned font catalog data.
                 tile.clearTextElements();
-                tile.load();
+                this.addToTaskQueue(tile);
             }
-        }
+        };
 
         renderListEntry.visibleTiles.forEach(tile => {
             if (filter === undefined || filter(tile)) {

@@ -2954,6 +2954,7 @@ export class MapView extends EventDispatcher {
      */
     markTilesDirty(dataSource?: DataSource, filter?: (tile: Tile) => boolean) {
         this.m_visibleTiles.markTilesDirty(dataSource, filter);
+        this.update();
     }
 
     /**
