@@ -254,9 +254,10 @@ describe("MapViewUtils", function() {
                         mapTargetWorldNew!
                     );
                     if (projection === sphereProjection) {
-                        // Please read the comments in orbitAroundScreenPoint for why this is
-                        // difficult to compute accurately on globe.
-                        expect(afterTilt).to.be.lte(tiltLimit);
+                        if (afterTilt > tiltLimit) {
+                            // If greater, then only within EPS, otherwise it should be less.
+                            expect(afterTilt).to.be.closeTo(tiltLimit, EPS);
+                        }
                     } else {
                         // Use a custom EPS, Number.Epsilon is too strict for such maths
                         expect(afterTilt).to.be.closeTo(tiltLimit, EPS);

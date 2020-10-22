@@ -351,57 +351,53 @@ export namespace MapViewUtils {
         if (projection === sphereProjection) {
             const projectedRotationTargetNormal = projection
                 .surfaceNormal(rotationTargetWorld, cache.vector3[0])
-                .projectOnPlane(tiltAxis);
+                .projectOnPlane(tiltAxis)
+                .normalize();
             const mapTargetNormal = projection.surfaceNormal(mapTargetWorld, cache.vector3[1]);
             angleBetweenNormals = projectedRotationTargetNormal.angleTo(mapTargetNormal);
         }
 
         const ninetyRad = THREE.MathUtils.degToRad(90);
+
         // The following terminology will be used:
-        // Ta = Tilt axis, tilting is achieved by rotating the camera around this point.
+        // Ta = Tilt axis, tilting is achieved by rotating the camera around this direction.
         // R = rotation target, i.e. the point about which we are rotating: `rotationTargetWorld`
-        // Rp = rotation target projected on to the plane defined with normal as the tilt axis.
+        // Rp = rotation target projected on to Ta
         // C = camera position
-        // M = map target, i.e. the point which the camera is looking at: `mapTargetWorld`
+        // M = map target, i.e. the point which the camera is looking at at the NDC coordinates 0,0
+
         // Note, the points Rp, C, and M create a plane that is perpendicular to the earths surface,
-        // because the tilt axis is perpendicular to the up vector.
-        // The following variable `angleBetweenRotationTargetAndMapTarget` is the angle between the
-        // two rays C->Rp and C->M, i.e. the angle RpCM. This angle remains constant when tilting with
-        // a fixed `offsetX` and `offsetY`. It is calculated by using the intersection of the two
-        // ways with the earth. Where:
-        // MRpC is 90 + `angleBetweenNormals` - tilt at Rp.
-        // CMRp is 90 + `tilt`
-        // RpCM is 180 - CRpM - RpMC, aka `angleBetweenRotationTargetAndMapTarget`
+        // because the tilt axis is perpendicular to the up vector. The following variable `RpCM` is
+        // the angle between the two rays C->Rp and C->M. This angle remains constant when tilting
+        // with a fixed `offsetX` and `offsetY`. It is calculated by using the intersection of the
+        // two rays with the earth.
+
         // Note the use of `angleBetweenNormals` to ensure this works for spherical projections.
-        // Note, also, the above calculation only works when the tilt at the M is less than the tilt
+        // Note, this calculation only works when the tilt at M is less than the tilt
         // at Rp, otherwise the above formula won't work. We however don't need to worry about this
         // case because this happens only when offsetY is less than zero, and this is handled above.
-        const angleBetweenRotationTargetAndMapTarget =
-            ninetyRad * 2 -
-            (ninetyRad + angleBetweenNormals - rotationCenterTilt + ninetyRad + tilt);
+        const MRpC = ninetyRad + angleBetweenNormals - rotationCenterTilt;
+        const CMRp = ninetyRad + tilt;
+        const RpCM = ninetyRad * 2 - (MRpC + CMRp);
 
-        // This uses the same formula as above, just we change `tilt` to the maxTiltAngle,
-        // i.e we want to find the greatest angle at the rotation target that gives us the max
+        // We want to find the greatest angle at the rotation target that gives us the max
         // angle at the map center target.
-        // i.e. CMR is 90 + `maxTiltAngle`
-        const maxRotationTargetAngle =
-            ninetyRad * 2 - angleBetweenRotationTargetAndMapTarget - ninetyRad - maxTiltAngle;
+        const CMRpMaxTilt = ninetyRad * 2 - RpCM - ninetyRad - maxTiltAngle;
 
-        // Converting the `maxRotationTargetAngle` back to a tilt is as easy as subtracting it from
-        // 90 and the `angleBetweenNormals`, i.e. this gives us the maximum allowed tilt at R that
-        // satisfies the `maxTiltAngle` constraint. Note, for globe projection, this is just an
-        // approximation, because once we move the camera by delta, the map target changes, and
-        // therefore the normal also changes, this would need to be applied iteratively until the
-        // difference in normals is reduced to some epsilon. I don't apply this because it is
-        // computationally expensive and the user would never notice this in practice.
-        const maxTilt = ninetyRad + angleBetweenNormals - maxRotationTargetAngle;
+        // Converting the `MRpC` back to a tilt is as easy as subtracting it from 90 and the
+        // `angleBetweenNormals`, i.e. this gives us the maximum allowed tilt at R that satisfies
+        // the `maxTiltAngle` constraint. Note, for globe projection, this is just an approximation,
+        // because once we move the camera by delta, the map target changes, and therefore the
+        // normal also changes, this would need to be applied iteratively until the difference in
+        // normals is reduced to some epsilon. I don't apply this because it is computationally
+        // expensive and the user would never notice this in practice.
+        const maxTilt = ninetyRad + angleBetweenNormals - CMRpMaxTilt;
 
         // Here we clamp to the min of `maxTilt` and 89 degrees. The check for 89 is to prevent it
         // intersecting with the world at 90. This is possible for example when the R position is
         // near the horizon. If the angle RCM is say 5 degrees, then an angle of say 89 degrees at
-        // R, plus 5 degrees means the tilt at M would be 84 degrees. If the `maxTiltAngle` is
-        // however 89, then we still have 5 degrees at M, so, without this check, we would go to 90
-        // degrees.
+        // R, plus 5 degrees means the tilt at M would be 84 degrees, so the camera can reach 90
+        // from the point R whilst the tilt to M never reaches the `maxTiltAngle`
         const clampedDeltaTilt =
             MathUtils.clamp(
                 deltaTilt + rotationCenterTilt,
@@ -1481,6 +1477,7 @@ export namespace MapViewUtils {
         const dirVec = cache.vector3[2].copy(object.position).sub(cache.vector3[0]);
         if (tiltAxis) {
             dirVec.projectOnPlane(tiltAxis);
+            tangentSpace.z.projectOnPlane(tiltAxis).normalize();
         }
         const dirLen = dirVec.length();
         if (dirLen < epsilon) {
