@@ -92,7 +92,8 @@ export class FrustumIntersection {
         readonly mapView: MapView,
         private readonly m_extendedFrustumCulling: boolean,
         private readonly m_tileWrappingEnabled: boolean,
-        private readonly m_enableMixedLod: boolean
+        private readonly m_enableMixedLod: boolean,
+        private readonly m_tilePixelSize: number = 256
     ) {
         this.m_mapTileCuller = new MapTileCuller(m_camera);
     }
@@ -151,7 +152,7 @@ export class FrustumIntersection {
         // A tile should take up roughly 256x256 pixels on screen in accordance to
         // the zoom level chosen by [MapViewUtils.calculateZoomLevelFromDistance].
         assert(this.mapView.viewportHeight !== 0);
-        const targetTileArea = Math.pow(256 / this.mapView.viewportHeight, 2);
+        const targetTileArea = Math.pow(this.m_tilePixelSize / this.mapView.viewportHeight, 2);
         const useElevationRangeSource: boolean =
             elevationRangeSource !== undefined &&
             elevationRangeSource.getTilingScheme() === tilingScheme;
