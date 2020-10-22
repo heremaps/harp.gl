@@ -453,6 +453,7 @@ describe("VisibleTileSet", function() {
         );
 
         fixture.vts.markTilesDirty();
+        fixture.mapView.taskQueue.processNext(TileTaskGroups.FETCH_AND_DECODE, undefined, 2);
 
         // only visible should be updated
         assert(visibleTileReloadSpies[0].calledOnce);
