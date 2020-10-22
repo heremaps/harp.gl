@@ -1367,6 +1367,7 @@ export class TileGeometryCreator {
      * @param renderOrder - Render order of the tile
      */
     addGroundPlane(tile: Tile, renderOrder: number) {
+        console.log("test for IBCT abort job with this change, more changes,");
         const shadowsEnabled = tile.mapView.shadowsEnabled;
         const material = this.createGroundPlaneMaterial(
             new THREE.Color(tile.mapView.clearColor),
