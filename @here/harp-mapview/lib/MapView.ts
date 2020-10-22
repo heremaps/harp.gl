@@ -623,6 +623,16 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     enableMixedLod?: boolean;
 
     /**
+     * If enableMixedLod is true, this value will be used to calculate the minimum Pixel Size of a
+     * Tile regarding to the screen size, when the subdivision of tiles is stopped and therefore
+     * higher level tiles rendered.
+     * @beta
+     *
+     * @default 256
+     */
+    lodMinTilePixelSize?: number;
+
+    /**
      * Enable shadows in the map. Shadows will only be casted on features that use the "standard"
      * or "extruded-polygon" technique in the map theme.
      * @default false
@@ -946,6 +956,7 @@ export class MapView extends EventDispatcher {
     private readonly m_env: MapEnv = new MapEnv({});
 
     private m_enableMixedLod: boolean | undefined;
+    private readonly m_lodMinTilePixelSize: number | undefined;
 
     private readonly m_renderOrderStencilValues = new Map<number, number>();
     // Valid values start at 1, because the screen is cleared to zero
@@ -1142,6 +1153,9 @@ export class MapView extends EventDispatcher {
 
         if (options.enableMixedLod !== undefined) {
             this.m_enableMixedLod = options.enableMixedLod;
+        }
+        if (options.lodMinTilePixelSize !== undefined) {
+            this.m_lodMinTilePixelSize = options.lodMinTilePixelSize;
         }
         this.m_visibleTiles = this.createVisibleTileSet();
 
@@ -4171,7 +4185,8 @@ export class MapView extends EventDispatcher {
                 this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled,
-                enableMixedLod
+                enableMixedLod,
+                this.m_lodMinTilePixelSize
             ),
             this.m_tileGeometryManager,
             this.m_visibleTileSetOptions,
