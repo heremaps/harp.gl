@@ -1297,6 +1297,7 @@ export class TileGeometryCreator {
             geometry.setAttribute("uv", uvAttr);
         }
 
+        let mesh: THREE.Mesh;
         if (shouldSubdivide) {
             const geometries: THREE.BufferGeometry[] = [];
             const sphericalModifier = new SphericalGeometrySubdivisionModifier(
@@ -1323,19 +1324,22 @@ export class TileGeometryCreator {
                     moveTileCenter(zoomLevelGeometry);
                     geometries.push(zoomLevelGeometry);
                 }
-                return new LodMesh(geometries, material);
+                mesh = new LodMesh(geometries, material);
             } else {
                 // Use static mesh if mixed LOD is disabled
                 sphericalModifier.modify(geometry);
                 moveTileCenter(geometry);
 
-                return new THREE.Mesh(geometry, material);
+                mesh = new THREE.Mesh(geometry, material);
             }
         } else {
             // Use static mesh for planar projection
             moveTileCenter(geometry);
-            return new THREE.Mesh(geometry, material);
+            mesh = new THREE.Mesh(geometry, material);
         }
+
+        this.registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
+        return mesh;
     }
 
     generateTilePlaneCorners(geoBox: GeoBox, sourceProjection: Projection): TileCorners {
@@ -1374,7 +1378,6 @@ export class TileGeometryCreator {
         const mesh = this.createGroundPlane(tile, material, false, shadowsEnabled);
         mesh.receiveShadow = shadowsEnabled;
         mesh.renderOrder = renderOrder;
-        this.registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
         tile.objects.push(mesh);
     }
 
