@@ -28,6 +28,7 @@ export interface WebTileRenderingOptions {
     /**
      * RenderOrder for order in which to render WebTileDataSouurces
      * @defaultValue 0
+     * @deprecated Use instead `dataSourceOrder` on {@link DataSource}
      */
     renderOrder?: number;
 }
@@ -142,6 +143,8 @@ export class WebTileDataSource extends DataSource {
 
     /**
      * Gets the renderOrder of the WebTileDataSource.
+     *
+     * @deprecated Use instead the `dataSourceOrder` on {@link DataSource}
      */
     get renderOrder(): number {
         return this.m_renderOrder;

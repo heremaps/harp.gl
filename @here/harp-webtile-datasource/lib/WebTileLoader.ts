@@ -72,6 +72,7 @@ export class WebTileLoader extends BaseTileLoader {
                     true
                 );
                 this.tile.objects.push(mesh);
+                // Remove, as `renderOrder` will be deprecated.
                 mesh.renderOrder = this.dataSource.renderOrder;
                 this.tile.invalidateResourceInfo();
                 this.dataSource.requestUpdate();
