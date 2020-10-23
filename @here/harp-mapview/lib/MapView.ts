@@ -3,14 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    Env,
-    ImageTexture,
-    MapEnv,
-    PostEffects,
-    Theme,
-    Value
-} from "@here/harp-datasource-protocol";
+import { Env, MapEnv, PostEffects, Theme, Value } from "@here/harp-datasource-protocol";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     EarthConstants,
@@ -60,6 +53,7 @@ import { MapAnchors } from "./MapAnchors";
 import { MapViewEnvironment } from "./MapViewEnvironment";
 import { MapViewFog } from "./MapViewFog";
 import { MapViewTaskScheduler } from "./MapViewTaskScheduler";
+import { MapViewThemeManager } from "./MapViewThemeManager";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
@@ -76,7 +70,6 @@ import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
 import { TextStyleCache } from "./text/TextStyleCache";
-import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { TileObjectRenderer } from "./TileObjectsRenderer";
 import { MapViewUtils } from "./Utils";
@@ -888,9 +881,7 @@ export class MapView extends EventDispatcher {
     private readonly m_options: MapViewOptions;
     private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
 
-    private m_theme: Theme = {};
     private readonly m_uriResolver?: UriResolver;
-    private m_themeIsLoading: boolean = false;
 
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
@@ -901,7 +892,6 @@ export class MapView extends EventDispatcher {
 
     private readonly m_pickHandler: PickHandler;
 
-    private readonly m_imageCache: MapViewImageCache = new MapViewImageCache(this);
     private readonly m_userImageCache: MapViewImageCache = new MapViewImageCache(this);
     private readonly m_env: MapEnv = new MapEnv({});
 
@@ -925,7 +915,8 @@ export class MapView extends EventDispatcher {
     private readonly m_lodMinTilePixelSize: number | undefined;
 
     private m_taskScheduler: MapViewTaskScheduler;
-    private readonly m_environment: MapViewEnvironment;
+    private readonly m_themeManager: MapViewThemeManager;
+    private readonly m_sceneEnvironment: MapViewEnvironment;
 
     // `true` if dispose() has been called on `MapView`.
     private m_disposed = false;
@@ -1093,7 +1084,7 @@ export class MapView extends EventDispatcher {
         // Must be initialized before setupCamera, because the VisibleTileSet is created as part
         // of the setupCamera method and it needs the TaskQueue instance, same for environment
         this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
-        this.m_environment = new MapViewEnvironment(this, options);
+        this.m_sceneEnvironment = new MapViewEnvironment(this, options);
 
         // setup camera with initial position
         this.setupCamera();
@@ -1149,9 +1140,12 @@ export class MapView extends EventDispatcher {
             this.m_taskScheduler.throttlingEnabled = options.throttlingEnabled;
         }
 
-        this.initTheme();
+        this.m_themeManager = new MapViewThemeManager(this, this.m_uriResolver);
 
+        // will initialize with an empty theme and updated when theme is loaded and set
         this.m_textElementsRenderer = this.createTextRenderer();
+
+        this.setTheme(getOptionValue(this.m_options.theme, MapViewDefaults.theme));
 
         this.update();
     }
@@ -1161,7 +1155,7 @@ export class MapView extends EventDispatcher {
      * lights can still be accessed by traversing the children of the [[scene]].
      */
     get lights(): THREE.Light[] {
-        return this.m_environment.lights;
+        return this.m_sceneEnvironment.lights;
     }
 
     get taskQueue(): TaskQueue {
@@ -1244,7 +1238,7 @@ export class MapView extends EventDispatcher {
 
         this.m_enableMixedLod = enableMixedLod;
         this.m_visibleTiles = this.createVisibleTileSet();
-        this.resetTextRenderer();
+        //FIXME: Why is this needed: this.resetTextRenderer(theme);
         this.update();
     }
 
@@ -1315,7 +1309,7 @@ export class MapView extends EventDispatcher {
             this.m_renderer.forceContextLoss();
         }
 
-        this.m_imageCache.clear();
+        this.m_themeManager.dispose();
         this.m_tileGeometryManager.clear();
 
         this.m_movementDetector.dispose();
@@ -1364,11 +1358,8 @@ export class MapView extends EventDispatcher {
         this.m_visibleTiles.setDataSourceCacheSize(size);
         numVisibleTiles = numVisibleTiles !== undefined ? numVisibleTiles : size / 2;
         this.m_visibleTiles.setNumberOfVisibleTiles(Math.floor(numVisibleTiles));
-        this.updateImages();
-        this.m_environment.updateLighting(this.m_theme);
-
+        this.m_themeManager.updateCache();
         this.m_textElementsRenderer.invalidateCache();
-        this.m_environment.updateSkyBackground(this.m_theme);
         this.update();
     }
 
@@ -1445,82 +1436,37 @@ export class MapView extends EventDispatcher {
 
     /**
      * Gets the current `Theme` used by this `MapView` to style map elements.
+     * @deprecated
      */
     get theme(): Theme {
-        return this.m_theme;
+        return this.m_themeManager.theme;
     }
 
     /**
      * Changes the `Theme` used by this `MapView` to style map elements.
+     * @deprecated use MapView.setTheme instead
      */
     set theme(theme: Theme) {
-        if (!ThemeLoader.isThemeLoaded(theme)) {
-            this.m_themeIsLoading = true;
-            // If theme is not yet loaded, let's set theme asynchronously
-            ThemeLoader.load(theme, { uriResolver: this.m_uriResolver })
-                .then(loadedTheme => {
-                    this.m_themeIsLoading = false;
-                    this.theme = loadedTheme;
-                })
-                .catch(error => {
-                    this.m_themeIsLoading = false;
-                    logger.error(`failed to set theme: ${error}`, error);
-                });
-            return;
-        }
+        this.setTheme(theme);
+    }
 
-        // Fog and sky.
-        this.m_theme.fog = theme.fog;
-        this.m_theme.sky = theme.sky;
-        this.m_environment.updateSkyBackground(this.m_theme);
-        this.m_environment.fog.reset(this.m_theme);
+    /**
+     * Changes the `Theme`used by this `MapView`to style map elements.
+     */
+    async setTheme(theme: Theme | string): Promise<Theme> {
+        const newTheme = await this.m_themeManager.setTheme(theme);
 
-        this.m_theme.lights = theme.lights;
-        this.m_environment.updateLighting(this.m_theme);
-
-        // Clear color.
-        this.m_theme.clearColor = theme.clearColor;
-        this.m_theme.clearAlpha = theme.clearAlpha;
-        this.renderer.setClearColor(new THREE.Color(theme.clearColor), theme.clearAlpha);
-        // Images.
-        this.m_theme.images = theme.images;
-        this.m_theme.imageTextures = theme.imageTextures;
-        this.updateImages();
-
-        // POI tables.
-        this.m_theme.poiTables = theme.poiTables;
-        this.loadPoiTables();
-
-        // Text.
-        this.m_theme.textStyles = theme.textStyles;
-        this.m_theme.defaultTextStyle = theme.defaultTextStyle;
-        this.m_theme.fontCatalogs = theme.fontCatalogs;
-
-        this.resetTextRenderer();
-
-        if (Array.isArray(theme.priorities)) {
-            this.m_theme.priorities = theme.priorities;
-        }
-        this.mapAnchors.setPriorities(theme.priorities ?? []);
-
-        if (Array.isArray(theme.labelPriorities)) {
-            this.m_theme.labelPriorities = theme.labelPriorities;
-        }
-
-        if (this.m_theme.styles === undefined) {
-            this.m_theme.styles = {};
-        }
-
-        this.m_environment.setBackgroundTheme(this.m_theme);
-        this.m_theme.styles = theme.styles ?? {};
-        this.m_theme.definitions = theme.definitions;
-
-        for (const dataSource of this.m_tileDataSources) {
-            dataSource.setTheme(this.m_theme);
-        }
         this.THEME_LOADED_EVENT.time = Date.now();
         this.dispatchEvent(this.THEME_LOADED_EVENT);
         this.update();
+        return newTheme;
+    }
+
+    /**
+     * Returns the currently set `Theme` as a `Promise` as it might be still loading/updating.
+     */
+    async getTheme(): Promise<Theme> {
+        return await this.m_themeManager.getTheme();
     }
 
     /**
@@ -1700,6 +1646,14 @@ export class MapView extends EventDispatcher {
      */
     get overlayScene(): THREE.Scene {
         return this.m_overlayScene;
+    }
+
+    /**
+     * The MapViewEnvironment used by this `MapView`.
+     * @internal
+     */
+    get sceneEnvironment(): MapViewEnvironment {
+        return this.m_sceneEnvironment;
     }
 
     /**
@@ -1931,7 +1885,7 @@ export class MapView extends EventDispatcher {
      * should be used instead.
      */
     get imageCache(): MapViewImageCache {
-        return this.m_imageCache;
+        return this.m_themeManager.imageCache;
     }
 
     /**
@@ -2177,7 +2131,7 @@ export class MapView extends EventDispatcher {
         dataSource.attach(this);
         dataSource.setEnableElevationOverlay(this.m_elevationProvider !== undefined);
         this.m_tileDataSources.push(dataSource);
-        this.m_environment?.updateBackgroundDataSource();
+        this.m_sceneEnvironment?.updateBackgroundDataSource();
 
         try {
             await dataSource.connect();
@@ -2190,8 +2144,12 @@ export class MapView extends EventDispatcher {
                 this.update();
             });
 
+            const theme = await this.getTheme();
             dataSource.setLanguages(this.m_languages);
-            dataSource.setTheme(this.m_theme);
+
+            if (theme !== undefined && theme.styles !== undefined) {
+                dataSource.setTheme(theme);
+            }
 
             this.m_connectedDataSources.add(dataSource.name);
 
@@ -2230,7 +2188,7 @@ export class MapView extends EventDispatcher {
         this.m_connectedDataSources.delete(dataSource.name);
         this.m_failedDataSources.delete(dataSource.name);
 
-        this.m_environment.updateBackgroundDataSource();
+        this.m_sceneEnvironment.updateBackgroundDataSource();
 
         this.update();
     }
@@ -2975,7 +2933,7 @@ export class MapView extends EventDispatcher {
      * Public access to {@link MapViewFog} allowing to toggle it by setting its `enabled` property.
      */
     get fog(): MapViewFog {
-        return this.m_environment.fog;
+        return this.m_sceneEnvironment.fog;
     }
 
     private setPostEffects() {
@@ -3299,7 +3257,7 @@ export class MapView extends EventDispatcher {
         this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
-        this.m_environment.update();
+        this.m_sceneEnvironment.update();
     }
 
     /**
@@ -3549,7 +3507,8 @@ export class MapView extends EventDispatcher {
             !this.m_initialTextPlacementDone &&
             !this.m_firstFrameComplete &&
             !this.isDynamicFrame &&
-            !this.m_themeIsLoading &&
+            !this.m_themeManager.isLoading() &&
+            !this.m_themeManager.isUpdating() &&
             this.m_poiTableManager.finishedLoading &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
             this.m_connectedDataSources.size + this.m_failedDataSources.size ===
@@ -3740,24 +3699,6 @@ export class MapView extends EventDispatcher {
         }
     }
 
-    private initTheme() {
-        const theme = getOptionValue(this.m_options.theme, MapViewDefaults.theme);
-
-        this.m_themeIsLoading = true;
-        Promise.resolve<string | Theme>(theme)
-            .then(theme => ThemeLoader.load(theme, { uriResolver: this.m_uriResolver }))
-            .then(theme => {
-                this.m_themeIsLoading = false;
-                this.theme = theme;
-            })
-            .catch(error => {
-                this.m_themeIsLoading = false;
-                const themeName =
-                    typeof this.m_options.theme === "string" ? ` from ${this.m_options.theme}` : "";
-                logger.error(`Failed to load theme${themeName}: ${error}`, error);
-            });
-    }
-
     private setupCamera() {
         const { width, height } = this.getCanvasClientSize();
 
@@ -3911,47 +3852,6 @@ export class MapView extends EventDispatcher {
         return result;
     }
 
-    private updateImages() {
-        if (!this.m_theme) {
-            return;
-        }
-
-        const theme = this.m_theme as Theme;
-
-        this.m_imageCache.clear();
-        this.poiManager.clear();
-
-        if (theme.images !== undefined) {
-            for (const name of Object.keys(theme.images)) {
-                const image = theme.images[name];
-                this.m_imageCache.addImage(name, image.url, image.preload === true);
-                if (typeof image.atlas === "string") {
-                    this.poiManager.addTextureAtlas(name, image.atlas);
-                }
-            }
-        }
-
-        if (theme.imageTextures !== undefined) {
-            theme.imageTextures.forEach((imageTexture: ImageTexture) => {
-                this.poiManager.addImageTexture(imageTexture);
-            });
-        }
-    }
-
-    private loadPoiTables() {
-        if (this.m_theme === undefined) {
-            return;
-        }
-
-        this.poiTableManager.clear();
-
-        // Add the POI tables defined in the theme.
-        this.poiTableManager
-            .loadPoiTables(this.m_theme as Theme)
-            .then(() => this.update())
-            .catch(() => this.update());
-    }
-
     private setupStats(enable: boolean) {
         new PerformanceStatistics(enable, 1000);
     }
@@ -3963,7 +3863,7 @@ export class MapView extends EventDispatcher {
         this.shadowsEnabled = this.m_options.enableShadows ?? false;
     }
 
-    private createTextRenderer(): TextElementsRenderer {
+    private createTextRenderer(theme: Theme = {}): TextElementsRenderer {
         const updateCallback: ViewUpdateCallback = () => {
             this.update();
         };
@@ -3977,18 +3877,24 @@ export class MapView extends EventDispatcher {
             new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
             new PoiRendererFactory(this),
-            new FontCatalogLoader(this.m_theme),
-            new TextStyleCache(this.m_theme),
+            new FontCatalogLoader(theme),
+            new TextStyleCache(theme),
             this.m_options
         );
     }
 
-    private resetTextRenderer(): void {
+    /**
+     * @internal
+     * @param theme
+     */
+    public async resetTextRenderer(theme: Theme): Promise<void> {
         const overlayText = this.m_textElementsRenderer.overlayText;
-        this.m_textElementsRenderer = this.createTextRenderer();
+        this.m_textElementsRenderer = this.createTextRenderer(theme);
         if (overlayText !== undefined) {
             this.m_textElementsRenderer.addOverlayText(overlayText);
         }
+        await this.m_textElementsRenderer.waitInitialized();
+        await this.m_textElementsRenderer.waitLoaded();
     }
 
     /**
@@ -4009,7 +3915,7 @@ export class MapView extends EventDispatcher {
     private readonly onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
-            this.m_environment.updateClearColor(this.m_theme);
+            this.m_sceneEnvironment.updateClearColor(this.theme);
             this.update();
         }
         logger.warn("WebGL context restored", event);

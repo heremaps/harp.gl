@@ -67,7 +67,7 @@ export namespace ThemesExample {
     gui.add(options, "theme", options.theme)
         .onChange((value: string) => {
             ThemeLoader.load(value).then(theme => {
-                mapView.theme = theme;
+                mapView.setTheme(theme);
             });
         })
         .setValue("resources/berlin_tilezen_base.json");
