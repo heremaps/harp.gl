@@ -1463,6 +1463,9 @@ export class TileGeometryCreator {
             // Render terrain using the given color.
             const stdMaterial = material as MapMeshStandardMaterial;
             stdMaterial.color.set(terrainColor);
+            // Remove displacement map, otherwise it would elevate terrain geometry and make it
+            // twice as high as it should be.
+            stdMaterial.displacementMap = null;
             return;
         }
 
