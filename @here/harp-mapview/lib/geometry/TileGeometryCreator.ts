@@ -95,12 +95,12 @@ import {
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "../MapMaterialAdapter";
 import { MapObjectAdapter, MapObjectAdapterParams } from "../MapObjectAdapter";
-import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { Tile, TileFeatureData } from "../Tile";
+import { FALLBACK_RENDER_ORDER_OFFSET } from "../TileObjectsRenderer";
 import { LodMesh } from "./LodMesh";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
