@@ -75,11 +75,12 @@ export class OlpDataProvider extends DataProvider {
 
             this.m_catalogVersion = latestVersion;
         }
-        this.m_versionLayerClient = new VersionedLayerClient(
-            HRN.fromString(this.params.hrn),
-            this.params.layerId,
+        this.m_versionLayerClient = new VersionedLayerClient({
+            catalogHrn: HRN.fromString(this.params.hrn),
+            layerId: this.params.layerId,
+            version: this.m_catalogVersion,
             settings
-        );
+        });
     }
 
     /**
@@ -103,7 +104,7 @@ export class OlpDataProvider extends DataProvider {
 
         try {
             const response = await this.m_versionLayerClient.getData(
-                new DataRequest().withQuadKey(tileKey).withVersion(this.m_catalogVersion),
+                new DataRequest().withQuadKey(tileKey),
                 abortSignal
             );
             if (abortSignal && abortSignal.aborted) {
