@@ -8,7 +8,6 @@
 
 const fs = require("fs");
 const webpack = require("webpack");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 
 const path = require("path");
 const merge = require("webpack-merge");
@@ -58,10 +57,6 @@ const commonConfig = {
     // @ts-ignore
     mode: process.env.NODE_ENV || "development"
 };
-
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    commonConfig.plugins.push(new HardSourceWebpackPlugin());
-}
 
 const mapComponentConfig = merge(commonConfig, {
     entry: path.resolve(__dirname, "./lib/index.ts"),

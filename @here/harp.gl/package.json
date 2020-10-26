@@ -53,10 +53,10 @@
         "@here/harp-vectortile-datasource": "^0.21.1",
         "@here/harp-webtile-datasource": "^0.21.1",
         "@microsoft/api-extractor": "^7.8.10",
-        "ts-loader": "^7.0.5",
+        "ts-loader": "^8.0.7",
         "typescript": "^3.9.3",
-        "webpack": "^4.43.0",
-        "webpack-cli": "^3.3.11",
+        "webpack": "^5.3.0",
+        "webpack-cli": "^4.1.0",
         "webpack-merge": "^4.1.1"
     },
     "publishConfig": {

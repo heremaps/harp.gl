@@ -3,7 +3,6 @@ const webpack = require("webpack");
 const merge = require("webpack-merge");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 const ScriptExtHtmlWebpackPlugin = require("script-ext-html-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -56,10 +55,6 @@ const commonConfig = {
     },
     mode: process.env.NODE_ENV || "development"
 };
-
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    commonConfig.plugins.push(new HardSourceWebpackPlugin());
-}
 
 const mainConfig = merge(commonConfig, {
     entry: {

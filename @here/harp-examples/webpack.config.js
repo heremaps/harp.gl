@@ -10,7 +10,6 @@ const webpack = require("webpack");
 const merge = require("webpack-merge");
 const path = require("path");
 const glob = require("glob");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
@@ -107,10 +106,6 @@ const commonConfig = {
         })
     ]
 };
-
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    commonConfig.plugins.push(new HardSourceWebpackPlugin());
-}
 
 const decoderConfig = merge(commonConfig, {
     target: "webworker",

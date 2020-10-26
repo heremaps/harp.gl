@@ -10,7 +10,6 @@ const webpack = require("webpack");
 const glob = require("glob");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 
 const testResourceDirs = glob.sync(path.join(__dirname, "@here/*/test/resources"));
 const testResources = testResourceDirs.map(dir => {
@@ -120,10 +119,10 @@ const browserTestsConfig = {
             three: "THREE",
             typescript: "undefined"
         },
-        function(context, request, callback) {
+        ({ context, request }, cb) => {
             return /three\.module\.js$/.test(request)
-                ? callback(null, "THREE")
-                : callback(undefined, undefined);
+                ? cb(null, "THREE")
+                : cb(undefined, undefined);
         }
     ],
     performance: {
@@ -150,9 +149,5 @@ const browserTestsConfig = {
     // @ts-ignore
     mode: process.env.NODE_ENV || "development"
 };
-
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    browserTestsConfig.plugins.push(new HardSourceWebpackPlugin());
-}
 
 module.exports = browserTestsConfig;
