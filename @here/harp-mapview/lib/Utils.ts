@@ -498,33 +498,6 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Returns the height of the camera above the earths surface.
-     *
-     * @remarks
-     * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
-     * how high the camera is above the surface.
-     *
-     * @param level - Which level to request the surface height from.
-     * @return Height in world units.
-     */
-    function getHeightAboveTerrain(
-        location: THREE.Vector3,
-        projection: Projection,
-        elevationProvider?: ElevationProvider,
-        level?: number
-    ): number {
-        if (elevationProvider !== undefined) {
-            const geoLocation = projection.unprojectPoint(location);
-            const heightAboveTerrain = elevationProvider.getHeight(geoLocation, level);
-            if (heightAboveTerrain !== undefined) {
-                const height = projection.unprojectAltitude(location) - heightAboveTerrain;
-                return Math.max(height, 1);
-            }
-        }
-        return Math.abs(projection.groundDistance(location));
-    }
-
-    /**
      * Constrains given camera target and distance to {@link MapView.maxBounds}.
      *
      * @remarks
@@ -665,13 +638,18 @@ export namespace MapViewUtils {
     }
     /**
      * @internal
-     * @deprecated This method will be moved to MapView.
+     * Computes the target for a given camera and the distance between them.
+     * @param projection - The world space projection.
+     * @param camera - The camera whose target will be computed.
+     * @param elevationProvider - If provided, elevation at the camera position will be used.
+     * @returns The target, the distance to it and a boolean flag set to false in case an elevation
+     * provider was passed but the elevation was not available yet.
      */
     export function getTargetAndDistance(
         projection: Projection,
         camera: THREE.Camera,
         elevationProvider?: ElevationProvider
-    ): { target: THREE.Vector3; distance: number } {
+    ): { target: THREE.Vector3; distance: number; final: boolean } {
         const cameraPitch = extractAttitude({ projection }, camera).pitch;
 
         //FIXME: For now we keep the old behaviour when terrain is enabled (i.e. use the camera
@@ -685,6 +663,7 @@ export namespace MapViewUtils {
                   TERRAIN_ZOOM_LEVEL
               )
             : undefined;
+        const final = !elevationProvider || elevation !== undefined;
 
         // Even for a tilt of 90° raycastTargetFromCamera is returning some point almost at
         // infinity.
@@ -694,32 +673,28 @@ export namespace MapViewUtils {
                 : null;
         if (target !== null) {
             const distance = camera.position.distanceTo(target);
-            return { target, distance };
+            return { target, distance, final };
         } else {
             // We either reached the [[PITCH_LIMIT]] or we did not hit the ground surface.
             // In this case we do the reverse, i.e. compute some fallback distance and
             // use it to compute the tagret point by using the camera direction.
-            const cameraPosZ = getHeightAboveTerrain(
-                camera.position,
-                projection,
-                elevationProvider,
-                TERRAIN_ZOOM_LEVEL
-            );
+            const groundDistance = projection.groundDistance(camera.position);
+            const heightAboveTerrain = Math.max(groundDistance - (elevation ?? 0), 0);
 
             //For flat projection we fallback to the target distance at 89 degree pitch.
             //For spherical projection we fallback to the tangent line distance
             const distance =
                 projection.type === ProjectionType.Planar
-                    ? cameraPosZ / Math.cos(Math.min(cameraPitch, MAX_TILT_RAD))
+                    ? heightAboveTerrain / Math.cos(Math.min(cameraPitch, MAX_TILT_RAD))
                     : Math.sqrt(
-                          Math.pow(cameraPosZ + EarthConstants.EQUATORIAL_RADIUS, 2) -
+                          Math.pow(heightAboveTerrain + EarthConstants.EQUATORIAL_RADIUS, 2) -
                               Math.pow(EarthConstants.EQUATORIAL_RADIUS, 2)
                       );
             const cameraDir = camera.getWorldDirection(cache.vector3[0]);
             cameraDir.multiplyScalar(distance);
             const fallbackTarget = cache.vector3[1];
             fallbackTarget.copy(camera.position).add(cameraDir);
-            return { target: fallbackTarget, distance };
+            return { target: fallbackTarget, distance, final };
         }
     }
 

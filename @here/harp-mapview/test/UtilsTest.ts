@@ -668,6 +668,32 @@ describe("MapViewUtils", function() {
                         GeoCoordinates.fromDegrees(geoTarget.lat, geoTarget.lng, elevation)
                     );
                 });
+
+                it("indicates whether the computation was final or not", function() {
+                    elevationProvider.getHeight = sandbox.stub().returns(undefined);
+
+                    const res1 = MapViewUtils.getTargetAndDistance(
+                        projection,
+                        camera,
+                        elevationProvider
+                    );
+
+                    expect(res1.final).to.be.false;
+
+                    elevationProvider.getHeight = sandbox.stub().returns(0);
+
+                    const res2 = MapViewUtils.getTargetAndDistance(
+                        projection,
+                        camera,
+                        elevationProvider
+                    );
+
+                    expect(res2.final).to.be.true;
+
+                    const res3 = MapViewUtils.getTargetAndDistance(projection, camera);
+
+                    expect(res3.final).to.be.true;
+                });
             });
 
             describe("constrainTargetAndDistanceToViewBounds", function() {
