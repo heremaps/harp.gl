@@ -1678,10 +1678,9 @@ export class TextElementsRenderer {
             }
 
             const iconIsRequired = !(poiInfo?.iconIsOptional === false);
-            const iconIsReady = poiInfo?.isValid === true;
             // Rejected icons are only considered to hide the text if they are valid, so a missing icon image will
             // not keep the text from showing up.
-            const requiredIconRejected: boolean = iconRejected && iconIsReady && iconIsRequired;
+            const requiredIconRejected: boolean = iconRejected && iconReady && iconIsRequired;
 
             const textRejected = requiredIconRejected || placeResult === PlacementResult.Rejected;
             if (!iconRejected && !iconInvisible) {
