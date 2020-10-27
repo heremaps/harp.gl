@@ -33,7 +33,8 @@ export function stubTextCanvas(
     addTextSpy: sinon.SinonSpy,
     addTextBufferObjSpy: sinon.SinonSpy,
     fontCatalog: FontCatalog,
-    textWidthHeight: number
+    textWidth: number,
+    textHeight: number
 ): TextCanvas {
     const renderer = ({ capabilities: { isWebGL2: false } } as any) as THREE.WebGLRenderer;
     const textCanvas = new TextCanvas({
@@ -70,8 +71,8 @@ export function stubTextCanvas(
             ) => {
                 // Return a box centered on origin with dimensions DEF_TEXT_WIDTH_HEIGHT
                 outputBounds.set(
-                    new THREE.Vector2(-textWidthHeight / 2, -textWidthHeight / 2),
-                    new THREE.Vector2(textWidthHeight / 2, textWidthHeight / 2)
+                    new THREE.Vector2(-textWidth / 2, -textHeight / 2),
+                    new THREE.Vector2(textWidth / 2, textHeight / 2)
                 );
                 // Same bbox for character bounds, as if text had a single character.
                 if (params !== undefined && params.outputCharacterBounds !== undefined) {

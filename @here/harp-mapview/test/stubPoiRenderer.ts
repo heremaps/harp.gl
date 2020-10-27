@@ -51,7 +51,11 @@ export function stubPoiRenderer(
                 screenCollisions.allocate(bbox);
             }
             const screenPosCopy = screenPosition.toArray();
-            renderPoiSpy(poiInfo, screenPosCopy, opacity);
+            if (opacity > 0) {
+                renderPoiSpy(poiInfo, screenPosCopy, opacity);
+                return true;
+            }
+            return false;
         }
     );
 

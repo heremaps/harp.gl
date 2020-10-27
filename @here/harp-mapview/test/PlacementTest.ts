@@ -367,7 +367,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition
                     );
 
@@ -404,7 +403,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -438,7 +436,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -472,7 +469,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -509,7 +505,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -546,7 +541,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -738,7 +732,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition,
                         false
                     );
@@ -763,7 +756,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition,
                         true
                     );
@@ -962,7 +954,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition,
                         false
                     );
@@ -986,7 +977,6 @@ describe("Placement", function() {
                             textCanvas,
                             new Env(),
                             screenCollisions,
-                            false,
                             outPosition,
                             true
                         );
@@ -1052,7 +1042,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i]
                     );
                     const textPlacement = states[i].textPlacement;
@@ -1079,7 +1068,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );
@@ -1136,7 +1124,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );
@@ -1188,7 +1175,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         false
                     );
@@ -1231,7 +1217,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );
@@ -1274,7 +1259,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );

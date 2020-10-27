@@ -428,7 +428,6 @@ export function placePointLabel(
     textCanvas: TextCanvas,
     env: Env,
     screenCollisions: ScreenCollisions,
-    isRejected: boolean,
     outScreenPosition: THREE.Vector3,
     multiAnchor: boolean = false
 ): PlacementResult {
@@ -436,16 +435,11 @@ export function placePointLabel(
 
     const layoutStyle = labelState.element.layoutStyle!;
 
-    // For the new labels with rejected icons we don't need to go further.
-    const newLabel = !labelState.visible;
-    if (isRejected && newLabel) {
-        return PlacementResult.Rejected;
-    }
     // Check if alternative placements have been provided.
     multiAnchor =
         multiAnchor && layoutStyle.placements !== undefined && layoutStyle.placements.length > 1;
     // For single placement labels or labels with icon rejected, do only current anchor testing.
-    if (!multiAnchor || isRejected) {
+    if (!multiAnchor) {
         return placePointLabelAtCurrentAnchor(
             labelState,
             screenPosition,
