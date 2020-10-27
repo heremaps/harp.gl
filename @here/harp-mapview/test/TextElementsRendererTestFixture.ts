@@ -64,7 +64,8 @@ type OpacityMatcher = (opacity: number) => boolean;
 
 export const SCREEN_WIDTH = 1920;
 export const SCREEN_HEIGHT = 1080;
-export const DEF_TEXT_WIDTH_HEIGHT = 10;
+export const DEF_TEXT_WIDTH = 30;
+export const DEF_TEXT_HEIGHT = 10;
 export const WORLD_SCALE = 100;
 
 const TILE_LEVEL = 5; // dummy tile level.
@@ -156,7 +157,8 @@ export class TestFixture {
             this.m_addTextSpy,
             this.m_addTextBufferObjSpy,
             fontCatalog,
-            DEF_TEXT_WIDTH_HEIGHT
+            DEF_TEXT_WIDTH,
+            DEF_TEXT_HEIGHT
         );
         const dummyUpdateCall = () => {};
         this.m_textRenderer = new TextElementsRenderer(
@@ -183,30 +185,76 @@ export class TestFixture {
      * Checks that the fading state of a given text element has the specified expected value.
      * @param textElement - The text element to verify.
      * @param expectedState - The expected fading state of the text element.
+     * @param expectedIconState - The expected fading state of the icon.
      * @param prevOpacity - The text element opacity in the previous frame.
      * @returns The text element opacity in the current frame.
      */
     checkTextElementState(
         textElement: TextElement,
         expectedState: FadeState,
+        expectedIconState: FadeState | undefined,
         prevOpacity: number
     ): number {
+        let iconOpacityMatcher: ((arg0: number) => boolean) | undefined;
+        let iconRendered = true;
+
+        if (expectedIconState !== undefined) {
+            switch (expectedIconState) {
+                case FadeState.FadingIn:
+                    iconOpacityMatcher = (opacity: number) => {
+                        return opacity > prevOpacity;
+                    };
+                    break;
+                case FadeState.FadingOut:
+                    iconOpacityMatcher = (opacity: number) => {
+                        return opacity < prevOpacity;
+                    };
+                    break;
+                case FadeState.FadedIn:
+                    iconOpacityMatcher = (opacity: number) => {
+                        return opacity === 1;
+                    };
+                    break;
+                case FadeState.FadedOut:
+                    iconOpacityMatcher = (opacity: number) => {
+                        return opacity === 0;
+                    };
+                    iconRendered = false;
+                    break;
+            }
+        }
+
         let newOpacity = 0;
         switch (expectedState) {
             case FadeState.FadingIn:
-                newOpacity = this.checkTextElementRendered(textElement, (opacity: number) => {
-                    return opacity > prevOpacity;
-                });
+                newOpacity = this.checkTextElementRendered(
+                    textElement,
+                    (opacity: number) => {
+                        return opacity > prevOpacity;
+                    },
+                    iconRendered,
+                    iconOpacityMatcher
+                );
                 break;
             case FadeState.FadingOut:
-                newOpacity = this.checkTextElementRendered(textElement, (opacity: number) => {
-                    return opacity < prevOpacity;
-                });
+                newOpacity = this.checkTextElementRendered(
+                    textElement,
+                    (opacity: number) => {
+                        return opacity < prevOpacity;
+                    },
+                    iconRendered,
+                    iconOpacityMatcher
+                );
                 break;
             case FadeState.FadedIn:
-                newOpacity = this.checkTextElementRendered(textElement, (opacity: number) => {
-                    return opacity === 1;
-                });
+                newOpacity = this.checkTextElementRendered(
+                    textElement,
+                    (opacity: number) => {
+                        return opacity === 1;
+                    },
+                    iconRendered,
+                    iconOpacityMatcher
+                );
                 break;
             case FadeState.FadedOut:
                 this.checkTextElementNotRendered(textElement);
@@ -308,7 +356,9 @@ export class TestFixture {
 
     private checkTextElementRendered(
         textElement: TextElement,
-        opacityMatcher: OpacityMatcher | undefined
+        opacityMatcher: OpacityMatcher | undefined,
+        iconRendered: boolean,
+        iconOpacityMatcher: OpacityMatcher | undefined
     ): number {
         if (this.m_viewState.elevationProvider) {
             assert(textElement.elevated, this.getErrorHeading(textElement) + " was NOT elevated.");
@@ -316,7 +366,12 @@ export class TestFixture {
         switch (textElement.type) {
             case TextElementType.PoiLabel:
                 if (textElement.poiInfo !== undefined) {
-                    return this.checkPoiRendered(textElement, opacityMatcher);
+                    return this.checkPoiRendered(
+                        textElement,
+                        opacityMatcher,
+                        iconRendered,
+                        iconOpacityMatcher
+                    );
                 } else {
                     return this.checkPointTextRendered(textElement, opacityMatcher);
                 }
@@ -480,10 +535,17 @@ export class TestFixture {
 
     private checkPoiRendered(
         textElement: TextElement,
-        opacityMatcher: OpacityMatcher | undefined
+        opacityMatcher: OpacityMatcher | undefined,
+        iconRendered: boolean,
+        iconOpacityMatcher: OpacityMatcher | undefined
     ): number {
-        this.checkPointTextRendered(textElement, opacityMatcher);
-        return this.checkIconRendered(textElement, opacityMatcher);
+        let opacity = this.checkPointTextRendered(textElement, opacityMatcher);
+        if (iconRendered) {
+            opacity = this.checkIconRendered(textElement, iconOpacityMatcher);
+        } else {
+            this.checkIconNotRendered(textElement);
+        }
+        return opacity;
     }
 
     private checkPoiNotRendered(textElement: TextElement) {
@@ -565,7 +627,7 @@ export class TestFixture {
     }
 
     private getErrorHeading(textElement: TextElement): string {
-        // Substract first initialization frame and 1 more because the view state holds the number
+        // Subtract first initialization frame and 1 more because the view state holds the number
         // of the next frame.
         const currentFrame = this.m_viewState.frameNumber - 2;
         return "Frame " + currentFrame + ", label '" + textElement.text + "': ";

@@ -1647,19 +1647,24 @@ export class TextElementsRenderer {
         // Render the label's text...
         // textRenderState is always defined at this point.
         if (renderText) {
+            // For the new labels with rejected icons we don't need to go further.
+            const newLabel = !labelState.visible;
+
             // Multi point (icons) features (line markers) will use single placement anchor, but
             // single point labels (POIs, etc.) may use multi-placement algorithm.
-            const placeResult = placePointLabel(
-                labelState,
-                tempScreenPosition,
-                distanceScaleFactor,
-                textCanvas,
-                this.m_viewState.env,
-                this.m_screenCollisions,
-                iconRejected,
-                tempPosition,
-                iconIndex === undefined
-            );
+            const placeResult =
+                iconRejected && newLabel
+                    ? PlacementResult.Rejected
+                    : placePointLabel(
+                          labelState,
+                          tempScreenPosition,
+                          distanceScaleFactor,
+                          textCanvas,
+                          this.m_viewState.env,
+                          this.m_screenCollisions,
+                          tempPosition,
+                          iconIndex === undefined
+                      );
             const textInvisible = placeResult === PlacementResult.Invisible;
             if (textInvisible) {
                 if (placementStats) {
@@ -1672,7 +1677,13 @@ export class TextElementsRenderer {
                 textRenderState!.reset();
             }
 
-            const textRejected = placeResult === PlacementResult.Rejected;
+            const iconIsRequired = !(poiInfo?.iconIsOptional === false);
+            const iconIsReady = poiInfo?.isValid === true;
+            // Rejected icons are only considered to hide the text if they are valid, so a missing icon image will
+            // not keep the text from showing up.
+            const requiredIconRejected: boolean = iconRejected && iconIsReady && iconIsRequired;
+
+            const textRejected = requiredIconRejected || placeResult === PlacementResult.Rejected;
             if (!iconRejected && !iconInvisible) {
                 const textIsOptional: boolean =
                     pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
