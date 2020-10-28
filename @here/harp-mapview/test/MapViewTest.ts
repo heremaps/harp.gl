@@ -34,6 +34,7 @@ import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSo
 import { MapMaterialAdapter } from "../lib/MapMaterialAdapter";
 import { MapObjectAdapter } from "../lib/MapObjectAdapter";
 import { MapView, MapViewEventNames } from "../lib/MapView";
+import { DEFAULT_CLEAR_COLOR } from "../lib/MapViewEnvironment";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
@@ -666,11 +667,11 @@ describe("MapView", function() {
         webGlContextLostHandler();
 
         expect(clearColorStub.callCount).to.be.equal(3);
-        expect(clearColorStub.getCall(0).calledWith(0xefe9e1)).to.be.equal(true);
+        expect(clearColorStub.getCall(0).calledWith(DEFAULT_CLEAR_COLOR)).to.be.equal(true);
         expect(clearColorStub.getCall(1).args[0].r).to.be.equal(1);
         expect(clearColorStub.getCall(1).args[0].g).to.be.equal(1);
         expect(clearColorStub.getCall(1).args[0].b).to.be.equal(1);
-        expect(clearColorStub.getCall(2).calledWith(0xefe9e1)).to.be.equal(true);
+        expect(clearColorStub.getCall(2).calledWith(DEFAULT_CLEAR_COLOR)).to.be.equal(true);
 
         expect(updateSpy.callCount).to.be.equal(2);
         expect(dispatchEventSpy.callCount).to.be.equal(5);
