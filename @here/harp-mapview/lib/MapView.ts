@@ -75,6 +75,7 @@ import { TextCanvasFactory } from "./text/TextCanvasFactory";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
+import { TextStyleCache } from "./text/TextStyleCache";
 import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { TileObjectRenderer } from "./TileObjectsRenderer";
@@ -1500,6 +1501,7 @@ export class MapView extends EventDispatcher {
         if (Array.isArray(theme.priorities)) {
             this.m_theme.priorities = theme.priorities;
         }
+        this.mapAnchors.setPriorities(theme.priorities ?? []);
 
         if (Array.isArray(theme.labelPriorities)) {
             this.m_theme.labelPriorities = theme.labelPriorities;
@@ -3562,8 +3564,7 @@ export class MapView extends EventDispatcher {
             this.projection,
             this.camera.position,
             this.m_sceneRoot,
-            this.m_overlaySceneRoot,
-            this.m_theme.priorities
+            this.m_overlaySceneRoot
         );
 
         this.m_animatedExtrusionHandler.update(this.zoomLevel);
@@ -3977,7 +3978,7 @@ export class MapView extends EventDispatcher {
             this.m_poiManager,
             new PoiRendererFactory(this),
             new FontCatalogLoader(this.m_theme),
-            this.m_theme,
+            new TextStyleCache(this.m_theme),
             this.m_options
         );
     }
