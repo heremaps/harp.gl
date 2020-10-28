@@ -21,7 +21,16 @@ const commonConfig = {
         rules: [
             {
                 test: /\.css$/,
-                use: [MiniCssExtractPlugin.loader, "css-loader"]
+                use:
+                    [{
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {
+                            publicPath: '..'
+                        }
+                    },
+                    {
+                        loader:"css-loader"
+                    }]
             },
             {
                 test: /\.(png|jpg)$/,

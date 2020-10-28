@@ -4,10 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as CopyWebpackPlugin from "copy-webpack-plugin";
+// The typings don't yet work for copy-webpack-plugin & webpack 5, hence we ignore them for now,
+// see: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/49528
+const CopyWebpackPlugin: any = require("copy-webpack-plugin");
+// Uncomment this when the above issue is fixed.
+//import * as CopyWebpackPlugin from "copy-webpack-plugin";
+
 import * as HtmlWebpackPlugin from "html-webpack-plugin";
-import { Configuration, Plugin } from "webpack";
-import * as WebpackMerge from "webpack-merge";
+import { Configuration, WebpackPluginInstance } from "webpack";
+
+// As above, the typings don't work for webpack-merge, see:
+// https://github.com/DefinitelyTyped/DefinitelyTyped/issues/49757
+const WebpackMerge: any = require("webpack-merge");
+// Uncomment this when the above issue is fixed.
+//import * as WebpackMerge from "webpack-merge";
 
 export interface HarpWebpackConfig {
     mainEntry?: string;
@@ -98,7 +108,7 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
     return bundles;
 }
 
-function createPlugins(htmlTemplate?: string): Plugin[] {
+function createPlugins(htmlTemplate?: string): WebpackPluginInstance[] {
     const plugins = [
         new CopyWebpackPlugin({
             patterns: [

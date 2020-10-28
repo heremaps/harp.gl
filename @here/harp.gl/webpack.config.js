@@ -68,9 +68,10 @@ const mapComponentConfig = merge(commonConfig, {
         {
             three: "THREE"
         },
-        function(context, request, callback) {
-            // @ts-ignore
-            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        ({context, request}, callback) => {
+            return /three\.module\.js$/.test(request)
+                ? callback(null, "THREE")
+                : callback(undefined, undefined)
         }
     ]
 });
@@ -84,9 +85,10 @@ const mapComponentDecoderConfig = merge(commonConfig, {
         {
             three: "THREE"
         },
-        function(context, request, callback) {
-            // @ts-ignore
-            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        ({context, request}, callback) => {
+            return /three\.module\.js$/.test(request)
+                ? callback(null, "THREE")
+                : callback(undefined, undefined)
         }
     ]
 });

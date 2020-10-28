@@ -49,19 +49,21 @@ const commonConfig = {
     devtool: prepareOnly ? undefined : "source-map",
     externals: [
         {
-            three: "THREE",
-            fs: "undefined"
+            three: "THREE"
         },
-        function(context, request, callback) {
+        ({ context, request }, cb) => {
             return /three\.module\.js$/.test(request)
-                ? callback(null, "THREE")
-                : callback(undefined, undefined);
+                ? cb(null, "THREE")
+                : cb(undefined, undefined);
         }
     ],
     resolve: {
         extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         alias: {
             "react-native": "react-native-web"
+        },
+        fallback: {
+            fs: false
         }
     },
     module: {

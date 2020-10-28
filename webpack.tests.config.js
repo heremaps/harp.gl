@@ -42,7 +42,10 @@ const browserTestsConfig = {
     devtool: "source-map",
     resolve: {
         extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
-        modules: [".", "node_modules"]
+        modules: [".", "node_modules"],
+        fallback: {
+            fs: false
+        }
     },
     module: {
         rules: [
@@ -114,7 +117,6 @@ const browserTestsConfig = {
     ],
     externals: [
         {
-            fs: "undefined",
             perf_hooks: "undefined",
             three: "THREE",
             typescript: "undefined"
