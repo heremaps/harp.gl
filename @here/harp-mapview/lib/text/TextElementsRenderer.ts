@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LineMarkerTechnique } from "@here/harp-datasource-protocol";
-import { TileKey } from "@here/harp-geoutils";
+import { TileKey, Vector3Like } from "@here/harp-geoutils";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -1778,15 +1778,11 @@ export class TextElementsRenderer {
             this.m_tmpVector3
         );
 
-        const projectionResult = this.m_screenProjector.projectToScreen(
-            worldPosition,
-            tempScreenPosition
-        );
-
         // Only process labels that are potentially within the frustum.
-        if (projectionResult === undefined) {
+        if (!this.labelPotentiallyVisible(worldPosition, tempScreenPosition)) {
             return false;
         }
+
         // Add this POI as a point label.
         return this.addPointLabel(
             labelState,
@@ -1839,12 +1835,7 @@ export class TextElementsRenderer {
                 const point = path[pointIndex];
 
                 // Only process potentially visible labels
-                const projectionResult = this.m_screenProjector.projectToScreen(
-                    point,
-                    tempScreenPosition
-                );
-
-                if (projectionResult !== undefined) {
+                if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
                     // Find a suitable location for the lineMarker to be placed at.
                     let tooClose = false;
                     for (let j = 0; j < shieldGroup.length; j += 2) {
@@ -1885,11 +1876,7 @@ export class TextElementsRenderer {
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
                 // Only process potentially visible labels
-                const projectionResult = this.m_screenProjector.projectToScreen(
-                    point,
-                    tempScreenPosition
-                );
-                if (projectionResult !== undefined) {
+                if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
                     this.addPointLabel(
                         labelState,
                         point,
@@ -2048,5 +2035,23 @@ export class TextElementsRenderer {
         }
         this.m_overloaded = newOverloaded;
         return this.m_overloaded;
+    }
+
+    /**
+     * Project point to screen and check if it is on screen or within a fixed distance to the
+     * border.
+     *
+     * @param point center point of label.
+     * @param outPoint projected screen point of label.
+     */
+    private labelPotentiallyVisible(point: Vector3Like, outPoint: THREE.Vector2): boolean {
+        const maxDistance = THREE.MathUtils.clamp(this.m_options.maxPoiDistanceToBorder ?? 0, 0, 1);
+        const projectionResult = this.m_screenProjector.projectAreaToScreen(
+            point,
+            maxDistance,
+            maxDistance,
+            outPoint
+        );
+        return projectionResult !== undefined;
     }
 }
