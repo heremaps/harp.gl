@@ -93,6 +93,37 @@ export class ScreenProjector {
     }
 
     /**
+     * Test if the area around the specified point is visible on the screen.
+     *
+     * @param {(Vector3Like)} source The centered source vector to project.
+     * @param {(Number)} width Half of the width of the area in NDC space [0..1].
+     * @param {(Number)} height Half of the height of the area in NDC space [0..1].
+     * @param {THREE.Vector2} target The target vector.
+     * @returns {THREE.Vector2} The projected vector (the parameter 'target') or undefined if
+     * the area is completely outside the screen.
+     */
+    projectAreaToScreen(
+        source: Vector3Like,
+        width: number,
+        height: number,
+        target: THREE.Vector2 = new THREE.Vector2()
+    ): THREE.Vector2 | undefined {
+        width *= 2;
+        height *= 2;
+        const p = this.projectVector(source, ScreenProjector.tempV3);
+        if (
+            isInRange(p) &&
+            p.x + width >= -1 &&
+            p.x - width <= 1 &&
+            p.y + height >= -1 &&
+            p.y - height <= 1
+        ) {
+            return this.ndcToScreen(p, target);
+        }
+        return undefined;
+    }
+
+    /**
      * Apply current projectionViewMatrix of the camera to project the source vector into
      * screen coordinates. The z component between -1 and 1 is also returned.
      *

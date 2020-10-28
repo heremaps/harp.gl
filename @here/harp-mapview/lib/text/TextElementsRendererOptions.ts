@@ -34,6 +34,13 @@ const DEFAULT_LABEL_DISTANCE_SCALE_MIN = 0.7;
  */
 const DEFAULT_LABEL_DISTANCE_SCALE_MAX = 1.5;
 
+// Allowed distance to screen border for early rejection of POIs during placement. Its range is
+// [0..1] of screen size.
+// A value of 0 will lead to POI labels popping in at the border of the screen. A large value will
+// lead to many labels being placed outside the screen, with all the required actions for measuring
+// and loading glyphs impacting performance.
+const DEFAULT_MAX_DISTANCE_TO_BORDER = 0.2;
+
 const MIN_GLYPH_COUNT = 1024;
 
 const MAX_GLYPH_COUNT = 32768;
@@ -113,6 +120,12 @@ export interface TextElementsRendererOptions {
      * @default `false`
      */
     showReplacementGlyphs?: boolean;
+
+    /**
+     * The maximum distance to the screen border as a fraction of screen size [0..1].
+     * @default [[DEFAULT_MAX_DISTANCE_TO_BORDER]].
+     */
+    maxPoiDistanceToBorder?: number;
 }
 
 /**
@@ -160,5 +173,9 @@ export function initializeDefaultOptions(options: TextElementsRendererOptions) {
 
     if (options.showReplacementGlyphs === undefined) {
         options.showReplacementGlyphs = false;
+    }
+
+    if (options.maxPoiDistanceToBorder === undefined) {
+        options.maxPoiDistanceToBorder = DEFAULT_MAX_DISTANCE_TO_BORDER;
     }
 }
