@@ -14,13 +14,22 @@ import {
     StyleSet,
     Theme
 } from "@here/harp-datasource-protocol";
+import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { wrapPolygon } from "@here/harp-geometry/lib/WrapPolygon";
-import { EarthConstants, GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    GeoBox,
+    GeoCoordinates,
+    GeoPointLike,
+    webMercatorProjection,
+    webMercatorTilingScheme
+} from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
 import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
+import { Vector2, Vector3 } from "three";
 
 import * as polygon_crossing_antimeridian from "../resources/polygon_crossing_antimeridian.json";
 
@@ -737,5 +746,136 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 });
             });
         }
+    });
+    describe("clip lines against bounds", async function() {
+        it("clip long line string", async function() {
+            const bounds: GeoPointLike[] = [
+                [-2.8125, -15.28418511407642],
+                [76.9921875, -15.28418511407642],
+                [76.9921875, 54.77534585936447],
+                [-2.8125, 54.77534585936447],
+                [-2.8125, -15.28418511407642]
+            ];
+
+            const geoBox = new GeoBox(
+                GeoCoordinates.fromGeoPoint(bounds[0]),
+                GeoCoordinates.fromGeoPoint(bounds[0])
+            );
+
+            bounds.forEach(geoPoint => {
+                geoBox.growToContain(GeoCoordinates.fromGeoPoint(geoPoint));
+            });
+
+            const { west, south, east, north } = geoBox;
+
+            const { min, max } = webMercatorTilingScheme.projection.projectBox(geoBox);
+
+            const inputLineString: GeoPointLike[] = [
+                [-28.125, 33.43144133557529],
+                [-24.609375, 49.38237278700955],
+                [-9.140625, 39.36827914916014],
+                [21.4453125, 44.08758502824516],
+                [25.6640625, 61.60639637138628],
+                [45, 45.82879925192134],
+                [56.6015625, 62.2679226294176],
+                [61.87499999999999, 43.32517767999296],
+                [88.24218749999999, 39.639537564366684],
+                [84.72656249999999, 14.26438308756265],
+                [53.78906249999999, 13.923403897723347],
+                [33.3984375, 27.994401411046148],
+                [52.734375, 35.17380831799959],
+                [58.71093750000001, 28.613459424004414],
+                [61.52343749999999, 35.460669951495305],
+                [38.67187499999999, 39.639537564366684],
+                [16.875, 32.24997445586331],
+                [12.65625, 14.604847155053898],
+                [-14.0625, -4.214943141390639],
+                [41.1328125, -26.11598592533351]
+            ];
+
+            const points = inputLineString.map(geoPos => {
+                const { x, y } = webMercatorProjection.projectPoint(
+                    GeoCoordinates.fromGeoPoint(geoPos)
+                );
+                return new Vector2(x, y);
+            });
+
+            const lineStrings = clipLineString(points, min.x, min.y, max.x, max.y);
+
+            const coordinates = lineStrings.map(lineString =>
+                lineString.map(({ x, y }) =>
+                    webMercatorProjection.unprojectPoint(new Vector3(x, y, 0)).toGeoPoint()
+                )
+            );
+
+            const geoJson = {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: {},
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: [
+                                [
+                                    [west, south],
+                                    [east, south],
+                                    [east, north],
+                                    [west, north],
+                                    [west, south]
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        type: "Feature",
+                        properties: {
+                            color: "#00ff00"
+                        },
+                        geometry: {
+                            type: "LineString",
+                            coordinates: inputLineString
+                        }
+                    },
+                    {
+                        type: "Feature",
+                        properties: {
+                            color: "#ff0000"
+                        },
+                        geometry: {
+                            type: "MultiLineString",
+                            coordinates
+                        }
+                    }
+                ]
+            };
+
+            const ourStyle: StyleSet = [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "fill",
+                    color: "rgba(100,100,100,0.5)",
+                    lineWidth: 2
+                },
+                {
+                    when: ["==", ["geometry-type"], "LineString"],
+                    technique: "solid-line",
+                    metricUnit: "Pixel",
+                    color: ["get", "color"],
+                    lineWidth: 2
+                }
+            ];
+
+            await geoJsonTest({
+                mochaTest: this,
+                testImageName: "geojson-clip-line-against-tile-border",
+                theme: { lights, styles: { geojson: ourStyle } },
+                geoJson: geoJson as any,
+                lookAt: {
+                    zoomLevel: 2,
+                    target: geoBox.center
+                }
+            });
+        });
     });
 });
