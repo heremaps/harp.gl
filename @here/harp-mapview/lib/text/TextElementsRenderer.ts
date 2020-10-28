@@ -177,6 +177,18 @@ function checkIfTextElementsChanged(dataSourceTileList: DataSourceTileList[]) {
     return textElementsChanged;
 }
 
+function hasTextElements(dataSourceTileList: DataSourceTileList[]): boolean {
+    for (let i = 0; i < dataSourceTileList.length; i++) {
+        for (const [_key, value] of dataSourceTileList[i].renderedTiles) {
+            if (value.hasTextElements()) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 function addTextToCanvas(
     textElement: TextElement,
     canvas: TextCanvas,
@@ -474,7 +486,8 @@ export class TextElementsRenderer {
     placeText(dataSourceTileList: DataSourceTileList[], time: number) {
         const tileTextElementsChanged = checkIfTextElementsChanged(dataSourceTileList);
 
-        const textElementsAvailable = this.hasOverlayText() || tileTextElementsChanged;
+        const textElementsAvailable =
+            this.hasOverlayText() || tileTextElementsChanged || hasTextElements(dataSourceTileList);
         if (!this.initialize(textElementsAvailable)) {
             return;
         }

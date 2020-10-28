@@ -5,12 +5,9 @@
  */
 import {
     Env,
-    GradientSky,
     ImageTexture,
-    Light,
     MapEnv,
     PostEffects,
-    Sky,
     Theme,
     Value
 } from "@here/harp-datasource-protocol";
@@ -44,7 +41,6 @@ import {
 import * as THREE from "three";
 
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
-import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
 import { ClipPlanesEvaluator, createDefaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
@@ -61,6 +57,7 @@ import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { IntersectParams } from "./IntersectParams";
 import { MapAnchors } from "./MapAnchors";
+import { MapViewEnvironment } from "./MapViewEnvironment";
 import { MapViewFog } from "./MapViewFog";
 import { MapViewTaskScheduler } from "./MapViewTaskScheduler";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -71,7 +68,6 @@ import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
 import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
-import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { FontCatalogLoader } from "./text/FontCatalogLoader";
 import { MapViewState } from "./text/MapViewState";
@@ -79,7 +75,6 @@ import { TextCanvasFactory } from "./text/TextCanvasFactory";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
-import { createLight } from "./ThemeHelpers";
 import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { TileObjectRenderer } from "./TileObjectsRenderer";
@@ -145,7 +140,6 @@ export enum MapViewEventNames {
 }
 
 const logger = LoggerManager.instance.create("MapView");
-const DEFAULT_CLEAR_COLOR = 0xefe9e1;
 const DEFAULT_FOV_CALCULATION: FovCalculation = { type: "dynamic", fov: 40 };
 const DEFAULT_CAM_NEAR_PLANE = 0.1;
 const DEFAULT_CAM_FAR_PLANE = 4000000;
@@ -183,16 +177,6 @@ const cache = {
     rayCaster: new THREE.Raycaster(),
     groundPlane: new THREE.Plane(),
     groundSphere: new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS),
-    frustumPoints: [
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3()
-    ],
     matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
     transform: [
         {
@@ -806,10 +790,6 @@ export class MapView extends EventDispatcher {
     private m_movementFinishedUpdateTimerId?: any;
     private m_postEffects?: PostEffects;
 
-    private m_skyBackground?: SkyBackground;
-    private m_createdLights?: THREE.Light[];
-    private m_overlayCreatedLights?: THREE.Light[];
-
     private readonly m_screenProjector: ScreenProjector;
     private readonly m_screenCollisions:
         | ScreenCollisions
@@ -869,7 +849,6 @@ export class MapView extends EventDispatcher {
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     /** Separate scene for overlay map anchors */
     private readonly m_overlayScene: THREE.Scene = new THREE.Scene();
-    private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
     /** Root node of [[m_scene]] that gets cleared every frame. */
     private readonly m_sceneRoot = new THREE.Object3D();
     /** Root node of [[m_overlayScene]] that gets cleared every frame. */
@@ -897,7 +876,6 @@ export class MapView extends EventDispatcher {
     private readonly m_tileDataSources: DataSource[] = [];
     private readonly m_connectedDataSources = new Set<string>();
     private readonly m_failedDataSources = new Set<string>();
-    private readonly m_backgroundDataSource?: BackgroundDataSource;
     private readonly m_polarDataSource?: PolarTileDataSource;
     private readonly m_enablePolarDataSource: boolean = true;
 
@@ -946,6 +924,7 @@ export class MapView extends EventDispatcher {
     private readonly m_lodMinTilePixelSize: number | undefined;
 
     private m_taskScheduler: MapViewTaskScheduler;
+    private readonly m_environment: MapViewEnvironment;
 
     // `true` if dispose() has been called on `MapView`.
     private m_disposed = false;
@@ -1111,8 +1090,9 @@ export class MapView extends EventDispatcher {
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
         // Must be initialized before setupCamera, because the VisibleTileSet is created as part
-        // of the setupCamera method and it needs the TaskQueue instance.
+        // of the setupCamera method and it needs the TaskQueue instance, same for environment
         this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
+        this.m_environment = new MapViewEnvironment(this, options);
 
         // setup camera with initial position
         this.setupCamera();
@@ -1146,11 +1126,6 @@ export class MapView extends EventDispatcher {
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
-        if (this.m_options.addBackgroundDatasource !== false) {
-            this.m_backgroundDataSource = new BackgroundDataSource();
-            this.addDataSource(this.m_backgroundDataSource);
-        }
-
         if (this.m_enablePolarDataSource) {
             const styleSetName =
                 options.polarStyleSetName !== undefined
@@ -1163,13 +1138,6 @@ export class MapView extends EventDispatcher {
             });
 
             this.updatePolarDataSource();
-        }
-
-        if (
-            this.m_options.backgroundTilingScheme !== undefined &&
-            this.m_backgroundDataSource !== undefined
-        ) {
-            this.m_backgroundDataSource.setTilingScheme(this.m_options.backgroundTilingScheme);
         }
 
         this.m_taskScheduler.addEventListener(MapViewEventNames.Update, () => {
@@ -1192,7 +1160,7 @@ export class MapView extends EventDispatcher {
      * lights can still be accessed by traversing the children of the [[scene]].
      */
     get lights(): THREE.Light[] {
-        return this.m_createdLights ?? [];
+        return this.m_environment.lights;
     }
 
     get taskQueue(): TaskQueue {
@@ -1396,11 +1364,10 @@ export class MapView extends EventDispatcher {
         numVisibleTiles = numVisibleTiles !== undefined ? numVisibleTiles : size / 2;
         this.m_visibleTiles.setNumberOfVisibleTiles(Math.floor(numVisibleTiles));
         this.updateImages();
-        this.updateLighting();
+        this.m_environment.updateLighting(this.m_theme);
 
         this.m_textElementsRenderer.invalidateCache();
-
-        this.updateSkyBackground();
+        this.m_environment.updateSkyBackground(this.m_theme);
         this.update();
     }
 
@@ -1504,11 +1471,11 @@ export class MapView extends EventDispatcher {
         // Fog and sky.
         this.m_theme.fog = theme.fog;
         this.m_theme.sky = theme.sky;
-        this.updateSkyBackground();
-        this.m_fog.reset(this.m_theme);
+        this.m_environment.updateSkyBackground(this.m_theme);
+        this.m_environment.fog.reset(this.m_theme);
 
         this.m_theme.lights = theme.lights;
-        this.updateLighting();
+        this.m_environment.updateLighting(this.m_theme);
 
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
@@ -1541,9 +1508,8 @@ export class MapView extends EventDispatcher {
         if (this.m_theme.styles === undefined) {
             this.m_theme.styles = {};
         }
-        if (this.m_backgroundDataSource) {
-            this.m_backgroundDataSource.setTheme(this.m_theme);
-        }
+
+        this.m_environment.setBackgroundTheme(this.m_theme);
         this.m_theme.styles = theme.styles ?? {};
         this.m_theme.definitions = theme.definitions;
 
@@ -1725,6 +1691,13 @@ export class MapView extends EventDispatcher {
      */
     get scene(): THREE.Scene {
         return this.m_scene;
+    }
+
+    /**
+     * The THREE.js overlay scene
+     */
+    get overlayScene(): THREE.Scene {
+        return this.m_overlayScene;
     }
 
     /**
@@ -2191,7 +2164,7 @@ export class MapView extends EventDispatcher {
      * `MapView` needs at least one {@link DataSource} to display something.
      * @param dataSource - The data source.
      */
-    addDataSource(dataSource: DataSource): Promise<void> {
+    async addDataSource(dataSource: DataSource): Promise<void> {
         const twinDataSource = this.getDataSourceByName(dataSource.name);
         if (twinDataSource !== undefined) {
             throw new Error(
@@ -2202,61 +2175,40 @@ export class MapView extends EventDispatcher {
         dataSource.attach(this);
         dataSource.setEnableElevationOverlay(this.m_elevationProvider !== undefined);
         this.m_tileDataSources.push(dataSource);
+        this.m_environment?.updateBackgroundDataSource();
 
-        if (this.m_backgroundDataSource) {
-            this.m_backgroundDataSource.updateStorageLevelOffset();
-        }
+        try {
+            await dataSource.connect();
 
-        return dataSource
-            .connect()
-            .then(() => {
-                return new Promise(resolve => {
-                    if (this.theme !== undefined && this.theme.styles !== undefined) {
-                        resolve();
-                        return;
-                    }
-
-                    const resolveOnce = () => {
-                        this.removeEventListener(MapViewEventNames.ThemeLoaded, resolveOnce);
-                        resolve();
-                    };
-
-                    this.addEventListener(MapViewEventNames.ThemeLoaded, resolveOnce);
-                });
-            })
-            .then(() => {
-                const alreadyRemoved = !this.m_tileDataSources.includes(dataSource);
-                if (alreadyRemoved) {
-                    return;
-                }
-                dataSource.addEventListener(MapViewEventNames.Update, () => {
-                    this.update();
-                });
-
-                dataSource.setLanguages(this.m_languages);
-                dataSource.setTheme(this.m_theme);
-
-                this.m_connectedDataSources.add(dataSource.name);
-
-                this.dispatchEvent({
-                    type: MapViewEventNames.DataSourceConnect,
-                    dataSourceName: dataSource.name
-                });
-
+            const alreadyRemoved = !this.m_tileDataSources.includes(dataSource);
+            if (alreadyRemoved) {
+                return;
+            }
+            dataSource.addEventListener(MapViewEventNames.Update, () => {
                 this.update();
-            })
-            .catch(error => {
-                logger.error(
-                    `Failed to connect to datasource ${dataSource.name}: ${error.message}`
-                );
-
-                this.m_failedDataSources.add(dataSource.name);
-                this.dispatchEvent({
-                    type: MapViewEventNames.DataSourceConnect,
-                    dataSourceName: dataSource.name,
-                    error
-                });
             });
+
+            dataSource.setLanguages(this.m_languages);
+            dataSource.setTheme(this.m_theme);
+
+            this.m_connectedDataSources.add(dataSource.name);
+
+            this.dispatchEvent({
+                type: MapViewEventNames.DataSourceConnect,
+                dataSourceName: dataSource.name
+            });
+
+            this.update();
+        } catch (error) {
+            logger.error(`Failed to connect to datasource ${dataSource.name}: ${error.message}`);
+
+            this.m_failedDataSources.add(dataSource.name);
+            this.dispatchEvent({
+                type: MapViewEventNames.DataSourceConnect,
+                dataSourceName: dataSource.name,
+                error
+            });
+        }
     }
 
     /**
@@ -2276,9 +2228,7 @@ export class MapView extends EventDispatcher {
         this.m_connectedDataSources.delete(dataSource.name);
         this.m_failedDataSources.delete(dataSource.name);
 
-        if (this.m_backgroundDataSource) {
-            this.m_backgroundDataSource.updateStorageLevelOffset();
-        }
+        this.m_environment.updateBackgroundDataSource();
 
         this.update();
     }
@@ -3023,7 +2973,7 @@ export class MapView extends EventDispatcher {
      * Public access to {@link MapViewFog} allowing to toggle it by setting its `enabled` property.
      */
     get fog(): MapViewFog {
-        return this.m_fog;
+        return this.m_environment.fog;
     }
 
     private setPostEffects() {
@@ -3347,7 +3297,7 @@ export class MapView extends EventDispatcher {
         this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
-        this.m_fog.update(this, this.m_viewRanges.maximum);
+        this.m_environment.update();
     }
 
     /**
@@ -3399,105 +3349,13 @@ export class MapView extends EventDispatcher {
      * @param vector - Vector to transform.
      * @param result - Result to place calculation.
      */
-    private ndcToView(vector: Vector3Like, result: THREE.Vector3): THREE.Vector3 {
+    public ndcToView(vector: Vector3Like, result: THREE.Vector3): THREE.Vector3 {
         result
             .set(vector.x, vector.y, vector.z)
             .applyMatrix4(this.camera.projectionMatrixInverse)
             // Make sure to apply rotation, hence use the rte camera
             .applyMatrix4(this.m_rteCamera.matrixWorld);
         return result;
-    }
-
-    /**
-     * Transfer from view space to camera space.
-     * @param viewPos - position in view space, result is stored here.
-     */
-    private viewToLightSpace(viewPos: THREE.Vector3, camera: THREE.Camera): THREE.Vector3 {
-        return viewPos.applyMatrix4(camera.matrixWorldInverse);
-    }
-
-    /**
-     * Update the directional light camera. Note, this requires the cameras to first be updated.
-     */
-    private updateLights() {
-        // TODO: HARP-9479 Globe doesn't support shadows.
-        if (
-            !this.shadowsEnabled ||
-            this.projection.type === ProjectionType.Spherical ||
-            this.m_createdLights === undefined ||
-            this.m_createdLights.length === 0
-        ) {
-            return;
-        }
-
-        const points: Vector3Like[] = [
-            // near plane points
-            { x: -1, y: -1, z: -1 },
-            { x: 1, y: -1, z: -1 },
-            { x: -1, y: 1, z: -1 },
-            { x: 1, y: 1, z: -1 },
-
-            // far planes points
-            { x: -1, y: -1, z: 1 },
-            { x: 1, y: -1, z: 1 },
-            { x: -1, y: 1, z: 1 },
-            { x: 1, y: 1, z: 1 }
-        ];
-        const transformedPoints = points.map((p, i) => this.ndcToView(p, cache.frustumPoints[i]));
-
-        this.m_createdLights.forEach(element => {
-            const directionalLight = element as THREE.DirectionalLight;
-            if (directionalLight.isDirectionalLight === true) {
-                const lightDirection = cache.vector3[0];
-                lightDirection.copy(directionalLight.target.position);
-                lightDirection.sub(directionalLight.position);
-                lightDirection.normalize();
-
-                const normal = cache.vector3[1];
-                if (this.projection.type === ProjectionType.Planar) {
-                    // -Z points to the camera, we can't use Projection.surfaceNormal, because
-                    // webmercator and mercator give different results.
-                    normal.set(0, 0, -1);
-                } else {
-                    // Enable shadows for globe...
-                    //this.projection.surfaceNormal(target, normal);
-                }
-
-                // The camera of the shadow has the same height as the map camera, and the target is
-                // also the same. The position is then calculated based on the light direction and
-                // the height
-                // using basic trigonometry.
-                const tilt = this.m_pitch;
-                const cameraHeight = this.targetDistance * Math.cos(tilt);
-                const lightPosHyp = cameraHeight / normal.dot(lightDirection);
-
-                directionalLight.target.position.copy(this.worldTarget).sub(this.camera.position);
-                directionalLight.position.copy(this.worldTarget);
-                directionalLight.position.addScaledVector(lightDirection, -lightPosHyp);
-                directionalLight.position.sub(this.camera.position);
-                directionalLight.updateMatrixWorld();
-                directionalLight.shadow.updateMatrices(directionalLight);
-
-                const camera = directionalLight.shadow.camera;
-                const pointsInLightSpace = transformedPoints.map(p =>
-                    this.viewToLightSpace(p.clone(), camera)
-                );
-
-                const box = new THREE.Box3();
-                pointsInLightSpace.forEach(point => {
-                    box.expandByPoint(point);
-                });
-                camera.left = box.min.x;
-                camera.right = box.max.x;
-                camera.top = box.max.y;
-                camera.bottom = box.min.y;
-                // Moving back to the light the near plane in order to catch high buildings, that
-                // are not visible by the camera, but existing on the scene.
-                camera.near = -box.max.z * 0.95;
-                camera.far = -box.min.z;
-                camera.updateProjectionMatrix();
-            }
-        });
     }
 
     /**
@@ -3631,7 +3489,6 @@ export class MapView extends EventDispatcher {
 
         this.updateCameras();
         this.updateEnv();
-        this.updateLights();
 
         this.m_renderer.clear();
 
@@ -3752,9 +3609,6 @@ export class MapView extends EventDispatcher {
 
         if (gatherStatistics) {
             textPlacementTime = PerformanceTimer.now();
-        }
-        if (this.m_skyBackground !== undefined && this.projection.type === ProjectionType.Planar) {
-            this.m_skyBackground.updateCamera(this.m_camera);
         }
 
         this.mapRenderingManager.render(
@@ -3953,104 +3807,6 @@ export class MapView extends EventDispatcher {
         );
     }
 
-    private updateSkyBackground() {
-        if (this.m_theme === undefined) {
-            return;
-        }
-        const theme = this.m_theme;
-        if (this.m_skyBackground instanceof SkyBackground && theme.sky !== undefined) {
-            // there is a sky in the view and there is a sky option in the theme. Update the colors
-            this.updateSkyBackgroundColors(theme.sky, theme.clearColor);
-        } else if (this.m_skyBackground === undefined && theme.sky !== undefined) {
-            // there is no sky in the view but there is a sky option in the theme
-            this.addNewSkyBackground(theme.sky, theme.clearColor);
-            return;
-        } else if (this.m_skyBackground instanceof SkyBackground && theme.sky === undefined) {
-            // there is a sky in the view, but not in the theme
-            this.removeSkyBackGround();
-        }
-    }
-
-    private addNewSkyBackground(sky: Sky, clearColor: string | undefined) {
-        if (sky.type === "gradient" && (sky as GradientSky).groundColor === undefined) {
-            sky.groundColor = getOptionValue(clearColor, "#000000");
-        }
-        this.m_skyBackground = new SkyBackground(sky, this.projection.type, this.m_camera);
-        this.m_scene.background = this.m_skyBackground.texture;
-    }
-
-    private removeSkyBackGround() {
-        this.m_scene.background = null;
-        if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.dispose();
-            this.m_skyBackground = undefined;
-        }
-    }
-
-    private updateSkyBackgroundColors(sky: Sky, clearColor: string | undefined) {
-        if (sky.type === "gradient" && (sky as GradientSky).groundColor === undefined) {
-            sky.groundColor = getOptionValue(clearColor, "#000000");
-        }
-        if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.updateTexture(sky, this.projection.type);
-            this.m_scene.background = this.m_skyBackground?.texture;
-        }
-    }
-
-    private updateLighting() {
-        if (!this.m_theme) {
-            return;
-        }
-
-        const theme = this.m_theme as Theme;
-        if (theme.clearColor !== undefined) {
-            this.m_renderer.setClearColor(new THREE.Color(theme.clearColor));
-        }
-
-        if (this.m_createdLights) {
-            this.m_createdLights.forEach((light: THREE.Light) => {
-                this.m_scene.remove(light);
-            });
-        }
-
-        this.m_overlayCreatedLights?.forEach(light => {
-            this.m_overlayScene.remove(light);
-            if (light instanceof THREE.DirectionalLight) {
-                this.m_overlayScene.remove(light.target);
-            }
-        });
-
-        if (theme.lights !== undefined) {
-            this.m_createdLights = [];
-            this.m_overlayCreatedLights = [];
-
-            theme.lights.forEach((lightDescription: Light) => {
-                const light = createLight(lightDescription);
-                if (!light) {
-                    logger.warn(
-                        `MapView: failed to create light ${lightDescription.name} of type ${lightDescription.type}`
-                    );
-                    return;
-                }
-                this.m_scene.add(light);
-
-                if ((light as any).isDirectionalLight) {
-                    const directionalLight = light as THREE.DirectionalLight;
-                    // This is needed so that the target is updated automatically, see:
-                    // https://threejs.org/docs/#api/en/lights/DirectionalLight.target
-                    this.m_scene.add(directionalLight.target);
-                }
-                this.m_createdLights!.push(light);
-
-                const clonedLight: THREE.Light = light.clone();
-                this.m_overlayScene.add(clonedLight);
-                if (clonedLight instanceof THREE.DirectionalLight) {
-                    this.m_overlayScene.add(clonedLight.target.clone());
-                }
-            });
-        }
-    }
-
     private movementStarted() {
         this.m_textElementsRenderer.movementStarted();
 
@@ -4200,8 +3956,6 @@ export class MapView extends EventDispatcher {
     }
 
     private setupRenderer() {
-        this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
-
         this.m_scene.add(this.m_sceneRoot);
         this.m_overlayScene.add(this.m_overlaySceneRoot);
 
@@ -4254,11 +4008,7 @@ export class MapView extends EventDispatcher {
     private readonly onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
-            if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {
-                this.m_renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));
-            } else {
-                this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
-            }
+            this.m_environment.updateClearColor(this.m_theme);
             this.update();
         }
         logger.warn("WebGL context restored", event);
