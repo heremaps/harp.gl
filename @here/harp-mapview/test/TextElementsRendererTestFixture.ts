@@ -18,6 +18,7 @@ import { TextElement } from "../lib/text/TextElement";
 import { TextElementsRenderer } from "../lib/text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "../lib/text/TextElementsRendererOptions";
 import { TextElementType } from "../lib/text/TextElementType";
+import { TextStyleCache } from "../lib/text/TextStyleCache";
 import { ViewState } from "../lib/text/ViewState";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
@@ -171,7 +172,7 @@ export class TestFixture {
             stubPoiManager(this.sandbox),
             stubPoiRendererFactory(this.sandbox, this.m_poiRendererStub),
             stubFontCatalogLoader(this.sandbox, fontCatalog),
-            this.m_theme,
+            new TextStyleCache(this.m_theme),
             this.m_options
         );
         // Force renderer initialization by calling render with changed text elements.

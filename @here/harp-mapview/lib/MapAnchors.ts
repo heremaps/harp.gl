@@ -77,6 +77,7 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
  */
 export class MapAnchors {
     private m_anchors: MapAnchor[] = [];
+    private m_priorities: StylePriority[] = [];
 
     /**
      * All currently added [[MapAnchor]]s.
@@ -114,6 +115,10 @@ export class MapAnchors {
         this.m_anchors.length = 0;
     }
 
+    setPriorities(priorities: StylePriority[]) {
+        this.m_priorities = priorities;
+    }
+
     /**
      * Update the map anchors.
      * @param projection - Current projection
@@ -129,14 +134,13 @@ export class MapAnchors {
         projection: Projection,
         cameraPosition: THREE.Vector3,
         rootNode: THREE.Object3D,
-        overlayRootNode: THREE.Object3D,
-        priorities?: StylePriority[]
+        overlayRootNode: THREE.Object3D
     ) {
         const worldPosition = new THREE.Vector3();
 
         this.m_anchors.forEach((mapAnchor: MapAnchor) => {
             if (mapAnchor.styleSet !== undefined) {
-                const priority = priorities?.findIndex(
+                const priority = this.m_priorities?.findIndex(
                     entry =>
                         entry.group === mapAnchor.styleSet && entry.category === mapAnchor.category
                 );

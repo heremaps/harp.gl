@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import { LineMarkerTechnique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import {
     AdditionParameters,
@@ -323,7 +323,6 @@ export class TextElementsRenderer {
     private m_loadPromise: Promise<any> | undefined;
     private readonly m_options: TextElementsRendererOptions;
 
-    private readonly m_textStyleCache: TextStyleCache;
     private readonly m_textRenderers: TextCanvasRenderer[] = [];
 
     private m_overlayTextElements?: TextElement[];
@@ -357,7 +356,7 @@ export class TextElementsRenderer {
      * @param m_poiRendererFactory - To create PoiRenderer instances.
      * @param m_poiManager - To prepare pois for rendering.
      * @param m_fontCatalogLoader - To load font catalogs.
-     * @param m_theme - Theme defining  text styles.
+     * @param m_textStyleCache - Cache defining  text styles.
      * @param options - Configuration options for the text renderer. See
      * [[TextElementsRendererOptions]].
      */
@@ -371,11 +370,9 @@ export class TextElementsRenderer {
         private readonly m_poiManager: PoiManager,
         private readonly m_poiRendererFactory: PoiRendererFactory,
         private readonly m_fontCatalogLoader: FontCatalogLoader,
-        private readonly m_theme: Theme,
+        private readonly m_textStyleCache: TextStyleCache,
         options: TextElementsRendererOptions
     ) {
-        this.m_textStyleCache = new TextStyleCache(this.m_theme);
-
         this.m_options = { ...options };
         initializeDefaultOptions(this.m_options);
 

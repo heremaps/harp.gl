@@ -167,53 +167,42 @@ export class PoiManager {
      *
      * @param imageName - Name of the image from the theme (NOT the url!).
      * @param atlas - URL of the JSON file defining the texture atlas.
+     * @param abortSignal - Signal to Abort the loading of the Atlas Image
      */
-    addTextureAtlas(imageName: string, atlas: string) {
-        fetch(atlas)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(
-                        `addTextureAtlas: Cannot load textureAtlas: ${response.statusText}`
-                    );
-                }
+    async addTextureAtlas(imageName: string, atlas: string, abortSignal?: AbortSignal) {
+        const response = await fetch(atlas, { signal: abortSignal });
+        if (!response.ok) {
+            throw new Error(`addTextureAtlas: Cannot load textureAtlas: ${response.statusText}`);
+        }
+        try {
+            const jsonAtlas: any | undefined = await response.json();
 
-                return response.json();
-            })
-            .then((jsonAtlas: any | undefined) => {
-                if (jsonAtlas === undefined) {
-                    logger.info(`addTextureAtlas: TextureAtlas empty: ${atlas}`);
-                    return;
-                }
+            if (jsonAtlas === undefined) {
+                logger.info(`addTextureAtlas: TextureAtlas empty: ${atlas}`);
+                return;
+            }
 
-                try {
-                    logger.debug(
-                        `addTextureAtlas: Loading textureAtlas '${atlas}' for image '${imageName}'`
-                    );
-                    for (const textureName of Object.getOwnPropertyNames(jsonAtlas)) {
-                        const imageTextureDef = jsonAtlas[textureName] as ImageTextureDef;
+            logger.debug(
+                `addTextureAtlas: Loading textureAtlas '${atlas}' for image '${imageName}'`
+            );
+            for (const textureName of Object.getOwnPropertyNames(jsonAtlas)) {
+                const imageTextureDef = jsonAtlas[textureName] as ImageTextureDef;
 
-                        const imageTexture: ImageTexture = {
-                            name: textureName,
-                            image: imageName,
-                            xOffset: imageTextureDef.x,
-                            yOffset: imageTextureDef.y,
-                            width: imageTextureDef.width,
-                            height: imageTextureDef.height
-                        };
+                const imageTexture: ImageTexture = {
+                    name: textureName,
+                    image: imageName,
+                    xOffset: imageTextureDef.x,
+                    yOffset: imageTextureDef.y,
+                    width: imageTextureDef.width,
+                    height: imageTextureDef.height
+                };
 
-                        this.addImageTexture(imageTexture);
-                    }
-                } catch (ex) {
-                    logger.error(
-                        `addTextureAtlas: Failed to load textureAtlas ` + `'${atlas}' : ${ex}`
-                    );
-                }
-                this.mapView.update();
-            })
-
-            .catch((reason: any) => {
-                logger.error(`addTextureAtlas: Failed to load textureAtlas '${atlas}' : ${reason}`);
-            });
+                this.addImageTexture(imageTexture);
+            }
+            this.mapView.update();
+        } catch (error) {
+            logger.error(`addTextureAtlas: Failed to load textureAtlas '${atlas}' : ${error}`);
+        }
     }
 
     /**

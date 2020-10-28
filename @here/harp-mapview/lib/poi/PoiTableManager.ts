@@ -197,11 +197,12 @@ export class PoiTable {
      * Start to load the PoiTable from the specified URL. Can only be called once per table.
      *
      * @param {string} poiTableUrl URL that points to the JSON file.
+     * @param {AbortSignal} abortSignal Signal to abort the loading of the poi table file
      *
      * @returns {Promise<boolean>} Promise is being resolved once the JSON file has been fetched and
      *          the `PoiTable` has been set up.
      */
-    async load(poiTableUrl: string): Promise<boolean> {
+    async load(poiTableUrl: string, abortSignal?: AbortSignal): Promise<boolean> {
         if (this.m_loadedOk !== undefined) {
             // Only load once.
             return true;
@@ -209,7 +210,7 @@ export class PoiTable {
 
         this.m_loadedOk = false;
 
-        const response = await fetch(poiTableUrl);
+        const response = await fetch(poiTableUrl, { signal: abortSignal });
 
         if (!response.ok) {
             throw new Error(
@@ -299,6 +300,7 @@ export class PoiTable {
 export class PoiTableManager {
     private m_isLoading = false;
     private m_poiTables: Map<string, PoiTable> = new Map();
+    private readonly m_abortControllers: Map<string, AbortController> = new Map();
 
     /**
      * Creates an instance of PoiTableManager.
@@ -343,7 +345,13 @@ export class PoiTableManager {
                         );
                         if (poiTableRef.url !== undefined && typeof poiTableRef.url === "string") {
                             this.addTable(poiTable);
-                            loadPromises.push(poiTable.load(poiTableRef.url));
+                            this.m_abortControllers.set(poiTableRef.name, new AbortController());
+                            loadPromises.push(
+                                poiTable.load(
+                                    poiTableRef.url,
+                                    this.m_abortControllers.get(poiTableRef.name)?.signal
+                                )
+                            );
                         } else {
                             logger.error(`POI table definition has no valid url: ${poiTableRef}`);
                         }
@@ -375,6 +383,10 @@ export class PoiTableManager {
      */
     clear() {
         this.m_poiTables = new Map();
+        this.m_abortControllers.forEach((abortController, name) => {
+            abortController.abort();
+            this.m_abortControllers.delete(name);
+        });
     }
 
     /**
