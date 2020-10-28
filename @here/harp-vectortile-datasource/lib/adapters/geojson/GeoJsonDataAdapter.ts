@@ -5,6 +5,7 @@
  */
 
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
+import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
@@ -199,14 +200,36 @@ export class GeoJsonDataAdapter implements DataAdapter {
             switch (feature.geometry.type) {
                 case "LineString":
                 case "MultiLineString": {
-                    const geometry = convertLineGeometry(feature.geometry, decodeInfo);
-                    this.m_processor.processLineFeature(
-                        $layer,
-                        DEFAULT_EXTENTS,
-                        geometry,
-                        env,
-                        $level
-                    );
+                    let geometry = convertLineGeometry(feature.geometry, decodeInfo);
+
+                    const clippedGeometries: ILineGeometry[] = [];
+
+                    const DEFAULT_BORDER = 100;
+
+                    geometry.forEach(g => {
+                        const clipped = clipLineString(
+                            g.positions,
+                            -DEFAULT_BORDER,
+                            -DEFAULT_BORDER,
+                            DEFAULT_EXTENTS + DEFAULT_BORDER,
+                            DEFAULT_EXTENTS + DEFAULT_BORDER
+                        );
+                        clipped.forEach(positions => {
+                            clippedGeometries.push({ positions });
+                        });
+                    });
+
+                    geometry = clippedGeometries;
+
+                    if (geometry.length > 0) {
+                        this.m_processor.processLineFeature(
+                            $layer,
+                            DEFAULT_EXTENTS,
+                            clippedGeometries,
+                            env,
+                            $level
+                        );
+                    }
                     break;
                 }
                 case "Polygon":
