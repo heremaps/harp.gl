@@ -1876,6 +1876,7 @@ export class MapView extends EventDispatcher {
     }
 
     /**
+     * @internal
      * Get the {@link ImageCache} that belongs to this `MapView`.
      *
      * Images stored in this cache are primarily used for POIs (icons) and they are used with the
@@ -1891,8 +1892,7 @@ export class MapView extends EventDispatcher {
     /**
      * Get the {@link ImageCache} for user images that belongs to this `MapView`.
      *
-     * Images added to this cache can be removed if no longer required. If images with identical
-     * names are stored in imageCache and userImageCache, the userImageCache will take precedence.
+     * Images added to this cache can be removed if no longer required.
      */
     get userImageCache(): MapViewImageCache {
         return this.m_userImageCache;
@@ -1900,6 +1900,7 @@ export class MapView extends EventDispatcher {
 
     /**
      * @hidden
+     * @internal
      * Get the {@link PoiManager} that belongs to this `MapView`.
      */
     get poiManager(): PoiManager {

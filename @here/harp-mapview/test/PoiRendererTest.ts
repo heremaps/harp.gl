@@ -15,7 +15,7 @@ import { Math2D } from "@here/harp-utils";
 import { expect } from "chai";
 import * as THREE from "three";
 
-import { PoiRenderer } from "../lib/poi/PoiRenderer";
+import { PoiBuffer, PoiRenderer } from "../lib/poi/PoiRenderer";
 
 describe("PoiRenderer", function() {
     describe("computeIconScreenBox", function() {
@@ -24,7 +24,7 @@ describe("PoiRenderer", function() {
                 computedWidth: 32,
                 computedHeight: 32,
                 mayOverlap: false,
-                poiRenderBatch: 1,
+                buffer: {} as PoiBuffer,
                 technique: {}
             };
             const env = new Env();
@@ -48,7 +48,7 @@ describe("PoiRenderer", function() {
                 computedWidth: 32,
                 computedHeight: 32,
                 mayOverlap: false,
-                poiRenderBatch: 1,
+                buffer: {} as PoiBuffer,
                 technique: {
                     iconXOffset: 16,
                     iconYOffset: -16
@@ -75,7 +75,7 @@ describe("PoiRenderer", function() {
                 computedWidth: 32,
                 computedHeight: 32,
                 mayOverlap: false,
-                poiRenderBatch: 1,
+                buffer: {} as PoiBuffer,
                 technique: {
                     iconXOffset: 16,
                     iconYOffset: -16

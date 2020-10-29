@@ -25,6 +25,7 @@ import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";
 import { PickResult } from "../PickHandler";
+import { PoiBuffer } from "../poi/PoiRenderer";
 import { TextElementType } from "./TextElementType";
 
 /**
@@ -37,7 +38,8 @@ export interface PoiInfo {
     technique: PoiTechnique | LineMarkerTechnique;
 
     /**
-     * Name of the {@link @here/harp-datasource-protocol#ImageTexture}.
+     * Name of the {@link @here/harp-datasource-protocol#ImageTexture} or image in
+     * {@link @here/harp-mapview#userImageCache}.
      */
     imageTextureName: string;
 
@@ -158,7 +160,7 @@ export interface PoiInfo {
      * @hidden
      * Internal reference to a render batch, made up of all icons that use the same Material.
      */
-    poiRenderBatch?: number;
+    buffer?: PoiBuffer;
 
     /**
      * @hidden
@@ -193,7 +195,7 @@ export interface PoiInfo {
  * @internal
  */
 export function poiIsRenderable(poiInfo: PoiInfo): boolean {
-    return poiInfo.poiRenderBatch !== undefined;
+    return poiInfo.buffer !== undefined;
 }
 
 export interface TextPickResult extends PickResult {
@@ -527,6 +529,16 @@ export class TextElement {
                     this.poiInfo.textMaxZoomLevel
                 );
             }
+        }
+    }
+
+    /**
+     * Disposes of any allocated resources.
+     */
+    dispose() {
+        const poiBuffer = this.poiInfo?.buffer;
+        if (poiBuffer) {
+            poiBuffer.decreaseRefCount();
         }
     }
 }

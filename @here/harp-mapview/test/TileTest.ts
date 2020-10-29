@@ -205,6 +205,19 @@ describe("Tile", function() {
             expect(tile.textElementGroups.count()).to.equal(0);
             assert.isTrue(tile.textElementsChanged);
         });
+
+        it("dispose diposes of text elements", function() {
+            const tile = new Tile(stubDataSource, tileKey);
+            const textElement = createFakeTextElement();
+            const disposeStub = sinon.stub(textElement, "dispose");
+            tile.addTextElement(textElement);
+            expect(tile.textElementGroups.count()).to.equal(1);
+
+            tile.dispose();
+
+            disposeStub.called;
+            expect(tile.textElementGroups.count()).to.equal(0);
+        });
     });
 
     it("setting skipping will cause willRender to return false", function() {

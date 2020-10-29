@@ -707,11 +707,13 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      */
     poiNameField?: string;
     /**
-     * Name of [[ImageTexture]] definition to use.
+     * Name of [[ImageTexture]] definition or image in {@link @here/harp-mapview#userImageCache}
+     * to use.
      */
     imageTexture?: DynamicProperty<string>;
     /**
-     * Field name to extract imageTexture content from.
+     * Field name to extract imageTexture content from, if imageTexture refers to an
+     * [[ImageTexture]] definition.
      */
     imageTextureField?: string;
     /**
