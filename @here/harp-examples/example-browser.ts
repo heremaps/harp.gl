@@ -154,7 +154,7 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
                 if (text === null) {
                     continue;
                 }
-                const matches = filterValue === "" || text.includes(filterValue);
+                const matches = filterValue === "" || text.includes(filterValue.toLowerCase());
                 if (matches) {
                     element.classList.remove("filtered");
                 } else {
