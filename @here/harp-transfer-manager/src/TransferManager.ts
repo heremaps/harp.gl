@@ -96,7 +96,7 @@ export class TransferManager implements ITransferManager {
         } catch (err) {
             if (
                 err.hasOwnProperty("isCancelled") ||
-                (err.hasOwnProperty("name") && err.name === "AbortError") ||
+                err.name === "AbortError" ||
                 retryCount >= maxRetries
             ) {
                 throw err;
