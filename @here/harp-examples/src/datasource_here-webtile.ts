@@ -78,8 +78,10 @@ export namespace HereWebTileDataSourceExample {
 
         // Add an UI.
         const ui = new MapControlsUI(controls, { zoomLevel: "input", projectionSwitch: true });
-        ui.projectionSwitchElement?.addEventListener("click", () => {
-            map.theme = map.projection.type === ProjectionType.Spherical ? GLOBE_THEME : FLAT_THEME;
+        ui.projectionSwitchElement?.addEventListener("click", async () => {
+            await map.setTheme(
+                map.projection.type === ProjectionType.Spherical ? GLOBE_THEME : FLAT_THEME
+            );
         });
         canvas.parentElement!.appendChild(ui.domElement);
 

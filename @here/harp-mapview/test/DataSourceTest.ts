@@ -113,7 +113,7 @@ describe("DataSource", function() {
                 dataSource.attach(mapView);
                 dataSource.styleSetName = "test";
                 expect(dataSource.styleSetName).to.equal("test");
-                expect(setThemeSpy.calledOnceWith(mapView.theme));
+                expect(setThemeSpy.calledOnce);
             });
         });
 

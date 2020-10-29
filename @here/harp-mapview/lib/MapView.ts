@@ -3507,7 +3507,6 @@ export class MapView extends EventDispatcher {
             !this.m_initialTextPlacementDone &&
             !this.m_firstFrameComplete &&
             !this.isDynamicFrame &&
-            !this.m_themeManager.isLoading() &&
             !this.m_themeManager.isUpdating() &&
             this.m_poiTableManager.finishedLoading &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
@@ -3915,8 +3914,10 @@ export class MapView extends EventDispatcher {
     private readonly onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
-            this.m_sceneEnvironment.updateClearColor(this.theme);
-            this.update();
+            this.getTheme().then(theme => {
+                this.m_sceneEnvironment.updateClearColor(theme);
+                this.update();
+            });
         }
         logger.warn("WebGL context restored", event);
     };

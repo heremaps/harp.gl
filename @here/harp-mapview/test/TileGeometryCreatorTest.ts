@@ -378,10 +378,6 @@ describe("TileGeometryCreator", () => {
             }
         ];
 
-        newTile.mapView.theme = {
-            styles: { rules }
-        };
-
         // create `StyleSetEvaluator` to instantiate techniques
         // for the test polygons.
         const styleSetEvaluator = new StyleSetEvaluator({ styleSet: rules });
