@@ -86,7 +86,7 @@ describe("Berlin Theme", function() {
             it(`works with StyleSetEvaluator`, async function() {
                 for (const styleSetName in theme.styles) {
                     const styleSet = theme.styles[styleSetName];
-                    new StyleSetEvaluator(styleSet, theme.definitions);
+                    new StyleSetEvaluator({ styleSet, definitions: theme.definitions });
                 }
             });
 

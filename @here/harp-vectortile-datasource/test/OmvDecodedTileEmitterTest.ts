@@ -58,7 +58,7 @@ describe("OmvDecodedTileEmitter", function() {
             }
         ];
 
-        const styleSetEvaluator = new StyleSetEvaluator(styleSet);
+        const styleSetEvaluator = new StyleSetEvaluator({ styleSet });
 
         const tileEmitter = new OmvDecodedTileEmitterTest(
             decodeInfo,

@@ -24,7 +24,7 @@ import {
     TextTechniqueParams,
     TextureCoordinateType
 } from "./TechniqueParams";
-import { Theme } from "./Theme";
+import { StylePriority } from "./Theme";
 
 /**
  * Names of the supported texture properties.
@@ -494,9 +494,11 @@ export function composeTechniqueTextureName(
  * @param technique- The technique whose render order or priority will be set.
  * @param theme - The theme from which the category priorities will be taken.
  */
-export function setTechniqueRenderOrderOrPriority(technique: IndexedTechnique, theme: Theme) {
-    const { priorities, labelPriorities } = theme;
-
+export function setTechniqueRenderOrderOrPriority(
+    technique: IndexedTechnique,
+    priorities: StylePriority[],
+    labelPriorities: string[]
+) {
     if (
         isTextTechnique(technique) ||
         isPoiTechnique(technique) ||

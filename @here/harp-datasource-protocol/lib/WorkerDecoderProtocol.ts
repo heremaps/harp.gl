@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Definitions, StyleSet } from "./Theme";
+import { Definitions, StylePriority, StyleSet } from "./Theme";
 import { WorkerServiceProtocol } from "./WorkerServiceProtocol";
 
 /**
@@ -75,6 +75,8 @@ export namespace WorkerDecoderProtocol {
         type: DecoderMessageName.Configuration;
         styleSet?: StyleSet;
         definitions?: Definitions;
+        priorities?: StylePriority[];
+        labelPriorities?: string[];
         options?: OptionsMap;
         languages?: string[];
     }

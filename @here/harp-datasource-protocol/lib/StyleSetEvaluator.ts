@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { LoggerManager } from "@here/harp-utils";
 
 import {
@@ -33,8 +32,9 @@ import {
     interpolatedPropertyDefinitionToJsonExpr,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedPropertyDefs";
+import { DecoderOptions } from "./ITileDecoder";
 import { AttrScope, getTechniqueAttributeDescriptor } from "./TechniqueDescriptors";
-import { IndexedTechnique, Technique } from "./Techniques";
+import { IndexedTechnique, setTechniqueRenderOrderOrPriority, Technique } from "./Techniques";
 import { Definitions, Style, StyleSet } from "./Theme";
 
 const logger = LoggerManager.instance.create("StyleSetEvaluator");
@@ -332,6 +332,13 @@ class OptimizedSubSetKey {
 }
 
 /**
+ * Options to be passed to the StyleSetEvaluator
+ *
+ * Basically identical as the DecoderOptions but requires styleSet to be set.
+ */
+export type StyleSetOptions = DecoderOptions & { styleSet: StyleSet };
+
+/**
  * Combine data from datasource and apply the rules from a specified theme to show it on the map.
  */
 export class StyleSetEvaluator {
@@ -353,9 +360,9 @@ export class StyleSetEvaluator {
     private m_previousResult: IndexedTechnique[] | undefined;
     private m_previousEnv: Env | undefined;
 
-    constructor(styleSet: StyleSet, definitions?: Definitions) {
-        this.m_definitions = definitions;
-        this.styleSet = resolveReferences(styleSet, definitions);
+    constructor(private readonly m_options: StyleSetOptions) {
+        this.m_definitions = this.m_options.definitions;
+        this.styleSet = resolveReferences(this.m_options.styleSet, this.m_definitions);
         computeDefaultRenderOrder(this.styleSet);
         this.compileStyleSet();
     }
@@ -912,6 +919,11 @@ export class StyleSetEvaluator {
         if (style._usesFeatureState !== undefined) {
             technique._usesFeatureState = style._usesFeatureState;
         }
+        setTechniqueRenderOrderOrPriority(
+            technique,
+            this.m_options.priorities ?? [],
+            this.m_options.labelPriorities ?? []
+        );
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
     }
