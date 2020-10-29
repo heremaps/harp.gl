@@ -89,7 +89,7 @@ export class ImageCache {
     /**
      * Add an image definition to the global cache. Useful when the image data is already loaded.
      *
-     * @param mapView - Specifiy which {@link MapView} requests the image.
+     * @param mapView - Specify which {@link MapView} requests the image.
      * @param url - URL of image.
      * @param imageData - Optional {@link ImageData}containing the image content.
      * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as conten.
@@ -155,13 +155,13 @@ export class ImageCache {
      * Remove an image from the cache..
      *
      * @param url - URL of the image.
+     * @param mapView - Optional: Specify which {@link MapView} removes the image.
      * @returns `true` if image has been removed.
      */
-    removeImage(url: string): boolean {
+    removeImage(url: string, mapView?: MapView): boolean {
         const cacheItem = this.m_images.get(url);
         if (cacheItem !== undefined) {
-            this.m_images.delete(url);
-            this.cancelLoading(cacheItem.imageItem);
+            this.unlinkCacheItem(cacheItem, mapView);
             return true;
         }
         return false;
@@ -171,12 +171,13 @@ export class ImageCache {
      * Remove an image from the cache.
      *
      * @param imageItem - Item identifying the image.
+     * @param mapView - Optional: Specify which {@link MapView} removes the image.
      * @returns `true` if image has been removed.
      */
-    removeImageItem(imageItem: ImageItem): boolean {
-        if (this.m_images.has(imageItem.url) !== undefined) {
-            this.m_images.delete(imageItem.url);
-            this.cancelLoading(imageItem);
+    removeImageItem(imageItem: ImageItem, mapView?: MapView): boolean {
+        const cacheItem = this.m_images.get(imageItem.url);
+        if (cacheItem !== undefined) {
+            this.unlinkCacheItem(cacheItem, mapView);
             return true;
         }
         return false;
@@ -187,14 +188,14 @@ export class ImageCache {
      *
      * @param itemFilter - Filter to identify images to remove. Should return `true` if item
      * should be removed.
+     * @param mapView - Optional: Specify which {@link MapView} removes the image.
      * @returns Number of images removed.
      */
-    removeImageItems(itemFilter: (item: ImageItem) => boolean): number {
+    removeImageItems(itemFilter: (item: ImageItem) => boolean, mapView?: MapView): number {
         const oldSize = this.m_images.size;
         [...this.m_images.values()].filter((cacheItem: ImageCacheItem) => {
             if (itemFilter(cacheItem.imageItem)) {
-                this.m_images.delete(cacheItem.imageItem.url);
-                this.cancelLoading(cacheItem.imageItem);
+                this.unlinkCacheItem(cacheItem, mapView);
             }
         });
         return oldSize - this.m_images.size;
@@ -226,7 +227,7 @@ export class ImageCache {
      */
     clear(mapView: MapView): number {
         const oldSize = this.m_images.size;
-        const itemsToRemove: string[] = [];
+        const itemsToRemove: ImageCacheItem[] = [];
 
         this.m_images.forEach(cacheItem => {
             const mapViewIndex = cacheItem.mapViews.indexOf(mapView);
@@ -234,13 +235,12 @@ export class ImageCache {
                 cacheItem.mapViews.splice(mapViewIndex, 1);
             }
             if (cacheItem.mapViews.length === 0) {
-                itemsToRemove.push(cacheItem.imageItem.url);
-                this.cancelLoading(cacheItem.imageItem);
+                itemsToRemove.push(cacheItem);
             }
         });
 
-        for (const keyToDelete of itemsToRemove) {
-            this.m_images.delete(keyToDelete);
+        for (const cacheItem of itemsToRemove) {
+            this.unlinkCacheItem(cacheItem);
         }
         return oldSize - this.m_images.size;
     }
@@ -250,7 +250,7 @@ export class ImageCache {
      */
     clearAll() {
         this.m_images.forEach(cacheItem => {
-            this.cancelLoading(cacheItem.imageItem);
+            this.unlinkCacheItem(cacheItem);
         });
         this.m_images = new Map();
     }
@@ -492,6 +492,35 @@ export class ImageCache {
         if (imageItem.loadingPromise !== undefined) {
             // Notify that we are cancelling.
             imageItem.cancelled = true;
+        }
+    }
+
+    /**
+     * Remove the cacheItem from cache and from the {@link MapView}s that have this item in their
+     * cache. If the item is used in another {@link MapView}, the item is not removed, but the link
+     * to the {@link MapView} is removed from the item, just like a reference count.
+     *
+     * @param cacheItem The cache item to be removed.
+     * @param mapView - Optional: Specify which {@link MapView} removes the image.
+     */
+    private unlinkCacheItem(cacheItem: ImageCacheItem, mapView?: MapView) {
+        if (mapView) {
+            const mapViewIndex = cacheItem.mapViews.indexOf(mapView);
+            if (mapViewIndex >= 0) {
+                cacheItem.mapViews.splice(mapViewIndex, 1);
+            }
+            if (cacheItem.mapViews.length > 0) {
+                // Do not delete the item, it is still used.
+                return;
+            }
+        }
+
+        this.m_images.delete(cacheItem.imageItem.url);
+        this.cancelLoading(cacheItem.imageItem);
+        for (const mapView of cacheItem.mapViews) {
+            if (mapView.imageCache) {
+                mapView.imageCache.removeImageByUrl(cacheItem.imageItem.url);
+            }
         }
     }
 }

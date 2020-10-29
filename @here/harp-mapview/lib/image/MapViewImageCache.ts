@@ -63,11 +63,9 @@ export class MapViewImageCache {
             this.m_name2Url.set(name, url);
         }
 
-        const imageItem = ImageCache.instance.findImage(url);
-        if (imageItem === undefined) {
-            return ImageCache.instance.registerImage(this.mapView, url, image, htmlElement);
-        }
-        return imageItem;
+        // Register new image or add this mapView to list of MapViews using this image (identified
+        // by URL).)
+        return ImageCache.instance.registerImage(this.mapView, url, image, htmlElement);
     }
 
     /**
@@ -252,7 +250,7 @@ export class MapViewImageCache {
             } else {
                 // URL was used by this image only, remove the image.
                 this.m_url2Name.delete(url);
-                ImageCache.instance.removeImage(url);
+                ImageCache.instance.removeImage(url, this.mapView);
             }
             return true;
         }

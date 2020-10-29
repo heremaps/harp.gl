@@ -22,6 +22,7 @@ class ImageData {
 
 describe("MapViewImageCache", function() {
     const mapView: MapView = {} as MapView;
+    (mapView as any).imageCache = new MapViewImageCache(mapView);
 
     beforeEach(function() {
         ImageCache.instance.clearAll();
@@ -938,5 +939,144 @@ describe("ImageCache", function() {
 
         assert.equal(numImagesInCache, 3, "wrong count");
         assert.equal(cache.size, 3, "wrong cache size");
+    });
+
+    it("#clear images shared in multiple MapViews", function() {
+        const commonCache = ImageCache.instance;
+        commonCache.clearAll();
+
+        const mapView1: MapView = {} as MapView;
+        const mapView2: MapView = {} as MapView;
+
+        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache(mapView1));
+        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache(mapView2));
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache0.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache0.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        cache1.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache1.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        assert.equal(ImageCache.instance.size, 2);
+        assert.equal(cache0.numberOfNames, 2);
+        assert.equal(cache1.numberOfNames, 2);
+        assert.equal(cache0.numberOfUrls, 2);
+        assert.equal(cache1.numberOfUrls, 2);
+
+        cache0.clear();
+
+        assert.equal(ImageCache.instance.size, 2);
+        assert.equal(cache0.numberOfNames, 0);
+        assert.equal(cache1.numberOfNames, 2);
+
+        cache1.clear();
+
+        assert.equal(ImageCache.instance.size, 0);
+        assert.equal(cache1.numberOfNames, 0);
+    });
+
+    it("#share images in multiple MapViews", function() {
+        const commonCache = ImageCache.instance;
+        commonCache.clearAll();
+
+        const mapView1: MapView = {} as MapView;
+        const mapView2: MapView = {} as MapView;
+
+        const cache0 = new MapViewImageCache(mapView1);
+        const cache1 = new MapViewImageCache(mapView2);
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        const imageItem0 = cache0.registerImage("img0", "httpx://naxos.de", imageData1);
+        const imageItem1 = cache0.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        cache1.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache1.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        assert.equal(imageItem0, cache0.findImageByName("img0"));
+        assert.equal(imageItem1, cache0.findImageByName("img1"));
+
+        assert.equal(imageItem0, cache1.findImageByName("img0"));
+        assert.equal(imageItem1, cache1.findImageByName("img1"));
+    });
+
+    it("#remove images shared in multiple MapViews", function() {
+        const commonCache = ImageCache.instance;
+        commonCache.clearAll();
+
+        const mapView1: MapView = {} as MapView;
+        const mapView2: MapView = {} as MapView;
+
+        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache(mapView1));
+        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache(mapView2));
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache0.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache0.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        cache1.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache1.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        assert.equal(ImageCache.instance.size, 2);
+
+        assert.isTrue(cache0.removeImage("img0"));
+
+        assert.equal(ImageCache.instance.size, 2);
+
+        assert.isTrue(cache1.removeImage("img0"));
+
+        assert.equal(ImageCache.instance.size, 1);
+
+        assert.isTrue(cache0.removeImage("img1"));
+
+        assert.equal(ImageCache.instance.size, 1);
+
+        assert.isTrue(cache1.removeImage("img1"));
+
+        assert.equal(ImageCache.instance.size, 0);
+    });
+
+    it("#removeImageByUrl images shared in multiple MapViews", function() {
+        const commonCache = ImageCache.instance;
+        commonCache.clearAll();
+
+        const mapView1: MapView = {} as MapView;
+        const mapView2: MapView = {} as MapView;
+
+        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache(mapView1));
+        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache(mapView2));
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache0.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache0.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        cache1.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache1.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        assert.equal(ImageCache.instance.size, 2);
+
+        assert.isTrue(cache0.removeImageByUrl("httpx://naxos.de"));
+
+        assert.equal(ImageCache.instance.size, 2);
+
+        assert.isTrue(cache1.removeImageByUrl("httpx://naxos.de"));
+
+        assert.equal(ImageCache.instance.size, 1);
+
+        assert.isTrue(cache0.removeImageByUrl("httpx://naxos.de-2"));
+
+        assert.equal(ImageCache.instance.size, 1);
+
+        assert.isTrue(cache1.removeImageByUrl("httpx://naxos.de-2"));
+
+        assert.equal(ImageCache.instance.size, 0);
     });
 });
