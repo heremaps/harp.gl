@@ -95,4 +95,35 @@ describe("GeoBox", function() {
         assert.isFalse(g.contains(new GeoCoordinates(0, 561)));
         assert.isFalse(g.contains(new GeoCoordinates(0, -510)));
     });
+
+    describe("GeoBox.center", function() {
+        it("center of zero-sized GeoBox", function() {
+            const lat = 52.0;
+            const lng = 0;
+
+            const geoBox = new GeoBox(new GeoCoordinates(lat, lng), new GeoCoordinates(lat, lng));
+
+            assert.strictEqual(geoBox.center.latitude, lat);
+            assert.strictEqual(geoBox.center.longitude, lng);
+
+            assert.strictEqual(geoBox.latitudeSpan, 0);
+            assert.strictEqual(geoBox.longitudeSpan, 0);
+        });
+
+        it("center of zero-sized GeoBox created using center and extents", function() {
+            const lat = 52.0;
+            const lng = 0;
+
+            const geoBox = GeoBox.fromCenterAndExtents(new GeoCoordinates(lat, lng), {
+                latitudeSpan: 0,
+                longitudeSpan: 0
+            });
+
+            assert.strictEqual(geoBox.center.latitude, lat);
+            assert.strictEqual(geoBox.center.longitude, lng);
+
+            assert.strictEqual(geoBox.latitudeSpan, 0);
+            assert.strictEqual(geoBox.longitudeSpan, 0);
+        });
+    });
 });
