@@ -580,20 +580,31 @@ export class VisibleTileSet {
                 frameNumber,
                 {
                     newTilesPerFrame
-                }
+                },
+                true
             );
-
+            const dependentResult = this.processVisibleTiles(
+                visibleResult.dependentTiles,
+                dataSource,
+                frameNumber,
+                {
+                    newTilesPerFrame
+                },
+                false
+            );
             // creates geometry if not yet available
             this.m_tileGeometryManager.updateTiles(visibleResult.visibleTiles);
-
+            this.m_tileGeometryManager.updateTiles(dependentResult.visibleTiles);
             // used to actually render the tiles or find alternatives for incomplete tiles
             this.dataSourceTileList.push({
                 dataSource,
                 storageLevel,
                 zoomLevel: dataZoomLevel,
-                allVisibleTileLoaded: visibleResult.allDataSourceTilesLoaded,
-                numTilesLoading: visibleResult.numTilesLoading,
-                visibleTiles: visibleResult.visibleTiles,
+                allVisibleTileLoaded:
+                    visibleResult.allDataSourceTilesLoaded &&
+                    dependentResult.allDataSourceTilesLoaded,
+                numTilesLoading: visibleResult.numTilesLoading + dependentResult.numTilesLoading,
+                visibleTiles: [...visibleResult.visibleTiles, ...dependentResult.visibleTiles],
                 renderedTiles: new Map<number, Tile>()
             });
             allVisibleTilesLoaded = allVisibleTilesLoaded && visibleResult.allDataSourceTilesLoaded;
@@ -900,15 +911,18 @@ export class VisibleTileSet {
         // Must be passed by reference
         refs: {
             newTilesPerFrame: number;
-        }
+        },
+        processDependentTiles: boolean
     ): {
         allDataSourceTilesLoaded: boolean;
         numTilesLoading: number;
         visibleTiles: Tile[];
+        dependentTiles: TileKeyEntry[];
     } {
         let allDataSourceTilesLoaded = true;
         let numTilesLoading = 0;
         const visibleTiles: Tile[] = [];
+        const dependentTiles: TileKeyEntry[] = [];
         for (
             let i = 0;
             i < visibleTileKeys.length &&
@@ -938,17 +952,20 @@ export class VisibleTileSet {
             tile.visibleArea = tileEntry.area;
             tile.elevationRange = tileEntry.elevationRange ?? { minElevation: 0, maxElevation: 0 };
 
-            // Add any dependent tileKeys if not already visible. Consider to optimize with a
-            // Set if this proves to be a bottleneck (because of O(n^2) search). Given the fact
-            // that dependencies are rare and used for non tiled data, this shouldn't be a
-            // problem.
-            for (const tileKey of tile.dependencies) {
-                if (
-                    visibleTileKeys.find(
-                        tileKeyEntry => tileKeyEntry.tileKey.mortonCode() === tileKey.mortonCode()
-                    ) === undefined
-                ) {
-                    visibleTileKeys.push(new TileKeyEntry(tileKey, 0));
+            if (processDependentTiles) {
+                // Add any dependent tileKeys if not already visible. Consider to optimize with a
+                // Set if this proves to be a bottleneck (because of O(n^2) search). Given the fact
+                // that dependencies are rare and used for non tiled data, this shouldn't be a
+                // problem.
+                for (const tileKey of tile.dependencies) {
+                    if (
+                        visibleTileKeys.find(
+                            tileKeyEntry =>
+                                tileKeyEntry.tileKey.mortonCode() === tileKey.mortonCode()
+                        ) === undefined
+                    ) {
+                        dependentTiles.push(new TileKeyEntry(tileKey, 0));
+                    }
                 }
             }
         }
@@ -956,7 +973,8 @@ export class VisibleTileSet {
         return {
             allDataSourceTilesLoaded,
             numTilesLoading,
-            visibleTiles
+            visibleTiles,
+            dependentTiles
         };
     }
 

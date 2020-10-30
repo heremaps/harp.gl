@@ -291,12 +291,22 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+        const dataSourceTileList_1 = updateRenderList(zoomLevel, storageLevel).tileList;
 
-        assert.equal(dataSourceTileList.length, 1);
-        assert.equal(dataSourceTileList[0].visibleTiles.length, 3);
+        assert.equal(dataSourceTileList_1.length, 1);
+        assert.equal(dataSourceTileList_1[0].visibleTiles.length, 3);
 
-        const visibleTiles = dataSourceTileList[0].visibleTiles;
+        const tile3 = fixture.vts.getCachedTile(dataSource, tileKey3, 0, 0);
+        assert.notEqual(tile3, undefined);
+        const tileKey4 = TileKey.fromMortonCode(371506853);
+        tile3!.dependencies.push(tileKey4);
+
+        const dataSourceTileList_2 = updateRenderList(zoomLevel, storageLevel).tileList;
+        assert.equal(dataSourceTileList_2.length, 1);
+        // Ensure that the fourth tile isn't `visible`.
+        assert.equal(dataSourceTileList_2[0].visibleTiles.length, 3);
+
+        const visibleTiles = dataSourceTileList_2[0].visibleTiles;
         assert.equal(visibleTiles[0].tileKey.mortonCode(), tileKey1.mortonCode());
         assert.equal(visibleTiles[1].tileKey.mortonCode(), tileKey2.mortonCode());
         assert.equal(visibleTiles[2].tileKey.mortonCode(), tileKey3.mortonCode());
@@ -304,7 +314,7 @@ describe("VisibleTileSet", function() {
         // Check that the dependent tile exists in the cache.
         assert.notEqual(fixture.vts.getCachedTile(dataSource, tileKey3, 0, 0), undefined);
 
-        const renderedTiles = dataSourceTileList[0].renderedTiles;
+        const renderedTiles = dataSourceTileList_2[0].renderedTiles;
         assert.equal(renderedTiles.size, 0);
     });
 
