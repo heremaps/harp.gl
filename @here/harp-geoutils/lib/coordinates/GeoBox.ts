@@ -116,7 +116,7 @@ export class GeoBox implements GeoBoxExtentLike {
             altitude = minAltitude + altitudeSpan * 0.5;
         }
 
-        if (west < east) {
+        if (west <= east) {
             return new GeoCoordinates(latitude, (west + east) * 0.5, altitude);
         }
 
