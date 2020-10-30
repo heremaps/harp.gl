@@ -373,6 +373,23 @@ export interface DataSourceTileList {
     renderedTiles: Map<number, Tile>;
 }
 
+// Sort by distance to camera, now the tiles that are further away are at the end
+// of the list.
+//
+// Sort is unstable if distance is equal, which happens a lot when looking top-down.
+// Unstable sorting makes label placement unstable at tile borders, leading to
+// flickering.
+const compareDistances = (a: TileKeyEntry, b: TileKeyEntry) => {
+    const distanceDiff = a.distance - b.distance;
+
+    // Take care or numerical precision issues
+    const minDiff = (a.distance + b.distance) * 0.000001;
+
+    return Math.abs(distanceDiff) < minDiff
+        ? a.tileKey.mortonCode() - b.tileKey.mortonCode()
+        : distanceDiff;
+};
+
 /**
  * Manages visible {@link Tile}s for {@link MapView}.
  *
@@ -391,7 +408,13 @@ export class VisibleTileSet {
 
     private readonly m_cameraOverride = new THREE.PerspectiveCamera();
     private readonly m_dataSourceCache: DataSourceCache;
-    private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
+    private m_viewRange: ViewRanges = {
+        near: 0.1,
+        far: Infinity,
+        minimum: 0.1,
+        maximum: Infinity
+    };
+
     // Maps morton codes to a given Tile, used to find overlapping Tiles. We only need to have this
     // for a single TilingScheme, i.e. that of the BackgroundDataSource.
     private readonly m_coveringMap = new Map<number, Tile>();
@@ -535,7 +558,8 @@ export class VisibleTileSet {
         elevationRangeSource?: ElevationRangeSource
     ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
         let allVisibleTilesLoaded: boolean = true;
-        let newTilesPerFrame = 0;
+        // This isn't really const, because we pass by ref to the methods below.
+        const newTilesPerFrame = 0;
 
         const visibleTileKeysResult = this.getVisibleTileKeysForDataSources(
             zoomLevel,
@@ -545,109 +569,34 @@ export class VisibleTileSet {
         this.dataSourceTileList = [];
         this.m_coveringMap.clear();
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
-            // Sort by distance to camera, now the tiles that are further away are at the end
-            // of the list.
-            //
-            // Sort is unstable if distance is equal, which happens a lot when looking top-down.
-            // Unstable sorting makes label placement unstable at tile borders, leading to
-            // flickering.
-            visibleTileKeys.sort((a: TileKeyEntry, b: TileKeyEntry) => {
-                const distanceDiff = a.distance - b.distance;
+            visibleTileKeys.sort(compareDistances);
 
-                // Take care or numerical precision issues
-                const minDiff = (a.distance + b.distance) * 0.000001;
-
-                return Math.abs(distanceDiff) < minDiff
-                    ? a.tileKey.mortonCode() - b.tileKey.mortonCode()
-                    : distanceDiff;
-            });
-
-            const actuallyVisibleTiles: Tile[] = [];
-            let allDataSourceTilesLoaded = true;
-            let numTilesLoading = 0;
             // Create actual tiles only for the allowed number of visible tiles
             const dataZoomLevel = dataSource.getDataZoomLevel(zoomLevel);
-            for (
-                let i = 0;
-                i < visibleTileKeys.length &&
-                actuallyVisibleTiles.length < this.options.maxVisibleDataSourceTiles;
-                i++
-            ) {
-                const tileEntry = visibleTileKeys[i];
-                const tile = this.getTile(
-                    dataSource,
-                    tileEntry.tileKey,
-                    tileEntry.offset,
-                    frameNumber
-                );
-                if (tile === undefined) {
-                    continue;
+
+            const visibleResult = this.processVisibleTiles(
+                visibleTileKeys,
+                dataSource,
+                frameNumber,
+                {
+                    newTilesPerFrame
                 }
-
-                allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.allGeometryLoaded;
-                if (!tile.allGeometryLoaded) {
-                    numTilesLoading++;
-                } else {
-                    // If this tile's data source is "covering" then other tiles beneath it have
-                    // their rendering skipped, see [[Tile.willRender]].
-                    this.skipOverlappedTiles(dataSource, tile);
-
-                    if (
-                        // if set to 0, it will ignore the limit and upload all available
-                        this.options.maxTilesPerFrame !== 0 &&
-                        newTilesPerFrame > this.options.maxTilesPerFrame &&
-                        //if the tile was already visible last frame dont delay it
-                        !(tile.frameNumLastVisible === frameNumber - 1)
-                    ) {
-                        tile.delayRendering = true;
-                        tile.mapView.update();
-                    } else {
-                        if (tile.frameNumVisible < 0) {
-                            // Store the fist frame the tile became visible.
-                            tile.frameNumVisible = frameNumber;
-                            newTilesPerFrame++;
-                        }
-                        tile.numFramesVisible++;
-                        tile.delayRendering = false;
-                    }
-                }
-                // Update the visible area of the tile. This is used for those tiles that are
-                // currently loaded and are waiting to be decoded to sort the jobs by area.
-                tile.visibleArea = tileEntry.area;
-                tile.elevationRange = tileEntry;
-
-                actuallyVisibleTiles.push(tile);
-
-                // Add any dependent tileKeys if not already visible. Consider to optimize with a
-                // Set if this proves to be a bottleneck (because of O(n^2) search). Given the fact
-                // that dependencies are rare and used for non tiled data, this shouldn't be a
-                // problem.
-                for (const tileKey of tile.dependencies) {
-                    if (
-                        visibleTileKeys.find(
-                            tileKeyEntry =>
-                                tileKeyEntry.tileKey.mortonCode() === tileKey.mortonCode()
-                        ) === undefined
-                    ) {
-                        visibleTileKeys.push(new TileKeyEntry(tileKey, 0));
-                    }
-                }
-            }
+            );
 
             // creates geometry if not yet available
-            this.m_tileGeometryManager.updateTiles(actuallyVisibleTiles);
+            this.m_tileGeometryManager.updateTiles(visibleResult.visibleTiles);
 
             // used to actually render the tiles or find alternatives for incomplete tiles
             this.dataSourceTileList.push({
                 dataSource,
                 storageLevel,
                 zoomLevel: dataZoomLevel,
-                allVisibleTileLoaded: allDataSourceTilesLoaded,
-                numTilesLoading,
-                visibleTiles: actuallyVisibleTiles,
+                allVisibleTileLoaded: visibleResult.allDataSourceTilesLoaded,
+                numTilesLoading: visibleResult.numTilesLoading,
+                visibleTiles: visibleResult.visibleTiles,
                 renderedTiles: new Map<number, Tile>()
             });
-            allVisibleTilesLoaded = allVisibleTilesLoaded && allDataSourceTilesLoaded;
+            allVisibleTilesLoaded = allVisibleTilesLoaded && visibleResult.allDataSourceTilesLoaded;
         }
 
         this.allVisibleTilesLoaded =
@@ -942,6 +891,104 @@ export class VisibleTileSet {
         tile.dispose();
     }
 
+    // Requests the tiles using the tilekeys from the DataSource and returns them, including whether
+    // all tiles were loaded and how many are loading.
+    private processVisibleTiles(
+        visibleTileKeys: TileKeyEntry[],
+        dataSource: DataSource,
+        frameNumber: number,
+        // Must be passed by reference
+        refs: {
+            newTilesPerFrame: number;
+        }
+    ): {
+        allDataSourceTilesLoaded: boolean;
+        numTilesLoading: number;
+        visibleTiles: Tile[];
+    } {
+        let allDataSourceTilesLoaded = true;
+        let numTilesLoading = 0;
+        const visibleTiles: Tile[] = [];
+        for (
+            let i = 0;
+            i < visibleTileKeys.length &&
+            visibleTiles.length < this.options.maxVisibleDataSourceTiles;
+            i++
+        ) {
+            const tileEntry = visibleTileKeys[i];
+            const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset, frameNumber);
+            if (tile === undefined) {
+                continue;
+            }
+            visibleTiles.push(tile);
+
+            allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.allGeometryLoaded;
+            if (!tile.allGeometryLoaded) {
+                numTilesLoading++;
+            } else {
+                // If this tile's data source is "covering" then other tiles beneath it have
+                // their rendering skipped, see [[Tile.willRender]].
+                this.skipOverlappedTiles(dataSource, tile);
+                if (this.processDelayTileRendering(tile, refs.newTilesPerFrame, frameNumber)) {
+                    refs.newTilesPerFrame++;
+                }
+            }
+            // Update the visible area of the tile. This is used for those tiles that are
+            // currently loaded and are waiting to be decoded to sort the jobs by area.
+            tile.visibleArea = tileEntry.area;
+            tile.elevationRange = tileEntry.elevationRange ?? { minElevation: 0, maxElevation: 0 };
+
+            // Add any dependent tileKeys if not already visible. Consider to optimize with a
+            // Set if this proves to be a bottleneck (because of O(n^2) search). Given the fact
+            // that dependencies are rare and used for non tiled data, this shouldn't be a
+            // problem.
+            for (const tileKey of tile.dependencies) {
+                if (
+                    visibleTileKeys.find(
+                        tileKeyEntry => tileKeyEntry.tileKey.mortonCode() === tileKey.mortonCode()
+                    ) === undefined
+                ) {
+                    visibleTileKeys.push(new TileKeyEntry(tileKey, 0));
+                }
+            }
+        }
+
+        return {
+            allDataSourceTilesLoaded,
+            numTilesLoading,
+            visibleTiles
+        };
+    }
+
+    // Processes if the tile should delay its rendering, returns if the tile is new, which is needed
+    // to count how many tiles are generated per frame.
+    private processDelayTileRendering(
+        tile: Tile,
+        newTilesPerFrame: number,
+        frameNumber: number
+    ): boolean {
+        let isNewTile: boolean = false;
+        if (
+            // if set to 0, it will ignore the limit and upload all available
+            this.options.maxTilesPerFrame !== 0 &&
+            newTilesPerFrame > this.options.maxTilesPerFrame &&
+            //if the tile was already visible last frame dont delay it
+            !(tile.frameNumLastVisible === frameNumber - 1)
+        ) {
+            tile.delayRendering = true;
+            tile.mapView.update();
+        } else {
+            if (tile.frameNumVisible < 0) {
+                // Store the fist frame the tile became visible.
+                tile.frameNumVisible = frameNumber;
+                isNewTile = true;
+            }
+            tile.numFramesVisible++;
+            tile.delayRendering = false;
+        }
+        return isNewTile;
+    }
+
     /**
      * Skips rendering of tiles that are overlapped. The overlapping {@link Tile} comes from a
      * {@link DataSource} which is fully covering, i.e. there it is fully opaque.
@@ -976,7 +1023,11 @@ export class VisibleTileSet {
     private getSearchDirection(
         dataSource: DataSource,
         visibleLevel: number
-    ): { searchDirection: SearchDirection; searchLevelsUp: number; searchLevelsDown: number } {
+    ): {
+        searchDirection: SearchDirection;
+        searchLevelsUp: number;
+        searchLevelsDown: number;
+    } {
         const searchLevelsUp = Math.min(
             this.options.quadTreeSearchDistanceUp,
             Math.max(0, visibleLevel - dataSource.minDataLevel)
@@ -1279,7 +1330,10 @@ export class VisibleTileSet {
         tileKeys: Array<{ dataSource: DataSource; visibleTileKeys: TileKeyEntry[] }>;
         allBoundingBoxesFinal: boolean;
     } {
-        const tileKeys = Array<{ dataSource: DataSource; visibleTileKeys: TileKeyEntry[] }>();
+        const tileKeys = Array<{
+            dataSource: DataSource;
+            visibleTileKeys: TileKeyEntry[];
+        }>();
         let allBoundingBoxesFinal: boolean = true;
 
         if (dataSources.length === 0) {
