@@ -3,14 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    Definitions,
-    ITileDecoder,
-    StyleSet,
-    Theme,
-    TileInfo
-} from "@here/harp-datasource-protocol";
-import { StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
+import { ITileDecoder, Theme, TileInfo } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -198,24 +191,6 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         });
     }
 
-    /** @override */
-    setStyleSet(
-        options: StyleSetOptions | StyleSet,
-        definitions?: Definitions,
-        languages?: string[]
-    ): void {
-        if (!options?.hasOwnProperty("styleSet")) {
-            this.m_decoder.configure({
-                styleSet: options as StyleSet,
-                definitions,
-                languages
-            });
-        } else {
-            this.m_decoder.configure(options as StyleSetOptions);
-        }
-        this.mapView.clearTileCache(this.name);
-    }
-
     /**
      * Apply the [[Theme]] to this data source.
      *
@@ -223,20 +198,25 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
      * `styleSetName` property) is found in `theme`.
      * @override
      */
-    setTheme(theme: Theme, languages?: string[]): void {
+    setTheme(theme: Theme, languages?: string[], styleSetName?: string): void {
+        if (styleSetName !== undefined) {
+            this.styleSetName = styleSetName;
+        }
+
         const styleSet =
             this.styleSetName !== undefined && theme.styles
                 ? theme.styles[this.styleSetName]
                 : undefined;
 
         if (styleSet !== undefined) {
-            this.setStyleSet({
+            this.m_decoder.configure({
                 styleSet,
                 definitions: theme.definitions,
                 priorities: theme.priorities,
                 labelPriorities: theme.labelPriorities,
                 languages
             });
+            this.mapView.clearTileCache(this.name);
         }
     }
 

@@ -6,7 +6,7 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { Style } from "@here/harp-datasource-protocol";
+import { Style, Theme } from "@here/harp-datasource-protocol";
 import {
     GeoCoordinates,
     MercatorConstants,
@@ -31,22 +31,33 @@ describe("PolarTileDataSource", function() {
     const north_style: Style = {
         when: ["==", ["get", "kind"], "north_pole"],
         technique: "fill",
-        attr: { color: "#dac0de" }
+        attr: { color: "#dac0de" },
+        styleSet: "polar"
     };
     const south_style: Style = {
         when: ["==", ["get", "kind"], "south_pole"],
         technique: "fill",
-        attr: { color: "#bada55" }
+        attr: { color: "#bada55" },
+        styleSet: "polar"
     };
 
-    const theme_both: Style[] = [north_style, south_style];
-    const theme_south: Style[] = [south_style];
+    const theme_both: Theme = {
+        styles: {
+            polar: [north_style, south_style]
+        }
+    };
+    const theme_south: Theme = {
+        styles: {
+            polar: [south_style]
+        }
+    };
     const renderer = { capabilities: { isWebGL2: false } };
 
     describe("should", function() {
         it("#canGetTile()", function() {
             dataSource = new PolarTileDataSource({
-                storageLevelOffset: 0
+                storageLevelOffset: 0,
+                styleSetName: "polar"
             });
 
             const msgLess = "should not render tileKey of level less than current";
@@ -149,7 +160,7 @@ describe("PolarTileDataSource", function() {
         });
 
         it("Creates tile with objects if has pole styles", function() {
-            dataSource.setStyleSet({ styleSet: theme_south });
+            dataSource.setTheme(theme_south);
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
             const south = dataSource.getTile(TileKey.fromRowColumnLevel(0, 1, 2));
 
@@ -158,7 +169,7 @@ describe("PolarTileDataSource", function() {
         });
 
         it("Creates meshes with proper materials", function() {
-            dataSource.setStyleSet({ styleSet: theme_both });
+            dataSource.setTheme(theme_both);
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
             const south = dataSource.getTile(TileKey.fromRowColumnLevel(0, 1, 2));
 
@@ -174,7 +185,7 @@ describe("PolarTileDataSource", function() {
         });
 
         it("Don't create geometries if disposed", function() {
-            dataSource.setStyleSet({ styleSet: theme_both });
+            dataSource.setTheme(theme_both);
             dataSource.dispose();
 
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
@@ -216,7 +227,7 @@ describe("PolarTileDataSource", function() {
                 return renderer;
             });
             dataSource.attach((mapViewStub as unknown) as MapView);
-            dataSource.setStyleSet({ styleSet: theme_both });
+            dataSource.setTheme(theme_both);
         });
 
         it("Creates empty tile if outside of pole radius", function() {

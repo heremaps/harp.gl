@@ -474,7 +474,7 @@ export namespace TiledGeoJsonTechniquesExample {
         });
 
         mapView.addDataSource(baseMapDataSource).then(() => {
-            baseMapDataSource.setStyleSet({ styleSet: theme.styles!.tilezen });
+            baseMapDataSource.setTheme(theme);
         });
 
         mapView.update();
