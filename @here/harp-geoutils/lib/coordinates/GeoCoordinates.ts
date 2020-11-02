@@ -15,6 +15,21 @@ export const MIN_LATITUDE = -90;
 export const MAX_LONGITUDE = 180;
 export const MIN_LONGITUDE = -180;
 
+const tmpV0 = new THREE.Vector3();
+const tmpV1 = new THREE.Vector3();
+
+/**
+ * Compute the modulo.
+ *
+ * @internal
+ */
+function mod(dividend: number, divisor: number): number {
+    const modulo = dividend % divisor;
+    const modulo_sign = modulo < 0;
+    const divisor_sign = divisor < 0;
+    return modulo_sign === divisor_sign ? modulo : modulo + divisor;
+}
+
 /**
  * `GeoCoordinates` is used to represent geo positions.
  */
@@ -108,6 +123,44 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     }
 
     /**
+     * Returns a `GeoCoordinates` resulting from the linear interpolation of other two.
+     * @param geoCoords0 - One of the `GeoCoordinates` used for interpolation.
+     * @param geoCoords1 - The other `GeoCoordinates` used for interpolation.
+     * @param factor - Interpolation factor. If `0` result will be equal to `geoCoords0`, if `1`
+     * it'll be equal to `geoCoords1`.
+     * @param wrap - If `true`, interpolation will be done across the antimeridian, otherwise it's
+     * done across the Greenwich meridian. Supported only if longitude span is less than 360 deg.
+     * @default false
+     * @param normalize - If `true`, interpolation result will be normalized. @default false
+     */
+    static lerp(
+        geoCoords0: GeoCoordinates,
+        geoCoords1: GeoCoordinates,
+        factor: number,
+        wrap: boolean = false,
+        normalize: boolean = false
+    ): GeoCoordinates {
+        if (wrap) {
+            if (geoCoords0.lng < geoCoords1.lng) {
+                const geoCoordsEnd = geoCoords0.clone();
+                geoCoordsEnd.longitude += 360;
+                return this.lerp(geoCoords1, geoCoordsEnd, 1 - factor);
+            } else {
+                const geoCoordsEnd = geoCoords1.clone();
+                geoCoordsEnd.longitude += 360;
+                return this.lerp(geoCoords0, geoCoordsEnd, factor);
+            }
+        }
+
+        const v0 = tmpV0.set(geoCoords0.lat, geoCoords0.lng, geoCoords0.altitude ?? 0);
+        const v1 = tmpV1.set(geoCoords1.lat, geoCoords1.lng, geoCoords1.altitude ?? 0);
+        v0.lerp(v1, factor);
+        const result = new GeoCoordinates(v0.x, v0.y, v0.z);
+
+        return normalize ? result.normalized() : result;
+    }
+
+    /**
      * Creates a `GeoCoordinates` from the given latitude, longitude, and optional altitude.
      *
      * @param latitude - Latitude in degrees.
@@ -172,40 +225,13 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      */
     normalized(): GeoCoordinates {
         let { latitude, longitude } = this;
-
         if (isNaN(latitude) || isNaN(longitude)) {
             return this;
         }
-
-        if (latitude > MAX_LATITUDE) {
-            let wrapped = (latitude + MAX_LATITUDE) % 360;
-            if (wrapped >= MAX_LONGITUDE) {
-                longitude += MAX_LONGITUDE;
-                wrapped = 360 - wrapped;
-            }
-
-            latitude = wrapped - 90;
+        if (longitude < -180 || longitude > 180) {
+            longitude = mod(longitude + 180, 360) - 180;
         }
-
-        if (latitude < MIN_LATITUDE) {
-            let wrapped = (latitude + MIN_LATITUDE) % 360;
-            if (wrapped <= MIN_LONGITUDE) {
-                longitude += MAX_LONGITUDE;
-                wrapped = -360 - wrapped;
-            }
-
-            latitude = wrapped + 90;
-        }
-
-        if (longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE) {
-            const sign = Math.sign(longitude);
-            longitude = (((longitude % 360) + 180 * sign) % 360) - 180 * sign;
-        }
-
-        if (latitude === this.latitude && longitude === this.longitude) {
-            return this;
-        }
-
+        latitude = THREE.MathUtils.clamp(latitude, -90, 90);
         return new GeoCoordinates(latitude, longitude, this.altitude);
     }
 

@@ -34,6 +34,7 @@ import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSo
 import { MapMaterialAdapter } from "../lib/MapMaterialAdapter";
 import { MapObjectAdapter } from "../lib/MapObjectAdapter";
 import { MapView, MapViewEventNames } from "../lib/MapView";
+import { DEFAULT_CLEAR_COLOR } from "../lib/MapViewEnvironment";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
@@ -640,7 +641,7 @@ describe("MapView", function() {
         }
     });
 
-    it("Correctly sets event listeners and handlers webgl context restored", function() {
+    it("Correctly sets event listeners and handlers webgl context restored", async function() {
         mapView = new MapView({ canvas });
         const updateSpy = sinon.spy(mapView, "update");
 
@@ -655,34 +656,40 @@ describe("MapView", function() {
         const webGlContextLostHandler = addEventListenerSpy.getCall(0).args[1];
 
         const dispatchEventSpy = sinon.spy(mapView, "dispatchEvent");
-        // @ts-ignore: Conversion to Theme type
-        mapView.m_theme = {};
-        // @ts-ignore: Conversion to Number type
-        mapView.m_theme.clearColor = 0xffffff;
+        await mapView.setTheme({
+            clearColor: "#ffffff"
+        });
         webGlContextRestoredHandler();
-        // @ts-ignore: Conversion to undefined
-        mapView.m_theme.clearColor = undefined;
+
+        await mapView.setTheme({
+            clearColor: undefined
+        });
         webGlContextRestoredHandler();
         webGlContextLostHandler();
 
-        expect(clearColorStub.callCount).to.be.equal(3);
-        expect(clearColorStub.getCall(0).calledWith(0xefe9e1)).to.be.equal(true);
-        expect(clearColorStub.getCall(1).args[0].r).to.be.equal(1);
-        expect(clearColorStub.getCall(1).args[0].g).to.be.equal(1);
-        expect(clearColorStub.getCall(1).args[0].b).to.be.equal(1);
-        expect(clearColorStub.getCall(2).calledWith(0xefe9e1)).to.be.equal(true);
+        expect(clearColorStub.callCount).to.be.equal(6);
+        expect(clearColorStub.getCall(0).calledWith(DEFAULT_CLEAR_COLOR)).to.be.equal(true);
+        expect(clearColorStub.getCall(2).args[0].r).to.be.equal(1);
+        expect(clearColorStub.getCall(2).args[0].g).to.be.equal(1);
+        expect(clearColorStub.getCall(2).args[0].b).to.be.equal(1);
+        expect(clearColorStub.getCall(4).calledWith(DEFAULT_CLEAR_COLOR)).to.be.equal(true);
 
-        expect(updateSpy.callCount).to.be.equal(2);
-        expect(dispatchEventSpy.callCount).to.be.equal(5);
-        expect(dispatchEventSpy.getCall(0).args[0].type).to.be.equal(
+        expect(updateSpy.callCount).to.be.equal(6);
+        expect(dispatchEventSpy.callCount).to.be.equal(13);
+        expect(dispatchEventSpy.getCall(6).args[0].type).to.be.equal(
             MapViewEventNames.ContextRestored
         );
-        expect(dispatchEventSpy.getCall(1).args[0].type).to.be.equal(MapViewEventNames.Update);
-        expect(dispatchEventSpy.getCall(2).args[0].type).to.be.equal(
+
+        expect(dispatchEventSpy.getCall(7).args[0].type).to.be.equal(MapViewEventNames.Update);
+        expect(dispatchEventSpy.getCall(8).args[0].type).to.be.equal(MapViewEventNames.ThemeLoaded);
+        expect(dispatchEventSpy.getCall(9).args[0].type).to.be.equal(MapViewEventNames.Update);
+        expect(dispatchEventSpy.getCall(10).args[0].type).to.be.equal(
             MapViewEventNames.ContextRestored
         );
-        expect(dispatchEventSpy.getCall(3).args[0].type).to.be.equal(MapViewEventNames.Update);
-        expect(dispatchEventSpy.getCall(4).args[0].type).to.be.equal(MapViewEventNames.ContextLost);
+        expect(dispatchEventSpy.getCall(11).args[0].type).to.be.equal(MapViewEventNames.Update);
+        expect(dispatchEventSpy.getCall(12).args[0].type).to.be.equal(
+            MapViewEventNames.ContextLost
+        );
     });
 
     it("Correctly sets and removes all event listeners by API", function() {
@@ -1476,6 +1483,30 @@ describe("MapView", function() {
         expect(updateStorageOffsetSpy.called);
     });
 
+    it("languages set in MapView are also set in datasources", async function() {
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
+        mapView = new MapView({ canvas, theme: {} });
+
+        await mapView.addDataSource(dataSource);
+        mapView.languages = ["Goblin"];
+
+        assert.isDefined(dataSource.getLanguages());
+        assert.equal(dataSource.getLanguages()!.length, 1, "No language set in datasource");
+        assert.equal(dataSource.getLanguages()![0], "Goblin", "Wrong language set in datasource");
+    });
+
+    it("languages set in MapView are also set in datasources added later", async function() {
+        const dataSource = new FakeOmvDataSource({ name: "omv" });
+        mapView = new MapView({ canvas, theme: {} });
+
+        mapView.languages = ["Goblin"];
+        await mapView.addDataSource(dataSource);
+
+        assert.isDefined(dataSource.getLanguages());
+        assert.equal(dataSource.getLanguages()!.length, 1, "No language set in datasource");
+        assert.equal(dataSource.getLanguages()![0], "Goblin", "Wrong language set in datasource");
+    });
+
     describe("elevation source", function() {
         let fakeElevationSource: DataSource;
         let fakeElevationRangeSource: ElevationRangeSource;
@@ -1671,21 +1702,23 @@ describe("MapView", function() {
             });
 
             mapView.theme = {};
-            expect(mapView.theme).to.deep.equal({
-                clearAlpha: undefined,
-                clearColor: undefined,
-                defaultTextStyle: undefined,
-                definitions: undefined,
-                fog: undefined,
-                fontCatalogs: undefined,
-                imageTextures: undefined,
-                images: undefined,
-                lights: undefined,
-                poiTables: undefined,
-                sky: undefined,
-                styles: {},
-                textStyles: undefined
-            });
+            mapView.getTheme().then(theme =>
+                expect(theme).to.deep.equal({
+                    clearAlpha: undefined,
+                    clearColor: undefined,
+                    defaultTextStyle: undefined,
+                    definitions: undefined,
+                    fog: undefined,
+                    fontCatalogs: undefined,
+                    imageTextures: undefined,
+                    images: undefined,
+                    lights: undefined,
+                    poiTables: undefined,
+                    sky: undefined,
+                    styles: {},
+                    textStyles: undefined
+                })
+            );
         });
     });
 

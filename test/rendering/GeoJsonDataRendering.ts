@@ -6,13 +6,23 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { FeatureCollection, GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
-import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
+import {
+    Feature,
+    FeatureCollection,
+    GeoJson,
+    Light,
+    StyleSet,
+    Theme
+} from "@here/harp-datasource-protocol";
+import { wrapPolygon } from "@here/harp-geometry/lib/WrapPolygon";
+import { EarthConstants, GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
 import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
+
+import * as polygon_crossing_antimeridian from "../resources/polygon_crossing_antimeridian.json";
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
     let mapView: MapView;
@@ -93,6 +103,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             styleSetName: "geojson"
         });
 
+        mapView.setDynamicProperty("enabled", true);
         mapView.addDataSource(geoJsonDataSource);
 
         await waitForEvent(mapView, MapViewEventNames.FrameComplete);
@@ -154,6 +165,28 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
+    it("renders japanese flag with enabled as dynamic expression", async function() {
+        this.timeout(50000);
+        const greenStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Point"],
+                technique: "circles",
+                renderOrder: 10000,
+                // select the color based on the the value of the dynamic property `correct`.
+                color: "#BC002D",
+                // This causes the bug HARP-12247
+                enabled: ["get", "enabled", ["dynamic-properties"]],
+                size: 150
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-point-enabled-as-dynamic-expression",
+            theme: { lights, styles: { geojson: greenStyle } },
+            geoJson: "../dist/resources/basic_polygon.json"
+        });
+    });
     it("renders extruded polygons with height", async function() {
         this.timeout(5000);
 
@@ -549,5 +582,160 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 target: geoBox.center
             }
         });
+    });
+
+    describe("wrap polygon crossing antimeridian", async function() {
+        const ourStyle: StyleSet = [
+            {
+                when: ["all", ["==", ["geometry-type"], "Polygon"], ["!has", "fragment"]],
+                technique: "solid-line",
+                color: "rgba(255,0,0,1)",
+                lineWidth: "2px"
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "Polygon"],
+                    ["==", ["get", "fragment"], "left"]
+                ],
+                technique: "fill",
+                color: "rgba(255,0,0,0.5)",
+                lineColor: "rgb(0,0,0)",
+                lineWidth: 1,
+                renderOrder: 1
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "Polygon"],
+                    ["==", ["get", "fragment"], "middle"]
+                ],
+                technique: "fill",
+                color: "rgba(0,255,0,0.5)",
+                lineColor: "rgb(0,0,0)",
+                lineWidth: 1,
+                renderOrder: 0
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "Polygon"],
+                    ["==", ["get", "fragment"], "right"]
+                ],
+                technique: "fill",
+                color: "rgba(0,0,255,0.5)",
+                lineColor: "rgb(0,0,0)",
+                lineWidth: 1,
+                renderOrder: 1
+            },
+            {
+                when: ["==", ["geometry-type"], "LineString"],
+                technique: "solid-line",
+                lineWidth: "2px",
+                color: "rgb(0,0,0)"
+            }
+        ];
+
+        // Convert the coordinates of the polygon from GeoJson to GeoCoordinates.
+        const coordinates = polygon_crossing_antimeridian.features[0].geometry.coordinates[0].map(
+            ([lng, lat]) => GeoCoordinates.fromGeoPoint([lng, lat])
+        );
+
+        // Split the polygon in 3 parts.
+        const wrappedPolygon = wrapPolygon(coordinates);
+
+        // Extracts a part (left, middle or right) from the wrapped polygon
+        // and convert it to a GeoJson feature.
+        const toGeoPolygonFeature = (part: string): Feature => {
+            const coordinates: GeoCoordinates[] | undefined = (wrappedPolygon as any)[part];
+
+            // Converts an Array of GeoCoordinates to GeoJSON coordinates.
+            const toGeoJsonCoordinates = (coordinates: GeoCoordinates[] | undefined) => [
+                (coordinates ?? []).map(({ lat, lng }) => [lng, lat])
+            ];
+
+            return {
+                type: "Feature",
+                properties: {
+                    fragment: part
+                },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: toGeoJsonCoordinates(coordinates)
+                }
+            };
+        };
+
+        const separator: Feature = {
+            type: "Feature",
+            properties: {},
+            geometry: {
+                type: "LineString",
+                coordinates: [
+                    [180, 90],
+                    [180, -90]
+                ]
+            }
+        };
+
+        const lookAt: Partial<LookAtParams> = {
+            target: [-160, 40],
+            distance: EarthConstants.EQUATORIAL_CIRCUMFERENCE * 2.5
+        };
+
+        it(`polygon to wrap`, async function() {
+            this.timeout(5000);
+
+            await geoJsonTest({
+                lookAt,
+                mochaTest: this,
+                testImageName: `geojson-wrap-polygon-crossing-antimeridian`,
+                theme: { lights, styles: { geojson: ourStyle } },
+                geoJson: polygon_crossing_antimeridian as any
+            });
+        });
+
+        it(`wrapped polygon - merged`, async function() {
+            this.timeout(5000);
+
+            await geoJsonTest({
+                lookAt,
+                mochaTest: this,
+                testImageName: `geojson-wrap-polygon-crossing-antimeridian-merged`,
+                theme: { lights, styles: { geojson: ourStyle } },
+                geoJson: {
+                    type: "FeatureCollection",
+                    features: [
+                        toGeoPolygonFeature("left"),
+                        toGeoPolygonFeature("middle"),
+                        toGeoPolygonFeature("right"),
+                        separator
+                    ]
+                }
+            });
+        });
+
+        for (const part in wrappedPolygon) {
+            if (!wrappedPolygon.hasOwnProperty(part)) {
+                continue;
+            }
+
+            const feature = toGeoPolygonFeature(part);
+
+            it(`wrapped polygon - ${part}`, async function() {
+                this.timeout(5000);
+
+                await geoJsonTest({
+                    lookAt,
+                    mochaTest: this,
+                    testImageName: `geojson-wrap-polygon-crossing-antimeridian-${part}`,
+                    theme: { lights, styles: { geojson: ourStyle } },
+                    geoJson: {
+                        type: "FeatureCollection",
+                        features: [feature, separator]
+                    }
+                });
+            });
+        }
     });
 });

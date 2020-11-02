@@ -85,21 +85,25 @@ export class TransferManager implements ITransferManager {
         init?: RequestInit
     ): Promise<Response> {
         try {
-            const response = await fetchFunction(url, init);
-            if (response.status !== 503 || retryCount > maxRetries) {
-                return response;
+            if (retryCount < maxRetries) {
+                const response = await fetchFunction(url, init);
+                if (response.status !== 503) {
+                    return response;
+                }
+            } else {
+                throw new Error("Max number of retries reached");
             }
         } catch (err) {
             if (
                 err.hasOwnProperty("isCancelled") ||
-                (err.hasOwnProperty("name") && err.name === "AbortError") ||
-                retryCount > maxRetries
+                err.name === "AbortError" ||
+                retryCount >= maxRetries
             ) {
                 throw err;
             }
         }
         return await TransferManager.waitFor(TransferManager.retryTimeout * retryCount).then(() =>
-            TransferManager.fetchRepeatedly(fetchFunction, maxRetries, retryCount + 1, url, init)
+            TransferManager.fetchRepeatedly(fetchFunction, retryCount + 1, maxRetries, url, init)
         );
     }
 

@@ -27,6 +27,7 @@ import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { getProjectionName } from "@here/harp-datasource-protocol";
+import { Camera, Vector3 } from "three";
 
 function setCamera(
     camera: THREE.Camera,
@@ -55,6 +56,7 @@ function setCamera(
 }
 
 describe("MapViewUtils", function() {
+    const EPS = 1e-8;
     describe("zoomOnTargetPosition", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
@@ -218,43 +220,48 @@ describe("MapViewUtils", function() {
                 );
             });
             it("limits tilt when orbiting around screen point", function() {
-                setCamera(
-                    mapView.camera,
-                    mapView.projection,
-                    target,
-                    0, // heading
-                    0, // tilt
-                    MapViewUtils.calculateDistanceFromZoomLevel(mapView, 4)
-                );
+                for (const startTilt of [0, 20, 45]) {
+                    setCamera(
+                        mapView.camera,
+                        mapView.projection,
+                        target,
+                        0, // heading
+                        startTilt, // tilt
+                        MapViewUtils.calculateDistanceFromZoomLevel(mapView, 4)
+                    );
 
-                const deltaTilt = THREE.MathUtils.degToRad(46);
-                const deltaHeading = 0;
-                const offsetX = 0.2;
-                const offsetY = 0.5;
+                    const deltaTilt = THREE.MathUtils.degToRad(46);
+                    const deltaHeading = 0;
+                    // OffsetX must be 0 for this to work for Sphere & Mercator, when this is non-zero,
+                    // it works for planar, but not sphere.
+                    const offsetX = 0.1;
+                    const offsetY = 0.1;
 
-                MapViewUtils.orbitAroundScreenPoint(
-                    mapView,
-                    offsetX,
-                    offsetY,
-                    deltaHeading,
-                    deltaTilt,
-                    tiltLimit
-                );
+                    MapViewUtils.orbitAroundScreenPoint(
+                        mapView,
+                        offsetX,
+                        offsetY,
+                        deltaHeading,
+                        // Delta is past the tilt limit.
+                        deltaTilt,
+                        tiltLimit
+                    );
+                    const mapTargetWorldNew = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
 
-                const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-                expect(mapTargetWorld).to.not.be.null;
-
-                const { tilt } = MapViewUtils.extractSphericalCoordinatesFromLocation(
-                    mapView,
-                    mapView.camera,
-                    mapTargetWorld!
-                );
-                if (projection === sphereProjection) {
-                    //FIXME(HARP-11926): For globe tilt in the map center is different from the tilt
-                    // in the rotation center, hence the clamped tilt is too conservative.
-                    expect(tilt).to.be.lessThan(tiltLimit);
-                } else {
-                    expect(tilt).to.be.closeTo(tiltLimit, Number.EPSILON);
+                    const afterTilt = MapViewUtils.extractTiltAngleFromLocation(
+                        mapView.projection,
+                        mapView.camera,
+                        mapTargetWorldNew!
+                    );
+                    if (projection === sphereProjection) {
+                        if (afterTilt > tiltLimit) {
+                            // If greater, then only within EPS, otherwise it should be less.
+                            expect(afterTilt).to.be.closeTo(tiltLimit, EPS);
+                        }
+                    } else {
+                        // Use a custom EPS, Number.Epsilon is too strict for such maths
+                        expect(afterTilt).to.be.closeTo(tiltLimit, EPS);
+                    }
                 }
             });
             it("keeps rotation target when orbiting around screen point", function() {
@@ -287,21 +294,19 @@ describe("MapViewUtils", function() {
                     tiltLimit
                 );
 
-                const newRoationTarget = MapViewUtils.rayCastWorldCoordinates(
+                const newRotationTarget = MapViewUtils.rayCastWorldCoordinates(
                     mapView,
                     offsetX,
                     offsetY
                 );
-                expect(newRoationTarget).to.be.not.null;
+                expect(newRotationTarget).to.be.not.null;
 
-                expect(oldRotationTarget!.distanceTo(newRoationTarget!)).to.be.closeTo(
-                    0,
-                    projection === sphereProjection ? 1e-9 : Number.EPSILON
-                );
+                const distance = oldRotationTarget!.distanceTo(newRotationTarget!);
+                expect(distance).to.be.closeTo(0, EPS);
 
                 // Also check that we did not introduce any roll
                 const { roll } = MapViewUtils.extractAttitude(mapView, mapView.camera);
-                expect(roll).to.be.closeTo(0, Number.EPSILON);
+                expect(roll).to.be.closeTo(0, EPS);
             });
         });
     });
@@ -662,6 +667,32 @@ describe("MapViewUtils", function() {
                     expect(geoTargetElevation).deep.equals(
                         GeoCoordinates.fromDegrees(geoTarget.lat, geoTarget.lng, elevation)
                     );
+                });
+
+                it("indicates whether the computation was final or not", function() {
+                    elevationProvider.getHeight = sandbox.stub().returns(undefined);
+
+                    const res1 = MapViewUtils.getTargetAndDistance(
+                        projection,
+                        camera,
+                        elevationProvider
+                    );
+
+                    expect(res1.final).to.be.false;
+
+                    elevationProvider.getHeight = sandbox.stub().returns(0);
+
+                    const res2 = MapViewUtils.getTargetAndDistance(
+                        projection,
+                        camera,
+                        elevationProvider
+                    );
+
+                    expect(res2.final).to.be.true;
+
+                    const res3 = MapViewUtils.getTargetAndDistance(projection, camera);
+
+                    expect(res3.final).to.be.true;
                 });
             });
 

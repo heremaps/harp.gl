@@ -25,8 +25,7 @@ export namespace EffectsExample {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
         const mapView = new MapView({
-            canvas,
-            theme: "resources/resources/berlin_tilezen_effects_streets.json"
+            canvas
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
@@ -78,15 +77,9 @@ export namespace EffectsExample {
     const selector = gui.add(options, "theme", options.theme);
     selector
         .onChange((value: string) => {
-            fetch(value)
-                .then(response => {
-                    return response.json();
-                })
-                .then((theme: any) => {
-                    map.clearTileCache();
-                    map.theme = theme;
-                    map.loadPostEffects((options.postEffects as { [key: string]: string })[value]);
-                });
+            map.clearTileCache();
+            map.setTheme(value);
+            map.loadPostEffects((options.postEffects as { [key: string]: string })[value]);
         })
         .setValue(options.theme.streets);
 }

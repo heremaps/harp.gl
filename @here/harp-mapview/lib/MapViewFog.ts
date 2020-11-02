@@ -111,8 +111,12 @@ export class MapViewFog {
             assert(startRatio <= endRatio);
             const t = Math.abs(Math.cos(mapView.tilt));
             const density = MathUtils.smoothStep(horizontalDensity, verticalDensity, t);
-            this.m_fog.near = MathUtils.lerp(viewRange * startRatio, viewRange, 1.0 - density);
-            this.m_fog.far = MathUtils.lerp(viewRange * endRatio, viewRange, density);
+            this.m_fog.near = THREE.MathUtils.lerp(
+                viewRange * startRatio,
+                viewRange,
+                1.0 - density
+            );
+            this.m_fog.far = THREE.MathUtils.lerp(viewRange * endRatio, viewRange, density);
             this.m_fog.near = Math.min(this.m_fog.near, mapView.camera.far);
             this.m_fog.far = Math.min(this.m_fog.far, mapView.camera.far);
         }

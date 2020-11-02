@@ -43,7 +43,7 @@ export class RenderState {
     /**
      * Computed opacity depending on value.
      */
-    opacity: number = 1.0;
+    opacity: number = 0.0;
 
     private m_state = FadingState.Undefined;
 
@@ -61,7 +61,7 @@ export class RenderState {
         this.m_state = FadingState.Undefined;
         this.value = 0.0;
         this.startTime = 0.0;
-        this.opacity = 1.0;
+        this.opacity = 0.0;
     }
 
     /**
@@ -113,10 +113,15 @@ export class RenderState {
     }
 
     /**
-     * @returns `true` if state is neither faded out nor undefined.
+     * @returns `true` if state is neither faded out nor undefined and the opacity is larger
+     * than 0.
      */
     isVisible(): boolean {
-        return this.m_state !== FadingState.FadedOut && this.m_state !== FadingState.Undefined;
+        return (
+            this.m_state !== FadingState.FadedOut &&
+            this.m_state !== FadingState.Undefined &&
+            this.opacity > 0
+        );
     }
 
     /**
@@ -157,13 +162,17 @@ export class RenderState {
 
     /**
      * Updates the state to [[FadingState.FadingOut]].
-     * If previous state is [[FadingState.FadingOut]] or [[FadingState.FadedOut]] it remains
-     * unchanged.
+     * If previous state is [[FadingState.FadingOut]], [[FadingState.FadedOut]] or
+     * [[FadingState.Undefined]] it remains unchanged.
      *
      * @param time - Current time.
      */
     startFadeOut(time: number) {
-        if (this.m_state === FadingState.FadingOut || this.m_state === FadingState.FadedOut) {
+        if (
+            this.m_state === FadingState.FadingOut ||
+            this.m_state === FadingState.FadedOut ||
+            this.m_state === FadingState.Undefined
+        ) {
             return;
         }
 

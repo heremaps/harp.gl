@@ -8,7 +8,7 @@
 
 import "@here/harp-fetch";
 
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import * as sinon from "sinon";
 
 import { TransferManager } from "../index";
@@ -71,6 +71,35 @@ describe("TransferManager", function() {
         assert.isFalse(resp.ok);
         assert.equal(resp.status, 404);
         assert.deepEqual(data, { version: "4" });
+    });
+
+    it("#downloadJson handles HTTP 503 status response with max retries", async function() {
+        // This test is slower than others, because it waits `TransferManager.retryTimeout` *
+        // retryCount ms, which means it gets longer and longer each time it fails.
+        this.timeout(10000);
+
+        // Arrange
+        const mock = createMockDownloadResponse();
+        mock.status = 503;
+        mock.ok = false;
+        mock.json.resolves({
+            version: "4"
+        });
+        const fetchStub = sinon.stub().resolves(mock);
+        const maxRetries = 5;
+        const downloadMgr = new TransferManager(fetchStub, maxRetries);
+
+        // Act
+        const downloadResponse = downloadMgr.download(fakeDataUrl);
+
+        await downloadResponse.catch(err => {
+            expect(err.message).contains("Max number of retries reached");
+        });
+
+        // Assert
+        assert(fetchStub.called);
+        assert(fetchStub.callCount === maxRetries);
+        assert(fetchStub.getCall(0).args[0] === fakeDataUrl);
     });
 
     it("#instance handles returning same single static instance correctly", async function() {

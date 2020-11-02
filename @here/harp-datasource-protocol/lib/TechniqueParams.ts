@@ -251,6 +251,12 @@ export interface BaseTechniqueParams {
      * See https://threejs.org/docs/#api/en/materials/Material.transparent.
      */
     transparent?: DynamicProperty<boolean>;
+
+    /**
+     * Defines which side of faces will be rendered - front, back or both.
+     * See https://threejs.org/docs/#api/en/materials/Material.side.
+     */
+    side?: DynamicProperty<number>;
 }
 
 export enum TextureCoordinateType {
@@ -821,11 +827,13 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     placements?: string;
 
     /**
-     * World space offset in meters applied to the icon.
+     * World space offset in meters applied to the icon along the ground plane, i.e. tangent
+     * to the local space up vector.
      *
      * @remarks
      * Valid only for icons which have the
-     * "offset_direction" property as an attribute of the data.
+     * "offset_direction" property as an attribute of the data, which specifies an angle in degrees
+     * in which direction the offset should take place, i.e. 0 degrees is north, 90 is east etc.
      */
     worldOffset?: DynamicProperty<number>;
 }

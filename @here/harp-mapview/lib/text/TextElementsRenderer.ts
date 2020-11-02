@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import { LineMarkerTechnique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import {
     AdditionParameters,
@@ -177,6 +177,18 @@ function checkIfTextElementsChanged(dataSourceTileList: DataSourceTileList[]) {
     return textElementsChanged;
 }
 
+function hasTextElements(dataSourceTileList: DataSourceTileList[]): boolean {
+    for (let i = 0; i < dataSourceTileList.length; i++) {
+        for (const [_key, value] of dataSourceTileList[i].renderedTiles) {
+            if (value.hasTextElements()) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 function addTextToCanvas(
     textElement: TextElement,
     canvas: TextCanvas,
@@ -263,7 +275,7 @@ function shouldRenderPointText(
     const visibleAtDistance =
         label.ignoreDistance === true ||
         labelState.viewDistance === undefined ||
-        labelState.viewDistance < poiTextMaxDistance;
+        (labelState.viewDistance < poiTextMaxDistance && labelState.viewDistance > 0);
     if (!visibleAtDistance) {
         return false;
     }
@@ -311,7 +323,6 @@ export class TextElementsRenderer {
     private m_loadPromise: Promise<any> | undefined;
     private readonly m_options: TextElementsRendererOptions;
 
-    private readonly m_textStyleCache: TextStyleCache;
     private readonly m_textRenderers: TextCanvasRenderer[] = [];
 
     private m_overlayTextElements?: TextElement[];
@@ -345,7 +356,7 @@ export class TextElementsRenderer {
      * @param m_poiRendererFactory - To create PoiRenderer instances.
      * @param m_poiManager - To prepare pois for rendering.
      * @param m_fontCatalogLoader - To load font catalogs.
-     * @param m_theme - Theme defining  text styles.
+     * @param m_textStyleCache - Cache defining  text styles.
      * @param options - Configuration options for the text renderer. See
      * [[TextElementsRendererOptions]].
      */
@@ -359,11 +370,9 @@ export class TextElementsRenderer {
         private readonly m_poiManager: PoiManager,
         private readonly m_poiRendererFactory: PoiRendererFactory,
         private readonly m_fontCatalogLoader: FontCatalogLoader,
-        private readonly m_theme: Theme,
+        private readonly m_textStyleCache: TextStyleCache,
         options: TextElementsRendererOptions
     ) {
-        this.m_textStyleCache = new TextStyleCache(this.m_theme);
-
         this.m_options = { ...options };
         initializeDefaultOptions(this.m_options);
 
@@ -395,6 +404,24 @@ export class TextElementsRenderer {
 
     set delayLabelsUntilMovementFinished(delay: boolean) {
         this.m_options.delayLabelsUntilMovementFinished = delay;
+    }
+
+    /**
+     * If `true`, a replacement glyph ("?") is rendered for every missing glyph.
+     */
+    get showReplacementGlyphs() {
+        return this.m_options.showReplacementGlyphs === true;
+    }
+
+    /**
+     * If `true`, a replacement glyph ("?") is rendered for every missing glyph.
+     */
+    set showReplacementGlyphs(value: boolean) {
+        this.m_options.showReplacementGlyphs = value;
+
+        this.m_textRenderers.forEach(textRenderer => {
+            textRenderer.textCanvas.fontCatalog.showReplacementGlyphs = value;
+        });
     }
 
     /**
@@ -456,7 +483,8 @@ export class TextElementsRenderer {
     placeText(dataSourceTileList: DataSourceTileList[], time: number) {
         const tileTextElementsChanged = checkIfTextElementsChanged(dataSourceTileList);
 
-        const textElementsAvailable = this.hasOverlayText() || tileTextElementsChanged;
+        const textElementsAvailable =
+            this.hasOverlayText() || tileTextElementsChanged || hasTextElements(dataSourceTileList);
         if (!this.initialize(textElementsAvailable)) {
             return;
         }
@@ -783,7 +811,7 @@ export class TextElementsRenderer {
                 }
                 continue;
             }
-            if (textElementState.viewDistance === undefined) {
+            if (textElementState.viewDistance === undefined || textElementState.viewDistance < 0) {
                 if (placementStats) {
                     ++placementStats.tooFar;
                 }
@@ -901,7 +929,7 @@ export class TextElementsRenderer {
     ): boolean {
         // Trigger the glyph load if needed.
         if (textElement.loadingState === LoadingState.Initialized) {
-            return true;
+            return textElement.glyphs !== undefined;
         }
 
         assert(textElementStyle.textCanvas !== undefined);
@@ -977,6 +1005,8 @@ export class TextElementsRenderer {
     private async initializeTextCanvases(): Promise<void> {
         const catalogCallback = (name: string, catalog: FontCatalog) => {
             const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog);
+
+            catalog.showReplacementGlyphs = this.showReplacementGlyphs;
 
             this.m_textRenderers.push({
                 fontCatalog: name,
@@ -1596,7 +1626,7 @@ export class TextElementsRenderer {
             this.m_viewState.lookAtDistance
         );
         const iconReady = renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.env);
-
+        let iconInvisible = false;
         if (iconReady) {
             const result = placeIcon(
                 iconRenderState,
@@ -1606,18 +1636,14 @@ export class TextElementsRenderer {
                 this.m_viewState.env,
                 this.m_screenCollisions
             );
-            if (result === PlacementResult.Invisible) {
-                iconRenderState.reset();
-
-                if (placementStats) {
-                    ++placementStats.numNotVisible;
-                }
-                return false;
-            }
+            iconInvisible = result === PlacementResult.Invisible;
             iconRejected = result === PlacementResult.Rejected;
+            if (iconInvisible) {
+                iconRenderState.reset();
+            }
         } else if (renderIcon && poiInfo!.isValid !== false) {
             // Ensure that text elements still loading icons get a chance to be rendered if
-            // there's no text element updates in the next frames.
+            // there are no text element updates in the next frames.
             this.m_forceNewLabelsPass = true;
         }
 
@@ -1631,29 +1657,43 @@ export class TextElementsRenderer {
         // Render the label's text...
         // textRenderState is always defined at this point.
         if (renderText) {
+            // For the new labels with rejected icons we don't need to go further.
+            const newLabel = !labelState.visible;
+
             // Multi point (icons) features (line markers) will use single placement anchor, but
             // single point labels (POIs, etc.) may use multi-placement algorithm.
-            const placeResult = placePointLabel(
-                labelState,
-                tempScreenPosition,
-                distanceScaleFactor,
-                textCanvas,
-                this.m_viewState.env,
-                this.m_screenCollisions,
-                iconRejected,
-                tempPosition,
-                iconIndex === undefined
-            );
-            if (placeResult === PlacementResult.Invisible) {
+            const placeResult =
+                iconRejected && newLabel
+                    ? PlacementResult.Rejected
+                    : placePointLabel(
+                          labelState,
+                          tempScreenPosition,
+                          distanceScaleFactor,
+                          textCanvas,
+                          this.m_viewState.env,
+                          this.m_screenCollisions,
+                          tempPosition,
+                          iconIndex === undefined
+                      );
+            const textInvisible = placeResult === PlacementResult.Invisible;
+            if (textInvisible) {
                 if (placementStats) {
                     placementStats.numPoiTextsInvisible++;
                 }
-                labelState.reset();
-                return false;
+                if (!renderIcon || iconInvisible) {
+                    labelState.reset();
+                    return false;
+                }
+                textRenderState!.reset();
             }
 
-            const textRejected = placeResult === PlacementResult.Rejected;
-            if (!iconRejected) {
+            const iconIsRequired = !(poiInfo?.iconIsOptional === false);
+            // Rejected icons are only considered to hide the text if they are valid, so a missing icon image will
+            // not keep the text from showing up.
+            const requiredIconRejected: boolean = iconRejected && iconReady && iconIsRequired;
+
+            const textRejected = requiredIconRejected || placeResult === PlacementResult.Rejected;
+            if (!iconRejected && !iconInvisible) {
                 const textIsOptional: boolean =
                     pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
                 iconRejected = textRejected && !textIsOptional;
@@ -1664,8 +1704,9 @@ export class TextElementsRenderer {
             }
 
             const textNeedsDraw =
-                (!textRejected && shouldRenderPoiText(labelState, this.m_viewState)) ||
-                textRenderState!.isFading();
+                !textInvisible &&
+                ((!textRejected && shouldRenderPoiText(labelState, this.m_viewState)) ||
+                    textRenderState!.isFading());
 
             if (textNeedsDraw) {
                 if (!textRejected) {
@@ -1688,9 +1729,9 @@ export class TextElementsRenderer {
             }
         }
         // ... and render the icon (if any).
-        if (iconReady) {
+        if (iconReady && !iconInvisible) {
             if (iconRejected) {
-                iconRenderState!.startFadeOut(renderParams.time);
+                iconRenderState.startFadeOut(renderParams.time);
             } else {
                 iconRenderState!.startFadeIn(renderParams.time, this.m_options.disableFading);
             }
@@ -1736,10 +1777,14 @@ export class TextElementsRenderer {
             this.m_viewState.env,
             this.m_tmpVector3
         );
-        // Only process labels frustum-clipped labels
-        if (
-            this.m_screenProjector.projectOnScreen(worldPosition, tempScreenPosition) === undefined
-        ) {
+
+        const projectionResult = this.m_screenProjector.projectToScreen(
+            worldPosition,
+            tempScreenPosition
+        );
+
+        // Only process labels that are potentially within the frustum.
+        if (projectionResult === undefined) {
             return false;
         }
         // Add this POI as a point label.
@@ -1792,10 +1837,14 @@ export class TextElementsRenderer {
         if (minDistanceSqr > 0 && shieldGroup !== undefined) {
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.projectOnScreen(point, tempScreenPosition) !== undefined
-                ) {
+
+                // Only process potentially visible labels
+                const projectionResult = this.m_screenProjector.projectToScreen(
+                    point,
+                    tempScreenPosition
+                );
+
+                if (projectionResult !== undefined) {
                     // Find a suitable location for the lineMarker to be placed at.
                     let tooClose = false;
                     for (let j = 0; j < shieldGroup.length; j += 2) {
@@ -1835,10 +1884,12 @@ export class TextElementsRenderer {
         else {
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.projectOnScreen(point, tempScreenPosition) !== undefined
-                ) {
+                // Only process potentially visible labels
+                const projectionResult = this.m_screenProjector.projectToScreen(
+                    point,
+                    tempScreenPosition
+                );
+                if (projectionResult !== undefined) {
                     this.addPointLabel(
                         labelState,
                         point,

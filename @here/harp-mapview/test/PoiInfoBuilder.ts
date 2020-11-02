@@ -34,11 +34,11 @@ export class PoiInfoBuilder {
     private readonly m_iconMaxZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MAX_ZL;
     private readonly m_textMinZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MIN_ZL;
     private readonly m_textMaxZl: number = PoiInfoBuilder.DEF_ICON_TEXT_MAX_ZL;
-    private readonly m_textOpt: boolean = PoiInfoBuilder.DEF_TEXT_OPT;
-    private readonly m_iconOpt: boolean = PoiInfoBuilder.DEF_ICON_OPT;
+    private m_textOpt: boolean = PoiInfoBuilder.DEF_TEXT_OPT;
+    private m_iconOpt: boolean = PoiInfoBuilder.DEF_ICON_OPT;
     private m_mayOverlap: boolean = PoiInfoBuilder.DEF_MAY_OVERLAP;
     private readonly m_reserveSpace: boolean = PoiInfoBuilder.DEF_RESERVE_SPACE;
-    private readonly m_valid: boolean = PoiInfoBuilder.DEF_VALID;
+    private m_valid: boolean = PoiInfoBuilder.DEF_VALID;
     private readonly m_renderOnMove: boolean = PoiInfoBuilder.DEF_RENDER_ON_MOVE;
     private readonly m_width: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
     private readonly m_height: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
@@ -62,6 +62,21 @@ export class PoiInfoBuilder {
 
     withMayOverlap(mayOverlap: boolean): PoiInfoBuilder {
         this.m_mayOverlap = mayOverlap;
+        return this;
+    }
+
+    withIconOptional(iconOptional: boolean): PoiInfoBuilder {
+        this.m_iconOpt = iconOptional;
+        return this;
+    }
+
+    withIconValid(iconValid: boolean): PoiInfoBuilder {
+        this.m_valid = iconValid;
+        return this;
+    }
+
+    withTextOptional(textOptional: boolean): PoiInfoBuilder {
+        this.m_textOpt = textOptional;
         return this;
     }
 

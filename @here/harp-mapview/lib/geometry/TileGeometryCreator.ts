@@ -95,12 +95,12 @@ import {
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "../MapMaterialAdapter";
 import { MapObjectAdapter, MapObjectAdapterParams } from "../MapObjectAdapter";
-import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { Tile, TileFeatureData } from "../Tile";
+import { FALLBACK_RENDER_ORDER_OFFSET } from "../TileObjectsRenderer";
 import { LodMesh } from "./LodMesh";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
@@ -753,6 +753,7 @@ export class TileGeometryCreator {
                         }
                     };
                     material = createMaterial(
+                        mapView.renderer.capabilities,
                         {
                             technique,
                             env: mapView.env,
@@ -1010,7 +1011,8 @@ export class TileGeometryCreator {
                         fadeNear: fadingParams.lineFadeNear,
                         fadeFar: fadingParams.lineFadeFar,
                         extrusionRatio: extrusionAnimationEnabled ? 0 : undefined,
-                        vertexColors: bufferGeometry.getAttribute("color") ? true : false
+                        vertexColors: bufferGeometry.getAttribute("color") ? true : false,
+                        rendererCapabilities: mapView.renderer.capabilities
                     };
                     const edgeMaterial = new EdgeMaterial(materialParams);
                     const edgeObj = new THREE.LineSegments(
@@ -1094,7 +1096,8 @@ export class TileGeometryCreator {
                         colorMix: fadingParams.colorMix,
                         fadeNear: fadingParams.lineFadeNear,
                         fadeFar: fadingParams.lineFadeFar,
-                        vertexColors: bufferGeometry.getAttribute("color") ? true : false
+                        vertexColors: bufferGeometry.getAttribute("color") ? true : false,
+                        rendererCapabilities: mapView.renderer.capabilities
                     };
                     const outlineMaterial = new EdgeMaterial(materialParams);
                     const outlineObj = new THREE.LineSegments(
@@ -1456,10 +1459,13 @@ export class TileGeometryCreator {
         material: THREE.Material,
         terrainColor: number
     ) {
-        if (technique.displacementMap === undefined) {
+        if (!technique.map || !technique.displacementMap) {
             // Render terrain using the given color.
             const stdMaterial = material as MapMeshStandardMaterial;
             stdMaterial.color.set(terrainColor);
+            // Remove displacement map, otherwise it would elevate terrain geometry and make it
+            // twice as high as it should be.
+            stdMaterial.displacementMap = null;
             return;
         }
 

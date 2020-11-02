@@ -379,8 +379,6 @@ export class ConcurrentWorkerSet {
             | WorkerServiceProtocol.ServiceRequest,
         transferList?: ArrayBuffer[]
     ): Promise<Res[]> {
-        this.ensureStarted();
-
         const promises = [];
         for (const worker of this.m_workers) {
             const messageId = this.m_nextMessageId++;

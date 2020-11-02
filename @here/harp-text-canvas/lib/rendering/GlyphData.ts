@@ -67,6 +67,7 @@ export class GlyphData {
      * @param v1 - Glyph' top texture coordinate.
      * @param texture - Glyph' source texture atlas page.
      * @param font - Glyph' font.
+     * @param isReplacement - `true` if glyph is a replacement for a missing glyph.
      *
      * @returns New `GlyphData`.
      */
@@ -83,7 +84,8 @@ export class GlyphData {
         u1: number,
         v1: number,
         readonly texture: THREE.Texture,
-        readonly font: Font
+        readonly font: Font,
+        readonly isReplacement: boolean = false
     ) {
         this.character = String.fromCodePoint(codePoint);
         this.direction = UnicodeUtils.getDirection(codePoint, block);
@@ -134,7 +136,8 @@ export class GlyphData {
             this.sourceTextureCoordinates[3].x,
             this.sourceTextureCoordinates[3].y,
             this.texture,
-            this.font
+            this.font,
+            this.isReplacement
         );
     }
 }

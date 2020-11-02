@@ -216,6 +216,7 @@ export class HereTileProvider implements WebTileDataProvider {
     /** Copyright provider instance. */
     private readonly m_copyrightProvider: UrlCopyrightProvider;
     private readonly m_ppi: WebTileDataSource.ppiValue;
+    private readonly m_resolution: WebTileDataSource.resolutionValue;
     private readonly m_tileBaseAddress: string;
     private m_languages?: string[];
 
@@ -229,6 +230,10 @@ export class HereTileProvider implements WebTileDataProvider {
 
     constructor(private readonly m_options: HereWebTileDataSourceParameters) {
         this.m_ppi = getOptionValue(m_options.ppi, WebTileDataSource.ppiValue.ppi72);
+        this.m_resolution = getOptionValue(
+            m_options.resolution,
+            WebTileDataSource.resolutionValue.resolution512
+        );
         this.m_tileBaseAddress = m_options.tileBaseAddress ?? HereTileProvider.TILE_BASE_NORMAL;
         if (
             this.m_tileBaseAddress === HereTileProvider.TILE_AERIAL_SATELLITE &&
@@ -250,7 +255,7 @@ export class HereTileProvider implements WebTileDataProvider {
     }
 
     /** @override */
-    async getTexture(tile: Tile): Promise<[Texture, CopyrightInfo[]]> {
+    async getTexture(tile: Tile, abortSignal?: AbortSignal): Promise<[Texture, CopyrightInfo[]]> {
         const column = tile.tileKey.column;
         const row = tile.tileKey.row;
         const level = tile.tileKey.level;
@@ -259,15 +264,13 @@ export class HereTileProvider implements WebTileDataProvider {
 
         const url =
             `https://${server}.${this.m_tileBaseAddress}/` +
-            `${level}/${column}/${row}/${
-                (tile.dataSource as HereWebTileDataSource).resolution
-            }/png8` +
+            `${level}/${column}/${row}/${this.m_resolution}/png8` +
             `${this.getImageRequestParams()}`;
 
         return await this.getRequestHeaders().then(headers => {
             return Promise.all([
-                textureLoader.load(url, headers),
-                this.getTileCopyright(tile, headers)
+                textureLoader.load(url, headers, abortSignal),
+                this.getTileCopyright(tile, headers, abortSignal)
             ]);
         });
     }
@@ -302,7 +305,8 @@ export class HereTileProvider implements WebTileDataProvider {
 
     private async getTileCopyright(
         tile: Tile,
-        requestHeaders: RequestHeaders | undefined
+        requestHeaders: RequestHeaders | undefined,
+        abortSignal?: AbortSignal
     ): Promise<CopyrightInfo[]> {
         if (this.m_options.gatherCopyrightInfo === false) {
             return [this.HERE_COPYRIGHT_INFO];

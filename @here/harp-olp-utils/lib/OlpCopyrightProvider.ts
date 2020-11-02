@@ -70,7 +70,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
      * @inheritdoc
      * @override
      */
-    async getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]> {
+    async getCopyrightCoverageData(abortSignal?: AbortSignal): Promise<AreaCopyrightInfo[]> {
         if (this.m_cachedCopyrightResponse !== undefined) {
             return await this.m_cachedCopyrightResponse;
         }
@@ -81,15 +81,15 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
                 getToken: this.m_params.getToken,
                 environment: this.m_params.environment ?? hrn.data.partition
             });
-            const client = new VersionedLayerClient(
-                hrn,
-                this.m_params.layer ?? DEFAULT_LAYER,
+            const client = new VersionedLayerClient({
+                catalogHrn: hrn,
+                layerId: this.m_params.layer ?? DEFAULT_LAYER,
+                version: this.m_params.version,
                 settings
-            );
+            });
             const partition = await client.getData(
-                new DataRequest()
-                    .withPartitionId(this.m_params.partition ?? DEFAULT_PARTITION)
-                    .withVersion(this.m_params.version)
+                new DataRequest().withPartitionId(this.m_params.partition ?? DEFAULT_PARTITION),
+                abortSignal
             );
             const json = await partition.json();
             this.m_cachedCopyrightResponse = json[this.m_params.baseScheme ?? "normal"];

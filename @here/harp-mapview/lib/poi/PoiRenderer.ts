@@ -141,6 +141,7 @@ class PoiRenderBufferBatch {
         texture.needsUpdate = true;
 
         this.m_material = new IconMaterial({
+            rendererCapabilities: this.mapView.renderer.capabilities,
             map: texture
         });
 
@@ -441,7 +442,8 @@ export class PoiRenderer {
     }
 
     /**
-     * Render the icon.
+     * Render the icon. Icon will only be rendered if opacity > 0, otherwise only its space will be
+     * allocated.
      *
      * @param poiInfo - PoiInfo containing information for rendering the POI icon.
      * @param screenPosition - Position on screen (2D):
@@ -450,6 +452,7 @@ export class PoiRenderer {
      * @param scale - Scaling factor to apply to text and icon.
      * @param allocateScreenSpace - If `true` screen space will be allocated for the icon.
      * @param opacity - Opacity of icon to allow fade in/out.
+     * @returns - `true` if icon has been actually rendered, `false` otherwise.
      */
     renderPoi(
         poiInfo: PoiInfo,
@@ -460,7 +463,7 @@ export class PoiRenderer {
         allocateScreenSpace: boolean,
         opacity: number,
         env: Env
-    ): void {
+    ): boolean {
         assert(poiInfo.poiRenderBatch !== undefined);
 
         PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scale, env, this.m_tempScreenBox);
@@ -469,7 +472,11 @@ export class PoiRenderer {
             screenCollisions.allocate(this.m_tempScreenBox);
         }
 
-        this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
+        if (opacity > 0) {
+            this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
+            return true;
+        }
+        return false;
     }
 
     /**

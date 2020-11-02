@@ -20,7 +20,8 @@ import {
     pointTextBuilder
 } from "./TextElementBuilder";
 import {
-    DEF_TEXT_WIDTH_HEIGHT,
+    DEF_TEXT_HEIGHT,
+    DEF_TEXT_WIDTH,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
     TestFixture,
@@ -41,6 +42,7 @@ import {
     firstNFrames,
     framesEnabled,
     frameStates,
+    iconFrameStates,
     INITIAL_TIME,
     InputTextElement,
     InputTile,
@@ -299,6 +301,109 @@ const tests: TestCase[] = [
         frameTimes: FADE_2_CYCLES,
         collisionFrames: not(firstNFrames(FADE_2_CYCLES, 3))
     },
+    {
+        name: "Text is rendered although icon is invisible",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder("P0")
+                            .withPriority(0)
+                            .withPosition(
+                                SCREEN_WIDTH / WORLD_SCALE / 2,
+                                SCREEN_HEIGHT / WORLD_SCALE / 2
+                            )
+                            .withPoiInfo(
+                                new PoiInfoBuilder()
+                                    .withPoiTechnique()
+                                    .withIconOffset(SCREEN_WIDTH * 0.5, SCREEN_HEIGHT * 0.5 + 10)
+                                    .withIconOptional(false)
+                            ),
+                        fadeIn(FADE_IN_OUT.length),
+                        [],
+                        fadedOut(FADE_IN_OUT.length)
+                    ]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Text is not rendered because the valid icon is rejected",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder("P1")
+                            .withPriority(1)
+                            .withPosition(0, 0)
+                            .withPoiInfo(
+                                new PoiInfoBuilder().withPoiTechnique().withIconOptional(false)
+                            )
+                            .withOffset(0, 20),
+                        fadeIn(FADE_IN_OUT.length),
+                        [],
+                        fadeIn(FADE_IN_OUT.length)
+                    ],
+                    [
+                        poiBuilder("P0")
+                            .withPriority(0)
+                            // Manual testing and debugging showed that this position lets the icon
+                            // area be covered by the first poi, while the text area is available.
+                            .withPosition(0, 5)
+                            .withPoiInfo(
+                                new PoiInfoBuilder().withPoiTechnique().withIconOptional(false)
+                            )
+                            .withOffset(0, 20),
+                        fadedOut(FADE_IN_OUT.length),
+                        [],
+                        fadedOut(FADE_IN_OUT.length)
+                    ]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Text is rendered because the invalid and optional icon is rejected",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder("P1")
+                            .withPriority(1)
+                            .withPosition(0, 0)
+                            .withPoiInfo(
+                                new PoiInfoBuilder().withPoiTechnique().withIconOptional(false)
+                            )
+                            .withOffset(0, 20),
+                        fadeIn(FADE_IN_OUT.length),
+                        [],
+                        fadeIn(FADE_IN_OUT.length)
+                    ],
+                    [
+                        poiBuilder("P0")
+                            .withPriority(0)
+                            // Manual testing and debugging showed that this position lets the icon
+                            // area be covered by the first poi, while the text area is available.
+                            // Same values as in test above.
+                            .withPosition(0, 5)
+                            .withPoiInfo(
+                                new PoiInfoBuilder()
+                                    .withPoiTechnique()
+                                    .withIconOptional(true)
+                                    .withIconValid(false)
+                            )
+                            .withOffset(0, 20),
+                        fadeIn(FADE_IN_OUT.length), // text should fade in
+                        [],
+                        fadedOut(FADE_IN_OUT.length) // icon should stay faded out
+                    ]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
     // DEDUPLICATION
     {
         name: "Second from two near, non-colliding point labels with same text never fades in",
@@ -307,8 +412,8 @@ const tests: TestCase[] = [
                 labels: [
                     [
                         pointTextBuilder().withPosition(
-                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_WIDTH,
-                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_HEIGHT
+                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH)) / SCREEN_WIDTH,
+                            (WORLD_SCALE * (4 * DEF_TEXT_HEIGHT)) / SCREEN_HEIGHT
                         ),
                         fadeIn(FADE_IN_OUT.length)
                     ],
@@ -325,8 +430,8 @@ const tests: TestCase[] = [
                 labels: [
                     [
                         poiBuilder().withPosition(
-                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_WIDTH,
-                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_HEIGHT
+                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH)) / SCREEN_WIDTH,
+                            (WORLD_SCALE * (4 * DEF_TEXT_HEIGHT)) / SCREEN_HEIGHT
                         ),
                         fadeIn(FADE_IN_OUT.length)
                     ],
@@ -464,7 +569,7 @@ const tests: TestCase[] = [
     },
     {
         name:
-            "Longest path label with same text within distance tolerace replaces predecessor" +
+            "Longest path label with same text within distance tolerance replaces predecessor" +
             " without fading",
         tiles: [
             {
@@ -585,9 +690,28 @@ const tests: TestCase[] = [
                 labels: [
                     [
                         poiBuilder("outside frustum marker").withPosition(
-                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_WIDTH,
-                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH_HEIGHT)) / SCREEN_HEIGHT,
-                            WORLD_SCALE * 10
+                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH)) / SCREEN_WIDTH,
+                            (WORLD_SCALE * (40 * DEF_TEXT_HEIGHT)) / SCREEN_HEIGHT,
+                            -WORLD_SCALE * 10
+                        ),
+                        fadedOut(FADE_2_CYCLES.length)
+                    ]
+                ],
+                frames: firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Poi only fades in, if in front of camera",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder("behind camera marker").withPosition(
+                            (WORLD_SCALE * (4 * DEF_TEXT_WIDTH)) / SCREEN_WIDTH,
+                            (WORLD_SCALE * (4 * DEF_TEXT_HEIGHT)) / SCREEN_HEIGHT,
+                            -1
                         ),
                         fadedOut(FADE_2_CYCLES.length)
                     ]
@@ -624,7 +748,7 @@ describe("TextElementsRenderer", function() {
 
     function buildLabels(
         inputElements: InputTextElement[] | undefined,
-        elementFrameStates: Array<[TextElement, FadeState[]]>,
+        elementFrameStates: Array<[TextElement, FadeState[], FadeState[] | undefined]>,
         frameCount: number
     ): TextElement[] {
         if (!inputElements) {
@@ -635,23 +759,30 @@ describe("TextElementsRenderer", function() {
                 frameCount,
                 "frameStates of inputElement equals frameCount"
             );
+            const iconStates = iconFrameStates(inputElement);
+            if (iconStates !== undefined) {
+                expect(iconStates.length).equal(
+                    frameCount,
+                    "iconFrameStates of inputElement equals frameCount"
+                );
+            }
             // Only used to identify some text elements for testing purposes.
             const dummyUserData = {};
             const element = builder(inputElement)
                 .withUserData(dummyUserData)
                 .build();
-            elementFrameStates.push([element, frameStates(inputElement)]);
+            elementFrameStates.push([element, frameStates(inputElement), iconStates]);
             return element;
         });
     }
     async function initTest(
         test: TestCase
     ): Promise<{
-        elementFrameStates: Array<[TextElement, FadeState[]]>;
+        elementFrameStates: Array<[TextElement, FadeState[], FadeState[]]>;
         prevOpacities: number[];
     }> {
         // Array with all text elements and their corresponding expected frame states.
-        const elementFrameStates = new Array<[TextElement, FadeState[]]>();
+        const elementFrameStates = new Array<[TextElement, FadeState[], FadeState[]]>();
 
         let enableElevation = false;
         const allTileIndices: number[] = [];
@@ -729,13 +860,21 @@ describe("TextElementsRenderer", function() {
                 await fixture.renderFrame(frameTime, tileIdcs, terrainTileIdcs, collisionEnabled);
 
                 let elementIdx = 0;
-                for (const [textElement, expectedStates] of elementFrameStates) {
+                for (const [
+                    textElement,
+                    expectedStates,
+                    expectedIconStates
+                ] of elementFrameStates) {
                     const expectedState = expectedStates[frameIdx];
+                    const expectedIconState = expectedIconStates
+                        ? expectedIconStates[frameIdx]
+                        : undefined;
 
                     const prevOpacity = prevOpacities[elementIdx];
                     const newOpacity = fixture.checkTextElementState(
                         textElement,
                         expectedState,
+                        expectedIconState,
                         prevOpacity
                     );
                     prevOpacities[elementIdx++] = newOpacity;

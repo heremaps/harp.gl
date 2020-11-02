@@ -3,10 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as THREE from "three";
 
 import { MemoryUsage } from "../TextCanvas";
+import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { GlyphData } from "./GlyphData";
 import { GlyphTextureCache } from "./GlyphTextureCache";
 import { FontStyle, FontVariant, TextRenderStyle } from "./TextStyle";
@@ -118,7 +118,8 @@ export class FontCatalog {
             1.0,
             1.0,
             replacementTexture,
-            replacementFont!
+            replacementFont!,
+            true
         );
 
         const fontCatalogInfo = new FontCatalog(
@@ -160,6 +161,9 @@ export class FontCatalog {
     private readonly m_loadedJson: Map<string, any>;
     private readonly m_loadedPages: Map<string, THREE.Texture>;
     private readonly m_loadedGlyphs: Map<string, Map<number, GlyphData>>;
+
+    /** If `true`, a replacement glyph is returned for every missing glyph. */
+    public showReplacementGlyphs = false;
 
     /**
      * @hidden
@@ -462,7 +466,10 @@ export class FontCatalog {
                 const codePoint = char.codePointAt(0)!;
                 const font = this.getFont(codePoint, fontName);
                 const glyphData = this.getGlyph(codePoint, font, fontStyle);
-                if (glyphData !== undefined) {
+                if (
+                    glyphData !== undefined &&
+                    (!glyphData.isReplacement || this.showReplacementGlyphs)
+                ) {
                     result.push(glyphData);
                     if (letterCaseArray !== undefined) {
                         letterCaseArray.push(char !== character);
@@ -537,6 +544,8 @@ export class FontCatalog {
         (replacementGlyph as any).codePoint = codePoint;
         (replacementGlyph as any).character = char;
         (replacementGlyph as any).font = font;
+        // Glyphs for ASCII control characters and such are not really replacement glyphs.
+        (replacementGlyph as any).isReplacement = UnicodeUtils.isPrintable(codePoint);
         return replacementGlyph;
     }
 

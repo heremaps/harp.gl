@@ -17,21 +17,21 @@ describe("GeoCoordinates", function() {
         { args: [-90, -180], expected: [-90, -180] },
         { args: [0, 0], expected: [0, 0] },
         { args: [90, 250], expected: [90, -110] },
-        { args: [91, 123], expected: [89, -57] },
-        { args: [360, 123], expected: [0, 123] },
-        { args: [451, 123], expected: [89, -57] },
-        { args: [-91, 123], expected: [-89, -57] },
-        { args: [181, 123], expected: [-1, -57] },
-        { args: [359, 123], expected: [-1, 123] },
-        { args: [271, 123], expected: [-89, 123] },
-        { args: [-360, 123], expected: [0, 123] },
-        { args: [361, 123], expected: [1, 123] },
-        { args: [-360, 123, 0], expected: [0, 123, 0] },
-        { args: [361, 123, 50], expected: [1, 123, 50] },
-        { args: [361, -720, 50], expected: [1, 0, 50] },
-        { args: [361, -711, 50], expected: [1, 9, 50] },
-        { args: [361, -4534, 50], expected: [1, 146, 50] },
-        { args: [361, 4534, 50], expected: [1, -146, 50] }
+        { args: [91, 123], expected: [90, 123] },
+        { args: [360, 123], expected: [90, 123] },
+        { args: [451, 123], expected: [90, 123] },
+        { args: [-91, 123], expected: [-90, 123] },
+        { args: [181, 123], expected: [90, 123] },
+        { args: [359, 123], expected: [90, 123] },
+        { args: [271, 123], expected: [90, 123] },
+        { args: [-360, 123], expected: [-90, 123] },
+        { args: [361, 123], expected: [90, 123] },
+        { args: [-360, 123, 0], expected: [-90, 123, 0] },
+        { args: [361, 123, 50], expected: [90, 123, 50] },
+        { args: [361, -720, 50], expected: [90, 0, 50] },
+        { args: [361, -711, 50], expected: [90, 9, 50] },
+        { args: [361, -4534, 50], expected: [90, 146, 50] },
+        { args: [361, 4534, 50], expected: [90, -146, 50] }
     ];
 
     it("API compatibility", function() {
@@ -154,5 +154,50 @@ describe("GeoCoordinates", function() {
             ),
             180
         );
+    });
+
+    describe("lerp", function() {
+        it("returns first coords if factor is 0", function() {
+            const start = new GeoCoordinates(10, 50, 1000);
+            const end = new GeoCoordinates(20, 5, 500);
+            assert.deepEqual(GeoCoordinates.lerp(start, end, 0), start);
+        });
+        it("returns second coords if factor is 1", function() {
+            const start = new GeoCoordinates(10, 50, 1000);
+            const end = new GeoCoordinates(20, 5, 500);
+            assert.deepEqual(GeoCoordinates.lerp(start, end, 1), end);
+        });
+        it("interpolates given coords if factor >0 and <1", function() {
+            const start = new GeoCoordinates(10, 50, 1000);
+            const end = new GeoCoordinates(20, 10, 500);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.25),
+                new GeoCoordinates(12.5, 40, 875)
+            );
+        });
+        it("normalizes result if requested", function() {
+            const start = new GeoCoordinates(10, 180);
+            const end = new GeoCoordinates(20, 190);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.5, false, true),
+                new GeoCoordinates(15, -175, 0)
+            );
+        });
+        it("wraps coordinates if requested", function() {
+            const start = new GeoCoordinates(10, 170, 1000);
+            const end = new GeoCoordinates(20, -140, 500);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.25, true),
+                new GeoCoordinates(12.5, 182.5, 875)
+            );
+        });
+        it("reverses interpolation direction when wrapping if needed", function() {
+            const start = new GeoCoordinates(20, -140, 500);
+            const end = new GeoCoordinates(10, 170, 1000);
+            assert.deepEqual(
+                GeoCoordinates.lerp(start, end, 0.25, true),
+                new GeoCoordinates(17.5, 207.5, 625)
+            );
+        });
     });
 });

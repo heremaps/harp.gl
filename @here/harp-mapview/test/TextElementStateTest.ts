@@ -65,6 +65,8 @@ describe("TextElementState", function() {
             } as any);
             textElementState.update(0);
             textElementState.textRenderState!.startFadeIn(0);
+            expect(textElementState.visible).to.be.false;
+            textElementState.updateFading(1, true);
             expect(textElementState.visible).to.be.true;
         });
 
@@ -77,6 +79,8 @@ describe("TextElementState", function() {
             } as any);
             textElementState.update(0);
             textElementState.iconRenderState!.startFadeIn(0);
+            expect(textElementState.visible).to.be.false;
+            textElementState.updateFading(1, true);
             expect(textElementState.visible).to.be.true;
         });
 
@@ -93,6 +97,8 @@ describe("TextElementState", function() {
             } as any);
             textElementState.update(0);
             textElementState.iconRenderStates![0].startFadeIn(0);
+            expect(textElementState.visible).to.be.false;
+            textElementState.updateFading(1, true);
             expect(textElementState.visible).to.be.true;
         });
     });

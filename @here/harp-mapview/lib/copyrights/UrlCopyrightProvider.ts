@@ -50,14 +50,15 @@ export class UrlCopyrightProvider extends CopyrightCoverageProvider {
      * @inheritdoc
      * @override
      */
-    getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]> {
+    getCopyrightCoverageData(abortSignal?: AbortSignal): Promise<AreaCopyrightInfo[]> {
         if (this.m_cachedCopyrightResponse !== undefined) {
             return this.m_cachedCopyrightResponse;
         }
 
         this.m_cachedCopyrightResponse = this.m_transferManager
             .downloadJson<CopyrightCoverageResponse>(this.m_fetchURL, {
-                headers: this.m_requestHeaders
+                headers: this.m_requestHeaders,
+                signal: abortSignal
             })
             .then(json => json[this.m_baseScheme])
             .catch(error => {

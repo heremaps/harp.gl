@@ -68,8 +68,12 @@ export abstract class CopyrightCoverageProvider implements CopyrightProvider {
 
     private m_cachedTreePromise: Promise<any> | undefined;
 
-    /** Asynchronously retrieves copyright coverage data. */
-    abstract async getCopyrightCoverageData(): Promise<AreaCopyrightInfo[]>;
+    /** Asynchronously retrieves copyright coverage data.
+     * @param abortSignal - Optional AbortSignal to cancel the request.
+     */
+    abstract async getCopyrightCoverageData(
+        abortSignal?: AbortSignal
+    ): Promise<AreaCopyrightInfo[]>;
 
     /** @inheritdoc */
     getTree(): Promise<any> {

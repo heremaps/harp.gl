@@ -119,7 +119,8 @@ export function allFrames(frames: number[]): boolean[] {
  */
 export type InputTextElement =
     | [TextElementBuilder, FadeState[]]
-    | [TextElementBuilder, FadeState[], boolean[]];
+    | [TextElementBuilder, FadeState[], boolean[]]
+    | [TextElementBuilder, FadeState[], boolean[], FadeState[]];
 
 export function builder(input: InputTextElement) {
     return input[0];
@@ -127,6 +128,10 @@ export function builder(input: InputTextElement) {
 
 export function frameStates(input: InputTextElement) {
     return input[1];
+}
+
+export function iconFrameStates(input: InputTextElement) {
+    return input[3];
 }
 
 export function framesEnabled(input: InputTextElement): boolean[] | undefined {

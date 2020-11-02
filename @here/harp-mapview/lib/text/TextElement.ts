@@ -115,7 +115,7 @@ export interface PoiInfo {
 
     /**
      * If isValid is `false`, the icon will no longer be placed or rendered. The reason may be a
-     * missing resource.
+     * missing resource. Defaults to `false`.
      */
     isValid?: boolean;
 
@@ -131,7 +131,7 @@ export interface PoiInfo {
 
     /**
      * @hidden
-     * If false, text will not be rendered during camera movements. Defaults to `true`;
+     * If false, text will not be rendered during camera movements. Defaults to `true`.
      */
     renderTextDuringMovements?: boolean;
 

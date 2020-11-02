@@ -40,7 +40,14 @@ describe("Rendering lines: ", function() {
     const maxColumnCount = 3;
     const cellSize = 150;
 
+    let canvas: HTMLCanvasElement;
     let webglRenderer: THREE.WebGLRenderer;
+
+    beforeEach(() => {
+        canvas = document.createElement("canvas");
+        // Enable backward compatibility with three.js <= 0.117
+        webglRenderer = new ((THREE as any).WebGL1Renderer ?? THREE.WebGLRenderer)({ canvas });
+    });
 
     afterEach(() => {
         if (webglRenderer !== undefined) {
@@ -215,12 +222,10 @@ describe("Rendering lines: ", function() {
         lineStyle: SolidLineMaterialParameters,
         camera?: THREE.Camera
     ) {
-        const canvas = document.createElement("canvas");
         const scene = new THREE.Scene();
 
         const canvasSize = getCanvasSize(config);
-        canvas.width = canvasSize.width;
-        canvas.height = canvasSize.height;
+        webglRenderer.setSize(canvasSize.width, canvasSize.height);
 
         if (!camera) {
             const orthoCamera = new THREE.OrthographicCamera(
@@ -248,6 +253,7 @@ describe("Rendering lines: ", function() {
                     uvs.push(test.points[i] / cellSize + 0.5, test.points[i + 1] / cellSize + 0.5);
                 }
             }
+            lineParams.rendererCapabilities = { isWebGL2: false } as any;
             const material = new SolidLineMaterial(lineParams);
             const lineGeometry = createLineGeometry(
                 new THREE.Vector3(),
@@ -280,8 +286,6 @@ describe("Rendering lines: ", function() {
         }
 
         scene.position.set(-canvas.width / 2, -canvas.height / 2, 0);
-        // Enable backward compatibility with three.js <= 0.117
-        webglRenderer = new ((THREE as any).WebGL1Renderer ?? THREE.WebGLRenderer)({ canvas });
         webglRenderer.setClearColor(0x000000, 0.0);
 
         webglRenderer.render(scene, camera);
@@ -290,17 +294,31 @@ describe("Rendering lines: ", function() {
     }
 
     it("renders solid lines - lineWidth: 2", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 2, color: "#FFF" };
+        const lineStyle = {
+            lineWidth: 2,
+            color: "#FFF",
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(linesConfig, this, "solid-lines-1px", lineStyle);
     });
 
     it("renders solid lines - lineWidth: 2 - offset: 2", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 2, color: "#FFF", offset: 2 };
+        const lineStyle = {
+            lineWidth: 2,
+            color: "#FFF",
+            offset: 2,
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(linesConfig, this, "solid-lines-1px-offset-2", lineStyle);
     });
 
     it("renders solid lines - lineWidth: 2 - offset: -2", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 2, color: "#FFF", offset: -2 };
+        const lineStyle = {
+            lineWidth: 2,
+            color: "#FFF",
+            offset: -2,
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(linesConfig, this, "solid-lines-1px-offset--2", lineStyle);
     });
 
@@ -311,7 +329,8 @@ describe("Rendering lines: ", function() {
 
         const lineStyle = {
             lineWidth: 2,
-            color: "#FFF"
+            color: "#FFF",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(config, this, "undisplaced-solid-lines-persective", lineStyle, camera);
     });
@@ -325,18 +344,29 @@ describe("Rendering lines: ", function() {
         const lineStyle = {
             lineWidth: 2,
             color: "#FFF",
-            displacementMap
+            displacementMap,
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(config, this, "displaced-solid-lines-persective", lineStyle, camera);
     });
 
     it("renders solid lines - lineWidth: 20", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 40, color: "#FFF" };
+        const lineStyle = {
+            lineWidth: 40,
+            color: "#FFF",
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(linesConfig, this, "solid-lines-20px", lineStyle);
     });
 
     it("renders solid lines with outline - outlineWidth: 5", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 20, color: "#F00", outlineWidth: 5, outlineColor: "#0F0" };
+        const lineStyle = {
+            lineWidth: 20,
+            color: "#F00",
+            outlineWidth: 5,
+            outlineColor: "#0F0",
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(linesConfig, this, "solid-lines-outline", lineStyle);
     });
 
@@ -348,7 +378,8 @@ describe("Rendering lines: ", function() {
             dashSize: 4,
             dashColor: "#00F",
             outlineWidth: 3,
-            outlineColor: "#0F0"
+            outlineColor: "#0F0",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(linesConfig, this, "dashed-lines-outline", lineStyle);
     });
@@ -360,13 +391,20 @@ describe("Rendering lines: ", function() {
             gapSize: 4,
             dashSize: 4,
             outlineWidth: 3,
-            outlineColor: "#0F0"
+            outlineColor: "#0F0",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(linesConfig, this, "dashed-lines-outline-alpha", lineStyle);
     });
 
     it("renders dashed lines - lineWidth: 2, gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 2, color: "#FFF", gapSize: 2, dashSize: 2 };
+        const lineStyle = {
+            lineWidth: 2,
+            color: "#FFF",
+            gapSize: 2,
+            dashSize: 2,
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(linesConfig, this, "dashed-lines-1px", lineStyle);
     });
 
@@ -376,18 +414,31 @@ describe("Rendering lines: ", function() {
             color: "#FFF",
             gapSize: 2,
             dashSize: 2,
-            dashColor: "#0F0"
+            dashColor: "#0F0",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(linesConfig, this, "dashed-lines-color", lineStyle);
     });
 
     it("renders dashed lines - lineWidth: 20,gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 40, color: "#FFF", gapSize: 2, dashSize: 2 };
+        const lineStyle = {
+            lineWidth: 40,
+            color: "#FFF",
+            gapSize: 2,
+            dashSize: 2,
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(linesConfig, this, "dashed-lines-20px", lineStyle);
     });
 
     it("renders solid lines - overdraw check", async function(this: Mocha.Context) {
-        const lineStyle = { lineWidth: 40, color: "#FFF", opacity: 0.5, transparent: true };
+        const lineStyle = {
+            lineWidth: 40,
+            color: "#FFF",
+            opacity: 0.5,
+            transparent: true,
+            rendererCapabilities: webglRenderer.capabilities
+        };
         await renderLines(checkOverDrawLines, this, "solid-lines-overdraw-20px", lineStyle);
     });
 
@@ -398,7 +449,8 @@ describe("Rendering lines: ", function() {
             opacity: 0.5,
             transparent: true,
             gapSize: 2,
-            dashSize: 2
+            dashSize: 2,
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(checkOverDrawLines, this, "dashed-lines-overdraw-20px", lineStyle);
     });
@@ -410,7 +462,8 @@ describe("Rendering lines: ", function() {
             color: "#F00",
             gapSize: 16,
             dashSize: 16,
-            dashColor: "#00F"
+            dashColor: "#00F",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -429,7 +482,8 @@ describe("Rendering lines: ", function() {
             dashSize: 16,
             dashColor: "#00F",
             outlineWidth: 3,
-            outlineColor: "#0F0"
+            outlineColor: "#0F0",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -446,7 +500,8 @@ describe("Rendering lines: ", function() {
             color: "#F00",
             gapSize: 16,
             dashSize: 16,
-            dashColor: "#00F"
+            dashColor: "#00F",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -465,7 +520,8 @@ describe("Rendering lines: ", function() {
             dashSize: 16,
             dashColor: "#00F",
             outlineWidth: 3,
-            outlineColor: "#0F0"
+            outlineColor: "#0F0",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -482,7 +538,8 @@ describe("Rendering lines: ", function() {
             color: "#F00",
             gapSize: 0.01,
             dashSize: 32,
-            dashColor: "#00F"
+            dashColor: "#00F",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -498,7 +555,8 @@ describe("Rendering lines: ", function() {
             color: "#FFF",
             opacity: 0.5,
             transparent: true,
-            caps: "Round"
+            caps: "Round",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -514,7 +572,8 @@ describe("Rendering lines: ", function() {
             color: "#FFF",
             opacity: 0.5,
             transparent: true,
-            caps: "None"
+            caps: "None",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -530,7 +589,8 @@ describe("Rendering lines: ", function() {
             color: "#FFF",
             opacity: 0.5,
             transparent: true,
-            caps: "Square"
+            caps: "Square",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -546,7 +606,8 @@ describe("Rendering lines: ", function() {
             color: "#FFF",
             opacity: 0.5,
             transparent: true,
-            caps: "TriangleOut"
+            caps: "TriangleOut",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,
@@ -562,7 +623,8 @@ describe("Rendering lines: ", function() {
             color: "#FFF",
             opacity: 0.5,
             transparent: true,
-            caps: "TriangleIn"
+            caps: "TriangleIn",
+            rendererCapabilities: webglRenderer.capabilities
         };
         await renderLines(
             linesConfig,

@@ -3,7 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { DecodedTile, GeometryType, TextPathGeometry } from "@here/harp-datasource-protocol";
+import {
+    DecodedTile,
+    GeometryKindSet,
+    GeometryType,
+    TextPathGeometry
+} from "@here/harp-datasource-protocol";
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
@@ -13,6 +18,7 @@ import { DataSource } from "./DataSource";
 import { ElevationRange } from "./ElevationRangeSource";
 import { LodMesh } from "./geometry/LodMesh";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
+import { ITileLoader, TileLoaderState } from "./ITileLoader";
 import { MapView } from "./MapView";
 import { PathBlockingElement } from "./PathBlockingElement";
 import { PerformanceStatistics } from "./Statistics";
@@ -93,39 +99,6 @@ export function getFeatureDataSize(featureData: TileFeatureData): number {
     }
 
     return numBytes;
-}
-
-/**
- * The state the {@link ITileLoader}.
- */
-export enum TileLoaderState {
-    Initialized,
-    Loading,
-    Loaded,
-    Decoding,
-    Ready,
-    Canceled,
-    Failed
-}
-
-/**
- * The interface for managing tile loading.
- */
-export interface ITileLoader {
-    state: TileLoaderState;
-    payload?: ArrayBufferLike | {};
-    decodedTile?: DecodedTile;
-
-    isFinished: boolean;
-
-    priority: number;
-
-    loadAndDecode(): Promise<TileLoaderState>;
-    waitSettled(): Promise<TileLoaderState>;
-
-    updatePriority(area: number): void;
-
-    cancel(): void;
 }
 
 /**
@@ -290,6 +263,7 @@ export class Tile implements CachedResource {
      * Prepared text geometries optimized for display.
      */
     protected preparedTextPaths: TextPathGeometry[] | undefined;
+    protected readonly m_tileGeometryLoader?: TileGeometryLoader;
 
     /**
      * The bounding box of this `Tile` in world coordinates.
@@ -304,7 +278,6 @@ export class Tile implements CachedResource {
 
     private m_tileLoader?: ITileLoader;
     private m_decodedTile?: DecodedTile;
-    private m_tileGeometryLoader?: TileGeometryLoader;
 
     // Used for {@link TextElement}s that are stored in the data, and that are placed explicitly,
     // fading in and out.
@@ -360,6 +333,10 @@ export class Tile implements CachedResource {
         this.m_textStyleCache = new TileTextStyleCache(this);
         this.m_offset = offset;
         this.m_uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(this.tileKey, this.offset);
+        if (dataSource.useGeometryLoader) {
+            this.m_tileGeometryLoader = new TileGeometryLoader(this, this.mapView.taskQueue);
+            this.attachGeometryLoadedCallback();
+        }
     }
 
     /**
@@ -382,8 +359,16 @@ export class Tile implements CachedResource {
         }
     }
 
+    /**
+     * Sets the tile visibility status.
+     * @param visible - `True` to mark the tile as visible, `False` otherwise.
+     */
     set isVisible(visible: boolean) {
         this.frameNumLastRequested = visible ? this.dataSource.mapView.frameNumber : -1;
+
+        if (!visible && this.m_tileGeometryLoader && !this.m_tileGeometryLoader.isSettled) {
+            this.m_tileGeometryLoader.cancel();
+        }
     }
 
     /**
@@ -680,7 +665,7 @@ export class Tile implements CachedResource {
     set visibleArea(area: number) {
         this.m_visibleArea = area;
         if (this.tileLoader !== undefined) {
-            this.tileLoader.updatePriority(area);
+            this.tileLoader.priority = area;
         }
     }
 
@@ -773,26 +758,6 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Remove the decodedTile when no longer needed.
-     */
-    removeDecodedTile() {
-        this.m_decodedTile = undefined;
-        this.invalidateResourceInfo();
-    }
-
-    /**
-     * Called by the {@link @here/harp-mapview-decoder#TileLoader}
-     *
-     * @remarks
-     * after the `Tile` has finished loading its map data. Can be used
-     * to add content to the `Tile`.
-     * The {@link @here/harp-datasource-protocol#DecodedTile} should still be available.
-     */
-    loadingFinished() {
-        // To be used in subclasses.
-    }
-
-    /**
      * Called when the default implementation of `dispose()` needs
      * to free the geometry of a `Tile` object.
      *
@@ -833,29 +798,10 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Gets the [[TileGeometryLoader]] that manages this tile.
-     */
-    get tileGeometryLoader(): TileGeometryLoader | undefined {
-        return this.m_tileGeometryLoader;
-    }
-
-    /**
-     * Sets the [[TileGeometryLoader]] to manage this tile.
-     *
-     * @param tileGeometryLoader - A [[TileGeometryLoader]] instance to manage the geometry creation
-     *      for this tile.
-     */
-    set tileGeometryLoader(tileGeometryLoader: TileGeometryLoader | undefined) {
-        this.m_tileGeometryLoader = tileGeometryLoader;
-    }
-
-    /**
      * `True` if all geometry of the `Tile` has been loaded.
      */
     get allGeometryLoaded(): boolean {
-        return this.m_tileGeometryLoader === undefined
-            ? this.hasGeometry
-            : this.m_tileGeometryLoader.isFinished;
+        return this.m_tileGeometryLoader?.isFinished ?? this.hasGeometry;
     }
 
     /**
@@ -917,6 +863,14 @@ export class Tile implements CachedResource {
             return await Promise.resolve();
         }
 
+        if (this.m_tileGeometryLoader) {
+            const wasSettled = this.m_tileGeometryLoader.isSettled;
+            this.m_tileGeometryLoader.reset();
+            if (wasSettled) {
+                this.attachGeometryLoadedCallback();
+            }
+        }
+
         return await tileLoader
             .loadAndDecode()
             .then(tileLoaderState => {
@@ -928,10 +882,9 @@ export class Tile implements CachedResource {
                 });
             })
             .catch(tileLoaderState => {
-                if (
-                    tileLoaderState !== TileLoaderState.Canceled &&
-                    tileLoaderState !== TileLoaderState.Failed
-                ) {
+                if (tileLoaderState === TileLoaderState.Failed) {
+                    this.dispose();
+                } else if (tileLoaderState !== TileLoaderState.Canceled) {
                     logger.error("Unknown error" + tileLoaderState);
                 }
             });
@@ -1047,14 +1000,12 @@ export class Tile implements CachedResource {
             this.m_tileLoader.cancel();
             this.m_tileLoader = undefined;
         }
-        if (this.m_tileGeometryLoader !== undefined) {
-            this.m_tileGeometryLoader.dispose();
-            this.m_tileGeometryLoader = undefined;
-        }
         this.clear();
-        this.m_disposed = true;
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
+        this.m_disposed = true;
+        this.m_tileGeometryLoader?.dispose();
+
         if (this.m_disposeCallback) {
             this.m_disposeCallback(this);
         }
@@ -1073,6 +1024,7 @@ export class Tile implements CachedResource {
     /**
      * Update tile for current map view zoom level
      * @param zoomLevel - Zoom level of the map view
+     * @internal
      */
     update(zoomLevel: number): void {
         for (const object of this.objects) {
@@ -1087,6 +1039,95 @@ export class Tile implements CachedResource {
      */
     get boundingBox(): OrientedBox3 {
         return this.m_boundingBox;
+    }
+
+    /**
+     * Start with or continue with loading geometry for tiles requiring this step. Called
+     * repeatedly until loading is finished.
+     * @param priority - Priority assigned to asynchronous tasks doing the geometry update.
+     * @param enabledKinds - {@link GeometryKind}s that will be created.
+     * @param disabledKinds - {@link GeometryKind}s that will not be created.
+     * @return `true` if tile uses a geometry loader, `false` otherwise.
+     * @internal
+     */
+    updateGeometry(
+        priority?: number,
+        enabledKinds?: GeometryKindSet,
+        disabledKinds?: GeometryKindSet
+    ): boolean {
+        if (!this.m_tileGeometryLoader) {
+            return false;
+        }
+
+        if (this.m_tileGeometryLoader.isSettled) {
+            return true;
+        }
+
+        if (this.dataSource.isDetached()) {
+            this.m_tileGeometryLoader.cancel();
+            return true;
+        }
+
+        if (this.tileLoader) {
+            if (!this.tileLoader.isFinished) {
+                return true;
+            } else if (!this.decodedTile) {
+                // Finish loading if tile has no data.
+                this.m_tileGeometryLoader.finish();
+                return true;
+            }
+        }
+
+        if (priority !== undefined) {
+            this.m_tileGeometryLoader.priority = priority;
+        }
+        this.m_tileGeometryLoader.update(enabledKinds, disabledKinds);
+        return true;
+    }
+
+    /**
+     * Gets a set of the {@link GeometryKind}s that were loaded (if any).
+     * @internal
+     */
+    get loadedGeometryKinds(): GeometryKindSet | undefined {
+        return this.m_tileGeometryLoader?.availableGeometryKinds;
+    }
+
+    /**
+     * Called when {@link TileGeometryLoader} is finished.
+     *
+     * @remarks
+     * It may be used to add content to the `Tile`.
+     * The {@link @here/harp-datasource-protocol#DecodedTile} is still available.
+     */
+    protected loadingFinished() {
+        // To be used in subclasses.
+    }
+
+    private attachGeometryLoadedCallback() {
+        assert(this.m_tileGeometryLoader !== undefined);
+        this.m_tileGeometryLoader!.waitFinished()
+            .then(() => {
+                this.loadingFinished();
+                this.removeDecodedTile();
+            })
+            .catch(() => {
+                if (this.disposed) {
+                    return;
+                }
+                // Loader was canceled, dispose tile.
+                if (!this.dataSource.isDetached()) {
+                    this.mapView.visibleTileSet.disposeTile(this);
+                }
+            });
+    }
+
+    /**
+     * Remove the decodedTile when no longer needed.
+     */
+    private removeDecodedTile() {
+        this.m_decodedTile = undefined;
+        this.invalidateResourceInfo();
     }
 
     /**

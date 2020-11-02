@@ -130,7 +130,7 @@ async function createTextCanvas(): Promise<TextCanvas> {
     );
 
     return new TextCanvas({
-        renderer: {},
+        renderer: { capabilities: { isWebGL2: false } },
         fontCatalog,
         minGlyphCount: 16,
         maxGlyphCount: 255
@@ -367,7 +367,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition
                     );
 
@@ -404,7 +403,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -438,7 +436,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -472,7 +469,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -509,7 +505,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -546,7 +541,6 @@ describe("Placement", function() {
                     textCanvas,
                     new Env(),
                     screenCollisions,
-                    false,
                     position
                 );
 
@@ -738,7 +732,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition,
                         false
                     );
@@ -763,7 +756,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition,
                         true
                     );
@@ -962,7 +954,6 @@ describe("Placement", function() {
                         textCanvas,
                         new Env(),
                         screenCollisions,
-                        false,
                         outPosition,
                         false
                     );
@@ -986,7 +977,6 @@ describe("Placement", function() {
                             textCanvas,
                             new Env(),
                             screenCollisions,
-                            false,
                             outPosition,
                             true
                         );
@@ -1003,7 +993,9 @@ describe("Placement", function() {
                             // Update its fading.
                             state.textRenderState?.startFadeIn(1);
                             // Labels gets persistent state - requires fading to start.
-                            expect(state.visible).to.be.true;
+                            expect(state.visible).to.be.false;
+                            expect(state.textRenderState!.isFadingIn()).to.be.true;
+                            expect(state.textRenderState!.opacity).to.equal(0);
                         }
                         // Cleanup screen for next frame
                         screenCollisions.reset();
@@ -1050,7 +1042,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i]
                     );
                     const textPlacement = states[i].textPlacement;
@@ -1059,10 +1050,9 @@ describe("Placement", function() {
                     expect(inPositions[i].x).to.equal(outPositions[i].x + marginX);
                     expect(inPositions[i].y).to.equal(outPositions[i].y - marginY);
                 }
-                // First element allocated, second collides, because it's a new label
-                // it retrieves PlacementResult.Invisible status.
+                // First element allocated, second collides.
                 expect(results[0]).to.equal(PlacementResult.Ok);
-                expect(results[1]).to.equal(PlacementResult.Invisible);
+                expect(results[1]).to.equal(PlacementResult.Rejected);
 
                 // Cleanup screen for next frame
                 screenCollisions.reset();
@@ -1078,7 +1068,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );
@@ -1135,7 +1124,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );
@@ -1146,9 +1134,8 @@ describe("Placement", function() {
                 }
                 // First element allocated, second collides, without alternative placement,
                 // centered labels are not handled with multi-anchor placement.
-                // Because it's a new label it retrieves PlacementResult.Invisible status.
                 expect(results[0]).to.equal(PlacementResult.Ok);
-                expect(results[1]).to.equal(PlacementResult.Invisible);
+                expect(results[1]).to.equal(PlacementResult.Rejected);
             });
 
             it("place two approaching texts", async function() {
@@ -1188,7 +1175,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         false
                     );
@@ -1207,8 +1193,12 @@ describe("Placement", function() {
                 states[0].textRenderState?.startFadeIn(1);
                 states[1].textRenderState?.startFadeIn(1);
                 // Labels gets persistent state.
-                expect(states[0].visible).to.be.true;
-                expect(states[1].visible).to.be.true;
+                expect(states[0].visible).to.be.false;
+                expect(states[1].visible).to.be.false;
+                expect(states[0].textRenderState!.isFadingIn()).to.be.true;
+                expect(states[0].textRenderState!.opacity).to.equal(0);
+                expect(states[1].textRenderState!.isFadingIn()).to.be.true;
+                expect(states[1].textRenderState!.opacity).to.equal(0);
 
                 // Cleanup for the next - approaching frame.
                 screenCollisions.reset();
@@ -1227,7 +1217,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );
@@ -1270,7 +1259,6 @@ describe("Placement", function() {
                         textCanvas,
                         env,
                         screenCollisions,
-                        false,
                         outPositions[i],
                         true
                     );

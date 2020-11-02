@@ -115,6 +115,7 @@ export class MapViewAtmosphere {
      * @param m_sceneCamera - The camera used to render entire scene.
      * @param m_projection - The geo-projection used to transform geo coordinates to
      *                       cartesian space.
+     * @param m_rendererCapabilities The capabilities of the WebGL renderer.
      * @param m_updateCallback - The optional callback to that should be called whenever atmosphere
      * configuration changes, may be used to inform related components (`MapView`) to redraw.
      * @param m_atmosphereVariant - The optional atmosphere configuration variant enum
@@ -128,6 +129,7 @@ export class MapViewAtmosphere {
         private readonly m_mapAnchors: MapAnchors,
         private readonly m_sceneCamera: THREE.Camera,
         private readonly m_projection: Projection,
+        private readonly m_rendererCapabilities: THREE.WebGLCapabilities,
         private readonly m_updateCallback?: () => void,
         private readonly m_atmosphereVariant: AtmosphereVariant = AtmosphereVariant.SkyAndGround,
         private readonly m_materialVariant = AtmosphereShadingVariant.ScatteringShader
@@ -301,7 +303,9 @@ export class MapViewAtmosphere {
         skyGeometry.dispose();
 
         if (this.m_materialVariant === AtmosphereShadingVariant.ScatteringShader) {
-            this.m_skyMaterial = new SkyAtmosphereMaterial();
+            this.m_skyMaterial = new SkyAtmosphereMaterial({
+                rendererCapabilities: this.m_rendererCapabilities
+            });
         } else if (this.m_materialVariant === AtmosphereShadingVariant.SimpleColor) {
             this.m_skyMaterial = new THREE.MeshBasicMaterial({
                 color: new THREE.Color(0xc4f8ed),
@@ -351,7 +355,9 @@ export class MapViewAtmosphere {
         groundGeometry.dispose();
 
         if (this.m_materialVariant === AtmosphereShadingVariant.ScatteringShader) {
-            this.m_groundMaterial = new GroundAtmosphereMaterial();
+            this.m_groundMaterial = new GroundAtmosphereMaterial({
+                rendererCapabilities: this.m_rendererCapabilities
+            });
         } else if (this.m_materialVariant === AtmosphereShadingVariant.SimpleColor) {
             this.m_groundMaterial = new THREE.MeshBasicMaterial({
                 color: new THREE.Color(0x00c5ff),

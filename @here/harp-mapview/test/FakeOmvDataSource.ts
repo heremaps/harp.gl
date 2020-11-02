@@ -14,7 +14,8 @@ import {
 } from "@here/harp-geoutils";
 
 import { DataSource, DataSourceOptions } from "../lib/DataSource";
-import { ITileLoader, Tile, TileLoaderState } from "../lib/Tile";
+import { ITileLoader, TileLoaderState } from "../lib/ITileLoader";
+import { Tile } from "../lib/Tile";
 
 export class FakeTileLoader implements ITileLoader {
     state: TileLoaderState = TileLoaderState.Initialized;
@@ -35,15 +36,13 @@ export class FakeTileLoader implements ITileLoader {
         return Promise.resolve(TileLoaderState.Ready);
     }
 
-    updatePriority(area: number): void {
-        // Not covered with tests yet
-    }
-
     cancel(): void {
         // Not covered with tests yet
     }
 }
 export class FakeOmvDataSource extends DataSource {
+    private m_languages: String[] | undefined;
+
     constructor(options: DataSourceOptions) {
         super(options);
         this.cacheable = true;
@@ -76,5 +75,14 @@ export class FakeOmvDataSource extends DataSource {
             return true;
         }
         return super.canGetTile(zoomLevel, tileKey);
+    }
+
+    /** @override */
+    setLanguages(languages?: string[]): void {
+        this.m_languages = languages;
+    }
+
+    getLanguages(): String[] | undefined {
+        return this.m_languages;
     }
 }
