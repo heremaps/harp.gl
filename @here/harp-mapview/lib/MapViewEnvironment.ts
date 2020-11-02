@@ -219,7 +219,8 @@ export class MapViewEnvironment {
                 // the height
                 // using basic trigonometry.
                 const tilt = this.m_mapView.tilt;
-                const cameraHeight = this.m_mapView.targetDistance * Math.cos(tilt);
+                const cameraHeight =
+                    this.m_mapView.targetDistance * Math.cos(THREE.MathUtils.degToRad(tilt));
                 const lightPosHyp = cameraHeight / normal.dot(lightDirection);
 
                 directionalLight.target.position
