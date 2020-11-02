@@ -14,7 +14,7 @@ import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { DataSource } from "./DataSource";
-import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
+import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { MapView } from "./MapView";
 import { MapViewUtils, TileOffsetUtils } from "./Utils";
@@ -34,8 +34,7 @@ export class TileKeyEntry {
         public tileKey: TileKey,
         public area: number,
         public offset: number = 0,
-        public minElevation: number = 0,
-        public maxElevation: number = 0,
+        public elevationRange?: ElevationRange,
         public distance: number = 0
     ) {}
 }
@@ -310,8 +309,10 @@ export class FrustumIntersection {
                 tileKey,
                 area,
                 offset,
-                geoBox.southWest.altitude, // minElevation
-                geoBox.northEast.altitude, // maxElevation
+                {
+                    minElevation: geoBox.southWest.altitude,
+                    maxElevation: geoBox.northEast.altitude
+                },
                 distance
             );
         }
@@ -379,7 +380,7 @@ export class FrustumIntersection {
         const tileWrappingEnabled = this.mapView.projection.type === ProjectionType.Planar;
 
         if (!tileWrappingEnabled || !this.m_tileWrappingEnabled) {
-            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, Infinity, 0, 0));
+            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, Infinity, 0));
             return;
         }
 
@@ -453,7 +454,7 @@ export class FrustumIntersection {
             offset <= offsetRange + startOffset;
             offset++
         ) {
-            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, Infinity, offset, 0, 0));
+            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, Infinity, offset));
         }
     }
 }
