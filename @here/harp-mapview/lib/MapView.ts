@@ -3,7 +3,15 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Env, MapEnv, PostEffects, Theme, Value } from "@here/harp-datasource-protocol";
+import {
+    Env,
+    FontCatalogConfig,
+    MapEnv,
+    PostEffects,
+    TextStyleDefinition,
+    Theme,
+    Value
+} from "@here/harp-datasource-protocol";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     EarthConstants,
@@ -3864,7 +3872,11 @@ export class MapView extends EventDispatcher {
         tileObjectRenderer.setupRenderer();
     }
 
-    private createTextRenderer(theme: Theme = {}): TextElementsRenderer {
+    private createTextRenderer(
+        fontCatalogs?: FontCatalogConfig[],
+        textStyles?: TextStyleDefinition[],
+        defaultTextStyle?: TextStyleDefinition
+    ): TextElementsRenderer {
         const updateCallback: ViewUpdateCallback = () => {
             this.update();
         };
@@ -3878,19 +3890,29 @@ export class MapView extends EventDispatcher {
             new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
             new PoiRendererFactory(this),
-            new FontCatalogLoader(theme),
-            new TextStyleCache(theme),
+            new FontCatalogLoader(fontCatalogs),
+            new TextStyleCache(textStyles, defaultTextStyle),
             this.m_options
         );
     }
 
     /**
      * @internal
-     * @param theme
+     * @param fontCatalogs
+     * @param textStyles
+     * @param defaultTextStyle
      */
-    public async resetTextRenderer(theme: Theme): Promise<void> {
+    public async resetTextRenderer(
+        fontCatalogs?: FontCatalogConfig[],
+        textStyles?: TextStyleDefinition[],
+        defaultTextStyle?: TextStyleDefinition
+    ): Promise<void> {
         const overlayText = this.m_textElementsRenderer.overlayText;
-        this.m_textElementsRenderer = this.createTextRenderer(theme);
+        this.m_textElementsRenderer = this.createTextRenderer(
+            fontCatalogs,
+            textStyles,
+            defaultTextStyle
+        );
         if (overlayText !== undefined) {
             this.m_textElementsRenderer.addOverlayText(overlayText);
         }
@@ -3917,7 +3939,7 @@ export class MapView extends EventDispatcher {
         this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
             this.getTheme().then(theme => {
-                this.m_sceneEnvironment.updateClearColor(theme);
+                this.m_sceneEnvironment.updateClearColor(theme.clearColor, theme.clearAlpha);
                 this.update();
             });
         }

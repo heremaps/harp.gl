@@ -172,7 +172,7 @@ export class TestFixture {
             stubPoiManager(this.sandbox),
             stubPoiRendererFactory(this.sandbox, this.m_poiRendererStub),
             stubFontCatalogLoader(this.sandbox, fontCatalog),
-            new TextStyleCache(this.m_theme),
+            new TextStyleCache(this.m_theme.textStyles),
             this.m_options
         );
         // Force renderer initialization by calling render with changed text elements.
