@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapView } from "../MapView";
 import { ImageItem } from "./Image";
 import { ImageCache } from "./ImageCache";
 
@@ -26,10 +25,8 @@ export class MapViewImageCache {
 
     /**
      * The constructor for `MapViewImageCache`.
-     *
-     * @param mapView - a {@link MapView} instance.
      */
-    constructor(public mapView: MapView) {}
+    constructor() {}
 
     /**
      * Register an existing image by name.
@@ -65,7 +62,7 @@ export class MapViewImageCache {
 
         // Register new image or add this mapView to list of MapViews using this image (identified
         // by URL).)
-        return ImageCache.instance.registerImage(this.mapView, url, image, htmlElement);
+        return ImageCache.instance.registerImage(this, url, image, htmlElement);
     }
 
     /**
@@ -184,7 +181,7 @@ export class MapViewImageCache {
      */
     clear(): number {
         const oldSize = ImageCache.instance.size;
-        ImageCache.instance.clear(this.mapView);
+        ImageCache.instance.clear(this);
         this.m_name2Url = new Map();
         this.m_url2Name = new Map();
         return oldSize;
@@ -250,7 +247,7 @@ export class MapViewImageCache {
             } else {
                 // URL was used by this image only, remove the image.
                 this.m_url2Name.delete(url);
-                ImageCache.instance.removeImage(url, this.mapView);
+                ImageCache.instance.removeImage(url, this);
             }
             return true;
         }

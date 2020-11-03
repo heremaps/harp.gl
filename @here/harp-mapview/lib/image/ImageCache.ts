@@ -6,7 +6,6 @@
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { MapView } from "../MapView";
 import { ImageItem } from "./Image";
 import { MipMapGenerator } from "./MipMapGenerator";
 
@@ -25,30 +24,31 @@ declare function createImageBitmap(
 ): Promise<ImageBitmap>;
 
 /**
- * Combines an {@link ImageItem} with a list of {@link MapView}s that reference it.
+ * Combines an {@link ImageItem} with a list of owners that reference it. Although an owner can be
+ * any type of object, it should be of type {@link MapViewImageCache}.
  */
 class ImageCacheItem {
     /**
-     * The list of {@link MapView}s referencing the {@link ImageItem}.
+     * The list of owners referencing the {@link ImageItem}. The owners are instances of
+     * {@link MapViewImageCache} which act as a facade to the ImageCache instance.
      */
-    mapViews: MapView[] = [];
+    owners: any[] = [];
 
     /**
      * Instantiates `ImageCacheItem`.
      *
-     * @param imageItem - The {@link ImageItem} referenced by
-     *                    the associated {@link MapView}s instances.
-     * @param mapView - An optional first {@link MapView} referencing the {@link ImageItem}.
+     * @param imageItem - The {@link ImageItem} referenced by the associated owners.
+     * @param owner - An optional first owner referencing the {@link ImageItem}.
      */
-    constructor(public imageItem: ImageItem, mapView?: MapView) {
-        if (mapView !== undefined) {
-            this.mapViews.push(mapView);
+    constructor(public imageItem: ImageItem, owner?: any) {
+        if (owner !== undefined) {
+            this.owners.push(owner);
         }
     }
 }
 
 /**
- * `ImageCache` is a singleton, so it can be used with multiple MapViews on a single page.
+ * `ImageCache` is a singleton, so it can be used with multiple owners on a single page.
  *
  * @remarks
  * This allows to have an image loaded only once for multiple views.
@@ -59,7 +59,7 @@ class ImageCacheItem {
  * One application that makes our own cache necessary is the generation of our own textures from
  * data that is not an URL.
  *
- * The `ImageCache` can be improved by adding satistics for memory footprint as well.
+ * The `ImageCache` can be improved by adding statistics for memory footprint as well.
  */
 export class ImageCache {
     /**
@@ -89,28 +89,29 @@ export class ImageCache {
     /**
      * Add an image definition to the global cache. Useful when the image data is already loaded.
      *
-     * @param mapView - Specify which {@link MapView} requests the image.
+     * @param owner - Specify which owner ({@link MapViewImageCache}) requests the image.
      * @param url - URL of image.
      * @param imageData - Optional {@link ImageData}containing the image content.
-     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as conten.
+     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as
+     * content.
      */
     registerImage(
-        mapView: MapView,
+        owner: any,
         url: string,
         imageData?: ImageData | ImageBitmap,
         htmlElement?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
         if (imageCacheItem !== undefined) {
-            if (mapView !== undefined && !imageCacheItem.mapViews.includes(mapView)) {
-                imageCacheItem.mapViews.push(mapView);
+            if (owner !== undefined && !imageCacheItem.owners.includes(owner)) {
+                imageCacheItem.owners.push(owner);
             }
             return imageCacheItem.imageItem;
         }
 
-        const mapViews: MapView[] = [];
-        if (mapView !== undefined) {
-            mapViews.push(mapView);
+        const owners: any[] = [];
+        if (owner !== undefined) {
+            owners.push(owner);
         }
 
         imageCacheItem = {
@@ -120,7 +121,7 @@ export class ImageCache {
                 htmlElement: htmlElement,
                 loaded: false
             },
-            mapViews
+            owners: owners
         };
 
         this.m_images.set(url, imageCacheItem);
@@ -131,19 +132,19 @@ export class ImageCache {
     /**
      * Add an image definition, and optionally start loading the content.
      *
-     * @param mapView - {@link MapView} requesting the image.
+     * @param owner - owner ({@link MapViewImageCache}) requesting the image.
      * @param url - URL of image.
      * @param startLoading - Optional flag. If `true` the image will be loaded in the background.
-     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as content,
-     * if set, `startLoading = true` will start the rendering process in the background.
+     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as
+     * content, if set, `startLoading = true` will start the rendering process in the background.
      */
     addImage(
-        mapView: MapView,
+        owner: any,
         url: string,
         startLoading = true,
         htmlElement?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem | Promise<ImageItem | undefined> | undefined {
-        const imageItem = this.registerImage(mapView, url, undefined, htmlElement);
+        const imageItem = this.registerImage(owner, url, undefined, htmlElement);
         if (imageItem !== undefined && startLoading === true) {
             return this.loadImage(imageItem);
         }
@@ -155,13 +156,13 @@ export class ImageCache {
      * Remove an image from the cache..
      *
      * @param url - URL of the image.
-     * @param mapView - Optional: Specify which {@link MapView} removes the image.
+     * @param owner - Optional: Specify which owner ({@link MapViewImageCache}) removes the image.
      * @returns `true` if image has been removed.
      */
-    removeImage(url: string, mapView?: MapView): boolean {
+    removeImage(url: string, owner?: any): boolean {
         const cacheItem = this.m_images.get(url);
         if (cacheItem !== undefined) {
-            this.unlinkCacheItem(cacheItem, mapView);
+            this.unlinkCacheItem(cacheItem, owner);
             return true;
         }
         return false;
@@ -171,13 +172,13 @@ export class ImageCache {
      * Remove an image from the cache.
      *
      * @param imageItem - Item identifying the image.
-     * @param mapView - Optional: Specify which {@link MapView} removes the image.
+     * @param owner - Optional: Specify which owner ({@link MapViewImageCache}) removes the image.
      * @returns `true` if image has been removed.
      */
-    removeImageItem(imageItem: ImageItem, mapView?: MapView): boolean {
+    removeImageItem(imageItem: ImageItem, owner?: any): boolean {
         const cacheItem = this.m_images.get(imageItem.url);
         if (cacheItem !== undefined) {
-            this.unlinkCacheItem(cacheItem, mapView);
+            this.unlinkCacheItem(cacheItem, owner);
             return true;
         }
         return false;
@@ -188,14 +189,14 @@ export class ImageCache {
      *
      * @param itemFilter - Filter to identify images to remove. Should return `true` if item
      * should be removed.
-     * @param mapView - Optional: Specify which {@link MapView} removes the image.
+     * @param owner - Optional: Specify which owner ({@link MapViewImageCache}) removes the image.
      * @returns Number of images removed.
      */
-    removeImageItems(itemFilter: (item: ImageItem) => boolean, mapView?: MapView): number {
+    removeImageItems(itemFilter: (item: ImageItem) => boolean, owner?: any): number {
         const oldSize = this.m_images.size;
         [...this.m_images.values()].filter((cacheItem: ImageCacheItem) => {
             if (itemFilter(cacheItem.imageItem)) {
-                this.unlinkCacheItem(cacheItem, mapView);
+                this.unlinkCacheItem(cacheItem, owner);
             }
         });
         return oldSize - this.m_images.size;
@@ -216,25 +217,24 @@ export class ImageCache {
     }
 
     /**
-     * Clear all {@link ImageItem}s belonging to a {@link MapView}.
+     * Clear all {@link ImageItem}s belonging to an owner.
      *
      * @remarks
-     * May remove cached items if no
-     * {@link MapView} are registered anymore.
+     * May remove cached items if no owner ({@link MapViewImageCache}) is registered anymore.
      *
-     * @param mapView - MapView to remove all {@link ImageItem}s from.
+     * @param owner - specify to remove all items registered by owner ({@link MapViewImageCache}).
      * @returns Number of images removed.
      */
-    clear(mapView: MapView): number {
+    clear(owner: any): number {
         const oldSize = this.m_images.size;
         const itemsToRemove: ImageCacheItem[] = [];
 
         this.m_images.forEach(cacheItem => {
-            const mapViewIndex = cacheItem.mapViews.indexOf(mapView);
-            if (mapViewIndex >= 0) {
-                cacheItem.mapViews.splice(mapViewIndex, 1);
+            const ownerIndex = cacheItem.owners.indexOf(owner);
+            if (ownerIndex >= 0) {
+                cacheItem.owners.splice(ownerIndex, 1);
             }
-            if (cacheItem.mapViews.length === 0) {
+            if (cacheItem.owners.length === 0) {
                 itemsToRemove.push(cacheItem);
             }
         });
@@ -246,7 +246,7 @@ export class ImageCache {
     }
 
     /**
-     * Clear all {@link ImageItem}s from all {@link MapView}s.
+     * Clear all {@link ImageItem}s from all owners ({@link MapViewImageCache}).
      */
     clearAll() {
         this.m_images.forEach(cacheItem => {
@@ -496,20 +496,20 @@ export class ImageCache {
     }
 
     /**
-     * Remove the cacheItem from cache and from the {@link MapView}s that have this item in their
-     * cache. If the item is used in another {@link MapView}, the item is not removed, but the link
-     * to the {@link MapView} is removed from the item, just like a reference count.
+     * Remove the cacheItem from cache and from the owners that have this item in their
+     * cache. If the item is used by another owner, the item is not removed, but the link
+     * to the owner is removed from the item, just like a reference count.
      *
      * @param cacheItem The cache item to be removed.
-     * @param mapView - Optional: Specify which {@link MapView} removes the image.
+     * @param owner - Optional: Specify which owner ({@link MapViewImageCache}) removes the image.
      */
-    private unlinkCacheItem(cacheItem: ImageCacheItem, mapView?: MapView) {
-        if (mapView) {
-            const mapViewIndex = cacheItem.mapViews.indexOf(mapView);
-            if (mapViewIndex >= 0) {
-                cacheItem.mapViews.splice(mapViewIndex, 1);
+    private unlinkCacheItem(cacheItem: ImageCacheItem, owner?: any) {
+        if (owner) {
+            const ownerIndex = cacheItem.owners.indexOf(owner);
+            if (ownerIndex >= 0) {
+                cacheItem.owners.splice(ownerIndex, 1);
             }
-            if (cacheItem.mapViews.length > 0) {
+            if (cacheItem.owners.length > 0) {
                 // Do not delete the item, it is still used.
                 return;
             }
@@ -517,9 +517,9 @@ export class ImageCache {
 
         this.m_images.delete(cacheItem.imageItem.url);
         this.cancelLoading(cacheItem.imageItem);
-        for (const mapView of cacheItem.mapViews) {
-            if (mapView.imageCache) {
-                mapView.imageCache.removeImageByUrl(cacheItem.imageItem.url);
+        for (const owner of cacheItem.owners) {
+            if (owner.imageCache) {
+                owner.imageCache.removeImageByUrl(cacheItem.imageItem.url);
             }
         }
     }

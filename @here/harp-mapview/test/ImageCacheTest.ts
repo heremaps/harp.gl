@@ -21,22 +21,19 @@ class ImageData {
 }
 
 describe("MapViewImageCache", function() {
-    const mapView: MapView = {} as MapView;
-    (mapView as any).imageCache = new MapViewImageCache(mapView);
-
     beforeEach(function() {
         ImageCache.instance.clearAll();
     });
 
     it("#empty", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
         assert.equal(cache.numberOfNames, 0);
         assert.equal(cache.numberOfUrls, 0);
         assert.notExists(cache.findNames("xxx"));
     });
 
     it("#registerImage", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData = new ImageData(16, 16);
 
@@ -56,7 +53,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#addImage", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
         cache.clear();
 
         const imageName = "headshot.png";
@@ -74,7 +71,7 @@ describe("MapViewImageCache", function() {
 
     if (typeof document !== "undefined") {
         it("#addImage with load", async function() {
-            const cache = new MapViewImageCache(mapView);
+            const cache = new MapViewImageCache();
             cache.clear();
 
             const imageName = "headshot.png";
@@ -105,7 +102,7 @@ describe("MapViewImageCache", function() {
         });
 
         it("#addImage (load cancelled)", async function() {
-            const cache = new MapViewImageCache(mapView);
+            const cache = new MapViewImageCache();
             cache.clear();
 
             const imageName = "headshot.png";
@@ -139,7 +136,7 @@ describe("MapViewImageCache", function() {
         });
 
         it("#loadImage", async function() {
-            const cache = new MapViewImageCache(mapView);
+            const cache = new MapViewImageCache();
             cache.clear();
 
             const imageName = "headshot.png";
@@ -172,7 +169,7 @@ describe("MapViewImageCache", function() {
     }
 
     it("#clear", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData = new ImageData(16, 16);
 
@@ -190,7 +187,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#add images", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -220,7 +217,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#add images with same url but differing names", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -245,7 +242,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#add images with same name but differing urls", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
         assert.throws(() => {
             cache.registerImage("testImage", "httpx://naxos.de", undefined);
             cache.registerImage("testImage", "httpx://naxos.de-2", undefined);
@@ -253,7 +250,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove image", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
 
@@ -272,7 +269,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove image 2", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
 
@@ -295,7 +292,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove image by URL", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -317,7 +314,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove image by name", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -337,7 +334,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove image by filter", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -361,7 +358,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove image by filter 2", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -388,7 +385,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove image with name by filter", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -413,7 +410,7 @@ describe("MapViewImageCache", function() {
     });
 
     it("#remove all images by filter", function() {
-        const cache = new MapViewImageCache(mapView);
+        const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -948,8 +945,8 @@ describe("ImageCache", function() {
         const mapView1: MapView = {} as MapView;
         const mapView2: MapView = {} as MapView;
 
-        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache(mapView1));
-        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache(mapView2));
+        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache());
+        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache());
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -982,11 +979,8 @@ describe("ImageCache", function() {
         const commonCache = ImageCache.instance;
         commonCache.clearAll();
 
-        const mapView1: MapView = {} as MapView;
-        const mapView2: MapView = {} as MapView;
-
-        const cache0 = new MapViewImageCache(mapView1);
-        const cache1 = new MapViewImageCache(mapView2);
+        const cache0 = new MapViewImageCache();
+        const cache1 = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -1008,11 +1002,8 @@ describe("ImageCache", function() {
         const commonCache = ImageCache.instance;
         commonCache.clearAll();
 
-        const mapView1: MapView = {} as MapView;
-        const mapView2: MapView = {} as MapView;
-
-        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache(mapView1));
-        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache(mapView2));
+        const cache0 = new MapViewImageCache();
+        const cache1 = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -1046,11 +1037,8 @@ describe("ImageCache", function() {
         const commonCache = ImageCache.instance;
         commonCache.clearAll();
 
-        const mapView1: MapView = {} as MapView;
-        const mapView2: MapView = {} as MapView;
-
-        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache(mapView1));
-        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache(mapView2));
+        const cache0 = new MapViewImageCache();
+        const cache1 = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
