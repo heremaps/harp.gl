@@ -3,16 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     DecodedTile,
-    Definitions,
+    DecoderOptions,
     ITileDecoder,
     OptionsMap,
-    StyleSet,
     TileInfo
 } from "@here/harp-datasource-protocol";
-import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { StyleSetEvaluator, StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, TileKey } from "@here/harp-geoutils";
 
 /**
@@ -53,20 +51,15 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         return Promise.resolve(undefined);
     }
 
-    configure(
-        styleSet?: StyleSet,
-        definitions?: Definitions,
-        languages?: string[],
-        options?: OptionsMap
-    ): void {
-        if (styleSet !== undefined) {
-            this.m_styleSetEvaluator = new StyleSetEvaluator(styleSet, definitions);
+    configure(options?: DecoderOptions, customOptions?: OptionsMap): void {
+        if (options?.styleSet !== undefined) {
+            this.m_styleSetEvaluator = new StyleSetEvaluator(options as StyleSetOptions);
         }
-        if (languages !== undefined) {
-            this.languages = languages;
+        if (options?.languages !== undefined) {
+            this.languages = options.languages;
         }
-        if (options !== undefined && options.storageLevelOffset !== undefined) {
-            this.m_storageLevelOffset = options.storageLevelOffset;
+        if (customOptions !== undefined && customOptions.storageLevelOffset !== undefined) {
+            this.m_storageLevelOffset = customOptions.storageLevelOffset;
         }
     }
 

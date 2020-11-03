@@ -3,14 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     DecodedTile,
-    Definitions,
+    DecoderOptions,
     GeometryKind,
     IndexedTechnique,
-    OptionsMap,
-    StyleSet
+    OptionsMap
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
@@ -345,16 +343,11 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     }
 
     /** @override */
-    configure(
-        styleSet: StyleSet,
-        definitions?: Definitions,
-        languages?: string[],
-        options?: OptionsMap
-    ): void {
-        super.configure(styleSet, definitions, languages, options);
+    configure(options?: DecoderOptions, customOptions?: OptionsMap): void {
+        super.configure(options, customOptions);
 
-        if (options) {
-            const omvOptions = options as OmvDecoderOptions;
+        if (customOptions) {
+            const omvOptions = customOptions as OmvDecoderOptions;
 
             if (omvOptions.showMissingTechniques !== undefined) {
                 this.m_showMissingTechniques = omvOptions.showMissingTechniques === true;
@@ -432,8 +425,8 @@ export class VectorTileDecoder extends ThemedTileDecoder {
                 this.m_roundUpCoordinatesIfNeeded = omvOptions.roundUpCoordinatesIfNeeded;
             }
         }
-        if (languages !== undefined) {
-            this.languages = languages;
+        if (options?.languages !== undefined) {
+            this.languages = options.languages;
         }
     }
 

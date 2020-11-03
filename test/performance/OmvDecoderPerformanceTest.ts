@@ -101,10 +101,10 @@ export function createOMVDecoderPerformanceTest(
             const counterName = `OMVDecoderPerformanceTest-${name} styleMatchOnly`;
             this.timeout(0);
 
-            const styleSetEvaluator = new StyleSetEvaluator(
-                theme.styles![styleSetName],
-                theme.definitions
-            );
+            const styleSetEvaluator = new StyleSetEvaluator({
+                styleSet: theme.styles![styleSetName],
+                definitions: theme.definitions
+            });
 
             const geometryProcessor: IGeometryProcessor = {
                 storageLevelOffset: 0,
@@ -151,10 +151,10 @@ export function createOMVDecoderPerformanceTest(
 
             const projection = webMercatorProjection;
 
-            const styleSetEvaluator = new StyleSetEvaluator(
-                theme.styles![styleSetName],
-                theme.definitions
-            );
+            const styleSetEvaluator = new StyleSetEvaluator({
+                styleSet: theme.styles![styleSetName],
+                definitions: theme.definitions
+            });
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
@@ -175,10 +175,10 @@ export function createOMVDecoderPerformanceTest(
 
             const projection = sphereProjection;
 
-            const styleSetEvaluator = new StyleSetEvaluator(
-                theme.styles![styleSetName],
-                theme.definitions
-            );
+            const styleSetEvaluator = new StyleSetEvaluator({
+                styleSet: theme.styles![styleSetName],
+                definitions: theme.definitions
+            });
 
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {

@@ -157,11 +157,6 @@ export class TileDecoderService extends WorkerService {
     }
 
     private handleConfigurationMessage(message: WorkerDecoderProtocol.ConfigurationMessage) {
-        this.m_decoder.configure(
-            message.styleSet,
-            message.definitions,
-            message.languages,
-            message.options
-        );
+        this.m_decoder.configure(message, message.options);
     }
 }

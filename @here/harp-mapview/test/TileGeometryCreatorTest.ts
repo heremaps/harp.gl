@@ -355,68 +355,8 @@ describe("TileGeometryCreator", () => {
             expect(adapter1!.isPickable(new MapEnv({}))).to.equal(true);
         });
     });
-    it("categories", () => {
-        type IndexedDecodedTile = Omit<DecodedTile, "techniques"> & {
-            techniques?: IndexedTechnique[];
-        };
 
-        const decodedTile: IndexedDecodedTile = {
-            geometries: [
-                {
-                    type: GeometryType.Polygon,
-                    vertexAttributes: [],
-                    groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }]
-                },
-                {
-                    type: GeometryType.Polygon,
-                    vertexAttributes: [],
-                    groups: [{ start: 0, count: 1, technique: 1, createdOffsets: [] }]
-                }
-            ],
-            techniques: [
-                {
-                    _styleSet: "tilezen",
-                    _category: "hi-priority",
-                    _index: 0,
-                    _styleSetIndex: 0,
-                    renderOrder: -1,
-                    name: "line",
-                    color: "rgb(255,0,0)",
-                    lineWidth: 1
-                },
-                {
-                    _styleSet: "tilezen",
-                    _category: "low-priority",
-                    _index: 1,
-                    _styleSetIndex: 0,
-                    renderOrder: -1,
-                    name: "circles"
-                }
-            ]
-        };
-
-        const savedTheme = newTile.mapView.theme;
-
-        newTile.mapView.theme = {
-            priorities: [
-                { group: "tilezen", category: "low-priority" },
-                { group: "tilezen", category: "hi-priority" }
-            ]
-        };
-
-        newTile.decodedTile = decodedTile as DecodedTile;
-
-        tgc.processTechniques(newTile, undefined, undefined);
-        tgc.createObjects(newTile, decodedTile as DecodedTile);
-
-        assert.strictEqual(newTile.objects.length, 2);
-        assert.strictEqual(newTile.objects[0].renderOrder, 20);
-        assert.strictEqual(newTile.objects[1].renderOrder, 10);
-
-        newTile.mapView.theme = savedTheme;
-    });
-
-    it("attachments", () => {
+    it("attachments", async () => {
         // create a simple style set defining rules and techniques
         // to style polygons.
         const rules: StyleSet = [
@@ -444,7 +384,7 @@ describe("TileGeometryCreator", () => {
 
         // create `StyleSetEvaluator` to instantiate techniques
         // for the test polygons.
-        const styleSetEvaluator = new StyleSetEvaluator(rules);
+        const styleSetEvaluator = new StyleSetEvaluator({ styleSet: rules });
 
         // get the instantiated `TechniqueIndex` associated with red-polygon.
         const redPolygonTechnique = styleSetEvaluator.getMatchingTechniques(

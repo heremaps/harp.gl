@@ -3,12 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
-    Definitions,
+    DecoderOptions,
     ITileDecoder,
     OptionsMap,
-    StyleSet,
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
 import { EarthConstants, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
@@ -345,7 +343,7 @@ export class VectorTileDataSource extends TileDataSource {
             }
             throw error;
         }
-        this.configureDecoder(undefined, undefined, undefined, this.m_decoderOptions);
+        this.configureDecoder(undefined, this.m_decoderOptions);
     }
 
     /**
@@ -353,7 +351,7 @@ export class VectorTileDataSource extends TileDataSource {
      * Will be applied to the decoder, which might be shared with other omv datasources.
      */
     removeDataFilter(): void {
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, {
             filterDescription: null
         });
     }
@@ -370,7 +368,7 @@ export class VectorTileDataSource extends TileDataSource {
         this.m_decoderOptions.filterDescription =
             filterDescription !== null ? filterDescription : undefined;
 
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, {
             filterDescription,
             featureModifiers: this.m_decoderOptions.featureModifiers,
             politicalView: this.m_decoderOptions.politicalView
@@ -385,7 +383,7 @@ export class VectorTileDataSource extends TileDataSource {
     /** @override */
     setLanguages(languages?: string[]): void {
         if (languages !== undefined) {
-            this.configureDecoder(undefined, undefined, languages, undefined);
+            this.configureDecoder({ languages }, undefined);
         }
     }
 
@@ -395,7 +393,7 @@ export class VectorTileDataSource extends TileDataSource {
         politicalView = politicalView?.toLowerCase();
         if (this.m_decoderOptions.politicalView !== politicalView) {
             this.m_decoderOptions.politicalView = politicalView;
-            this.configureDecoder(undefined, undefined, undefined, {
+            this.configureDecoder(undefined, {
                 filterDescription: this.m_decoderOptions.filterDescription,
                 featureModifiers: this.m_decoderOptions.featureModifiers,
                 politicalView: politicalView !== undefined ? politicalView : ""
@@ -412,7 +410,7 @@ export class VectorTileDataSource extends TileDataSource {
     set storageLevelOffset(levelOffset: number) {
         super.storageLevelOffset = levelOffset;
         this.m_decoderOptions.storageLevelOffset = this.storageLevelOffset;
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, {
             storageLevelOffset: this.storageLevelOffset
         });
     }
@@ -421,20 +419,15 @@ export class VectorTileDataSource extends TileDataSource {
     setEnableElevationOverlay(enable: boolean) {
         if (this.m_decoderOptions.enableElevationOverlay !== enable) {
             this.m_decoderOptions.enableElevationOverlay = enable;
-            this.configureDecoder(undefined, undefined, undefined, {
+            this.configureDecoder(undefined, {
                 enableElevationOverlay: enable
             });
         }
     }
 
-    private configureDecoder(
-        styleSet?: StyleSet,
-        definitions?: Definitions,
-        languages?: string[],
-        options?: OptionsMap
-    ) {
+    private configureDecoder(options?: DecoderOptions, customOptions?: OptionsMap) {
         this.clearCache();
-        this.decoder.configure(styleSet, definitions, languages, options);
+        this.decoder.configure(options, customOptions);
         this.mapView.markTilesDirty(this);
     }
 }
