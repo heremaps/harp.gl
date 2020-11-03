@@ -5,6 +5,7 @@
  */
 import {
     Env,
+    FlatTheme,
     FontCatalogConfig,
     MapEnv,
     PostEffects,
@@ -1461,7 +1462,7 @@ export class MapView extends EventDispatcher {
     /**
      * Changes the `Theme`used by this `MapView`to style map elements.
      */
-    async setTheme(theme: Theme | string): Promise<Theme> {
+    async setTheme(theme: Theme | FlatTheme | string): Promise<Theme> {
         const newTheme = await this.m_themeManager.setTheme(theme);
 
         this.THEME_LOADED_EVENT.time = Date.now();

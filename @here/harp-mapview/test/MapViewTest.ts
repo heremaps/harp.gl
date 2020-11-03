@@ -1627,6 +1627,11 @@ describe("MapView", function() {
             "test/resources/baseTheme.json"
         );
 
+        const sampleFlatThemeUrl = getTestResourceUrl(
+            "@here/harp-mapview",
+            "test/resources/baseThemeFlat.json"
+        );
+
         it("loads a default theme", async function() {
             mapView = new MapView({ canvas });
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
@@ -1657,6 +1662,18 @@ describe("MapView", function() {
             const theme = await mapView.getTheme();
 
             expect(theme.styles).to.not.be.empty;
+        });
+
+        it("loads a 'flat' theme ", async function() {
+            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleFlatThemeUrl);
+            mapView = new MapView({
+                canvas,
+                theme: relativeToAppUrl
+            });
+
+            const theme = await mapView.getTheme();
+            expect(theme.styles).to.not.be.empty;
+            expect(theme.styles?.tilezen).to.not.be.undefined;
         });
 
         it("allows to reset theme", async function() {
