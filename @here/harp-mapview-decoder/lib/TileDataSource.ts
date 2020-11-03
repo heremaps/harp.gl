@@ -3,7 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ITileDecoder, Theme, TileInfo } from "@here/harp-datasource-protocol";
+import {
+    extractStyleSet,
+    FlatTheme,
+    ITileDecoder,
+    StyleSet,
+    Theme,
+    TileInfo
+} from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -198,15 +205,15 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
      * `styleSetName` property) is found in `theme`.
      * @override
      */
-    setTheme(theme: Theme, languages?: string[], styleSetName?: string): void {
+    setTheme(theme: Theme | FlatTheme, languages?: string[], styleSetName?: string): void {
         if (styleSetName !== undefined) {
             this.styleSetName = styleSetName;
         }
 
-        const styleSet =
-            this.styleSetName !== undefined && theme.styles
-                ? theme.styles[this.styleSetName]
-                : undefined;
+        let styleSet: StyleSet | undefined;
+        if (this.styleSetName !== undefined) {
+            styleSet = extractStyleSet(theme, this.styleSetName);
+        }
 
         if (styleSet !== undefined) {
             this.m_decoder.configure({

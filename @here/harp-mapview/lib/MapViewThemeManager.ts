@@ -3,7 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ImageDefinitions, ImageTexture, PoiTableRef, Theme } from "@here/harp-datasource-protocol";
+import {
+    FlatTheme,
+    ImageDefinitions,
+    ImageTexture,
+    PoiTableRef,
+    Theme
+} from "@here/harp-datasource-protocol";
 import { LoggerManager, UriResolver } from "@here/harp-utils";
 
 import { MapViewImageCache } from "./image/MapViewImageCache";
@@ -25,7 +31,7 @@ export class MapViewThemeManager {
         this.m_imageCache = new MapViewImageCache(this.m_mapView);
     }
 
-    async setTheme(theme: Theme | string): Promise<Theme> {
+    async setTheme(theme: Theme | FlatTheme | string): Promise<Theme> {
         if (this.isUpdating()) {
             logger.warn("Formerly set Theme is still updating, update will be canceled");
             this.cancelThemeUpdate();
@@ -59,10 +65,11 @@ export class MapViewThemeManager {
         return this.isUpdating() ? {} : this.m_theme;
     }
 
-    private async loadTheme(theme: Theme | string): Promise<Theme> {
+    private async loadTheme(theme: Theme | string | FlatTheme): Promise<Theme> {
+        let loadedTheme: Theme = {};
         if (typeof theme === "string" || !ThemeLoader.isThemeLoaded(theme)) {
             try {
-                theme = await ThemeLoader.load(theme, {
+                loadedTheme = await ThemeLoader.load(theme, {
                     uriResolver: this.m_uriResolver,
                     signal: this.createAbortController().signal
                 });
@@ -72,10 +79,11 @@ export class MapViewThemeManager {
                 } else {
                     logger.error(`failed to load theme: ${error}`);
                 }
-                theme = {};
             }
+        } else {
+            loadedTheme = theme as Theme;
         }
-        return theme;
+        return loadedTheme;
     }
 
     private async updateTheme(theme: Theme): Promise<void> {

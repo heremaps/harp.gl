@@ -6,7 +6,7 @@
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
 
-import { JsonExpr, JsonValue } from "./Expr";
+import { isJsonExpr, JsonExpr, JsonValue } from "./Expr";
 import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 import {
     BaseTechniqueParams,
@@ -250,6 +250,33 @@ export function isJsonExprReference(value: any): value is JsonExprReference {
         value[0] === "ref" &&
         typeof value[1] === "string"
     );
+}
+
+/**
+ * Extracts a StyleSet for a styleSetName from a Theme
+ *
+ * @param theme - The theme
+ * @param styleSetName - The name of the styleSet to be extracted.
+ *
+ * @return The Extracted StyleSet
+ */
+export function extractStyleSet(theme: Theme | FlatTheme, styleSetName: string): StyleSet {
+    if (Array.isArray(theme.styles)) {
+        const styleSet: StyleSet = [];
+        theme.styles.forEach(style => {
+            if (isJsonExpr(style)) {
+                throw new Error("invalid usage of theme reference");
+            }
+            const styleSetName = style.styleSet;
+            if (styleSetName === undefined) {
+                throw new Error("missing reference to style set");
+            }
+            styleSet.push(style);
+        });
+        return styleSet;
+    } else {
+        return (theme.styles as Styles)[styleSetName];
+    }
 }
 
 /**
