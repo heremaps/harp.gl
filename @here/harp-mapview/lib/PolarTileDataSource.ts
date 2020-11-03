@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     Definitions,
     StandardGeometryKind,
@@ -11,7 +10,11 @@ import {
     Technique,
     Theme
 } from "@here/harp-datasource-protocol";
-import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import {
+    MapEnv,
+    StyleSetEvaluator,
+    StyleSetOptions
+} from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
     MercatorConstants,
@@ -127,15 +130,25 @@ export class PolarTileDataSource extends DataSource {
     }
 
     /** @override */
-    setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
+    setStyleSet(
+        options: StyleSetOptions | StyleSet,
+        definitions?: Definitions,
+        languages?: string[]
+    ): void {
         this.dispose();
 
-        if (styleSet !== undefined) {
-            this.m_styleSetEvaluator = new StyleSetEvaluator(styleSet, definitions);
-
-            this.m_northPoleEntry = this.createTechiqueEntry("north_pole");
-            this.m_southPoleEntry = this.createTechiqueEntry("south_pole");
+        if (!options?.hasOwnProperty("styleSet")) {
+            this.m_styleSetEvaluator = new StyleSetEvaluator({
+                styleSet: options as StyleSet,
+                definitions,
+                languages
+            });
+        } else {
+            this.m_styleSetEvaluator = new StyleSetEvaluator(options as StyleSetOptions);
         }
+
+        this.m_northPoleEntry = this.createTechiqueEntry("north_pole");
+        this.m_southPoleEntry = this.createTechiqueEntry("south_pole");
 
         this.mapView.markTilesDirty(this);
     }
@@ -148,7 +161,13 @@ export class PolarTileDataSource extends DataSource {
             styleSet = theme.styles[this.styleSetName];
         }
 
-        this.setStyleSet(styleSet ?? [], theme.definitions, languages);
+        this.setStyleSet({
+            styleSet: styleSet ?? [],
+            definitions: theme.definitions,
+            priorities: theme.priorities,
+            labelPriorities: theme.labelPriorities,
+            languages
+        });
     }
 
     /** @override */

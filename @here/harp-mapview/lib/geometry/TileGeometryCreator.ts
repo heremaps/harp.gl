@@ -38,7 +38,6 @@ import {
     MakeTechniqueAttrs,
     MapEnv,
     needsVertexNormals,
-    setTechniqueRenderOrderOrPriority,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
@@ -364,8 +363,6 @@ export class TileGeometryCreator {
         if (decodedTile === undefined) {
             return;
         }
-
-        this.processPriorities(tile);
 
         // Speedup and simplify following code: Test all techniques if they intersect with
         // enabledKinds and disabledKinds, in which case they are flagged. The disabledKinds can be
@@ -1428,30 +1425,6 @@ export class TileGeometryCreator {
                 }
             }
         }
-    }
-
-    /**
-     * Process the given {@link Tile} and assign default values to render orders
-     * and label priorities.
-     *
-     * @param tile - The {@link Tile} to process.
-     */
-    private processPriorities(tile: Tile) {
-        const decodedTile = tile.decodedTile;
-
-        if (decodedTile === undefined) {
-            return;
-        }
-
-        const theme = tile.mapView;
-
-        if (!theme) {
-            return;
-        }
-
-        decodedTile.techniques.forEach(technique => {
-            setTechniqueRenderOrderOrPriority(technique, tile.mapView.theme);
-        });
     }
 
     private setupTerrainMaterial(

@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     Definitions,
     ITileDecoder,
@@ -11,6 +10,7 @@ import {
     Theme,
     TileInfo
 } from "@here/harp-datasource-protocol";
+import { StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -193,14 +193,26 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         await Promise.all([this.m_options.dataProvider.register(this), this.m_decoder.connect()]);
         this.m_isReady = true;
 
-        this.m_decoder.configure(undefined, undefined, undefined, {
+        this.m_decoder.configure(undefined, {
             storageLevelOffset: this.m_options.storageLevelOffset
         });
     }
 
     /** @override */
-    setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
-        this.m_decoder.configure(styleSet, definitions, languages);
+    setStyleSet(
+        options: StyleSetOptions | StyleSet,
+        definitions?: Definitions,
+        languages?: string[]
+    ): void {
+        if (!options?.hasOwnProperty("styleSet")) {
+            this.m_decoder.configure({
+                styleSet: options as StyleSet,
+                definitions,
+                languages
+            });
+        } else {
+            this.m_decoder.configure(options as StyleSetOptions);
+        }
         this.mapView.clearTileCache(this.name);
     }
 
@@ -217,7 +229,15 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
                 ? theme.styles[this.styleSetName]
                 : undefined;
 
-        this.setStyleSet(styleSet, theme.definitions, languages);
+        if (styleSet !== undefined) {
+            this.setStyleSet({
+                styleSet,
+                definitions: theme.definitions,
+                priorities: theme.priorities,
+                labelPriorities: theme.labelPriorities,
+                languages
+            });
+        }
     }
 
     /**

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Definitions, StyleSet, Theme, ValueMap } from "@here/harp-datasource-protocol";
+import { StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
 import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert, LoggerManager } from "@here/harp-utils";
@@ -440,10 +441,15 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * @deprecated Use [[setTheme]].
      *
-     * @param styleSet - The new theme that {@link MapView} uses.
-     * @param languages - An optional list of languages for the `DataSource`.
+     * @param options - The Options used for decodeing and/or styling, alternativly a StyleSet
+     * @param definitions - The Definitions used for decoding/styling
+     * @param languages - A prioritized list of  ISO 639-1 language codes
      */
-    setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
+    setStyleSet(
+        options: StyleSetOptions | StyleSet,
+        definitions?: Definitions,
+        languages?: string[]
+    ): void {
         // to be overwritten by subclasses
     }
 

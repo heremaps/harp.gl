@@ -35,7 +35,7 @@ describe("StyleSetEvaluator", function() {
     ];
 
     it("doesn't modify input style set", function() {
-        const ev = new StyleSetEvaluator(basicStyleSetAutoOrder);
+        const ev = new StyleSetEvaluator({ styleSet: basicStyleSetAutoOrder });
         const parsedStyles = ev.styleSet;
 
         ev.getMatchingTechniques(new MapEnv({ kind: "bar" }));
@@ -53,7 +53,7 @@ describe("StyleSetEvaluator", function() {
     });
 
     it("finds techniques with equality operator", function() {
-        const ev = new StyleSetEvaluator(basicStyleSetAutoOrder);
+        const ev = new StyleSetEvaluator({ styleSet: basicStyleSetAutoOrder });
         const result = ev.getMatchingTechniques(new MapEnv({ kind: "bar" }));
 
         assert.equal(result.length, 1);
@@ -65,16 +65,18 @@ describe("StyleSetEvaluator", function() {
     });
 
     it("matches multiple techniques style", function() {
-        const ev = new StyleSetEvaluator([
-            basicStyleSetAutoOrder[0],
-            {
-                description: "injected",
-                technique: "fill",
-                when: "kind == 'park'",
-                attr: { color: "red" }
-            },
-            basicStyleSetAutoOrder[1]
-        ]);
+        const ev = new StyleSetEvaluator({
+            styleSet: [
+                basicStyleSetAutoOrder[0],
+                {
+                    description: "injected",
+                    technique: "fill",
+                    when: "kind == 'park'",
+                    attr: { color: "red" }
+                },
+                basicStyleSetAutoOrder[1]
+            ]
+        });
         const result = ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
 
         assert.equal(result.length, 2);
@@ -91,17 +93,19 @@ describe("StyleSetEvaluator", function() {
     });
 
     it("supports final style", function() {
-        const ev = new StyleSetEvaluator([
-            basicStyleSetAutoOrder[0],
-            {
-                description: "injected",
-                technique: "fill",
-                when: "kind == 'park'",
-                final: true,
-                attr: { color: "red" }
-            },
-            basicStyleSetAutoOrder[1]
-        ]);
+        const ev = new StyleSetEvaluator({
+            styleSet: [
+                basicStyleSetAutoOrder[0],
+                {
+                    description: "injected",
+                    technique: "fill",
+                    when: "kind == 'park'",
+                    final: true,
+                    attr: { color: "red" }
+                },
+                basicStyleSetAutoOrder[1]
+            ]
+        });
         const result = ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
 
         assert.equal(result.length, 1);
@@ -112,24 +116,68 @@ describe("StyleSetEvaluator", function() {
         });
     });
 
+    it("generates technique render order from priorities", async () => {
+        const ev = new StyleSetEvaluator({
+            styleSet: [
+                {
+                    styleSet: "tilezen",
+                    id: "foo",
+                    category: "low-priority",
+                    technique: "fill",
+                    when: "kind == 'ground'",
+                    renderOrder: 33,
+                    attr: { color: "brown" }
+                },
+                {
+                    styleSet: "tilezen",
+                    category: "hi-priority",
+                    technique: "fill",
+                    when: "kind == 'park'",
+                    id: "bar",
+                    renderOrder: -1,
+                    attr: {
+                        color: "rgb(255,0,0)"
+                    }
+                }
+            ],
+            priorities: [
+                { group: "tilezen", category: "low-priority" },
+                { group: "tilezen", category: "hi-priority" }
+            ]
+        });
+
+        const parsedStyles = ev.styleSet;
+        assert.equal(parsedStyles[0].renderOrder, 33);
+        assert.equal(parsedStyles[1].renderOrder, -1);
+
+        const groundTechniques = ev.getMatchingTechniques(new MapEnv({ kind: "ground" }));
+        const parkTechniques = ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
+
+        assert.strictEqual(groundTechniques[0].renderOrder, 10);
+        assert.strictEqual(parkTechniques[0].renderOrder, 20);
+    });
+
     it("generates implicit renderOrder", function() {
-        const ev = new StyleSetEvaluator(basicStyleSetAutoOrder);
+        const ev = new StyleSetEvaluator({ styleSet: basicStyleSetAutoOrder });
 
         const parsedStyles = ev.styleSet;
         assert.equal(parsedStyles[0].renderOrder, 0);
         assert.equal(parsedStyles[1].renderOrder, 1);
     });
+
     it("properly mixes auto-generated and explicit renderOrder", function() {
-        const ev = new StyleSetEvaluator([
-            {
-                description: "foo",
-                technique: "fill",
-                when: "kind == 'ground'",
-                renderOrder: 33,
-                attr: { color: "brown" }
-            },
-            ...basicStyleSetAutoOrder
-        ]);
+        const ev = new StyleSetEvaluator({
+            styleSet: [
+                {
+                    description: "foo",
+                    technique: "fill",
+                    when: "kind == 'ground'",
+                    renderOrder: 33,
+                    attr: { color: "brown" }
+                },
+                ...basicStyleSetAutoOrder
+            ]
+        });
 
         const parsedStyles = ev.styleSet;
         assert.equal(parsedStyles[0].renderOrder, 33);
@@ -154,7 +202,7 @@ describe("StyleSetEvaluator", function() {
             }
         ];
         it("instantiates two techniques from one styleset basing on expression result", function() {
-            const ev = new StyleSetEvaluator(testStyle);
+            const ev = new StyleSetEvaluator({ styleSet: testStyle });
             const r1 = ev.getMatchingTechniques(
                 new MapEnv({ kind: "park", area: 2, clipping: true })
             );
@@ -180,7 +228,7 @@ describe("StyleSetEvaluator", function() {
 
         it("generates stable technique cache key", function() {
             const techniquesTileA = (() => {
-                const ev = new StyleSetEvaluator(testStyle);
+                const ev = new StyleSetEvaluator({ styleSet: testStyle });
                 ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
                 ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 2 }));
                 ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 3 }));
@@ -190,7 +238,7 @@ describe("StyleSetEvaluator", function() {
             assert.equal(techniquesTileA.length, 3);
 
             const techniquesTileB = (() => {
-                const ev = new StyleSetEvaluator(testStyle);
+                const ev = new StyleSetEvaluator({ styleSet: testStyle });
                 ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 3 }));
                 return ev.decodedTechniques;
             })();
@@ -198,7 +246,7 @@ describe("StyleSetEvaluator", function() {
             assert.equal(techniquesTileB.length, 1);
 
             const techniquesTileC = (() => {
-                const ev = new StyleSetEvaluator(testStyle);
+                const ev = new StyleSetEvaluator({ styleSet: testStyle });
                 ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 2 }));
                 ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
                 return ev.decodedTechniques;
@@ -238,7 +286,10 @@ describe("StyleSetEvaluator", function() {
             }
         };
         it("resolves references in style declaration attributes", function() {
-            const sse = new StyleSetEvaluator([sampleStyleDeclaration], sampleDefinitions);
+            const sse = new StyleSetEvaluator({
+                styleSet: [sampleStyleDeclaration],
+                definitions: sampleDefinitions
+            });
             const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
 
             const expr = Expr.fromJSON(interpolatedPropertyDefinitionToJsonExpr(interpolator));
@@ -267,7 +318,7 @@ describe("StyleSetEvaluator", function() {
                 ...sampleDefinitions,
                 bigObject: { value: ["literal", bigObject] }
             };
-            const sse = new StyleSetEvaluator([styleReferencingObject], definitions);
+            const sse = new StyleSetEvaluator({ styleSet: [styleReferencingObject], definitions });
 
             const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
             assert.equal(techniques.length, 1);
@@ -277,33 +328,38 @@ describe("StyleSetEvaluator", function() {
 
     describe("#wantsLayer", function() {
         it("ignores all layers for empty styleset", function() {
-            const ss = new StyleSetEvaluator([]);
+            const ss = new StyleSetEvaluator({ styleSet: [] });
             assert.isFalse(ss.wantsLayer("foo"));
             assert.isFalse(ss.wantsLayer("bar"));
         });
 
         it("wants all layers if layer predicate is missing from at least one style", function() {
-            const ss = new StyleSetEvaluator([
-                {
-                    when: ["==", ["get", "foo"], "bar"],
-                    technique: "fill"
-                }
-            ]);
+            const ss = new StyleSetEvaluator({
+                styleSet: [
+                    {
+                        when: ["==", ["get", "foo"], "bar"],
+                        technique: "fill"
+                    }
+                ]
+            });
             assert.isTrue(ss.wantsLayer("foo"));
             assert.isTrue(ss.wantsLayer("bar"));
         });
+
         it("supports both layer and layer predicate", function() {
-            const ss = new StyleSetEvaluator([
-                {
-                    layer: "foo",
-                    when: ["==", ["get", "foo"], "bar"],
-                    technique: "fill"
-                },
-                {
-                    when: ["all", ["==", ["get", "$layer"], "bar"]],
-                    technique: "fill"
-                }
-            ]);
+            const ss = new StyleSetEvaluator({
+                styleSet: [
+                    {
+                        layer: "foo",
+                        when: ["==", ["get", "foo"], "bar"],
+                        technique: "fill"
+                    },
+                    {
+                        when: ["all", ["==", ["get", "$layer"], "bar"]],
+                        technique: "fill"
+                    }
+                ]
+            });
             assert.isTrue(ss.wantsLayer("foo"));
             assert.isTrue(ss.wantsLayer("bar"));
             assert.isFalse(ss.wantsLayer("baz"));
@@ -312,35 +368,39 @@ describe("StyleSetEvaluator", function() {
 
     describe("#wantsFeature", function() {
         it("ignores all layers for empty styleset", function() {
-            const ss = new StyleSetEvaluator([]);
+            const ss = new StyleSetEvaluator({ styleSet: [] });
             assert.isFalse(ss.wantsFeature("foo", "point"));
             assert.isFalse(ss.wantsFeature("bar", "polygon"));
             assert.isFalse(ss.wantsFeature("baz", "line"));
         });
 
         it("wants all features if predicate is missing from at least one style", function() {
-            const ss = new StyleSetEvaluator([
-                {
-                    when: ["==", ["get", "foo"], "bar"],
-                    technique: "fill"
-                }
-            ]);
+            const ss = new StyleSetEvaluator({
+                styleSet: [
+                    {
+                        when: ["==", ["get", "foo"], "bar"],
+                        technique: "fill"
+                    }
+                ]
+            });
             assert.isTrue(ss.wantsFeature("foo", "point"));
             assert.isTrue(ss.wantsFeature("bar", "polygon"));
             assert.isTrue(ss.wantsFeature("baz", "line"));
         });
 
         it("supports ignores all but selected layer/geometry ", function() {
-            const ss = new StyleSetEvaluator([
-                {
-                    when: [
-                        "all",
-                        ["==", ["get", "$layer"], "bar"],
-                        ["==", ["get", "$geometryType"], "polygon"]
-                    ],
-                    technique: "fill"
-                }
-            ]);
+            const ss = new StyleSetEvaluator({
+                styleSet: [
+                    {
+                        when: [
+                            "all",
+                            ["==", ["get", "$layer"], "bar"],
+                            ["==", ["get", "$geometryType"], "polygon"]
+                        ],
+                        technique: "fill"
+                    }
+                ]
+            });
             assert.isTrue(ss.wantsLayer("bar"));
             assert.isTrue(ss.wantsFeature("bar", "polygon"));
             assert.isFalse(ss.wantsFeature("bar", "line"));
@@ -351,12 +411,14 @@ describe("StyleSetEvaluator", function() {
         });
 
         it("works also only with geometryType predicate ", function() {
-            const ss = new StyleSetEvaluator([
-                {
-                    when: ["all", ["==", ["get", "$geometryType"], "polygon"]],
-                    technique: "fill"
-                }
-            ]);
+            const ss = new StyleSetEvaluator({
+                styleSet: [
+                    {
+                        when: ["all", ["==", ["get", "$geometryType"], "polygon"]],
+                        technique: "fill"
+                    }
+                ]
+            });
             // should return true for any layer
             assert.isTrue(ss.wantsLayer("bar"));
             assert.isTrue(ss.wantsLayer("baz"));
@@ -416,7 +478,7 @@ describe("StyleSetEvaluator", function() {
             }
         ];
 
-        const ev = new StyleSetEvaluator(styleSet);
+        const ev = new StyleSetEvaluator({ styleSet });
 
         const techniques = ev.getMatchingTechniques(
             new MapEnv({ $layer: "buildings", $geometryType: "polygon" })
@@ -470,7 +532,7 @@ describe("StyleSetEvaluator", function() {
 
         const env = new MapEnv({ $layer: layer, $geometryType: geometryType });
 
-        const styleSetEvaluator = new StyleSetEvaluator(styleSet);
+        const styleSetEvaluator = new StyleSetEvaluator({ styleSet });
 
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
 
@@ -509,7 +571,7 @@ describe("StyleSetEvaluator", function() {
 
     it("Filter techniques by zoom level", function() {
         function getMatchingTechniques(props: ValueMap, styleSet: Style[]) {
-            return new StyleSetEvaluator(styleSet).getMatchingTechniques(new MapEnv(props));
+            return new StyleSetEvaluator({ styleSet }).getMatchingTechniques(new MapEnv(props));
         }
 
         const defaultProperties = {
@@ -591,17 +653,19 @@ describe("StyleSetEvaluator", function() {
     });
 
     it("serialization of vector properties", () => {
-        const sse = new StyleSetEvaluator([
-            {
-                when: ["boolean", true],
-                technique: "shader",
-                attr: {
-                    offset1: ["make-vector", 10, 20],
-                    offset2: ["make-vector", 10, 20, 30],
-                    offset3: ["make-vector", 10, 20, 30, 40]
-                }
-            } as any
-        ]);
+        const sse = new StyleSetEvaluator({
+            styleSet: [
+                {
+                    when: ["boolean", true],
+                    technique: "shader",
+                    attr: {
+                        offset1: ["make-vector", 10, 20],
+                        offset2: ["make-vector", 10, 20, 30],
+                        offset3: ["make-vector", 10, 20, 30, 40]
+                    }
+                } as any
+            ]
+        });
 
         const matchingTechnique = sse.getMatchingTechniques(new Env())[0] as any;
 
@@ -627,49 +691,51 @@ describe("StyleSetEvaluator", function() {
     });
 
     describe("allow steps in filter conditions", () => {
-        const sse = new StyleSetEvaluator([
-            {
-                id: "new-style-rule",
-                layer: "buildings",
-                when: [
-                    "all",
-                    ["==", ["geometry-type"], "LineString"],
-                    ["step", ["zoom"], false, 15, true]
-                ],
-                technique: "solid-line"
-            },
-            {
-                id: "legacy-style-rule",
-                when: [
-                    "all",
-                    ["==", ["get", "$geometryType"], "line"],
-                    ["==", ["get", "$layer"], "buildings"],
-                    ["step", ["zoom"], false, 15, true]
-                ],
-                technique: "fill"
-            },
+        const sse = new StyleSetEvaluator({
+            styleSet: [
+                {
+                    id: "new-style-rule",
+                    layer: "buildings",
+                    when: [
+                        "all",
+                        ["==", ["geometry-type"], "LineString"],
+                        ["step", ["zoom"], false, 15, true]
+                    ],
+                    technique: "solid-line"
+                },
+                {
+                    id: "legacy-style-rule",
+                    when: [
+                        "all",
+                        ["==", ["get", "$geometryType"], "line"],
+                        ["==", ["get", "$layer"], "buildings"],
+                        ["step", ["zoom"], false, 15, true]
+                    ],
+                    technique: "fill"
+                },
 
-            {
-                id: "new-style-rule-with-other-layer",
-                layer: "roads",
-                when: [
-                    "all",
-                    ["==", ["geometry-type"], "LineString"],
-                    ["step", ["zoom"], false, 15, true]
-                ],
-                technique: "solid-line"
-            },
-            {
-                id: "legacy-style-rule-with-other-layer",
-                when: [
-                    "all",
-                    ["==", ["get", "$geometryType"], "line"],
-                    ["==", ["get", "$layer"], "roads"],
-                    ["step", ["zoom"], false, 15, true]
-                ],
-                technique: "fill"
-            }
-        ]);
+                {
+                    id: "new-style-rule-with-other-layer",
+                    layer: "roads",
+                    when: [
+                        "all",
+                        ["==", ["geometry-type"], "LineString"],
+                        ["step", ["zoom"], false, 15, true]
+                    ],
+                    technique: "solid-line"
+                },
+                {
+                    id: "legacy-style-rule-with-other-layer",
+                    when: [
+                        "all",
+                        ["==", ["get", "$geometryType"], "line"],
+                        ["==", ["get", "$layer"], "roads"],
+                        ["step", ["zoom"], false, 15, true]
+                    ],
+                    technique: "fill"
+                }
+            ]
+        });
 
         it("wants rules with zoom level >= 15", () => {
             const techniques = sse.getMatchingTechniques(
