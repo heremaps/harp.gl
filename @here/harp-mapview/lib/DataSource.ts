@@ -323,9 +323,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * {@link MapView}s theme.
      */
     set styleSetName(styleSetName: string | undefined) {
-        this.m_styleSetName = styleSetName;
-        if (this.m_mapView !== undefined && styleSetName !== undefined) {
-            this.setTheme(this.m_mapView.theme);
+        if (styleSetName !== this.m_styleSetName) {
+            this.m_styleSetName = styleSetName;
+            this.clearCache();
+            this.requestUpdate();
         }
     }
 

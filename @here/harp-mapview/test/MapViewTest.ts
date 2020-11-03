@@ -643,7 +643,6 @@ describe("MapView", function() {
 
     it("Correctly sets event listeners and handlers webgl context restored", async function() {
         mapView = new MapView({ canvas });
-        const updateSpy = sinon.spy(mapView, "update");
 
         expect(addEventListenerSpy.callCount).to.be.equal(2);
         expect(addEventListenerSpy.callCount).to.be.equal(2);
@@ -655,41 +654,25 @@ describe("MapView", function() {
         const webGlContextRestoredHandler = addEventListenerSpy.getCall(1).args[1];
         const webGlContextLostHandler = addEventListenerSpy.getCall(0).args[1];
 
-        const dispatchEventSpy = sinon.spy(mapView, "dispatchEvent");
         await mapView.setTheme({
             clearColor: "#ffffff"
         });
-        webGlContextRestoredHandler();
+        expect(clearColorStub.calledWith("#ffffff"));
+
+        await webGlContextRestoredHandler();
+        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
 
         await mapView.setTheme({
             clearColor: undefined
         });
-        webGlContextRestoredHandler();
+
+        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
+
+        await webGlContextRestoredHandler();
+        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
+
         webGlContextLostHandler();
-
-        expect(clearColorStub.callCount).to.be.equal(6);
-        expect(clearColorStub.getCall(0).calledWith(DEFAULT_CLEAR_COLOR)).to.be.equal(true);
-        expect(clearColorStub.getCall(2).args[0].r).to.be.equal(1);
-        expect(clearColorStub.getCall(2).args[0].g).to.be.equal(1);
-        expect(clearColorStub.getCall(2).args[0].b).to.be.equal(1);
-        expect(clearColorStub.getCall(4).calledWith(DEFAULT_CLEAR_COLOR)).to.be.equal(true);
-
-        expect(updateSpy.callCount).to.be.equal(6);
-        expect(dispatchEventSpy.callCount).to.be.equal(13);
-        expect(dispatchEventSpy.getCall(6).args[0].type).to.be.equal(
-            MapViewEventNames.ContextRestored
-        );
-
-        expect(dispatchEventSpy.getCall(7).args[0].type).to.be.equal(MapViewEventNames.Update);
-        expect(dispatchEventSpy.getCall(8).args[0].type).to.be.equal(MapViewEventNames.ThemeLoaded);
-        expect(dispatchEventSpy.getCall(9).args[0].type).to.be.equal(MapViewEventNames.Update);
-        expect(dispatchEventSpy.getCall(10).args[0].type).to.be.equal(
-            MapViewEventNames.ContextRestored
-        );
-        expect(dispatchEventSpy.getCall(11).args[0].type).to.be.equal(MapViewEventNames.Update);
-        expect(dispatchEventSpy.getCall(12).args[0].type).to.be.equal(
-            MapViewEventNames.ContextLost
-        );
+        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
     });
 
     it("Correctly sets and removes all event listeners by API", function() {
@@ -1464,8 +1447,7 @@ describe("MapView", function() {
                 clearTimeout(id);
             };
         }
-        mapView = new MapView({ canvas });
-        mapView.theme = {};
+        mapView = new MapView({ canvas, theme: {} });
 
         const dataSource = new FakeOmvDataSource({ name: "omv" });
 
@@ -1648,7 +1630,7 @@ describe("MapView", function() {
         it("loads a default theme", async function() {
             mapView = new MapView({ canvas });
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
-            expect(mapView.theme).to.deep.equal({
+            expect(await mapView.getTheme()).to.deep.equal({
                 clearAlpha: undefined,
                 clearColor: undefined,
                 defaultTextStyle: undefined,
@@ -1672,9 +1654,9 @@ describe("MapView", function() {
                 canvas,
                 theme: relativeToAppUrl
             });
-            await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
+            const theme = await mapView.getTheme();
 
-            expect(mapView.theme.styles).to.not.be.empty;
+            expect(theme.styles).to.not.be.empty;
         });
 
         it("allows to reset theme", async function() {
@@ -1686,7 +1668,7 @@ describe("MapView", function() {
             });
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
 
-            expect(mapView.theme).to.not.deep.equal({
+            expect(mapView.getTheme()).to.not.deep.equal({
                 clearColor: undefined,
                 defaultTextStyle: undefined,
                 definitions: undefined,
@@ -1701,7 +1683,7 @@ describe("MapView", function() {
                 textStyles: undefined
             });
 
-            mapView.theme = {};
+            await mapView.setTheme({});
             mapView.getTheme().then(theme =>
                 expect(theme).to.deep.equal({
                     clearAlpha: undefined,

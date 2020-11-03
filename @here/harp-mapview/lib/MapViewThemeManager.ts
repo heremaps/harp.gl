@@ -17,29 +17,37 @@ const logger = LoggerManager.instance.create("MapViewThemeManager");
  */
 export class MapViewThemeManager {
     private readonly m_imageCache: MapViewImageCache;
-    private m_themePromise: Promise<Theme> | undefined;
+    private m_updatePromise: Promise<void> | undefined;
     private m_abortControllers: AbortController[] = [];
     private m_theme: Theme = {};
-    private m_isUpdating: boolean = false;
 
     constructor(private readonly m_mapView: MapView, private readonly m_uriResolver?: UriResolver) {
         this.m_imageCache = new MapViewImageCache(this.m_mapView);
     }
 
-    async getTheme(): Promise<Theme> {
-        if (!this.m_themePromise) {
-            return this.m_theme;
-        } else {
-            return await this.m_themePromise;
+    async setTheme(theme: Theme | string): Promise<Theme> {
+        if (this.isUpdating()) {
+            logger.warn("Formerly set Theme is still updating, update will be canceled");
+            this.cancelThemeUpdate();
         }
+
+        this.m_updatePromise = this.loadTheme(theme).then(async theme => {
+            await this.updateTheme(theme);
+        });
+        await this.m_updatePromise;
+        this.m_updatePromise = undefined;
+        return this.m_theme;
     }
 
-    isLoading(): boolean {
-        return this.m_themePromise !== undefined;
+    async getTheme(): Promise<Theme> {
+        if (this.isUpdating()) {
+            await this.m_updatePromise;
+        }
+        return this.m_theme;
     }
 
     isUpdating(): boolean {
-        return this.m_isUpdating;
+        return this.m_updatePromise !== undefined;
     }
 
     /**
@@ -48,36 +56,29 @@ export class MapViewThemeManager {
      * after deprecation
      */
     get theme() {
-        return this.isLoading() ? {} : this.m_theme;
+        return this.isUpdating() ? {} : this.m_theme;
     }
 
     private async loadTheme(theme: Theme | string): Promise<Theme> {
         if (typeof theme === "string" || !ThemeLoader.isThemeLoaded(theme)) {
             try {
-                this.m_themePromise = ThemeLoader.load(theme, {
+                theme = await ThemeLoader.load(theme, {
                     uriResolver: this.m_uriResolver,
                     signal: this.createAbortController().signal
                 });
-                theme = await this.m_themePromise;
             } catch (error) {
-                logger.error(`failed to load theme: ${error}`, error);
+                if (error.name === "AbortError") {
+                    logger.warn(`theme loading was aborted due to: ${error}`);
+                } else {
+                    logger.error(`failed to load theme: ${error}`);
+                }
                 theme = {};
             }
         }
-        this.m_themePromise = undefined;
         return theme;
     }
 
-    async setTheme(theme: Theme | string): Promise<Theme> {
-        if (this.isLoading() || this.isUpdating()) {
-            logger.warn("Formerly set Theme is still updating");
-            this.m_themePromise = undefined;
-            this.cancelThemeUpdate();
-        }
-
-        theme = await this.loadTheme(theme);
-
-        this.m_isUpdating = true;
+    private async updateTheme(theme: Theme): Promise<void> {
         const environment = this.m_mapView.sceneEnvironment;
         // Fog and sky.
         this.m_theme.fog = theme.fog;
@@ -92,15 +93,14 @@ export class MapViewThemeManager {
         this.m_theme.clearColor = theme.clearColor;
         this.m_theme.clearAlpha = theme.clearAlpha;
         environment.updateClearColor(theme);
+
         // Images.
         this.m_theme.images = theme.images;
         this.m_theme.imageTextures = theme.imageTextures;
         await this.updateImages(theme);
-
         // POI tables.
         this.m_theme.poiTables = theme.poiTables;
         await this.loadPoiTables(theme);
-
         // Text.
         this.m_theme.textStyles = theme.textStyles;
         this.m_theme.defaultTextStyle = theme.defaultTextStyle;
@@ -125,11 +125,10 @@ export class MapViewThemeManager {
         this.m_theme.styles = theme.styles ?? {};
         this.m_theme.definitions = theme.definitions;
 
+        // TODO: this is asynchronouse too
         for (const dataSource of this.m_mapView.dataSources) {
             dataSource.setTheme(this.m_theme);
         }
-        this.m_isUpdating = false;
-        return this.m_theme;
     }
 
     updateCache() {

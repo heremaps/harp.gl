@@ -740,9 +740,9 @@ export namespace PerformanceBenchmark {
                 };
 
                 ThemeLoader.load(themeUrl, { uriResolver: fontUriResolver }).then(
-                    (newTheme: Theme) => {
+                    async (newTheme: Theme) => {
                         mapViewApp.mapView.clearTileCache();
-                        mapViewApp.mapView.setTheme(newTheme);
+                        await mapViewApp.mapView.setTheme(newTheme);
                     }
                 );
             })
