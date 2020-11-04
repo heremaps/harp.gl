@@ -115,7 +115,7 @@ class PoiBatch {
         const premultipliedAlpha = true;
 
         const texture = new THREE.Texture(
-            this.imageItem.imageData as any,
+            this.imageItem.image as any,
             THREE.UVMapping,
             undefined,
             undefined,
@@ -189,15 +189,15 @@ class PoiBatch {
      *
      * @param screenPosition - Screen coordinate of picking position.
      * @param pickCallback - Callback to be called for every picked element.
-     * @param imageData - Image data to test if the pixel is transparent
+     * @param image - Image to test if the pixel is transparent
      */
     pickBoxes(
         screenPosition: THREE.Vector2,
         pickCallback: (pickData: any | undefined) => void,
-        imageData?: ImageBitmap | ImageData
+        image?: CanvasImageSource | ImageData
     ) {
         for (const poiBuffer of this.m_poiBuffers.values()) {
-            poiBuffer.buffer.pickBoxes(screenPosition, pickCallback, imageData);
+            poiBuffer.buffer.pickBoxes(screenPosition, pickCallback, image);
         }
     }
 
@@ -207,8 +207,8 @@ class PoiBatch {
      * @param info - The info object to increment with the values from this `PoiBatch`.
      */
     updateMemoryUsage(info: MemoryUsage) {
-        if (this.imageItem.imageData !== undefined) {
-            const imageBytes = this.imageItem.imageData.width * this.imageItem.imageData.height * 4;
+        if (this.imageItem.image !== undefined) {
+            const imageBytes = this.imageItem.image.width * this.imageItem.image.height * 4;
             info.heapSize += imageBytes;
             info.gpuSize += imageBytes;
         }
@@ -352,7 +352,7 @@ export class PoiBatchRegistry {
         pickCallback: (pickData: any | undefined) => void
     ) {
         for (const batch of this.m_batchMap.values()) {
-            batch.pickBoxes(screenPosition, pickCallback, batch.imageItem.imageData);
+            batch.pickBoxes(screenPosition, pickCallback, batch.imageItem.image);
         }
     }
 
@@ -638,7 +638,7 @@ export class PoiRenderer {
     ) {
         assert(poiInfo.uvBox === undefined);
 
-        if (imageItem === undefined || imageItem.imageData === undefined) {
+        if (imageItem === undefined || imageItem.image === undefined) {
             logger.error("setupPoiInfo: No imageItem/imageData found");
             poiInfo.isValid = false;
             return;
@@ -646,8 +646,8 @@ export class PoiRenderer {
 
         const technique = poiInfo.technique;
 
-        const imageWidth = imageItem.imageData.width;
-        const imageHeight = imageItem.imageData.height;
+        const imageWidth = imageItem.image.width;
+        const imageHeight = imageItem.image.height;
         const paddedSize = MipMapGenerator.getPaddedSize(imageWidth, imageHeight);
         const trilinearFiltering = PoiBatch.trilinear && imageItem.mipMaps;
         const paddedImageWidth = trilinearFiltering ? paddedSize.width : imageWidth;

@@ -3,7 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ImageItem } from "./Image";
+
+import { assert } from "@here/harp-utils";
+
+import { ImageItem, TexturizableImage } from "./Image";
 import { ImageCache, ImageCacheOwner } from "./ImageCache";
 
 /**
@@ -28,68 +31,52 @@ export class MapViewImageCache implements ImageCacheOwner {
     constructor() {}
 
     /**
-     * Register an existing image by name.
+     * Add an image from an URL and optionally start loading it, storing the resulting
+     * {@link TexturizableImage} in a {@link ImageItem}.
      *
-     * @param name - Name of the image from {@link @here/harp-datasource-protocol#Theme}.
-     * @param url - URL of image.
-     * @param image - Optional {@link ImageData} of image.
-     * @param htmlElement - Optional raw data in case {@link HTMLImageElement} or {@link HTMLCanvasElement} reference is available.
-     *                In that case url is used as a unique identifier to avoid image duplicates and the specified
-     *                raw data is used for the rendering.
-     */
-    registerImage(
-        name: string | undefined,
-        url: string,
-        image?: ImageData | ImageBitmap,
-        htmlElement?: HTMLImageElement | HTMLCanvasElement
-    ): ImageItem {
-        if (name !== undefined) {
-            if (this.hasName(name)) {
-                throw new Error("duplicate name in cache");
-            }
-
-            const oldNames = this.m_url2Name.get(url);
-            if (oldNames !== undefined) {
-                if (!oldNames.includes(name)) {
-                    oldNames.push(name);
-                }
-            } else {
-                this.m_url2Name.set(url, [name]);
-            }
-            this.m_name2Url.set(name, url);
-        }
-
-        // Register new image or add this mapView to list of MapViews using this image (identified
-        // by URL).)
-        return ImageCache.instance.registerImage(this, url, image, htmlElement);
-    }
-
-    /**
-     * Add an image and optionally start loading it. Once done, the [[ImageData]] or [[ImageBitmap]]
-     * will be stored in the {@link ImageItem}.
-     *
+     * @remarks
      * Names are unique within a {@link MapView}. URLs are not unique, multiple images with
      * different names can have the same URL. Still, URLs are are loaded only once.
+     * If an image with the same name is already registered an error is thrown.
      *
-     * @param name - Name of image from {@link @here/harp-datasource-protocol#Theme}.
-     * @param url URL of image.
-     * @param htmlElement Optional raw data in case HTMLImageElement or HTMLCanvasElement reference is available.
-     *                In that case url is used as a unique identifier to avoid image duplicates and the specified
-     *                raw data is used for the rendering.
-     * @param startLoading Optional. Pass `true` to start loading the image in the background or
-     *  to start rendering the htmlElement if available.
+     * @param name - Image name.
+     * @param url - Image URL.
+     * @param startLoading - Optional. Pass `true` to start loading the image in the background.
+     * @returns The resulting {@link ImageItem} or a promise for it if it starts loading.
      */
     addImage(
         name: string,
         url: string,
-        startLoading = true,
-        htmlElement?: HTMLImageElement | HTMLCanvasElement
+        startLoading?: boolean
+    ): ImageItem | Promise<ImageItem | undefined>;
+
+    /**
+     * Add an image storing it in a {@link ImageItem}.
+     *
+     * @remarks
+     * Names are unique within a {@link MapView}. If an image with the same name is already
+     * registered an error is thrown.
+     *
+     * @param name - Unique image name.
+     * @param image - The image to add.
+     * @returns The resulting {@link ImageItem}
+     */
+    addImage(name: string, image: TexturizableImage): ImageItem;
+
+    addImage(
+        name: string,
+        urlOrImage: string | TexturizableImage,
+        startLoading = true
     ): ImageItem | Promise<ImageItem | undefined> {
-        const imageItem = this.registerImage(name, url, undefined, htmlElement);
-        if (startLoading === true) {
-            return ImageCache.instance.loadImage(imageItem);
+        if (typeof urlOrImage === "string") {
+            const url = urlOrImage;
+            const imageItem = this.registerImage(name, url);
+
+            return startLoading ? ImageCache.instance.loadImage(imageItem) : imageItem;
         }
-        return imageItem;
+
+        const image = urlOrImage;
+        return this.registerImage(name, undefined, image);
     }
 
     /**
@@ -99,7 +86,7 @@ export class MapViewImageCache implements ImageCacheOwner {
      * @returns `true` if item has been removed.
      */
     removeImage(name: string): boolean {
-        return this.removeImageInternal(name);
+        return this.removeImageImpl(name);
     }
 
     /**
@@ -113,7 +100,7 @@ export class MapViewImageCache implements ImageCacheOwner {
         const names = this.m_url2Name.get(url);
         if (names !== undefined) {
             for (const name of [...names]) {
-                this.removeImageInternal(name);
+                this.removeImageImpl(name);
             }
             return true;
         }
@@ -242,12 +229,44 @@ export class MapViewImageCache implements ImageCacheOwner {
     }
 
     /**
+     * Register an existing image by name. If the name already exists and error is thrown.
+     *
+     * @param name - Image name.
+     * @param url - Optional image URL.
+     * @param image - Optional {@link TexturizableImage}.
+     */
+    private registerImage(name: string, url?: string, image?: TexturizableImage): ImageItem {
+        if (url === undefined) {
+            assert(image !== undefined);
+
+            // Register new image or add this mapView to list of MapViews using this image
+            // (identified by URL).
+            return ImageCache.instance.registerImage(this, name, image);
+        }
+
+        if (this.hasName(name)) {
+            throw new Error("duplicate name in cache");
+        }
+
+        const oldNames = this.m_url2Name.get(url);
+        if (oldNames !== undefined) {
+            if (!oldNames.includes(name)) {
+                oldNames.push(name);
+            }
+        } else {
+            this.m_url2Name.set(url, [name]);
+        }
+        this.m_name2Url.set(name, url);
+        return ImageCache.instance.registerImage(this, url, image);
+    }
+
+    /**
      * Remove the image with this name from the cache.
      *
      * @param name - Name of the image.
      * @returns `true` if item has been removed.
      */
-    private removeImageInternal(name: string): boolean {
+    private removeImageImpl(name: string): boolean {
         const url = this.m_name2Url.get(name);
         if (url !== undefined) {
             this.m_name2Url.delete(name);

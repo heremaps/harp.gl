@@ -6,22 +6,11 @@
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { ImageItem } from "./Image";
+import { ImageItem, TexturizableImage } from "./Image";
 import { MipMapGenerator } from "./MipMapGenerator";
 
 const logger = LoggerManager.instance.create("ImageCache");
 const mipMapGenerator = new MipMapGenerator();
-
-// override declaration of createImageBitmap, add optional options parameter that
-// was removed in typings for TypeScript 3.1
-declare function createImageBitmap(
-    image: ImageBitmapSource,
-    sx: number,
-    sy: number,
-    sw: number,
-    sh: number,
-    options?: any
-): Promise<ImageBitmap>;
 
 /**
  * Interface for classes that access the shared {@link ImageCache} and need to be informed when an
@@ -64,6 +53,8 @@ class ImageCacheItem {
 }
 
 /**
+ * @internal
+ *
  * `ImageCache` is a singleton, so it can be used with multiple owners on a single page.
  *
  * @remarks
@@ -107,18 +98,11 @@ export class ImageCache {
      *
      * @param owner - Specify which {@link ImageCacheOwner} requests the image.
      * @param url - URL of image.
-     * @param imageData - Optional {@link ImageData} containing the image content.
-     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as
-     * content.
+     * @param image - Optional {@link TexturizableImage}.
      */
-    registerImage(
-        owner: ImageCacheOwner,
-        url: string,
-        imageData?: ImageData | ImageBitmap,
-        htmlElement?: HTMLImageElement | HTMLCanvasElement
-    ): ImageItem {
+    registerImage(owner: any, url: string, image?: TexturizableImage): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
-        if (imageCacheItem !== undefined) {
+        if (imageCacheItem) {
             if (owner !== undefined && !imageCacheItem.owners.includes(owner)) {
                 imageCacheItem.owners.push(owner);
             }
@@ -128,9 +112,8 @@ export class ImageCache {
         imageCacheItem = {
             imageItem: {
                 url,
-                imageData,
-                htmlElement: htmlElement,
-                loaded: false
+                image,
+                loaded: image !== undefined
             },
             owners: [owner]
         };
@@ -141,30 +124,7 @@ export class ImageCache {
     }
 
     /**
-     * Add an image definition, and optionally start loading the content.
-     *
-     * @param owner - {@link ImageCacheOwner} adding the image.
-     * @param url - URL of image.
-     * @param startLoading - Optional flag. If `true` the image will be loaded in the background.
-     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as
-     * content, if set, `startLoading = true` will start the rendering process in the background.
-     */
-    addImage(
-        owner: ImageCacheOwner,
-        url: string,
-        startLoading = true,
-        htmlElement?: HTMLImageElement | HTMLCanvasElement
-    ): ImageItem | Promise<ImageItem | undefined> | undefined {
-        const imageItem = this.registerImage(owner, url, undefined, htmlElement);
-        if (imageItem !== undefined && startLoading === true) {
-            return this.loadImage(imageItem);
-        }
-
-        return imageItem;
-    }
-
-    /**
-     * Remove an image from the cache.
+     * Remove an image from the cache..
      *
      * @param url - URL of the image.
      * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
@@ -280,7 +240,7 @@ export class ImageCache {
      * @returns An {@link ImageItem} if the image has already been loaded, a promise otherwise.
      */
     loadImage(imageItem: ImageItem): ImageItem | Promise<ImageItem | undefined> {
-        if (imageItem.imageData !== undefined) {
+        if (imageItem.image !== undefined) {
             return imageItem;
         }
 
@@ -288,62 +248,38 @@ export class ImageCache {
             return imageItem.loadingPromise;
         }
 
-        if (imageItem.htmlElement) {
-            imageItem.loadingPromise = new Promise((resolve, reject) => {
-                if (
-                    imageItem.htmlElement instanceof HTMLImageElement &&
-                    !imageItem.htmlElement.complete
-                ) {
-                    imageItem.htmlElement.addEventListener(
-                        "load",
-                        (this.createOnImageLoaded(imageItem, resolve, reject) as unknown) as (
-                            this: HTMLImageElement,
-                            ev: Event
-                        ) => any
-                    );
-                    imageItem.htmlElement.addEventListener("error", err => {
-                        reject(
-                            "The image with src: " +
-                                (imageItem.htmlElement as HTMLImageElement).src +
-                                " could not be loaded: " +
-                                err.message
-                        );
-                    });
-                } else {
-                    this.createOnImageLoaded(
-                        imageItem,
-                        resolve,
-                        reject
-                        // cast to be a HtmlCanvasElement, as undefined and HtmlImageElement are
-                        // already excluded from the conditions above
-                    )(imageItem.htmlElement as HTMLCanvasElement);
-                }
-            });
-        } else {
-            const imageLoader = new THREE.ImageLoader();
-
-            imageItem.loadingPromise = new Promise((resolve, reject) => {
-                logger.debug(`Loading image: ${imageItem.url}`);
-                if (imageItem.cancelled === true) {
-                    logger.debug(`Cancelled loading image: ${imageItem.url}`);
-                    resolve(undefined);
-                } else {
-                    imageLoader.load(
-                        imageItem.url,
-                        this.createOnImageLoaded(imageItem, resolve, reject),
-                        undefined,
-                        errorEvent => {
-                            logger.error(
-                                `... loading image failed: ${imageItem.url} : ${errorEvent}`
+        imageItem.loadingPromise = new Promise((resolve, reject) => {
+            logger.debug(`Loading image: ${imageItem.url}`);
+            if (imageItem.cancelled === true) {
+                logger.debug(`Cancelled loading image: ${imageItem.url}`);
+                resolve(undefined);
+            } else {
+                new THREE.ImageLoader().load(
+                    imageItem.url,
+                    (image: HTMLImageElement) => {
+                        if (imageItem.cancelled === true) {
+                            logger.debug(`Cancelled loading image: ${imageItem.url}`);
+                            resolve(undefined);
+                        } else {
+                            imageItem.image = image;
+                            imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                                imageItem
                             );
-
                             imageItem.loadingPromise = undefined;
-                            reject(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
+                            imageItem.loaded = true;
+                            resolve(imageItem);
                         }
-                    );
-                }
-            });
-        }
+                    },
+                    undefined,
+                    errorEvent => {
+                        logger.error(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
+
+                        imageItem.loadingPromise = undefined;
+                        reject(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
+                    }
+                );
+            }
+        });
 
         return imageItem.loadingPromise;
     }
@@ -359,31 +295,6 @@ export class ImageCache {
         });
     }
 
-    private createOnImageLoaded(
-        imageItem: ImageItem,
-        onDone: (value?: ImageItem) => void,
-        onError: (value?: ImageItem, errorMessage?: string) => void
-    ): (image: HTMLImageElement | HTMLCanvasElement) => any {
-        return (image: HTMLImageElement | HTMLCanvasElement) => {
-            logger.debug(`... finished loading image: ${imageItem.url}`);
-            if (imageItem.cancelled === true) {
-                logger.debug(`Cancelled loading image: ${imageItem.url}`);
-                onDone(undefined);
-            }
-            this.renderImage(imageItem, image)
-                .then(() => {
-                    imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(imageItem);
-                    imageItem.loadingPromise = undefined;
-                    imageItem.htmlElement = undefined;
-                    onDone(imageItem);
-                })
-                .catch(ex => {
-                    logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
-                    onError(imageItem, `... loading image failed: ${imageItem.url} : ${ex}`);
-                });
-        };
-    }
-
     /**
      * Find the cached {@link ImageItem} by URL.
      *
@@ -391,104 +302,6 @@ export class ImageCache {
      */
     private findImageCacheItem(url: string): ImageCacheItem | undefined {
         return this.m_images.get(url);
-    }
-
-    /**
-     * Render the `ImageItem` by using `createImageBitmap()` or by rendering the image into a
-     * `HTMLCanvasElement`.
-     *
-     * @param imageItem - {@link ImageItem} to assign image data to.
-     * @param image - `HTMLImageElement`
-     */
-    private renderImage(
-        imageItem: ImageItem,
-        image: HTMLImageElement | HTMLCanvasElement
-    ): Promise<ImageData | ImageBitmap | undefined> {
-        return new Promise((resolve, reject) => {
-            if (imageItem.cancelled) {
-                resolve(undefined);
-            }
-            // use createImageBitmap if it is available. It should be available in webworkers as
-            // well
-            if (typeof createImageBitmap === "function") {
-                const options: ImageBitmapOptions = {
-                    premultiplyAlpha: "default"
-                };
-
-                logger.debug(`Creating bitmap image: ${imageItem.url}`);
-                createImageBitmap(image, 0, 0, image.width, image.height, options)
-                    .then(imageBitmap => {
-                        if (imageItem.cancelled) {
-                            resolve(undefined);
-                        }
-                        logger.debug(`... finished creating bitmap image: ${imageItem.url}`);
-
-                        imageItem.loadingPromise = undefined;
-                        imageItem.imageData = imageBitmap;
-                        imageItem.loaded = true;
-                        resolve(imageBitmap);
-                    })
-                    .catch(ex => {
-                        logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
-                        reject(ex);
-                    });
-            } else {
-                try {
-                    if (typeof document === "undefined") {
-                        logger.error("Error: document is not available, cannot generate image");
-                        reject(
-                            new Error(
-                                "ImageCache#renderImage: document is not available, cannot " +
-                                    "render image to create texture"
-                            )
-                        );
-                    }
-
-                    // TODO: Extract the rendering to the canvas part and make it configurable for
-                    // the client, so it does not rely on the `document`.
-
-                    // use the image, e.g. draw part of it on a canvas
-                    let canvas: HTMLCanvasElement;
-                    if (image instanceof HTMLCanvasElement) {
-                        canvas = image;
-                    } else {
-                        canvas = document.createElement("canvas");
-                        canvas.width = image.width;
-                        canvas.height = image.height;
-                    }
-
-                    const context = canvas.getContext("2d");
-                    if (context !== null) {
-                        logger.debug(
-                            `... finished creating bitmap image in canvas: ${imageItem.url} ${image}`
-                        );
-                        context.drawImage(
-                            image,
-                            0,
-                            0,
-                            image.width,
-                            image.height,
-                            0,
-                            0,
-                            canvas.width,
-                            canvas.height
-                        );
-                        const imageData = context.getImageData(0, 0, image.width, image.height);
-                        imageItem.imageData = imageData;
-                        imageItem.loaded = true;
-                        resolve(imageData);
-                    } else {
-                        logger.error(`renderImage: no context found`);
-                        reject(new Error(`ImageCache#renderImage: no context found`));
-                    }
-                } catch (ex) {
-                    logger.error(`renderImage failed: ${ex}`);
-                    imageItem.imageData = undefined;
-                    imageItem.loaded = true;
-                    reject(new Error(`ImageCache#renderImage failed: ${ex}`));
-                }
-            }
-        });
     }
 
     /**

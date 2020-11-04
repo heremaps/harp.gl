@@ -61,7 +61,7 @@ describe("MipMapGenerator", function() {
                 const mipMapGenerator = new MipMapGenerator();
                 const mipMaps = mipMapGenerator.generateTextureAtlasMipMap({
                     url: "/test.png",
-                    imageData,
+                    image: imageData,
                     loaded: true
                 });
 
@@ -81,7 +81,7 @@ describe("MipMapGenerator", function() {
                 const mipMapGenerator = new MipMapGenerator();
                 const mipMaps = mipMapGenerator.generateTextureAtlasMipMap({
                     url: "/test.png",
-                    imageData: imageBitmap,
+                    image: imageBitmap,
                     loaded: true
                 });
                 expect(mipMaps).to.have.length(7);

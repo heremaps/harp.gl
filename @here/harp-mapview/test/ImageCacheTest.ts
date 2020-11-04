@@ -51,9 +51,9 @@ describe("MapViewImageCache", function() {
         assert.notExists(cache.findImageByName("xxx"));
         assert.notExists(cache.findImageByUrl("xxx"));
         assert.exists(testImage1);
-        assert.equal(imageData, testImage1!.imageData);
+        assert.equal(imageData, testImage1!.image);
         assert.exists(testImage2);
-        assert.equal(imageData, testImage2!.imageData);
+        assert.equal(imageData, testImage2!.image);
     });
 
     it("#addImage", function() {
@@ -69,7 +69,7 @@ describe("MapViewImageCache", function() {
 
         const testImage = cache.findImageByName(imageName);
         assert.exists(testImage);
-        assert.isUndefined(testImage!.imageData);
+        assert.isUndefined(testImage!.image);
         assert.isFalse(testImage!.loaded);
     });
 
@@ -88,7 +88,7 @@ describe("MapViewImageCache", function() {
 
             const testImage = cache.findImageByName(imageName);
             assert.exists(testImage);
-            assert.isUndefined(testImage!.imageData);
+            assert.isUndefined(testImage!.image);
             assert.isFalse(testImage!.loaded);
 
             assert.isTrue(promise instanceof Promise);
@@ -97,9 +97,9 @@ describe("MapViewImageCache", function() {
                 await promise;
                 const loadedImageItem = cache.findImageByName(imageName);
                 assert.exists(loadedImageItem);
-                assert.isDefined(loadedImageItem!.imageData);
+                assert.isDefined(loadedImageItem!.image);
                 assert.isTrue(loadedImageItem!.loaded);
-                const image = loadedImageItem!.imageData!;
+                const image = loadedImageItem!.image!;
                 assert.equal(image.width, 37);
                 assert.equal(image.height, 32);
             }
@@ -119,7 +119,7 @@ describe("MapViewImageCache", function() {
 
             const testImage = cache.findImageByName(imageName);
             assert.exists(testImage);
-            assert.isUndefined(testImage!.imageData);
+            assert.isUndefined(testImage!.image);
             assert.isFalse(testImage!.loaded);
 
             assert.isTrue(promise instanceof Promise);
@@ -153,7 +153,7 @@ describe("MapViewImageCache", function() {
             assert.isDefined(imageItem);
             assert.isFalse(imageItem instanceof Promise);
 
-            assert.isUndefined(imageItem.imageData);
+            assert.isUndefined(imageItem.image);
             assert.isFalse(imageItem!.loaded);
 
             const promise = cache.loadImage(imageItem);
@@ -163,9 +163,9 @@ describe("MapViewImageCache", function() {
                 await promise;
                 const loadedImageItem = cache.findImageByName(imageName);
                 assert.exists(loadedImageItem);
-                assert.isDefined(loadedImageItem!.imageData);
+                assert.isDefined(loadedImageItem!.image);
                 assert.isTrue(loadedImageItem!.loaded);
-                const image = loadedImageItem!.imageData!;
+                const image = loadedImageItem!.image!;
                 assert.equal(image.width, 37);
                 assert.equal(image.height, 32);
             }
@@ -228,11 +228,11 @@ describe("MapViewImageCache", function() {
         assert.equal(cache.numberOfNames, 2);
         assert.equal(cache.numberOfUrls, 2);
         assert.exists(testImage1);
-        assert.equal(imageData1, testImage1!.imageData);
-        assert.equal(imageData1, testImage11!.imageData);
+        assert.equal(imageData1, testImage1!.image);
+        assert.equal(imageData1, testImage11!.image);
         assert.exists(testImage2);
-        assert.equal(imageData2, testImage2!.imageData);
-        assert.equal(imageData2, testImage22!.imageData);
+        assert.equal(imageData2, testImage2!.image);
+        assert.equal(imageData2, testImage22!.image);
 
         assert.isTrue(cache.hasName("testImage1"));
         assert.isTrue(cache.hasName("testImage2"));
@@ -257,10 +257,10 @@ describe("MapViewImageCache", function() {
         assert.equal(cache.numberOfNames, 2, "should have 2 names");
         assert.equal(cache.numberOfUrls, 1, "should have just 1 url");
         assert.exists(testImage1);
-        assert.deepEqual(imageData1, testImage1!.imageData);
-        assert.deepEqual(imageData1, testImage11!.imageData);
+        assert.deepEqual(imageData1, testImage1!.image);
+        assert.deepEqual(imageData1, testImage11!.image);
         assert.exists(testImage2);
-        assert.deepEqual(imageData1, testImage2!.imageData);
+        assert.deepEqual(imageData1, testImage2!.image);
 
         assert.deepEqual(cache.findNames("httpx://naxos.de"), ["testImage1", "testImage2"]);
     });
@@ -509,7 +509,7 @@ describe("ImageCache", function() {
         assert.equal(cache.size, 1);
         assert.notExists(cache.findImage("xxx"));
         assert.exists(testImage);
-        assert.equal(imageData, testImage!.imageData);
+        assert.equal(imageData, testImage!.image);
     });
 
     if (typeof document !== "undefined") {
@@ -538,7 +538,7 @@ describe("ImageCache", function() {
 
             const testImage = cache.findImage(imageUrl);
             assert.exists(testImage);
-            assert.isUndefined(testImage!.imageData);
+            assert.isUndefined(testImage!.image);
             assert.isFalse(testImage!.loaded);
 
             assert.isTrue(promise instanceof Promise);
@@ -547,9 +547,9 @@ describe("ImageCache", function() {
                 await promise;
                 const loadedImageItem = cache.findImage(imageUrl);
                 assert.exists(loadedImageItem);
-                assert.isDefined(loadedImageItem!.imageData);
+                assert.isDefined(loadedImageItem!.image);
                 assert.isTrue(loadedImageItem!.loaded);
-                const image = loadedImageItem!.imageData!;
+                const image = loadedImageItem!.image!;
                 assert.equal(image.width, 37);
                 assert.equal(image.height, 32);
             }
@@ -570,7 +570,7 @@ describe("ImageCache", function() {
 
             const testImage = cache.findImage(imageUrl);
             assert.exists(testImage);
-            assert.isUndefined(testImage!.imageData);
+            assert.isUndefined(testImage!.image);
             assert.isFalse(testImage!.loaded);
 
             const promise = cache.loadImage(cacheItem);
@@ -581,9 +581,9 @@ describe("ImageCache", function() {
                 await promise;
                 const loadedImageItem = cache.findImage(imageUrl);
                 assert.exists(loadedImageItem);
-                assert.isDefined(loadedImageItem!.imageData);
+                assert.isDefined(loadedImageItem!.image);
                 assert.isTrue(loadedImageItem!.loaded);
-                const image = loadedImageItem!.imageData!;
+                const image = loadedImageItem!.image!;
                 assert.equal(image.width, 37);
                 assert.equal(image.height, 32);
             }
@@ -604,7 +604,7 @@ describe("ImageCache", function() {
 
                 const testImage = cache.findImage(imageUrl);
                 assert.exists(testImage);
-                assert.isUndefined(testImage!.imageData);
+                assert.isUndefined(testImage!.image);
                 assert.isFalse(testImage!.loaded);
 
                 assert.isTrue(promise instanceof Promise);
@@ -613,9 +613,9 @@ describe("ImageCache", function() {
                     await promise;
                     const loadedImageItem = cache.findImage(imageUrl);
                     assert.exists(loadedImageItem);
-                    assert.isDefined(loadedImageItem!.imageData);
+                    assert.isDefined(loadedImageItem!.image);
                     assert.isTrue(loadedImageItem!.loaded);
-                    const image = loadedImageItem!.imageData!;
+                    const image = loadedImageItem!.image!;
                     assert.equal(image.width, 37);
                     assert.equal(image.height, 32);
                 }
@@ -637,7 +637,7 @@ describe("ImageCache", function() {
 
                 const testImage = cache.findImage(imageUrl);
                 assert.exists(testImage);
-                assert.isUndefined(testImage!.imageData);
+                assert.isUndefined(testImage!.image);
                 assert.isFalse(testImage!.loaded);
 
                 const promise = cache.loadImage(cacheItem);
@@ -648,9 +648,9 @@ describe("ImageCache", function() {
                     await promise;
                     const loadedImageItem = cache.findImage(imageUrl);
                     assert.exists(loadedImageItem);
-                    assert.isDefined(loadedImageItem!.imageData);
+                    assert.isDefined(loadedImageItem!.image);
                     assert.isTrue(loadedImageItem!.loaded);
-                    const image = loadedImageItem!.imageData!;
+                    const image = loadedImageItem!.image!;
                     assert.equal(image.width, 37);
                     assert.equal(image.height, 32);
                 }
@@ -669,7 +669,7 @@ describe("ImageCache", function() {
 
                     const testImage = cache.findImage(imageUrl);
                     assert.exists(testImage);
-                    assert.isUndefined(testImage!.imageData);
+                    assert.isUndefined(testImage!.image);
                     assert.isFalse(testImage!.loaded);
 
                     assert.isTrue(promise instanceof Promise);
@@ -707,7 +707,7 @@ describe("ImageCache", function() {
                 assert.isDefined(imageItem);
                 assert.isFalse(imageItem instanceof Promise);
 
-                assert.isUndefined(imageItem.imageData);
+                assert.isUndefined(imageItem.image);
                 assert.isFalse(imageItem!.loaded);
 
                 const promise = cache.loadImage(imageItem);
@@ -717,9 +717,9 @@ describe("ImageCache", function() {
                     await promise;
                     const loadedImageItem = cache.findImage(imageUrl);
                     assert.exists(loadedImageItem);
-                    assert.isDefined(loadedImageItem!.imageData);
+                    assert.isDefined(loadedImageItem!.image);
                     assert.isTrue(loadedImageItem!.loaded);
-                    const image = loadedImageItem!.imageData!;
+                    const image = loadedImageItem!.image!;
                     assert.equal(image.width, 37);
                     assert.equal(image.height, 32);
                 }
@@ -741,7 +741,7 @@ describe("ImageCache", function() {
             assert.isDefined(imageItem);
             assert.isFalse(imageItem instanceof Promise);
 
-            assert.isUndefined(imageItem.imageData);
+            assert.isUndefined(imageItem.image);
             assert.isFalse(imageItem!.loaded);
 
             const promise = cache.loadImage(imageItem);
@@ -753,7 +753,7 @@ describe("ImageCache", function() {
 
                 const loadedImageItem = cache.findImage(imageUrl);
                 assert.exists(loadedImageItem);
-                assert.isUndefined(loadedImageItem!.imageData);
+                assert.isUndefined(loadedImageItem!.image);
                 assert.isFalse(loadedImageItem!.loaded);
             }
         });
@@ -773,7 +773,7 @@ describe("ImageCache", function() {
             assert.isDefined(imageItem);
             assert.isFalse(imageItem instanceof Promise);
 
-            assert.isUndefined(imageItem.imageData);
+            assert.isUndefined(imageItem.image);
             assert.isFalse(imageItem!.loaded);
 
             const promise = cache.loadImage(imageItem);
@@ -783,7 +783,7 @@ describe("ImageCache", function() {
                 assert.isRejected(promise);
                 const loadedImageItem = cache.findImage(imageUrl);
                 assert.exists(loadedImageItem);
-                assert.isUndefined(loadedImageItem!.imageData);
+                assert.isUndefined(loadedImageItem!.image);
                 assert.isFalse(loadedImageItem!.loaded);
             }
         });
@@ -830,7 +830,7 @@ describe("ImageCache", function() {
         assert.equal(cache.size, 1);
         assert.notExists(cache.findImage("xxx"));
         assert.exists(testImage);
-        assert.equal(imageData1, testImage!.imageData);
+        assert.equal(imageData1, testImage!.image);
     });
 
     it("#register different images in multiple MapViews", function() {
@@ -852,9 +852,9 @@ describe("ImageCache", function() {
         assert.equal(cache.size, 2);
         assert.notExists(cache.findImage("xxx"));
         assert.exists(testImage1);
-        assert.equal(imageData1, testImage1!.imageData);
+        assert.equal(imageData1, testImage1!.image);
         assert.exists(testImage2);
-        assert.equal(imageData2, testImage2!.imageData);
+        assert.equal(imageData2, testImage2!.image);
     });
 
     it("#clear images in multiple MapViews", function() {
