@@ -492,7 +492,7 @@ export class OutlineEffect {
 
         // Copy available fading params to the outline material.
         if (
-            material.defines.USE_FADING !== undefined &&
+            material.defines?.USE_FADING !== undefined &&
             originalUniforms.fadeNear !== undefined &&
             originalUniforms.fadeFar !== undefined &&
             originalUniforms.fadeFar.value >= 0.0

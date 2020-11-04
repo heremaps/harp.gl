@@ -54,7 +54,8 @@ export function stubElevationProvider(sandbox: sinon.SinonSandbox): ElevationPro
     return stub;
 }
 
-const dummyTexture = new THREE.Texture();
+const empty: Float32Array = new Float32Array();
+const dummyTexture = new THREE.DataTexture(empty, 32, 32);
 const dummyDisplacementMap: DisplacementMap = {
     xCountVertices: 32,
     yCountVertices: 32,
