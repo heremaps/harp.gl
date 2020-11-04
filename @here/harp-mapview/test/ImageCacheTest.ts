@@ -5,11 +5,11 @@
  */
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import { assert } from "chai";
+import * as sinon from "sinon";
 
 import { ImageItem } from "../lib/image/Image";
-import { ImageCache } from "../lib/image/ImageCache";
+import { ImageCache, ImageCacheOwner } from "../lib/image/ImageCache";
 import { MapViewImageCache } from "../lib/image/MapViewImageCache";
-import { MapView } from "../lib/MapView";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
@@ -18,6 +18,10 @@ class ImageData {
     close() {
         /* mock only */
     }
+}
+
+class TestImageCacheOwner implements ImageCacheOwner {
+    imageRemoved(url: string): void {}
 }
 
 describe("MapViewImageCache", function() {
@@ -186,6 +190,26 @@ describe("MapViewImageCache", function() {
         assert.equal(numImagesRemoved, 1, "wrong number of removed images");
     });
 
+    it("#clear calls imageRemoved", function() {
+        const cache = new MapViewImageCache();
+        const imageRemovedSpy = sinon.spy(cache, "imageRemoved");
+
+        const imageData = new ImageData(16, 16);
+
+        cache.registerImage("testImage", "httpx://naxos.de", imageData);
+        cache.registerImage("testImage2", "httpx://naxos.de", imageData);
+        assert.equal(cache.numberOfNames, 2);
+        assert.equal(cache.numberOfUrls, 1);
+
+        const numImagesRemoved = cache.clear();
+
+        assert.equal(ImageCache.instance.size, 0, "wrong cache size");
+        assert.equal(cache.numberOfNames, 0, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 0, "wrong number of urls");
+        assert.equal(numImagesRemoved, 1, "wrong number of removed images");
+        assert.equal(imageRemovedSpy.callCount, 1, "cache.imageRemoved() has not been called");
+    });
+
     it("#add images", function() {
         const cache = new MapViewImageCache();
 
@@ -266,6 +290,27 @@ describe("MapViewImageCache", function() {
         assert.equal(imageRemoved, true);
         assert.equal(cache.numberOfNames, 0, "wrong number of names");
         assert.equal(cache.numberOfUrls, 0, "wrong number of urls");
+    });
+
+    it("#remove image calls imageRemoved", function() {
+        const cache = new MapViewImageCache();
+        const imageRemovedSpy = sinon.spy(cache, "imageRemoved");
+
+        const imageData1 = new ImageData(16, 16);
+
+        cache.registerImage("testImage1", "httpx://naxos.de", imageData1);
+
+        assert.exists(cache.findImageByName("testImage1"));
+
+        assert.equal(ImageCache.instance.size, 1);
+        assert.equal(cache.numberOfNames, 1, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 1, "wrong number of urls");
+
+        const imageRemoved = cache.removeImage("testImage1");
+        assert.equal(imageRemoved, true);
+        assert.equal(cache.numberOfNames, 0, "wrong number of names");
+        assert.equal(cache.numberOfUrls, 0, "wrong number of urls");
+        assert.equal(imageRemovedSpy.callCount, 1, "cache.imageRemoved() has not been called");
     });
 
     it("#remove image 2", function() {
@@ -451,13 +496,13 @@ describe("ImageCache", function() {
     });
 
     it("#registerImage", function() {
-        const mapView: MapView = {} as MapView;
+        const owner = new TestImageCacheOwner();
         const cache = ImageCache.instance;
         cache.clearAll();
 
         const imageData = new ImageData(16, 16);
 
-        cache.registerImage(mapView, "httpx://naxos.de", imageData);
+        cache.registerImage(owner, "httpx://naxos.de", imageData);
 
         const testImage = cache.findImage("httpx://naxos.de");
 
@@ -480,7 +525,7 @@ describe("ImageCache", function() {
         image.src = getTestResourceUrl("@here/harp-mapview", "test/resources/headshot.png");
 
         it("#addImage, from url", async function() {
-            const mapView: MapView = {} as MapView;
+            const owner = new TestImageCacheOwner();
             const cache = ImageCache.instance;
             cache.clearAll();
 
@@ -489,7 +534,7 @@ describe("ImageCache", function() {
                 "test/resources/headshot.png"
             );
 
-            const promise = cache.addImage(mapView, imageUrl, true);
+            const promise = cache.addImage(owner, imageUrl, true);
 
             const testImage = cache.findImage(imageUrl);
             assert.exists(testImage);
@@ -511,7 +556,8 @@ describe("ImageCache", function() {
         });
 
         it("#loadImage, from url", async function() {
-            const mapView: MapView = {} as MapView;
+            const owner = new TestImageCacheOwner();
+
             const cache = ImageCache.instance;
             cache.clearAll();
 
@@ -520,7 +566,7 @@ describe("ImageCache", function() {
                 "test/resources/headshot.png"
             );
 
-            const cacheItem = cache.registerImage(mapView, imageUrl, undefined);
+            const cacheItem = cache.registerImage(owner, imageUrl, undefined);
 
             const testImage = cache.findImage(imageUrl);
             assert.exists(testImage);
@@ -548,13 +594,13 @@ describe("ImageCache", function() {
             { element: image, name: "HtmlImageElement" }
         ].forEach(testSetting => {
             it("#addImage, from htmlElement " + testSetting.name, async function() {
-                const mapView: MapView = {} as MapView;
+                const owner = new TestImageCacheOwner();
                 const cache = ImageCache.instance;
                 cache.clearAll();
 
                 const imageUrl = "htmlElementImage";
 
-                const promise = cache.addImage(mapView, imageUrl, true, testSetting.element);
+                const promise = cache.addImage(owner, imageUrl, true, testSetting.element);
 
                 const testImage = cache.findImage(imageUrl);
                 assert.exists(testImage);
@@ -576,14 +622,14 @@ describe("ImageCache", function() {
             });
 
             it("#loadImage, from htmlElement:  " + testSetting.name, async function() {
-                const mapView: MapView = {} as MapView;
+                const owner = new TestImageCacheOwner();
                 const cache = ImageCache.instance;
                 cache.clearAll();
 
                 const imageUrl = "htmlElementImage";
 
                 const cacheItem = cache.registerImage(
-                    mapView,
+                    owner,
                     imageUrl,
                     undefined,
                     testSetting.element
@@ -613,13 +659,13 @@ describe("ImageCache", function() {
             it(
                 "#addImage, from htmlElement and cancel loading: " + testSetting.name,
                 async function() {
-                    const mapView: MapView = {} as MapView;
+                    const owner = new TestImageCacheOwner();
                     const cache = ImageCache.instance;
                     cache.clearAll();
 
                     const imageUrl = "htmlElement";
 
-                    const promise = cache.addImage(mapView, imageUrl, true, testSetting.element);
+                    const promise = cache.addImage(owner, imageUrl, true, testSetting.element);
 
                     const testImage = cache.findImage(imageUrl);
                     assert.exists(testImage);
@@ -645,14 +691,15 @@ describe("ImageCache", function() {
             );
 
             it("#loadImage, from htmlElement: " + testSetting.name, async function() {
-                const mapView: MapView = {} as MapView;
+                const owner = new TestImageCacheOwner();
+
                 const cache = ImageCache.instance;
                 cache.clearAll();
 
                 const imageUrl = "htmlElement";
 
                 const imageItem = cache.addImage(
-                    mapView,
+                    owner,
                     imageUrl,
                     false,
                     testSetting.element
@@ -680,7 +727,8 @@ describe("ImageCache", function() {
         });
 
         it("#loadImage, from  HtmlImageElement with bad src", async function() {
-            const mapView: MapView = {} as MapView;
+            const owner = new TestImageCacheOwner();
+
             const cache = ImageCache.instance;
             cache.clearAll();
 
@@ -688,7 +736,7 @@ describe("ImageCache", function() {
             const invalidImage = document.createElement("img");
             invalidImage.src = "fooba.png";
 
-            const imageItem = cache.addImage(mapView, imageUrl, false, invalidImage) as ImageItem;
+            const imageItem = cache.addImage(owner, imageUrl, false, invalidImage) as ImageItem;
 
             assert.isDefined(imageItem);
             assert.isFalse(imageItem instanceof Promise);
@@ -711,7 +759,8 @@ describe("ImageCache", function() {
         });
 
         it("#loadImage, from HtmlImageElement without src", async function() {
-            const mapView: MapView = {} as MapView;
+            const owner = new TestImageCacheOwner();
+
             const cache = ImageCache.instance;
             cache.clearAll();
 
@@ -719,7 +768,7 @@ describe("ImageCache", function() {
             const invalidImage = document.createElement("img");
             invalidImage.src = "fooba.png";
 
-            const imageItem = cache.addImage(mapView, imageUrl, false, invalidImage) as ImageItem;
+            const imageItem = cache.addImage(owner, imageUrl, false, invalidImage) as ImageItem;
 
             assert.isDefined(imageItem);
             assert.isFalse(imageItem instanceof Promise);
@@ -741,10 +790,11 @@ describe("ImageCache", function() {
     }
 
     it("#clearAll", function() {
-        const mapView: MapView = {} as MapView;
+        const owner = new TestImageCacheOwner();
+
         const cache = ImageCache.instance;
         const imageData = new ImageData(16, 16);
-        cache.registerImage(mapView, "httpx://naxos.de", imageData);
+        cache.registerImage(owner, "httpx://naxos.de", imageData);
 
         cache.clearAll();
 
@@ -753,9 +803,10 @@ describe("ImageCache", function() {
     });
 
     it("#dispose", function() {
-        const mapView: MapView = {} as MapView;
+        const owner = new TestImageCacheOwner();
+
         const imageData = new ImageData(16, 16);
-        ImageCache.instance.registerImage(mapView, "httpx://naxos.de", imageData);
+        ImageCache.instance.registerImage(owner, "httpx://naxos.de", imageData);
 
         ImageCache.dispose();
 
@@ -766,13 +817,13 @@ describe("ImageCache", function() {
         const cache = ImageCache.instance;
         cache.clearAll();
 
-        const mapView1: MapView = {} as MapView;
-        const mapView2: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
+        const owner2 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        cache.registerImage(mapView2, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner2, "httpx://naxos.de", imageData1);
 
         const testImage = cache.findImage("httpx://naxos.de");
 
@@ -786,14 +837,14 @@ describe("ImageCache", function() {
         const cache = ImageCache.instance;
         cache.clearAll();
 
-        const mapView1: MapView = {} as MapView;
-        const mapView2: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
+        const owner2 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        cache.registerImage(mapView2, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner2, "httpx://naxos.de-2", imageData2);
 
         const testImage1 = cache.findImage("httpx://naxos.de");
         const testImage2 = cache.findImage("httpx://naxos.de-2");
@@ -810,16 +861,16 @@ describe("ImageCache", function() {
         const cache = ImageCache.instance;
         cache.clearAll();
 
-        const mapView1: MapView = {} as MapView;
-        const mapView2: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
+        const owner2 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        cache.registerImage(mapView2, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner2, "httpx://naxos.de-2", imageData2);
 
-        cache.clear(mapView1);
+        cache.clear(owner1);
 
         assert.equal(cache.size, 1);
 
@@ -829,11 +880,11 @@ describe("ImageCache", function() {
 
     it("#remove image item", function() {
         const cache = ImageCache.instance;
-        const mapView1: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
 
-        const item = cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        const item = cache.registerImage(owner1, "httpx://naxos.de", imageData1);
 
         assert.equal(cache.size, 1, "wrong cache size");
 
@@ -844,11 +895,11 @@ describe("ImageCache", function() {
 
     it("#remove image", function() {
         const cache = ImageCache.instance;
-        const mapView1: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
 
         assert.equal(cache.size, 1, "wrong cache size");
 
@@ -859,14 +910,14 @@ describe("ImageCache", function() {
 
     it("#remove image by filter", function() {
         const cache = ImageCache.instance;
-        const mapView1: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
-        cache.registerImage(mapView1, "httpx://naxos.de-3", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de-3", imageData2);
         assert.equal(ImageCache.instance.size, 3, "wrong cache size");
 
         const imagesRemoved = cache.removeImageItems((imageItem: ImageItem) => {
@@ -881,14 +932,14 @@ describe("ImageCache", function() {
 
     it("#remove image by filter 2", function() {
         const cache = ImageCache.instance;
-        const mapView1: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
-        cache.registerImage(mapView1, "httpx://XXX", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(owner1, "httpx://XXX", imageData2);
         assert.equal(ImageCache.instance.size, 3, "wrong cache size");
 
         const imagesRemoved = cache.removeImageItems((imageItem: ImageItem) => {
@@ -901,14 +952,14 @@ describe("ImageCache", function() {
 
     it("#remove all images by filter", function() {
         const cache = ImageCache.instance;
-        const mapView1: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
-        cache.registerImage(mapView1, "httpx://naxos.de-3", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de-3", imageData2);
 
         const imagesRemoved = cache.removeImageItems((imageItem: ImageItem) => {
             return true;
@@ -919,14 +970,14 @@ describe("ImageCache", function() {
 
     it("#apply", function() {
         const cache = ImageCache.instance;
-        const mapView1: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
 
-        cache.registerImage(mapView1, "httpx://naxos.de", imageData1);
-        cache.registerImage(mapView1, "httpx://naxos.de-2", imageData2);
-        cache.registerImage(mapView1, "httpx://naxos.de-3", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de", imageData1);
+        cache.registerImage(owner1, "httpx://naxos.de-2", imageData2);
+        cache.registerImage(owner1, "httpx://naxos.de-3", imageData2);
 
         let numImagesInCache = 0;
         cache.apply(imageItem => {
@@ -942,11 +993,11 @@ describe("ImageCache", function() {
         const commonCache = ImageCache.instance;
         commonCache.clearAll();
 
-        const mapView1: MapView = {} as MapView;
-        const mapView2: MapView = {} as MapView;
+        const owner1 = new TestImageCacheOwner();
+        const owner2 = new TestImageCacheOwner();
 
-        const cache0 = ((mapView1 as any).imageCache = new MapViewImageCache());
-        const cache1 = ((mapView2 as any).imageCache = new MapViewImageCache());
+        const cache0 = ((owner1 as any).imageCache = new MapViewImageCache());
+        const cache1 = ((owner2 as any).imageCache = new MapViewImageCache());
 
         const imageData1 = new ImageData(16, 16);
         const imageData2 = new ImageData(32, 32);
@@ -1029,6 +1080,52 @@ describe("ImageCache", function() {
         assert.equal(ImageCache.instance.size, 1);
 
         assert.isTrue(cache1.removeImage("img1"));
+
+        assert.equal(ImageCache.instance.size, 0);
+    });
+
+    it("#remove images shared in multiple MapViews call imageRemoved", function() {
+        const cache0 = new MapViewImageCache();
+        const cache1 = new MapViewImageCache();
+
+        const imageRemovedSpy0 = sinon.spy(cache0, "imageRemoved");
+        const imageRemovedSpy1 = sinon.spy(cache1, "imageRemoved");
+
+        const imageData1 = new ImageData(16, 16);
+        const imageData2 = new ImageData(32, 32);
+
+        cache0.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache0.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        cache1.registerImage("img0", "httpx://naxos.de", imageData1);
+        cache1.registerImage("img1", "httpx://naxos.de-2", imageData2);
+
+        assert.equal(ImageCache.instance.size, 2);
+
+        assert.isTrue(cache0.removeImage("img0"));
+        // Reference to image removed in owner cache0, The callback "imageRemoved" is not called.
+        assert.isFalse(imageRemovedSpy0.called, "cache.imageRemoved() has been called");
+
+        assert.equal(ImageCache.instance.size, 2);
+
+        assert.isTrue(cache1.removeImage("img0"));
+        // All references removed, image is removed from shared ImageCache. Last owner is informed
+        // about removal.
+        assert.isTrue(imageRemovedSpy1.called, "cache.imageRemoved() has not been called");
+
+        assert.equal(ImageCache.instance.size, 1);
+
+        assert.isTrue(cache0.removeImage("img1"));
+        // Reference to image removed in owner cache0, The callback "imageRemoved" is not called.
+        assert.isFalse(imageRemovedSpy0.called, "cache.imageRemoved() has been called");
+
+        assert.equal(ImageCache.instance.size, 1);
+
+        assert.isTrue(cache1.removeImage("img1"));
+        // All references removed, image is removed from shared ImageCache. Last owner is informed
+        // about removal.
+        assert.equal(imageRemovedSpy1.callCount, 2, "cache.imageRemoved() has not been called");
+        imageRemovedSpy1.resetHistory();
 
         assert.equal(ImageCache.instance.size, 0);
     });

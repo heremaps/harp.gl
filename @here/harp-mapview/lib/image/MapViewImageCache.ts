@@ -3,9 +3,8 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { ImageItem } from "./Image";
-import { ImageCache } from "./ImageCache";
+import { ImageCache, ImageCacheOwner } from "./ImageCache";
 
 /**
  * Cache images wrapped into {@link ImageItem}s for a {@link MapView}.
@@ -19,7 +18,7 @@ import { ImageCache } from "./ImageCache";
  * The `MapViewImageCache` uses a global {@link ImageCache} to actually store (and generate) the
  * image data.
  */
-export class MapViewImageCache {
+export class MapViewImageCache implements ImageCacheOwner {
     private m_name2Url: Map<string, string> = new Map();
     private m_url2Name: Map<string, string[]> = new Map();
 
@@ -119,6 +118,18 @@ export class MapViewImageCache {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @internal
+     * @hidden
+     * This method is called by the internally shared {@link ImageCache} to notify that this image
+     * has been removed from the cache, and is no longer available.
+     *
+     * @param url - URL of the image that has been removed from the internal (shared) cache.
+     */
+    imageRemoved(url: string): void {
+        this.removeImageByUrl(url);
     }
 
     /**
@@ -247,6 +258,8 @@ export class MapViewImageCache {
             } else {
                 // URL was used by this image only, remove the image.
                 this.m_url2Name.delete(url);
+                // If this is the last owner, the callback MapViewImageCache#imageRemoved will be
+                // called.
                 ImageCache.instance.removeImage(url, this);
             }
             return true;
