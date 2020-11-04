@@ -3,8 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Definitions, StyleSet, Theme, ValueMap } from "@here/harp-datasource-protocol";
-import { StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
+import { Theme, ValueMap } from "@here/harp-datasource-protocol";
 import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert, LoggerManager } from "@here/harp-utils";
@@ -456,35 +455,16 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * Invoked by {@link MapView} to notify when the
-     * {@link @here/harp-datasource-protocol#Theme} has been changed.
-     *
-     * @remarks
-     * If `DataSource` depends on a `styleSet` or `languages`, it must update its tiles' geometry.
-     *
-     * @deprecated Use [[setTheme]].
-     *
-     * @param options - The Options used for decodeing and/or styling, alternativly a StyleSet
-     * @param definitions - The Definitions used for decoding/styling
-     * @param languages - A prioritized list of  ISO 639-1 language codes
-     */
-    setStyleSet(
-        options: StyleSetOptions | StyleSet,
-        definitions?: Definitions,
-        languages?: string[]
-    ): void {
-        // to be overwritten by subclasses
-    }
-
-    /**
      * Apply the {@link @here/harp-datasource-protocol#Theme} to this data source.
      *
      * If `DataSource` depends on a `styleSet` defined by this theme or `languages`, it must update
      * its tiles' geometry.
      *
-     * @param languages -
+     * @param theme - The Theme to be applied
+     * @param languages - optional: The languages in priority order to be applied
+     * @param styleSetName - optional: The Name of the StyleSet to be used.
      */
-    setTheme(theme: Theme, languages?: string[]): void {
+    setTheme(theme: Theme, languages?: string[], styleSetName?: string): void {
         // to be overwritten by subclasses
     }
 

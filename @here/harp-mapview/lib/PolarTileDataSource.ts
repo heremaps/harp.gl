@@ -3,18 +3,8 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    Definitions,
-    StandardGeometryKind,
-    StyleSet,
-    Technique,
-    Theme
-} from "@here/harp-datasource-protocol";
-import {
-    MapEnv,
-    StyleSetEvaluator,
-    StyleSetOptions
-} from "@here/harp-datasource-protocol/index-decoder";
+import { StandardGeometryKind, StyleSet, Technique, Theme } from "@here/harp-datasource-protocol";
+import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
     MercatorConstants,
@@ -64,7 +54,7 @@ export class PolarTileDataSource extends DataSource {
 
     constructor({
         name = "polar",
-        styleSetName,
+        styleSetName = "polar",
         minDataLevel,
         maxDataLevel,
         minDisplayLevel,
@@ -130,44 +120,30 @@ export class PolarTileDataSource extends DataSource {
     }
 
     /** @override */
-    setStyleSet(
-        options: StyleSetOptions | StyleSet,
-        definitions?: Definitions,
-        languages?: string[]
-    ): void {
-        this.dispose();
-
-        if (!options?.hasOwnProperty("styleSet")) {
-            this.m_styleSetEvaluator = new StyleSetEvaluator({
-                styleSet: options as StyleSet,
-                definitions,
-                languages
-            });
-        } else {
-            this.m_styleSetEvaluator = new StyleSetEvaluator(options as StyleSetOptions);
-        }
-
-        this.m_northPoleEntry = this.createTechiqueEntry("north_pole");
-        this.m_southPoleEntry = this.createTechiqueEntry("south_pole");
-
-        this.mapView.markTilesDirty(this);
-    }
-
-    /** @override */
-    setTheme(theme: Theme, languages?: string[]): void {
+    setTheme(theme: Theme, languages?: string[], styleSetName?: string): void {
         let styleSet: StyleSet | undefined;
+
+        if (styleSetName) {
+            this.styleSetName = styleSetName;
+        }
 
         if (this.styleSetName !== undefined && theme.styles !== undefined) {
             styleSet = theme.styles[this.styleSetName];
         }
+        this.dispose();
 
-        this.setStyleSet({
+        this.m_styleSetEvaluator = new StyleSetEvaluator({
             styleSet: styleSet ?? [],
             definitions: theme.definitions,
             priorities: theme.priorities,
             labelPriorities: theme.labelPriorities,
             languages
         });
+
+        this.m_northPoleEntry = this.createTechiqueEntry("north_pole");
+        this.m_southPoleEntry = this.createTechiqueEntry("south_pole");
+
+        this.mapView.markTilesDirty(this);
     }
 
     /** @override */
