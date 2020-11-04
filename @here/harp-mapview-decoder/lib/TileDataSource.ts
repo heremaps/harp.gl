@@ -21,6 +21,7 @@ import {
     Tile,
     TileLoaderState
 } from "@here/harp-mapview";
+import { ThemeLoader } from "@here/harp-mapview/lib/ThemeLoader";
 import { ILogger, LoggerManager } from "@here/harp-utils";
 
 import { DataProvider } from "./DataProvider";
@@ -205,7 +206,14 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
      * `styleSetName` property) is found in `theme`.
      * @override
      */
-    setTheme(theme: Theme | FlatTheme, languages?: string[], styleSetName?: string): void {
+    async setTheme(
+        theme: Theme | FlatTheme,
+        languages?: string[],
+        styleSetName?: string
+    ): Promise<void> {
+        // Seems superfluent, but the call to  ThemeLoader.load will resolve extends etc.
+        theme = await ThemeLoader.load(theme);
+
         if (styleSetName !== undefined) {
             this.styleSetName = styleSetName;
         }

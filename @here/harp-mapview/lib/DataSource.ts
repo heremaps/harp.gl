@@ -464,7 +464,11 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @param languages - optional: The languages in priority order to be applied
      * @param styleSetName - optional: The Name of the StyleSet to be used.
      */
-    setTheme(theme: Theme | FlatTheme, languages?: string[], styleSetName?: string): void {
+    async setTheme(
+        theme: Theme | FlatTheme,
+        languages?: string[],
+        styleSetName?: string
+    ): Promise<void> {
         // to be overwritten by subclasses
     }
 

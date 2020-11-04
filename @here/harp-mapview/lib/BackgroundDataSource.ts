@@ -53,7 +53,7 @@ export class BackgroundDataSource extends DataSource {
     }
 
     /** @override */
-    setTheme(theme: Theme | FlatTheme, languages?: string[]) {
+    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
         this.mapView.clearTileCache(this.name);
     }
 
