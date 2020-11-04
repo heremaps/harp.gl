@@ -322,7 +322,7 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      *
      * @see {@link ThemeLoader.load} for details how theme is loaded
      */
-    theme?: string | Theme | Promise<Theme>;
+    theme?: string | Theme | FlatTheme | Promise<Theme>;
 
     /**
      * Resolve `URI` referenced in `MapView` assets using this resolver.

@@ -316,7 +316,7 @@ describe("TileDataSource", function() {
         assert.equal(testedDataSource.maxDataLevel, 17);
     });
 
-    it("supports setting of theme", function() {
+    it("supports setting of theme", async function() {
         const mockDecoder = createMockTileDecoder();
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
             styleSetName: "tilezen",
@@ -336,7 +336,7 @@ describe("TileDataSource", function() {
             }
         ];
 
-        testedDataSource.setTheme({
+        await testedDataSource.setTheme({
             styles
         });
 
