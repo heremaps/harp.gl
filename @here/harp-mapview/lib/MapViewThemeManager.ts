@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ImageTexture, Theme } from "@here/harp-datasource-protocol";
+import { ImageDefinitions, ImageTexture, PoiTableRef, Theme } from "@here/harp-datasource-protocol";
 import { LoggerManager, UriResolver } from "@here/harp-utils";
 
 import { MapViewImageCache } from "./image/MapViewImageCache";
@@ -83,30 +83,35 @@ export class MapViewThemeManager {
         // Fog and sky.
         this.m_theme.fog = theme.fog;
         this.m_theme.sky = theme.sky;
-        environment.updateSkyBackground(theme);
-        environment.fog.reset(theme);
+        environment.updateSkyBackground(theme.sky);
+        environment.fog.reset(theme.fog);
 
         this.m_theme.lights = theme.lights;
-        environment.updateLighting(theme);
+        environment.updateLighting(theme.lights);
 
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
         this.m_theme.clearAlpha = theme.clearAlpha;
-        environment.updateClearColor(theme);
+        environment.updateClearColor(theme.clearColor, theme.clearAlpha);
 
         // Images.
         this.m_theme.images = theme.images;
         this.m_theme.imageTextures = theme.imageTextures;
-        await this.updateImages(theme);
+        await this.updateImages(theme.images, theme.imageTextures);
+
         // POI tables.
         this.m_theme.poiTables = theme.poiTables;
-        await this.loadPoiTables(theme);
+        await this.loadPoiTables(theme.poiTables);
         // Text.
         this.m_theme.textStyles = theme.textStyles;
         this.m_theme.defaultTextStyle = theme.defaultTextStyle;
         this.m_theme.fontCatalogs = theme.fontCatalogs;
 
-        await this.m_mapView.resetTextRenderer(theme);
+        await this.m_mapView.resetTextRenderer(
+            theme.fontCatalogs,
+            theme.textStyles,
+            theme.defaultTextStyle
+        );
 
         if (Array.isArray(theme.priorities)) {
             this.m_theme.priorities = theme.priorities;
@@ -120,21 +125,24 @@ export class MapViewThemeManager {
         if (this.m_theme.styles === undefined) {
             this.m_theme.styles = {};
         }
-        environment.setBackgroundTheme(theme);
 
         this.m_theme.styles = theme.styles ?? {};
         this.m_theme.definitions = theme.definitions;
 
         // TODO: this is asynchronouse too
+        environment.clearBackgroundDataSource();
         for (const dataSource of this.m_mapView.dataSources) {
             dataSource.setTheme(this.m_theme);
         }
     }
 
     updateCache() {
-        this.updateImages(this.m_theme);
-        this.m_mapView.sceneEnvironment.updateLighting(this.m_theme);
-        this.m_mapView.sceneEnvironment.updateSkyBackground(this.m_theme);
+        this.updateImages(this.m_theme.images, this.m_theme.imageTextures);
+        this.m_mapView.sceneEnvironment.updateLighting(this.m_theme.lights);
+        this.m_mapView.sceneEnvironment.updateSkyBackground(
+            this.m_theme.sky,
+            this.m_theme.clearColor
+        );
     }
 
     get imageCache(): MapViewImageCache {
@@ -145,11 +153,11 @@ export class MapViewThemeManager {
         this.m_imageCache.clear();
     }
 
-    private async loadPoiTables(theme: Theme) {
+    private async loadPoiTables(poiTables?: PoiTableRef[]) {
         this.m_mapView.poiTableManager.clear();
 
         // Add the POI tables defined in the theme.
-        await this.m_mapView.poiTableManager.loadPoiTables(theme as Theme);
+        await this.m_mapView.poiTableManager.loadPoiTables(poiTables);
     }
 
     private cancelThemeUpdate() {
@@ -167,13 +175,13 @@ export class MapViewThemeManager {
         return this.m_abortControllers[this.m_abortControllers.length - 1];
     }
 
-    private async updateImages(theme: Theme) {
+    private async updateImages(images?: ImageDefinitions, imageTextures?: ImageTexture[]) {
         this.m_imageCache.clear();
         this.m_mapView.poiManager.clear();
 
-        if (theme.images !== undefined) {
-            for (const name of Object.keys(theme.images)) {
-                const image = theme.images[name];
+        if (images !== undefined) {
+            for (const name of Object.keys(images)) {
+                const image = images[name];
                 this.m_imageCache.addImage(name, image.url, image.preload === true);
                 if (typeof image.atlas === "string") {
                     await this.m_mapView.poiManager.addTextureAtlas(
@@ -185,8 +193,8 @@ export class MapViewThemeManager {
             }
         }
 
-        if (theme.imageTextures !== undefined) {
-            theme.imageTextures.forEach((imageTexture: ImageTexture) => {
+        if (imageTextures !== undefined) {
+            imageTextures.forEach((imageTexture: ImageTexture) => {
                 this.m_mapView.poiManager.addImageTexture(imageTexture);
             });
         }

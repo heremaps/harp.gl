@@ -3,8 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { Theme } from "@here/harp-datasource-protocol";
+import { Fog } from "@here/harp-datasource-protocol";
 import { HighPrecisionLineMaterial } from "@here/harp-materials";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
@@ -18,7 +17,7 @@ export class MapViewFog {
     private m_enabled: boolean = true;
     private m_fog: THREE.Fog = new THREE.Fog(0x000000); // Default color asked by DefinitelyTyped.
     private m_fogIsDefined: boolean = false;
-    private m_cachedTheme: Theme = { styles: {} };
+    private m_cachedFog: Fog | undefined;
 
     /**
      * Constructs a `MapViewFog` instance.
@@ -60,16 +59,11 @@ export class MapViewFog {
      *
      * @param theme - A {@link @here/harp-datasource-protocol#Theme} instance.
      */
-    reset(theme: Theme) {
-        this.m_cachedTheme = theme;
-        if (
-            theme !== undefined &&
-            theme.fog !== undefined &&
-            theme.fog.color !== undefined &&
-            theme.fog.startRatio !== undefined
-        ) {
+    reset(fog?: Fog) {
+        this.m_cachedFog = fog;
+        if (fog !== undefined && fog.color !== undefined && fog.startRatio !== undefined) {
             this.m_fogIsDefined = true;
-            this.m_fog.color.set(theme.fog.color);
+            this.m_fog.color.set(fog.color);
             if (this.m_enabled && this.m_scene.fog === null) {
                 this.add();
             }
@@ -89,9 +83,9 @@ export class MapViewFog {
     update(mapView: MapView, viewDistance?: number) {
         if (
             this.m_scene.fog !== null &&
-            this.m_cachedTheme !== undefined &&
-            this.m_cachedTheme.fog &&
-            this.m_cachedTheme.fog.startRatio !== undefined &&
+            this.m_cachedFog !== undefined &&
+            this.m_cachedFog &&
+            this.m_cachedFog.startRatio !== undefined &&
             (mapView.camera.far !== undefined || viewDistance !== undefined)
         ) {
             // If maximum visibility range is available use it instead of camera.far distance,
@@ -105,7 +99,7 @@ export class MapViewFog {
             const verticalDensity = 0.0;
             // The fraction of the maximum viewing distance along the eye vector
             // to start applying the fog.
-            const startRatio = this.m_cachedTheme.fog.startRatio;
+            const startRatio = this.m_cachedFog.startRatio;
             // The fraction of maximum viewing range at which fog fully covers geometry.
             const endRatio = 1.0;
             assert(startRatio <= endRatio);

@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     ColorUtils,
     getPropertyValue,
@@ -13,8 +12,7 @@ import {
     PlacementToken,
     PoiTechnique,
     TextStyleDefinition,
-    TextTechnique,
-    Theme
+    TextTechnique
 } from "@here/harp-datasource-protocol";
 import {
     DefaultTextStyle,
@@ -88,13 +86,16 @@ export class TextStyleCache {
         layoutParams: defaultTextLayoutStyle.params
     };
 
-    constructor(private m_theme: Theme) {}
+    constructor(
+        private m_textStyleDefinitions?: TextStyleDefinition[],
+        private readonly m_defaultTextStyleDefinition?: TextStyleDefinition
+    ) {}
 
     initializeDefaultTextElementStyle(defaultFontCatalogName: string) {
-        if (this.m_theme.textStyles === undefined) {
-            this.m_theme.textStyles = [];
+        if (this.m_textStyleDefinitions === undefined) {
+            this.m_textStyleDefinitions = [];
         }
-        const styles = this.m_theme.textStyles;
+        const styles = this.m_textStyleDefinitions;
 
         const themedDefaultStyle = styles.find(style => style.name === DEFAULT_STYLE_NAME);
         if (themedDefaultStyle !== undefined) {
@@ -102,9 +103,9 @@ export class TextStyleCache {
                 themedDefaultStyle,
                 DEFAULT_STYLE_NAME
             );
-        } else if (this.m_theme.defaultTextStyle !== undefined) {
+        } else if (this.m_defaultTextStyleDefinition !== undefined) {
             this.m_defaultStyle = this.createTextElementStyle(
-                this.m_theme.defaultTextStyle,
+                this.m_defaultTextStyleDefinition,
                 DEFAULT_STYLE_NAME
             );
         } else if (styles.length > 0) {
@@ -143,7 +144,7 @@ export class TextStyleCache {
         }
 
         // Initialize theme text styles.
-        this.m_theme.textStyles!.forEach(element => {
+        this.m_textStyleDefinitions!.forEach(element => {
             this.m_textStyles.set(
                 element.name!,
                 this.createTextElementStyle(element, element.name!)
