@@ -37,6 +37,7 @@ import * as path from "path";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
+import { PoiBuffer } from "../lib/poi/PoiRenderer";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { placeIcon, PlacementResult, placePointLabel } from "../lib/text/Placement";
 import { RenderState } from "../lib/text/RenderState";
@@ -1287,7 +1288,7 @@ describe("Placement", function() {
                 computedWidth: 32,
                 computedHeight: 32,
                 mayOverlap: false,
-                poiRenderBatch: 1,
+                buffer: {} as PoiBuffer,
                 technique: {}
             };
 
@@ -1311,7 +1312,7 @@ describe("Placement", function() {
                 computedWidth: 32,
                 computedHeight: 32,
                 mayOverlap: false,
-                poiRenderBatch: 1,
+                buffer: {} as PoiBuffer,
                 technique: {
                     iconYOffset: -16
                 }
