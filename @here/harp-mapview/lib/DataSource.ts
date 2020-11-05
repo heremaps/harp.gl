@@ -27,6 +27,13 @@ export interface DataSourceOptions {
      */
     styleSetName?: string;
     /**
+     * Used to configure the languages used by the `DataSource` according to priority;
+     * the first language in the array has the highest priority.
+     *
+     *  An array of ISO 639-1 language codes.
+     */
+    languages?: string[];
+    /**
      * The minimum zoom level at which data is available or displayed at
      * (depending on {@link DataSource} subclass).
      * @deprecated Use [[minDataLevel]] and [[minDisplayLevel]] instead.
@@ -221,6 +228,11 @@ export abstract class DataSource extends THREE.EventDispatcher {
     private readonly m_featureStateMap = new Map<number, ValueMap>();
 
     /**
+     *  An array of ISO 639-1 language codes.
+     */
+    protected languages?: string[];
+
+    /**
      * Constructs a new `DataSource`.
      *
      * @param options - The options to create the data source.
@@ -230,6 +242,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
         let { name } = options;
         const {
             styleSetName,
+            languages,
             minZoomLevel,
             maxZoomLevel,
             minDataLevel,
@@ -249,6 +262,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
         this.name = name;
 
         this.styleSetName = styleSetName;
+
+        if (languages !== undefined) {
+            this.languages = languages;
+        }
 
         if (minDataLevel !== undefined) {
             this.minDataLevel = minDataLevel;
@@ -461,7 +478,19 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * its tiles' geometry.
      *
      * @param theme - The Theme to be applied
+     */
+    async setTheme(theme: Theme | FlatTheme): Promise<void>;
+
+    /**
+     * Apply the {@link @here/harp-datasource-protocol#Theme} to this data source.
+     *
+     * If `DataSource` depends on a `styleSet` defined by this theme or `languages`, it must update
+     * its tiles' geometry.
+     *
+     * @param theme - The Theme to be applied
      * @param languages - optional: The languages in priority order to be applied
+     *
+     * @deprecated use setTheme( Theme | FlatTheme) and setLanguages(string[]) instead
      */
     async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
         // to be overwritten by subclasses
@@ -474,6 +503,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @param languages - An array of ISO 639-1 language codes.
      */
     setLanguages(languages?: string[]): void {
+        this.languages = languages;
         // to be overloaded by subclasses
     }
 

@@ -78,7 +78,8 @@ describe("DataSource", function() {
                 maxDataLevel: 14,
                 minDisplayLevel: 10,
                 maxDisplayLevel: 17,
-                storageLevelOffset: -1
+                storageLevelOffset: -1,
+                languages: []
             });
 
             expect(dataSource.name).to.equal("TestDataSource");
