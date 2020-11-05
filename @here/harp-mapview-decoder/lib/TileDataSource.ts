@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ITileDecoder, Theme, TileInfo } from "@here/harp-datasource-protocol";
+import { FlatTheme, ITileDecoder, StyleSet, Theme, TileInfo } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -14,6 +14,7 @@ import {
     Tile,
     TileLoaderState
 } from "@here/harp-mapview";
+import { ThemeLoader } from "@here/harp-mapview/lib/ThemeLoader";
 import { ILogger, LoggerManager } from "@here/harp-utils";
 
 import { DataProvider } from "./DataProvider";
@@ -198,15 +199,14 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
      * `styleSetName` property) is found in `theme`.
      * @override
      */
-    setTheme(theme: Theme, languages?: string[], styleSetName?: string): void {
-        if (styleSetName !== undefined) {
-            this.styleSetName = styleSetName;
-        }
+    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
+        // Seems superfluent, but the call to  ThemeLoader.load will resolve extends etc.
+        theme = await ThemeLoader.load(theme);
 
-        const styleSet =
-            this.styleSetName !== undefined && theme.styles
-                ? theme.styles[this.styleSetName]
-                : undefined;
+        let styleSet: StyleSet | undefined;
+        if (this.styleSetName !== undefined && theme.styles !== undefined) {
+            styleSet = theme.styles[this.styleSetName];
+        }
 
         if (styleSet !== undefined) {
             this.m_decoder.configure({

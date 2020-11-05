@@ -3,7 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { StandardGeometryKind, StyleSet, Technique, Theme } from "@here/harp-datasource-protocol";
+import {
+    FlatTheme,
+    StandardGeometryKind,
+    StyleSet,
+    Technique,
+    Theme
+} from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
@@ -18,6 +24,7 @@ import * as THREE from "three";
 import { DataSource, DataSourceOptions } from "./DataSource";
 import { createMaterial } from "./DecodedTileHelpers";
 import { MapObjectAdapter } from "./MapObjectAdapter";
+import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 
 export interface PolarTileDataSourceOptions extends DataSourceOptions {
@@ -120,17 +127,14 @@ export class PolarTileDataSource extends DataSource {
     }
 
     /** @override */
-    setTheme(theme: Theme, languages?: string[], styleSetName?: string): void {
+    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
+        // Seems superfluent, but the call to  ThemeLoader.load will resolve extends etc.
+        theme = await ThemeLoader.load(theme);
         let styleSet: StyleSet | undefined;
-
-        if (styleSetName) {
-            this.styleSetName = styleSetName;
-        }
 
         if (this.styleSetName !== undefined && theme.styles !== undefined) {
             styleSet = theme.styles[this.styleSetName];
         }
-        this.dispose();
 
         this.m_styleSetEvaluator = new StyleSetEvaluator({
             styleSet: styleSet ?? [],

@@ -3,12 +3,16 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
 import "@here/harp-fetch";
 
-import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/harp-datasource-protocol";
+import {
+    DecodedTile,
+    DecoderOptions,
+    Geometry,
+    ITileDecoder,
+    StyleSet,
+    TileInfo
+} from "@here/harp-datasource-protocol";
 import {
     Projection,
     TileKey,
@@ -20,6 +24,8 @@ import { assert } from "chai";
 import * as sinon from "sinon";
 
 import { DataProvider, TileDataSource, TileFactory } from "../index";
+
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 class MockDataProvider extends DataProvider {
     /** @override */ async connect() {
@@ -65,7 +71,7 @@ function createMockTileDecoder() {
         ): Promise<TileInfo | undefined> {
             return await Promise.resolve(undefined);
         },
-        configure() {
+        configure(options: DecoderOptions) {
             // no configuration needed for mock
         }
     };
@@ -79,7 +85,8 @@ function createMockMapView() {
         projection: webMercatorProjection,
         getDataSourceByName() {},
         statistics: new Statistics(),
-        frameNumber: 0
+        frameNumber: 0,
+        clearTileCache: () => {}
     } as any) as MapView;
 }
 
@@ -307,5 +314,33 @@ describe("TileDataSource", function() {
         assert.equal(testedDataSource.minDataLevel, 3);
         assert.equal(testedDataSource.maxZoomLevel, 17);
         assert.equal(testedDataSource.maxDataLevel, 17);
+    });
+
+    it("supports setting of theme", async function() {
+        const mockDecoder = createMockTileDecoder();
+        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+            styleSetName: "tilezen",
+            tilingScheme: webMercatorTilingScheme,
+            dataProvider: new MockDataProvider(),
+            decoder: mockDecoder,
+            minZoomLevel: 3,
+            maxZoomLevel: 17
+        });
+
+        testedDataSource.attach(createMockMapView());
+
+        const styles: StyleSet = [
+            {
+                styleSet: "tilezen",
+                technique: "none"
+            }
+        ];
+
+        await testedDataSource.setTheme({
+            styles
+        });
+
+        assert(mockDecoder.configure.calledOnce);
+        assert(mockDecoder.configure.calledWith(sinon.match({ styleSet: styles })));
     });
 });

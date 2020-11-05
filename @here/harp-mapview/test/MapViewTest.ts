@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { Expr, getProjectionName } from "@here/harp-datasource-protocol";
 import {
     GeoBox,
@@ -1657,6 +1656,24 @@ describe("MapView", function() {
             const theme = await mapView.getTheme();
 
             expect(theme.styles).to.not.be.empty;
+        });
+
+        it("loads a 'flat' theme ", async function() {
+            mapView = new MapView({
+                canvas,
+                theme: {
+                    styles: [
+                        {
+                            technique: "none",
+                            styleSet: "tilezen"
+                        }
+                    ]
+                }
+            });
+
+            const theme = await mapView.getTheme();
+            expect(theme.styles).to.not.be.empty;
+            expect(theme.styles?.tilezen).to.not.be.undefined;
         });
 
         it("allows to reset theme", async function() {

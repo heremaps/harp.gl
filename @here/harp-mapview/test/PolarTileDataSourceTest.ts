@@ -159,8 +159,8 @@ describe("PolarTileDataSource", function() {
             assert.equal(south.objects.length, 0);
         });
 
-        it("Creates tile with objects if has pole styles", function() {
-            dataSource.setTheme(theme_south);
+        it("Creates tile with objects if has pole styles", async function() {
+            await dataSource.setTheme(theme_south);
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
             const south = dataSource.getTile(TileKey.fromRowColumnLevel(0, 1, 2));
 
@@ -168,8 +168,8 @@ describe("PolarTileDataSource", function() {
             assert.equal(south.objects.length, 1);
         });
 
-        it("Creates meshes with proper materials", function() {
-            dataSource.setTheme(theme_both);
+        it("Creates meshes with proper materials", async function() {
+            await dataSource.setTheme(theme_both);
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
             const south = dataSource.getTile(TileKey.fromRowColumnLevel(0, 1, 2));
 
@@ -184,8 +184,8 @@ describe("PolarTileDataSource", function() {
             });
         });
 
-        it("Don't create geometries if disposed", function() {
-            dataSource.setTheme(theme_both);
+        it("Don't create geometries if disposed", async function() {
+            await dataSource.setTheme(theme_both);
             dataSource.dispose();
 
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
@@ -216,7 +216,7 @@ describe("PolarTileDataSource", function() {
             return points;
         }
 
-        beforeEach(function() {
+        beforeEach(async function() {
             dataSource = new PolarTileDataSource({});
 
             mapViewStub = sinon.createStubInstance(MapView);
@@ -227,7 +227,7 @@ describe("PolarTileDataSource", function() {
                 return renderer;
             });
             dataSource.attach((mapViewStub as unknown) as MapView);
-            dataSource.setTheme(theme_both);
+            await dataSource.setTheme(theme_both);
         });
 
         it("Creates empty tile if outside of pole radius", function() {

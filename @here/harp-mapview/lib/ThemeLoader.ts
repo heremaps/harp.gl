@@ -169,7 +169,8 @@ export class ThemeLoader {
      * @param theme -
      */
     static isThemeLoaded(theme: Theme | FlatTheme): boolean {
-        return theme.extends === undefined;
+        // TODO: Remove array check, when FlatTheme is fully supported
+        return theme.extends === undefined && !Array.isArray(theme.styles);
     }
 
     /**
