@@ -46,7 +46,7 @@ const tmpPointDir = new THREE.Vector3(0, 0, 0);
 const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Math.PI)
 
 /**
- * Checks whether the distance of the text element to the camera plane meets threshold criterias.
+ * Checks whether the distance of the text element to the camera plane meets threshold criteria.
  *
  * @param textElement - The textElement of which the view distance will be checked, with coordinates
  * in world space.
@@ -86,7 +86,7 @@ function checkViewDistance(
  * Computes distance of the specified text element to camera plane given with position and normal.
  *
  * The distance is measured as projection of the vector between `eyePosition` and text
- * eonto the `eyeLookAt` vector, so it actually computes the distance to plane that
+ * onto the `eyeLookAt` vector, so it actually computes the distance to plane that
  * contains `eyePosition` and is described with `eyeLookAt` as normal.
  *
  * @note Used for measuring the distances to camera, results in the metric that describes
@@ -411,9 +411,6 @@ export function placeIcon(
  * @param env - The {@link @here/harp-datasource-protocol#Env} used
  *              to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
- * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
- * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
- * for newly placed (upcoming) label or `PlacementResult.Rejected` if the label was persistent.
  * @param outScreenPosition - The final label screen position after applying any offsets.
  * @param multiAnchor - The parameter decides if multi-anchor placement algorithm should be
  * used, be default [[false]] meaning try to place label using current alignment settings only.
@@ -583,9 +580,6 @@ function placePointLabelChoosingAnchor(
  * @param env - The {@link @here/harp-datasource-protocol#Env}
  *              used to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
- * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
- * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
- * or `PlacementResult.Rejected`.
  * @param outScreenPosition - The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if point label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
@@ -632,9 +626,6 @@ function placePointLabelAtCurrentAnchor(
  * @param env - The {@link @here/harp-datasource-protocol#Env}
  *              used to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
- * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
- * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
- * or `PlacementResult.Rejected`.
  * @param forceInvalidation - Set to true if text layout or other params has changed such as text
  * re-measurement is required and text buffer need to be invalidated.
  * @param outScreenPosition - The final label screen position after applying any offsets.
