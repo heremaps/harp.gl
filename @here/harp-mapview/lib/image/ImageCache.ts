@@ -13,31 +13,13 @@ const logger = LoggerManager.instance.create("ImageCache");
 const mipMapGenerator = new MipMapGenerator();
 
 /**
- * Interface for classes that access the shared {@link ImageCache} and need to be informed when an
- * image is removed from the cache. It also acts as a reference for the cache. For most operations,
- * an image will not be removed from the cache as long as there is at least one owner left for that
- * image.
- */
-export interface ImageCacheOwner {
-    /**
-     * Notify the owner that an image has been removed either by the owner itself, or by another
-     * owner.
-     *
-     * @param url - The URL of the image which is used as the key to the cache.
-     */
-    imageRemoved(url: string): void;
-}
-
-/**
  * Combines an {@link ImageItem} with a list of owners (which can be any object) that reference it.
  */
 class ImageCacheItem {
     /**
-     * The list of owners referencing the {@link ImageItem}. The owners are implementers of
-     * {@link ImageCacheOwner} which are notified if the cache item has been removed from the
-     * cache.
+     * The list of owners referencing the {@link ImageItem}.
      */
-    owners: ImageCacheOwner[] = [];
+    owners: any[] = [];
 
     /**
      * Instantiates `ImageCacheItem`.
@@ -45,7 +27,7 @@ class ImageCacheItem {
      * @param imageItem - The {@link ImageItem} referenced by the associated owners.
      * @param owner - An optional first owner referencing the {@link ImageItem}.
      */
-    constructor(public imageItem: ImageItem, owner?: ImageCacheOwner) {
+    constructor(public imageItem: ImageItem, owner?: any) {
         if (owner !== undefined) {
             this.owners.push(owner);
         }
@@ -91,12 +73,12 @@ export class ImageCache {
 
     private static m_instance: ImageCache | undefined;
 
-    private m_images: Map<string, ImageCacheItem> = new Map();
+    private readonly m_images: Map<string, ImageCacheItem> = new Map();
 
     /**
      * Add an image definition to the global cache. Useful when the image data is already loaded.
      *
-     * @param owner - Specify which {@link ImageCacheOwner} requests the image.
+     * @param owner - Specify which {@link any} requests the image.
      * @param url - URL of image.
      * @param image - Optional {@link TexturizableImage}.
      */
@@ -127,50 +109,16 @@ export class ImageCache {
      * Remove an image from the cache..
      *
      * @param url - URL of the image.
-     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
+     * @param owner - Optional: Specify {@link any} removing the image.
      * @returns `true` if image has been removed.
      */
-    removeImage(url: string, owner?: ImageCacheOwner): boolean {
+    removeImage(url: string, owner?: any): boolean {
         const cacheItem = this.m_images.get(url);
         if (cacheItem !== undefined) {
             this.unlinkCacheItem(cacheItem, owner);
             return true;
         }
         return false;
-    }
-
-    /**
-     * Remove an image from the cache.
-     *
-     * @param imageItem - Item identifying the image.
-     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
-     * @returns `true` if image has been removed.
-     */
-    removeImageItem(imageItem: ImageItem, owner?: ImageCacheOwner): boolean {
-        const cacheItem = this.m_images.get(imageItem.url);
-        if (cacheItem !== undefined) {
-            this.unlinkCacheItem(cacheItem, owner);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Remove images from the cache using a filter function.
-     *
-     * @param itemFilter - Filter to identify images to remove. Should return `true` if item
-     * should be removed.
-     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
-     * @returns Number of images removed.
-     */
-    removeImageItems(itemFilter: (item: ImageItem) => boolean, owner?: ImageCacheOwner): number {
-        const oldSize = this.m_images.size;
-        [...this.m_images.values()].filter((cacheItem: ImageCacheItem) => {
-            if (itemFilter(cacheItem.imageItem)) {
-                this.unlinkCacheItem(cacheItem, owner);
-            }
-        });
-        return oldSize - this.m_images.size;
     }
 
     /**
@@ -193,34 +141,13 @@ export class ImageCache {
      * @remarks
      * May remove cached items if no owner is registered anymore.
      *
-     * @param owner - specify to remove all items registered by {@link ImageCacheOwner}.
+     * @param owner - specify to remove all items registered by {@link any}.
      * @returns Number of images removed.
      */
-    clear(owner: ImageCacheOwner): number {
-        const oldSize = this.m_images.size;
-        const itemsToRemove: ImageCacheItem[] = [];
-
+    clear(owner: any) {
         this.m_images.forEach(cacheItem => {
-            const ownerIndex = cacheItem.owners.indexOf(owner);
-            if (ownerIndex >= 0) {
-                itemsToRemove.push(cacheItem);
-            }
-        });
-
-        for (const cacheItem of itemsToRemove) {
             this.unlinkCacheItem(cacheItem, owner);
-        }
-        return oldSize - this.m_images.size;
-    }
-
-    /**
-     * Clear all {@link ImageItem}s from all owners.
-     */
-    clearAll() {
-        this.m_images.forEach(cacheItem => {
-            this.unlinkCacheItem(cacheItem);
         });
-        this.m_images = new Map();
     }
 
     /**
@@ -285,17 +212,6 @@ export class ImageCache {
     }
 
     /**
-     * Apply a function to every `ImageItem` in the cache.
-     *
-     * @param func - Function to apply to every `ImageItem`.
-     */
-    apply(func: (imageItem: ImageItem) => void) {
-        this.m_images.forEach(cacheItem => {
-            func(cacheItem.imageItem);
-        });
-    }
-
-    /**
      * Find the cached {@link ImageItem} by URL.
      *
      * @param url - URL of image.
@@ -317,27 +233,26 @@ export class ImageCache {
     }
 
     /**
-     * Remove the cacheItem from cache and from the owners that have this item in their
-     * cache. If the item is used by another owner, the item is not removed, but the link
-     * to the owner is removed from the item, just like a reference count.
+     * Remove the cacheItem from cache, unless the item is used by another owner, in that case the
+     * link to the owner is removed from the item, just like a reference count.
      *
      * @param cacheItem The cache item to be removed.
-     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
+     * @param owner - Optional: Specify which owner ({@link any}) removes the image.
+     * If no owner is specified, the cache item is removed even if it has owners.
      */
-    private unlinkCacheItem(cacheItem: ImageCacheItem, owner?: ImageCacheOwner) {
+    private unlinkCacheItem(cacheItem: ImageCacheItem, owner?: any) {
         if (owner) {
             const ownerIndex = cacheItem.owners.indexOf(owner);
             if (ownerIndex >= 0) {
                 cacheItem.owners.splice(ownerIndex, 1);
             }
-            if (cacheItem.owners.length === 0) {
-                this.m_images.delete(cacheItem.imageItem.url);
-                this.cancelLoading(cacheItem.imageItem);
-                owner.imageRemoved(cacheItem.imageItem.url);
+            if (cacheItem.owners.length > 0) {
+                // Do not delete the item, it is still used.
+                return;
             }
-        } else {
-            this.m_images.delete(cacheItem.imageItem.url);
-            this.cancelLoading(cacheItem.imageItem);
         }
+
+        this.m_images.delete(cacheItem.imageItem.url);
+        this.cancelLoading(cacheItem.imageItem);
     }
 }

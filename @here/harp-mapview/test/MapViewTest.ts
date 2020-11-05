@@ -455,19 +455,6 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-3);
     });
 
-    it("Check getters", function() {
-        // Make codecov happy ;)
-        mapView = new MapView({
-            canvas,
-            tilt: 45,
-            heading: 90
-        });
-
-        expect(mapView.imageCache.numberOfNames).to.be.equal(0);
-        expect(mapView.userImageCache.numberOfNames).to.be.equal(0);
-        assert.isDefined(mapView.pickHandler);
-    });
-
     it("Correctly set and get zoom", function() {
         mapView = new MapView({
             canvas,

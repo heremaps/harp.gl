@@ -7,7 +7,7 @@
 import { assert } from "@here/harp-utils";
 
 import { ImageItem, TexturizableImage } from "./Image";
-import { ImageCache, ImageCacheOwner } from "./ImageCache";
+import { ImageCache } from "./ImageCache";
 
 /**
  * Cache images wrapped into {@link ImageItem}s for a {@link MapView}.
@@ -21,14 +21,9 @@ import { ImageCache, ImageCacheOwner } from "./ImageCache";
  * The `MapViewImageCache` uses a global {@link ImageCache} to actually store (and generate) the
  * image data.
  */
-export class MapViewImageCache implements ImageCacheOwner {
-    private m_name2Url: Map<string, string> = new Map();
-    private m_url2Name: Map<string, string[]> = new Map();
-
-    /**
-     * The constructor for `MapViewImageCache`.
-     */
-    constructor() {}
+export class MapViewImageCache {
+    private readonly m_name2Url: Map<string, string> = new Map();
+    private readonly m_urlNameCount: Map<string, number> = new Map();
 
     /**
      * Add an image from an URL and optionally start loading it, storing the resulting
@@ -86,56 +81,29 @@ export class MapViewImageCache implements ImageCacheOwner {
      * @returns `true` if item has been removed.
      */
     removeImage(name: string): boolean {
-        return this.removeImageImpl(name);
-    }
+        const url = this.m_name2Url.get(name);
+        if (url !== undefined) {
+            this.m_name2Url.delete(name);
 
-    /**
-     * Remove images using the URL from the cache.
-     *
-     * @param url - URL of the image.
-     * @returns `true` if image has been removed. If multiple images are referring to the same
-     * image URL, they are all removed.
-     */
-    removeImageByUrl(url: string): boolean {
-        const names = this.m_url2Name.get(url);
-        if (names !== undefined) {
-            for (const name of [...names]) {
-                this.removeImageImpl(name);
+            let nameCount = 1;
+            if (name !== url) {
+                const result = this.m_urlNameCount.get(url);
+                assert(result !== undefined);
+                nameCount = result!;
+                assert(nameCount > 0);
+            }
+
+            if (nameCount > 1) {
+                // There is another name sharing this URL.
+                this.m_urlNameCount.set(url, nameCount - 1);
+            } else {
+                // URL was used by this image only, remove the image.
+                this.m_urlNameCount.delete(url);
+                ImageCache.instance.removeImage(url, this);
             }
             return true;
         }
         return false;
-    }
-
-    /**
-     * @internal
-     * @hidden
-     * This method is called by the internally shared {@link ImageCache} to notify that this image
-     * has been removed from the cache, and is no longer available.
-     *
-     * @param url - URL of the image that has been removed from the internal (shared) cache.
-     */
-    imageRemoved(url: string): void {
-        this.removeImageByUrl(url);
-    }
-
-    /**
-     * Remove images from the cache.
-     *
-     * @param itemFilter - Filter to identify images to remove. Should return `true` if item
-     * should be removed.
-     * @returns Number of images removed.
-     */
-    removeImages(itemFilter: (name: string, url: string) => boolean): number {
-        let numImagesRemoved = 0;
-        for (const [name, url] of [...this.m_name2Url]) {
-            if (itemFilter(name, url)) {
-                if (this.removeImage(name)) {
-                    numImagesRemoved++;
-                }
-            }
-        }
-        return numImagesRemoved;
     }
 
     /**
@@ -148,15 +116,6 @@ export class MapViewImageCache implements ImageCacheOwner {
         if (url === undefined) {
             return undefined;
         }
-        return ImageCache.instance.findImage(url);
-    }
-
-    /**
-     * Find {@link ImageItem} by URL.
-     *
-     * @param url - Url of image.
-     */
-    findImageByUrl(url: string): ImageItem | undefined {
         return ImageCache.instance.findImage(url);
     }
 
@@ -177,55 +136,10 @@ export class MapViewImageCache implements ImageCacheOwner {
      * {@link MapView} from the global {@link ImageCache}.
      * @returns Number of images removed.
      */
-    clear(): number {
-        const oldSize = ImageCache.instance.size;
+    clear() {
         ImageCache.instance.clear(this);
-        this.m_name2Url = new Map();
-        this.m_url2Name = new Map();
-        return oldSize;
-    }
-
-    /**
-     * Returns number of mappings from name to URL in the cache. Only items with a name can get
-     * mapped to URL.
-     */
-    get numberOfNames(): number {
-        return this.m_name2Url.size;
-    }
-
-    /**
-     * Returns number of mappings from URL to name in the cache. Only items with a name can get
-     * mapped from URL to name.
-     */
-    get numberOfUrls(): number {
-        return this.m_url2Name.size;
-    }
-
-    /**
-     * Return `true` if an image with the given name is known.
-     *
-     * @param name - Name of the image.
-     */
-    hasName(name: string): boolean {
-        return this.m_name2Url.get(name) !== undefined;
-    }
-
-    /**
-     * Return `true` if an image with the given URL is known. Only items with a name can get
-     * mapped from URL to name.
-     *
-     * @param url - URL of image.
-     */
-    hasUrl(url: string): boolean {
-        return this.m_url2Name.get(url) !== undefined;
-    }
-
-    /**
-     * Return the names under which an image with the given URL is saved. Only items with a name
-     * can get mapped from URL to name.
-     */
-    findNames(url: string): string[] | undefined {
-        return this.m_url2Name.get(url);
+        this.m_name2Url.clear();
+        this.m_urlNameCount.clear();
     }
 
     /**
@@ -236,53 +150,27 @@ export class MapViewImageCache implements ImageCacheOwner {
      * @param image - Optional {@link TexturizableImage}.
      */
     private registerImage(name: string, url?: string, image?: TexturizableImage): ImageItem {
-        if (url === undefined) {
-            assert(image !== undefined);
-
-            // Register new image or add this mapView to list of MapViews using this image
-            // (identified by URL).
-            return ImageCache.instance.registerImage(this, name, image);
-        }
-
         if (this.hasName(name)) {
             throw new Error("duplicate name in cache");
         }
 
-        const oldNames = this.m_url2Name.get(url);
-        if (oldNames !== undefined) {
-            if (!oldNames.includes(name)) {
-                oldNames.push(name);
-            }
-        } else {
-            this.m_url2Name.set(url, [name]);
+        if (url === undefined) {
+            // If no url given, an image must be provided directly. In this case the name is used
+            // as url.
+            assert(image !== undefined);
+            url = name;
         }
+
+        if (url !== name) {
+            const nameCount = this.m_urlNameCount.get(url) ?? 0;
+            this.m_urlNameCount.set(url, nameCount + 1);
+        }
+
         this.m_name2Url.set(name, url);
         return ImageCache.instance.registerImage(this, url, image);
     }
 
-    /**
-     * Remove the image with this name from the cache.
-     *
-     * @param name - Name of the image.
-     * @returns `true` if item has been removed.
-     */
-    private removeImageImpl(name: string): boolean {
-        const url = this.m_name2Url.get(name);
-        if (url !== undefined) {
-            this.m_name2Url.delete(name);
-            const names = this.m_url2Name.get(url);
-            if (names !== undefined && names.length > 1) {
-                // There is another name sharing this URL.
-                this.m_url2Name.set(url, names.splice(names.indexOf(name), 1));
-            } else {
-                // URL was used by this image only, remove the image.
-                this.m_url2Name.delete(url);
-                // If this is the last owner, the callback MapViewImageCache#imageRemoved will be
-                // called.
-                ImageCache.instance.removeImage(url, this);
-            }
-            return true;
-        }
-        return false;
+    private hasName(name: string): boolean {
+        return this.m_name2Url.get(name) !== undefined;
     }
 }
