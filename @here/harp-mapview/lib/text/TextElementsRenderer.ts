@@ -1574,6 +1574,7 @@ export class TextElementsRenderer {
     ): boolean {
         const pointLabel: TextElement = labelState.element;
         const textRenderState: RenderState | undefined = labelState.textRenderState;
+        const isLineMarker = iconIndex !== undefined;
 
         assert(iconIndex === undefined || labelState.iconRenderStates !== undefined);
         const iconRenderState: RenderState =
@@ -1681,16 +1682,24 @@ export class TextElementsRenderer {
                     placementStats.numPoiTextsInvisible++;
                 }
                 if (!renderIcon || iconInvisible) {
-                    labelState.reset();
+                    // Reset only the iconRenderState for line markers, not the shared
+                    // textRenderState, since some icons may be invisible while others are visible.
+                    // The labelState has to be reset by the calling function if no icons are
+                    // placed to reset the textRenderState properly.
+                    if (isLineMarker) {
+                        iconRenderState.reset();
+                    } else {
+                        labelState.reset();
+                    }
                     return false;
                 }
                 textRenderState!.reset();
             }
 
-            const iconIsRequired = !(poiInfo?.iconIsOptional === false);
-            // Rejected icons are only considered to hide the text if they are valid, so a missing icon image will
-            // not keep the text from showing up.
-            const requiredIconRejected: boolean = iconRejected && iconReady && iconIsRequired;
+            const iconIsOptional = poiInfo?.iconIsOptional !== false;
+            // Rejected icons are only considered to hide the text if they are valid, so a missing
+            // icon image will not keep the text from showing up.
+            const requiredIconRejected: boolean = iconRejected && iconReady && !iconIsOptional;
 
             const textRejected = requiredIconRejected || placeResult === PlacementResult.Rejected;
             if (!iconRejected && !iconInvisible) {
@@ -1831,6 +1840,7 @@ export class TextElementsRenderer {
 
         // Process markers (with shield groups).
         if (minDistanceSqr > 0 && shieldGroup !== undefined) {
+            let numShieldsVisible = 0;
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
 
@@ -1851,7 +1861,7 @@ export class TextElementsRenderer {
                         }
                     }
 
-                    // Place it as a point label if it's not to close to other marker in the
+                    // Place it as a point label if it's not to close to another marker in the
                     // same shield group.
                     if (!tooClose) {
                         if (
@@ -1866,9 +1876,15 @@ export class TextElementsRenderer {
                             )
                         ) {
                             shieldGroup.push(tempScreenPosition.x, tempScreenPosition.y);
+                            numShieldsVisible++;
                         }
                     }
                 }
+            }
+            if (numShieldsVisible === 0) {
+                // For road shields the shared textRenderState may only be reset if none of the
+                // icons can be rendered.
+                labelState.reset();
             }
         }
         // Process markers (without shield groups).
