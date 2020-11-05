@@ -19,6 +19,7 @@ import { EventDispatcher } from "three";
  */
 export abstract class DataProvider extends EventDispatcher {
     private readonly m_clients: Set<Object> = new Set();
+    private m_connectPromise: Promise<void> | undefined;
 
     /**
      * Registers a client to the data provider.
@@ -27,9 +28,11 @@ export abstract class DataProvider extends EventDispatcher {
      * @returns Promise to wait for successful (or failed) connection to the data source.
      */
     register(client: Object): Promise<void> {
-        const result = this.m_clients.size === 0 ? this.connect() : Promise.resolve();
+        if (this.m_clients.size === 0) {
+            this.m_connectPromise = this.connect();
+        }
         this.m_clients.add(client);
-        return result;
+        return this.m_connectPromise!;
     }
 
     /**
