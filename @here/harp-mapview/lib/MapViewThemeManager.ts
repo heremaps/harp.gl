@@ -28,7 +28,7 @@ export class MapViewThemeManager {
     private m_theme: Theme = {};
 
     constructor(private readonly m_mapView: MapView, private readonly m_uriResolver?: UriResolver) {
-        this.m_imageCache = new MapViewImageCache(this.m_mapView);
+        this.m_imageCache = new MapViewImageCache();
     }
 
     async setTheme(theme: Theme | FlatTheme | string): Promise<Theme> {

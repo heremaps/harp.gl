@@ -6,7 +6,6 @@
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { MapView } from "../MapView";
 import { ImageItem } from "./Image";
 import { MipMapGenerator } from "./MipMapGenerator";
 
@@ -25,30 +24,47 @@ declare function createImageBitmap(
 ): Promise<ImageBitmap>;
 
 /**
- * Combines an {@link ImageItem} with a list of {@link MapView}s that reference it.
+ * Interface for classes that access the shared {@link ImageCache} and need to be informed when an
+ * image is removed from the cache. It also acts as a reference for the cache. For most operations,
+ * an image will not be removed from the cache as long as there is at least one owner left for that
+ * image.
+ */
+export interface ImageCacheOwner {
+    /**
+     * Notify the owner that an image has been removed either by the owner itself, or by another
+     * owner.
+     *
+     * @param url - The URL of the image which is used as the key to the cache.
+     */
+    imageRemoved(url: string): void;
+}
+
+/**
+ * Combines an {@link ImageItem} with a list of owners (which can be any object) that reference it.
  */
 class ImageCacheItem {
     /**
-     * The list of {@link MapView}s referencing the {@link ImageItem}.
+     * The list of owners referencing the {@link ImageItem}. The owners are implementers of
+     * {@link ImageCacheOwner} which are notified if the cache item has been removed from the
+     * cache.
      */
-    mapViews: MapView[] = [];
+    owners: ImageCacheOwner[] = [];
 
     /**
      * Instantiates `ImageCacheItem`.
      *
-     * @param imageItem - The {@link ImageItem} referenced by
-     *                    the associated {@link MapView}s instances.
-     * @param mapView - An optional first {@link MapView} referencing the {@link ImageItem}.
+     * @param imageItem - The {@link ImageItem} referenced by the associated owners.
+     * @param owner - An optional first owner referencing the {@link ImageItem}.
      */
-    constructor(public imageItem: ImageItem, mapView?: MapView) {
-        if (mapView !== undefined) {
-            this.mapViews.push(mapView);
+    constructor(public imageItem: ImageItem, owner?: ImageCacheOwner) {
+        if (owner !== undefined) {
+            this.owners.push(owner);
         }
     }
 }
 
 /**
- * `ImageCache` is a singleton, so it can be used with multiple MapViews on a single page.
+ * `ImageCache` is a singleton, so it can be used with multiple owners on a single page.
  *
  * @remarks
  * This allows to have an image loaded only once for multiple views.
@@ -59,7 +75,7 @@ class ImageCacheItem {
  * One application that makes our own cache necessary is the generation of our own textures from
  * data that is not an URL.
  *
- * The `ImageCache` can be improved by adding satistics for memory footprint as well.
+ * The `ImageCache` can be improved by adding statistics for memory footprint as well.
  */
 export class ImageCache {
     /**
@@ -89,28 +105,24 @@ export class ImageCache {
     /**
      * Add an image definition to the global cache. Useful when the image data is already loaded.
      *
-     * @param mapView - Specifiy which {@link MapView} requests the image.
+     * @param owner - Specify which {@link ImageCacheOwner} requests the image.
      * @param url - URL of image.
-     * @param imageData - Optional {@link ImageData}containing the image content.
-     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as conten.
+     * @param imageData - Optional {@link ImageData} containing the image content.
+     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as
+     * content.
      */
     registerImage(
-        mapView: MapView,
+        owner: ImageCacheOwner,
         url: string,
         imageData?: ImageData | ImageBitmap,
         htmlElement?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem {
         let imageCacheItem = this.findImageCacheItem(url);
         if (imageCacheItem !== undefined) {
-            if (mapView !== undefined && !imageCacheItem.mapViews.includes(mapView)) {
-                imageCacheItem.mapViews.push(mapView);
+            if (owner !== undefined && !imageCacheItem.owners.includes(owner)) {
+                imageCacheItem.owners.push(owner);
             }
             return imageCacheItem.imageItem;
-        }
-
-        const mapViews: MapView[] = [];
-        if (mapView !== undefined) {
-            mapViews.push(mapView);
         }
 
         imageCacheItem = {
@@ -120,7 +132,7 @@ export class ImageCache {
                 htmlElement: htmlElement,
                 loaded: false
             },
-            mapViews
+            owners: [owner]
         };
 
         this.m_images.set(url, imageCacheItem);
@@ -131,19 +143,19 @@ export class ImageCache {
     /**
      * Add an image definition, and optionally start loading the content.
      *
-     * @param mapView - {@link MapView} requesting the image.
+     * @param owner - {@link ImageCacheOwner} adding the image.
      * @param url - URL of image.
      * @param startLoading - Optional flag. If `true` the image will be loaded in the background.
-     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as content,
-     * if set, `startLoading = true` will start the rendering process in the background.
+     * @param htmlElement - Optional containing a HtmlCanvasElement or a HtmlImageElement as
+     * content, if set, `startLoading = true` will start the rendering process in the background.
      */
     addImage(
-        mapView: MapView,
+        owner: ImageCacheOwner,
         url: string,
         startLoading = true,
         htmlElement?: HTMLImageElement | HTMLCanvasElement
     ): ImageItem | Promise<ImageItem | undefined> | undefined {
-        const imageItem = this.registerImage(mapView, url, undefined, htmlElement);
+        const imageItem = this.registerImage(owner, url, undefined, htmlElement);
         if (imageItem !== undefined && startLoading === true) {
             return this.loadImage(imageItem);
         }
@@ -152,16 +164,16 @@ export class ImageCache {
     }
 
     /**
-     * Remove an image from the cache..
+     * Remove an image from the cache.
      *
      * @param url - URL of the image.
+     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
      * @returns `true` if image has been removed.
      */
-    removeImage(url: string): boolean {
+    removeImage(url: string, owner?: ImageCacheOwner): boolean {
         const cacheItem = this.m_images.get(url);
         if (cacheItem !== undefined) {
-            this.m_images.delete(url);
-            this.cancelLoading(cacheItem.imageItem);
+            this.unlinkCacheItem(cacheItem, owner);
             return true;
         }
         return false;
@@ -171,12 +183,13 @@ export class ImageCache {
      * Remove an image from the cache.
      *
      * @param imageItem - Item identifying the image.
+     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
      * @returns `true` if image has been removed.
      */
-    removeImageItem(imageItem: ImageItem): boolean {
-        if (this.m_images.has(imageItem.url) !== undefined) {
-            this.m_images.delete(imageItem.url);
-            this.cancelLoading(imageItem);
+    removeImageItem(imageItem: ImageItem, owner?: ImageCacheOwner): boolean {
+        const cacheItem = this.m_images.get(imageItem.url);
+        if (cacheItem !== undefined) {
+            this.unlinkCacheItem(cacheItem, owner);
             return true;
         }
         return false;
@@ -187,14 +200,14 @@ export class ImageCache {
      *
      * @param itemFilter - Filter to identify images to remove. Should return `true` if item
      * should be removed.
+     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
      * @returns Number of images removed.
      */
-    removeImageItems(itemFilter: (item: ImageItem) => boolean): number {
+    removeImageItems(itemFilter: (item: ImageItem) => boolean, owner?: ImageCacheOwner): number {
         const oldSize = this.m_images.size;
         [...this.m_images.values()].filter((cacheItem: ImageCacheItem) => {
             if (itemFilter(cacheItem.imageItem)) {
-                this.m_images.delete(cacheItem.imageItem.url);
-                this.cancelLoading(cacheItem.imageItem);
+                this.unlinkCacheItem(cacheItem, owner);
             }
         });
         return oldSize - this.m_images.size;
@@ -215,42 +228,37 @@ export class ImageCache {
     }
 
     /**
-     * Clear all {@link ImageItem}s belonging to a {@link MapView}.
+     * Clear all {@link ImageItem}s belonging to an owner.
      *
      * @remarks
-     * May remove cached items if no
-     * {@link MapView} are registered anymore.
+     * May remove cached items if no owner is registered anymore.
      *
-     * @param mapView - MapView to remove all {@link ImageItem}s from.
+     * @param owner - specify to remove all items registered by {@link ImageCacheOwner}.
      * @returns Number of images removed.
      */
-    clear(mapView: MapView): number {
+    clear(owner: ImageCacheOwner): number {
         const oldSize = this.m_images.size;
-        const itemsToRemove: string[] = [];
+        const itemsToRemove: ImageCacheItem[] = [];
 
         this.m_images.forEach(cacheItem => {
-            const mapViewIndex = cacheItem.mapViews.indexOf(mapView);
-            if (mapViewIndex >= 0) {
-                cacheItem.mapViews.splice(mapViewIndex, 1);
-            }
-            if (cacheItem.mapViews.length === 0) {
-                itemsToRemove.push(cacheItem.imageItem.url);
-                this.cancelLoading(cacheItem.imageItem);
+            const ownerIndex = cacheItem.owners.indexOf(owner);
+            if (ownerIndex >= 0) {
+                itemsToRemove.push(cacheItem);
             }
         });
 
-        for (const keyToDelete of itemsToRemove) {
-            this.m_images.delete(keyToDelete);
+        for (const cacheItem of itemsToRemove) {
+            this.unlinkCacheItem(cacheItem, owner);
         }
         return oldSize - this.m_images.size;
     }
 
     /**
-     * Clear all {@link ImageItem}s from all {@link MapView}s.
+     * Clear all {@link ImageItem}s from all owners.
      */
     clearAll() {
         this.m_images.forEach(cacheItem => {
-            this.cancelLoading(cacheItem.imageItem);
+            this.unlinkCacheItem(cacheItem);
         });
         this.m_images = new Map();
     }
@@ -492,6 +500,31 @@ export class ImageCache {
         if (imageItem.loadingPromise !== undefined) {
             // Notify that we are cancelling.
             imageItem.cancelled = true;
+        }
+    }
+
+    /**
+     * Remove the cacheItem from cache and from the owners that have this item in their
+     * cache. If the item is used by another owner, the item is not removed, but the link
+     * to the owner is removed from the item, just like a reference count.
+     *
+     * @param cacheItem The cache item to be removed.
+     * @param owner - Optional: Specify {@link ImageCacheOwner} removing the image.
+     */
+    private unlinkCacheItem(cacheItem: ImageCacheItem, owner?: ImageCacheOwner) {
+        if (owner) {
+            const ownerIndex = cacheItem.owners.indexOf(owner);
+            if (ownerIndex >= 0) {
+                cacheItem.owners.splice(ownerIndex, 1);
+            }
+            if (cacheItem.owners.length === 0) {
+                this.m_images.delete(cacheItem.imageItem.url);
+                this.cancelLoading(cacheItem.imageItem);
+                owner.imageRemoved(cacheItem.imageItem.url);
+            }
+        } else {
+            this.m_images.delete(cacheItem.imageItem.url);
+            this.cancelLoading(cacheItem.imageItem);
         }
     }
 }

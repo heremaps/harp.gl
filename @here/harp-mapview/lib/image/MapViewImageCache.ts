@@ -3,10 +3,8 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { MapView } from "../MapView";
 import { ImageItem } from "./Image";
-import { ImageCache } from "./ImageCache";
+import { ImageCache, ImageCacheOwner } from "./ImageCache";
 
 /**
  * Cache images wrapped into {@link ImageItem}s for a {@link MapView}.
@@ -20,16 +18,14 @@ import { ImageCache } from "./ImageCache";
  * The `MapViewImageCache` uses a global {@link ImageCache} to actually store (and generate) the
  * image data.
  */
-export class MapViewImageCache {
+export class MapViewImageCache implements ImageCacheOwner {
     private m_name2Url: Map<string, string> = new Map();
     private m_url2Name: Map<string, string[]> = new Map();
 
     /**
      * The constructor for `MapViewImageCache`.
-     *
-     * @param mapView - a {@link MapView} instance.
      */
-    constructor(public mapView: MapView) {}
+    constructor() {}
 
     /**
      * Register an existing image by name.
@@ -63,11 +59,9 @@ export class MapViewImageCache {
             this.m_name2Url.set(name, url);
         }
 
-        const imageItem = ImageCache.instance.findImage(url);
-        if (imageItem === undefined) {
-            return ImageCache.instance.registerImage(this.mapView, url, image, htmlElement);
-        }
-        return imageItem;
+        // Register new image or add this mapView to list of MapViews using this image (identified
+        // by URL).)
+        return ImageCache.instance.registerImage(this, url, image, htmlElement);
     }
 
     /**
@@ -124,6 +118,18 @@ export class MapViewImageCache {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @internal
+     * @hidden
+     * This method is called by the internally shared {@link ImageCache} to notify that this image
+     * has been removed from the cache, and is no longer available.
+     *
+     * @param url - URL of the image that has been removed from the internal (shared) cache.
+     */
+    imageRemoved(url: string): void {
+        this.removeImageByUrl(url);
     }
 
     /**
@@ -186,7 +192,7 @@ export class MapViewImageCache {
      */
     clear(): number {
         const oldSize = ImageCache.instance.size;
-        ImageCache.instance.clear(this.mapView);
+        ImageCache.instance.clear(this);
         this.m_name2Url = new Map();
         this.m_url2Name = new Map();
         return oldSize;
@@ -252,7 +258,9 @@ export class MapViewImageCache {
             } else {
                 // URL was used by this image only, remove the image.
                 this.m_url2Name.delete(url);
-                ImageCache.instance.removeImage(url);
+                // If this is the last owner, the callback MapViewImageCache#imageRemoved will be
+                // called.
+                ImageCache.instance.removeImage(url, this);
             }
             return true;
         }

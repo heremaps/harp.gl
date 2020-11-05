@@ -901,7 +901,7 @@ export class MapView extends EventDispatcher {
 
     private readonly m_pickHandler: PickHandler;
 
-    private readonly m_userImageCache: MapViewImageCache = new MapViewImageCache(this);
+    private readonly m_userImageCache: MapViewImageCache = new MapViewImageCache();
     private readonly m_env: MapEnv = new MapEnv({});
 
     private readonly m_poiManager: PoiManager = new PoiManager(this);
