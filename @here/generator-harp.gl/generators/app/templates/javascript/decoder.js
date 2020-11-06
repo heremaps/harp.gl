@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-self.importScripts("three.min.js");
-
+import "./deps";
 import {
     GeoJsonTilerService,
     VectorTileDecoderService
