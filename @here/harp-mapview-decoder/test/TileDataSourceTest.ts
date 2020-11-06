@@ -20,7 +20,7 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/harp-mapview";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import * as sinon from "sinon";
 
 import { DataProvider, TileDataSource, TileFactory } from "../index";
@@ -342,5 +342,31 @@ describe("TileDataSource", function() {
 
         assert(mockDecoder.configure.calledOnce);
         assert(mockDecoder.configure.calledWith(sinon.match({ styleSet: styles })));
+    });
+
+    it("supports setting of languages", async function() {
+        const mockDecoder = createMockTileDecoder();
+        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+            styleSetName: "tilezen",
+            tilingScheme: webMercatorTilingScheme,
+            dataProvider: new MockDataProvider(),
+            decoder: mockDecoder,
+            minZoomLevel: 3,
+            maxZoomLevel: 17,
+            languages: ["de"]
+        });
+
+        await testedDataSource.connect();
+
+        expect(mockDecoder.configure.calledOnce).to.be.true;
+        expect(mockDecoder.configure.calledWith(sinon.match({ languages: ["de"] }))).to.be.true;
+
+        testedDataSource.attach(createMockMapView());
+
+        testedDataSource.setLanguages(["de", "en"]);
+
+        expect(mockDecoder.configure.calledTwice).to.be.true;
+        expect(mockDecoder.configure.calledWith(sinon.match({ languages: ["de", "en"] }))).to.be
+            .true;
     });
 });

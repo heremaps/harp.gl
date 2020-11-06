@@ -3,7 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { FlatTheme, ITileDecoder, StyleSet, Theme, TileInfo } from "@here/harp-datasource-protocol";
+import {
+    FlatTheme,
+    ITileDecoder,
+    OptionsMap,
+    StyleSet,
+    Theme,
+    TileInfo
+} from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -126,20 +133,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         private readonly m_tileFactory: TileFactory<TileType>,
         private readonly m_options: TileDataSourceOptions
     ) {
-        super({
-            name: m_options.name,
-            styleSetName: m_options.styleSetName,
-            minZoomLevel: m_options.minZoomLevel,
-            maxZoomLevel: m_options.maxZoomLevel,
-            minDataLevel: m_options.minDataLevel,
-            maxDataLevel: m_options.maxDataLevel,
-            minDisplayLevel: m_options.minDisplayLevel,
-            maxDisplayLevel: m_options.maxDisplayLevel,
-            storageLevelOffset: m_options.storageLevelOffset,
-            allowOverlappingTiles: m_options.allowOverlappingTiles,
-            minGeometryHeight: m_options.minGeometryHeight,
-            maxGeometryHeight: m_options.maxGeometryHeight
-        });
+        super(m_options);
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
         } else if (m_options.concurrentDecoderServiceName) {
@@ -187,16 +181,32 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         await Promise.all([this.m_options.dataProvider.register(this), this.m_decoder.connect()]);
         this.m_isReady = true;
 
-        this.m_decoder.configure(undefined, {
-            storageLevelOffset: this.m_options.storageLevelOffset
-        });
+        let customOptions: OptionsMap = {};
+        if (this.m_options.storageLevelOffset !== undefined) {
+            customOptions = {
+                storageLevelOffset: this.m_options.storageLevelOffset
+            };
+        }
+        this.m_decoder.configure({ languages: this.languages }, customOptions);
     }
 
     /**
-     * Apply the [[Theme]] to this data source.
+     * @override
+     */
+    setLanguages(languages: string[]): void {
+        this.languages = languages;
+
+        this.m_decoder.configure({
+            languages: this.languages
+        });
+        this.mapView.clearTileCache(this.name);
+    }
+
+    /**
+     * Apply the {@link @here/harp-datasource-protocol#Theme} to this data source.
      *
-     * Applies new [[StyleSet]] and definitions from theme only if matching styleset (see
-     * `styleSetName` property) is found in `theme`.
+     * Applies new {@here/harp-datasource-protocol StyleSet} and definitions from theme only
+     * if matching styleset (see `styleSetName` property) is found in `theme`.
      * @override
      */
     async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
@@ -206,6 +216,9 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         let styleSet: StyleSet | undefined;
         if (this.styleSetName !== undefined && theme.styles !== undefined) {
             styleSet = theme.styles[this.styleSetName];
+        }
+        if (languages !== undefined) {
+            this.languages = languages;
         }
 
         if (styleSet !== undefined) {

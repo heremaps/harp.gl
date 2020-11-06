@@ -336,7 +336,7 @@ class OptimizedSubSetKey {
  *
  * Basically identical as the DecoderOptions but requires styleSet to be set.
  */
-export type StyleSetOptions = DecoderOptions & { styleSet: StyleSet };
+export type StyleSetOptions = Omit<DecoderOptions, "languages"> & { styleSet: StyleSet };
 
 /**
  * Combine data from datasource and apply the rules from a specified theme to show it on the map.

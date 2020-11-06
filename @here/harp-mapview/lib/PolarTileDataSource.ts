@@ -127,7 +127,7 @@ export class PolarTileDataSource extends DataSource {
     }
 
     /** @override */
-    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
+    async setTheme(theme: Theme | FlatTheme): Promise<void> {
         // Seems superfluent, but the call to  ThemeLoader.load will resolve extends etc.
         theme = await ThemeLoader.load(theme);
         let styleSet: StyleSet | undefined;
@@ -140,8 +140,7 @@ export class PolarTileDataSource extends DataSource {
             styleSet: styleSet ?? [],
             definitions: theme.definitions,
             priorities: theme.priorities,
-            labelPriorities: theme.labelPriorities,
-            languages
+            labelPriorities: theme.labelPriorities
         });
 
         this.m_northPoleEntry = this.createTechiqueEntry("north_pole");

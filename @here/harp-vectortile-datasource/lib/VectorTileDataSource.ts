@@ -381,13 +381,6 @@ export class VectorTileDataSource extends TileDataSource {
     }
 
     /** @override */
-    setLanguages(languages?: string[]): void {
-        if (languages !== undefined) {
-            this.configureDecoder({ languages }, undefined);
-        }
-    }
-
-    /** @override */
     setPoliticalView(politicalView?: string): void {
         // Just in case users mess with letters' casing.
         politicalView = politicalView?.toLowerCase();
