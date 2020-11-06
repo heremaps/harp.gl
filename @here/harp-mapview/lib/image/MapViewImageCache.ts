@@ -6,7 +6,7 @@
 
 import { assert } from "@here/harp-utils";
 
-import { ImageItem, TexturizableImage } from "./Image";
+import { ImageItem, loadImage, TexturizableImage } from "./Image";
 import { ImageCache } from "./ImageCache";
 
 /**
@@ -67,7 +67,7 @@ export class MapViewImageCache {
             const url = urlOrImage;
             const imageItem = this.registerImage(name, url);
 
-            return startLoading ? ImageCache.instance.loadImage(imageItem) : imageItem;
+            return startLoading ? loadImage(imageItem) : imageItem;
         }
 
         const image = urlOrImage;
@@ -117,15 +117,6 @@ export class MapViewImageCache {
             return undefined;
         }
         return ImageCache.instance.findImage(url);
-    }
-
-    /**
-     * Load an {@link ImageItem}. Returns a promise or a loaded {@link ImageItem}.
-     *
-     * @param imageItem - ImageItem to load.
-     */
-    loadImage(imageItem: ImageItem): ImageItem | Promise<ImageItem | undefined> {
-        return ImageCache.instance.loadImage(imageItem);
     }
 
     /**

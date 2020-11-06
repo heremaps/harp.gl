@@ -6,7 +6,7 @@
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import { assert } from "chai";
 
-import { ImageItem } from "../lib/image/Image";
+import { ImageItem, loadImage } from "../lib/image/Image";
 import { ImageCache } from "../lib/image/ImageCache";
 import { MapViewImageCache } from "../lib/image/MapViewImageCache";
 
@@ -153,7 +153,7 @@ describe("MapViewImageCache", function() {
             assert.isUndefined(imageItem.image);
             assert.isFalse(imageItem!.loaded);
 
-            const promise = cache.loadImage(imageItem);
+            const promise = loadImage(imageItem);
             assert.isTrue(promise instanceof Promise);
 
             if (promise instanceof Promise) {
@@ -341,7 +341,7 @@ describe("ImageCache", function() {
                 "test/resources/headshot.png"
             );
 
-            const promise = cache.loadImage(cache.registerImage(owner, imageUrl));
+            const promise = loadImage(cache.registerImage(owner, imageUrl));
 
             const testImage = cache.findImage(imageUrl);
             assert.exists(testImage);
@@ -378,7 +378,7 @@ describe("ImageCache", function() {
             assert.isUndefined(testImage!.image);
             assert.isFalse(testImage!.loaded);
 
-            const promise = cache.loadImage(cacheItem);
+            const promise = loadImage(cacheItem);
 
             assert.isTrue(promise instanceof Promise);
 
@@ -411,7 +411,7 @@ describe("ImageCache", function() {
                 assert.equal(testImage!.image!.width, 37);
                 assert.equal(testImage!.image!.height, 32);
 
-                const promise = cache.loadImage(testImage);
+                const promise = loadImage(testImage);
 
                 assert.isTrue(promise instanceof Promise);
 
@@ -443,7 +443,7 @@ describe("ImageCache", function() {
             assert.isUndefined(imageItem.image);
             assert.isFalse(imageItem!.loaded);
 
-            const promise = cache.loadImage(imageItem);
+            const promise = loadImage(imageItem);
 
             assert.isTrue(promise instanceof Promise);
 
@@ -470,7 +470,7 @@ describe("ImageCache", function() {
             assert.isDefined(testImage!.image);
             assert.isFalse(testImage!.loaded);
 
-            const result = cache.loadImage(testImage);
+            const result = loadImage(testImage);
 
             assert.isTrue(result instanceof Promise);
             const promise = result as Promise<ImageItem | undefined>;

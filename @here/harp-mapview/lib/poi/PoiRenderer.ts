@@ -9,7 +9,7 @@ import { MemoryUsage, TextCanvas, TextCanvasLayer } from "@here/harp-text-canvas
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { ImageItem } from "../image/Image";
+import { ImageItem, loadImage } from "../image/Image";
 import { MapViewImageCache } from "../image/MapViewImageCache";
 import { MipMapGenerator } from "../image/MipMapGenerator";
 import { MapView } from "../MapView";
@@ -372,6 +372,41 @@ export class PoiBatchRegistry {
     }
 }
 
+// keep track of the missing textures, but only warn once
+const missingTextureName: Map<string, boolean> = new Map();
+
+function findImageItem(
+    poiInfo: PoiInfo,
+    mapView: MapView,
+    imageTexture?: ImageTexture
+): ImageItem | undefined {
+    const imageTextureName = poiInfo.imageTextureName;
+
+    if (imageTexture) {
+        const imageDefinition = imageTexture.image;
+        const imageItem = mapView.imageCache.findImageByName(imageDefinition);
+
+        if (!imageItem) {
+            logger.error(`init: No imageItem found with name '${imageDefinition}'`);
+            poiInfo.isValid = false;
+        }
+        return imageItem;
+    }
+
+    // No image texture found. Either this is a user image or it's missing.
+    const imageItem = mapView.userImageCache.findImageByName(imageTextureName);
+
+    if (!imageItem) {
+        // Warn about a missing texture, but only once.
+        if (missingTextureName.get(imageTextureName) === undefined) {
+            missingTextureName.set(imageTextureName, true);
+            logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
+        }
+        poiInfo.isValid = false;
+    }
+    return imageItem;
+}
+
 /**
  * @internal
  * Manage POI rendering. Uses a [[PoiBatchRegistry]] to actually create the geometry that is being
@@ -416,9 +451,6 @@ export class PoiRenderer {
 
         return screenBox;
     }
-
-    // keep track of the missing textures, but only warn once
-    private static readonly m_missingTextureName: Map<string, boolean> = new Map();
 
     // the render buffer containing all batches, one batch per texture/material.
     private readonly m_poiBatchRegistry: PoiBatchRegistry;
@@ -559,39 +591,10 @@ export class PoiRenderer {
         }
 
         const imageTextureName = poiInfo.imageTextureName;
-
         const imageTexture = this.mapView.poiManager.getImageTexture(imageTextureName);
-        let imageItem: ImageItem;
-        let imageCache: MapViewImageCache;
-        if (imageTexture) {
-            const imageDefinition = imageTexture.image;
-
-            const image = this.mapView.imageCache.findImageByName(imageDefinition);
-
-            if (!image) {
-                logger.error(`init: No imageItem found with name '${imageDefinition}'`);
-                poiInfo.isValid = false;
-                return;
-            }
-            imageItem = image;
-            imageCache = this.mapView.imageCache;
-        } else {
-            // No image texture found. Either this is a user image or it's missing.
-            const image = this.mapView.userImageCache.findImageByName(imageTextureName);
-
-            if (!image) {
-                // Warn about a missing texture, but only once.
-                if (PoiRenderer.m_missingTextureName.get(imageTextureName) === undefined) {
-                    PoiRenderer.m_missingTextureName.set(imageTextureName, true);
-                    logger.error(
-                        `preparePoi: No imageTexture with name '${imageTextureName}' found`
-                    );
-                }
-                poiInfo.isValid = false;
-                return;
-            }
-            imageItem = image;
-            imageCache = this.mapView.userImageCache;
+        const imageItem = findImageItem(poiInfo, this.mapView, imageTexture);
+        if (!imageItem) {
+            return;
         }
 
         if (imageItem.loaded) {
@@ -604,7 +607,7 @@ export class PoiRenderer {
             return;
         }
 
-        const result = imageCache.loadImage(imageItem);
+        const result = loadImage(imageItem);
         assert(result instanceof Promise);
         const loadPromise = result as Promise<ImageItem | undefined>;
         loadPromise
