@@ -196,7 +196,10 @@ export class TileLoader extends BaseTileLoader {
      *
      * @param decodedTile - The [[DecodedTile]].
      */
-    private onDecoded(decodedTile: DecodedTile, onDone: (doneState: TileLoaderState) => void) {
+    private onDecoded(
+        decodedTile: DecodedTile | undefined,
+        onDone: (doneState: TileLoaderState) => void
+    ) {
         this.decodedTile = decodedTile;
         onDone(TileLoaderState.Ready);
     }
