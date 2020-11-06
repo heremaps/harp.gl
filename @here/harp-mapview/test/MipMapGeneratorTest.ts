@@ -13,6 +13,7 @@
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import { expect } from "chai";
 
+import { ImageItem } from "../lib/image/Image";
 import { MipMapGenerator } from "../lib/image/MipMapGenerator";
 
 const isNode = typeof window === "undefined";
@@ -59,11 +60,9 @@ describe("MipMapGenerator", function() {
         } else {
             it("creates mipmaps from ImageData", function() {
                 const mipMapGenerator = new MipMapGenerator();
-                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap({
-                    url: "/test.png",
-                    image: imageData,
-                    loaded: true
-                });
+                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                    new ImageItem("/test.png", imageData)
+                );
 
                 expect(mipMaps).to.have.length(7);
                 for (let level = 0; level < mipMaps.length; ++level) {
@@ -79,11 +78,9 @@ describe("MipMapGenerator", function() {
 
             it("creates mipmaps from ImageBitmap", function() {
                 const mipMapGenerator = new MipMapGenerator();
-                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap({
-                    url: "/test.png",
-                    image: imageBitmap,
-                    loaded: true
-                });
+                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                    new ImageItem("/test.png", imageBitmap)
+                );
                 expect(mipMaps).to.have.length(7);
                 for (let level = 0; level < mipMaps.length; ++level) {
                     const size = Math.pow(2, 6 - level);

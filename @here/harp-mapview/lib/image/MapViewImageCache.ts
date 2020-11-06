@@ -6,7 +6,7 @@
 
 import { assert } from "@here/harp-utils";
 
-import { ImageItem, loadImage, TexturizableImage } from "./Image";
+import { ImageItem, TexturizableImage } from "./Image";
 import { ImageCache } from "./ImageCache";
 
 /**
@@ -67,7 +67,7 @@ export class MapViewImageCache {
             const url = urlOrImage;
             const imageItem = this.registerImage(name, url);
 
-            return startLoading ? loadImage(imageItem) : imageItem;
+            return startLoading ? imageItem.loadImage() : imageItem;
         }
 
         const image = urlOrImage;

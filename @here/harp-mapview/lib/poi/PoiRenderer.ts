@@ -9,8 +9,7 @@ import { MemoryUsage, TextCanvas, TextCanvasLayer } from "@here/harp-text-canvas
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { ImageItem, loadImage } from "../image/Image";
-import { MapViewImageCache } from "../image/MapViewImageCache";
+import { ImageItem } from "../image/Image";
 import { MipMapGenerator } from "../image/MipMapGenerator";
 import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
@@ -569,7 +568,7 @@ export class PoiRenderer {
      */
     private preparePoi(pointLabel: TextElement, env: Env): void {
         const poiInfo = pointLabel.poiInfo;
-        if (poiInfo === undefined || !pointLabel.visible) {
+        if (!poiInfo || !pointLabel.visible) {
             return;
         }
 
@@ -602,21 +601,18 @@ export class PoiRenderer {
             return;
         }
 
-        if (imageItem.loadingPromise) {
+        if (imageItem.loading) {
             // already being loaded, will be rendered once available
             return;
         }
 
-        const result = loadImage(imageItem);
-        assert(result instanceof Promise);
-        const loadPromise = result as Promise<ImageItem | undefined>;
-        loadPromise
+        imageItem
+            .loadImage()
             .then(loadedImageItem => {
-                if (loadedImageItem === undefined) {
-                    logger.error(`preparePoi: Failed to load imageItem: '${imageItem.url}`);
-                    return;
+                // Skip setup if image was not loaded (cancelled).
+                if (loadedImageItem.image) {
+                    this.setupPoiInfo(poiInfo, loadedImageItem, env, imageTexture);
                 }
-                this.setupPoiInfo(poiInfo, loadedImageItem, env, imageTexture);
             })
             .catch(error => {
                 logger.error(`preparePoi: Failed to load imageItem: '${imageItem.url}`, error);
@@ -641,7 +637,7 @@ export class PoiRenderer {
     ) {
         assert(poiInfo.uvBox === undefined);
 
-        if (imageItem === undefined || imageItem.image === undefined) {
+        if (!imageItem.image) {
             logger.error("setupPoiInfo: No imageItem/imageData found");
             poiInfo.isValid = false;
             return;

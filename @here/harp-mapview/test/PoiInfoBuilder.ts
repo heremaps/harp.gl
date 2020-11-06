@@ -106,15 +106,12 @@ export class PoiInfoBuilder {
     }
 
     withImageItem(): PoiInfoBuilder {
-        this.m_imageItem = {
-            url: "dummy",
-            image: {
-                height: this.m_height,
-                width: this.m_width,
-                data: new Uint8ClampedArray(this.m_height * this.m_width * 4)
-            },
-            loaded: true
-        };
+        this.m_imageItem = new ImageItem("dummy", {
+            height: this.m_height,
+            width: this.m_width,
+            data: new Uint8ClampedArray(this.m_height * this.m_width * 4)
+        });
+
         return this;
     }
 
