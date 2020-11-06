@@ -966,6 +966,9 @@ export class Tile implements CachedResource {
         }
         this.textElementsChanged = true;
         this.m_pathBlockingElements.splice(0);
+        this.textElementGroups.forEach((element: TextElement) => {
+            element.dispose();
+        });
         this.textElementGroups.clear();
     }
 
