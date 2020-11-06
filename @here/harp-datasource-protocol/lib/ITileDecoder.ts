@@ -62,7 +62,7 @@ export interface ITileDecoder {
         tileKey: TileKey,
         projection: Projection,
         requestController?: RequestController
-    ): Promise<DecodedTile>;
+    ): Promise<DecodedTile | undefined>;
 
     /**
      * Get tile info.

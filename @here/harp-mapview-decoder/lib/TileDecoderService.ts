@@ -104,7 +104,7 @@ export class TileDecoderService extends WorkerService {
             }
         };
 
-        decodedTile.geometries.forEach(geom => {
+        decodedTile?.geometries.forEach(geom => {
             geom.vertexAttributes?.forEach(attr => transferBufferAttribute(attr));
             geom.interleavedVertexAttributes?.forEach(attr => transferBufferAttribute(attr));
             transferBufferAttribute(geom.index);
@@ -128,7 +128,7 @@ export class TileDecoderService extends WorkerService {
             }
         });
 
-        decodedTile.techniques.forEach(technique => {
+        decodedTile?.techniques.forEach(technique => {
             addBuffersToTransferList(technique, transferList);
         });
 
