@@ -22,7 +22,7 @@ jobs:
       matrix:
         node_version: [12]
         os: [ubuntu-latest,macOS-latest,windows-latest]
-      fail-fast: false
+      fail-fast: true
 
     steps:
     - name: Reset git settings (Windows)
