@@ -398,7 +398,7 @@ describe("ImageCache", function() {
             { element: canvas, name: "HtmlCanvasElement" },
             { element: image, name: "HtmlImageElement" }
         ].forEach(testSetting => {
-            it("#addImage, from htmlElement " + testSetting.name, function() {
+            it("#loadImage, from htmlElement " + testSetting.name, async function() {
                 const owner = {};
                 const cache = ImageCache.instance;
 
@@ -407,9 +407,26 @@ describe("ImageCache", function() {
 
                 assert.exists(testImage);
                 assert.isDefined(testImage!.image);
-                assert.isTrue(testImage!.loaded);
+                assert.isFalse(testImage!.loaded);
                 assert.equal(testImage!.image!.width, 37);
                 assert.equal(testImage!.image!.height, 32);
+
+                const promise = cache.loadImage(testImage);
+
+                assert.isTrue(promise instanceof Promise);
+
+                if (promise instanceof Promise) {
+                    await promise;
+                    const loadedImageItem = cache.findImage(imageUrl);
+                    assert.exists(loadedImageItem);
+                    assert.isDefined(loadedImageItem!.image);
+                    assert.isTrue(loadedImageItem!.loaded);
+                    const image = loadedImageItem!.image!;
+                    assert.equal(image.width, 37);
+                    assert.equal(image.height, 32);
+                    assert.isDefined(loadedImageItem!.mipMaps);
+                    assert.isNotEmpty(loadedImageItem!.mipMaps);
+                }
             });
         });
 
@@ -438,6 +455,26 @@ describe("ImageCache", function() {
                 assert.isUndefined(loadedImageItem!.image);
                 assert.isFalse(loadedImageItem!.loaded);
             }
+        });
+
+        it("#loadImage, from bad HtmlImageElement", async function() {
+            const url = "dummy";
+            const badImage = document.createElement("img");
+            badImage.src = "bad source";
+            const owner = {};
+            const cache = ImageCache.instance;
+
+            const testImage = cache.registerImage(owner, url, badImage);
+
+            assert.exists(testImage);
+            assert.isDefined(testImage!.image);
+            assert.isFalse(testImage!.loaded);
+
+            const result = cache.loadImage(testImage);
+
+            assert.isTrue(result instanceof Promise);
+            const promise = result as Promise<ImageItem | undefined>;
+            assert.isRejected(promise);
         });
     }
 

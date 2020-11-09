@@ -95,7 +95,7 @@ export class ImageCache {
             imageItem: {
                 url,
                 image,
-                loaded: image !== undefined
+                loaded: false
             },
             owners: [owner]
         };
@@ -167,7 +167,15 @@ export class ImageCache {
      * @returns An {@link ImageItem} if the image has already been loaded, a promise otherwise.
      */
     loadImage(imageItem: ImageItem): ImageItem | Promise<ImageItem | undefined> {
-        if (imageItem.image !== undefined) {
+        const finalizeImage = (image: TexturizableImage, resolve: (item: ImageItem) => void) => {
+            imageItem.image = image;
+            imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(imageItem);
+            imageItem.loadingPromise = undefined;
+            imageItem.loaded = true;
+            resolve(imageItem);
+        };
+
+        if (imageItem.loaded) {
             return imageItem;
         }
 
@@ -176,6 +184,17 @@ export class ImageCache {
         }
 
         imageItem.loadingPromise = new Promise((resolve, reject) => {
+            if (imageItem.image) {
+                const image = imageItem.image;
+                if (image instanceof HTMLImageElement && !image.complete) {
+                    image.addEventListener("load", finalizeImage.bind(this, image, resolve));
+                    image.addEventListener("error", reject);
+                } else {
+                    finalizeImage(imageItem.image, resolve);
+                }
+                return;
+            }
+
             logger.debug(`Loading image: ${imageItem.url}`);
             if (imageItem.cancelled === true) {
                 logger.debug(`Cancelled loading image: ${imageItem.url}`);
@@ -187,15 +206,10 @@ export class ImageCache {
                         if (imageItem.cancelled === true) {
                             logger.debug(`Cancelled loading image: ${imageItem.url}`);
                             resolve(undefined);
-                        } else {
-                            imageItem.image = image;
-                            imageItem.mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
-                                imageItem
-                            );
-                            imageItem.loadingPromise = undefined;
-                            imageItem.loaded = true;
-                            resolve(imageItem);
+                            return;
                         }
+
+                        finalizeImage(image, resolve);
                     },
                     undefined,
                     errorEvent => {
