@@ -39,12 +39,20 @@ export class TileObjectRenderer {
 
     constructor(private readonly m_env: MapEnv, private readonly m_renderer: THREE.WebGLRenderer) {}
 
-    render(tile: Tile, zoomLevel: number, cameraPosition: Vector3, rootNode: Object3D) {
+    render(
+        tile: Tile,
+        storageLevel: number,
+        zoomLevel: number,
+        cameraPosition: Vector3,
+        rootNode: Object3D
+    ) {
         const worldOffsetX = tile.computeWorldOffsetX();
-        if (tile.willRender(zoomLevel)) {
+        if (tile.willRender(storageLevel)) {
             for (const object of tile.objects) {
                 const mapObjectAdapter = MapObjectAdapter.get(object);
-                if (!this.processTileObject(tile, object, mapObjectAdapter)) {
+                if (
+                    !this.processTileObject(tile, storageLevel, zoomLevel, object, mapObjectAdapter)
+                ) {
                     continue;
                 }
 
@@ -183,11 +191,17 @@ export class TileObjectRenderer {
      *
      * @returns `true` if object shall be used in scene, `false` otherwise
      */
-    private processTileObject(tile: Tile, object: TileObject, mapObjectAdapter?: MapObjectAdapter) {
+    private processTileObject(
+        tile: Tile,
+        storageLevel: number,
+        zoomLevel: number,
+        object: TileObject,
+        mapObjectAdapter?: MapObjectAdapter
+    ) {
         if (!object.visible) {
             return false;
         }
-        if (!this.processTileObjectFeatures(tile, object)) {
+        if (!this.processTileObjectFeatures(tile, storageLevel, zoomLevel, object)) {
             return false;
         }
 
@@ -201,16 +215,34 @@ export class TileObjectRenderer {
     }
 
     /**
-     * Process the features owned by the given [[TileObject]].
+     * Process the features owned by the given `TileObject`.
      *
-     * @param tile - The {@link Tile} owning the [[TileObject]]'s features.
-     * @param object - The [[TileObject]] to process.
-     * @returns `false` if the given [[TileObject]] should not be added to the scene.
+     * @param tile - The {@link Tile} owning the `TileObject`'s features.
+     * @param storageLevel - The storage level of the `Tile` containing the object,
+     * @param zoomLevel - The current zoom level of `MapView`.
+     * @param object - The `TileObject` to process.
+     * @returns `false` if the given `TileObject` should not be added to the scene.
      */
-    private processTileObjectFeatures(tile: Tile, object: TileObject): boolean {
-        const technique: IndexedTechnique = object.userData.technique;
+    private processTileObjectFeatures(
+        tile: Tile,
+        storageLevel: number,
+        zoomLevel: number,
+        object: TileObject
+    ): boolean {
+        const technique: IndexedTechnique | undefined = object.userData.technique;
 
-        if (!technique || technique.enabled === undefined) {
+        const minZoomLevel = getPropertyValue(technique?.minZoomLevel, this.m_env);
+        const maxZoomLevel = getPropertyValue(technique?.maxZoomLevel, this.m_env);
+
+        if (typeof minZoomLevel === "number" && zoomLevel < minZoomLevel) {
+            return false;
+        }
+
+        if (typeof maxZoomLevel === "number" && zoomLevel > maxZoomLevel) {
+            return false;
+        }
+
+        if (technique?.enabled === undefined) {
             // Nothing to do, there's no technique.
             return true;
         }

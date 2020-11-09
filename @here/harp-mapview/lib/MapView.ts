@@ -3498,6 +3498,7 @@ export class MapView extends EventDispatcher {
                 this.m_tileObjectRenderer.render(
                     tile,
                     zoomLevel,
+                    this.zoomLevel,
                     this.m_camera.position,
                     this.m_sceneRoot
                 );

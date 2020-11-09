@@ -343,7 +343,7 @@ export class OmvDebugLabelsTile extends Tile {
                                     xOffset,
                                     yOffset
                                 );
-                                labelElement.minZoomLevel = minZoomLevel;
+                                labelElement.minZoomLevel = getPropertyValue(minZoomLevel, env);
                                 labelElement.mayOverlap = true;
                                 labelElement.reserveSpace = false;
                                 labelElement.alwaysOnTop = true;
