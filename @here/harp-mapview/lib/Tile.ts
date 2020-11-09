@@ -358,8 +358,13 @@ export class Tile implements CachedResource {
     set isVisible(visible: boolean) {
         this.frameNumLastRequested = visible ? this.dataSource.mapView.frameNumber : -1;
 
-        if (!visible && this.m_tileGeometryLoader && !this.m_tileGeometryLoader.isSettled) {
-            this.m_tileGeometryLoader.cancel();
+        if (this.m_tileGeometryLoader) {
+            if (!visible && !this.m_tileGeometryLoader.isSettled) {
+                this.m_tileGeometryLoader.cancel();
+            } else if (visible && this.m_tileGeometryLoader.isSettled) {
+                // Reset a loader that was settled
+                this.m_tileGeometryLoader.reset();
+            }
         }
     }
 
