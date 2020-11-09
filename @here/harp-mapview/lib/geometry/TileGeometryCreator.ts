@@ -550,13 +550,13 @@ export class TileGeometryCreator {
                 );
                 textElement.pathLengthSqr = textPath.pathLengthSqr;
                 textElement.minZoomLevel =
-                    technique.minZoomLevel !== undefined
-                        ? technique.minZoomLevel
-                        : mapView.minZoomLevel;
+                    getPropertyValue(technique.minZoomLevel, discreteZoomEnv) ??
+                    mapView.minZoomLevel;
+
                 textElement.maxZoomLevel =
-                    technique.maxZoomLevel !== undefined
-                        ? technique.maxZoomLevel
-                        : mapView.maxZoomLevel;
+                    getPropertyValue(technique.maxZoomLevel, discreteZoomEnv) ??
+                    mapView.maxZoomLevel;
+
                 textElement.distanceScale =
                     technique.distanceScale !== undefined
                         ? technique.distanceScale
@@ -640,13 +640,13 @@ export class TileGeometryCreator {
                     );
 
                     textElement.minZoomLevel =
-                        technique.minZoomLevel !== undefined
-                            ? technique.minZoomLevel
-                            : mapView.minZoomLevel;
+                        getPropertyValue(technique.minZoomLevel, discreteZoomEnv) ??
+                        mapView.minZoomLevel;
+
                     textElement.maxZoomLevel =
-                        technique.maxZoomLevel !== undefined
-                            ? technique.maxZoomLevel
-                            : mapView.maxZoomLevel;
+                        getPropertyValue(technique.maxZoomLevel, discreteZoomEnv) ??
+                        mapView.maxZoomLevel;
+
                     textElement.mayOverlap = technique.mayOverlap === true;
                     textElement.reserveSpace = technique.reserveSpace !== false;
                     textElement.kind = technique.kind;

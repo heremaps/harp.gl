@@ -257,6 +257,16 @@ export interface BaseTechniqueParams {
      * See https://threejs.org/docs/#api/en/materials/Material.side.
      */
     side?: DynamicProperty<number>;
+
+    /**
+     * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
+     */
+    minZoomLevel?: DynamicProperty<number>;
+
+    /**
+     * Maximum zoom level. If the current zoom level is larger, the technique will not be used.
+     */
+    maxZoomLevel?: DynamicProperty<number>;
 }
 
 export enum TextureCoordinateType {
@@ -1335,14 +1345,6 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      * Priority of text, defaults to `0`. Elements with highest priority get placed first.
      */
     priority?: DynamicProperty<number>;
-    /**
-     * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
-     */
-    minZoomLevel?: number;
-    /**
-     * Maximum zoom level. If the current zoom level is larger, the technique will not be used.
-     */
-    maxZoomLevel?: number;
     /**
      * Scaling factor of the text. Defaults to 0.5, reducing the size ot 50% in the distance.
      */
