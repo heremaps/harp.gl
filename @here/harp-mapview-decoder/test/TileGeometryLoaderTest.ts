@@ -297,7 +297,8 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.true;
         });
 
-        it("should reload geometry for already loaded tile that was reset", async function() {
+        it(`should reload geometry for tile that hadn't
+         finished creating geometry that was reset`, async function() {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -311,22 +312,21 @@ describe("TileGeometryLoader", function() {
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            geometryLoader.waitFinished().should.be.fulfilled.then(() => {
-                expect(spyProcessTechniques.callCount).equal(1);
-                expect(spyCreateGeometries.callCount).equal(1);
+            const firstTaskPromise = geometryLoader.waitFinished();
+
+            // Reset / update before the geometry loader is finished.
+            geometryLoader.reset();
+            geometryLoader!.update();
+
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+            // Await both tasks to finish.
+            await firstTaskPromise;
+            await geometryLoader.waitFinished().should.be.fulfilled.then(() => {
+                expect(spyProcessTechniques.callCount).equal(2);
+                expect(spyCreateGeometries.callCount).equal(2);
                 expect(geometryLoader.isFinished).to.be.true;
-
-                geometryLoader.reset();
-                expect(geometryLoader.isFinished).to.be.false;
-
-                expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
-                expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
-
-                geometryLoader.waitFinished().should.be.fulfilled.then(() => {
-                    expect(spyProcessTechniques.callCount).equal(2);
-                    expect(spyCreateGeometries.callCount).equal(2);
-                    expect(geometryLoader.isFinished).to.be.true;
-                });
             });
         });
 
