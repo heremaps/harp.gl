@@ -6,6 +6,7 @@
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { CopyrightInfo, MapView, Tile } from "@here/harp-mapview";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { LoggerManager } from "@here/harp-utils";
 import { expect } from "chai";
 import * as sinon from "sinon";
 
@@ -21,6 +22,20 @@ describe("WebTileDataSource", function() {
     const fakeMapView = {
         projection: mercatorProjection
     } as MapView;
+
+    let loggerWasEnabled = true;
+
+    before(function() {
+        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
+        if (logger) {
+            loggerWasEnabled = logger.enabled;
+            logger.enabled = false;
+        }
+    });
+
+    after(function() {
+        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
+    });
 
     it("#createWebTileDataSource has default values", async function() {
         const webTileDataSource = new WebTileDataSource({

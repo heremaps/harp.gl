@@ -103,16 +103,26 @@ describe("TileLoader", function() {
     let mapView: MapView;
     let dataSource: DataSource;
     let dataProvider: MockDataProvider;
+    let loggerWasEnabled = true;
 
     before(function() {
         tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         mapView = createMockMapView();
         dataSource = new MockDataSource();
         dataSource.attach(mapView);
+        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
+        if (logger) {
+            loggerWasEnabled = logger.enabled;
+            logger.enabled = false;
+        }
     });
 
     beforeEach(function() {
         dataProvider = new MockDataProvider();
+    });
+
+    after(function() {
+        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
     });
 
     describe("loadAndDecode()", function() {
