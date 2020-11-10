@@ -25,12 +25,10 @@ class ImageCacheItem {
      * Instantiates `ImageCacheItem`.
      *
      * @param imageItem - The {@link ImageItem} referenced by the associated owners.
-     * @param owner - An optional first owner referencing the {@link ImageItem}.
+     * @param owner - First owner referencing the {@link ImageItem}.
      */
-    constructor(public imageItem: ImageItem, owner?: any) {
-        if (owner !== undefined) {
-            this.owners.push(owner);
-        }
+    constructor(public imageItem: ImageItem, owner: any) {
+        this.owners.push(owner);
     }
 }
 
@@ -109,10 +107,10 @@ export class ImageCache {
      * Remove an image from the cache..
      *
      * @param url - URL of the image.
-     * @param owner - Optional: Specify {@link any} removing the image.
+     * @param owner - Owner removing the image.
      * @returns `true` if image has been removed.
      */
-    removeImage(url: string, owner?: any): boolean {
+    removeImage(url: string, owner: any): boolean {
         const cacheItem = this.m_images.get(url);
         if (cacheItem !== undefined) {
             this.unlinkCacheItem(cacheItem, owner);
@@ -251,22 +249,17 @@ export class ImageCache {
      * link to the owner is removed from the item, just like a reference count.
      *
      * @param cacheItem The cache item to be removed.
-     * @param owner - Optional: Specify which owner ({@link any}) removes the image.
+     * @param owner - Specify which owner removes the image.
      * If no owner is specified, the cache item is removed even if it has owners.
      */
-    private unlinkCacheItem(cacheItem: ImageCacheItem, owner?: any) {
-        if (owner) {
-            const ownerIndex = cacheItem.owners.indexOf(owner);
-            if (ownerIndex >= 0) {
-                cacheItem.owners.splice(ownerIndex, 1);
-            }
-            if (cacheItem.owners.length > 0) {
-                // Do not delete the item, it is still used.
-                return;
-            }
+    private unlinkCacheItem(cacheItem: ImageCacheItem, owner: any) {
+        const ownerIndex = cacheItem.owners.indexOf(owner);
+        if (ownerIndex >= 0) {
+            cacheItem.owners.splice(ownerIndex, 1);
         }
-
-        this.m_images.delete(cacheItem.imageItem.url);
-        this.cancelLoading(cacheItem.imageItem);
+        if (cacheItem.owners.length === 0) {
+            this.m_images.delete(cacheItem.imageItem.url);
+            this.cancelLoading(cacheItem.imageItem);
+        }
     }
 }

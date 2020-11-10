@@ -561,7 +561,7 @@ describe("ImageCache", function() {
 
         assert.equal(cache.size, 1, "wrong cache size");
 
-        const imageRemoved = cache.removeImage("httpx://naxos.de");
+        const imageRemoved = cache.removeImage("httpx://naxos.de", owner1);
         assert.equal(imageRemoved, true);
         assert.equal(cache.size, 0, "wrong cache size");
     });
