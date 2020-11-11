@@ -596,21 +596,31 @@ export class PoiManager {
                 featureId,
                 iconBrightness: technique.iconBrightness,
                 iconColor,
-                iconMinZoomLevel: technique.iconMinZoomLevel,
-                iconMaxZoomLevel: technique.iconMaxZoomLevel,
-                textMinZoomLevel: technique.textMinZoomLevel,
-                textMaxZoomLevel: technique.textMaxZoomLevel
+                iconMinZoomLevel:
+                    getPropertyValue(technique.iconMinZoomLevel ?? technique.minZoomLevel, env) ??
+                    undefined,
+                iconMaxZoomLevel:
+                    getPropertyValue(technique.iconMaxZoomLevel ?? technique.maxZoomLevel, env) ??
+                    undefined,
+                textMinZoomLevel:
+                    getPropertyValue(technique.textMinZoomLevel ?? technique.minZoomLevel, env) ??
+                    undefined,
+                textMaxZoomLevel:
+                    getPropertyValue(technique.textMaxZoomLevel ?? technique.maxZoomLevel, env) ??
+                    undefined
             };
             textElement.updateMinMaxZoomLevelsFromPoiInfo();
         } else {
             // Select the smaller/larger one of the two min/max values, because the TextElement
             // is a container for both.
             if (textElement.minZoomLevel === undefined) {
-                textElement.minZoomLevel = technique.textMinZoomLevel;
+                textElement.minZoomLevel =
+                    getPropertyValue(technique.textMinZoomLevel, env) ?? undefined;
             }
 
             if (textElement.maxZoomLevel === undefined) {
-                textElement.maxZoomLevel = technique.textMaxZoomLevel;
+                textElement.maxZoomLevel =
+                    getPropertyValue(technique.textMaxZoomLevel, env) ?? undefined;
             }
         }
 

@@ -560,19 +560,19 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Minimum zoomLevel at which to display the label text. No default.
      */
-    textMinZoomLevel?: number;
+    textMinZoomLevel?: DynamicProperty<number>;
     /**
      * Maximum zoomLevel at which to display the label text. No default.
      */
-    textMaxZoomLevel?: number;
+    textMaxZoomLevel?: DynamicProperty<number>;
     /**
      * Minimum zoomLevel at which to display the label icon. No default.
      */
-    iconMinZoomLevel?: number;
+    iconMinZoomLevel?: DynamicProperty<number>;
     /**
      * Maximum zoomLevel at which to display the label icon. No default.
      */
-    iconMaxZoomLevel?: number;
+    iconMaxZoomLevel?: DynamicProperty<number>;
 
     /**
      * Icon color.

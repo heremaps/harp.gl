@@ -261,12 +261,12 @@ function shouldRenderPointText(
 
     const visibleInZoomLevel =
         poiInfo === undefined ||
-        viewState.zoomLevel === undefined ||
         MathUtils.isClamped(
             viewState.zoomLevel,
-            poiInfo.iconMinZoomLevel,
-            poiInfo.iconMaxZoomLevel
+            poiInfo.textMinZoomLevel,
+            poiInfo.textMaxZoomLevel
         );
+
     if (!visibleInZoomLevel) {
         return false;
     }
