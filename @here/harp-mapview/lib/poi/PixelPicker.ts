@@ -11,33 +11,25 @@ import { Math2D, MathUtils } from "@here/harp-utils";
  *
  * @param xPos - X value of the pixel.
  * @param yPos - Y value of the pixel.
- * @param imageData - Data containing the pixels.
+ * @param image - The image source.
  * @param canvas - Canvas element that will be used to draw the image, in case the imageData is an
  * ImageBitmap
  */
 export function getPixelFromImage(
     xPos: number,
     yPos: number,
-    imageData: ImageData | ImageBitmap,
+    image: CanvasImageSource | ImageData,
     canvas?: HTMLCanvasElement
 ): Uint8ClampedArray | undefined {
-    let pickedColor;
-
-    const isImageBitmap = (imgData: ImageBitmap | ImageData) => {
-        return (imgData as ImageBitmap).close !== undefined;
-    };
-
-    if (isImageBitmap(imageData!)) {
-        if (canvas === undefined) {
-            canvas = document.createElement("canvas");
-        }
-        pickedColor = getPixelFromImageBitmap(imageData as ImageBitmap, xPos, yPos, canvas);
-    } else {
-        const pixelsData = imageData as ImageData;
-        const stride = pixelsData.data.length / (pixelsData.height * pixelsData.width);
-        pickedColor = getPixelFromImageData(pixelsData, xPos, yPos, stride);
+    if (image instanceof ImageData) {
+        const stride = image.data.length / (image.height * image.width);
+        return getPixelFromImageData(image, xPos, yPos, stride);
     }
-    return pickedColor;
+
+    if (!canvas) {
+        canvas = document.createElement("canvas");
+    }
+    return getPixelFromCanvasImageSource(image, xPos, yPos, canvas);
 }
 
 /**
@@ -68,39 +60,31 @@ export function screenToUvCoordinates(
  * It returns an Uint8ClampedArray containing the color channel values for the given pixel
  * coordinates. It returns undefined if the given coordinates are out of range.
  *
- * @param image - Bitmap image in which the pixels are stored.
+ * @param image - Image source.
  * @param xPos - X value of the pixel.
  * @param yPos - Y value of the pixel.
  * @param canvas - HTML Canvas element on which the image is drawn.
  */
-export function getPixelFromImageBitmap(
-    image: ImageBitmap,
+export function getPixelFromCanvasImageSource(
+    image: CanvasImageSource,
     xPos: number,
     yPos: number,
     canvas: HTMLCanvasElement
 ): Uint8ClampedArray | undefined {
-    if (xPos > image.width || xPos < 0 || yPos > image.height || yPos < 0) {
+    const { width, height } = image instanceof SVGImageElement ? image.getBBox() : image;
+
+    if (xPos > width || xPos < 0 || yPos > height || yPos < 0) {
         return undefined;
     }
 
     let pixelData;
 
-    canvas.width = image.width;
-    canvas.height = image.height;
+    canvas.width = width;
+    canvas.height = height;
 
     const context = canvas.getContext("2d");
     if (context !== null) {
-        context.drawImage(
-            image,
-            0,
-            0,
-            image.width,
-            image.height,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
+        context.drawImage(image, 0, 0);
         pixelData = context.getImageData(xPos, yPos, 1, 1).data;
     }
     return pixelData;

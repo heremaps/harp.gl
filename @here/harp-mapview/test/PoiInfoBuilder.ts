@@ -108,7 +108,7 @@ export class PoiInfoBuilder {
     withImageItem(): PoiInfoBuilder {
         this.m_imageItem = {
             url: "dummy",
-            imageData: {
+            image: {
                 height: this.m_height,
                 width: this.m_width,
                 data: new Uint8ClampedArray(this.m_height * this.m_width * 4)

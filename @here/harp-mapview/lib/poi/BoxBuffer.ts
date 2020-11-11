@@ -392,12 +392,12 @@ export class BoxBuffer {
      *
      * @param screenPosition - Screen coordinate of picking position.
      * @param pickCallback - Callback to be called for every picked element.
-     * @param imageData - Image data to test if the pixel is transparent
+     * @param image - Image to test if the pixel is transparent
      */
     pickBoxes(
         screenPosition: THREE.Vector2,
         pickCallback: (pickData: any | undefined) => void,
-        imageData?: ImageBitmap | ImageData
+        image?: CanvasImageSource | ImageData
     ) {
         const n = this.m_pickInfos.length;
         const pickInfos = this.m_pickInfos;
@@ -405,7 +405,6 @@ export class BoxBuffer {
         const screenX = screenPosition.x;
         const screenY = screenPosition.y;
 
-        const canvas = document.createElement("canvas");
         for (let pickInfoIndex = 0; pickInfoIndex < n; pickInfoIndex++) {
             const positionIndex = pickInfoIndex * NUM_VERTICES_PER_ELEMENT;
 
@@ -431,16 +430,16 @@ export class BoxBuffer {
 
             const box = new Math2D.Box(minX, minY, maxX - minX, maxY - minY);
             if (
-                imageData !== undefined &&
+                image !== undefined &&
                 pickInfos[pickInfoIndex].poiInfo !== undefined &&
                 pickInfos[pickInfoIndex].poiInfo.uvBox !== undefined &&
                 this.isPixelTransparent(
-                    imageData,
+                    image,
                     screenX,
                     screenY,
                     box,
                     pickInfos[pickInfoIndex].poiInfo.uvBox,
-                    canvas
+                    document.createElement("canvas")
                 )
             ) {
                 continue;
@@ -507,37 +506,29 @@ export class BoxBuffer {
     /**
      * Check if a pixel is transparent or not.
      *
-     * @param imageData - Data containing the pixels.
+     * @param image - Image source.
      * @param xScreenPos - X position of the pixel.
      * @param yScreenPos - Y position of the pixel.
      * @param box - Bounding box of the image in screen coordinates.
      * @param uvBox - Uv box referred to the given bounding box.
-     * @param canvas - Canvas element that will be used to draw the image, in case the imageData is
-     *      an `ImageBitmap`
+     * @param canvas - Canvas element to draw the image if it's not a `ImageData` object.
      */
     private isPixelTransparent(
-        imageData: ImageBitmap | ImageData,
+        image: CanvasImageSource | ImageData,
         xScreenPos: number,
         yScreenPos: number,
         box: Math2D.Box,
         uvBox: Math2D.UvBox,
         canvas?: HTMLCanvasElement
     ): boolean {
-        let pixelIsTransparent = false;
-
         const { u, v } = screenToUvCoordinates(xScreenPos, yScreenPos, box, uvBox);
+        const { width, height } = image instanceof SVGImageElement ? image.getBBox() : image;
+        const x = width * u;
+        const y = height * v;
 
-        const imageWidth = imageData.width;
-        const x = imageWidth * u;
-        const imageHeight = imageData.height;
-        const y = imageHeight * v;
+        const pixel = getPixelFromImage(x, y, image, canvas);
 
-        const pixel = getPixelFromImage(x, y, imageData, canvas);
-
-        if (pixel !== undefined && pixel[3] === 0) {
-            pixelIsTransparent = true;
-        }
-        return pixelIsTransparent;
+        return pixel !== undefined && pixel[3] === 0;
     }
 
     /**
