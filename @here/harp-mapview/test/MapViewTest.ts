@@ -1499,6 +1499,7 @@ describe("MapView", function() {
                 getTilingScheme() {
                     return webMercatorTilingScheme;
                 },
+                setLanguages() {},
                 mapView: undefined
             } as any;
             fakeElevationRangeSource = {

@@ -6,6 +6,7 @@
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { CopyrightInfo, MapView, Tile } from "@here/harp-mapview";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { LoggerManager } from "@here/harp-utils";
 import { expect } from "chai";
 import * as sinon from "sinon";
 
@@ -82,6 +83,14 @@ describe("WebTileDataSource", function() {
     });
 
     it("# disposed tile for rejected Promise", async function() {
+        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
+        let loggerWasEnabled = false;
+
+        if (logger) {
+            loggerWasEnabled = logger.enabled;
+            logger.enabled = false;
+        }
+
         const noTextureProvider = {
             getTexture: sinon.spy((tile: Tile) => {
                 return Promise.reject();
@@ -99,6 +108,8 @@ describe("WebTileDataSource", function() {
         await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(tile.disposed).to.be.true;
+
+        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
     });
 
     it("#createWebTileDataSource with renderingOptions opacity", async function() {

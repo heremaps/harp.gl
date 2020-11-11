@@ -8,6 +8,7 @@
 
 import { TileKey, webMercatorProjection } from "@here/harp-geoutils";
 import { CopyrightInfo, MapView, Tile, TileLoaderState } from "@here/harp-mapview";
+import { LoggerManager } from "@here/harp-utils";
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
@@ -32,6 +33,15 @@ describe("WebTileLoader", function() {
     const dataProvider: WebTileDataProvider = { getTexture: getTextureStub } as any;
     let dataSource: WebTileDataSource;
     let tile: Tile;
+    let loggerWasEnabled = true;
+
+    before(function() {
+        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
+        if (logger) {
+            loggerWasEnabled = logger.enabled;
+            logger.enabled = false;
+        }
+    });
 
     beforeEach(function() {
         dataSource = new WebTileDataSource({
@@ -41,6 +51,10 @@ describe("WebTileLoader", function() {
         dataSource.attach(mapView);
         tile = new Tile(dataSource, tileKey);
         getTextureStub.resolves([texture, copyRightInfo]);
+    });
+
+    after(function() {
+        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
     });
 
     describe("loadAndDecode()", function() {

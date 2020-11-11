@@ -135,6 +135,7 @@ describe("MapView Picking", async function() {
             getTilingScheme() {
                 return webMercatorTilingScheme;
             },
+            setLanguages() {},
             mapView: undefined
         } as any;
         fakeElevationRangeSource = {

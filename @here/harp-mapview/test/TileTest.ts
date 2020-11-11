@@ -77,7 +77,8 @@ describe("Tile", function() {
                 groups: [TileTaskGroups.CREATE, TileTaskGroups.FETCH_AND_DECODE]
             }),
             projection: mercatorProjection,
-            frameNumber: 1
+            frameNumber: 1,
+            visibleTileSet: { disposeTile: () => {} } as any
         } as MapView;
         stubDataSource.attach(mapView);
     });
