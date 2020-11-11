@@ -69,5 +69,8 @@
     },
     "publishConfig": {
         "access": "public"
+    },
+    "dependencies": {
+        "@turf/turf": "^5.1.6"
     }
 }
