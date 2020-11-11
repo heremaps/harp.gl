@@ -550,12 +550,10 @@ export class TileGeometryCreator {
                 );
                 textElement.pathLengthSqr = textPath.pathLengthSqr;
                 textElement.minZoomLevel =
-                    getPropertyValue(technique.minZoomLevel, discreteZoomEnv) ??
-                    mapView.minZoomLevel;
+                    getPropertyValue(technique.minZoomLevel, discreteZoomEnv) ?? undefined;
 
                 textElement.maxZoomLevel =
-                    getPropertyValue(technique.maxZoomLevel, discreteZoomEnv) ??
-                    mapView.maxZoomLevel;
+                    getPropertyValue(technique.maxZoomLevel, discreteZoomEnv) ?? undefined;
 
                 textElement.distanceScale =
                     technique.distanceScale !== undefined
