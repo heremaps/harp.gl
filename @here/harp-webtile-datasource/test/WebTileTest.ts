@@ -23,20 +23,6 @@ describe("WebTileDataSource", function() {
         projection: mercatorProjection
     } as MapView;
 
-    let loggerWasEnabled = true;
-
-    before(function() {
-        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
-        if (logger) {
-            loggerWasEnabled = logger.enabled;
-            logger.enabled = false;
-        }
-    });
-
-    after(function() {
-        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
-    });
-
     it("#createWebTileDataSource has default values", async function() {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider
@@ -97,6 +83,14 @@ describe("WebTileDataSource", function() {
     });
 
     it("# disposed tile for rejected Promise", async function() {
+        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
+        let loggerWasEnabled = false;
+
+        if (logger) {
+            loggerWasEnabled = logger.enabled;
+            logger.enabled = false;
+        }
+
         const noTextureProvider = {
             getTexture: sinon.spy((tile: Tile) => {
                 return Promise.reject();
@@ -114,6 +108,8 @@ describe("WebTileDataSource", function() {
         await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(tile.disposed).to.be.true;
+
+        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
     });
 
     it("#createWebTileDataSource with renderingOptions opacity", async function() {

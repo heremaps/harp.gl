@@ -202,13 +202,13 @@ describe("TileGeometryLoader", function() {
 
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            geometryLoader.waitFinished().should.be.fulfilled;
+            await geometryLoader.waitFinished().should.be.fulfilled;
             expect(spyProcessTechniques.callCount).equal(1);
             expect(spyCreateGeometries.callCount).equal(1);
             expect(geometryLoader.isFinished).to.be.true;
         });
 
-        it("should not create geometry for invisible tile", function() {
+        it("should not create geometry for invisible tile", async function() {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -224,14 +224,13 @@ describe("TileGeometryLoader", function() {
 
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            return geometryLoader.waitFinished().should.be.rejected.then(() => {
-                expect(spyProcessTechniques.callCount).equal(1);
-                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
-                expect(geometryLoader.isFinished).to.be.false;
-            });
+            await geometryLoader.waitFinished().should.be.rejected;
+            expect(spyProcessTechniques.callCount).equal(1);
+            expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+            expect(geometryLoader.isFinished).to.be.false;
         });
 
-        it("should not create geometry for disposed tile ", function() {
+        it("should not create geometry for disposed tile ", async function() {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -248,11 +247,10 @@ describe("TileGeometryLoader", function() {
 
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            return geometryLoader.waitFinished().should.be.rejected.then(() => {
-                expect(spyProcessTechniques.callCount).equal(1);
-                expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
-                expect(geometryLoader.isFinished).to.be.false;
-            });
+            await geometryLoader.waitFinished().should.be.rejected;
+            expect(spyProcessTechniques.callCount).equal(1);
+            expect(spyCreateGeometries.callCount).equal(0, "should not create geometry");
+            expect(geometryLoader.isFinished).to.be.false;
         });
 
         it("should create geometry for tile which was invisible but now visible", async function() {
@@ -359,10 +357,11 @@ describe("TileGeometryLoader", function() {
             expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
             expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
 
-            await geometryLoader.waitFinished().should.be.fulfilled;
-
             expect(spyProcessTechniques.callCount).equal(2);
             expect(spyCreateGeometries.callCount).equal(1);
+
+            await geometryLoader.waitFinished().should.be.fulfilled;
+
             expect(geometryLoader.isFinished).to.be.true;
         });
     });
