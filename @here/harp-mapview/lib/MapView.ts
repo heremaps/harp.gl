@@ -86,6 +86,8 @@ import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "
 
 declare const process: any;
 
+//test
+
 // Cache value, because access to process.env.NODE_ENV is SLOW!
 const isProduction = process.env.NODE_ENV === "production";
 if (isProduction) {
