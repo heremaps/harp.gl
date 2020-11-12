@@ -183,20 +183,20 @@ describe("DataProviders", function() {
             features: []
         });
 
-        assert.isTrue(clearTileCache.called);
+        assert.isTrue(markTilesDirty.called);
 
-        clearTileCache.resetHistory();
+        markTilesDirty.resetHistory();
 
-        assert.isFalse(clearTileCache.called);
+        assert.isFalse(markTilesDirty.called);
 
         dataProvider.updateInput({
             type: "FeatureCollection",
             features: []
         });
 
-        assert.isTrue(clearTileCache.called);
+        assert.isTrue(markTilesDirty.called);
 
-        clearTileCache.resetHistory();
+        markTilesDirty.resetHistory();
 
         omvDataSource.dispose();
 
@@ -205,6 +205,6 @@ describe("DataProviders", function() {
             features: []
         });
 
-        assert.isFalse(clearTileCache.called);
+        assert.isFalse(markTilesDirty.called);
     });
 });
