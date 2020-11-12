@@ -152,7 +152,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         this.cacheable = true;
 
         this.m_unregisterClearTileCache = this.dataProvider().onDidInvalidate?.(() =>
-            this.mapView.clearTileCache(this.name)
+            this.mapView.markTilesDirty(this)
         );
     }
 

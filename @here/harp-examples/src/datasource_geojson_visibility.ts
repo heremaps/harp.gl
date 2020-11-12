@@ -8,7 +8,9 @@ import { FeatureCollection } from "@here/harp-datasource-protocol";
 import { GeoPointLike } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
+import { GeoJsonTiler } from "@here/harp-mapview-decoder/lib/GeoJsonTiler";
 import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
+import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
 import * as turf from "@turf/turf";
 
 import { apikey } from "../config";
@@ -54,16 +56,21 @@ export namespace GeoJsonVisibilityExample {
         const points = turf.randomPoint(100, {
             bbox: turf.bbox(circle)
         });
+
         points.features = points.features.filter(
             feature => turf.distance(NY, feature.geometry!.coordinates, { units: "meters" }) < 1000
         );
 
+        const dataProvider = new GeoJsonDataProvider(
+            "geojson",
+            turf.featureCollection([circle, ...points.features]) as FeatureCollection,
+            { tiler: new GeoJsonTiler() }
+        );
+
         const featuresDataSource = new VectorTileDataSource({
+            decoder: new VectorTileDecoder(),
             styleSetName: "geojson",
-            dataProvider: new GeoJsonDataProvider(
-                "geojson",
-                turf.featureCollection([circle, ...points.features]) as FeatureCollection
-            ),
+            dataProvider,
             addGroundPlane: false
         });
 
@@ -92,6 +99,23 @@ export namespace GeoJsonVisibilityExample {
                 }
             ]
         });
+
+        dataProvider.onDidInvalidate(() => {
+            mapView.update();
+        });
+
+        const animate = () => {
+            turf.transformRotate(points, 5, {
+                pivot: NY,
+                mutate: true
+            });
+
+            dataProvider.updateInput(
+                turf.featureCollection([circle, ...points.features]) as FeatureCollection
+            );
+        };
+
+        setInterval(animate, 100);
 
         return mapView;
     }
