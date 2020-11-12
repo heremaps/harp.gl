@@ -112,7 +112,7 @@ export function createOMVDecoderPerformanceTest(
                 processPointFeature(
                     layerName: string,
                     layerExtents: number,
-                    geometry: THREE.Vector2[],
+                    geometry: THREE.Vector3[],
                     env: MapEnv
                 ) {
                     styleSetEvaluator.getMatchingTechniques(env, layerName, "point");
