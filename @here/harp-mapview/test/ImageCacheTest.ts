@@ -206,8 +206,8 @@ describe("MapViewImageCache", function() {
     it("#add images with same url but differing names", function() {
         const cache = new MapViewImageCache();
 
-        cache.addImage("testImage1", "httpx://naxos.de");
-        cache.addImage("testImage2", "httpx://naxos.de");
+        cache.addImage("testImage1", "httpx://naxos.de", false);
+        cache.addImage("testImage2", "httpx://naxos.de", false);
 
         const testImage1 = cache.findImageByName("testImage1");
         const testImage2 = cache.findImageByName("testImage2");
@@ -221,8 +221,8 @@ describe("MapViewImageCache", function() {
     it("#add images with same name but differing urls", function() {
         const cache = new MapViewImageCache();
         assert.throws(() => {
-            cache.addImage("testImage", "httpx://naxos.de");
-            cache.addImage("testImage", "httpx://naxos.de-2");
+            cache.addImage("testImage", "httpx://naxos.de", false);
+            cache.addImage("testImage", "httpx://naxos.de-2", false);
         });
     });
 
@@ -246,8 +246,8 @@ describe("MapViewImageCache", function() {
     it("#remove image 2", function() {
         const cache = new MapViewImageCache();
 
-        cache.addImage("testImage1", "httpx://naxos.de");
-        cache.addImage("testImage2", "httpx://naxos.de");
+        cache.addImage("testImage1", "httpx://naxos.de", false);
+        cache.addImage("testImage2", "httpx://naxos.de", false);
 
         assert.exists(cache.findImageByName("testImage1"));
         assert.exists(cache.findImageByName("testImage2"));
