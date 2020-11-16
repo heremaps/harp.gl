@@ -321,55 +321,59 @@ describe("TileDataSource", function() {
 
     it("supports setting of theme", async function() {
         const mockDecoder = createMockTileDecoder();
-        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            styleSetName: "tilezen",
-            tilingScheme: webMercatorTilingScheme,
-            dataProvider: new MockDataProvider(),
-            decoder: mockDecoder,
-            minZoomLevel: 3,
-            maxZoomLevel: 17
+        errorOnlyLoggingAroundFunction("DataSource", async () => {
+            const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+                styleSetName: "tilezen",
+                tilingScheme: webMercatorTilingScheme,
+                dataProvider: new MockDataProvider(),
+                decoder: mockDecoder,
+                minZoomLevel: 3,
+                maxZoomLevel: 17
+            });
+
+            testedDataSource.attach(createMockMapView());
+
+            const styles: StyleSet = [
+                {
+                    styleSet: "tilezen",
+                    technique: "none"
+                }
+            ];
+
+            await testedDataSource.setTheme({
+                styles
+            });
+
+            assert(mockDecoder.configure.calledOnce);
+            assert(mockDecoder.configure.calledWith(sinon.match({ styleSet: styles })));
         });
-
-        testedDataSource.attach(createMockMapView());
-
-        const styles: StyleSet = [
-            {
-                styleSet: "tilezen",
-                technique: "none"
-            }
-        ];
-
-        await testedDataSource.setTheme({
-            styles
-        });
-
-        assert(mockDecoder.configure.calledOnce);
-        assert(mockDecoder.configure.calledWith(sinon.match({ styleSet: styles })));
     });
 
     it("supports setting of languages", async function() {
         const mockDecoder = createMockTileDecoder();
-        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            styleSetName: "tilezen",
-            tilingScheme: webMercatorTilingScheme,
-            dataProvider: new MockDataProvider(),
-            decoder: mockDecoder,
-            minZoomLevel: 3,
-            maxZoomLevel: 17,
-            languages: ["de"]
+        errorOnlyLoggingAroundFunction("DataSource", async () => {
+            const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+                styleSetName: "tilezen",
+                tilingScheme: webMercatorTilingScheme,
+                dataProvider: new MockDataProvider(),
+                decoder: mockDecoder,
+                minZoomLevel: 3,
+                maxZoomLevel: 17,
+                languages: ["de"]
+            });
+
+            await testedDataSource.connect();
+
+            expect(mockDecoder.configure.calledOnce).to.be.true;
+            expect(mockDecoder.configure.calledWith(sinon.match({ languages: ["de"] }))).to.be.true;
+
+            testedDataSource.attach(createMockMapView());
+
+            testedDataSource.setLanguages(["de", "en"]);
+
+            expect(mockDecoder.configure.calledTwice).to.be.true;
+            expect(mockDecoder.configure.calledWith(sinon.match({ languages: ["de", "en"] }))).to.be
+                .true;
         });
-
-        await testedDataSource.connect();
-
-        expect(mockDecoder.configure.calledOnce).to.be.true;
-        expect(mockDecoder.configure.calledWith(sinon.match({ languages: ["de"] }))).to.be.true;
-
-        testedDataSource.attach(createMockMapView());
-
-        testedDataSource.setLanguages(["de", "en"]);
-
-        expect(mockDecoder.configure.calledTwice).to.be.true;
-        expect(mockDecoder.configure.calledWith(sinon.match({ languages: ["de", "en"] }))).to.be
-            .true;
     });
 });
