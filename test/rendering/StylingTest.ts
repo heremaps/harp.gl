@@ -231,7 +231,7 @@ describe("MapView Styling Test", function() {
         fontCatalogs: [
             {
                 name: "fira",
-                url: "../@here/harp-fontcatalog/resources/Default_FontCatalog.json"
+                url: "../dist/resources/fonts/Default_FontCatalog.json"
             }
         ],
         images: {
