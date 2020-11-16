@@ -20,6 +20,7 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/harp-mapview";
+import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 
@@ -301,19 +302,21 @@ describe("TileDataSource", function() {
     });
 
     it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
-        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            styleSetName: "",
-            tilingScheme: webMercatorTilingScheme,
-            dataProvider: new MockDataProvider(),
-            decoder: createMockTileDecoder(),
-            minZoomLevel: 3,
-            maxZoomLevel: 17
-        });
+        errorOnlyLoggingAroundFunction("DataSource", () => {
+            const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+                styleSetName: "",
+                tilingScheme: webMercatorTilingScheme,
+                dataProvider: new MockDataProvider(),
+                decoder: createMockTileDecoder(),
+                minZoomLevel: 3,
+                maxZoomLevel: 17
+            });
 
-        assert.equal(testedDataSource.minZoomLevel, 3);
-        assert.equal(testedDataSource.minDataLevel, 3);
-        assert.equal(testedDataSource.maxZoomLevel, 17);
-        assert.equal(testedDataSource.maxDataLevel, 17);
+            assert.equal(testedDataSource.minZoomLevel, 3);
+            assert.equal(testedDataSource.minDataLevel, 3);
+            assert.equal(testedDataSource.maxZoomLevel, 17);
+            assert.equal(testedDataSource.maxDataLevel, 17);
+        });
     });
 
     it("supports setting of theme", async function() {

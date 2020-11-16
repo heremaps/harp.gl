@@ -1093,7 +1093,7 @@ export class MapView extends EventDispatcher {
 
         // Must be initialized before setupCamera, because the VisibleTileSet is created as part
         // of the setupCamera method and it needs the TaskQueue instance, same for environment
-        this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
+        this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps, this);
         this.m_sceneEnvironment = new MapViewEnvironment(this, options);
 
         // setup camera with initial position
@@ -2158,7 +2158,7 @@ export class MapView extends EventDispatcher {
             dataSource.setLanguages(this.m_languages);
 
             if (theme !== undefined && theme.styles !== undefined) {
-                dataSource.setTheme(theme);
+                await dataSource.setTheme(theme);
             }
 
             this.m_connectedDataSources.add(dataSource.name);

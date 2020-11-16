@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LoggerManager, LogLevel } from "@here/harp-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 
@@ -315,4 +316,34 @@ if (typeof beforeEach !== "undefined") {
         // executing.
         mochaCurrentTest = this.currentTest;
     });
+}
+
+/**
+ * Sets the specified loggers to only report errors. Only use this function when you know that you
+ * can safely ignore a warning, otherwise you should consider to fix the issue.
+ * All previous logging levels are reset after the function is executed.
+ * @param loggerName The loggerName, or array of names to set to error
+ * @param func The function to execute with the changed logging
+ */
+export async function errorOnlyLoggingAroundFunction(
+    loggerName: string | string[],
+    func: () => void
+) {
+    const previousLogLevels: Array<{ level: LogLevel; loggerName: string }> = [];
+    const loggers = !Array.isArray(loggerName) ? [loggerName] : loggerName;
+    for (const loggerName of loggers) {
+        const logger = LoggerManager.instance.getLogger(loggerName);
+        if (logger) {
+            previousLogLevels.push({ loggerName, level: logger?.level });
+            LoggerManager.instance.setLogLevel(loggerName, LogLevel.Error);
+        }
+    }
+
+    try {
+        await func();
+    } finally {
+        for (const logger of previousLogLevels) {
+            LoggerManager.instance.setLogLevel(logger.loggerName, logger.level);
+        }
+    }
 }
