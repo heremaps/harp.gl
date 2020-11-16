@@ -51,7 +51,7 @@ export namespace HelloWorldTexturedExample {
     }
 </style>
 <p id="texture-license">Textures by
-<a href="https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480">
+<a href="https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480" target="_blank">
 West</a>.</p>`;
     }
 
