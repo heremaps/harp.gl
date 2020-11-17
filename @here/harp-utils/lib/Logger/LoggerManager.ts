@@ -7,6 +7,8 @@
 import { ILoggerManager } from "./ILoggerManager";
 import { LoggerManagerImpl } from "./LoggerManagerImpl";
 
+declare const process: any;
+
 /**
  * The LoggerManager class implements a singleton object that handles logging.
  *
@@ -26,6 +28,7 @@ export class LoggerManager {
     private static m_instance: ILoggerManager;
 
     static get instance(): ILoggerManager {
-        return this.m_instance || (this.m_instance = new LoggerManagerImpl());
+        const isCI = process.env["CI_ENV"] !== undefined;
+        return this.m_instance || (this.m_instance = new LoggerManagerImpl(isCI));
     }
 }

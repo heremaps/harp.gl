@@ -9,6 +9,7 @@ import { IChannel } from "./IChannel";
 import { ILogger, LoggerOptions, LogLevel } from "./ILogger";
 import { ILoggerManager } from "./ILoggerManager";
 import { Logger } from "./Logger";
+import { NullChannel } from "./NullChannel";
 import { WorkerChannel } from "./WorkerChannel";
 
 /**
@@ -21,11 +22,12 @@ export class LoggerManagerImpl implements ILoggerManager {
     private readonly m_loggers: ILogger[] = [];
     private m_levelSetForAll?: LogLevel;
 
-    constructor() {
-        this.channel =
-            typeof self === "undefined" || typeof self.document !== "undefined"
-                ? new ConsoleChannel()
-                : new WorkerChannel();
+    constructor(isCI?: boolean) {
+        this.channel = isCI
+            ? new NullChannel()
+            : typeof self === "undefined" || typeof self.document !== "undefined"
+            ? new ConsoleChannel()
+            : new WorkerChannel();
     }
 
     getLoggerNames(): string[] {

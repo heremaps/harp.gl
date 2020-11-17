@@ -20,10 +20,10 @@ const bundleSuffix = isProduction ? ".min" : "";
 const commonConfig = {
     devtool: "source-map",
     resolve: {
-        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"]
+        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
     },
     output: {
-        path: path.join(process.cwd(), "dist")
+        path: path.join(process.cwd(), "dist"),
     },
     module: {
         rules: [
@@ -40,23 +40,24 @@ const commonConfig = {
                         : path.resolve(__dirname, "./tsconfig.json"),
                     compilerOptions: {
                         declaration: false,
-                        declarationMap: false
-                    }
-                }
-            }
-        ]
+                        declarationMap: false,
+                    },
+                },
+            },
+        ],
     },
     plugins: [
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
-            NODE_ENV: process.env.NODE_ENV || "development"
-        })
+            NODE_ENV: process.env.NODE_ENV || "development",
+            CI_ENV: process.env.JENKINS_HOME || undefined,
+        }),
     ],
     performance: {
-        hints: false
+        hints: false,
     },
     // @ts-ignore
-    mode: process.env.NODE_ENV || "development"
+    mode: process.env.NODE_ENV || "development",
 };
 
 if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
@@ -67,33 +68,33 @@ const mapComponentConfig = merge(commonConfig, {
     entry: path.resolve(__dirname, "./lib/index.ts"),
     output: {
         filename: `harp${bundleSuffix}.js`,
-        library: "harp"
+        library: "harp",
     },
     externals: [
         {
-            three: "THREE"
+            three: "THREE",
         },
-        function(context, request, callback) {
+        function (context, request, callback) {
             // @ts-ignore
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
-        }
-    ]
+        },
+    ],
 });
 
 const mapComponentDecoderConfig = merge(commonConfig, {
     entry: path.resolve(__dirname, "./lib/DecoderBootstrap.ts"),
     output: {
-        filename: `harp-decoders${bundleSuffix}.js`
+        filename: `harp-decoders${bundleSuffix}.js`,
     },
     externals: [
         {
-            three: "THREE"
+            three: "THREE",
         },
-        function(context, request, callback) {
+        function (context, request, callback) {
             // @ts-ignore
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
-        }
-    ]
+        },
+    ],
 });
 
 module.exports = [mapComponentConfig, mapComponentDecoderConfig];
