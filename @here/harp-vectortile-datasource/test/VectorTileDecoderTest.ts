@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
+import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
 import { expect } from "chai";
 
 import { VectorTileDecoder } from "../index-worker";
@@ -14,8 +15,14 @@ describe("ThemedTileDecoder", function() {
     it("#decodeTile does not throw", async function() {
         const target = new VectorTileDecoder();
 
-        expect(
-            await target.decodeTile(new ArrayBuffer(0), new TileKey(0, 0, 0), mercatorProjection)
-        ).to.not.throw;
+        errorOnlyLoggingAroundFunction("ThemedTileDecoder", async () => {
+            expect(
+                await target.decodeTile(
+                    new ArrayBuffer(0),
+                    new TileKey(0, 0, 0),
+                    mercatorProjection
+                )
+            ).to.not.throw;
+        });
     });
 });

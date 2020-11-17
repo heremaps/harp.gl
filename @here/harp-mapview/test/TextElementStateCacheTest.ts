@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { TileKey } from "@here/harp-geoutils";
+import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
 import { expect } from "chai";
 import * as THREE from "three";
 
@@ -257,8 +258,10 @@ describe("TextElementStateCache", function() {
             poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
-            const didReplace = cache.replaceElement(0, poiState1);
-            expect(didReplace).to.be.false;
+            errorOnlyLoggingAroundFunction("TextElementsStateCache", () => {
+                const didReplace = cache.replaceElement(0, poiState1);
+                expect(didReplace).to.be.false;
+            });
         });
 
         it("replaceElement POI failed (feature ID mismatch)", function() {
