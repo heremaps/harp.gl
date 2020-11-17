@@ -76,7 +76,7 @@ export namespace HelloWorldExample {
         const NY = new GeoCoordinates(40.707, -74.01);
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json",
+            theme: "resources/berlin_tilezen_effects_streets.json",
             target: NY,
             tilt: 50,
             heading: -20,

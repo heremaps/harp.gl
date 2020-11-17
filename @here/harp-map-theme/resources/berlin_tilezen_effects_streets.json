@@ -2,43 +2,57 @@
     "sky": {
         "type": "gradient",
         "topColor": "#161719",
-        "bottomColor": "#262829",
-        "groundColor": "#262829",
+        "bottomColor": "#0C1429",
+        "groundColor": "#0C1429",
         "monomialPower": 1
     },
     "fog": {
         "color": "#262829",
         "startRatio": 0.8
     },
-    "clearColor": "#32353B",
+    "clearColor": "#080d12",
     "lights": [
         {
-            "type": "ambient",
-            "color": "#C9CACC",
             "name": "ambientLight",
-            "intensity": 0.8
+            "color": "#FFFFFF",
+            "intensity": 1,
+            "type": "ambient"
         },
         {
-            "type": "directional",
-            "color": "#C5C7CA",
+            "direction": {
+                "x": -0.3535533524,
+                "y": 0.3535534098,
+                "z": 0.8660254115
+            },
             "name": "light1",
-            "intensity": 0.4,
-            "direction": {
-                "x": 1,
-                "y": 0,
-                "z": 1
-            }
+            "color": "#665458",
+            "intensity": 1,
+            "type": "directional",
+            "castShadow": false
         },
         {
-            "type": "directional",
-            "color": "#B6B6B6",
-            "name": "light2",
-            "intensity": 0.4,
             "direction": {
-                "x": -1,
-                "y": 0,
-                "z": 1
-            }
+                "x": -0.2548870499,
+                "y": -0.9512512293,
+                "z": 0.1736481802
+            },
+            "name": "light2",
+            "color": "#46575F",
+            "intensity": 0.5,
+            "type": "directional",
+            "castShadow": false
+        },
+        {
+            "direction": {
+                "x": 0.6830126975,
+                "y": 0.1830126865,
+                "z": 0.7071067893
+            },
+            "name": "light3",
+            "color": "#72586B",
+            "intensity": 0.6,
+            "type": "directional",
+            "castShadow": false
         }
     ],
     "defaultTextStyle": {
@@ -115,7 +129,7 @@
                 ],
                 "technique": "solid-line",
                 "renderOrder": 11,
-                "color": "#000",
+                "color": "#FF2A6D",
                 "lineWidth": [
                     "interpolate",
                     ["linear"],
@@ -151,7 +165,7 @@
                 ],
                 "technique": "solid-line",
                 "renderOrder": 11.3,
-                "color": "#F2D12E",
+                "color": "#FF2A6D",
                 "lineWidth": [
                     "interpolate",
                     ["linear"],
@@ -187,7 +201,7 @@
                 ],
                 "technique": "none",
                 "renderOrder": 12,
-                "color": "#999999",
+                "color": "#FF2A6D",
                 "backgroundColor": "#141414",
                 "backgroundOpacity": 0.5,
                 "size": 0,
@@ -226,7 +240,7 @@
                 "renderOrder": 15.3,
                 "secondaryRenderOrder": 10.3,
                 "final": true,
-                "color": "#F27C37",
+                "color": "#FF2A6D",
                 "secondaryColor": "#000",
                 "lineWidth": [
                     "interpolate",
@@ -304,7 +318,7 @@
                 ],
                 "technique": "solid-line",
                 "renderOrder": 10.3,
-                "color": "#000",
+                "color": "#FF2A6D",
                 "lineWidth": [
                     "interpolate",
                     ["linear"],
@@ -344,7 +358,7 @@
                 "technique": "solid-line",
                 "renderOrder": 15.3,
                 "final": true,
-                "color": "#F2AB26",
+                "color": "#FF2A6D",
                 "lineWidth": [
                     "interpolate",
                     ["linear"],
@@ -412,7 +426,7 @@
                 ],
                 "technique": "solid-line",
                 "renderOrder": 10.4,
-                "color": "#000",
+                "color": "#FF2A6D",
                 "lineWidth": [
                     "interpolate",
                     ["linear"],
@@ -456,7 +470,7 @@
                 "technique": "solid-line",
                 "renderOrder": 15.4,
                 "final": true,
-                "color": "#D84C1A",
+                "color": "#FF2A6D",
                 "lineWidth": [
                     "interpolate",
                     ["linear"],
@@ -496,7 +510,7 @@
                 ],
                 "technique": "text",
                 "renderOrder": 10,
-                "color": "#999999",
+                "color": "#FF2A6D",
                 "backgroundColor": "#141414",
                 "backgroundOpacity": 0.5,
                 "size": 0,
@@ -516,7 +530,7 @@
                 "renderOrder": 10,
                 "final": true,
                 "clipping": false,
-                "color": "#484A4C",
+                "color": "#FF2A6D",
                 "dashSize": [
                     "step",
                     ["zoom"],
@@ -871,7 +885,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 5,
-                "color": "#0F1621"
+                "color": "#0C1429"
             },
             {
                 "description": "water",
@@ -1232,7 +1246,7 @@
                 "technique": "fill",
                 "renderOrder": 0,
                 "opacity": 0.8,
-                "color": "#3B3E45"
+                "color": "#080d12"
             },
             {
                 "description": "urban area",
@@ -1244,7 +1258,7 @@
                 ],
                 "technique": "none",
                 "renderOrder": 0.1,
-                "color": "#3B3E45"
+                "color": "#080d12"
             },
             {
                 "description": "park",
@@ -1276,7 +1290,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 0.2,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "runway",
@@ -1289,7 +1303,7 @@
                 "technique": "fill",
                 "renderOrder": 20,
                 "final": true,
-                "color": "#2E3036"
+                "color": "#080d12"
             },
             {
                 "description": "aerodrome",
@@ -1301,7 +1315,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 0.3,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "national_park",
@@ -1313,7 +1327,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 1,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "pitch",
@@ -1325,7 +1339,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 1,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "hospital",
@@ -1337,7 +1351,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 0.1,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "cemetery",
@@ -1349,7 +1363,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 0.1,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "bridge",
@@ -1361,7 +1375,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 1,
-                "color": "#ff0000"
+                "color": "#080d12000"
             },
             {
                 "description": "zoo",
@@ -1377,7 +1391,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 1,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "religion",
@@ -1389,7 +1403,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 1,
-                "color": "#373A40"
+                "color": "#F00"
             },
             {
                 "description": "industrial",
@@ -1405,7 +1419,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 0,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "farmyard",
@@ -1421,7 +1435,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 0,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "beach",
@@ -1433,7 +1447,7 @@
                 ],
                 "technique": "fill",
                 "renderOrder": 1,
-                "color": "#373A40"
+                "color": "#080d12"
             },
             {
                 "description": "Earth layer",
@@ -1899,17 +1913,17 @@
                 "technique": "extruded-polygon",
                 "minZoomLevel": 16,
                 "renderOrder": 2000,
-                "color": "#494B4C",
-                "opacity": 0.85,
+                "color": "#152137",
+                "opacity": 0.9,
                 "defaultHeight": 1,
-                "roughness": 1,
+                "roughness": 0.37,
                 "metalness": 0.9,
                 "emissive": "#383C45",
                 "emissiveIntensity": 0.5,
                 "footprint": true,
                 "maxSlope": 0.8799999999999999,
                 "lineWidth": 1,
-                "lineColor": "#000",
+                "lineColor": "#FF2A6D",
                 "lineColorMix": 0.1,
                 "fadeNear": 0.1,
                 "fadeFar": 1,
