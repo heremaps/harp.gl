@@ -334,7 +334,7 @@ export async function errorOnlyLoggingAroundFunction(
     for (const loggerName of loggers) {
         const logger = LoggerManager.instance.getLogger(loggerName);
         if (logger) {
-            previousLogLevels.push({ loggerName, level: logger?.level });
+            previousLogLevels.push({ loggerName, level: logger.level });
             LoggerManager.instance.setLogLevel(loggerName, LogLevel.Error);
         }
     }

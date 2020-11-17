@@ -650,8 +650,7 @@ describe("MapView", function() {
             });
 
             expect(clearColorStub.calledWith("#ffffff"));
-
-            await webGlContextRestoredHandler(); // Move the logger manager down
+            await webGlContextRestoredHandler();
             expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
 
             await mapView!.setTheme({
@@ -660,10 +659,10 @@ describe("MapView", function() {
 
             expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
 
-            await webGlContextRestoredHandler(); // Move it even more down
+            await webGlContextRestoredHandler();
             expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
 
-            webGlContextLostHandler(); // Below here too
+            webGlContextLostHandler();
             expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
         });
     });
