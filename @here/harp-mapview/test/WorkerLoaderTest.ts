@@ -170,7 +170,7 @@ describe("WorkerLoader", function() {
                 );
             });
 
-            it("#startWorker catches error in worker global context", async function() {
+            it.skip("#startWorker catches error in worker global context", async function() {
                 const script = `
                     // We intentionally do not send anything, so waitForWorkerInitialized
                     // should raise timeout error.
