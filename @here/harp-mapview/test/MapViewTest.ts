@@ -107,6 +107,7 @@ describe("MapView", function() {
 
     afterEach(async function() {
         if (mapView !== undefined) {
+            await mapView.getTheme();
             mapView.dispose();
             mapView = undefined;
         }
