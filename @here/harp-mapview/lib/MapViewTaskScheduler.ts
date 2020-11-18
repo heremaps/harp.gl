@@ -6,7 +6,7 @@
 import { PerformanceTimer, Task, TaskQueue } from "@here/harp-utils";
 import THREE = require("three");
 
-import { MapView, TileTaskGroups } from "./MapView";
+import { TileTaskGroups } from "./MapView";
 import { PerformanceStatistics } from "./Statistics";
 
 const DEFAULT_MAX_FPS = 60;
@@ -17,7 +17,7 @@ export class MapViewTaskScheduler extends THREE.EventDispatcher {
     private readonly m_taskQueue: TaskQueue;
     private m_throttlingEnabled: boolean = false;
 
-    constructor(private m_maxFps: number = DEFAULT_MAX_FPS, private readonly m_mapView: MapView) {
+    constructor(private m_maxFps: number = DEFAULT_MAX_FPS) {
         super();
         this.m_taskQueue = new TaskQueue({
             groups: [TileTaskGroups.FETCH_AND_DECODE, TileTaskGroups.CREATE],
@@ -77,10 +77,6 @@ export class MapViewTaskScheduler extends THREE.EventDispatcher {
         let numItemsLeft = this.taskQueue.numItemsLeft();
         currentFrameEvent?.setValue("TaskScheduler.numPendingTasks", numItemsLeft);
 
-        // Needed for tests that dispose but that still have running tasks after MapView disposed.
-        const mapViewAlive = () => {
-            return !this.m_mapView.disposed;
-        };
         if (this.throttlingEnabled) {
             // get the available time in this frame to achieve a max fps rate
             let availableTime = this.spaceInFrame(frameStartTime);
@@ -94,9 +90,6 @@ export class MapViewTaskScheduler extends THREE.EventDispatcher {
                 counter++;
                 // create a processing condition for the tasks
                 function shouldProcess(task: Task) {
-                    if (!mapViewAlive()) {
-                        return false;
-                    }
                     // if there is a time estimate use it, otherwise default to 1 ms
                     // TODO: check whats a sane default, 1 seems to do it for now
                     availableTime -=
@@ -139,12 +132,12 @@ export class MapViewTaskScheduler extends THREE.EventDispatcher {
             //if throttling is disabled, process all pending tasks
             this.m_taskQueue.processNext(
                 TileTaskGroups.CREATE,
-                mapViewAlive,
+                undefined,
                 this.m_taskQueue.numItemsLeft(TileTaskGroups.CREATE)
             );
             this.m_taskQueue.processNext(
                 TileTaskGroups.FETCH_AND_DECODE,
-                mapViewAlive,
+                undefined,
                 this.m_taskQueue.numItemsLeft(TileTaskGroups.FETCH_AND_DECODE)
             );
         }
@@ -155,6 +148,13 @@ export class MapViewTaskScheduler extends THREE.EventDispatcher {
                 PerformanceTimer.now() - startTime!
             );
         }
+    }
+
+    /**
+     * Removes all tasks that have been queued.
+     */
+    clearQueuedTasks() {
+        this.m_taskQueue.clear();
     }
 
     private spaceInFrame(frameStartTime: number): number {

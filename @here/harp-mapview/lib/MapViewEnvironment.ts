@@ -47,16 +47,13 @@ export class MapViewEnvironment {
     private m_skyBackground?: SkyBackground;
     private m_createdLights?: THREE.Light[];
     private m_overlayCreatedLights?: THREE.Light[];
-    private readonly m_backgroundDSPromise: Promise<void> | undefined;
     private readonly m_backgroundDataSource?: BackgroundDataSource;
 
     constructor(private readonly m_mapView: MapView, options: MapViewEnvironmentOptions) {
         this.m_fog = new MapViewFog(this.m_mapView.scene);
         if (options.addBackgroundDatasource !== false) {
             this.m_backgroundDataSource = new BackgroundDataSource();
-            this.m_backgroundDSPromise = this.m_mapView.addDataSource(this.m_backgroundDataSource);
-        } else {
-            this.m_backgroundDSPromise = undefined;
+            this.m_mapView.addDataSource(this.m_backgroundDataSource);
         }
         if (
             options.backgroundTilingScheme !== undefined &&
@@ -73,15 +70,6 @@ export class MapViewEnvironment {
 
     get fog(): MapViewFog {
         return this.m_fog;
-    }
-
-    /**
-     * Required to be able to wait for this DataSource to be added, if not, the MapViewTest.ts will
-     * complain because we then call update() once the MapView is disposed.
-     * @internal
-     */
-    get backgroundDataSourcePromise(): Promise<void> | undefined {
-        return this.m_backgroundDSPromise;
     }
 
     updateBackgroundDataSource() {

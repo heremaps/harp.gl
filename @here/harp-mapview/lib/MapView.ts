@@ -1093,7 +1093,7 @@ export class MapView extends EventDispatcher {
 
         // Must be initialized before setupCamera, because the VisibleTileSet is created as part
         // of the setupCamera method and it needs the TaskQueue instance, same for environment
-        this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps, this);
+        this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
         this.m_sceneEnvironment = new MapViewEnvironment(this, options);
 
         // setup camera with initial position
@@ -1326,6 +1326,8 @@ export class MapView extends EventDispatcher {
         // Destroy the facade if the there are no workers active anymore.
         ConcurrentDecoderFacade.destroyIfTerminated();
         ConcurrentTilerFacade.destroyIfTerminated();
+
+        this.m_taskScheduler.clearQueuedTasks();
 
         // Remove all event handlers.
         super.dispose();

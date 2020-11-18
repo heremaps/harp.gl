@@ -105,7 +105,7 @@ describe("MapView", function() {
         } as unknown) as HTMLCanvasElement;
     });
 
-    afterEach(function() {
+    afterEach(async function() {
         if (mapView !== undefined) {
             mapView.dispose();
             mapView = undefined;
@@ -888,18 +888,20 @@ describe("MapView", function() {
             removeEventListener: sinon.stub()
         };
 
+        const mapViewOptions = {
+            canvas: (customCanvas as any) as HTMLCanvasElement,
+            addBackgroundDatasource: false
+        };
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
                 await mapView.getTheme();
-                await mapView.sceneEnvironment.backgroundDataSourcePromise;
                 const resultA = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
                 await mapView.getTheme();
-                await mapView.sceneEnvironment.backgroundDataSourcePromise;
                 const resultB = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
 
                 expect(resultA!.x).to.be.closeTo(resultB!.x, 0.00000001);
@@ -920,18 +922,20 @@ describe("MapView", function() {
             removeEventListener: sinon.stub()
         };
 
+        const mapViewOptions = {
+            canvas: (customCanvas as any) as HTMLCanvasElement,
+            addBackgroundDatasource: false
+        };
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
                 await mapView.getTheme();
-                await mapView.sceneEnvironment.backgroundDataSourcePromise;
                 const resultA = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
                 await mapView.getTheme();
-                await mapView.sceneEnvironment.backgroundDataSourcePromise;
                 const resultB = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
 
                 expect(resultA!.x).to.be.closeTo(resultB!.x, 0.00000001);
@@ -1453,7 +1457,6 @@ describe("MapView", function() {
         }
         mapView = new MapView({ canvas, theme: {} });
         await mapView.getTheme();
-        await mapView.sceneEnvironment.backgroundDataSourcePromise;
 
         const dataSource = new FakeOmvDataSource({ name: "omv" });
 
