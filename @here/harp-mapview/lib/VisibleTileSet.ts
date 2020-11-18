@@ -1313,9 +1313,6 @@ export class VisibleTileSet {
             const tileKey = DataSourceCache.getKeyForTile(tile);
             if (!retainedTiles.has(tileKey)) {
                 retainedTiles.add(tileKey);
-                // Prevent label rendering issues when the style set is changing. Prevent Text
-                // element rendering that depends on cleaned font catalog data.
-                tile.clearTextElements();
                 this.addToTaskQueue(tile);
             }
         };
