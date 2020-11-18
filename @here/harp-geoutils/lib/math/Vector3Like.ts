@@ -4,12 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isVector2Like, Vector2Like } from "./Vector2Like";
-
 /**
  * Interface representing a Vector3.
  */
-export interface Vector3Like extends Vector2Like {
+export interface Vector3Like {
+    /**
+     * The X position.
+     */
+    x: number;
+
+    /**
+     * The Y position.
+     */
+    y: number;
+
     /**
      * The Z position.
      */
@@ -17,5 +25,5 @@ export interface Vector3Like extends Vector2Like {
 }
 
 export function isVector3Like(v: any): v is Vector3Like {
-    return isVector2Like(v) && typeof (v as any).z === "number";
+    return v && typeof v.x === "number" && typeof v.y === "number" && typeof v.z === "number";
 }
