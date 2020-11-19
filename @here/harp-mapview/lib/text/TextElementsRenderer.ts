@@ -494,10 +494,6 @@ export class TextElementsRenderer {
             tileTextElementsChanged ||
             this.m_viewState.renderedTilesChanged;
 
-        logger.debug(
-            `FRAME: ${this.m_viewState.frameNumber}, ZOOM LEVEL: ${this.m_viewState.zoomLevel}`
-        );
-
         if (updateTextElements && this.m_addNewLabels) {
             this.m_textElementStateCache.clearVisited();
             this.updateTextElements(dataSourceTileList);
@@ -1111,8 +1107,6 @@ export class TextElementsRenderer {
      * @param dataSourceTileList - List of tiles to be rendered for each data source.
      */
     private updateTextElements(dataSourceTileList: DataSourceTileList[]) {
-        logger.debug("updateTextElements");
-
         if (updateStats) {
             updateStats.clear();
         }
@@ -1350,9 +1344,6 @@ export class TextElementsRenderer {
 
         const placeNew = this.m_forceNewLabelsPass || placeNewTextElements;
         if (this.m_forceNewLabelsPass) {
-            if (!placeNewTextElements) {
-                logger.debug("Force new label pass");
-            }
             this.m_forceNewLabelsPass = false;
         }
         const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels!;
