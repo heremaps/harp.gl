@@ -90,9 +90,15 @@ export function stubTextCanvas(
     sandbox
         .stub(textCanvas, "addTextBufferObject")
         .callsFake((textBufferObject: TextBufferObject, params?: TextBufferAdditionParameters) => {
+            const position: THREE.Vector2 | undefined =
+                params === undefined
+                    ? undefined
+                    : new THREE.Vector2(params.position?.x, params.position?.y);
+
             addTextBufferObjSpy(
                 textBufferObject,
-                params === undefined ? undefined : params.opacity
+                params === undefined ? undefined : params.opacity,
+                params === undefined ? undefined : position?.toArray()
             );
             return true;
         });

@@ -333,48 +333,146 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.equal(100);
         });
 
-        it("uses fading time from technique", function() {
+        it("uses text fading time from marker technique", function() {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
                     technique: {
-                        textFadeTime: 100,
                         iconFadeTime: 100
                     }
                 },
-                textFadeTime: 100
+                textFadeTime: 200
             } as any);
-            textElementState.update(100);
+            textElementState.update(300);
 
             expect(textElementState.textRenderState).to.not.be.undefined;
-            expect(textElementState.textRenderState!.fadeTime).to.equal(100);
+            expect(textElementState.textRenderState!.fadeTime).to.equal(200);
             expect(textElementState.iconRenderState).to.not.be.undefined;
             expect(textElementState.iconRenderState!.fadeTime).to.equal(100);
-            expect(textElementState.viewDistance).to.equal(100);
+            expect(textElementState.viewDistance).to.equal(300);
         });
 
-        it("uses fading time from technique for line marker", function() {
+        it("uses fading time from poi technique", function() {
+            const textElementState = new TextElementState({
+                type: TextElementType.PoiLabel,
+                poiInfo: {
+                    technique: {
+                        textFadeTime: 1000,
+                        iconFadeTime: 100
+                    }
+                }
+            } as any);
+            textElementState.update(300);
+
+            expect(textElementState.textRenderState).to.not.be.undefined;
+            expect(textElementState.textRenderState!.fadeTime).to.equal(1000);
+            expect(textElementState.iconRenderState).to.not.be.undefined;
+            expect(textElementState.iconRenderState!.fadeTime).to.equal(100);
+            expect(textElementState.viewDistance).to.equal(300);
+        });
+
+        it("textFadeTime in TextElement override poi value", function() {
+            const textElementState = new TextElementState({
+                type: TextElementType.PoiLabel,
+                poiInfo: {
+                    technique: {
+                        textFadeTime: 1000,
+                        iconFadeTime: 100
+                    }
+                },
+                // override value in poiInfo
+                textFadeTime: 200
+            } as any);
+            textElementState.update(300);
+
+            expect(textElementState.textRenderState).to.not.be.undefined;
+            expect(textElementState.textRenderState!.fadeTime).to.equal(200);
+            expect(textElementState.iconRenderState).to.not.be.undefined;
+            expect(textElementState.iconRenderState!.fadeTime).to.equal(100);
+            expect(textElementState.viewDistance).to.equal(300);
+        });
+
+        it("uses text fading time from marker technique for line marker", function() {
             const textElementState = new TextElementState({
                 type: TextElementType.LineMarker,
                 poiInfo: {
                     technique: {
-                        textFadeTime: 100,
                         iconFadeTime: 100
                     }
                 },
-                textFadeTime: 100,
+                textFadeTime: 200,
                 points: [
                     [0, 1],
                     [0, 2]
                 ]
             } as any);
-            textElementState.update(100);
+            textElementState.update(300);
 
-            expect(textElementState.textRenderState).to.not.be.undefined;
+            expect(textElementState.textRenderState).to.be.undefined;
+            expect(textElementState.textRenderStates).to.not.be.undefined;
+            expect(textElementState.textRenderStates![0].fadeTime).to.equal(200);
+            expect(textElementState.textRenderStates![1].fadeTime).to.equal(200);
+
             expect(textElementState.iconRenderStates).to.not.be.undefined;
             expect(textElementState.iconRenderStates![0].fadeTime).to.equal(100);
             expect(textElementState.iconRenderStates![1].fadeTime).to.equal(100);
-            expect(textElementState.viewDistance).to.equal(100);
+            expect(textElementState.viewDistance).to.equal(300);
+        });
+
+        it("uses fading time from poi technique for line marker", function() {
+            const textElementState = new TextElementState({
+                type: TextElementType.LineMarker,
+                poiInfo: {
+                    technique: {
+                        textFadeTime: 2000,
+                        iconFadeTime: 100
+                    }
+                },
+                points: [
+                    [0, 1],
+                    [0, 2]
+                ]
+            } as any);
+            textElementState.update(300);
+
+            expect(textElementState.textRenderState).to.be.undefined;
+            expect(textElementState.textRenderStates).to.not.be.undefined;
+            expect(textElementState.textRenderStates![0].fadeTime).to.equal(2000);
+            expect(textElementState.textRenderStates![1].fadeTime).to.equal(2000);
+
+            expect(textElementState.iconRenderStates).to.not.be.undefined;
+            expect(textElementState.iconRenderStates![0].fadeTime).to.equal(100);
+            expect(textElementState.iconRenderStates![1].fadeTime).to.equal(100);
+            expect(textElementState.viewDistance).to.equal(300);
+        });
+
+        it("textFadeTime in TextElement override poi value for line marker", function() {
+            const textElementState = new TextElementState({
+                type: TextElementType.LineMarker,
+                poiInfo: {
+                    technique: {
+                        textFadeTime: 2000,
+                        iconFadeTime: 100
+                    }
+                },
+                // override value in poiInfo
+                textFadeTime: 200,
+                points: [
+                    [0, 1],
+                    [0, 2]
+                ]
+            } as any);
+            textElementState.update(300);
+
+            expect(textElementState.textRenderState).to.be.undefined;
+            expect(textElementState.textRenderStates).to.not.be.undefined;
+            expect(textElementState.textRenderStates![0].fadeTime).to.equal(200);
+            expect(textElementState.textRenderStates![1].fadeTime).to.equal(200);
+
+            expect(textElementState.iconRenderStates).to.not.be.undefined;
+            expect(textElementState.iconRenderStates![0].fadeTime).to.equal(100);
+            expect(textElementState.iconRenderStates![1].fadeTime).to.equal(100);
+            expect(textElementState.viewDistance).to.equal(300);
         });
 
         it("updates a initialized text element state", function() {

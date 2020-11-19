@@ -41,7 +41,7 @@ export class TextElementState {
      * @hidden
      * Used during rendering.
      */
-    private m_textRenderState?: RenderState;
+    private m_textRenderStates?: RenderState | RenderState[];
     /**
      * @hidden
      * Used to store recently used text layout.
@@ -51,15 +51,25 @@ export class TextElementState {
     constructor(readonly element: TextElement) {}
 
     get initialized(): boolean {
-        return this.m_textRenderState !== undefined || this.m_iconRenderStates !== undefined;
+        return this.m_textRenderStates !== undefined || this.m_iconRenderStates !== undefined;
     }
 
     /**
      * @returns `true` if any component of the element is visible, `false` otherwise.
      */
     get visible(): boolean {
-        if (this.m_textRenderState !== undefined && this.m_textRenderState.isVisible()) {
+        const textRenderState = this.textRenderState;
+        if (textRenderState !== undefined && textRenderState.isVisible()) {
             return true;
+        }
+
+        const textRenderStates = this.textRenderStates;
+        if (textRenderStates !== undefined) {
+            for (const state of textRenderStates) {
+                if (state.isVisible()) {
+                    return true;
+                }
+            }
         }
 
         const iconRenderState = this.iconRenderState;
@@ -147,9 +157,14 @@ export class TextElementState {
      * Resets the element to an initialized state.
      */
     reset() {
-        if (this.m_textRenderState !== undefined) {
-            this.m_textRenderState.reset();
+        if (this.textRenderState) {
+            (this.m_textRenderStates as RenderState).reset();
+        } else if (this.m_textRenderStates !== undefined) {
+            for (const renderState of this.m_textRenderStates as RenderState[]) {
+                renderState.reset();
+            }
         }
+
         if (this.m_textLayoutState !== undefined) {
             if (this.element.layoutStyle !== undefined) {
                 this.m_textLayoutState.reset(this.element.layoutStyle);
@@ -175,10 +190,10 @@ export class TextElementState {
      * @param predecessor - Text element state to be replaced.
      */
     replace(predecessor: TextElementState) {
-        this.m_textRenderState = predecessor.m_textRenderState;
+        this.m_textRenderStates = predecessor.m_textRenderStates;
         this.m_textLayoutState = predecessor.m_textLayoutState;
         this.m_iconRenderStates = predecessor.m_iconRenderStates;
-        predecessor.m_textRenderState = undefined;
+        predecessor.m_textRenderStates = undefined;
         predecessor.m_textLayoutState = undefined;
         predecessor.m_iconRenderStates = undefined;
 
@@ -237,10 +252,30 @@ export class TextElementState {
     }
 
     /**
-     * @returns The text render state.
+     * Returns the text render state for the case where the text element has only one position.
+     * @returns The text render state if the text element has a single position, otherwise
+     * undefined.
      */
     get textRenderState(): RenderState | undefined {
-        return this.m_textRenderState;
+        if (this.m_textRenderStates === undefined) {
+            return undefined;
+        }
+        return this.m_textRenderStates instanceof RenderState ? this.m_textRenderStates : undefined;
+    }
+
+    /**
+     * Returns the text render states for text elements with multiple positions.
+     * @returns The text render states if the text element has multiple positions, otherwise
+     * undefined.
+     */
+    get textRenderStates(): RenderState[] | undefined {
+        if (this.m_textRenderStates === undefined) {
+            return undefined;
+        }
+
+        return this.m_textRenderStates instanceof RenderState
+            ? undefined
+            : (this.m_textRenderStates as RenderState[]);
     }
 
     /**
@@ -273,11 +308,16 @@ export class TextElementState {
      * Updates the fading state to the specified time.
      * @param time - The current time.
      * @param disableFading - If `True` there will be no fading transitions, i.e., state will go
-     * directly from FadedIn to FadedOut and viceversa.
+     * directly from FadedIn to FadedOut and vice versa.
      */
     updateFading(time: number, disableFading: boolean): void {
-        if (this.m_textRenderState !== undefined) {
-            this.m_textRenderState.updateFading(time, disableFading);
+        if (this.textRenderState !== undefined) {
+            const textRenderState = this.m_textRenderStates as RenderState;
+            textRenderState.updateFading(time, disableFading);
+        } else if (this.textRenderStates !== undefined) {
+            for (const renderState of this.textRenderStates as RenderState[]) {
+                renderState.updateFading(time, disableFading);
+            }
         }
 
         if (this.iconRenderState !== undefined) {
@@ -294,22 +334,32 @@ export class TextElementState {
      * Initialize text and icon render states
      */
     private initializeRenderStates() {
-        assert(this.m_textRenderState === undefined);
+        assert(this.m_textRenderStates === undefined);
         assert(this.m_textLayoutState === undefined);
         assert(this.m_iconRenderStates === undefined);
 
-        const { textFadeTime } = this.element;
-        this.m_textRenderState = new RenderState(textFadeTime);
+        // PoiInfo.textFadeTime is set to the default value if not set in the style. That is why
+        // a defined value of TextElement.textFadeTime overrides PoiInfo.textFadeTime.
+        const textFadeTime = this.element.textFadeTime
+            ? this.element.textFadeTime
+            : this.element.poiInfo
+            ? this.element.poiInfo.technique.textFadeTime
+            : undefined;
 
         const iconFadeTime = this.element.poiInfo?.technique.iconFadeTime;
+
         if (this.element.type === TextElementType.LineMarker) {
+            this.m_textRenderStates = new Array<RenderState>();
             this.m_iconRenderStates = new Array<RenderState>();
+            const textRenderStates = this.m_textRenderStates as RenderState[];
+            const iconRenderStates = this.m_iconRenderStates as RenderState[];
             for (const _point of this.element.points as THREE.Vector3[]) {
-                const iconRenderStates = this.m_iconRenderStates as RenderState[];
-                const renderState = new RenderState(iconFadeTime);
-                iconRenderStates.push(renderState);
+                textRenderStates.push(new RenderState(textFadeTime));
+                iconRenderStates.push(new RenderState(iconFadeTime));
             }
             return;
+        } else {
+            this.m_textRenderStates = new RenderState(textFadeTime);
         }
 
         if (this.element.type === TextElementType.PoiLabel) {

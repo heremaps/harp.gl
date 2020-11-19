@@ -205,14 +205,22 @@ function addTextToCanvas(
 }
 
 function addTextBufferToCanvas(
-    textElementState: TextElementState,
+    labelState: TextElementState,
+    iconIndex: number | undefined,
     canvas: TextCanvas,
     screenPosition: THREE.Vector3,
     fadeFactor: number,
     scaleFactor: number
 ): boolean {
-    const textElement = textElementState.element;
-    const textRenderState = textElementState.textRenderState;
+    const textElement = labelState.element;
+
+    assert(iconIndex === undefined || labelState.textRenderStates !== undefined);
+    const textRenderState: RenderState =
+        iconIndex !== undefined
+            ? labelState.textRenderStates![iconIndex]
+            : labelState.textRenderState!;
+    assert(textRenderState !== undefined);
+
     const opacity = textRenderState!.opacity * fadeFactor * textElement.renderStyle!.opacity;
 
     if (opacity === 0) {
@@ -245,10 +253,17 @@ function addTextBufferToCanvas(
 
 function shouldRenderPointText(
     labelState: TextElementState,
+    iconIndex: number | undefined,
     viewState: ViewState,
     options: TextElementsRendererOptions
 ): boolean {
-    const textRenderState: RenderState | undefined = labelState.textRenderState;
+    assert(iconIndex === undefined || labelState.textRenderStates !== undefined);
+    const textRenderState: RenderState =
+        iconIndex !== undefined
+            ? labelState.textRenderStates![iconIndex]
+            : labelState.textRenderState!;
+    assert(textRenderState !== undefined);
+
     const label = labelState.element;
     const poiInfo = label.poiInfo;
 
@@ -1573,8 +1588,14 @@ export class TextElementsRenderer {
         iconIndex?: number
     ): boolean {
         const pointLabel: TextElement = labelState.element;
-        const textRenderState: RenderState | undefined = labelState.textRenderState;
         const isLineMarker = iconIndex !== undefined;
+
+        assert(iconIndex === undefined || labelState.textRenderStates !== undefined);
+        const textRenderState: RenderState =
+            iconIndex !== undefined
+                ? labelState.textRenderStates![iconIndex]
+                : labelState.textRenderState!;
+        assert(textRenderState !== undefined);
 
         assert(iconIndex === undefined || labelState.iconRenderStates !== undefined);
         const iconRenderState: RenderState =
@@ -1653,7 +1674,12 @@ export class TextElementsRenderer {
             labelState,
             this.m_viewState.maxVisibilityDist
         );
-        const renderText = shouldRenderPointText(labelState, this.m_viewState, this.m_options);
+        const renderText = shouldRenderPointText(
+            labelState,
+            iconIndex,
+            this.m_viewState,
+            this.m_options
+        );
 
         // Render the label's text...
         // textRenderState is always defined at this point.
@@ -1726,6 +1752,7 @@ export class TextElementsRenderer {
                 if (
                     addTextBufferToCanvas(
                         labelState,
+                        iconIndex,
                         textCanvas,
                         tempPosition,
                         distanceFadeFactor,

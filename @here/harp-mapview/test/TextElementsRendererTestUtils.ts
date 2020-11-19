@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { DEFAULT_FADE_TIME } from "../lib/text/RenderState";
 import { TextElementBuilder } from "./TextElementBuilder";
 
@@ -92,6 +91,14 @@ export function fadeOut(frames: number): FadeState[] {
     return FADE_OUT.concat(fadedOut(frames - FADE_OUT.length));
 }
 
+export function stateMix(state0: FadeState[], state1: FadeState[]): FadeState[][] {
+    const result: FadeState[][] = [];
+    for (let i = 0; i < state0.length; i++) {
+        result.push([state0[i], state1[i]]);
+    }
+    return result;
+}
+
 /**
  * Helper functions to generate boolean arrays used to indicate on what frames
  * an input test tile is visible (see [[InputTile]]).
@@ -120,17 +127,17 @@ export function allFrames(frames: number[]): boolean[] {
 export type InputTextElement =
     | [TextElementBuilder, FadeState[]]
     | [TextElementBuilder, FadeState[], boolean[]]
-    | [TextElementBuilder, FadeState[], boolean[], FadeState[]];
+    | [TextElementBuilder, FadeState[] | FadeState[][], boolean[], FadeState[] | FadeState[][]];
 
 export function builder(input: InputTextElement) {
     return input[0];
 }
 
-export function frameStates(input: InputTextElement) {
+export function frameStates(input: InputTextElement): FadeState[] | FadeState[][] {
     return input[1];
 }
 
-export function iconFrameStates(input: InputTextElement) {
+export function iconFrameStates(input: InputTextElement): FadeState[] | FadeState[][] | undefined {
     return input[3];
 }
 

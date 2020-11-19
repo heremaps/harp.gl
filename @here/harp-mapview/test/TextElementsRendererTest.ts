@@ -46,7 +46,8 @@ import {
     INITIAL_TIME,
     InputTextElement,
     InputTile,
-    not
+    not,
+    stateMix
 } from "./TextElementsRendererTestUtils";
 
 /**
@@ -225,6 +226,18 @@ const tests: TestCase[] = [
         collisionFrames: not(firstNFrames(FADE_2_CYCLES, 3))
     },
     {
+        name: "Least prioritized from two colliding persistent pois fades out (with collisions)",
+        tiles: [
+            {
+                labels: [
+                    [poiBuilder("P0").withPriority(0), fadedOut(FADE_IN_OUT.length)],
+                    [poiBuilder("P1").withPriority(1), fadeIn(FADE_IN_OUT.length)]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
         name: "Least prioritized from two colliding persistent pois fades out",
         tiles: [
             {
@@ -259,10 +272,17 @@ const tests: TestCase[] = [
         tiles: [
             {
                 labels: [
-                    [lineMarkerBuilder(WORLD_SCALE, "P0").withPriority(0), FADE_IN_OUT],
+                    [
+                        lineMarkerBuilder(WORLD_SCALE, "P0").withPriority(0),
+                        stateMix(FADE_IN_OUT, FADE_IN_OUT),
+                        [],
+                        stateMix(FADE_IN_OUT, FADE_IN_OUT)
+                    ],
                     [
                         lineMarkerBuilder(WORLD_SCALE, "P1").withPriority(1),
-                        fadeIn(FADE_IN_OUT.length)
+                        stateMix(fadeIn(FADE_IN_OUT.length), fadeIn(FADE_IN_OUT.length)),
+                        [],
+                        stateMix(fadeIn(FADE_IN_OUT.length), fadeIn(FADE_IN_OUT.length))
                     ]
                 ]
             }
@@ -398,6 +418,49 @@ const tests: TestCase[] = [
                         fadeIn(FADE_IN_OUT.length), // text should fade in
                         [],
                         fadedOut(FADE_IN_OUT.length) // icon should stay faded out
+                    ]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Text is not rendered because the valid and non-optional icon is rejected",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder("P1")
+                            .withPriority(1)
+                            .withPosition(0, 0)
+                            .withPoiInfo(
+                                new PoiInfoBuilder()
+                                    .withPoiTechnique()
+                                    .withIconOptional(false)
+                                    .withIconOffset(0, 0)
+                            )
+                            .withOffset(0, 0),
+                        fadeIn(FADE_IN_OUT.length),
+                        [],
+                        fadeIn(FADE_IN_OUT.length)
+                    ],
+                    [
+                        poiBuilder("P0")
+                            .withPriority(0)
+                            .withPath([new THREE.Vector3(0, 8, 0), new THREE.Vector3(0, 3, 0)])
+                            .withPoiInfo(
+                                new PoiInfoBuilder()
+                                    .withLineMarkerTechnique()
+                                    .withIconOptional(false)
+                                    .withIconValid(true)
+                                    .withIconOffset(0, -10)
+                            )
+                            .withOffset(0, 0),
+                        // first text should be visible, second invisible
+                        stateMix(fadeIn(FADE_IN_OUT.length), fadedOut(FADE_IN_OUT.length)),
+                        [],
+                        // first icon should be visible, second invisible
+                        stateMix(fadeIn(FADE_IN_OUT.length), fadedOut(FADE_IN_OUT.length))
                     ]
                 ]
             }
@@ -748,41 +811,73 @@ describe("TextElementsRenderer", function() {
 
     function buildLabels(
         inputElements: InputTextElement[] | undefined,
-        elementFrameStates: Array<[TextElement, FadeState[], FadeState[] | undefined]>,
+        elementFrameStates: Array<
+            [TextElement, FadeState[] | FadeState[][], FadeState[] | FadeState[][] | undefined]
+        >,
         frameCount: number
     ): TextElement[] {
         if (!inputElements) {
             return [];
         }
         return inputElements.map((inputElement: InputTextElement) => {
-            expect(frameStates(inputElement).length).equal(
-                frameCount,
-                "frameStates of inputElement equals frameCount"
-            );
-            const iconStates = iconFrameStates(inputElement);
-            if (iconStates !== undefined) {
-                expect(iconStates.length).equal(
-                    frameCount,
-                    "iconFrameStates of inputElement equals frameCount"
-                );
-            }
             // Only used to identify some text elements for testing purposes.
             const dummyUserData = {};
             const element = builder(inputElement)
                 .withUserData(dummyUserData)
                 .build();
-            elementFrameStates.push([element, frameStates(inputElement), iconStates]);
+
+            const textStates = frameStates(inputElement);
+
+            if (textStates && textStates.length > 0) {
+                const textState = textStates[0];
+                if (Array.isArray(textState)) {
+                    expect(element.path).to.exist;
+                    expect(element.path!.length).to.equal(
+                        textState.length,
+                        "number of frameStates must equal number of path points"
+                    );
+                }
+                expect(textStates.length).equal(
+                    frameCount,
+                    "number of frameStates of inputElement must equal frameCount"
+                );
+            }
+
+            const iconStates = iconFrameStates(inputElement);
+
+            if (iconStates !== undefined) {
+                if (iconStates.length > 0) {
+                    const iconState = iconStates[0];
+                    if (Array.isArray(iconState)) {
+                        expect(element.path).to.exist;
+                        expect(element.path!.length).to.equal(
+                            iconState.length,
+                            "number of iconFrameStates must equal number of path points"
+                        );
+                    }
+                    expect(iconStates.length).equal(
+                        frameCount,
+                        "number of iconFrameStates of inputElement must equal frameCount"
+                    );
+                }
+            }
+
+            elementFrameStates.push([element, textStates, iconStates]);
             return element;
         });
     }
     async function initTest(
         test: TestCase
     ): Promise<{
-        elementFrameStates: Array<[TextElement, FadeState[], FadeState[]]>;
+        elementFrameStates: Array<
+            [TextElement, FadeState[] | FadeState[][], FadeState[] | FadeState[][]]
+        >;
         prevOpacities: number[];
     }> {
         // Array with all text elements and their corresponding expected frame states.
-        const elementFrameStates = new Array<[TextElement, FadeState[], FadeState[]]>();
+        const elementFrameStates = new Array<
+            [TextElement, FadeState[] | FadeState[][], FadeState[] | FadeState[][]]
+        >();
 
         let enableElevation = false;
         const allTileIndices: number[] = [];
@@ -865,7 +960,7 @@ describe("TextElementsRenderer", function() {
                     expectedStates,
                     expectedIconStates
                 ] of elementFrameStates) {
-                    const expectedState = expectedStates[frameIdx];
+                    const expectedTextState = expectedStates[frameIdx];
                     const expectedIconState = expectedIconStates
                         ? expectedIconStates[frameIdx]
                         : undefined;
@@ -873,7 +968,7 @@ describe("TextElementsRenderer", function() {
                     const prevOpacity = prevOpacities[elementIdx];
                     const newOpacity = fixture.checkTextElementState(
                         textElement,
-                        expectedState,
+                        expectedTextState,
                         expectedIconState,
                         prevOpacity
                     );

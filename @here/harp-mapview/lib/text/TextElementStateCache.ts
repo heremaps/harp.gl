@@ -81,6 +81,15 @@ function findDuplicateById(
     }
 
     if (
+        elementState.textRenderStates !== undefined &&
+        candidateElement.textRenderStates !== undefined &&
+        elementState.textRenderStates.length !== candidateElement.textRenderStates.length
+    ) {
+        // Cached line marker element needs the same number of text positions to fit.
+        return undefined;
+    }
+
+    if (
         elementState.iconRenderStates !== undefined &&
         candidateElement.iconRenderStates !== undefined &&
         elementState.iconRenderStates.length !== candidateElement.iconRenderStates.length
@@ -161,6 +170,15 @@ function findDuplicateByText(
         const distSquared = elementPosition.distanceToSquared(cachedElement.position);
         if (distSquared > maxSqDistError) {
             // Cached text element is too far away to be a duplicate.
+            continue;
+        }
+
+        if (
+            elementState.textRenderStates !== undefined &&
+            candidateEntry.textRenderStates !== undefined &&
+            elementState.textRenderStates.length !== candidateEntry.textRenderStates.length
+        ) {
+            // Cached line marker element needs the same number of text positions to fit.
             continue;
         }
 

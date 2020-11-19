@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { MapEnv, Theme } from "@here/harp-datasource-protocol";
 import { identityProjection, TileKey } from "@here/harp-geoutils";
 import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
@@ -186,81 +185,119 @@ export class TestFixture {
     /**
      * Checks that the fading state of a given text element has the specified expected value.
      * @param textElement - The text element to verify.
-     * @param expectedState - The expected fading state of the text element.
+     * @param expectedTextState - The expected fading state of the text element.
      * @param expectedIconState - The expected fading state of the icon.
      * @param prevOpacity - The text element opacity in the previous frame.
      * @returns The text element opacity in the current frame.
      */
     checkTextElementState(
         textElement: TextElement,
-        expectedState: FadeState,
-        expectedIconState: FadeState | undefined,
+        expectedTextStates: FadeState | FadeState[],
+        expectedIconStates: FadeState | FadeState[] | undefined,
         prevOpacity: number
     ): number {
         let iconOpacityMatcher: ((arg0: number) => boolean) | undefined;
-        let iconRendered = true;
+        let newOpacity = 0;
 
-        if (expectedIconState !== undefined) {
-            switch (expectedIconState) {
+        const checkState = (
+            positionIndex: number | undefined,
+            textState: FadeState,
+            iconState: FadeState | undefined
+        ): number => {
+            let iconRendered = true;
+            let textOpacity = 0;
+
+            if (iconState !== undefined) {
+                switch (iconState) {
+                    case FadeState.FadingIn:
+                        iconOpacityMatcher = (opacity: number) => {
+                            return opacity > prevOpacity;
+                        };
+                        break;
+                    case FadeState.FadingOut:
+                        iconOpacityMatcher = (opacity: number) => {
+                            return opacity < prevOpacity;
+                        };
+                        break;
+                    case FadeState.FadedIn:
+                        iconOpacityMatcher = (opacity: number) => {
+                            return opacity === 1;
+                        };
+                        break;
+                    case FadeState.FadedOut:
+                        iconOpacityMatcher = (opacity: number) => {
+                            return opacity === 0;
+                        };
+                        iconRendered = false;
+                        break;
+                }
+            }
+
+            switch (textState) {
                 case FadeState.FadingIn:
-                    iconOpacityMatcher = (opacity: number) => {
-                        return opacity > prevOpacity;
-                    };
+                    textOpacity = this.checkTextElementRendered(
+                        textElement,
+                        positionIndex,
+                        (opacity: number) => {
+                            return opacity > prevOpacity;
+                        },
+                        iconRendered,
+                        iconOpacityMatcher
+                    );
                     break;
                 case FadeState.FadingOut:
-                    iconOpacityMatcher = (opacity: number) => {
-                        return opacity < prevOpacity;
-                    };
+                    textOpacity = this.checkTextElementRendered(
+                        textElement,
+                        positionIndex,
+                        (opacity: number) => {
+                            return opacity < prevOpacity;
+                        },
+                        iconRendered,
+                        iconOpacityMatcher
+                    );
                     break;
                 case FadeState.FadedIn:
-                    iconOpacityMatcher = (opacity: number) => {
-                        return opacity === 1;
-                    };
+                    textOpacity = this.checkTextElementRendered(
+                        textElement,
+                        positionIndex,
+                        (opacity: number) => {
+                            return opacity === 1;
+                        },
+                        iconRendered,
+                        iconOpacityMatcher
+                    );
                     break;
                 case FadeState.FadedOut:
-                    iconOpacityMatcher = (opacity: number) => {
-                        return opacity === 0;
-                    };
-                    iconRendered = false;
+                    this.checkTextElementNotRendered(textElement, positionIndex);
                     break;
             }
-        }
+            return textOpacity;
+        };
 
-        let newOpacity = 0;
-        switch (expectedState) {
-            case FadeState.FadingIn:
-                newOpacity = this.checkTextElementRendered(
-                    textElement,
-                    (opacity: number) => {
-                        return opacity > prevOpacity;
-                    },
-                    iconRendered,
-                    iconOpacityMatcher
+        if (Array.isArray(expectedTextStates)) {
+            expect(expectedIconStates).is.an("Array");
+            expect((expectedTextStates as FadeState[]).length).equals(
+                (expectedIconStates as FadeState[]).length
+            );
+            const expectedTextStateArray = expectedTextStates as FadeState[];
+            const expectedIconStateArray = expectedIconStates as FadeState[];
+
+            for (let i = 0; i < expectedTextStateArray.length; i++) {
+                newOpacity = checkState(i, expectedTextStateArray[i], expectedIconStateArray[i]);
+            }
+        } else {
+            expect(expectedIconStates).is.not.an("Array");
+            if (textElement.path !== undefined) {
+                for (let i = 0; i < textElement.path.length; i++) {
+                    newOpacity = checkState(i, expectedTextStates, expectedIconStates as FadeState);
+                }
+            } else {
+                newOpacity = checkState(
+                    undefined,
+                    expectedTextStates,
+                    expectedIconStates as FadeState
                 );
-                break;
-            case FadeState.FadingOut:
-                newOpacity = this.checkTextElementRendered(
-                    textElement,
-                    (opacity: number) => {
-                        return opacity < prevOpacity;
-                    },
-                    iconRendered,
-                    iconOpacityMatcher
-                );
-                break;
-            case FadeState.FadedIn:
-                newOpacity = this.checkTextElementRendered(
-                    textElement,
-                    (opacity: number) => {
-                        return opacity === 1;
-                    },
-                    iconRendered,
-                    iconOpacityMatcher
-                );
-                break;
-            case FadeState.FadedOut:
-                this.checkTextElementNotRendered(textElement);
-                break;
+            }
         }
         return newOpacity;
     }
@@ -360,44 +397,47 @@ export class TestFixture {
 
     private checkTextElementRendered(
         textElement: TextElement,
+        positionIndex: number | undefined,
         opacityMatcher: OpacityMatcher | undefined,
         iconRendered: boolean,
         iconOpacityMatcher: OpacityMatcher | undefined
     ): number {
         if (this.m_viewState.elevationProvider) {
-            assert(textElement.elevated, this.getErrorHeading(textElement) + " was NOT elevated.");
+            assert(
+                textElement.elevated,
+                this.getErrorHeading(textElement, positionIndex) + " was NOT elevated."
+            );
         }
         switch (textElement.type) {
             case TextElementType.PoiLabel:
+            case TextElementType.LineMarker:
                 if (textElement.poiInfo !== undefined) {
                     return this.checkPoiRendered(
                         textElement,
+                        positionIndex,
                         opacityMatcher,
                         iconRendered,
                         iconOpacityMatcher
                     );
                 } else {
-                    return this.checkPointTextRendered(textElement, opacityMatcher);
+                    return this.checkPointTextRendered(textElement, positionIndex, opacityMatcher);
                 }
             case TextElementType.PathLabel:
                 return this.checkPathTextRendered(textElement, opacityMatcher);
-            case TextElementType.LineMarker:
-                return this.checkLineMarkerRendered(textElement, opacityMatcher);
         }
     }
 
-    private checkTextElementNotRendered(textElement: TextElement) {
+    private checkTextElementNotRendered(textElement: TextElement, positionIndex?: number) {
         switch (textElement.type) {
             case TextElementType.PoiLabel:
+            case TextElementType.LineMarker:
                 if (textElement.poiInfo !== undefined) {
-                    return this.checkPoiNotRendered(textElement);
+                    return this.checkPoiNotRendered(textElement, positionIndex);
                 } else {
-                    return this.checkPointTextNotRendered(textElement);
+                    return this.checkPointTextNotRendered(textElement, positionIndex);
                 }
             case TextElementType.PathLabel:
                 return this.checkPathTextNotRendered(textElement);
-            case TextElementType.LineMarker:
-                return this.checkLineMarkerNotRendered(textElement);
         }
     }
 
@@ -463,28 +503,36 @@ export class TestFixture {
 
     private checkPointTextRendered(
         textElement: TextElement,
+        positionIndex: number | undefined,
         opacityMatcher: OpacityMatcher | undefined
     ): number {
+        const screenCoords = this.computeTextScreenCoordinates(textElement, positionIndex);
+        expect(screenCoords).to.exist;
+
         const addBufferObjSpy = this.m_addTextBufferObjSpy.withArgs(
             sinon.match.same(textElement.textBufferObject),
-            sinon.match.any
+            sinon.match.any,
+            sinon.match.array.deepEquals(screenCoords!.toArray())
         );
         assert(
             addBufferObjSpy.calledOnce,
-            this.getErrorHeading(textElement) + "point text was NOT rendered."
+            this.getErrorHeading(textElement, positionIndex) + "point text was NOT rendered."
         );
         const actualOpacity = addBufferObjSpy.firstCall.args[1];
         this.checkOpacity(actualOpacity, textElement, "text", opacityMatcher);
         return actualOpacity;
     }
 
-    private checkPointTextNotRendered(textElement: TextElement) {
+    private checkPointTextNotRendered(textElement: TextElement, positionIndex: number | undefined) {
+        const screenCoords = this.computeTextScreenCoordinates(textElement, positionIndex);
+        expect(screenCoords).to.exist;
         assert(
             this.m_addTextBufferObjSpy.neverCalledWith(
                 sinon.match.same(textElement.textBufferObject),
-                sinon.match.any
+                sinon.match.any,
+                sinon.match.array.deepEquals(screenCoords!.toArray())
             ),
-            this.getErrorHeading(textElement) + "point text was rendered."
+            this.getErrorHeading(textElement, positionIndex) + "point text was rendered."
         );
     }
 
@@ -493,15 +541,14 @@ export class TestFixture {
         opacityMatcher: OpacityMatcher | undefined,
         positionIndex?: number
     ): number {
-        const screenCoords = this.computeScreenCoordinates(textElement, positionIndex);
+        const screenCoords = this.computeIconScreenCoordinates(textElement, positionIndex);
         expect(screenCoords).to.exist;
         assert(
             this.m_renderPoiSpy.calledWith(
                 sinon.match.same(textElement.poiInfo),
-                sinon.match.any,
-                sinon.match.any
+                sinon.match.array.deepEquals(screenCoords!.toArray())
             ),
-            this.getErrorHeading(textElement) + "icon was NOT rendered."
+            this.getErrorHeading(textElement, positionIndex) + "icon was NOT rendered."
         );
         const renderPoiSpy = this.m_renderPoiSpy.withArgs(
             sinon.match.same(textElement.poiInfo),
@@ -509,10 +556,8 @@ export class TestFixture {
             sinon.match.any
         );
         assert(
-            renderPoiSpy.called,
-            this.getErrorHeading(textElement) +
-                "icon was NOT rendered in expected position " +
-                JSON.stringify(screenCoords)
+            renderPoiSpy.calledOnce,
+            this.getErrorHeading(textElement, positionIndex) + "point icon was NOT rendered."
         );
         const actualOpacity = renderPoiSpy.firstCall.args[2];
         let labelPartDescription: string = "icon";
@@ -524,54 +569,38 @@ export class TestFixture {
     }
 
     private checkIconNotRendered(textElement: TextElement, positionIndex?: number) {
-        const screenCoords = this.computeScreenCoordinates(textElement, positionIndex);
+        const screenCoords = this.computeIconScreenCoordinates(textElement, positionIndex);
+
+        const renderPoiSpy = this.m_renderPoiSpy.withArgs(
+            sinon.match.same(textElement.poiInfo),
+            sinon.match.array.deepEquals(screenCoords!.toArray()),
+            sinon.match.any
+        );
         assert(
-            this.m_renderPoiSpy.neverCalledWith(
-                sinon.match.same(textElement.poiInfo),
-                sinon.match
-                    .typeOf("undefined")
-                    .or(sinon.match.array.deepEquals(screenCoords!.toArray())),
-                sinon.match.any
-            ),
-            this.getErrorHeading(textElement) + "icon was rendered."
+            !renderPoiSpy.called,
+            this.getErrorHeading(textElement, positionIndex) + "icon was rendered."
         );
     }
 
     private checkPoiRendered(
         textElement: TextElement,
+        positionIndex: number | undefined,
         opacityMatcher: OpacityMatcher | undefined,
         iconRendered: boolean,
         iconOpacityMatcher: OpacityMatcher | undefined
     ): number {
-        let opacity = this.checkPointTextRendered(textElement, opacityMatcher);
+        let opacity = this.checkPointTextRendered(textElement, positionIndex, opacityMatcher);
         if (iconRendered) {
-            opacity = this.checkIconRendered(textElement, iconOpacityMatcher);
+            opacity = this.checkIconRendered(textElement, iconOpacityMatcher, positionIndex);
         } else {
-            this.checkIconNotRendered(textElement);
+            this.checkIconNotRendered(textElement, positionIndex);
         }
         return opacity;
     }
 
-    private checkPoiNotRendered(textElement: TextElement) {
-        this.checkPointTextNotRendered(textElement);
-        this.checkIconNotRendered(textElement);
-    }
-
-    private checkLineMarkerRendered(
-        textElement: TextElement,
-        opacityMatcher: OpacityMatcher | undefined
-    ): number {
-        let actualOpacity: number = 0;
-        for (let i = 0; i < textElement.path!.length; ++i) {
-            actualOpacity = this.checkIconRendered(textElement, opacityMatcher, i);
-        }
-        return actualOpacity;
-    }
-
-    private checkLineMarkerNotRendered(textElement: TextElement) {
-        for (let i = 0; i < textElement.path!.length; ++i) {
-            this.checkIconNotRendered(textElement, i);
-        }
+    private checkPoiNotRendered(textElement: TextElement, positionIndex: number | undefined) {
+        this.checkPointTextNotRendered(textElement, positionIndex);
+        this.checkIconNotRendered(textElement, positionIndex);
     }
 
     private checkPathTextRendered(
@@ -598,7 +627,25 @@ export class TestFixture {
         );
     }
 
-    private computeScreenCoordinates(
+    private computeTextScreenCoordinates(
+        textElement: TextElement,
+        positionIndex?: number
+    ): THREE.Vector2 | undefined {
+        if (positionIndex !== undefined) {
+            expect(textElement.path).exist;
+        }
+        const worldCoords =
+            positionIndex !== undefined ? textElement.path![positionIndex] : textElement.position;
+
+        const position = this.m_screenProjector!.project(worldCoords);
+        if (position) {
+            position.x += textElement.xOffset;
+            position.y += textElement.yOffset;
+        }
+        return position;
+    }
+
+    private computeIconScreenCoordinates(
         textElement: TextElement,
         positionIndex?: number
     ): THREE.Vector2 | undefined {
@@ -630,11 +677,18 @@ export class TestFixture {
         }
     }
 
-    private getErrorHeading(textElement: TextElement): string {
+    private getErrorHeading(textElement: TextElement, positionIndex?: number): string {
         // Subtract first initialization frame and 1 more because the view state holds the number
         // of the next frame.
         const currentFrame = this.m_viewState.frameNumber - 2;
-        return "Frame " + currentFrame + ", label '" + textElement.text + "': ";
+        return (
+            "Frame " +
+            currentFrame +
+            ", label '" +
+            textElement.text +
+            `${positionIndex !== undefined ? " index=" + positionIndex.toString() : ""}` +
+            "': "
+        );
     }
 
     private syncCamera() {
