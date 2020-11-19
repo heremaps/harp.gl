@@ -319,15 +319,17 @@ if (typeof beforeEach !== "undefined") {
 }
 
 /**
- * Sets the specified loggers to only report errors. Only use this function when you know that you
- * can safely ignore a warning, otherwise you should consider to fix the issue.
- * All previous logging levels are reset after the function is executed.
+ * Sets the specified loggers to only log at the given minLogLevel. Only use this function when you
+ * know that you can safely ignore a warning, otherwise you should consider to fix the issue. All
+ * previous logging levels are reset after the function is executed.
  * @param loggerName The loggerName, or array of names to set to error
  * @param func The function to execute with the changed logging
+ * @param minLogLevel The minimum log level that is shown, defaults to LogLevel.Error
  */
-export async function errorOnlyLoggingAroundFunction(
+export async function silenceLoggingAroundFunction(
     loggerName: string | string[],
-    func: () => void
+    func: () => void,
+    minLogLevel: LogLevel = LogLevel.Error
 ) {
     const previousLogLevels: Array<{ level: LogLevel; loggerName: string }> = [];
     const loggers = !Array.isArray(loggerName) ? [loggerName] : loggerName;
@@ -335,7 +337,7 @@ export async function errorOnlyLoggingAroundFunction(
         const logger = LoggerManager.instance.getLogger(loggerName);
         if (logger) {
             previousLogLevels.push({ loggerName, level: logger.level });
-            LoggerManager.instance.setLogLevel(loggerName, LogLevel.Error);
+            LoggerManager.instance.setLogLevel(loggerName, minLogLevel);
         }
     }
 

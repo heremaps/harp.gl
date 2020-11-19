@@ -17,8 +17,8 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import {
-    errorOnlyLoggingAroundFunction,
     getTestResourceUrl,
+    silenceLoggingAroundFunction,
     waitForEvent
 } from "@here/harp-test-utils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
@@ -36,7 +36,7 @@ import { ElevationProvider } from "../lib/ElevationProvider";
 import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSource";
 import { MapMaterialAdapter } from "../lib/MapMaterialAdapter";
 import { MapObjectAdapter } from "../lib/MapObjectAdapter";
-import { MapView, MapViewEventNames } from "../lib/MapView";
+import { MapView, MapViewEventNames, MapViewOptions } from "../lib/MapView";
 import { DEFAULT_CLEAR_COLOR } from "../lib/MapViewEnvironment";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
@@ -75,6 +75,7 @@ describe("MapView", function() {
     let addEventListenerSpy: sinon.SinonStub;
     let removeEventListenerSpy: sinon.SinonStub;
     let canvas: HTMLCanvasElement;
+    let mapViewOptions: MapViewOptions;
     let mapView: MapView | undefined;
 
     beforeEach(function() {
@@ -103,6 +104,13 @@ describe("MapView", function() {
             addEventListener: addEventListenerSpy,
             removeEventListener: removeEventListenerSpy
         } as unknown) as HTMLCanvasElement;
+        mapViewOptions = {
+            canvas,
+            // Both options cause the `addDataSource` method to be called, which we can't `await` on
+            // because it is called in the constructor, but we can disable them being added.
+            addBackgroundDatasource: false,
+            enablePolarDataSource: false
+        };
     });
 
     afterEach(async function() {
@@ -132,7 +140,7 @@ describe("MapView", function() {
         const rotationSpy = sinon.spy(MapViewUtils, "setRotation");
         const zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
-        mapView = new MapView({ canvas });
+        mapView = new MapView(mapViewOptions);
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
 
         expect(zoomSpy.calledOnce).to.be.true;
@@ -301,7 +309,7 @@ describe("MapView", function() {
             ]) {
                 it(`obeys constructor params - ${testName}`, function() {
                     mapView = new MapView({
-                        canvas,
+                        ...mapViewOptions,
                         projection,
                         ...lookAtParams
                     });
@@ -328,7 +336,7 @@ describe("MapView", function() {
                 });
                 it(`obeys #lookAt params - ${testName}`, function() {
                     mapView = new MapView({
-                        canvas,
+                        ...mapViewOptions,
                         projection
                     });
 
@@ -427,7 +435,7 @@ describe("MapView", function() {
     }
     it("Correctly sets target and zoom from options in constructor", function() {
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             target: new GeoCoordinates(52.5145, 13.3501),
             zoomLevel: 18,
             tilt: 10,
@@ -443,7 +451,7 @@ describe("MapView", function() {
 
     it("Correctly sets geolocation and zoom from options in constructor with sphere projection", function() {
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             projection: sphereProjection,
             target: new GeoCoordinates(52.5145, 13.3501),
             zoomLevel: 18,
@@ -462,7 +470,7 @@ describe("MapView", function() {
 
     it("Correctly set and get zoom", function() {
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             tilt: 45,
             heading: 90
         });
@@ -474,9 +482,7 @@ describe("MapView", function() {
     });
 
     it("Correctly clamp zoom", function() {
-        mapView = new MapView({
-            canvas
-        });
+        mapView = new MapView(mapViewOptions);
 
         mapView.zoomLevel = 0;
         expect(mapView.zoomLevel).to.be.equal(1);
@@ -486,9 +492,7 @@ describe("MapView", function() {
     });
 
     it("Distance bigger than lowest zoomLevel", function() {
-        mapView = new MapView({
-            canvas
-        });
+        mapView = new MapView(mapViewOptions);
 
         mapView.zoomLevel = 1;
         const distance = mapView.targetDistance * 2;
@@ -498,9 +502,7 @@ describe("MapView", function() {
     });
 
     it("Distance lower than highest zoomLevel", function() {
-        mapView = new MapView({
-            canvas
-        });
+        mapView = new MapView(mapViewOptions);
 
         mapView.zoomLevel = 20;
         const distance = mapView.targetDistance / 2;
@@ -512,7 +514,7 @@ describe("MapView", function() {
     it("Correctly set and get tilt", function() {
         const zoomLevel = 10;
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             zoomLevel
         });
 
@@ -525,7 +527,7 @@ describe("MapView", function() {
 
     it("Correctly sets geolocation with GeoPointLike as parameter in constructor", function() {
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             target: [13.3501, 52.5145],
             zoomLevel: 18,
             tilt: 10,
@@ -541,7 +543,7 @@ describe("MapView", function() {
 
     it("Correctly sets geolocation with GeoCoordinatesLike as parameter in constructor", function() {
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             target: {
                 latitude: 52.5145,
                 longitude: 13.3501
@@ -560,7 +562,7 @@ describe("MapView", function() {
 
     it("Correctly sets geolocation with LatLngLike as parameter in constructor", function() {
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             target: {
                 lat: 52.5145,
                 lng: 13.3501
@@ -578,9 +580,7 @@ describe("MapView", function() {
     });
 
     it("Correctly sets geolocation with GeoPointLike", function() {
-        mapView = new MapView({
-            canvas
-        });
+        mapView = new MapView(mapViewOptions);
 
         mapView.lookAt({
             target: [13.3501, 52.5145]
@@ -590,9 +590,7 @@ describe("MapView", function() {
     });
 
     it("Correctly sets target with GeoCoordinatesLike", function() {
-        mapView = new MapView({
-            canvas
-        });
+        mapView = new MapView(mapViewOptions);
 
         mapView.lookAt({
             target: {
@@ -605,9 +603,7 @@ describe("MapView", function() {
     });
 
     it("Correctly sets target with LatLngLike", function() {
-        mapView = new MapView({
-            canvas
-        });
+        mapView = new MapView(mapViewOptions);
 
         mapView.lookAt({
             target: {
@@ -621,7 +617,7 @@ describe("MapView", function() {
 
     it("Correctly set and get distance", function() {
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             tilt: 45,
             heading: 90
         });
@@ -633,7 +629,7 @@ describe("MapView", function() {
     });
 
     it("Correctly sets event listeners and handlers webgl context restored", async function() {
-        mapView = new MapView({ canvas });
+        mapView = new MapView(mapViewOptions);
 
         expect(addEventListenerSpy.callCount).to.be.equal(2);
         expect(addEventListenerSpy.callCount).to.be.equal(2);
@@ -645,7 +641,7 @@ describe("MapView", function() {
         const webGlContextRestoredHandler = addEventListenerSpy.getCall(1).args[1];
         const webGlContextLostHandler = addEventListenerSpy.getCall(0).args[1];
 
-        await errorOnlyLoggingAroundFunction(["MapViewThemeManager", "MapView"], async () => {
+        await silenceLoggingAroundFunction(["MapViewThemeManager", "MapView"], async () => {
             await mapView!.setTheme({
                 clearColor: "#ffffff"
             });
@@ -670,7 +666,7 @@ describe("MapView", function() {
 
     it("Correctly sets and removes all event listeners by API", function() {
         const checkEvent = (eventName: string) => {
-            mapView = new MapView({ canvas });
+            mapView = new MapView(mapViewOptions);
 
             const callStub = sinon.stub();
 
@@ -698,7 +694,7 @@ describe("MapView", function() {
     });
 
     it("correctly set and get tile wrapping mode", function() {
-        mapView = new MapView({ canvas, projection: mercatorProjection });
+        mapView = new MapView({ ...mapViewOptions, projection: mercatorProjection });
         const vts = mapView.visibleTileSet;
         mapView.tileWrappingEnabled = false;
         expect(mapView.tileWrappingEnabled).equal(false);
@@ -708,8 +704,8 @@ describe("MapView", function() {
     });
 
     it("ignore set and get tile wrapping mode for sphere projection", function() {
-        mapView = new MapView({ canvas, projection: sphereProjection });
-        errorOnlyLoggingAroundFunction("MapView", () => {
+        mapView = new MapView({ ...mapViewOptions, projection: sphereProjection });
+        silenceLoggingAroundFunction("MapView", () => {
             mapView!.tileWrappingEnabled = false; // Ignore warning here
         });
         expect(mapView.tileWrappingEnabled).equal(true);
@@ -718,7 +714,7 @@ describe("MapView", function() {
     it("supports #dispose", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
-        mapView = new MapView({ canvas });
+        mapView = new MapView(mapViewOptions);
         await mapView.getTheme();
         await mapView.addDataSource(dataSource);
 
@@ -741,7 +737,7 @@ describe("MapView", function() {
 
     it("#dispose removes event listeners", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
-        mapView = new MapView({ canvas });
+        mapView = new MapView(mapViewOptions);
         await mapView.getTheme();
         await mapView.addDataSource(dataSource);
         await dataSource.connect();
@@ -802,6 +798,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
+            ...mapViewOptions,
             canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "fixed", fov }
         });
@@ -821,6 +818,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
+            ...mapViewOptions,
             canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "fixed", fov }
         });
@@ -842,6 +840,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
+            ...mapViewOptions,
             canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "dynamic", fov }
         });
@@ -863,6 +862,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
+            ...mapViewOptions,
             canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "dynamic", fov }
         });
@@ -876,7 +876,7 @@ describe("MapView", function() {
     });
 
     it("returns the fog through #fog getter", function() {
-        mapView = new MapView({ canvas });
+        mapView = new MapView(mapViewOptions);
         expect(mapView.fog instanceof MapViewFog).to.equal(true);
     });
 
@@ -889,19 +889,19 @@ describe("MapView", function() {
             removeEventListener: sinon.stub()
         };
 
-        const mapViewOptions = {
-            canvas: (customCanvas as any) as HTMLCanvasElement,
-            addBackgroundDatasource: false
+        const customMapViewOptions = {
+            ...mapViewOptions,
+            canvas: (customCanvas as any) as HTMLCanvasElement
         };
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
-                mapView = new MapView(mapViewOptions);
+                mapView = new MapView(customMapViewOptions);
                 await mapView.getTheme();
                 const resultA = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
-                mapView = new MapView(mapViewOptions);
+                mapView = new MapView(customMapViewOptions);
                 await mapView.getTheme();
                 const resultB = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
 
@@ -923,19 +923,19 @@ describe("MapView", function() {
             removeEventListener: sinon.stub()
         };
 
-        const mapViewOptions = {
-            canvas: (customCanvas as any) as HTMLCanvasElement,
-            addBackgroundDatasource: false
+        const customMapViewOptions = {
+            ...mapViewOptions,
+            canvas: (customCanvas as any) as HTMLCanvasElement
         };
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
-                mapView = new MapView(mapViewOptions);
+                mapView = new MapView(customMapViewOptions);
                 await mapView.getTheme();
                 const resultA = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
-                mapView = new MapView(mapViewOptions);
+                mapView = new MapView(customMapViewOptions);
                 await mapView.getTheme();
                 const resultB = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
 
@@ -956,7 +956,13 @@ describe("MapView", function() {
             const sphere = projection === sphereProjection;
             const eps = projection === sphereProjection ? 1e-9 : 1e-10;
             const target = new GeoCoordinates(52.5145, 13.3501);
-            mapView = new MapView({ canvas, target, tilt: 0, zoomLevel: 10, projection });
+            mapView = new MapView({
+                ...mapViewOptions,
+                target,
+                tilt: 0,
+                zoomLevel: 10,
+                projection
+            });
             for (let tilt = 0; tilt < 90; ++tilt) {
                 mapView.tilt = tilt;
                 const center = mapView.getGeoCoordinatesAt(
@@ -1040,7 +1046,13 @@ describe("MapView", function() {
             const sphere = projection === sphereProjection;
             const eps = 1e-10;
             const target = new GeoCoordinates(52.5145, 13.3501);
-            mapView = new MapView({ canvas, target, tilt: 45, zoomLevel: 1, projection });
+            mapView = new MapView({
+                ...mapViewOptions,
+                target,
+                tilt: 45,
+                zoomLevel: 1,
+                projection
+            });
             for (let zoom = 1; zoom < 20; ++zoom) {
                 mapView.zoomLevel = zoom;
                 const center = mapView.getGeoCoordinatesAt(
@@ -1126,7 +1138,13 @@ describe("MapView", function() {
             );
             const eps = 1e-10;
 
-            mapView = new MapView({ canvas, target, tilt: 45, zoomLevel: 10, projection });
+            mapView = new MapView({
+                ...mapViewOptions,
+                target,
+                tilt: 45,
+                zoomLevel: 10,
+                projection
+            });
             const center = mapView.getGeoCoordinatesAt(
                 canvas.clientWidth / 2,
                 canvas.clientHeight / 2
@@ -1165,7 +1183,7 @@ describe("MapView", function() {
             const eps = 1e-10;
 
             mapView = new MapView({
-                canvas,
+                ...mapViewOptions,
                 target,
                 tilt: 45,
                 zoomLevel: 10,
@@ -1208,7 +1226,7 @@ describe("MapView", function() {
             const eps = 1e-10;
 
             mapView = new MapView({
-                canvas,
+                ...mapViewOptions,
                 target,
                 tilt: 45,
                 zoomLevel: 10,
@@ -1250,7 +1268,7 @@ describe("MapView", function() {
             const eps = 1e-10;
 
             mapView = new MapView({
-                canvas,
+                ...mapViewOptions,
                 target,
                 tilt: 45,
                 zoomLevel: 10,
@@ -1288,7 +1306,7 @@ describe("MapView", function() {
         const eps = 1e-10;
 
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             target,
             tilt: 45,
             zoomLevel: 10,
@@ -1317,7 +1335,7 @@ describe("MapView", function() {
         const eps = 1e-10;
 
         mapView = new MapView({
-            canvas,
+            ...mapViewOptions,
             target,
             tilt: 45,
             zoomLevel: 10,
@@ -1361,7 +1379,7 @@ describe("MapView", function() {
         };
 
         const dataSource = new FakeOmvDataSource({ name: "omv" });
-        mapView = new MapView({ canvas, theme: {} });
+        mapView = new MapView({ ...mapViewOptions, theme: {} });
         await mapView.addDataSource(dataSource);
 
         //
@@ -1477,7 +1495,7 @@ describe("MapView", function() {
 
     it("languages set in MapView are also set in datasources", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
-        mapView = new MapView({ canvas, theme: {} });
+        mapView = new MapView({ ...mapViewOptions, theme: {} });
         await mapView.getTheme();
 
         await mapView.addDataSource(dataSource);
@@ -1490,7 +1508,7 @@ describe("MapView", function() {
 
     it("languages set in MapView are also set in datasources added later", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
-        mapView = new MapView({ canvas, theme: {} });
+        mapView = new MapView({ ...mapViewOptions, theme: {} });
         await mapView.getTheme();
 
         mapView.languages = ["Goblin"];
@@ -1546,7 +1564,7 @@ describe("MapView", function() {
 
         describe("setElevationSource", function() {
             it("can add an elevation source", async function() {
-                mapView = new MapView({ canvas });
+                mapView = new MapView(mapViewOptions);
                 await mapView.setElevationSource(
                     fakeElevationSource,
                     fakeElevationRangeSource,
@@ -1557,7 +1575,7 @@ describe("MapView", function() {
                     .that.equals(fakeElevationSource);
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(2)
+                    .that.has.length(1)
                     .and.includes(fakeElevationSource);
                 expect(mapView)
                     .to.have.property("m_elevationRangeSource")
@@ -1572,7 +1590,7 @@ describe("MapView", function() {
                     ...fakeElevationSource
                 } as any;
 
-                mapView = new MapView({ canvas });
+                mapView = new MapView(mapViewOptions);
                 await mapView.setElevationSource(
                     fakeElevationSource,
                     fakeElevationRangeSource,
@@ -1583,7 +1601,7 @@ describe("MapView", function() {
                     .that.equals(fakeElevationSource);
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(2)
+                    .that.has.length(1)
                     .and.includes(fakeElevationSource);
 
                 await mapView.setElevationSource(
@@ -1597,7 +1615,7 @@ describe("MapView", function() {
                     .that.equals(secondElevationSource);
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(2)
+                    .that.has.length(1)
                     .and.includes(secondElevationSource)
                     .and.does.not.include(fakeElevationSource);
                 expect(mapView)
@@ -1613,7 +1631,7 @@ describe("MapView", function() {
 
         describe("clearElevationSource", function() {
             it("removes an elevation source", async function() {
-                mapView = new MapView({ canvas });
+                mapView = new MapView(mapViewOptions);
                 await mapView.setElevationSource(
                     fakeElevationSource,
                     fakeElevationRangeSource,
@@ -1624,7 +1642,7 @@ describe("MapView", function() {
                 expect(mapView).to.have.property("m_elevationSource").that.is.undefined;
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(1)
+                    .that.has.length(0)
                     .and.does.not.include(fakeElevationSource);
                 expect(mapView).to.have.property("m_elevationRangeSource").that.is.undefined;
                 expect(mapView).to.have.property("m_elevationProvider").that.is.undefined;
@@ -1641,7 +1659,7 @@ describe("MapView", function() {
         );
 
         it("loads a default theme", async function() {
-            mapView = new MapView({ canvas });
+            mapView = new MapView(mapViewOptions);
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
             expect(await mapView.getTheme()).to.deep.equal({
                 clearAlpha: undefined,
@@ -1664,7 +1682,7 @@ describe("MapView", function() {
             const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
 
             mapView = new MapView({
-                canvas,
+                ...mapViewOptions,
                 theme: relativeToAppUrl
             });
             const theme = await mapView.getTheme();
@@ -1674,7 +1692,7 @@ describe("MapView", function() {
 
         it("loads a 'flat' theme ", async function() {
             mapView = new MapView({
-                canvas,
+                ...mapViewOptions,
                 theme: {
                     styles: [
                         {
@@ -1694,7 +1712,7 @@ describe("MapView", function() {
             const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
 
             mapView = new MapView({
-                canvas,
+                ...mapViewOptions,
                 theme: relativeToAppUrl
             });
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
@@ -1738,12 +1756,12 @@ describe("MapView", function() {
     describe("frame complete", function() {
         it("MapView emits frame complete for empty map", async function() {
             this.timeout(100);
-            mapView = new MapView({ canvas });
+            mapView = new MapView(mapViewOptions);
             return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
         it("MapView emits frame complete after map initialized", async function() {
             this.timeout(100);
-            mapView = new MapView({ canvas });
+            mapView = new MapView(mapViewOptions);
 
             const dataSource = new FakeOmvDataSource({ name: "omv" });
             mapView.addDataSource(dataSource);
@@ -1752,7 +1770,7 @@ describe("MapView", function() {
         });
         it("MapView emits frame complete again after map update", async function() {
             this.timeout(100);
-            mapView = new MapView({ canvas });
+            mapView = new MapView(mapViewOptions);
 
             const dataSource = new FakeOmvDataSource({ name: "omv" });
             mapView.addDataSource(dataSource);
@@ -1766,7 +1784,7 @@ describe("MapView", function() {
 
     it("markTilesDirty proxies call to VisibleTileSet", () => {
         const markTilesDirtySpy = sinon.spy(VisibleTileSet.prototype, "markTilesDirty");
-        mapView = new MapView({ canvas });
+        mapView = new MapView(mapViewOptions);
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         const tileFilter = () => true;
         mapView.markTilesDirty(dataSource, tileFilter);

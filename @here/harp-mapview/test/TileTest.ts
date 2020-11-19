@@ -13,7 +13,7 @@ import {
     TileKey,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { TaskQueue } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
@@ -345,7 +345,7 @@ describe("Tile", function() {
             expect(tile.isVisible).not.throw;
             expect(tile.isVisible).is.true;
             stubDataSource.detach(mapView as MapView);
-            errorOnlyLoggingAroundFunction("Tile", () => {
+            silenceLoggingAroundFunction("Tile", () => {
                 expect(tile.isVisible).not.throw;
                 expect(tile.isVisible).is.false;
             });

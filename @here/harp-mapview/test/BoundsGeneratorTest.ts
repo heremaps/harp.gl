@@ -21,7 +21,7 @@ import { Vector3 } from "three";
 
 import { BoundsGenerator } from "../lib/BoundsGenerator";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
-import { LookAtParams, MapView } from "../lib/MapView";
+import { LookAtParams, MapView, MapViewOptions } from "../lib/MapView";
 import { MapViewUtils } from "../lib/Utils";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
@@ -38,6 +38,7 @@ describe("BoundsGenerator", function() {
     let mapView: MapView | undefined;
     let boundsGenerator: BoundsGenerator;
     let lookAtParams: Partial<LookAtParams>;
+    let mapViewOptions: MapViewOptions;
 
     beforeEach(function() {
         //Setup a stubbed mapview to emulate the camera behaviour
@@ -66,14 +67,20 @@ describe("BoundsGenerator", function() {
             addEventListener: addEventListenerSpy,
             removeEventListener: removeEventListenerSpy
         } as unknown) as HTMLCanvasElement;
-
+        mapViewOptions = {
+            canvas,
+            // Both options cause the `addDataSource` method to be called, which we can't `await` on
+            // because it is called in the constructor, but we can disable them being added.
+            addBackgroundDatasource: false,
+            enablePolarDataSource: false
+        };
         lookAtParams = {
             target: new GeoCoordinates(0, 0),
             zoomLevel: 5,
             tilt: 0,
             heading: 0
         };
-        mapView = new MapView({ canvas, tileWrappingEnabled: false });
+        mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: false });
         mapView.lookAt(lookAtParams);
         boundsGenerator = new BoundsGenerator(
             mapView.camera,
@@ -82,8 +89,9 @@ describe("BoundsGenerator", function() {
         );
     });
 
-    afterEach(function() {
+    afterEach(async function() {
         if (mapView !== undefined) {
+            await mapView.getTheme(); // Needed otherwise the dispose will cause log messages
             mapView.dispose();
             mapView = undefined;
         }
@@ -183,7 +191,7 @@ describe("BoundsGenerator", function() {
 
     describe("Sphere Projection", function() {
         beforeEach(function() {
-            mapView = new MapView({ canvas, projection: sphereProjection });
+            mapView = new MapView({ ...mapViewOptions, projection: sphereProjection });
             mapView.lookAt({
                 target: new GeoCoordinates(0, 0),
                 zoomLevel: 12,
@@ -422,7 +430,7 @@ describe("BoundsGenerator", function() {
 
     describe("Mercator Projection", function() {
         beforeEach(function() {
-            mapView = new MapView({ canvas, tileWrappingEnabled: false });
+            mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: false });
             mapView.lookAt(lookAtParams);
             boundsGenerator = new BoundsGenerator(
                 mapView.camera,
@@ -443,7 +451,7 @@ describe("BoundsGenerator", function() {
 
         it("generates polygon for canvas filled with map, w/ tileWrapping", function() {
             //Setup mapView with tileWrapping Enabled
-            mapView = new MapView({ canvas, tileWrappingEnabled: true });
+            mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
             boundsGenerator = new BoundsGenerator(
                 mapView.camera,
@@ -496,7 +504,7 @@ describe("BoundsGenerator", function() {
 
         it("generates polygon of world vertically clipped by frustum , w/ tileWrapping", function() {
             //Setup mapView with tileWrapping Enabled
-            mapView = new MapView({ canvas, tileWrappingEnabled: true });
+            mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
             boundsGenerator = new BoundsGenerator(
                 mapView.camera,
@@ -542,7 +550,7 @@ describe("BoundsGenerator", function() {
 
         it("generates polygon of world horizontally clipped by frustum , w/ tileWrapping", function() {
             //Setup mapView with tileWrapping Enabled
-            mapView = new MapView({ canvas, tileWrappingEnabled: true });
+            mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
             boundsGenerator = new BoundsGenerator(
                 mapView.camera,
@@ -599,7 +607,7 @@ describe("BoundsGenerator", function() {
 
         it("generates polygon for tilted map, cut by horizon, w/ tileWrapping", function() {
             //Setup mapView with tileWrapping Enabled
-            mapView = new MapView({ canvas, tileWrappingEnabled: true });
+            mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
             boundsGenerator = new BoundsGenerator(
                 mapView.camera,

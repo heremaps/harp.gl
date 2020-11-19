@@ -3,7 +3,8 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { getTestResourceUrl } from "@here/harp-test-utils";
+import { getTestResourceUrl, silenceLoggingAroundFunction } from "@here/harp-test-utils";
+import { LogLevel } from "@here/harp-utils";
 import { assert } from "chai";
 
 import { ImageItem } from "../lib/image/Image";
@@ -445,15 +446,23 @@ describe("ImageCache", function() {
 
             const promise = imageItem.loadImage();
 
-            assert.isTrue(promise instanceof Promise);
+            const isPromise = promise instanceof Promise;
+            assert.isTrue(isPromise);
 
             if (promise instanceof Promise) {
-                assert.isRejected(promise);
-
-                const loadedImageItem = cache.findImage(imageUrl);
-                assert.exists(loadedImageItem);
-                assert.isUndefined(loadedImageItem!.image);
-                assert.isFalse(loadedImageItem!.loaded);
+                await silenceLoggingAroundFunction(
+                    "loadImage",
+                    async () => {
+                        await promise.catch(() => {
+                            assert.isRejected(promise);
+                            const loadedImageItem = cache.findImage(imageUrl);
+                            assert.exists(loadedImageItem);
+                            assert.isUndefined(loadedImageItem!.image);
+                            assert.isFalse(loadedImageItem!.loaded);
+                        });
+                    },
+                    LogLevel.None
+                );
             }
         });
 
