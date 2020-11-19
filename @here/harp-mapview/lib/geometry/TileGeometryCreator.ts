@@ -17,7 +17,6 @@ import {
     GeometryKind,
     GeometryKindSet,
     getArrayConstructor,
-    getFeatureId,
     getPropertyValue,
     IndexedTechnique,
     InterleavedBufferAttribute,
@@ -74,7 +73,6 @@ import {
     setShaderMaterialDefine,
     SolidLineMaterial
 } from "@here/harp-materials";
-import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -96,8 +94,7 @@ import { MapAdapterUpdateEnv, MapMaterialAdapter } from "../MapMaterialAdapter";
 import { MapObjectAdapter, MapObjectAdapterParams } from "../MapObjectAdapter";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
-import { TextElement } from "../text/TextElement";
-import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
+import { TextElementBuilder } from "../text/TextElementBuilder";
 import { Tile, TileFeatureData } from "../Tile";
 import { LodMesh } from "./LodMesh";
 
@@ -484,11 +481,12 @@ export class TileGeometryCreator {
         textFilter?: (technique: IndexedTechnique) => boolean
     ) {
         const mapView = tile.mapView;
-        const textStyleCache = tile.textStyleCache;
         const worldOffsetX = tile.computeWorldOffsetX();
 
         const discreteZoomLevel = Math.floor(mapView.zoomLevel);
         const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
+
+        const textElementBuilder = new TextElementBuilder(discreteZoomEnv, tile.textStyleCache);
 
         if (decodedTile.textPathGeometries !== undefined) {
             const textPathGeometries = this.prepareTextPaths(
@@ -519,52 +517,15 @@ export class TileGeometryCreator {
                     );
                 }
 
-                // Make sorting stable.
-                const priority =
-                    technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, discreteZoomEnv)
-                        : 0;
-                const fadeNear =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
-                        : technique.fadeNear;
-                const fadeFar =
-                    technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
-                        : technique.fadeFar;
-                const userData = textPath.objInfos;
-                const featureId = getFeatureId(userData);
-                const textElement = new TextElement(
-                    ContextualArabicConverter.instance.convert(textPath.text),
-                    path,
-                    textStyleCache.getRenderStyle(technique),
-                    textStyleCache.getLayoutStyle(technique),
-                    priority,
-                    technique.xOffset !== undefined ? technique.xOffset : 0.0,
-                    technique.yOffset !== undefined ? technique.yOffset : 0.0,
-                    featureId,
-                    technique.style,
-                    fadeNear,
-                    fadeFar,
-                    tile.offset
-                );
-                textElement.pathLengthSqr = textPath.pathLengthSqr;
-                textElement.minZoomLevel =
-                    getPropertyValue(technique.minZoomLevel, discreteZoomEnv) ?? undefined;
-
-                textElement.maxZoomLevel =
-                    getPropertyValue(technique.maxZoomLevel, discreteZoomEnv) ?? undefined;
-
-                textElement.distanceScale =
-                    technique.distanceScale !== undefined
-                        ? technique.distanceScale
-                        : DEFAULT_TEXT_DISTANCE_SCALE;
-                textElement.mayOverlap = technique.mayOverlap === true;
-                textElement.reserveSpace = technique.reserveSpace !== false;
-                textElement.kind = technique.kind;
-                // Get the userData for text element picking.
-                textElement.userData = textPath.objInfos;
-                textElement.textFadeTime = technique.textFadeTime;
+                const textElement = textElementBuilder
+                    .withTechnique(technique)
+                    .build(
+                        textPath.text,
+                        path,
+                        tile.offset,
+                        textPath.objInfos,
+                        textPath.pathLengthSqr
+                    );
 
                 tile.addTextElement(textElement);
             }
@@ -596,18 +557,7 @@ export class TileGeometryCreator {
                     continue;
                 }
 
-                const priority =
-                    technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, discreteZoomEnv)
-                        : 0;
-                const fadeNear =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
-                        : technique.fadeNear;
-                const fadeFar =
-                    technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
-                        : technique.fadeFar;
+                textElementBuilder.withTechnique(technique);
 
                 for (let i = 0; i < numPositions; ++i) {
                     const x = positions.getX(i) + worldOffsetX;
@@ -619,42 +569,14 @@ export class TileGeometryCreator {
                         continue;
                     }
 
-                    const userData = text.objInfos !== undefined ? text.objInfos[i] : undefined;
-                    const featureId = getFeatureId(userData);
-
-                    const textElement = new TextElement(
-                        ContextualArabicConverter.instance.convert(label!),
-                        new THREE.Vector3(x, y, z),
-                        textStyleCache.getRenderStyle(technique),
-                        textStyleCache.getLayoutStyle(technique),
-                        priority,
-                        technique.xOffset ?? 0.0,
-                        technique.yOffset ?? 0.0,
-                        featureId,
-                        technique.style,
-                        undefined,
-                        undefined,
-                        tile.offset
+                    const attributes = text.objInfos?.[i];
+                    const point = new THREE.Vector3(x, y, z);
+                    const textElement = textElementBuilder.build(
+                        label!,
+                        point,
+                        tile.offset,
+                        attributes
                     );
-
-                    textElement.minZoomLevel =
-                        getPropertyValue(technique.minZoomLevel, discreteZoomEnv) ??
-                        mapView.minZoomLevel;
-
-                    textElement.maxZoomLevel =
-                        getPropertyValue(technique.maxZoomLevel, discreteZoomEnv) ??
-                        mapView.maxZoomLevel;
-
-                    textElement.mayOverlap = technique.mayOverlap === true;
-                    textElement.reserveSpace = technique.reserveSpace !== false;
-                    textElement.kind = technique.kind;
-
-                    textElement.fadeNear = fadeNear;
-                    textElement.fadeFar = fadeFar;
-                    textElement.textFadeTime = technique.textFadeTime;
-
-                    // Get the userData for text element picking.
-                    textElement.userData = userData;
                     tile.addTextElement(textElement);
                 }
             }
