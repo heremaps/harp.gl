@@ -13,6 +13,7 @@ import {
     TileKey,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
 import { TaskQueue } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
@@ -344,8 +345,10 @@ describe("Tile", function() {
             expect(tile.isVisible).not.throw;
             expect(tile.isVisible).is.true;
             stubDataSource.detach(mapView as MapView);
-            expect(tile.isVisible).not.throw;
-            expect(tile.isVisible).is.false;
+            errorOnlyLoggingAroundFunction("Tile", () => {
+                expect(tile.isVisible).not.throw;
+                expect(tile.isVisible).is.false;
+            });
         });
 
         it("cancels geometry loader if tile is made invisible", function() {

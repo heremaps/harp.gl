@@ -16,7 +16,11 @@ import {
     sphereProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils";
+import {
+    errorOnlyLoggingAroundFunction,
+    getTestResourceUrl,
+    waitForEvent
+} from "@here/harp-test-utils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
@@ -101,8 +105,9 @@ describe("MapView", function() {
         } as unknown) as HTMLCanvasElement;
     });
 
-    afterEach(function() {
+    afterEach(async function() {
         if (mapView !== undefined) {
+            await mapView.getTheme();
             mapView.dispose();
             mapView = undefined;
         }
@@ -640,25 +645,27 @@ describe("MapView", function() {
         const webGlContextRestoredHandler = addEventListenerSpy.getCall(1).args[1];
         const webGlContextLostHandler = addEventListenerSpy.getCall(0).args[1];
 
-        await mapView.setTheme({
-            clearColor: "#ffffff"
+        await errorOnlyLoggingAroundFunction(["MapViewThemeManager", "MapView"], async () => {
+            await mapView!.setTheme({
+                clearColor: "#ffffff"
+            });
+
+            expect(clearColorStub.calledWith("#ffffff"));
+            await webGlContextRestoredHandler();
+            expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
+
+            await mapView!.setTheme({
+                clearColor: undefined
+            });
+
+            expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
+
+            await webGlContextRestoredHandler();
+            expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
+
+            webGlContextLostHandler();
+            expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
         });
-        expect(clearColorStub.calledWith("#ffffff"));
-
-        await webGlContextRestoredHandler();
-        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
-
-        await mapView.setTheme({
-            clearColor: undefined
-        });
-
-        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
-
-        await webGlContextRestoredHandler();
-        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
-
-        webGlContextLostHandler();
-        expect(clearColorStub.calledWith(DEFAULT_CLEAR_COLOR));
     });
 
     it("Correctly sets and removes all event listeners by API", function() {
@@ -702,7 +709,9 @@ describe("MapView", function() {
 
     it("ignore set and get tile wrapping mode for sphere projection", function() {
         mapView = new MapView({ canvas, projection: sphereProjection });
-        mapView.tileWrappingEnabled = false;
+        errorOnlyLoggingAroundFunction("MapView", () => {
+            mapView!.tileWrappingEnabled = false; // Ignore warning here
+        });
         expect(mapView.tileWrappingEnabled).equal(true);
     });
 
@@ -710,7 +719,8 @@ describe("MapView", function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
         mapView = new MapView({ canvas });
-        mapView.addDataSource(dataSource);
+        await mapView.getTheme();
+        await mapView.addDataSource(dataSource);
 
         const disposeStub = sinon.stub();
         mapView!.addEventListener(MapViewEventNames.Dispose, disposeStub);
@@ -732,7 +742,8 @@ describe("MapView", function() {
     it("#dispose removes event listeners", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ canvas });
-        mapView.addDataSource(dataSource);
+        await mapView.getTheme();
+        await mapView.addDataSource(dataSource);
         await dataSource.connect();
 
         const eventStubs: Map<string, sinon.SinonStub> = new Map();
@@ -869,7 +880,7 @@ describe("MapView", function() {
         expect(mapView.fog instanceof MapViewFog).to.equal(true);
     });
 
-    it("converts screen coords to geo to screen w/ different pixel ratio", function() {
+    it("converts screen coords to geo to screen w/ different pixel ratio", async function() {
         const customCanvas = {
             clientWidth: 1920,
             clientHeight: 1080,
@@ -878,14 +889,20 @@ describe("MapView", function() {
             removeEventListener: sinon.stub()
         };
 
+        const mapViewOptions = {
+            canvas: (customCanvas as any) as HTMLCanvasElement,
+            addBackgroundDatasource: false
+        };
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
+                await mapView.getTheme();
                 const resultA = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
+                await mapView.getTheme();
                 const resultB = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
 
                 expect(resultA!.x).to.be.closeTo(resultB!.x, 0.00000001);
@@ -897,7 +914,7 @@ describe("MapView", function() {
             }
         }
     });
-    it("converts screen coords to world to screen w/ different pixel ratio", function() {
+    it("converts screen coords to world to screen w/ different pixel ratio", async function() {
         const customCanvas = {
             clientWidth: 1920,
             clientHeight: 1080,
@@ -906,14 +923,20 @@ describe("MapView", function() {
             removeEventListener: sinon.stub()
         };
 
+        const mapViewOptions = {
+            canvas: (customCanvas as any) as HTMLCanvasElement,
+            addBackgroundDatasource: false
+        };
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
+                await mapView.getTheme();
                 const resultA = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
-                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
+                mapView = new MapView(mapViewOptions);
+                await mapView.getTheme();
                 const resultB = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
 
                 expect(resultA!.x).to.be.closeTo(resultB!.x, 0.00000001);
@@ -1434,6 +1457,7 @@ describe("MapView", function() {
             };
         }
         mapView = new MapView({ canvas, theme: {} });
+        await mapView.getTheme();
 
         const dataSource = new FakeOmvDataSource({ name: "omv" });
 
@@ -1454,6 +1478,7 @@ describe("MapView", function() {
     it("languages set in MapView are also set in datasources", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ canvas, theme: {} });
+        await mapView.getTheme();
 
         await mapView.addDataSource(dataSource);
         mapView.languages = ["Goblin"];
@@ -1466,6 +1491,7 @@ describe("MapView", function() {
     it("languages set in MapView are also set in datasources added later", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ canvas, theme: {} });
+        await mapView.getTheme();
 
         mapView.languages = ["Goblin"];
         await mapView.addDataSource(dataSource);

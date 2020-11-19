@@ -197,6 +197,10 @@ export class TaskQueue {
         return true;
     }
 
+    clear() {
+        this.m_taskLists.clear();
+    }
+
     private pull(group: string, checkIfExpired: boolean = false): Task | undefined {
         const taskList = this.getTaskList(group);
         let nextTask;

@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
 import { assert } from "chai";
 
 import {
@@ -181,7 +182,9 @@ describe("mapview-statistics", function() {
                 assert.isNumber(tx);
                 assert.isAbove(tx, t);
 
-                stats.log();
+                errorOnlyLoggingAroundFunction("Statistics", () => {
+                    stats.log();
+                });
                 done();
             }, 2);
         }, 2);
@@ -223,7 +226,9 @@ describe("mapview-statistics", function() {
                 assert.isNumber(tx);
                 assert.isAbove(tx, t);
 
-                stats.log();
+                errorOnlyLoggingAroundFunction("Statistics", () => {
+                    stats.log();
+                });
                 done();
             }, 2);
         }, 2);
@@ -266,7 +271,9 @@ describe("mapview-statistics", function() {
                     assert.isNumber(stats.getTimer("post").value);
                     assert.isAbove(stats.getTimer("post").value ?? 0, 0);
 
-                    stats.log();
+                    errorOnlyLoggingAroundFunction("Statistics", () => {
+                        stats.log();
+                    });
 
                     done();
                 }, 2);

@@ -1327,6 +1327,8 @@ export class MapView extends EventDispatcher {
         ConcurrentDecoderFacade.destroyIfTerminated();
         ConcurrentTilerFacade.destroyIfTerminated();
 
+        this.m_taskScheduler.clearQueuedTasks();
+
         // Remove all event handlers.
         super.dispose();
     }
@@ -2158,7 +2160,7 @@ export class MapView extends EventDispatcher {
             dataSource.setLanguages(this.m_languages);
 
             if (theme !== undefined && theme.styles !== undefined) {
-                dataSource.setTheme(theme);
+                await dataSource.setTheme(theme);
             }
 
             this.m_connectedDataSources.add(dataSource.name);

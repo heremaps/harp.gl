@@ -29,7 +29,11 @@ import {
     TileLoaderState
 } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/lib/GeoJsonTiler";
-import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils/";
+import {
+    errorOnlyLoggingAroundFunction,
+    getTestResourceUrl,
+    waitForEvent
+} from "@here/harp-test-utils/";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
@@ -83,7 +87,11 @@ describe("MapView Picking", async function() {
             };
             g.navigator = {};
             g.requestAnimationFrame = (cb: (delta: number) => void) => {
-                return setTimeout(() => cb(15), 15);
+                return setTimeout(() => {
+                    errorOnlyLoggingAroundFunction("TextElementsRenderer", () => {
+                        cb(15);
+                    });
+                }, 15);
             };
             g.cancelAnimationFrame = (id: any) => {
                 return clearTimeout(id);

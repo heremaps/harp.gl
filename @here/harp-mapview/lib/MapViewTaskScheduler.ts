@@ -150,6 +150,13 @@ export class MapViewTaskScheduler extends THREE.EventDispatcher {
         }
     }
 
+    /**
+     * Removes all tasks that have been queued.
+     */
+    clearQueuedTasks() {
+        this.m_taskQueue.clear();
+    }
+
     private spaceInFrame(frameStartTime: number): number {
         const passedTime = (performance || Date).now() - frameStartTime;
         return Math.max(1000 / this.m_maxFps - passedTime, 0);
