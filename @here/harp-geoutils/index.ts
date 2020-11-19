@@ -41,6 +41,7 @@ export * from "./lib/tiling/HereTilingScheme";
 export * from "./lib/tiling/WebMercatorTilingScheme";
 export * from "./lib/tiling/MercatorTilingScheme";
 export * from "./lib/tiling/PolarTilingScheme";
+export * from "./lib/math/Vector2Like";
 export * from "./lib/math/Vector3Like";
 export * from "./lib/math/Box3Like";
 export * from "./lib/math/OrientedBox3Like";

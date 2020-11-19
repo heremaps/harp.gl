@@ -129,10 +129,11 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         return this.m_decodedTileEmitter.getDecodedTile();
     }
 
+    /** @override */
     processPointFeature(
         layer: string,
         extents: number,
-        geometry: THREE.Vector2[],
+        geometry: THREE.Vector3[],
         env: MapEnv,
         storageLevel: number
     ): void {
@@ -178,6 +179,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         }
     }
 
+    /** @override */
     processLineFeature(
         layer: string,
         extents: number,
@@ -229,6 +231,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         }
     }
 
+    /** @override */
     processPolygonFeature(
         layer: string,
         extents: number,

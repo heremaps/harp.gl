@@ -107,13 +107,7 @@ describe("OmvDecodedTileEmitter", function() {
         const tileLocalCoords = coordinates.map(p => {
             const projected = webMercatorProjection.projectPoint(p, new Vector3());
             const result = new Vector2();
-            const tileCoords = world2tile(
-                4096,
-                decodeInfo,
-                new Vector2(projected.x, projected.y),
-                false,
-                result
-            );
+            const tileCoords = world2tile(4096, decodeInfo, projected, false, result);
             return tileCoords;
         });
 

@@ -264,14 +264,14 @@ export class VectorTileDataEmitter {
      *
      * @param layer - Tile's layer to be processed.
      * @param extents - Tile's layer extents.
-     * @param geometry - The current feature containing the main geometry.
+     * @param geometry - The feature geometry in local webMercator coordinates.
      * @param env - The [[MapEnv]] containing the environment information for the map.
      * @param techniques - The array of [[Technique]] that will be applied to the geometry.
      */
     processPointFeature(
         layer: string,
         extents: number,
-        geometry: THREE.Vector2[],
+        geometry: THREE.Vector3[],
         context: AttrEvaluationContext,
         techniques: IndexedTechnique[]
     ): void {
@@ -1160,10 +1160,10 @@ export class VectorTileDataEmitter {
 
             case TextureCoordinateType.EquirectangularSpace:
                 return (tilePos: THREE.Vector2, extents: number): THREE.Vector2 => {
-                    const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
+                    const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV3r);
                     const uv = normalizedEquirectangularProjection.reprojectPoint(
                         webMercatorProjection,
-                        new THREE.Vector3(worldPos.x, worldPos.y, 0)
+                        worldPos
                     );
                     return new THREE.Vector2(uv.x, uv.y);
                 };
@@ -1173,8 +1173,8 @@ export class VectorTileDataEmitter {
                     return undefined;
                 }
                 return (tilePos: THREE.Vector2, extents: number): THREE.Vector2 => {
-                    const uv = new THREE.Vector2();
-                    tile2world(extents, this.m_decodeInfo, tilePos, false, uv);
+                    const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV3r);
+                    const uv = new THREE.Vector2(worldPos.x, worldPos.y);
                     if (objectBounds) {
                         uv.x -= objectBounds.min.x;
                         uv.y -= objectBounds.min.y;
@@ -1446,7 +1446,7 @@ export class VectorTileDataEmitter {
                                 this.m_decodeInfo,
                                 tmpV2.set(vertices[i], vertices[i + 1]),
                                 true,
-                                tmpV2r
+                                tmpV3r
                             );
                             positionArray.push(worldPos.x, worldPos.y, 0);
                             if (texCoordType !== undefined) {
@@ -1508,7 +1508,7 @@ export class VectorTileDataEmitter {
                             const tilePos = world2tile(
                                 extents,
                                 this.m_decodeInfo,
-                                tmpV2.set(posAttr.array[i], posAttr.array[i + 1]),
+                                tmpV3.set(posAttr.array[i], posAttr.array[i + 1], 0),
                                 true,
                                 tmpV2r
                             );

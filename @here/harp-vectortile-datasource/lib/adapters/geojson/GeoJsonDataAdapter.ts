@@ -7,6 +7,7 @@
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
+import { Vector2Like } from "@here/harp-geoutils/lib/math/Vector2Like";
 import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
 
@@ -87,19 +88,23 @@ function convertGeometryType(type: string): string {
 }
 
 const worldP = new Vector3();
-const localP = new Vector2();
 
 /**
  * Converts a `geoPoint` to local tile space.
  *
  * @param geoPoint - The input [[GeoPointLike]].
  * @param decodeInfo - The [[DecodeInfo]].
+ * @param target - A [[VectorLike]] used as target of the converted coordinates.
+ * @return A [[VectorLike]] with the converted point.
  * @hidden
  */
-function convertPoint(geoPoint: GeoPointLike, decodeInfo: DecodeInfo): Vector2 {
+function convertPoint<VectorType extends Vector2Like>(
+    geoPoint: GeoPointLike,
+    decodeInfo: DecodeInfo,
+    target: VectorType
+): VectorType {
     webMercatorProjection.projectPoint(GeoCoordinates.fromGeoPoint(geoPoint), worldP);
-    localP.set(worldP.x, worldP.y);
-    return world2tile(DEFAULT_EXTENTS, decodeInfo, localP, false, new Vector2());
+    return world2tile(DEFAULT_EXTENTS, decodeInfo, worldP, false, target);
 }
 
 function convertLineStringGeometry(
@@ -110,7 +115,9 @@ function convertLineStringGeometry(
         return GeoCoordinates.fromGeoPoint(geoPoint);
     });
 
-    const positions = coordinates.map(geoPoint => convertPoint(geoPoint, decodeInfo));
+    const positions = coordinates.map(geoPoint =>
+        convertPoint(geoPoint, decodeInfo, new Vector2())
+    );
 
     return { untiledPositions, positions };
 }
@@ -150,12 +157,12 @@ function convertPolygonGeometry(
 function convertPointGeometry(
     geometry: GeoJsonPointGeometry | GeoJsonMultiPointGeometry,
     decodeInfo: DecodeInfo
-): Vector2[] {
+): Vector3[] {
     if (geometry.type === "Point") {
-        return [convertPoint(geometry.coordinates, decodeInfo)];
+        return [convertPoint(geometry.coordinates, decodeInfo, new Vector3())];
     }
 
-    return geometry.coordinates.map(geoPoint => convertPoint(geoPoint, decodeInfo));
+    return geometry.coordinates.map(geoPoint => convertPoint(geoPoint, decodeInfo, new Vector3()));
 }
 
 export class GeoJsonDataAdapter implements DataAdapter {
