@@ -11,6 +11,7 @@ import * as sinon from "sinon";
 
 import { ConsoleChannel } from "../lib/Logger/ConsoleChannel";
 import { ILogger, LogLevel } from "../lib/Logger/ILogger";
+import { ILoggerManager } from "../lib/Logger/ILoggerManager";
 import { LoggerManager } from "../lib/Logger/LoggerManager";
 import { LoggerManagerImpl } from "../lib/Logger/LoggerManagerImpl";
 import { MultiChannel } from "../lib/Logger/MultiChannel";
@@ -112,13 +113,21 @@ describe("LoggerManager", function() {
 
     describe("Check channel compliancy", function() {
         const sandbox = sinon.createSandbox();
-        LoggerManager.instance.setLogLevelForAll(LogLevel.Trace);
+        let loggerManager: ILoggerManager;
+
+        beforeEach(() => {
+            loggerManager = new LoggerManagerImpl();
+        });
+
+        afterEach(() => {
+            sandbox.restore();
+        });
 
         it("Check channels logging abilities", function() {
             // Arrange
-            const consoleChannel = LoggerManager.instance.channel;
+            const consoleChannel = loggerManager.channel;
             const stubs = sandbox.stub(consoleChannel);
-            const logger = LoggerManager.instance.create("foo");
+            const logger = loggerManager.create("foo", { level: LogLevel.Trace });
 
             // Act
             printAll(logger, "some message");
@@ -134,16 +143,15 @@ describe("LoggerManager", function() {
 
         it("Check channels logging abilities after switching channels", function() {
             // Arrange
-            sandbox.restore();
-            const oldChannel = LoggerManager.instance.channel;
+            const oldChannel = loggerManager.channel;
             const oldChannelStub = sandbox.stub(oldChannel);
 
             const newChannel = new ConsoleChannel();
             const newChannelStub = sandbox.stub(newChannel);
 
-            LoggerManager.instance.setChannel(newChannel);
+            loggerManager.setChannel(newChannel);
 
-            const logger = LoggerManager.instance.create("foo");
+            const logger = loggerManager.create("foo", { level: LogLevel.Trace });
 
             // Act
             printAll(logger, "some message");
@@ -172,9 +180,9 @@ describe("LoggerManager", function() {
             const channel1Stub = sandbox.stub(channel1);
             const channel2Stub = sandbox.stub(channel2);
 
-            LoggerManager.instance.setChannel(multiChannel);
+            loggerManager.setChannel(multiChannel);
 
-            const logger = LoggerManager.instance.create("foo");
+            const logger = loggerManager.create("foo", { level: LogLevel.Trace });
 
             // Act
             printAll(logger, "some message");
