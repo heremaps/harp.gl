@@ -20,7 +20,7 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/harp-mapview";
-import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 
@@ -302,7 +302,7 @@ describe("TileDataSource", function() {
     });
 
     it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
-        errorOnlyLoggingAroundFunction("DataSource", () => {
+        silenceLoggingAroundFunction("DataSource", () => {
             const testedDataSource = new TileDataSource(new TileFactory(Tile), {
                 styleSetName: "",
                 tilingScheme: webMercatorTilingScheme,
@@ -321,7 +321,7 @@ describe("TileDataSource", function() {
 
     it("supports setting of theme", async function() {
         const mockDecoder = createMockTileDecoder();
-        errorOnlyLoggingAroundFunction("DataSource", async () => {
+        silenceLoggingAroundFunction("DataSource", async () => {
             const testedDataSource = new TileDataSource(new TileFactory(Tile), {
                 styleSetName: "tilezen",
                 tilingScheme: webMercatorTilingScheme,
@@ -351,7 +351,7 @@ describe("TileDataSource", function() {
 
     it("supports setting of languages", async function() {
         const mockDecoder = createMockTileDecoder();
-        errorOnlyLoggingAroundFunction("DataSource", async () => {
+        silenceLoggingAroundFunction("DataSource", async () => {
             const testedDataSource = new TileDataSource(new TileFactory(Tile), {
                 styleSetName: "tilezen",
                 tilingScheme: webMercatorTilingScheme,

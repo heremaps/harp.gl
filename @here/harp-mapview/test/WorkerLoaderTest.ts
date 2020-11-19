@@ -8,7 +8,12 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assertRejected, getTestResourceUrl, stubGlobalConstructor } from "@here/harp-test-utils";
+import {
+    assertRejected,
+    getTestResourceUrl,
+    silenceLoggingAroundFunction,
+    stubGlobalConstructor
+} from "@here/harp-test-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 
@@ -229,22 +234,24 @@ describe("WorkerLoader", function() {
                     return await originalFetch(testWorkerUrl);
                 });
 
-                const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
-                await new Promise((resolve, reject) => {
-                    worker.addEventListener("message", event => {
-                        assert.isDefined(event.data);
-                        assert.equal(event.data.hello, "world");
-                        resolve();
+                await silenceLoggingAroundFunction("WorkerLoader", async () => {
+                    const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
+                    await new Promise((resolve, reject) => {
+                        worker.addEventListener("message", event => {
+                            assert.isDefined(event.data);
+                            assert.equal(event.data.hello, "world");
+                            resolve();
+                        });
+                        worker.addEventListener("error", msg => {
+                            reject(new Error("received error event"));
+                        });
                     });
-                    worker.addEventListener("error", msg => {
-                        reject(new Error("received error event"));
-                    });
-                });
 
-                assert.isTrue(fetchStub.calledOnce);
-                assert.equal(workerConstructorStub.callCount, 2);
-                assert.equal(workerConstructorStub.firstCall.args[0], cspTestScriptUrl);
-                assert(workerConstructorStub.secondCall.args[0].startsWith, "blob:");
+                    assert.isTrue(fetchStub.calledOnce);
+                    assert.equal(workerConstructorStub.callCount, 2);
+                    assert.equal(workerConstructorStub.firstCall.args[0], cspTestScriptUrl);
+                    assert(workerConstructorStub.secondCall.args[0].startsWith, "blob:");
+                });
             });
 
             it("#startWorker falls back to blob in case of async error", async function() {
@@ -273,22 +280,25 @@ describe("WorkerLoader", function() {
                     assert.equal(url, cspTestScriptUrl);
                     return await originalFetch(testWorkerUrl);
                 });
-                const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
 
-                await new Promise((resolve, reject) => {
-                    worker.addEventListener("message", event => {
-                        assert.isDefined(event.data);
-                        assert.equal(event.data.hello, "world");
-                        resolve();
+                await silenceLoggingAroundFunction("WorkerLoader", async () => {
+                    const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
+
+                    await new Promise((resolve, reject) => {
+                        worker.addEventListener("message", event => {
+                            assert.isDefined(event.data);
+                            assert.equal(event.data.hello, "world");
+                            resolve();
+                        });
+                        worker.addEventListener("error", msg => {
+                            reject(new Error("received error event"));
+                        });
                     });
-                    worker.addEventListener("error", msg => {
-                        reject(new Error("received error event"));
-                    });
+                    assert.isTrue(fetchStub.calledOnce);
+                    assert.equal(workerConstructorStub.callCount, 2);
+                    assert.equal(workerConstructorStub.firstCall.args[0], cspTestScriptUrl);
+                    assert(workerConstructorStub.secondCall.args[0].startsWith, "blob:");
                 });
-                assert.isTrue(fetchStub.calledOnce);
-                assert.equal(workerConstructorStub.callCount, 2);
-                assert.equal(workerConstructorStub.firstCall.args[0], cspTestScriptUrl);
-                assert(workerConstructorStub.secondCall.args[0].startsWith, "blob:");
             });
         });
     });

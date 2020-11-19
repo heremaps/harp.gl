@@ -12,7 +12,7 @@ import { FeatureCollection } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
-import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 
@@ -97,7 +97,7 @@ describe("DataProviders", function() {
 
     it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
         const mockDataProvider = new MockDataProvider();
-        errorOnlyLoggingAroundFunction("DataSource", () => {
+        silenceLoggingAroundFunction("DataSource", () => {
             const omvDataSource = new VectorTileDataSource({
                 decoder: new VectorTileDecoder(),
                 baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
@@ -126,7 +126,7 @@ describe("DataProviders", function() {
             maxDataLevel: 17
         });
 
-        errorOnlyLoggingAroundFunction("DataSource", () => {
+        silenceLoggingAroundFunction("DataSource", () => {
             assert.equal(omvDataSource.minZoomLevel, 3);
             assert.equal(omvDataSource.minDataLevel, 3);
             assert.equal(omvDataSource.maxZoomLevel, 17);

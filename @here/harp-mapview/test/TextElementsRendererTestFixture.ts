@@ -6,7 +6,7 @@
 
 import { MapEnv, Theme } from "@here/harp-datasource-protocol";
 import { identityProjection, TileKey } from "@here/harp-geoutils";
-import { errorOnlyLoggingAroundFunction } from "@here/harp-test-utils";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
@@ -344,7 +344,7 @@ export class TestFixture {
         }
 
         this.m_viewState.frameNumber++;
-        errorOnlyLoggingAroundFunction(["TextElementsRenderer", "TextElementsStateCache"], () => {
+        silenceLoggingAroundFunction(["TextElementsRenderer", "TextElementsStateCache"], () => {
             this.textRenderer.placeText(this.tileLists, time);
         });
     }

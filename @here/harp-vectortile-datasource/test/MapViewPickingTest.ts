@@ -30,8 +30,8 @@ import {
 } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/lib/GeoJsonTiler";
 import {
-    errorOnlyLoggingAroundFunction,
     getTestResourceUrl,
+    silenceLoggingAroundFunction,
     waitForEvent
 } from "@here/harp-test-utils/";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
@@ -88,7 +88,7 @@ describe("MapView Picking", async function() {
             g.navigator = {};
             g.requestAnimationFrame = (cb: (delta: number) => void) => {
                 return setTimeout(() => {
-                    errorOnlyLoggingAroundFunction("TextElementsRenderer", () => {
+                    silenceLoggingAroundFunction("TextElementsRenderer", () => {
                         cb(15);
                     });
                 }, 15);
