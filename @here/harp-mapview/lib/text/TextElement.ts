@@ -20,7 +20,7 @@ import {
     TextRenderParameters,
     TextRenderStyle
 } from "@here/harp-text-canvas";
-import { Math2D, MathUtils } from "@here/harp-utils";
+import { Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";
@@ -41,7 +41,7 @@ export interface PoiInfo {
      * Name of the {@link @here/harp-datasource-protocol#ImageTexture} or image in
      * {@link @here/harp-mapview#userImageCache}.
      */
-    imageTextureName: string;
+    imageTextureName?: string;
 
     /**
      * Icon color override
@@ -508,28 +508,6 @@ export class TextElement {
 
     hasFeatureId(): boolean {
         return this.featureId !== undefined && this.featureId !== 0;
-    }
-
-    /**
-     * Update the minZoomLevel and maxZoomLevel from the values set in {@link PoiInfo}.
-     * Selects the smaller/larger one of the two min/max values for icon and text, because the
-     * TextElement is a container for both.
-     */
-    updateMinMaxZoomLevelsFromPoiInfo() {
-        if (this.poiInfo !== undefined) {
-            if (this.minZoomLevel === undefined) {
-                this.minZoomLevel = MathUtils.min2(
-                    this.poiInfo.iconMinZoomLevel,
-                    this.poiInfo.textMinZoomLevel
-                );
-            }
-            if (this.maxZoomLevel === undefined) {
-                this.maxZoomLevel = MathUtils.max2(
-                    this.poiInfo.iconMaxZoomLevel,
-                    this.poiInfo.textMaxZoomLevel
-                );
-            }
-        }
     }
 
     /**

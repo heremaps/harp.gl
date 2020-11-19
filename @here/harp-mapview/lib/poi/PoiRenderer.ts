@@ -268,7 +268,8 @@ export class PoiBatchRegistry {
         // There is a batch for every ImageDefinition, which could be a texture atlas with many
         // ImageTextures in it. If the imageTexture is not set, imageTextureName has the actual
         // image name.
-        const batchKey = imageTexture?.image ?? poiInfo.imageTextureName;
+        assert(poiInfo.imageTextureName !== undefined);
+        const batchKey = imageTexture?.image ?? poiInfo.imageTextureName!;
         let batch = this.m_batchMap.get(batchKey);
 
         if (batch === undefined) {
@@ -379,7 +380,8 @@ function findImageItem(
     mapView: MapView,
     imageTexture?: ImageTexture
 ): ImageItem | undefined {
-    const imageTextureName = poiInfo.imageTextureName;
+    assert(poiInfo.imageTextureName !== undefined);
+    const imageTextureName = poiInfo.imageTextureName!;
 
     if (imageTexture) {
         const imageDefinition = imageTexture.image;
@@ -590,6 +592,11 @@ export class PoiRenderer {
         }
 
         const imageTextureName = poiInfo.imageTextureName;
+        if (imageTextureName === undefined) {
+            poiInfo.isValid = false;
+            return;
+        }
+
         const imageTexture = this.mapView.poiManager.getImageTexture(imageTextureName);
         const imageItem = findImageItem(poiInfo, this.mapView, imageTexture);
         if (!imageItem) {
