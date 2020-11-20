@@ -91,7 +91,7 @@ describe("BoundsGenerator", function() {
 
     afterEach(async function() {
         if (mapView !== undefined) {
-            await mapView.getTheme(); // Needed otherwise the dispose will cause log messages
+            await mapView.loadPromise(); // Needed otherwise the dispose will cause log messages
             mapView.dispose();
             mapView = undefined;
         }

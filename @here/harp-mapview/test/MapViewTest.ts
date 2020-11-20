@@ -105,17 +105,13 @@ describe("MapView", function() {
             removeEventListener: removeEventListenerSpy
         } as unknown) as HTMLCanvasElement;
         mapViewOptions = {
-            canvas,
-            // Both options cause the `addDataSource` method to be called, which we can't `await` on
-            // because it is called in the constructor, but we can disable them being added.
-            addBackgroundDatasource: false,
-            enablePolarDataSource: false
+            canvas
         };
     });
 
     afterEach(async function() {
         if (mapView !== undefined) {
-            await mapView.getTheme();
+            await mapView.loadPromise();
             mapView.dispose();
             mapView = undefined;
         }
@@ -715,7 +711,7 @@ describe("MapView", function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
         mapView = new MapView(mapViewOptions);
-        await mapView.getTheme();
+        await mapView.loadPromise();
         await mapView.addDataSource(dataSource);
 
         const disposeStub = sinon.stub();
@@ -738,7 +734,7 @@ describe("MapView", function() {
     it("#dispose removes event listeners", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView(mapViewOptions);
-        await mapView.getTheme();
+        await mapView.loadPromise();
         await mapView.addDataSource(dataSource);
         await dataSource.connect();
 
@@ -896,13 +892,13 @@ describe("MapView", function() {
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
                 mapView = new MapView(customMapViewOptions);
-                await mapView.getTheme();
+                await mapView.loadPromise();
                 const resultA = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
                 mapView = new MapView(customMapViewOptions);
-                await mapView.getTheme();
+                await mapView.loadPromise();
                 const resultB = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
 
                 expect(resultA!.x).to.be.closeTo(resultB!.x, 0.00000001);
@@ -930,13 +926,13 @@ describe("MapView", function() {
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
                 mapView = new MapView(customMapViewOptions);
-                await mapView.getTheme();
+                await mapView.loadPromise();
                 const resultA = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
                 mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
                 mapView = new MapView(customMapViewOptions);
-                await mapView.getTheme();
+                await mapView.loadPromise();
                 const resultB = mapView.getScreenPosition(mapView.getWorldPositionAt(x, y)!);
 
                 expect(resultA!.x).to.be.closeTo(resultB!.x, 0.00000001);
@@ -1475,7 +1471,7 @@ describe("MapView", function() {
             };
         }
         mapView = new MapView({ canvas, theme: {} });
-        await mapView.getTheme();
+        await mapView.loadPromise();
 
         const dataSource = new FakeOmvDataSource({ name: "omv" });
 
@@ -1496,7 +1492,7 @@ describe("MapView", function() {
     it("languages set in MapView are also set in datasources", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ ...mapViewOptions, theme: {} });
-        await mapView.getTheme();
+        await mapView.loadPromise();
 
         await mapView.addDataSource(dataSource);
         mapView.languages = ["Goblin"];
@@ -1509,7 +1505,7 @@ describe("MapView", function() {
     it("languages set in MapView are also set in datasources added later", async function() {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ ...mapViewOptions, theme: {} });
-        await mapView.getTheme();
+        await mapView.loadPromise();
 
         mapView.languages = ["Goblin"];
         await mapView.addDataSource(dataSource);
@@ -1575,7 +1571,7 @@ describe("MapView", function() {
                     .that.equals(fakeElevationSource);
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(1)
+                    .that.has.length(2)
                     .and.includes(fakeElevationSource);
                 expect(mapView)
                     .to.have.property("m_elevationRangeSource")
@@ -1601,7 +1597,7 @@ describe("MapView", function() {
                     .that.equals(fakeElevationSource);
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(1)
+                    .that.has.length(2)
                     .and.includes(fakeElevationSource);
 
                 await mapView.setElevationSource(
@@ -1615,7 +1611,7 @@ describe("MapView", function() {
                     .that.equals(secondElevationSource);
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(1)
+                    .that.has.length(2)
                     .and.includes(secondElevationSource)
                     .and.does.not.include(fakeElevationSource);
                 expect(mapView)
@@ -1642,7 +1638,7 @@ describe("MapView", function() {
                 expect(mapView).to.have.property("m_elevationSource").that.is.undefined;
                 expect(mapView)
                     .to.have.property("m_tileDataSources")
-                    .that.has.length(0)
+                    .that.has.length(1)
                     .and.does.not.include(fakeElevationSource);
                 expect(mapView).to.have.property("m_elevationRangeSource").that.is.undefined;
                 expect(mapView).to.have.property("m_elevationProvider").that.is.undefined;

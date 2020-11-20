@@ -881,6 +881,7 @@ export class MapView extends EventDispatcher {
     private readonly m_failedDataSources = new Set<string>();
     private readonly m_polarDataSource?: PolarTileDataSource;
     private readonly m_enablePolarDataSource: boolean = true;
+    private readonly m_promises: Array<Promise<any>> = [];
 
     // gestures
     private readonly m_raycaster: PickingRaycaster;
@@ -1154,7 +1155,9 @@ export class MapView extends EventDispatcher {
         // will initialize with an empty theme and updated when theme is loaded and set
         this.m_textElementsRenderer = this.createTextRenderer();
 
-        this.setTheme(getOptionValue(this.m_options.theme, MapViewDefaults.theme));
+        this.m_promises.push(
+            this.setTheme(getOptionValue(this.m_options.theme, MapViewDefaults.theme))
+        );
 
         this.update();
     }
@@ -2133,54 +2136,74 @@ export class MapView extends EventDispatcher {
      * @param dataSource - The data source.
      */
     async addDataSource(dataSource: DataSource): Promise<void> {
-        const twinDataSource = this.getDataSourceByName(dataSource.name);
-        if (twinDataSource !== undefined) {
-            throw new Error(
-                `A DataSource with the name "${dataSource.name}" already exists in this MapView.`
-            );
-        }
-
-        dataSource.attach(this);
-        dataSource.setEnableElevationOverlay(this.m_elevationProvider !== undefined);
-        this.m_tileDataSources.push(dataSource);
-        this.m_sceneEnvironment?.updateBackgroundDataSource();
-
-        try {
-            await dataSource.connect();
-
-            const alreadyRemoved = !this.m_tileDataSources.includes(dataSource);
-            if (alreadyRemoved) {
-                return;
+        const dsPromise = new Promise<void>(async resolve => {
+            const twinDataSource = this.getDataSourceByName(dataSource.name);
+            if (twinDataSource !== undefined) {
+                throw new Error(
+                    `A DataSource with the name "${dataSource.name}" already exists in this MapView.`
+                );
             }
-            dataSource.addEventListener(MapViewEventNames.Update, () => {
+
+            dataSource.attach(this);
+            dataSource.setEnableElevationOverlay(this.m_elevationProvider !== undefined);
+            this.m_tileDataSources.push(dataSource);
+            this.m_sceneEnvironment?.updateBackgroundDataSource();
+
+            try {
+                await dataSource.connect();
+
+                const alreadyRemoved = !this.m_tileDataSources.includes(dataSource);
+                if (alreadyRemoved) {
+                    return;
+                }
+                dataSource.addEventListener(MapViewEventNames.Update, () => {
+                    this.update();
+                });
+
+                const theme = await this.getTheme();
+                dataSource.setLanguages(this.m_languages);
+
+                if (theme !== undefined && theme.styles !== undefined) {
+                    await dataSource.setTheme(theme);
+                }
+
+                this.m_connectedDataSources.add(dataSource.name);
+
+                this.dispatchEvent({
+                    type: MapViewEventNames.DataSourceConnect,
+                    dataSourceName: dataSource.name
+                });
+
                 this.update();
-            });
+            } catch (error) {
+                logger.error(
+                    `Failed to connect to datasource ${dataSource.name}: ${error.message}`
+                );
 
-            const theme = await this.getTheme();
-            dataSource.setLanguages(this.m_languages);
-
-            if (theme !== undefined && theme.styles !== undefined) {
-                await dataSource.setTheme(theme);
+                this.m_failedDataSources.add(dataSource.name);
+                this.dispatchEvent({
+                    type: MapViewEventNames.DataSourceConnect,
+                    dataSourceName: dataSource.name,
+                    error
+                });
             }
+            resolve();
+        });
+        this.m_promises.push(dsPromise);
+        return dsPromise;
+    }
 
-            this.m_connectedDataSources.add(dataSource.name);
-
-            this.dispatchEvent({
-                type: MapViewEventNames.DataSourceConnect,
-                dataSourceName: dataSource.name
-            });
-
-            this.update();
-        } catch (error) {
-            logger.error(`Failed to connect to datasource ${dataSource.name}: ${error.message}`);
-
-            this.m_failedDataSources.add(dataSource.name);
-            this.dispatchEvent({
-                type: MapViewEventNames.DataSourceConnect,
-                dataSourceName: dataSource.name,
-                error
-            });
-        }
+    /**
+     * Promise that resolves when the theme and all DataSources added via `addDataSource` are added.
+     *
+     * Only necessary if you need to `await` for the `MapView` to be fully loaded before doing some
+     * next step.
+     */
+    async loadPromise() {
+        return await Promise.all(this.m_promises).then(() => {
+            // Once the promises are awaited on, they can be cleared.
+            this.m_promises.splice(0);
+        });
     }
 
     /**
