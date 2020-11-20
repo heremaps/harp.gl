@@ -14,7 +14,10 @@ import {
     silenceLoggingAroundFunction,
     stubGlobalConstructor
 } from "@here/harp-test-utils";
-import { assert } from "chai";
+import * as chai from "chai";
+import * as chaiAsPromised from "chai-as-promised";
+chai.use(chaiAsPromised);
+const { expect, assert } = chai;
 import * as sinon from "sinon";
 
 import { WorkerLoader } from "../lib/workers/WorkerLoader";
@@ -67,7 +70,6 @@ describeWithWorker("Web Worker API", function() {
 
 describe("WorkerLoader", function() {
     let sandbox: sinon.SinonSandbox;
-    let restoreMochaGlobalExceptionHandler: boolean = false;
     beforeEach(function() {
         sandbox = sinon.createSandbox();
         if (typeof window === "undefined") {
@@ -80,9 +82,6 @@ describe("WorkerLoader", function() {
         sandbox.restore();
         if (typeof window === "undefined") {
             delete global.Worker;
-        }
-        if (restoreMochaGlobalExceptionHandler) {
-            (Mocha as any).process.addListener("uncaughtException");
         }
         WorkerLoader.directlyFallbackToBlobBasedLoading = false;
     });
@@ -175,7 +174,7 @@ describe("WorkerLoader", function() {
                 );
             });
 
-            it.skip("#startWorker catches error in worker global context", async function() {
+            it("#startWorker catches error in worker global context", function() {
                 const script = `
                     // We intentionally do not send anything, so waitForWorkerInitialized
                     // should raise timeout error.
@@ -183,26 +182,16 @@ describe("WorkerLoader", function() {
                 `;
                 assert.isDefined(Blob);
 
-                // For some reason, both Chrome and Firefox call global exception handler
-                // for error in global worker context (probably to help lazy developers) even
-                // if we subscribe to `onerror`.
-                // It's reported on console and to mocha, so we
-                //  1) Show log message, so random developer is not worried about error in developer
-                //     console
-                console.log(
-                    "Next 'TypeError' about accessing null in some blob based worker is handled. " +
-                        "Don't worry"
-                );
-
-                //  2) Temporarily disable global exception handler, so mocha doesn't report
-                //     this as error
-                restoreMochaGlobalExceptionHandler = true;
-                (Mocha as any).process.removeListener("uncaughtException");
                 const blob = new Blob([script], { type: "application/javascript" });
-                await assertRejected(
-                    WorkerLoader.startWorker(URL.createObjectURL(blob)),
-                    /Error during worker initialization/i
-                );
+
+                const listener = () => {
+                    (Mocha as any).process.removeListener("uncaughtException", listener);
+                };
+                (Mocha as any).process.on("uncaughtException", listener);
+
+                return expect(
+                    WorkerLoader.startWorker(URL.createObjectURL(blob))
+                ).to.be.rejectedWith(Error);
             });
         });
 
