@@ -9,6 +9,7 @@
 import {
     Feature,
     FeatureCollection,
+    FlatTheme,
     GeoJson,
     Light,
     StyleSet,
@@ -21,14 +22,17 @@ import {
     GeoBox,
     GeoCoordinates,
     GeoPointLike,
+    TileKey,
     webMercatorProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
+import { DataProvider } from "@here/harp-mapview-decoder";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
 import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
+import * as turf from "@turf/turf";
 import * as sinon from "sinon";
 import { Vector2, Vector3 } from "three";
 
@@ -65,11 +69,11 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     interface GeoJsoTestOptions {
         mochaTest: Mocha.Context;
         testImageName: string;
-        theme: Theme;
-        geoJson: string | GeoJson;
-
+        theme: Theme | FlatTheme;
+        geoJson?: string | GeoJson;
         lookAt?: Partial<LookAtParams>;
         tileGeoJson?: boolean;
+        dataProvider?: DataProvider;
     }
 
     async function geoJsonTest(options: GeoJsoTestOptions) {
@@ -109,13 +113,15 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
         const geoJsonDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
-            dataProvider: new GeoJsonDataProvider(
-                "geojson",
-                typeof options.geoJson === "string"
-                    ? new URL(options.geoJson, window.location.href)
-                    : options.geoJson,
-                { tiler }
-            ),
+            dataProvider:
+                options.dataProvider ??
+                new GeoJsonDataProvider(
+                    "geojson",
+                    typeof options.geoJson === "string"
+                        ? new URL(options.geoJson, window.location.href)
+                        : options.geoJson!,
+                    { tiler }
+                ),
             name: "geojson",
             styleSetName: "geojson"
         });
@@ -945,6 +951,68 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 lookAt: {
                     zoomLevel: 2,
                     target: geoBox.center
+                }
+            });
+        });
+    });
+
+    describe("Tiled GeoJson", async function() {
+        it("Circle with an hole with same winding as the outer ring", async function() {
+            const dataProvider = new (class extends DataProvider {
+                ready(): boolean {
+                    return true;
+                }
+
+                async getTile(tileKey: TileKey) {
+                    const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
+                    const { longitudeSpan, center } = geoBox;
+                    const [cx, cy] = center.toGeoPoint();
+
+                    const circle = turf.circle([cx, cy], longitudeSpan * 0.1, {
+                        units: "degrees"
+                    });
+
+                    const innerCircle = turf.circle([cx, cy], longitudeSpan * 0.04, {
+                        units: "degrees"
+                    });
+
+                    const ring = turf.polygon([
+                        ...circle.geometry!.coordinates,
+                        ...innerCircle.geometry!.coordinates
+                    ]);
+
+                    return turf.featureCollection([ring]);
+                }
+
+                protected async connect(): Promise<void> {}
+
+                protected dispose(): void {}
+            })();
+
+            await geoJsonTest({
+                dataProvider,
+                mochaTest: this,
+                testImageName: "geojson-polygon-holes-windings",
+                theme: {
+                    styles: [
+                        {
+                            styleSet: "geojson",
+                            when: ["==", ["geometry-type"], "Polygon"],
+                            technique: "fill",
+                            color: "red",
+                            lineColor: "#000",
+                            lineWidth: 1
+                        }
+                    ]
+                },
+                lookAt: {
+                    zoomLevel: 14.0,
+                    target: webMercatorTilingScheme.getGeoBox(
+                        webMercatorTilingScheme.getTileKey(
+                            GeoCoordinates.fromGeoPoint([-90, -42.52556]),
+                            13
+                        )!
+                    ).center
                 }
             });
         });

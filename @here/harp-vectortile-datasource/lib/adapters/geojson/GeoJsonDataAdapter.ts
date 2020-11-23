@@ -135,9 +135,25 @@ function convertLineGeometry(
     );
 }
 
+function signedPolygonArea(contour: GeoPointLike[]): number {
+    const n = contour.length;
+    let area = 0.0;
+    for (let p = n - 1, q = 0; q < n; p = q++) {
+        area += contour[p][0] * contour[q][1] - contour[q][0] * contour[p][1];
+    }
+    return area * 0.5;
+}
+
 function convertRings(coordinates: GeoPointLike[][], decodeInfo: DecodeInfo): IPolygonGeometry {
-    const rings = coordinates.map(ring => {
+    let outerWinding: boolean | undefined;
+    const rings = coordinates.map((ring, i) => {
         const { positions } = convertLineStringGeometry(ring, decodeInfo);
+        const winding = signedPolygonArea(ring) < 0;
+        if (i === 0) {
+            outerWinding = winding;
+        } else if (winding === outerWinding) {
+            positions.reverse();
+        }
         return positions;
     });
     return { rings };
