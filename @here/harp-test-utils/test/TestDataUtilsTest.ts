@@ -19,8 +19,7 @@ describe("@here/harp-test-utils", function() {
                 "text"
             );
 
-            assert(textFromFile);
-            assert.equal(textFromFile, "Test message\n");
+            assert.include(textFromFile, "Test message");
         });
         it(`loads static json file`, async function() {
             const jsonFromFile = await loadTestResource(
