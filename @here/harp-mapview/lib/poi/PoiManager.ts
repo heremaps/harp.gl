@@ -17,13 +17,11 @@ import {
 } from "@here/harp-datasource-protocol";
 import { assert, assertExists, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-import { Vector3 } from "three";
 
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";
 import { TextElementBuilder } from "../text/TextElementBuilder";
 import { Tile } from "../Tile";
-import { PoiBuilder } from "./PoiBuilder";
 import { PoiTable } from "./PoiTableManager";
 
 const logger = LoggerManager.instance.create("PoiManager");
@@ -40,7 +38,7 @@ interface ImageTextureDef {
     pixelRatio?: number;
 }
 
-function getPoiImageTexture(poiGeometry: PoiGeometry, index: number = 0): string | undefined {
+function getImageTexture(poiGeometry: PoiGeometry, index: number = 0): string | undefined {
     if (poiGeometry.imageTextures) {
         const textureNameIndex = poiGeometry.imageTextures[index];
         if (textureNameIndex >= 0) {
@@ -51,21 +49,21 @@ function getPoiImageTexture(poiGeometry: PoiGeometry, index: number = 0): string
     return undefined;
 }
 
-function getPoiAttributes(poiGeometry: PoiGeometry, index: number = 0): AttributeMap | undefined {
+function getAttributes(poiGeometry: PoiGeometry, index: number = 0): AttributeMap | undefined {
     return poiGeometry.objInfos ? poiGeometry.objInfos[index] : undefined;
 }
 
-function getPoiPosition(
+function getPosition(
     positionAttribute: THREE.BufferAttribute,
     worldOffsetX: number,
     index: number = 0
-): Vector3 {
-    const position = new Vector3().fromBufferAttribute(positionAttribute, index);
+): THREE.Vector3 {
+    const position = new THREE.Vector3().fromBufferAttribute(positionAttribute, index);
     position.x += worldOffsetX;
     return position;
 }
 
-function getPoiText(poiGeometry: PoiGeometry, index: number = 0): string {
+function getText(poiGeometry: PoiGeometry, index: number = 0): string {
     assert(poiGeometry.texts.length > index);
     const stringIndex = poiGeometry.texts[index];
     assert(poiGeometry.stringCatalog.length > stringIndex);
@@ -357,8 +355,8 @@ export class PoiManager {
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
-        const text = getPoiText(poiGeometry);
-        const imageTextureName = getPoiImageTexture(poiGeometry);
+        const text = getText(poiGeometry);
+        const imageTextureName = getImageTexture(poiGeometry);
 
         // let the combined image texture name (name of image in atlas, not the URL) and
         // text of the shield be the group key, at worst scenario it may be: "undefined-"
@@ -371,11 +369,11 @@ export class PoiManager {
 
         const positionArray: THREE.Vector3[] = [];
         for (let i = 0; i < positions.count; i += 3) {
-            positionArray.push(getPoiPosition(positions, worldOffsetX, i));
+            positionArray.push(getPosition(positions, worldOffsetX, i));
         }
         const textElement = poiBuilder
             .withIcon(imageTextureName, shieldGroupIndex)
-            .build(text, positionArray, tile.offset, getPoiAttributes(poiGeometry));
+            .build(text, positionArray, tile.offset, getAttributes(poiGeometry));
 
         tile.addTextElement(textElement);
     }
@@ -394,12 +392,12 @@ export class PoiManager {
             const offsetDirection = poiGeometry.offsetDirections?.[i] ?? 0;
 
             const textElement = poiBuilder
-                .withIcon(getPoiImageTexture(poiGeometry, i))
+                .withIcon(getImageTexture(poiGeometry, i))
                 .build(
-                    getPoiText(poiGeometry, i),
-                    getPoiPosition(positions, worldOffsetX, i),
+                    getText(poiGeometry, i),
+                    getPosition(positions, worldOffsetX, i),
                     tile.offset,
-                    getPoiAttributes(poiGeometry, i),
+                    getAttributes(poiGeometry, i),
                     undefined,
                     offsetDirection
                 );

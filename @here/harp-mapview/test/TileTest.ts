@@ -111,7 +111,8 @@ describe("Tile", function() {
                         type: "float",
                         itemCount: 1000
                     },
-                    texts: new Array<number>(1000)
+                    texts: new Array<number>(1000),
+                    stringCatalog: new Array<undefined>(1000)
                 }
             ]
         };
