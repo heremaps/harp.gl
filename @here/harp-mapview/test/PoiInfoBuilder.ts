@@ -134,9 +134,9 @@ export class PoiInfoBuilder {
             computedWidth: this.m_width,
             computedHeight: this.m_height,
             textElement,
-            renderOrder: this.m_renderOrder,
+            renderOrder: BigInt(this.m_renderOrder),
             buffer: new PoiBuffer(
-                new BoxBuffer(new THREE.Material()),
+                new BoxBuffer(new THREE.Material(), BigInt(0)),
                 {} as TextCanvasLayer,
                 () => {}
             )

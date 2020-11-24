@@ -17,7 +17,8 @@ function defaultSort(lhs: PickResult, rhs: PickResult) {
         return distanceDiff;
     }
 
-    return rhs.renderOrder! - lhs.renderOrder!;
+    const renderOrderDiff = rhs.renderOrder! - lhs.renderOrder!;
+    return renderOrderDiff < 0 ? -1 : renderOrderDiff === BigInt(0) ? 0 : 1;
 }
 
 /**

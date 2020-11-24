@@ -486,7 +486,11 @@ export class TileGeometryCreator {
         const discreteZoomLevel = Math.floor(mapView.zoomLevel);
         const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
 
-        const textElementBuilder = new TextElementBuilder(discreteZoomEnv, tile.textStyleCache);
+        const textElementBuilder = new TextElementBuilder(
+            discreteZoomEnv,
+            tile.textStyleCache,
+            tile.dataSource.dataSourceOrder
+        );
 
         if (decodedTile.textPathGeometries !== undefined) {
             const textPathGeometries = this.prepareTextPaths(

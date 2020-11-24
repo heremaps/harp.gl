@@ -145,7 +145,7 @@ export class BoxBuffer {
      */
     constructor(
         private readonly m_material: THREE.Material | THREE.Material[],
-        private readonly m_renderOrder: number = 0,
+        private readonly m_renderOrder: bigint,
         startElementCount = START_BOX_BUFFER_SIZE,
         private readonly m_maxElementCount = MAX_BOX_BUFFER_SIZE
     ) {
@@ -480,7 +480,6 @@ export class BoxBuffer {
 
         if (this.m_mesh === undefined) {
             this.m_mesh = new BoxBufferMesh(this.m_geometry, this.m_material);
-            this.m_mesh.renderOrder = this.m_renderOrder;
         } else {
             this.m_mesh.geometry = this.m_geometry;
         }

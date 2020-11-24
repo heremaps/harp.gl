@@ -42,7 +42,7 @@ describe("TextElementBuilder", function() {
 
     it("reuses same technique between calls to withTechnique", () => {
         const textTechnique = buildTextTechnique({ priority: 42 });
-        const builder = new TextElementBuilder(env, styleCache);
+        const builder = new TextElementBuilder(env, styleCache, 0);
         const label1 = builder.withTechnique(textTechnique).build("one", new Vector3(), 0);
         const label2 = builder.build("two", new Vector3(), 0);
 
@@ -53,7 +53,7 @@ describe("TextElementBuilder", function() {
 
     it("reuses same imageTextureName and shield group index between calls to withIcon", () => {
         const poiTechnique = buildPoiTechnique({});
-        const builder = new TextElementBuilder(env, styleCache);
+        const builder = new TextElementBuilder(env, styleCache, 0);
         const iconName = "dummy";
         const shieldGroupIndex = 42;
         const label1 = builder
@@ -76,7 +76,7 @@ describe("TextElementBuilder", function() {
             textMayOverlap: false,
             textReserveSpace: true
         });
-        const builder = new TextElementBuilder(env, styleCache);
+        const builder = new TextElementBuilder(env, styleCache, 0);
         const poi = builder.withTechnique(poiTechnique).build("", new Vector3(), 0);
         const lineMarker = builder.withTechnique(lineMarkerTechnique).build("", new Vector3(), 0);
 
@@ -88,7 +88,7 @@ describe("TextElementBuilder", function() {
 
     it("does not set PoiInfo if no imageTextureName or poiName set", () => {
         const poiTechnique = buildPoiTechnique({});
-        const poi = new TextElementBuilder(env, styleCache)
+        const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon(undefined)
             .build("", new Vector3(), 0);
@@ -106,7 +106,7 @@ describe("TextElementBuilder", function() {
             iconMaxZoomLevel,
             textMaxZoomLevel
         });
-        const poi = new TextElementBuilder(env, styleCache)
+        const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon("")
             .build("", new Vector3(), 0);
@@ -116,12 +116,65 @@ describe("TextElementBuilder", function() {
 
     it("sets renderOrder on text element and poi info", () => {
         const poiTechnique = buildPoiTechnique({ renderOrder: 42 });
-        const poi = new TextElementBuilder(env, styleCache)
+        const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon("dummy")
             .build("", new Vector3(), 0);
-        expect(poi.renderOrder)
-            .equals(poi.poiInfo?.renderOrder)
-            .and.equals(poiTechnique.renderOrder);
+        // bigints must be converted to string before asserting, Mocha's error serializer does not
+        // support bigint type: https://github.com/mochajs/mocha/issues/4090
+        expect(poi.renderOrder.toString())
+            .equals(poi.poiInfo?.renderOrder?.toString())
+            .and.equals(BigInt(poiTechnique.renderOrder).toString());
+    });
+
+    it("combines baseRenderOrder and technique's renderOrder into a single render order", () => {
+        const poiTechnique = buildPoiTechnique({ renderOrder: 42 });
+        const baseRenderOrder = 1;
+        const poi = new TextElementBuilder(env, styleCache, baseRenderOrder)
+            .withTechnique(poiTechnique)
+            .withIcon("dummy")
+            .build("", new Vector3(), 0);
+        // bigints must be converted to string before asserting, Mocha's error serializer does not
+        // support bigint type: https://github.com/mochajs/mocha/issues/4090
+        expect(poi.renderOrder.toString(16))
+            .equals(poi.poiInfo?.renderOrder?.toString(16))
+            .and.equals(
+                TextElementBuilder.composeRenderOrder(
+                    baseRenderOrder,
+                    poiTechnique.renderOrder as number
+                ).toString(16)
+            );
+    });
+
+    it("composeRenderOrder", () => {
+        expect(
+            TextElementBuilder.composeRenderOrder(0, 0) <
+                TextElementBuilder.composeRenderOrder(0, 1)
+        ).true;
+
+        expect(
+            TextElementBuilder.composeRenderOrder(0xffffffff, 0xfffffffe) <
+                TextElementBuilder.composeRenderOrder(0xffffffff, 0xffffffff)
+        ).true;
+
+        expect(
+            TextElementBuilder.composeRenderOrder(0, 0xffffffff) <
+                TextElementBuilder.composeRenderOrder(1, 0)
+        ).true;
+
+        expect(
+            TextElementBuilder.composeRenderOrder(0, -1) <
+                TextElementBuilder.composeRenderOrder(0, 0)
+        ).true;
+
+        expect(
+            TextElementBuilder.composeRenderOrder(-1, 0) <
+                TextElementBuilder.composeRenderOrder(0, -0xffffffff)
+        ).true;
+
+        expect(
+            TextElementBuilder.composeRenderOrder(-0xffffffff, -0xffffffff) <
+                TextElementBuilder.composeRenderOrder(-0xffffffff, -0xfffffffe)
+        ).true;
     });
 });

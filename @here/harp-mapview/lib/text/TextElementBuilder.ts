@@ -46,7 +46,7 @@ export class TextElementBuilder {
     private m_technique?: (PoiTechnique | LineMarkerTechnique | TextTechnique) &
         IndexedTechniqueParams;
 
-    private m_renderOrder: number = 0;
+    private m_renderOrder = BigInt(0);
     private m_xOffset?: number;
     private m_yOffset?: number;
     private m_poiBuilder?: PoiBuilder;
@@ -75,6 +75,21 @@ export class TextElementBuilder {
     }
 
     /**
+     * Combines two render order numbers into a single bigint.
+     * @param baseRenderOrder - The most significative half of the render order.
+     * @param offset - An offset to apply to the base render order after shifting it.
+     * @return The combined render order.
+     */
+    static composeRenderOrder(baseRenderOrder: number, offset: number): bigint {
+        return (
+            (BigInt(Math.trunc(baseRenderOrder)) << TextElementBuilder.BASE_RENDER_ORDER_SHIFT) +
+            BigInt(offset)
+        );
+    }
+
+    private static readonly BASE_RENDER_ORDER_SHIFT = BigInt(32);
+
+    /**
      * Constructor
      *
      * @param m_env - The {@link @link @here/harp-datasource-protocol#MapEnv} used to evaluate
@@ -84,8 +99,11 @@ export class TextElementBuilder {
      */
     constructor(
         private readonly m_env: MapEnv | Env,
-        private readonly m_styleCache: TileTextStyleCache
-    ) {}
+        private readonly m_styleCache: TileTextStyleCache,
+        private readonly m_baseRenderOrder: number
+    ) {
+        assert(Number.isInteger(m_baseRenderOrder), "Only integer render orders are supported");
+    }
 
     /**
      * Sets a technique that will be used to create text elements on subsequent calls to
@@ -111,7 +129,13 @@ export class TextElementBuilder {
         this.m_layoutStype = this.m_styleCache.getLayoutStyle(technique);
         this.m_xOffset = getPropertyValue(technique.xOffset, this.m_env);
         this.m_yOffset = getPropertyValue(technique.yOffset, this.m_env);
-        this.m_renderOrder = getPropertyValue(technique.renderOrder, this.m_env) ?? 0;
+
+        const techniqueRenderOrder = getPropertyValue(technique.renderOrder, this.m_env) ?? 0;
+        assert(Number.isInteger(techniqueRenderOrder), "Only integer render orders are supported");
+        this.m_renderOrder = TextElementBuilder.composeRenderOrder(
+            this.m_baseRenderOrder,
+            techniqueRenderOrder
+        );
 
         if (isTextTechnique(technique)) {
             this.withTextTechnique(technique);

@@ -78,7 +78,7 @@ export interface AdditionParameters {
     /**
      * Layer where text will be added.
      */
-    layer?: number;
+    layer?: bigint;
 
     /**
      * If `true`, the input position parameter will be updated to contain the position of the last
@@ -139,7 +139,7 @@ export interface TextBufferCreationParameters {
  * Optional parameters passed on [[TextCanvas]].`addTextBufferObject` function call.
  */
 export interface TextBufferAdditionParameters {
-    layer?: number;
+    layer?: bigint;
     position?: THREE.Vector3;
     scale?: number;
     rotation?: number;
@@ -153,13 +153,13 @@ export interface TextBufferAdditionParameters {
 /**
  * Default's [[TextCanvas]] layer identifier.
  */
-export const DEFAULT_TEXT_CANVAS_LAYER = 0;
+export const DEFAULT_TEXT_CANVAS_LAYER = BigInt(0);
 
 /**
  * [[TextCanvas]] rendering layer.
  */
 export interface TextCanvasLayer {
-    id: number;
+    id: bigint;
     storage: TextGeometry;
 }
 
@@ -434,7 +434,7 @@ export class TextCanvas {
      *
      * @returns Created [[TextCanvasLayer]].
      */
-    addLayer(layerId: number): TextCanvasLayer {
+    addLayer(layerId: bigint): TextCanvasLayer {
         let result = this.getLayer(layerId);
         if (result === undefined) {
             result = {
@@ -450,7 +450,9 @@ export class TextCanvas {
 
             this.m_layers.push(result);
             this.m_layers.sort((a: TextCanvasLayer, b: TextCanvasLayer) => {
-                return a.id - b.id;
+                const diff = a.id - b.id;
+
+                return diff < 0 ? -1 : diff === BigInt(0) ? 0 : 1;
             });
         }
         return result;
@@ -463,7 +465,7 @@ export class TextCanvas {
      *
      * @returns Selected [[TextCanvasLayer]].
      */
-    getLayer(layerId: number): TextCanvasLayer | undefined {
+    getLayer(layerId: bigint): TextCanvasLayer | undefined {
         return this.m_layers.find(layer => layer.id === layerId);
     }
 

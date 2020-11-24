@@ -78,7 +78,7 @@ export interface PickResult {
     /**
      * Render order of the intersected object.
      */
-    renderOrder?: number;
+    renderOrder?: bigint;
 
     /**
      * An optional feature ID of the picked object; typically applies to the Optimized Map
@@ -235,7 +235,7 @@ export class PickHandler {
         if (this.enablePickTechnique) {
             pickResult.technique = intersection.object.userData.technique;
         }
-        pickResult.renderOrder = intersection.object?.renderOrder;
+        pickResult.renderOrder = BigInt(intersection.object?.renderOrder);
 
         const featureData: TileFeatureData = intersection.object.userData.feature;
         this.addObjInfo(featureData, intersection, pickResult);

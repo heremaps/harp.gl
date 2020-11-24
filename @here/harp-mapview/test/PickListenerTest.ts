@@ -169,19 +169,19 @@ describe("PickListener", function() {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: BigInt(1)
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: BigInt(3)
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 2
+                    renderOrder: BigInt(2)
                 }
             ];
             listener.addResult(expectedResults[2]);
@@ -200,13 +200,13 @@ describe("PickListener", function() {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: BigInt(1)
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: BigInt(3)
                 }
             ];
             listener.addResult(results[1]);
@@ -231,13 +231,13 @@ describe("PickListener", function() {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: BigInt(1)
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: BigInt(3)
                 }
             ];
             listener.addResult(results[1]);
@@ -261,13 +261,13 @@ describe("PickListener", function() {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: BigInt(1)
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: BigInt(3)
                 }
             ];
             listener.addResult(results[1]);
