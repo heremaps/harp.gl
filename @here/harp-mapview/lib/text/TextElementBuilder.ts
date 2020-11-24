@@ -46,6 +46,7 @@ export class TextElementBuilder {
     private m_technique?: (PoiTechnique | LineMarkerTechnique | TextTechnique) &
         IndexedTechniqueParams;
 
+    private m_renderOrder: number = 0;
     private m_xOffset?: number;
     private m_yOffset?: number;
     private m_poiBuilder?: PoiBuilder;
@@ -110,6 +111,7 @@ export class TextElementBuilder {
         this.m_layoutStype = this.m_styleCache.getLayoutStyle(technique);
         this.m_xOffset = getPropertyValue(technique.xOffset, this.m_env);
         this.m_yOffset = getPropertyValue(technique.yOffset, this.m_env);
+        this.m_renderOrder = getPropertyValue(technique.renderOrder, this.m_env) ?? 0;
 
         if (isTextTechnique(technique)) {
             this.withTextTechnique(technique);
@@ -188,6 +190,7 @@ export class TextElementBuilder {
         textElement.textFadeTime = technique.textFadeTime;
         textElement.pathLengthSqr = pathLengthSqr;
         textElement.alwaysOnTop = this.m_alwaysOnTop;
+        textElement.renderOrder = this.m_renderOrder;
 
         textElement.poiInfo = this.m_poiBuilder?.build(textElement);
         TextElementBuilder.alignZoomLevelRanges(textElement);

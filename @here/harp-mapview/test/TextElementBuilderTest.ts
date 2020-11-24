@@ -113,4 +113,15 @@ describe("TextElementBuilder", function() {
         expect(poi.minZoomLevel).equals(Math.min(iconMinZoomLevel, textMinZoomLevel));
         expect(poi.maxZoomLevel).equals(Math.max(iconMaxZoomLevel, textMaxZoomLevel));
     });
+
+    it("sets renderOrder on text element and poi info", () => {
+        const poiTechnique = buildPoiTechnique({ renderOrder: 42 });
+        const poi = new TextElementBuilder(env, styleCache)
+            .withTechnique(poiTechnique)
+            .withIcon("dummy")
+            .build("", new Vector3(), 0);
+        expect(poi.renderOrder)
+            .equals(poi.poiInfo?.renderOrder)
+            .and.equals(poiTechnique.renderOrder);
+    });
 });
