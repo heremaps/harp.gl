@@ -49,7 +49,7 @@ export class PoiInfoBuilder {
     private readonly m_width: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
     private readonly m_height: number = PoiInfoBuilder.DEF_WIDTH_HEIGHT;
     private m_technique: PoiTechnique | LineMarkerTechnique = PoiInfoBuilder.DEF_TECHNIQUE;
-    private m_imageTextureName: string = PoiInfoBuilder.DEF_IMAGE_TEXTURE_NAME;
+    private m_imageTextureName: string | undefined = PoiInfoBuilder.DEF_IMAGE_TEXTURE_NAME;
     private m_imageTexture?: ImageTexture;
     private m_renderOrder: number = 0;
     private m_imageItem?: ImageItem;
@@ -90,7 +90,7 @@ export class PoiInfoBuilder {
         return this;
     }
 
-    withImageTextureName(name: string): PoiInfoBuilder {
+    withImageTextureName(name?: string): PoiInfoBuilder {
         this.m_imageTextureName = name;
         return this;
     }
