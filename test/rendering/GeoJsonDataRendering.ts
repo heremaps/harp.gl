@@ -6,15 +6,7 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import {
-    Feature,
-    FeatureCollection,
-    FlatTheme,
-    GeoJson,
-    Light,
-    StyleSet,
-    Theme
-} from "@here/harp-datasource-protocol";
+import { Feature, FeatureCollection, StyleSet } from "@here/harp-datasource-protocol";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { wrapPolygon } from "@here/harp-geometry/lib/WrapPolygon";
 import {
@@ -26,112 +18,20 @@ import {
     webMercatorProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
+import { LookAtParams } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
-import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
-import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
-import { GeoJsonDataProvider, VectorTileDataSource } from "@here/harp-vectortile-datasource";
-import { VectorTileDecoder } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
 import * as turf from "@turf/turf";
-import * as sinon from "sinon";
 import { Vector2, Vector3 } from "three";
 
 import * as polygon_crossing_antimeridian from "../resources/polygon_crossing_antimeridian.json";
+import { GeoJsonTest } from "./utils/GeoJsonTest";
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
-    let mapView: MapView;
-    const lights: Light[] = [
-        {
-            type: "ambient",
-            color: "#FFFFFF",
-            name: "ambientLight",
-            intensity: 0.9
-        },
-        {
-            type: "directional",
-            color: "#FFFFFF",
-            name: "light1",
-            intensity: 0.8,
-            direction: {
-                x: 1,
-                y: 5,
-                z: 0.5
-            }
-        }
-    ];
+    const geoJsonTest = new GeoJsonTest();
 
-    afterEach(() => {
-        if (mapView !== undefined) {
-            mapView.dispose();
-        }
-    });
+    const { lights } = geoJsonTest; // get the default lighting set up.
 
-    interface GeoJsoTestOptions {
-        mochaTest: Mocha.Context;
-        testImageName: string;
-        theme: Theme | FlatTheme;
-        geoJson?: string | GeoJson;
-        lookAt?: Partial<LookAtParams>;
-        tileGeoJson?: boolean;
-        dataProvider?: DataProvider;
-    }
-
-    async function geoJsonTest(options: GeoJsoTestOptions) {
-        const ibct = new RenderingTestHelper(options.mochaTest, { module: "mapview" });
-        const canvas = document.createElement("canvas");
-        canvas.width = 400;
-        canvas.height = 300;
-
-        mapView = new MapView({
-            canvas,
-            theme: options.theme,
-            preserveDrawingBuffer: true,
-            pixelRatio: 1,
-            disableFading: true
-        });
-        mapView.animatedExtrusionHandler.enabled = false;
-
-        const defaultLookAt: Partial<LookAtParams> = {
-            target: { lat: 53.3, lng: 14.6 },
-            distance: 200000,
-            tilt: 0,
-            heading: 0
-        };
-
-        const lookAt: LookAtParams = { ...defaultLookAt, ...options.lookAt } as any;
-
-        mapView.lookAt(lookAt);
-        // Shutdown errors cause by firefox bug
-        mapView.renderer.getContext().getShaderInfoLog = (x: any) => {
-            return "";
-        };
-
-        const tiler = new GeoJsonTiler();
-        if (options.tileGeoJson === false) {
-            sinon.stub(tiler, "getTile").resolves(options.geoJson);
-        }
-
-        const geoJsonDataSource = new VectorTileDataSource({
-            decoder: new VectorTileDecoder(),
-            dataProvider:
-                options.dataProvider ??
-                new GeoJsonDataProvider(
-                    "geojson",
-                    typeof options.geoJson === "string"
-                        ? new URL(options.geoJson, window.location.href)
-                        : options.geoJson!,
-                    { tiler }
-                ),
-            name: "geojson",
-            styleSetName: "geojson"
-        });
-
-        mapView.setDynamicProperty("enabled", true);
-        mapView.addDataSource(geoJsonDataSource);
-
-        await waitForEvent(mapView, MapViewEventNames.FrameComplete);
-        await ibct.assertCanvasMatchesReference(canvas, options.testImageName);
-    }
+    afterEach(() => geoJsonTest.dispose());
 
     it("renders flat polygon using fill technique", async function() {
         this.timeout(5000);
@@ -146,7 +46,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-polygon-fill",
             theme: { lights, styles: { geojson: greenStyle } },
@@ -172,7 +72,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-flat",
             theme: {
@@ -202,7 +102,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-point-enabled-as-dynamic-expression",
             theme: { lights, styles: { geojson: greenStyle } },
@@ -227,7 +127,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-with-height",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -258,7 +158,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-with-height-color",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -288,7 +188,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-with-height-color-no-batching",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -318,7 +218,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-with-height-no-outline",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -354,7 +254,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 }
             ];
 
-            await geoJsonTest({
+            await geoJsonTest.run({
                 mochaTest: this,
                 testImageName: "geojson-extruded-polygon-linewidth-expression-to-zero",
                 theme: { lights, styles: { geojson: ourStyle } },
@@ -392,7 +292,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 }
             ];
 
-            await geoJsonTest({
+            await geoJsonTest.run({
                 mochaTest: this,
                 testImageName: "geojson-extruded-polygon-linewidth-expression-to-one",
                 theme: { lights, styles: { geojson: ourStyle } },
@@ -418,7 +318,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-multilinestring",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -467,7 +367,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-stroke-polygons-at-tile-border",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -516,7 +416,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-stroke-polygons-crossing-tile-border",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -594,7 +494,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-stroke-polygons-touching-and-crossing-tile-border",
             theme: { lights, styles: { geojson: ourStyle } },
@@ -621,7 +521,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             }
         ];
 
-        await geoJsonTest({
+        await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-elevated-point",
             theme: {
@@ -772,7 +672,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         it(`polygon to wrap`, async function() {
             this.timeout(5000);
 
-            await geoJsonTest({
+            await geoJsonTest.run({
                 lookAt,
                 mochaTest: this,
                 testImageName: `geojson-wrap-polygon-crossing-antimeridian`,
@@ -784,7 +684,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         it(`wrapped polygon - merged`, async function() {
             this.timeout(5000);
 
-            await geoJsonTest({
+            await geoJsonTest.run({
                 lookAt,
                 mochaTest: this,
                 testImageName: `geojson-wrap-polygon-crossing-antimeridian-merged`,
@@ -811,7 +711,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             it(`wrapped polygon - ${part}`, async function() {
                 this.timeout(5000);
 
-                await geoJsonTest({
+                await geoJsonTest.run({
                     lookAt,
                     mochaTest: this,
                     testImageName: `geojson-wrap-polygon-crossing-antimeridian-${part}`,
@@ -943,7 +843,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 }
             ];
 
-            await geoJsonTest({
+            await geoJsonTest.run({
                 mochaTest: this,
                 testImageName: "geojson-clip-line-against-tile-border",
                 theme: { lights, styles: { geojson: ourStyle } },
@@ -989,7 +889,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 protected dispose(): void {}
             })();
 
-            await geoJsonTest({
+            await geoJsonTest.run({
                 dataProvider,
                 mochaTest: this,
                 testImageName: "geojson-polygon-holes-windings",
