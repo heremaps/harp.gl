@@ -570,6 +570,100 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
+    it("renders point markers using dataSourceOrder", async function() {
+        this.timeout(5000);
+
+        const markerStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Point"],
+                technique: "labeled-icon",
+                imageTexture: ["get", "icon"],
+                text: ["get", "text"],
+                size: 15,
+                iconMayOverlap: true,
+                iconReserveSpace: false,
+                textMayOverlap: true,
+                textReserveSpace: false,
+                color: "black",
+                renderOrder: ["get", "renderOrder"]
+            }
+        ];
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "markers-with-different-dataSourceOrders",
+            theme: {
+                lights,
+                sky: {
+                    type: "gradient",
+                    topColor: "#161719",
+                    bottomColor: "#262829",
+                    groundColor: "#262829"
+                },
+                clearColor: "#4A4D4E",
+                styles: { geojson: markerStyle },
+                images: {
+                    "red-icon": {
+                        // tslint:disable-next-line:max-line-length
+                        url:
+                            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzOCIgaGVpZ2h0PSI0NyIgdmlld0JveD0iMCAwIDM4IDQ3Ij48ZyBmaWxsPSJub25lIj48cGF0aCBmaWxsPSIjMEYxNjIxIiBmaWxsLW9wYWNpdHk9Ii40IiBkPSJNMTUgNDZjMCAuMzE3IDEuNzkuNTc0IDQgLjU3NHM0LS4yNTcgNC0uNTc0YzAtLjMxNy0xLjc5LS41NzQtNC0uNTc0cy00IC4yNTctNCAuNTc0eiI+PC9wYXRoPjxwYXRoIGZpbGw9IiNiNjAxMDEiIGQ9Ik0zMy4yNSAzMS42NTJBMTkuMDE1IDE5LjAxNSAwIDAgMCAzOCAxOS4wNkMzOCA4LjU0OSAyOS40NzggMCAxOSAwUzAgOC41NSAwIDE5LjA1OWMwIDQuODIzIDEuNzk1IDkuMjMzIDQuNzUgMTIuNTkzTDE4Ljk3NSA0NiAzMy4yNSAzMS42NTJ6Ij48L3BhdGg+PHBhdGggZmlsbD0iIzZBNkQ3NCIgZmlsbC1vcGFjaXR5PSIuNSIgZD0iTTI2Ljg2MiAzNy41bDQuNzE0LTQuNzdjMy44MjItMy41NzYgNS45MjQtOC40MTEgNS45MjQtMTMuNjJDMzcuNSA4Ljg0NyAyOS4yLjUgMTkgLjVTLjUgOC44NDguNSAxOS4xMWMwIDUuMjA5IDIuMTAyIDEwLjA0NCA1LjkxOSAxMy42MTRsNC43MTkgNC43NzZoMTUuNzI0ek0xOSAwYzEwLjQ5MyAwIDE5IDguNTI1IDE5IDE5LjA0MSAwIDUuNTA3LTIuMzQ4IDEwLjQ1NC02LjA3OSAxMy45MzJMMTkgNDYgNi4wNzkgMzIuOTczQzIuMzQ4IDI5LjQ5NSAwIDI0LjU0OCAwIDE5LjA0IDAgOC41MjUgOC41MDcgMCAxOSAweiI+PC9wYXRoPjwvZz48L3N2Zz4K",
+                        preload: true
+                    },
+                    "green-icon": {
+                        // tslint:disable-next-line:max-line-length
+                        url:
+                            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzOCIgaGVpZ2h0PSI0NyIgdmlld0JveD0iMCAwIDM4IDQ3Ij48ZyBmaWxsPSJub25lIj48cGF0aCBmaWxsPSIjMEYxNjIxIiBmaWxsLW9wYWNpdHk9Ii40IiBkPSJNMTUgNDZjMCAuMzE3IDEuNzkuNTc0IDQgLjU3NHM0LS4yNTcgNC0uNTc0YzAtLjMxNy0xLjc5LS41NzQtNC0uNTc0cy00IC4yNTctNCAuNTc0eiI+PC9wYXRoPjxwYXRoIGZpbGw9IiMwNGI2MDEiIGQ9Ik0zMy4yNSAzMS42NTJBMTkuMDE1IDE5LjAxNSAwIDAgMCAzOCAxOS4wNkMzOCA4LjU0OSAyOS40NzggMCAxOSAwUzAgOC41NSAwIDE5LjA1OWMwIDQuODIzIDEuNzk1IDkuMjMzIDQuNzUgMTIuNTkzTDE4Ljk3NSA0NiAzMy4yNSAzMS42NTJ6Ij48L3BhdGg+PHBhdGggZmlsbD0iIzZBNkQ3NCIgZmlsbC1vcGFjaXR5PSIuNSIgZD0iTTI2Ljg2MiAzNy41bDQuNzE0LTQuNzdjMy44MjItMy41NzYgNS45MjQtOC40MTEgNS45MjQtMTMuNjJDMzcuNSA4Ljg0NyAyOS4yLjUgMTkgLjVTLjUgOC44NDguNSAxOS4xMWMwIDUuMjA5IDIuMTAyIDEwLjA0NCA1LjkxOSAxMy42MTRsNC43MTkgNC43NzZoMTUuNzI0ek0xOSAwYzEwLjQ5MyAwIDE5IDguNTI1IDE5IDE5LjA0MSAwIDUuNTA3LTIuMzQ4IDEwLjQ1NC02LjA3OSAxMy45MzJMMTkgNDYgNi4wNzkgMzIuOTczQzIuMzQ4IDI5LjQ5NSAwIDI0LjU0OCAwIDE5LjA0IDAgOC41MjUgOC41MDcgMCAxOSAweiI+PC9wYXRoPjwvZz48L3N2Zz4K",
+                        preload: true
+                    }
+                },
+                imageTextures: [
+                    {
+                        name: "red-icon",
+                        image: "red-icon"
+                    },
+                    {
+                        name: "green-icon",
+                        image: "green-icon"
+                    }
+                ],
+                fontCatalogs: [
+                    {
+                        name: "fira",
+                        url: "../dist/resources/fonts/Default_FontCatalog.json"
+                    }
+                ]
+            },
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "1", icon: "red-icon", renderOrder: 1 },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3] }
+                    },
+                    {
+                        type: "Feature",
+                        properties: { text: "2", icon: "red-icon", renderOrder: 2 },
+                        geometry: { type: "Point", coordinates: [14.65, 53.33] }
+                    }
+                ]
+            },
+            extraDataSource: {
+                geoJson: {
+                    type: "FeatureCollection",
+                    features: [
+                        {
+                            type: "Feature",
+                            properties: { text: "3", icon: "green-icon", renderOrder: 0 },
+                            geometry: { type: "Point", coordinates: [14.68, 53.26] }
+                        }
+                    ]
+                },
+                dataSourceOrder: 1
+            }
+        });
+    });
+
     describe("wrap polygon crossing antimeridian", async function() {
         const ourStyle: StyleSet = [
             {
