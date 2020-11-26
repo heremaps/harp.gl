@@ -68,6 +68,7 @@
         "start": "ts-node ./scripts/credentials.ts -- . && webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
         "build": "npm run build-bundle && npm run build-examples",
         "build-examples": "ts-node ./scripts/credentials.ts -- dist/examples && webpack --config @here/harp-examples/webpack.config.js",
+        "watch-examples": "ts-node ./scripts/credentials.ts -- dist/examples && webpack --watch --config @here/harp-examples/webpack.config.js",
         "build-bundle": "cd @here/harp.gl && webpack",
         "build-www": "cd www && yarn build",
         "start-www": "cd www && yarn start",
