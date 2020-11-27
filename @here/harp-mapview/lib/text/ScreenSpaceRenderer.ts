@@ -8,8 +8,8 @@ import { TextCanvas } from "@here/harp-text-canvas";
 
 import { PoiRenderer } from "../poi/PoiRenderer";
 
-export interface TextCanvasRenderer {
-    fontCatalog: string;
-    textCanvas: TextCanvas;
-    poiRenderer: PoiRenderer;
+export interface ScreenSpaceRenderer {
+    fontCatalog?: string;
+    textCanvas?: TextCanvas;
+    poiRenderer?: PoiRenderer;
 }

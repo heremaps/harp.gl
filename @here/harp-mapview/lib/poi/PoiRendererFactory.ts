@@ -3,9 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { TextCanvas } from "@here/harp-text-canvas";
-
 import { MapView } from "../MapView";
 import { PoiRenderer } from "./PoiRenderer";
 
@@ -21,7 +18,7 @@ export class PoiRendererFactory {
      * @param textCanvas -
      * @returns
      */
-    createPoiRenderer(textCanvas: TextCanvas): PoiRenderer {
-        return new PoiRenderer(this.m_mapView, textCanvas);
+    createPoiRenderer(): PoiRenderer {
+        return new PoiRenderer(this.m_mapView);
     }
 }

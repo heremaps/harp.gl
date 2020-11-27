@@ -3,35 +3,24 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { IconMaterial } from "@here/harp-materials";
-import { TextCanvas } from "@here/harp-text-canvas";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { MapView } from "../lib/MapView";
-import { PoiBatchRegistry } from "../lib/poi/PoiRenderer";
+import { PoiBatchRegistry, PoiRenderer } from "../lib/poi/PoiRenderer";
 import { TextElement } from "../lib/text/TextElement";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
-import { stubFontCatalog } from "./stubFontCatalog";
 
 describe("PoiBatchRegistry", () => {
     const renderer = { capabilities: { isWebGL2: false } } as THREE.WebGLRenderer;
     const mapView = { update: () => {}, renderer } as MapView;
-    let textCanvas: TextCanvas;
     let registry: PoiBatchRegistry;
     const textElement = {} as TextElement;
-    const sandbox = sinon.createSandbox();
 
     beforeEach(() => {
-        textCanvas = new TextCanvas({
-            renderer,
-            fontCatalog: stubFontCatalog(sandbox),
-            minGlyphCount: 1,
-            maxGlyphCount: 1
-        });
-        registry = new PoiBatchRegistry(mapView, textCanvas);
+        registry = new PoiBatchRegistry(new PoiRenderer(mapView));
     });
     describe("registerPoi", function() {
         it("marks PoiInfo as invalid if it has no image item", () => {
@@ -159,7 +148,7 @@ describe("PoiBatchRegistry", () => {
 
             const disposalSpies: sinon.SinonSpy[] = [
                 sinon.spy(poiBuffer.buffer, "dispose"),
-                sinon.spy(poiBuffer.layer.storage.scene, "remove"),
+                sinon.spy(poiBuffer.layer.scene, "remove"),
                 sinon.spy(material, "dispose"),
                 sinon.spy(material.map, "dispose")
             ];

@@ -5,7 +5,7 @@
  */
 import { Env, getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
 import { IconMaterial } from "@here/harp-materials";
-import { MemoryUsage, TextCanvas, TextCanvasLayer } from "@here/harp-text-canvas";
+import { MemoryUsage } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -29,6 +29,11 @@ const neutralColor = new THREE.Color(1, 1, 1);
  */
 const tmpIconColor = new THREE.Color();
 
+export interface PoiLayer {
+    id: number;
+    scene: THREE.Scene;
+}
+
 /**
  * @internal
  * Buffer for POIs sharing same material and render order, renderable in a single draw call
@@ -44,7 +49,7 @@ export class PoiBuffer {
      */
     constructor(
         readonly buffer: BoxBuffer,
-        readonly layer: TextCanvasLayer,
+        readonly layer: PoiLayer,
         private readonly m_onDispose: () => void
     ) {}
 
@@ -72,7 +77,7 @@ export class PoiBuffer {
     }
 
     private dispose() {
-        this.layer.storage.scene.remove(this.buffer.mesh);
+        this.layer.scene.remove(this.buffer.mesh);
         this.buffer.dispose();
         this.m_onDispose();
     }
@@ -99,14 +104,12 @@ class PoiBatch {
     /**
      * Create the `PoiBatch`.
      *
-     * @param mapView - The {@link MapView} instance.
-     * @param textCanvas - The {@link TextCanvas} used for rendering.
+     * @param m_poiRenderer - The {@link PoiRenderer} instance.
      * @param imageItem - The icon that will have his material shared.
      * @param m_onDispose - Callback executed when the `PoiBatch` is disposed.
      */
     constructor(
-        readonly mapView: MapView,
-        readonly textCanvas: TextCanvas,
+        readonly m_poiRenderer: PoiRenderer,
         readonly imageItem: ImageItem,
         private readonly m_onDispose: () => void
     ) {
@@ -132,7 +135,7 @@ class PoiBatch {
         texture.needsUpdate = true;
 
         this.m_material = new IconMaterial({
-            rendererCapabilities: this.mapView.renderer.capabilities,
+            rendererCapabilities: this.m_poiRenderer.renderer.capabilities,
             map: texture
         });
 
@@ -152,15 +155,14 @@ class PoiBatch {
         const mesh = boxBuffer.mesh;
         mesh.frustumCulled = false;
 
-        const layer = this.textCanvas.addLayer(renderOrder);
-        layer.storage.scene.add(mesh);
+        const layer = this.m_poiRenderer.addLayer(renderOrder);
+        layer.scene.add(mesh);
 
         poiBuffer = new PoiBuffer(boxBuffer, layer, () => {
             this.disposeBuffer(renderOrder);
         });
         this.m_poiBuffers.set(renderOrder, poiBuffer);
 
-        this.mapView.update();
         return poiBuffer.increaseRefCount();
     }
 
@@ -243,13 +245,10 @@ export class PoiBatchRegistry {
     /**
      * Create the `PoiBatchRegistry`.
      *
-     * @param mapView - The {@link MapView} to be rendered to.
-     * @param textCanvas - The [[TextCanvas]] to which scenes this `PoiBatchRegistry`
-     *                     adds geometry to.
-     * The actual scene a {@link TextElement} is added to is specified by the renderOrder of the
-     * {@link TextElement}.
+     * @param m_poiRenderer - The {@link PoiRenderer} to be rendered to.
+     * i
      */
-    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {}
+    constructor(private readonly m_poiRenderer: PoiRenderer) {}
 
     /**
      * Register the POI and prepare the [[PoiBatch]] for the POI at first usage.
@@ -273,7 +272,7 @@ export class PoiBatchRegistry {
         let batch = this.m_batchMap.get(batchKey);
 
         if (batch === undefined) {
-            batch = new PoiBatch(this.mapView, this.textCanvas, imageItem, () => {
+            batch = new PoiBatch(this.m_poiRenderer, imageItem, () => {
                 this.deleteBatch(batchKey);
             });
             this.m_batchMap.set(batchKey, batch);
@@ -459,15 +458,21 @@ export class PoiRenderer {
     // temporary variable to save allocations
     private readonly m_tempScreenBox = new Math2D.Box();
 
+    private readonly m_renderer: THREE.WebGLRenderer;
+    private readonly m_layers: PoiLayer[] = [];
+
     /**
      * Create the `PoiRenderer` for the specified {@link MapView}.
      *
      * @param mapView - The MapView to be rendered to.
-     * @param textCanvas - The [[TextCanvas]] this `PoiRenderer` is associated to. POIs are added to
-     * the different layers of this [[TextCanvas]] based on renderOrder.
      */
-    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {
-        this.m_poiBatchRegistry = new PoiBatchRegistry(mapView, textCanvas);
+    constructor(readonly mapView: MapView) {
+        this.m_renderer = mapView.renderer;
+        this.m_poiBatchRegistry = new PoiBatchRegistry(this);
+    }
+
+    get renderer(): THREE.WebGLRenderer {
+        return this.m_renderer;
     }
 
     /**
@@ -539,6 +544,64 @@ export class PoiRenderer {
      */
     update(): void {
         this.m_poiBatchRegistry.update();
+    }
+
+    /**
+     * @internal
+     *
+     * Adds a layer to the PoiRenderer
+     * @param layerId
+     */
+    addLayer(layerId: number): PoiLayer {
+        let result = this.getLayer(layerId);
+        if (result === undefined) {
+            result = {
+                id: layerId,
+                scene: new THREE.Scene()
+            };
+
+            this.m_layers.push(result);
+            this.m_layers.sort((a: PoiLayer, b: PoiLayer) => {
+                return a.id - b.id;
+            });
+        }
+        return result;
+    }
+
+    /**
+     * Retrieves a specific `Poi` rendering layer.
+     *
+     * @param layerId - Desired layer identifier.
+     *
+     * @returns Selected {@link PoiLayer}
+     */
+    private getLayer(layerId: number): PoiLayer | undefined {
+        return this.m_layers.find(layer => layer.id === layerId);
+    }
+
+    /**
+     * Renders the content of this `PoiRenderer`.
+     *
+     * @param camera - Orthographic camera.
+     * @param target - Optional render target.
+     * @param clear - Optional render target clear operation.
+     */
+    render(camera: THREE.OrthographicCamera, target?: THREE.WebGLRenderTarget, clear?: boolean) {
+        let oldTarget: THREE.RenderTarget | null = null;
+        if (target !== undefined) {
+            oldTarget = this.m_renderer.getRenderTarget();
+            this.m_renderer.setRenderTarget(target);
+        }
+        if (clear === true) {
+            this.m_renderer.clear(true);
+        }
+        for (const layer of this.m_layers) {
+            this.update();
+            this.m_renderer.render(layer.scene, camera);
+        }
+        if (target !== undefined) {
+            this.m_renderer.setRenderTarget(oldTarget);
+        }
     }
 
     /**
