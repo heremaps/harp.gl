@@ -2002,4 +2002,76 @@ describe("ExprEvaluator", function() {
             );
         });
     });
+
+    describe("Operator 'slice'", () => {
+        it("parse", () => {
+            assert.throw(() => evaluate(["slice"]), "not enough arguments");
+            assert.throw(() => evaluate(["slice", "abc"]), "not enough arguments");
+            assert.throw(() => evaluate(["slice", 123, 0]), "input must be a string or an array");
+        });
+
+        it("slice of strings", () => {
+            assert.deepStrictEqual(evaluate(["slice", "abc", 0]), "abc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 1]), "bc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 2]), "c");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 3]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 4]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -1]), "c");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -2]), "bc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -3]), "abc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -4]), "abc");
+        });
+
+        it("empty string slices", () => {
+            assert.deepStrictEqual(evaluate(["slice", "abc", 0, 0]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 1, 1]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 2, 2]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 3, 3]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 4, 4]), "");
+        });
+
+        it("extracts slices of one character from strings", () => {
+            assert.deepStrictEqual(evaluate(["slice", "abc", 0, 1]), "a");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 1, 2]), "b");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 2, 3]), "c");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 3, 4]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 4, 5]), "");
+        });
+
+        it("slice of arrays", () => {
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 0]), [10, 20, 30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 1]), [20, 30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 2]), [30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 3]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 4]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -1]), [30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -2]), [20, 30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -3]), [
+                10,
+                20,
+                30
+            ]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -4]), [
+                10,
+                20,
+                30
+            ]);
+        });
+
+        it("extracts empty slices", () => {
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 0, 0]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 1, 1]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 2, 2]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 3, 3]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 4, 4]), []);
+        });
+
+        it("extracts slices of one element from arrays", () => {
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 0, 1]), [10]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 1, 2]), [20]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 2, 3]), [30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 3, 4]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 4, 5]), []);
+        });
+    });
 });
