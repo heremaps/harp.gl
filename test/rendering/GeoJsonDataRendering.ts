@@ -8,6 +8,7 @@
 
 import { Feature, FeatureCollection, StyleSet } from "@here/harp-datasource-protocol";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
+import { wrapLineString } from "@here/harp-geometry/lib/WrapLineString";
 import { wrapPolygon } from "@here/harp-geometry/lib/WrapPolygon";
 import {
     EarthConstants,
@@ -818,6 +819,163 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             });
         }
     });
+
+    describe("wrap linestring crossing antimeridian", async function() {
+        const ourStyle: StyleSet = [
+            {
+                when: ["all", ["==", ["geometry-type"], "Polygon"], ["!has", "fragment"]],
+                technique: "solid-line",
+                color: "rgba(255,0,0,1)",
+                lineWidth: "2px"
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "LineString"],
+                    ["==", ["get", "fragment"], "left"]
+                ],
+                technique: "solid-line",
+                color: "rgba(255,0,0,1)",
+                lineWidth: "2px",
+                caps: "Round",
+                renderOrder: 1
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "LineString"],
+                    ["==", ["get", "fragment"], "middle"]
+                ],
+                technique: "solid-line",
+                color: "rgba(0,255,0,1)",
+                lineWidth: "2px",
+                renderOrder: 0
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["geometry-type"], "LineString"],
+                    ["==", ["get", "fragment"], "right"]
+                ],
+                technique: "solid-line",
+                color: "rgba(0,0,255,1)",
+                lineWidth: "2px",
+                renderOrder: 1
+            },
+            {
+                when: ["all", ["==", ["geometry-type"], "LineString"], ["!has", "fragment"]],
+                technique: "solid-line",
+                lineWidth: "2px",
+                color: "rgb(0,0,0)"
+            }
+        ];
+
+        // Convert the coordinates of the polygon from GeoJson to GeoCoordinates.
+        const coordinates = polygon_crossing_antimeridian.features[0].geometry.coordinates[0].map(
+            ([lng, lat]) => GeoCoordinates.fromGeoPoint([lng, lat])
+        );
+
+        // Split the polygon in 3 parts.
+        const wrappedLineString = wrapLineString(coordinates);
+
+        // Extracts a part (left, middle or right) from the wrapped polygon
+        // and convert it to a GeoJson feature.
+        const toGeoJsonMultiLineString = (part: string): Feature => {
+            const coordinates: GeoCoordinates[][] | undefined = (wrappedLineString as any)[part];
+
+            // Converts an Array of GeoCoordinates to GeoJSON coordinates.
+            const toGeoJsonCoordinates = (coordinates: GeoCoordinates[][] | undefined) => {
+                coordinates = coordinates ?? [];
+                return coordinates.map(line => {
+                    return line.map(({ lat, lng }) => [lng, lat]);
+                });
+            };
+
+            return {
+                type: "Feature",
+                properties: {
+                    fragment: part
+                },
+                geometry: {
+                    type: "MultiLineString",
+                    coordinates: toGeoJsonCoordinates(coordinates)
+                }
+            };
+        };
+
+        const separator: Feature = {
+            type: "Feature",
+            properties: {},
+            geometry: {
+                type: "LineString",
+                coordinates: [
+                    [180, 90],
+                    [180, -90]
+                ]
+            }
+        };
+
+        const lookAt: Partial<LookAtParams> = {
+            target: [-160, 40],
+            distance: EarthConstants.EQUATORIAL_CIRCUMFERENCE * 2.5
+        };
+
+        it(`linestring to wrap`, async function() {
+            this.timeout(5000);
+
+            await geoJsonTest.run({
+                lookAt,
+                mochaTest: this,
+                testImageName: `geojson-wrap-linestring-crossing-antimeridian`,
+                theme: { lights, styles: { geojson: ourStyle } },
+                geoJson: polygon_crossing_antimeridian as any
+            });
+        });
+
+        it(`wrapped linestring - merged`, async function() {
+            this.timeout(5000);
+
+            await geoJsonTest.run({
+                lookAt,
+                mochaTest: this,
+                testImageName: `geojson-wrap-linestring-crossing-antimeridian-merged`,
+                theme: { lights, styles: { geojson: ourStyle } },
+                geoJson: {
+                    type: "FeatureCollection",
+                    features: [
+                        toGeoJsonMultiLineString("left"),
+                        toGeoJsonMultiLineString("middle"),
+                        toGeoJsonMultiLineString("right"),
+                        separator
+                    ]
+                }
+            });
+        });
+
+        for (const part in wrappedLineString) {
+            if (!wrappedLineString.hasOwnProperty(part)) {
+                continue;
+            }
+
+            const feature = toGeoJsonMultiLineString(part);
+
+            it(`wrapped linestring - ${part}`, async function() {
+                this.timeout(5000);
+
+                await geoJsonTest.run({
+                    lookAt,
+                    mochaTest: this,
+                    testImageName: `geojson-wrap-linestring-crossing-antimeridian-${part}`,
+                    theme: { lights, styles: { geojson: ourStyle } },
+                    geoJson: {
+                        type: "FeatureCollection",
+                        features: [feature, separator]
+                    }
+                });
+            });
+        }
+    });
+
     describe("clip lines against bounds", async function() {
         it("clip long line string", async function() {
             const bounds: GeoPointLike[] = [
