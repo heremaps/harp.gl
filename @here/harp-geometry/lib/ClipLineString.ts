@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { EarthConstants, GeoCoordinates, webMercatorProjection } from "@here/harp-geoutils";
 import { Math2D } from "@here/harp-utils";
-import { Vector2 } from "three";
+import { Vector2, Vector3 } from "three";
 
 /**
  * A clipping edge.
@@ -153,3 +154,101 @@ export function clipLineString(
 
     return lines;
 }
+
+/**
+ * The result of wrapping a line string.
+ */
+interface WrappedLineString {
+    left: GeoCoordinates[][];
+    middle: GeoCoordinates[][];
+    right: GeoCoordinates[][];
+}
+
+/**
+ * Helper function to wrap a line string projected in web mercator.
+ *
+ * @param multiLineString The input to wrap
+ * @param edges The clipping edges used to wrap the input.
+ * @param offset The x-offset used to displace the result
+ *
+ * @internal
+ */
+function wrapMultiLineStringHelper(
+    multiLineString: Vector2[][],
+    edges: ClipEdge[],
+    offset: number
+): GeoCoordinates[][] | undefined {
+    for (const clip of edges) {
+        multiLineString = clip.clipLines(multiLineString);
+    }
+
+    const worldP = new Vector3();
+
+    const coordinates: GeoCoordinates[][] = [];
+
+    multiLineString.forEach(lineString => {
+        if (lineString.length === 0) {
+            return;
+        }
+
+        const coords = lineString.map(({ x, y }) => {
+            worldP.set(x, y, 0);
+            const geoPoint = webMercatorProjection.unprojectPoint(worldP);
+            geoPoint.longitude += offset;
+            return geoPoint;
+        });
+
+        coordinates.push(coords);
+    });
+
+    return coordinates.length > 0 ? coordinates : undefined;
+}
+
+/**
+ * Wrap the given line string.
+ *
+ * @remarks
+ * This function splits this input line string in three parts.
+ *
+ * The `left` member of the result contains the part of the line string with longitude less than `-180`.
+ *
+ * The `middle` member contains the part of the line string with longitude in the range `[-180, 180]`.
+ *
+ * The `right` member contains the part of the line string with longitude greater than `180`.
+ *
+ * @param coordinates The coordinates of the line string to wrap.
+ */
+export function wrapLineString(coordinates: GeoCoordinates[]): Partial<WrappedLineString> {
+    const worldP = new Vector3();
+
+    const lineString = coordinates.map(g => {
+        const { x, y } = webMercatorProjection.projectPoint(g, worldP);
+        return new Vector2(x, y);
+    });
+
+    const multiLineString = [lineString];
+
+    return {
+        left: wrapMultiLineStringHelper(multiLineString, WRAP_LEFT_CLIP_EDGES, 360),
+        middle: wrapMultiLineStringHelper(multiLineString, WRAP_MIDDLE_CLIP_EDGES, 0),
+        right: wrapMultiLineStringHelper(multiLineString, WRAP_RIGHT_CLIP_EDGES, -360)
+    };
+}
+
+const ec = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+const border = 0;
+
+const WRAP_MIDDLE_CLIP_EDGES = [
+    new ClipEdge(0 - border, ec, 0 - border, 0, p => p.x > 0 - border),
+    new ClipEdge(ec + border, 0, ec + border, ec, p => p.x < ec + border)
+];
+
+const WRAP_LEFT_CLIP_EDGES = [
+    new ClipEdge(-ec - border, ec, -ec - border, 0, p => p.x > -ec - border),
+    new ClipEdge(0 + border, 0, 0 + border, ec, p => p.x < 0 + border)
+];
+
+const WRAP_RIGHT_CLIP_EDGES = [
+    new ClipEdge(ec - border, ec, ec - border, 0, p => p.x > ec - border),
+    new ClipEdge(ec * 2 + border, 0, ec * 2 + border, ec, p => p.x < ec * 2 + border)
+];
