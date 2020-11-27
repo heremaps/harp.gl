@@ -21,10 +21,34 @@ import {
 import { LookAtParams } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import * as turf from "@turf/turf";
+import rbush from "geojson-rbush";
 import { Vector2, Vector3 } from "three";
 
 import * as polygon_crossing_antimeridian from "../resources/polygon_crossing_antimeridian.json";
 import { GeoJsonTest } from "./utils/GeoJsonTest";
+
+class GeoJsonStore extends DataProvider {
+    private readonly tree = rbush();
+
+    constructor(features: turf.helpers.FeatureCollection) {
+        super();
+        this.tree.load(features);
+    }
+
+    async getTile(tileKey: TileKey) {
+        const { west, south, east, north } = webMercatorTilingScheme.getGeoBox(tileKey);
+        const bbox: turf.helpers.BBox = [west, south, east, north];
+        return this.tree.search(bbox);
+    }
+
+    ready(): boolean {
+        return true;
+    }
+
+    protected async connect(): Promise<void> {}
+
+    protected dispose(): void {}
+}
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
     const geoJsonTest = new GeoJsonTest();
@@ -913,6 +937,49 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                             13
                         )!
                     ).center
+                }
+            });
+        });
+    });
+
+    describe("Polygons", async function() {
+        it("enfore closing", async function() {
+            const ourStyle: StyleSet = [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "fill",
+                    color: "rgba(100,100,100,0.5)",
+                    lineWidth: 2
+                }
+            ];
+
+            const polygon = turf.polygon([
+                [
+                    [20.390625, 64.16810689799152],
+                    [68.90625, 63.23362741232569],
+                    [26.71875, 38.8225909761771],
+                    [20.390625, 64.16810689799152]
+                ]
+            ]);
+
+            const [lng, lat] = turf.center(polygon).geometry!.coordinates;
+
+            // remove the last coordinate of the polygon,
+            // this creates an invalid polygon that will
+            // be automatically closed in the geojson
+            // decoder.
+            polygon.geometry?.coordinates[0].pop();
+
+            const geoJsonStore = new GeoJsonStore(turf.featureCollection([polygon]));
+
+            await geoJsonTest.run({
+                mochaTest: this,
+                testImageName: "geojson-force-closing-of-polygons",
+                theme: { lights, styles: { geojson: ourStyle } },
+                dataProvider: geoJsonStore,
+                lookAt: {
+                    zoomLevel: 2,
+                    target: [lng, lat]
                 }
             });
         });

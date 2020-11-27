@@ -146,16 +146,30 @@ function signedPolygonArea(contour: GeoPointLike[]): number {
 
 function convertRings(coordinates: GeoPointLike[][], decodeInfo: DecodeInfo): IPolygonGeometry {
     let outerWinding: boolean | undefined;
-    const rings = coordinates.map((ring, i) => {
+    const rings: Vector2[][] = [];
+
+    coordinates.forEach((ring, i) => {
         const { positions } = convertLineStringGeometry(ring, decodeInfo);
+
+        if (positions.length < 2) {
+            return;
+        }
+
+        if (!positions[0].equals(positions[positions.length - 1])) {
+            positions.push(positions[0].clone());
+        }
+
         const winding = signedPolygonArea(ring) < 0;
+
         if (i === 0) {
             outerWinding = winding;
         } else if (winding === outerWinding) {
             positions.reverse();
         }
-        return positions;
+
+        rings.push(positions);
     });
+
     return { rings };
 }
 
