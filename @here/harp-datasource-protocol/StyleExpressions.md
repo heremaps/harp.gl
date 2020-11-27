@@ -488,6 +488,15 @@ Returns the element of the array at the given position.
 ["at", number, array]
 ```
 
+## slice
+
+Extracts a section of the input `string` or `Array`.
+
+```javascript
+["slice", input, start, end]
+["slice", input, start]
+```
+
 ## concat
 
 Concatenates the given string values.
