@@ -583,10 +583,19 @@ export class PoiRenderer {
      * Renders the content of this `PoiRenderer`.
      *
      * @param camera - Orthographic camera.
+     * @param betweenLayersCallback - Optional callback between layers.
      * @param target - Optional render target.
      * @param clear - Optional render target clear operation.
      */
-    render(camera: THREE.OrthographicCamera, target?: THREE.WebGLRenderTarget, clear?: boolean) {
+    render(
+        camera: THREE.OrthographicCamera,
+        betweenLayersCallback?: (
+            lastRendererdLayerId?: number,
+            nextRenderedLayerId?: number
+        ) => void,
+        target?: THREE.WebGLRenderTarget,
+        clear?: boolean
+    ) {
         let oldTarget: THREE.RenderTarget | null = null;
         if (target !== undefined) {
             oldTarget = this.m_renderer.getRenderTarget();
@@ -595,9 +604,18 @@ export class PoiRenderer {
         if (clear === true) {
             this.m_renderer.clear(true);
         }
-        for (const layer of this.m_layers) {
-            this.update();
-            this.m_renderer.render(layer.scene, camera);
+        if (this.m_layers.length <= 0) {
+            betweenLayersCallback?.();
+        } else {
+            for (let i = 0; i < this.m_layers.length; i++) {
+                const layer = this.m_layers[i];
+                if (i === 0) {
+                    betweenLayersCallback?.(undefined, layer.id);
+                }
+                this.update();
+                this.m_renderer.render(layer.scene, camera);
+                betweenLayersCallback?.(layer.id, this.m_layers[i + 1]?.id);
+            }
         }
         if (target !== undefined) {
             this.m_renderer.setRenderTarget(oldTarget);

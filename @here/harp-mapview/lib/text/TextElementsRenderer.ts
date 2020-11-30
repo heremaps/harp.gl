@@ -439,8 +439,19 @@ export class TextElementsRenderer {
         this.updateGlyphDebugMesh();
 
         for (const screenSpaceRenderer of this.m_screenSpaceRenderers) {
-            screenSpaceRenderer.poiRenderer?.render(camera);
-            screenSpaceRenderer.textCanvas?.render(camera);
+            if (screenSpaceRenderer.poiRenderer) {
+                screenSpaceRenderer.poiRenderer?.render(camera, (layerBefore, layerAfter) => {
+                    screenSpaceRenderer.textCanvas?.render(
+                        camera,
+                        layerBefore,
+                        layerAfter,
+                        undefined,
+                        false
+                    );
+                });
+            } else {
+                screenSpaceRenderer.textCanvas?.render(camera);
+            }
         }
     }
 

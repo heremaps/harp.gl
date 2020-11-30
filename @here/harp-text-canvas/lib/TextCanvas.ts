@@ -404,10 +404,18 @@ export class TextCanvas {
      * Renders the content of this `TextCanvas`.
      *
      * @param camera - Orthographic camera.
+     * @param lowerLayerId - Optional Id the first layer to be rendered has to be equal or above
+     * @param higherLayerId - Optional Id the last layer to be rendered has to be below
      * @param target - Optional render target.
      * @param clear - Optional render target clear operation.
      */
-    render(camera: THREE.OrthographicCamera, target?: THREE.WebGLRenderTarget, clear?: boolean) {
+    render(
+        camera: THREE.OrthographicCamera,
+        lowerLayerId?: number,
+        higherLayerId?: number,
+        target?: THREE.WebGLRenderTarget,
+        clear?: boolean
+    ) {
         this.m_fontCatalog.update(this.m_renderer);
         let oldTarget: THREE.RenderTarget | null = null;
         if (target !== undefined) {
@@ -417,9 +425,16 @@ export class TextCanvas {
         if (clear === true) {
             this.m_renderer.clear(true);
         }
-        for (const layer of this.m_layers) {
-            layer.storage.update();
-            this.m_renderer.render(layer.storage.scene, camera);
+        for (let i = 0; i < this.m_layers.length; i++) {
+            const layer = this.m_layers[i];
+            if (layer.id >= (lowerLayerId ?? 0)) {
+                if (higherLayerId === undefined || layer.id < higherLayerId) {
+                    layer.storage.update();
+                    this.m_renderer.render(layer.storage.scene, camera);
+                } else {
+                    break;
+                }
+            }
         }
         if (target !== undefined) {
             this.m_renderer.setRenderTarget(oldTarget);
