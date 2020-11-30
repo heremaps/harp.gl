@@ -78,7 +78,7 @@ export const THEME: Theme = {
                 attr: {
                     color: "#000000"
                 },
-                renderOrder: 10
+                renderOrder: 10.3
             },
             {
                 description: "line",
@@ -91,7 +91,7 @@ export const THEME: Theme = {
                     fadeFar: 0.9,
                     clipping: false
                 },
-                renderOrder: 10
+                renderOrder: 10.3
             },
             {
                 description: "label",
@@ -104,7 +104,7 @@ export const THEME: Theme = {
                     size: 8,
                     priority: 100
                 },
-                renderOrder: 10
+                renderOrder: 10.3
             }
         ]
     }

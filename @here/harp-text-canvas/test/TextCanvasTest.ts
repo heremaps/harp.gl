@@ -17,7 +17,6 @@ import {
     TextRenderStyle,
     WrappingMode
 } from "../index";
-import { DEFAULT_TEXT_CANVAS_LAYER } from "../lib/TextCanvas";
 
 async function loadTexture(url: string): Promise<THREE.Texture> {
     return await new Promise(resolve => {
@@ -282,14 +281,11 @@ describe("TextCanvas", () => {
         assert.strictEqual(position.x, 88.5);
         assert.strictEqual(position.y, 0.0);
         assert.strictEqual(position.z, 0.0);
-        assert.strictEqual(
-            textCanvas.getLayer(DEFAULT_TEXT_CANVAS_LAYER)!.storage.drawCount,
-            textSample.length
-        );
+        assert.strictEqual(textCanvas.getLayer(0)!.storage.drawCount, textSample.length);
     });
     it("Is cleared.", () => {
         textCanvas.clear();
-        assert.strictEqual(textCanvas.getLayer(DEFAULT_TEXT_CANVAS_LAYER)!.storage.drawCount, 0.0);
+        assert.strictEqual(textCanvas.getLayer(0)!.storage.drawCount, 0.0);
     });
     it("Word wrapping mode test", () => {
         const charBounds: THREE.Box2[] = [];

@@ -185,7 +185,7 @@ export interface PoiInfo {
      * Computed from owning {@link TextElement}. Value is set when `PoiInfo` is assigned to
      * {@link TextElement}.
      */
-    renderOrder?: bigint;
+    renderOrder?: number;
 }
 
 /**
@@ -287,7 +287,7 @@ export class TextElement {
      * A `TextElement` with a higher `renderOrder` will be rendered after a `TextElement` with a
      * lower `renderOrder`.
      */
-    renderOrder = BigInt(0);
+    renderOrder: number = 0;
 
     /**
      * Specified kind of geometry. One kind is set as default in the technique, and can be
@@ -471,7 +471,7 @@ export class TextElement {
             if (this.path !== undefined) {
                 this.type = TextElementType.LineMarker;
             }
-            const poiRenderOrder = this.renderOrder !== undefined ? this.renderOrder : BigInt(0);
+            const poiRenderOrder = this.renderOrder !== undefined ? this.renderOrder : 0;
             poiInfo.renderOrder = poiRenderOrder;
         }
     }

@@ -11,7 +11,9 @@ import {
     PoiTechnique,
     TextTechnique
 } from "@here/harp-datasource-protocol";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { TextLayoutStyle, TextRenderStyle } from "@here/harp-text-canvas";
+import { LogLevel } from "@here/harp-utils";
 import { expect } from "chai";
 import { Vector3 } from "three";
 
@@ -120,11 +122,9 @@ describe("TextElementBuilder", function() {
             .withTechnique(poiTechnique)
             .withIcon("dummy")
             .build("", new Vector3(), 0);
-        // bigints must be converted to string before asserting, Mocha's error serializer does not
-        // support bigint type: https://github.com/mochajs/mocha/issues/4090
-        expect(poi.renderOrder.toString())
-            .equals(poi.poiInfo?.renderOrder?.toString())
-            .and.equals(BigInt(poiTechnique.renderOrder).toString());
+        expect(poi.renderOrder)
+            .equals(poi.poiInfo?.renderOrder)
+            .and.equals(poiTechnique.renderOrder);
     });
 
     it("combines baseRenderOrder and technique's renderOrder into a single render order", () => {
@@ -134,47 +134,103 @@ describe("TextElementBuilder", function() {
             .withTechnique(poiTechnique)
             .withIcon("dummy")
             .build("", new Vector3(), 0);
-        // bigints must be converted to string before asserting, Mocha's error serializer does not
-        // support bigint type: https://github.com/mochajs/mocha/issues/4090
-        expect(poi.renderOrder.toString(16))
-            .equals(poi.poiInfo?.renderOrder?.toString(16))
+        expect(poi.renderOrder)
+            .equals(poi.poiInfo?.renderOrder)
             .and.equals(
                 TextElementBuilder.composeRenderOrder(
                     baseRenderOrder,
                     poiTechnique.renderOrder as number
-                ).toString(16)
+                )
             );
     });
 
+    it("withTechnique throws if positive renderOrder is >= than upper bound", async () => {
+        const builder = new TextElementBuilder(env, styleCache, 0);
+
+        const poiTechnique = buildPoiTechnique({
+            renderOrder: builder.renderOrderUpBound
+        });
+
+        await silenceLoggingAroundFunction(
+            "TextElementBuilder",
+            () => {
+                expect(builder.withTechnique.bind(builder, poiTechnique)).throws();
+            },
+            LogLevel.None
+        );
+    });
+
+    it("withTechnique throws if negative renderOrder is <= than lower bound", async () => {
+        const builder = new TextElementBuilder(env, styleCache, 0);
+
+        const poiTechnique = buildPoiTechnique({
+            renderOrder: -builder.renderOrderUpBound
+        });
+
+        await silenceLoggingAroundFunction(
+            "TextElementBuilder",
+            () => {
+                expect(builder.withTechnique.bind(builder, poiTechnique)).throws();
+            },
+            LogLevel.None
+        );
+    });
+
+    it("withTechnique throws if renderOrder is >= than adjusted upper bound", async () => {
+        const builder = new TextElementBuilder(env, styleCache, 0.01);
+
+        const poiTechnique = buildPoiTechnique({
+            renderOrder: builder.renderOrderUpBound
+        });
+
+        await silenceLoggingAroundFunction(
+            "TextElementBuilder",
+            () => {
+                expect(builder.withTechnique.bind(builder, poiTechnique)).throws();
+            },
+            LogLevel.None
+        );
+    });
+
     it("composeRenderOrder", () => {
-        expect(
-            TextElementBuilder.composeRenderOrder(0, 0) <
-                TextElementBuilder.composeRenderOrder(0, 1)
-        ).true;
+        expect(TextElementBuilder.composeRenderOrder(0, 0)).lessThan(
+            TextElementBuilder.composeRenderOrder(0, 1)
+        );
 
         expect(
-            TextElementBuilder.composeRenderOrder(0xffffffff, 0xfffffffe) <
-                TextElementBuilder.composeRenderOrder(0xffffffff, 0xffffffff)
-        ).true;
+            TextElementBuilder.composeRenderOrder(
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 1,
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 2
+            )
+        ).lessThan(
+            TextElementBuilder.composeRenderOrder(
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 1,
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 1
+            )
+        );
 
         expect(
-            TextElementBuilder.composeRenderOrder(0, 0xffffffff) <
-                TextElementBuilder.composeRenderOrder(1, 0)
-        ).true;
+            TextElementBuilder.composeRenderOrder(0, TextElementBuilder.RENDER_ORDER_UP_BOUND - 1)
+        ).lessThan(TextElementBuilder.composeRenderOrder(1, 0));
+
+        expect(TextElementBuilder.composeRenderOrder(0, -1)).lessThan(
+            TextElementBuilder.composeRenderOrder(0, 0)
+        );
+
+        expect(TextElementBuilder.composeRenderOrder(-1, 0)).lessThan(
+            TextElementBuilder.composeRenderOrder(0, -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1)
+        );
 
         expect(
-            TextElementBuilder.composeRenderOrder(0, -1) <
-                TextElementBuilder.composeRenderOrder(0, 0)
-        ).true;
-
-        expect(
-            TextElementBuilder.composeRenderOrder(-1, 0) <
-                TextElementBuilder.composeRenderOrder(0, -0xffffffff)
-        ).true;
-
-        expect(
-            TextElementBuilder.composeRenderOrder(-0xffffffff, -0xffffffff) <
-                TextElementBuilder.composeRenderOrder(-0xffffffff, -0xfffffffe)
-        ).true;
+            TextElementBuilder.composeRenderOrder(
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1,
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1
+            )
+        ).lessThan(
+            TextElementBuilder.composeRenderOrder(
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1,
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 2
+            )
+        );
     });
 });

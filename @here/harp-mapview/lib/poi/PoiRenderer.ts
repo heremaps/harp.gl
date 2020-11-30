@@ -92,7 +92,7 @@ class PoiBatch {
     static readonly trilinear: boolean = true;
 
     // Map of buffers and their corresponding canvas layers, with render order as key.
-    private readonly m_poiBuffers: Map<bigint, PoiBuffer>;
+    private readonly m_poiBuffers: Map<number, PoiBuffer>;
 
     private readonly m_material: IconMaterial;
 
@@ -143,7 +143,7 @@ class PoiBatch {
      * Gets the {@link PoiBuffer} for a given render order, creating it if necessary.
      * @returns The {@link PoiBuffer}.
      */
-    getBuffer(renderOrder: bigint): PoiBuffer {
+    getBuffer(renderOrder: number): PoiBuffer {
         let poiBuffer = this.m_poiBuffers.get(renderOrder);
         if (poiBuffer) {
             return poiBuffer.increaseRefCount();
@@ -223,7 +223,7 @@ class PoiBatch {
         this.m_onDispose();
     }
 
-    private disposeBuffer(renderOrder: bigint) {
+    private disposeBuffer(renderOrder: number) {
         assert(this.m_poiBuffers.size > 0);
 
         this.m_poiBuffers.delete(renderOrder);

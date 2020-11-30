@@ -21,12 +21,14 @@ import {
     TextLayoutStyle,
     TextRenderStyle
 } from "@here/harp-text-canvas";
-import { assert, MathUtils } from "@here/harp-utils";
+import { assert, LoggerManager, MathUtils } from "@here/harp-utils";
 
 import { PoiBuilder } from "../poi/PoiBuilder";
 import { TextElement } from "./TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "./TextElementsRenderer";
 import { TileTextStyleCache } from "./TileTextStyleCache";
+
+const logger = LoggerManager.instance.create("TextElementBuilder");
 
 /**
  * Constructs {@link TextElement} objects from {@link @here/harp-datasource-protocol/Technique},
@@ -46,11 +48,19 @@ export class TextElementBuilder {
     private m_technique?: (PoiTechnique | LineMarkerTechnique | TextTechnique) &
         IndexedTechniqueParams;
 
-    private m_renderOrder = BigInt(0);
+    private m_renderOrder: number;
     private m_xOffset?: number;
     private m_yOffset?: number;
     private m_poiBuilder?: PoiBuilder;
     private m_alwaysOnTop?: boolean;
+
+    // Upper bound for render order values coming from a technique. The lowest upper bound
+    // (`renderOrderUpBound`) will be smaller if `baseRenderOrder` is not an integer.
+    static readonly RENDER_ORDER_UP_BOUND = 1e7;
+
+    // Lowest upper bound for render order values, taking into account the `baseRenderOrder` given
+    // at construction.
+    readonly renderOrderUpBound: number;
 
     /**
      * Aligns a {@link TextElement}'s minZoomLevel and maxZoomLevel with values set in
@@ -75,19 +85,15 @@ export class TextElementBuilder {
     }
 
     /**
-     * Combines two render order numbers into a single bigint.
-     * @param baseRenderOrder - The most significative half of the render order.
-     * @param offset - An offset to apply to the base render order after shifting it.
+     * Combines two render order numbers into a single one.
+     * @param baseRenderOrder - The most significative part of the render order.
+     * @param offset - The least significative part of the render order. It must be within the
+     * interval (-RENDER_ORDER_UP_BOUND, RENDER_ORDER_UP_BOUND).
      * @return The combined render order.
      */
-    static composeRenderOrder(baseRenderOrder: number, offset: number): bigint {
-        return (
-            (BigInt(Math.trunc(baseRenderOrder)) << TextElementBuilder.BASE_RENDER_ORDER_SHIFT) +
-            BigInt(offset)
-        );
+    static composeRenderOrder(baseRenderOrder: number, offset: number): number {
+        return baseRenderOrder * TextElementBuilder.RENDER_ORDER_UP_BOUND + offset;
     }
-
-    private static readonly BASE_RENDER_ORDER_SHIFT = BigInt(32);
 
     /**
      * Constructor
@@ -102,7 +108,24 @@ export class TextElementBuilder {
         private readonly m_styleCache: TileTextStyleCache,
         private readonly m_baseRenderOrder: number
     ) {
-        assert(Number.isInteger(m_baseRenderOrder), "Only integer render orders are supported");
+        this.m_renderOrder = m_baseRenderOrder;
+
+        if (Number.isInteger(m_baseRenderOrder)) {
+            this.renderOrderUpBound = TextElementBuilder.RENDER_ORDER_UP_BOUND;
+        } else {
+            // If base render order is not an integer, lower render order upper bound to leave room
+            // for the decimal places.
+            const absBaseRenderOrder = Math.abs(m_baseRenderOrder);
+            this.renderOrderUpBound =
+                (absBaseRenderOrder - Math.floor(absBaseRenderOrder)) *
+                TextElementBuilder.RENDER_ORDER_UP_BOUND;
+        }
+
+        if (!this.isValidRenderOrder(m_baseRenderOrder)) {
+            logger.warn(
+                `Large base render order (${m_baseRenderOrder}) might cause precision issues.`
+            );
+        }
     }
 
     /**
@@ -131,7 +154,12 @@ export class TextElementBuilder {
         this.m_yOffset = getPropertyValue(technique.yOffset, this.m_env);
 
         const techniqueRenderOrder = getPropertyValue(technique.renderOrder, this.m_env) ?? 0;
-        assert(Number.isInteger(techniqueRenderOrder), "Only integer render orders are supported");
+
+        if (!this.isValidRenderOrder(techniqueRenderOrder)) {
+            const msg = `Unsupported large render order (${techniqueRenderOrder})`;
+            logger.error(msg);
+            assert(false, msg);
+        }
         this.m_renderOrder = TextElementBuilder.composeRenderOrder(
             this.m_baseRenderOrder,
             techniqueRenderOrder
@@ -239,5 +267,9 @@ export class TextElementBuilder {
             this.m_poiBuilder = new PoiBuilder(this.m_env);
         }
         this.m_poiBuilder.withTechnique(technique);
+    }
+
+    private isValidRenderOrder(renderOrder: number) {
+        return Math.abs(renderOrder) < this.renderOrderUpBound;
     }
 }
