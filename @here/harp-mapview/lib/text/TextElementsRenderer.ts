@@ -351,7 +351,7 @@ export class TextElementsRenderer {
      *     instances.
      * @param m_screenProjector - Projects 3D coordinates into screen space.
      * @param m_textCanvasFactory - To create TextCanvas instances.
-     * @param m_poiRenderer - To render Icons
+     * @param m_poiRenderer - To render Icons.
      * @param m_poiManager - To prepare pois for rendering.
      * @param m_fontCatalogLoader - To load font catalogs.
      * @param m_textStyleCache - Cache defining  text styles.
@@ -418,9 +418,7 @@ export class TextElementsRenderer {
         this.m_options.showReplacementGlyphs = value;
 
         this.m_textCanvases.forEach(textCanvas => {
-            if (textCanvas?.fontCatalog) {
-                textCanvas.fontCatalog.showReplacementGlyphs = value;
-            }
+            textCanvas.fontCatalog.showReplacementGlyphs = value;
         });
     }
 
@@ -436,17 +434,11 @@ export class TextElementsRenderer {
 
         this.updateGlyphDebugMesh();
 
-        if (this.m_poiRenderer) {
-            this.m_poiRenderer?.render(camera, (layerBefore, layerAfter) => {
-                for (const textCanvas of this.m_textCanvases) {
-                    textCanvas?.render(camera, layerBefore, layerAfter, undefined, false);
-                }
-            });
-        } else {
+        this.m_poiRenderer.render(camera, (layerBefore, layerAfter) => {
             for (const textCanvas of this.m_textCanvases) {
-                textCanvas?.render(camera);
+                textCanvas.render(camera, layerBefore, layerAfter, undefined, false);
             }
-        }
+        });
     }
 
     /**
@@ -597,12 +589,12 @@ export class TextElementsRenderer {
         };
 
         for (const textCanvas of this.m_textCanvases) {
-            textCanvas?.pickText(screenPosition, (pickData: any | undefined) => {
+            textCanvas.pickText(screenPosition, (pickData: any | undefined) => {
                 pickHandler(pickData, PickObjectType.Text);
             });
         }
 
-        this.m_poiRenderer?.pickTextElements(screenPosition, (pickData: any | undefined) => {
+        this.m_poiRenderer.pickTextElements(screenPosition, (pickData: any | undefined) => {
             pickHandler(pickData, PickObjectType.Icon);
         });
     }
@@ -652,9 +644,9 @@ export class TextElementsRenderer {
         };
 
         for (const textCanvas of this.m_textCanvases) {
-            textCanvas?.getMemoryUsage(memoryUsage);
+            textCanvas.getMemoryUsage(memoryUsage);
         }
-        this.m_poiRenderer?.getMemoryUsage(memoryUsage);
+        this.m_poiRenderer.getMemoryUsage(memoryUsage);
 
         return memoryUsage;
     }
@@ -708,9 +700,9 @@ export class TextElementsRenderer {
         this.m_cameraLookAt.copy(this.m_viewState.lookAtVector);
         this.m_screenCollisions.reset();
         for (const textCanvas of this.m_textCanvases) {
-            textCanvas?.clear();
+            textCanvas.clear();
         }
-        this.m_poiRenderer?.reset();
+        this.m_poiRenderer.reset();
     }
 
     /**
@@ -768,11 +760,6 @@ export class TextElementsRenderer {
     ): boolean {
         // Unvisited text elements are never placed.
         assert(groupState.visited);
-
-        if (this.m_textCanvases.length === 0 && !this.m_poiRenderer) {
-            logger.warn("No renderers initialized.");
-            return false;
-        }
 
         const shieldGroups: number[][] = [];
         const hiddenKinds = this.m_viewState.hiddenGeometryKinds;
@@ -1029,7 +1016,7 @@ export class TextElementsRenderer {
                 });
 
                 this.m_textStyleCache.initializeTextElementStyles(
-                    this.m_poiRenderer!,
+                    this.m_poiRenderer,
                     defaultTextCanvas!,
                     this.m_textCanvases
                 );
