@@ -66,7 +66,7 @@ import { MapViewThemeManager } from "./MapViewThemeManager";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
-import { PoiRendererFactory } from "./poi/PoiRendererFactory";
+import { PoiRenderer } from "./poi/PoiRenderer";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
 import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
@@ -3894,7 +3894,7 @@ export class MapView extends EventDispatcher {
             this.m_screenProjector,
             new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
-            new PoiRendererFactory(this),
+            new PoiRenderer(this),
             new FontCatalogLoader(fontCatalogs),
             new TextStyleCache(textStyles, defaultTextStyle),
             this.m_options

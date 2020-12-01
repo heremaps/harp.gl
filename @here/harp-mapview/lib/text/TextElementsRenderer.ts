@@ -32,7 +32,6 @@ import { PickObjectType } from "../PickHandler";
 import { PickListener } from "../PickListener";
 import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
-import { PoiRendererFactory } from "../poi/PoiRendererFactory";
 import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
@@ -353,7 +352,7 @@ export class TextElementsRenderer {
      *     instances.
      * @param m_screenProjector - Projects 3D coordinates into screen space.
      * @param m_textCanvasFactory - To create TextCanvas instances.
-     * @param m_poiRendererFactory - To create PoiRenderer instances.
+     * @param m_poiRenderer - To render Icons
      * @param m_poiManager - To prepare pois for rendering.
      * @param m_fontCatalogLoader - To load font catalogs.
      * @param m_textStyleCache - Cache defining  text styles.
@@ -368,7 +367,7 @@ export class TextElementsRenderer {
         private readonly m_screenProjector: ScreenProjector,
         private readonly m_textCanvasFactory: TextCanvasFactory,
         private readonly m_poiManager: PoiManager,
-        private readonly m_poiRendererFactory: PoiRendererFactory,
+        private readonly m_poiRenderer: PoiRenderer,
         private readonly m_fontCatalogLoader: FontCatalogLoader,
         private readonly m_textStyleCache: TextStyleCache,
         options: TextElementsRendererOptions
@@ -1028,14 +1027,14 @@ export class TextElementsRenderer {
             this.m_screenSpaceRenderers.push({
                 fontCatalog: name,
                 textCanvas: loadedTextCanvas,
-                poiRenderer: this.m_poiRendererFactory.createPoiRenderer()
+                poiRenderer: this.m_poiRenderer
             });
         };
         const failureCallback = (name: string, error: Error) => {
             this.m_screenSpaceRenderers.push({
                 fontCatalog: name,
                 textCanvas: undefined,
-                poiRenderer: this.m_poiRendererFactory.createPoiRenderer()
+                poiRenderer: this.m_poiRenderer
             });
         };
 

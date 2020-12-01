@@ -10,7 +10,6 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
-import { PoiRendererFactory } from "../lib/poi/PoiRendererFactory";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { PoiInfo } from "../lib/text/TextElement";
 
@@ -60,20 +59,4 @@ export function stubPoiRenderer(
     );
 
     return stub;
-}
-
-/**
- * Creates a PoiRendererFactory stub.
- * @param sandbox - Sinon sandbox used to keep track of created stubs.
- * @param poiRendererStub - Poi renderer that will be returned by the factory.
- * @returns PoiRendererFactory stub.
- */
-export function stubPoiRendererFactory(
-    sandbox: sinon.SinonSandbox,
-    poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>
-) {
-    const factoryStub = sandbox.createStubInstance(PoiRendererFactory);
-    factoryStub.createPoiRenderer.returns((poiRendererStub as unknown) as PoiRenderer);
-
-    return (factoryStub as unknown) as PoiRendererFactory;
 }

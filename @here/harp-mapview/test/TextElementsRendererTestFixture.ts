@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { MapEnv, Theme } from "@here/harp-datasource-protocol";
 import { identityProjection, TileKey } from "@here/harp-geoutils";
 import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
@@ -33,7 +32,7 @@ import {
 import { stubFontCatalog } from "./stubFontCatalog";
 import { stubFontCatalogLoader } from "./stubFontCatalogLoader";
 import { stubPoiManager } from "./stubPoiManager";
-import { stubPoiRenderer, stubPoiRendererFactory } from "./stubPoiRenderer";
+import { stubPoiRenderer } from "./stubPoiRenderer";
 import { stubTextCanvas, stubTextCanvasFactory } from "./stubTextCanvas";
 import { FadeState } from "./TextElementsRendererTestUtils";
 
@@ -171,7 +170,7 @@ export class TestFixture {
             this.m_screenProjector,
             stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub),
             stubPoiManager(this.sandbox),
-            stubPoiRendererFactory(this.sandbox, this.m_poiRendererStub),
+            (this.m_poiRendererStub as unknown) as PoiRenderer,
             stubFontCatalogLoader(this.sandbox, fontCatalog),
             new TextStyleCache(this.m_theme.textStyles),
             this.m_options
