@@ -323,91 +323,14 @@ describe("TextElementStateCache", function() {
                 .build();
             const poiState1 = new TextElementState(poiLabel1);
             poiState1.update(100);
-            expect(poiState1.iconRenderStates).to.not.be.undefined;
-            expect(poiState1.iconRenderStates!.length).to.equal(1);
-            poiState1.iconRenderStates![0].startFadeIn(0);
+            expect(poiState1.iconRenderState).to.exist;
+            poiState1.iconRenderState!.startFadeIn(0);
             expect(poiState1.visible).to.be.false;
             poiState1.updateFading(1, true);
             expect(poiState1.visible).to.be.true;
 
             const didReplace = cache.replaceElement(0, poiState1);
             expect(didReplace).to.be.true;
-        });
-
-        it("replaceElement LineMarker (fail because different number of points)", function() {
-            const cache = new TextElementStateCache();
-
-            const poiLabel0 = lineMarkerBuilder(1.0, "lineMarker0")
-                .withFeatureId(1)
-                .withPath([new THREE.Vector3(1, 1, 1)])
-                .build();
-            const poiState0 = new TextElementState(poiLabel0);
-            poiState0.update(100);
-            // Must not be visible when cached
-            expect(poiState0.visible).to.be.false;
-
-            const elements = [poiLabel0];
-            const poiGroup = new TextElementGroup(10, elements);
-            cache.getOrSet(poiGroup, tileKey, filter);
-
-            const noDuplicate = cache.deduplicateElement(0, poiState0);
-            expect(noDuplicate).to.be.true;
-            expect(cache.cacheSize).to.equal(1);
-
-            // Same text, same featureID, different number of points
-            const poiLabel1 = lineMarkerBuilder(1.0, "lineMarker0")
-                .withFeatureId(1)
-                .withPath([new THREE.Vector3(1, 1, 1), new THREE.Vector3(1, 1, 1)])
-                .build();
-            const poiState1 = new TextElementState(poiLabel1);
-            poiState1.update(100);
-            expect(poiState1.iconRenderStates).to.not.be.undefined;
-            expect(poiState1.iconRenderStates!.length).to.equal(2);
-            poiState1.iconRenderStates![0].startFadeIn(0);
-            poiState1.iconRenderStates![1].startFadeIn(0);
-            expect(poiState1.visible).to.be.false;
-            poiState1.updateFading(1, true);
-            expect(poiState1.visible).to.be.true;
-
-            const didReplace = cache.replaceElement(0, poiState1);
-            expect(didReplace).to.be.false;
-        });
-
-        it("replaceElement LineMarker no featureID (fail b/c diff. number of points)", function() {
-            const cache = new TextElementStateCache();
-
-            const poiLabel0 = lineMarkerBuilder(1.0, "lineMarker0")
-                .withPath([new THREE.Vector3(1, 1, 1)])
-                .build();
-            const poiState0 = new TextElementState(poiLabel0);
-            poiState0.update(100);
-            // Must not be visible when cached
-            expect(poiState0.visible).to.be.false;
-
-            const elements = [poiLabel0];
-            const poiGroup = new TextElementGroup(10, elements);
-            cache.getOrSet(poiGroup, tileKey, filter);
-
-            const noDuplicate = cache.deduplicateElement(0, poiState0);
-            expect(noDuplicate).to.be.true;
-            expect(cache.cacheSize).to.equal(1);
-
-            // Same text, no featureID, different number of points
-            const poiLabel1 = lineMarkerBuilder(1.0, "lineMarker0")
-                .withPath([new THREE.Vector3(1, 1, 1), new THREE.Vector3(1, 1, 1)])
-                .build();
-            const poiState1 = new TextElementState(poiLabel1);
-            poiState1.update(100);
-            expect(poiState1.iconRenderStates).to.not.be.undefined;
-            expect(poiState1.iconRenderStates!.length).to.equal(2);
-            poiState1.iconRenderStates![0].startFadeIn(0);
-            poiState1.iconRenderStates![1].startFadeIn(0);
-            expect(poiState1.visible).to.be.false;
-            poiState1.updateFading(1, true);
-            expect(poiState1.visible).to.be.true;
-
-            const didReplace = cache.replaceElement(0, poiState1);
-            expect(didReplace).to.be.false;
         });
     });
 });

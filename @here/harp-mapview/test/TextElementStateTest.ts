@@ -96,7 +96,7 @@ describe("TextElementState", function() {
                 ]
             } as any);
             textElementState.update(0);
-            textElementState.iconRenderStates![0].startFadeIn(0);
+            textElementState.iconRenderState!.startFadeIn(0);
             expect(textElementState.visible).to.be.false;
             textElementState.updateFading(1, true);
             expect(textElementState.visible).to.be.true;
@@ -177,8 +177,7 @@ describe("TextElementState", function() {
             textElementState.update(0);
             expect(() => textElementState.reset()).to.not.throw();
 
-            expect(textElementState.iconRenderStates![0].isUndefined()).to.be.true;
-            expect(textElementState.iconRenderStates![1].isUndefined()).to.be.true;
+            expect(textElementState.iconRenderState!.isUndefined()).to.be.true;
             expect(textElementState.viewDistance).to.be.undefined;
         });
     });
@@ -371,9 +370,8 @@ describe("TextElementState", function() {
             textElementState.update(100);
 
             expect(textElementState.textRenderState).to.not.be.undefined;
-            expect(textElementState.iconRenderStates).to.not.be.undefined;
-            expect(textElementState.iconRenderStates![0].fadeTime).to.equal(100);
-            expect(textElementState.iconRenderStates![1].fadeTime).to.equal(100);
+            expect(textElementState.iconRenderState!).to.not.be.undefined;
+            expect(textElementState.iconRenderState!.fadeTime).to.equal(100);
             expect(textElementState.viewDistance).to.equal(100);
         });
 
@@ -446,7 +444,6 @@ describe("TextElementState", function() {
             textElementState.updateFading(100, false);
             expect(textElementState.textRenderState).to.be.undefined;
             expect(textElementState.iconRenderState).to.be.undefined;
-            expect(textElementState.iconRenderStates).to.be.undefined;
         });
 
         it("updates text render state", function() {
@@ -498,19 +495,13 @@ describe("TextElementState", function() {
                 ]
             } as any);
             textElementState.update(100);
-            textElementState.iconRenderStates![0].startFadeIn(50);
-            textElementState.iconRenderStates![1].startFadeIn(50);
+            textElementState.iconRenderState!.startFadeIn(50);
             textElementState.updateFading(100, false);
 
-            expect(textElementState.iconRenderStates![0]).to.not.be.undefined;
-            expect(textElementState.iconRenderStates![0].isFadingIn()).to.be.true;
-            expect(textElementState.iconRenderStates![0].value).to.equal(0.0625);
-            expect(textElementState.iconRenderStates![0].opacity).to.equal(0.0022182464599609375);
-
-            expect(textElementState.iconRenderStates![1]).to.not.be.undefined;
-            expect(textElementState.iconRenderStates![1].isFadingIn()).to.be.true;
-            expect(textElementState.iconRenderStates![1].value).to.equal(0.0625);
-            expect(textElementState.iconRenderStates![1].opacity).to.equal(0.0022182464599609375);
+            expect(textElementState.iconRenderState).to.not.be.undefined;
+            expect(textElementState.iconRenderState!.isFadingIn()).to.be.true;
+            expect(textElementState.iconRenderState!.value).to.equal(0.0625);
+            expect(textElementState.iconRenderState!.opacity).to.equal(0.0022182464599609375);
         });
     });
 });

@@ -50,6 +50,7 @@ const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Mat
  *
  * @param textElement - The textElement of which the view distance will be checked, with coordinates
  * in world space.
+ * @param poiIndex - If TextElement is a line marker, the index into the line marker positions.
  * @param eyePos - The eye (or camera) position that will be used as reference to calculate
  * the distance.
  * @param eyeLookAt - The eye looking direction - normalized.
@@ -59,12 +60,13 @@ const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Mat
  */
 function checkViewDistance(
     textElement: TextElement,
+    poiIndex: number | undefined,
     eyePos: THREE.Vector3,
     eyeLookAt: THREE.Vector3,
     projectionType: ProjectionType,
     maxViewDistance: number
 ): number | undefined {
-    const textDistance = computeViewDistance(textElement, eyePos, eyeLookAt);
+    const textDistance = computeViewDistance(textElement, poiIndex, eyePos, eyeLookAt);
 
     if (projectionType !== ProjectionType.Spherical) {
         return textDistance <= maxViewDistance ? textDistance : undefined;
@@ -96,6 +98,7 @@ function checkViewDistance(
  *
  * @param textElement - The textElement of which the view distance will be checked. It must have
  *                      coordinates in world space.
+ * @param poiIndex - If TextElement is a line marker, the index into the line marker positions.
  * @param eyePosition - The world eye coordinates used a reference position to calculate
  *                      the distance.
  * @param eyeLookAt - The eye looking direction or simply said projection plane normal.
@@ -103,6 +106,7 @@ function checkViewDistance(
  */
 export function computeViewDistance(
     textElement: TextElement,
+    poiIndex: number | undefined,
     eyePosition: THREE.Vector3,
     eyeLookAt: THREE.Vector3
 ): number {
@@ -111,10 +115,18 @@ export function computeViewDistance(
     // Compute the distances as the distance along plane normal.
     const path = textElement.path;
     if (path && path.length > 1) {
-        const viewDistance0 = pointToPlaneDistance(path[0], eyePosition, eyeLookAt);
-        const viewDistance1 = pointToPlaneDistance(path[path.length - 1], eyePosition, eyeLookAt);
+        if (poiIndex !== undefined && path && path.length > poiIndex) {
+            viewDistance = pointToPlaneDistance(path[poiIndex], eyePosition, eyeLookAt);
+        } else {
+            const viewDistance0 = pointToPlaneDistance(path[0], eyePosition, eyeLookAt);
+            const viewDistance1 = pointToPlaneDistance(
+                path[path.length - 1],
+                eyePosition,
+                eyeLookAt
+            );
 
-        viewDistance = Math.min(viewDistance0, viewDistance1);
+            viewDistance = Math.min(viewDistance0, viewDistance1);
+        }
     } else {
         viewDistance = pointToPlaneDistance(textElement.position, eyePosition, eyeLookAt);
     }
@@ -170,6 +182,7 @@ const tmpPlacementBounds = new THREE.Box2();
  * Applies early rejection tests for a given text element meant to avoid trying to place labels
  * that are not visible, not ready, duplicates etc...
  * @param textElement - The Text element to check.
+ * @param poiIndex - If TextElement is a line marker, the index into the line marker positions
  * @param viewState - The view for which the text element will be placed.
  * @param viewCamera - The view's camera.
  * @param m_poiManager - To prepare pois for rendering.
@@ -180,6 +193,7 @@ const tmpPlacementBounds = new THREE.Box2();
  */
 export function checkReadyForPlacement(
     textElement: TextElement,
+    poiIndex: number | undefined,
     viewState: ViewState,
     viewCamera: THREE.Camera,
     poiManager: PoiManager,
@@ -215,9 +229,15 @@ export function checkReadyForPlacement(
 
     viewDistance =
         maxViewDistance === undefined
-            ? computeViewDistance(textElement, viewState.worldCenter, viewState.lookAtVector)
+            ? computeViewDistance(
+                  textElement,
+                  poiIndex,
+                  viewState.worldCenter,
+                  viewState.lookAtVector
+              )
             : checkViewDistance(
                   textElement,
+                  poiIndex,
                   viewState.worldCenter,
                   viewState.lookAtVector,
                   viewState.projection.type,
