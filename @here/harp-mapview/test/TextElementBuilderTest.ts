@@ -11,7 +11,9 @@ import {
     PoiTechnique,
     TextTechnique
 } from "@here/harp-datasource-protocol";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { TextLayoutStyle, TextRenderStyle } from "@here/harp-text-canvas";
+import { LogLevel } from "@here/harp-utils";
 import { expect } from "chai";
 import { Vector3 } from "three";
 
@@ -42,7 +44,7 @@ describe("TextElementBuilder", function() {
 
     it("reuses same technique between calls to withTechnique", () => {
         const textTechnique = buildTextTechnique({ priority: 42 });
-        const builder = new TextElementBuilder(env, styleCache);
+        const builder = new TextElementBuilder(env, styleCache, 0);
         const label1 = builder.withTechnique(textTechnique).build("one", new Vector3(), 0);
         const label2 = builder.build("two", new Vector3(), 0);
 
@@ -53,7 +55,7 @@ describe("TextElementBuilder", function() {
 
     it("reuses same imageTextureName and shield group index between calls to withIcon", () => {
         const poiTechnique = buildPoiTechnique({});
-        const builder = new TextElementBuilder(env, styleCache);
+        const builder = new TextElementBuilder(env, styleCache, 0);
         const iconName = "dummy";
         const shieldGroupIndex = 42;
         const label1 = builder
@@ -76,7 +78,7 @@ describe("TextElementBuilder", function() {
             textMayOverlap: false,
             textReserveSpace: true
         });
-        const builder = new TextElementBuilder(env, styleCache);
+        const builder = new TextElementBuilder(env, styleCache, 0);
         const poi = builder.withTechnique(poiTechnique).build("", new Vector3(), 0);
         const lineMarker = builder.withTechnique(lineMarkerTechnique).build("", new Vector3(), 0);
 
@@ -88,7 +90,7 @@ describe("TextElementBuilder", function() {
 
     it("does not set PoiInfo if no imageTextureName or poiName set", () => {
         const poiTechnique = buildPoiTechnique({});
-        const poi = new TextElementBuilder(env, styleCache)
+        const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon(undefined)
             .build("", new Vector3(), 0);
@@ -106,11 +108,129 @@ describe("TextElementBuilder", function() {
             iconMaxZoomLevel,
             textMaxZoomLevel
         });
-        const poi = new TextElementBuilder(env, styleCache)
+        const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon("")
             .build("", new Vector3(), 0);
         expect(poi.minZoomLevel).equals(Math.min(iconMinZoomLevel, textMinZoomLevel));
         expect(poi.maxZoomLevel).equals(Math.max(iconMaxZoomLevel, textMaxZoomLevel));
+    });
+
+    it("sets renderOrder on text element and poi info", () => {
+        const poiTechnique = buildPoiTechnique({ renderOrder: 42 });
+        const poi = new TextElementBuilder(env, styleCache, 0)
+            .withTechnique(poiTechnique)
+            .withIcon("dummy")
+            .build("", new Vector3(), 0);
+        expect(poi.renderOrder)
+            .equals(poi.poiInfo?.renderOrder)
+            .and.equals(poiTechnique.renderOrder);
+    });
+
+    it("combines baseRenderOrder and technique's renderOrder into a single render order", () => {
+        const poiTechnique = buildPoiTechnique({ renderOrder: 42 });
+        const baseRenderOrder = 1;
+        const poi = new TextElementBuilder(env, styleCache, baseRenderOrder)
+            .withTechnique(poiTechnique)
+            .withIcon("dummy")
+            .build("", new Vector3(), 0);
+        expect(poi.renderOrder)
+            .equals(poi.poiInfo?.renderOrder)
+            .and.equals(
+                TextElementBuilder.composeRenderOrder(
+                    baseRenderOrder,
+                    poiTechnique.renderOrder as number
+                )
+            );
+    });
+
+    it("withTechnique throws if positive renderOrder is >= than upper bound", async () => {
+        const builder = new TextElementBuilder(env, styleCache, 0);
+
+        const poiTechnique = buildPoiTechnique({
+            renderOrder: builder.renderOrderUpBound
+        });
+
+        await silenceLoggingAroundFunction(
+            "TextElementBuilder",
+            () => {
+                expect(builder.withTechnique.bind(builder, poiTechnique)).throws();
+            },
+            LogLevel.None
+        );
+    });
+
+    it("withTechnique throws if negative renderOrder is <= than lower bound", async () => {
+        const builder = new TextElementBuilder(env, styleCache, 0);
+
+        const poiTechnique = buildPoiTechnique({
+            renderOrder: -builder.renderOrderUpBound
+        });
+
+        await silenceLoggingAroundFunction(
+            "TextElementBuilder",
+            () => {
+                expect(builder.withTechnique.bind(builder, poiTechnique)).throws();
+            },
+            LogLevel.None
+        );
+    });
+
+    it("withTechnique throws if renderOrder is >= than adjusted upper bound", async () => {
+        const builder = new TextElementBuilder(env, styleCache, 0.01);
+
+        const poiTechnique = buildPoiTechnique({
+            renderOrder: builder.renderOrderUpBound
+        });
+
+        await silenceLoggingAroundFunction(
+            "TextElementBuilder",
+            () => {
+                expect(builder.withTechnique.bind(builder, poiTechnique)).throws();
+            },
+            LogLevel.None
+        );
+    });
+
+    it("composeRenderOrder", () => {
+        expect(TextElementBuilder.composeRenderOrder(0, 0)).lessThan(
+            TextElementBuilder.composeRenderOrder(0, 1)
+        );
+
+        expect(
+            TextElementBuilder.composeRenderOrder(
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 1,
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 2
+            )
+        ).lessThan(
+            TextElementBuilder.composeRenderOrder(
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 1,
+                TextElementBuilder.RENDER_ORDER_UP_BOUND - 1
+            )
+        );
+
+        expect(
+            TextElementBuilder.composeRenderOrder(0, TextElementBuilder.RENDER_ORDER_UP_BOUND - 1)
+        ).lessThan(TextElementBuilder.composeRenderOrder(1, 0));
+
+        expect(TextElementBuilder.composeRenderOrder(0, -1)).lessThan(
+            TextElementBuilder.composeRenderOrder(0, 0)
+        );
+
+        expect(TextElementBuilder.composeRenderOrder(-1, 0)).lessThan(
+            TextElementBuilder.composeRenderOrder(0, -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1)
+        );
+
+        expect(
+            TextElementBuilder.composeRenderOrder(
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1,
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1
+            )
+        ).lessThan(
+            TextElementBuilder.composeRenderOrder(
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 1,
+                -TextElementBuilder.RENDER_ORDER_UP_BOUND + 2
+            )
+        );
     });
 });

@@ -287,7 +287,7 @@ export class TextElement {
      * A `TextElement` with a higher `renderOrder` will be rendered after a `TextElement` with a
      * lower `renderOrder`.
      */
-    renderOrder?: number = 0;
+    renderOrder: number = 0;
 
     /**
      * Specified kind of geometry. One kind is set as default in the technique, and can be

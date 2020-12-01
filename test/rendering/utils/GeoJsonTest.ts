@@ -15,7 +15,13 @@ import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
 import * as sinon from "sinon";
 
-export interface GeoJsoTestOptions {
+export interface GeoJsonDataSourceTestOptions {
+    geoJson?: string | GeoJson;
+    tileGeoJson?: boolean;
+    dataProvider?: DataProvider;
+    dataSourceOrder?: number;
+}
+export interface GeoJsonTestOptions extends GeoJsonDataSourceTestOptions {
     mochaTest: Mocha.Context;
     testImageName: string;
     theme: Theme | FlatTheme;
@@ -23,6 +29,33 @@ export interface GeoJsoTestOptions {
     lookAt?: Partial<LookAtParams>;
     tileGeoJson?: boolean;
     dataProvider?: DataProvider;
+    extraDataSource?: GeoJsonDataSourceTestOptions;
+}
+
+function createDataSource(
+    name: string,
+    options: GeoJsonDataSourceTestOptions
+): VectorTileDataSource {
+    const tiler = new GeoJsonTiler();
+    if (options.tileGeoJson === false) {
+        sinon.stub(tiler, "getTile").resolves(options.geoJson);
+    }
+
+    return new VectorTileDataSource({
+        decoder: new VectorTileDecoder(),
+        dataProvider:
+            options.dataProvider ??
+            new GeoJsonDataProvider(
+                "geojson",
+                typeof options.geoJson === "string"
+                    ? new URL(options.geoJson, window.location.href)
+                    : options.geoJson!,
+                { tiler }
+            ),
+        name,
+        styleSetName: "geojson",
+        dataSourceOrder: options.dataSourceOrder
+    });
 }
 
 export class GeoJsonTest {
@@ -52,7 +85,7 @@ export class GeoJsonTest {
         this.mapView?.dispose();
     }
 
-    async run(options: GeoJsoTestOptions) {
+    async run(options: GeoJsonTestOptions) {
         const ibct = new RenderingTestHelper(options.mochaTest, { module: "mapview" });
         const canvas = document.createElement("canvas");
         canvas.width = 400;
@@ -87,23 +120,14 @@ export class GeoJsonTest {
             sinon.stub(tiler, "getTile").resolves(options.geoJson);
         }
 
-        const geoJsonDataSource = new VectorTileDataSource({
-            decoder: new VectorTileDecoder(),
-            dataProvider:
-                options.dataProvider ??
-                new GeoJsonDataProvider(
-                    "geojson",
-                    typeof options.geoJson === "string"
-                        ? new URL(options.geoJson, window.location.href)
-                        : options.geoJson!,
-                    { tiler }
-                ),
-            name: "geojson",
-            styleSetName: "geojson"
-        });
+        const dataSource = createDataSource("geojson", options);
 
         this.mapView.setDynamicProperty("enabled", true);
-        this.mapView.addDataSource(geoJsonDataSource);
+        this.mapView.addDataSource(dataSource);
+
+        if (options.extraDataSource) {
+            this.mapView.addDataSource(createDataSource("geojson2", options.extraDataSource));
+        }
 
         await waitForEvent(this.mapView, MapViewEventNames.FrameComplete);
         await ibct.assertCanvasMatchesReference(canvas, options.testImageName);

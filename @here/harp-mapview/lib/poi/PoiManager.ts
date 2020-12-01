@@ -154,7 +154,11 @@ export class PoiManager {
         const mapView = tile.mapView;
         const discreteZoomLevel = Math.floor(mapView.zoomLevel);
         const intZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
-        const poiBuilder = new TextElementBuilder(intZoomEnv, tile.textStyleCache);
+        const poiBuilder = new TextElementBuilder(
+            intZoomEnv,
+            tile.textStyleCache,
+            tile.dataSource.dataSourceOrder
+        );
 
         for (const poiGeometry of poiGeometries) {
             assert(poiGeometry.technique !== undefined);
