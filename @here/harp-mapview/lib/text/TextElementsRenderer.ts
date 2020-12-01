@@ -1203,6 +1203,9 @@ export class TextElementsRenderer {
         ): number | undefined => {
             let { result, viewDistance } = checkReadyForPlacement(
                 textElementState.element,
+                textElementState.element.type === TextElementType.LineMarker
+                    ? textElementState.lineMarkerIndex
+                    : undefined,
                 this.m_viewState,
                 this.m_viewCamera,
                 this.m_poiManager,
@@ -1560,18 +1563,13 @@ export class TextElementsRenderer {
         screenPosition: THREE.Vector2,
         poiRenderer: PoiRenderer,
         textCanvas: TextCanvas,
-        renderParams: RenderParams,
-        iconIndex?: number
+        renderParams: RenderParams
     ): boolean {
         const pointLabel: TextElement = labelState.element;
         const textRenderState: RenderState | undefined = labelState.textRenderState;
-        const isLineMarker = iconIndex !== undefined;
+        const isLineMarker = pointLabel.type === TextElementType.LineMarker;
 
-        assert(iconIndex === undefined || labelState.iconRenderStates !== undefined);
-        const iconRenderState: RenderState =
-            iconIndex !== undefined
-                ? labelState.iconRenderStates![iconIndex]
-                : labelState.iconRenderState!;
+        const iconRenderState = labelState.iconRenderState!;
         assert(iconRenderState !== undefined);
 
         // Find the label's original position.
@@ -1665,7 +1663,7 @@ export class TextElementsRenderer {
                           this.m_viewState.env,
                           this.m_screenCollisions,
                           tempPosition,
-                          iconIndex === undefined
+                          !isLineMarker
                       );
             const textInvisible = placeResult === PlacementResult.Invisible;
             if (textInvisible) {
@@ -1802,14 +1800,10 @@ export class TextElementsRenderer {
         renderParams: RenderParams
     ): void {
         const lineMarkerLabel = labelState.element;
-        const path = lineMarkerLabel.points as THREE.Vector3[];
 
         // Early exit if the line marker doesn't have the necessary data.
         const poiInfo = lineMarkerLabel.poiInfo!;
-        if (
-            path.length === 0 ||
-            !poiRenderer.prepareRender(lineMarkerLabel, this.m_viewState.env)
-        ) {
+        if (!poiRenderer.prepareRender(lineMarkerLabel, this.m_viewState.env)) {
             return;
         }
 
@@ -1832,43 +1826,40 @@ export class TextElementsRenderer {
         // Process markers (with shield groups).
         if (minDistanceSqr > 0 && shieldGroup !== undefined) {
             let numShieldsVisible = 0;
-            for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
-                const point = path[pointIndex];
+            const point = labelState.position!;
 
-                // Only process potentially visible labels
-                if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
-                    // Find a suitable location for the lineMarker to be placed at.
-                    let tooClose = false;
-                    for (let j = 0; j < shieldGroup.length; j += 2) {
-                        const distanceSqr = Math2D.distSquared(
-                            shieldGroup[j],
-                            shieldGroup[j + 1],
-                            tempScreenPosition.x,
-                            tempScreenPosition.y
-                        );
-                        tooClose = distanceSqr < minDistanceSqr;
-                        if (tooClose) {
-                            break;
-                        }
+            // Only process potentially visible labels
+            if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
+                // Find a suitable location for the lineMarker to be placed at.
+                let tooClose = false;
+                for (let j = 0; j < shieldGroup.length; j += 2) {
+                    const distanceSqr = Math2D.distSquared(
+                        shieldGroup[j],
+                        shieldGroup[j + 1],
+                        tempScreenPosition.x,
+                        tempScreenPosition.y
+                    );
+                    tooClose = distanceSqr < minDistanceSqr;
+                    if (tooClose) {
+                        break;
                     }
+                }
 
-                    // Place it as a point label if it's not to close to another marker in the
-                    // same shield group.
-                    if (!tooClose) {
-                        if (
-                            this.addPointLabel(
-                                labelState,
-                                point,
-                                tempScreenPosition,
-                                poiRenderer,
-                                textCanvas,
-                                renderParams,
-                                pointIndex
-                            )
-                        ) {
-                            shieldGroup.push(tempScreenPosition.x, tempScreenPosition.y);
-                            numShieldsVisible++;
-                        }
+                // Place it as a point label if it's not to close to another marker in the
+                // same shield group.
+                if (!tooClose) {
+                    if (
+                        this.addPointLabel(
+                            labelState,
+                            point,
+                            tempScreenPosition,
+                            poiRenderer,
+                            textCanvas,
+                            renderParams
+                        )
+                    ) {
+                        shieldGroup.push(tempScreenPosition.x, tempScreenPosition.y);
+                        numShieldsVisible++;
                     }
                 }
             }
@@ -1880,20 +1871,18 @@ export class TextElementsRenderer {
         }
         // Process markers (without shield groups).
         else {
-            for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
-                const point = path[pointIndex];
-                // Only process potentially visible labels
-                if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
-                    this.addPointLabel(
-                        labelState,
-                        point,
-                        tempScreenPosition,
-                        poiRenderer,
-                        textCanvas,
-                        renderParams,
-                        pointIndex
-                    );
-                }
+            const point = labelState.position!;
+
+            // Only process potentially visible labels
+            if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
+                this.addPointLabel(
+                    labelState,
+                    point,
+                    tempScreenPosition,
+                    poiRenderer,
+                    textCanvas,
+                    renderParams
+                );
             }
         }
     }
@@ -1958,7 +1947,12 @@ export class TextElementsRenderer {
 
         // Update the real rendering distance to have smooth fading and scaling
         labelState.setViewDistance(
-            computeViewDistance(pathLabel, this.m_viewState.worldCenter, this.m_cameraLookAt)
+            computeViewDistance(
+                pathLabel,
+                undefined,
+                this.m_viewState.worldCenter,
+                this.m_cameraLookAt
+            )
         );
         const textRenderDistance = -labelState.renderDistance;
 
