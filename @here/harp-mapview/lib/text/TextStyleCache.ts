@@ -37,7 +37,6 @@ import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
 import { ColorCache } from "../ColorCache";
 import { evaluateColorProperty } from "../DecodedTileHelpers";
-import { PoiRenderer } from "../poi/PoiRenderer";
 import { Tile } from "../Tile";
 
 const logger = LoggerManager.instance.create("TextStyleCache");
@@ -73,7 +72,6 @@ export interface TextElementStyle {
     renderParams: TextRenderParameters;
     layoutParams: TextLayoutParameters;
     textCanvas?: TextCanvas;
-    poiRenderer?: PoiRenderer;
 }
 
 export class TextStyleCache {
@@ -113,31 +111,25 @@ export class TextStyleCache {
         this.m_defaultStyle.fontCatalog = defaultFontCatalogName;
     }
 
-    initializeTextElementStyles(
-        defaultPoiRenderer: PoiRenderer,
-        defaultTextCanvas: TextCanvas,
-        textCanvases: TextCanvas[]
-    ) {
+    initializeTextElementStyles(textCanvases: TextCanvas[]) {
         // Initialize default text style.
         if (this.m_defaultStyle.fontCatalog !== undefined) {
             const styledTextCanvas = textCanvases.find(
                 textCanvas => textCanvas.fontCatalog.name === this.m_defaultStyle.fontCatalog
             );
             this.m_defaultStyle.textCanvas = styledTextCanvas;
-            this.m_defaultStyle.poiRenderer = defaultPoiRenderer;
         }
         if (this.m_defaultStyle.textCanvas === undefined) {
             if (this.m_defaultStyle.fontCatalog !== undefined) {
                 logger.warn(
                     `FontCatalog '${this.m_defaultStyle.fontCatalog}' set in TextStyle
-                     '${this.m_defaultStyle.name}' not found,
-                      using default fontCatalog(${defaultTextCanvas?.fontCatalog?.name}).`
+                     '${this.m_defaultStyle.name}' not found`
                 );
             }
-            if (defaultTextCanvas) {
-                this.m_defaultStyle.textCanvas = defaultTextCanvas;
+            if (textCanvases.length > 0) {
+                this.m_defaultStyle.textCanvas = textCanvases[0];
+                logger.info(`using default fontCatalog(${textCanvases[0].fontCatalog.name}).`);
             }
-            this.m_defaultStyle.poiRenderer = defaultPoiRenderer;
         }
 
         // Initialize theme text styles.
@@ -154,20 +146,20 @@ export class TextStyleCache {
                         textCanvas => textCanvas.fontCatalog.name === style.fontCatalog
                     );
                     style.textCanvas = styledTextCanvas;
-                    style.poiRenderer = defaultPoiRenderer;
                 }
                 if (style.textCanvas === undefined) {
                     if (style.fontCatalog !== undefined) {
                         logger.warn(
-                            `FontCatalog '${style.fontCatalog}' set in TextStyle '${
-                                style.name
-                            }' not found, using default fontCatalog(${
-                                defaultTextCanvas!.fontCatalog.name
-                            }).`
+                            `FontCatalog '${style.fontCatalog}' set in TextStyle '${style.name}'
+                            not found`
                         );
                     }
-                    style.textCanvas = defaultTextCanvas;
-                    style.poiRenderer = defaultPoiRenderer;
+                    if (textCanvases.length > 0) {
+                        style.textCanvas = textCanvases[0];
+                        logger.info(
+                            `using default fontCatalog(${textCanvases[0].fontCatalog.name}).`
+                        );
+                    }
                 }
             }
         }

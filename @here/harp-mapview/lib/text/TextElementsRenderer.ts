@@ -810,11 +810,6 @@ export class TextElementsRenderer {
             // Get the TextElementStyle.
             const textElementStyle = this.m_textStyleCache.getTextElementStyle(textElement.style);
             const textCanvas = textElementStyle.textCanvas;
-            const poiRenderer = textElementStyle.poiRenderer;
-            if (textCanvas === undefined && poiRenderer === undefined) {
-                logger.warn("Text canvas and poi renderer not ready.");
-                continue;
-            }
 
             // TODO: HARP-7648. Discard hidden kinds sooner, before placement.
             // Check if the label should be hidden.
@@ -890,12 +885,11 @@ export class TextElementsRenderer {
 
             switch (elementType) {
                 case TextElementType.PoiLabel:
-                    this.addPoiLabel(textElementState, poiRenderer, textCanvas, renderParams);
+                    this.addPoiLabel(textElementState, textCanvas, renderParams);
                     break;
                 case TextElementType.LineMarker:
                     this.addLineMarkerLabel(
                         textElementState,
-                        poiRenderer,
                         shieldGroups,
                         textCanvas,
                         renderParams
@@ -1007,19 +1001,7 @@ export class TextElementsRenderer {
         return this.m_fontCatalogLoader
             .loadCatalogs(catalogCallback)
             .then(() => {
-                // Find the default TextCanvas and PoiRenderer.
-                let defaultTextCanvas: TextCanvas | undefined;
-                this.m_textCanvases.forEach(textCanvas => {
-                    if (!defaultTextCanvas && textCanvas) {
-                        defaultTextCanvas = textCanvas;
-                    }
-                });
-
-                this.m_textStyleCache.initializeTextElementStyles(
-                    this.m_poiRenderer,
-                    defaultTextCanvas!,
-                    this.m_textCanvases
-                );
+                this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
             })
             .catch(error => {
                 logger.info("rendering without font catalog, only icons possible");
@@ -1043,7 +1025,7 @@ export class TextElementsRenderer {
     }
 
     private initializeGlyphDebugMesh() {
-        if (!this.m_textCanvases[0]) {
+        if (this.m_textCanvases.length === 0) {
             return;
         }
         const defaultFontCatalog = this.m_textCanvases[0].fontCatalog;
@@ -1559,7 +1541,6 @@ export class TextElementsRenderer {
         labelState: TextElementState,
         position: THREE.Vector3,
         screenPosition: THREE.Vector2,
-        poiRenderer: PoiRenderer | undefined,
         textCanvas: TextCanvas | undefined,
         renderParams: RenderParams
     ): boolean {
@@ -1614,7 +1595,8 @@ export class TextElementsRenderer {
             this.m_viewState.lookAtDistance
         );
         const iconReady =
-            renderIcon && poiRenderer?.prepareRender(pointLabel, this.m_viewState.env) === true;
+            renderIcon &&
+            this.m_poiRenderer.prepareRender(pointLabel, this.m_viewState.env) === true;
         let iconInvisible = false;
         if (iconReady) {
             const result = placeIcon(
@@ -1742,7 +1724,7 @@ export class TextElementsRenderer {
                 // that any label blocked by it gets a chance to be placed as soon as any other
                 // surrounding new labels.
                 const allocateSpace = poiInfo!.reserveSpace !== false && !iconRejected;
-                poiRenderer?.renderPoi(
+                this.m_poiRenderer.renderPoi(
                     poiInfo!,
                     tempPoiScreenPosition,
                     this.m_screenCollisions,
@@ -1764,7 +1746,6 @@ export class TextElementsRenderer {
 
     private addPoiLabel(
         labelState: TextElementState,
-        poiRenderer: PoiRenderer | undefined,
         textCanvas: TextCanvas | undefined,
         renderParams: RenderParams
     ): boolean {
@@ -1785,7 +1766,6 @@ export class TextElementsRenderer {
             labelState,
             worldPosition,
             tempScreenPosition,
-            poiRenderer,
             textCanvas,
             renderParams
         );
@@ -1793,7 +1773,6 @@ export class TextElementsRenderer {
 
     private addLineMarkerLabel(
         labelState: TextElementState,
-        poiRenderer: PoiRenderer | undefined,
         shieldGroups: number[][],
         textCanvas: TextCanvas | undefined,
         renderParams: RenderParams
@@ -1802,7 +1781,7 @@ export class TextElementsRenderer {
 
         // Early exit if the line marker doesn't have the necessary data.
         const poiInfo = lineMarkerLabel.poiInfo!;
-        if (!poiRenderer?.prepareRender(lineMarkerLabel, this.m_viewState.env)) {
+        if (!this.m_poiRenderer?.prepareRender(lineMarkerLabel, this.m_viewState.env)) {
             return;
         }
 
@@ -1852,7 +1831,6 @@ export class TextElementsRenderer {
                             labelState,
                             point,
                             tempScreenPosition,
-                            poiRenderer,
                             textCanvas,
                             renderParams
                         )
@@ -1874,14 +1852,7 @@ export class TextElementsRenderer {
 
             // Only process potentially visible labels
             if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
-                this.addPointLabel(
-                    labelState,
-                    point,
-                    tempScreenPosition,
-                    poiRenderer,
-                    textCanvas,
-                    renderParams
-                );
+                this.addPointLabel(labelState, point, tempScreenPosition, textCanvas, renderParams);
             }
         }
     }
