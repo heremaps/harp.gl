@@ -39,7 +39,6 @@ import { ColorCache } from "../ColorCache";
 import { evaluateColorProperty } from "../DecodedTileHelpers";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { Tile } from "../Tile";
-import { ScreenSpaceRenderer } from "./ScreenSpaceRenderer";
 
 const logger = LoggerManager.instance.create("TextStyleCache");
 
@@ -117,17 +116,15 @@ export class TextStyleCache {
     initializeTextElementStyles(
         defaultPoiRenderer: PoiRenderer,
         defaultTextCanvas: TextCanvas,
-        screenSpaceRenderers: ScreenSpaceRenderer[]
+        textCanvases: TextCanvas[]
     ) {
         // Initialize default text style.
         if (this.m_defaultStyle.fontCatalog !== undefined) {
-            const styledTextRenderer = screenSpaceRenderers.find(
-                textRenderer => textRenderer.fontCatalog === this.m_defaultStyle.fontCatalog
+            const styledTextCanvas = textCanvases.find(
+                textCanvas => textCanvas.fontCatalog.name === this.m_defaultStyle.fontCatalog
             );
-            this.m_defaultStyle.textCanvas =
-                styledTextRenderer !== undefined ? styledTextRenderer.textCanvas : undefined;
-            this.m_defaultStyle.poiRenderer =
-                styledTextRenderer !== undefined ? styledTextRenderer.poiRenderer : undefined;
+            this.m_defaultStyle.textCanvas = styledTextCanvas;
+            this.m_defaultStyle.poiRenderer = defaultPoiRenderer;
         }
         if (this.m_defaultStyle.textCanvas === undefined) {
             if (this.m_defaultStyle.fontCatalog !== undefined) {
@@ -153,17 +150,11 @@ export class TextStyleCache {
         for (const [, style] of this.m_textStyles) {
             if (style.textCanvas === undefined) {
                 if (style.fontCatalog !== undefined) {
-                    const styledTextRenderer = screenSpaceRenderers.find(
-                        textRenderer => textRenderer.fontCatalog === style.fontCatalog
+                    const styledTextCanvas = textCanvases.find(
+                        textCanvas => textCanvas.fontCatalog.name === style.fontCatalog
                     );
-                    style.textCanvas =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.textCanvas
-                            : undefined;
-                    style.poiRenderer =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.poiRenderer
-                            : undefined;
+                    style.textCanvas = styledTextCanvas;
+                    style.poiRenderer = defaultPoiRenderer;
                 }
                 if (style.textCanvas === undefined) {
                     if (style.fontCatalog !== undefined) {

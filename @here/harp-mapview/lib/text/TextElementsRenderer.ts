@@ -53,7 +53,6 @@ import {
 } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
 import { RenderState } from "./RenderState";
-import { ScreenSpaceRenderer } from "./ScreenSpaceRenderer";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { TextCanvasFactory } from "./TextCanvasFactory";
 import { LoadingState, TextElement, TextPickResult } from "./TextElement";
@@ -322,7 +321,7 @@ export class TextElementsRenderer {
     private m_loadPromise: Promise<any> | undefined;
     private readonly m_options: TextElementsRendererOptions;
 
-    private readonly m_screenSpaceRenderers: ScreenSpaceRenderer[] = [];
+    private readonly m_textCanvases: TextCanvas[] = [];
 
     private m_overlayTextElements?: TextElement[];
 
@@ -418,9 +417,9 @@ export class TextElementsRenderer {
     set showReplacementGlyphs(value: boolean) {
         this.m_options.showReplacementGlyphs = value;
 
-        this.m_screenSpaceRenderers.forEach(screenSpaceRenderer => {
-            if (screenSpaceRenderer.textCanvas?.fontCatalog) {
-                screenSpaceRenderer.textCanvas.fontCatalog.showReplacementGlyphs = value;
+        this.m_textCanvases.forEach(textCanvas => {
+            if (textCanvas?.fontCatalog) {
+                textCanvas.fontCatalog.showReplacementGlyphs = value;
             }
         });
     }
@@ -437,19 +436,15 @@ export class TextElementsRenderer {
 
         this.updateGlyphDebugMesh();
 
-        for (const screenSpaceRenderer of this.m_screenSpaceRenderers) {
-            if (screenSpaceRenderer.poiRenderer) {
-                screenSpaceRenderer.poiRenderer?.render(camera, (layerBefore, layerAfter) => {
-                    screenSpaceRenderer.textCanvas?.render(
-                        camera,
-                        layerBefore,
-                        layerAfter,
-                        undefined,
-                        false
-                    );
-                });
-            } else {
-                screenSpaceRenderer.textCanvas?.render(camera);
+        if (this.m_poiRenderer) {
+            this.m_poiRenderer?.render(camera, (layerBefore, layerAfter) => {
+                for (const textCanvas of this.m_textCanvases) {
+                    textCanvas?.render(camera, layerBefore, layerAfter, undefined, false);
+                }
+            });
+        } else {
+            for (const textCanvas of this.m_textCanvases) {
+                textCanvas?.render(camera);
             }
         }
     }
@@ -601,20 +596,15 @@ export class TextElementsRenderer {
             pickListener.addResult(pickResult);
         };
 
-        for (const screenSpaceRenderer of this.m_screenSpaceRenderers) {
-            screenSpaceRenderer.textCanvas?.pickText(
-                screenPosition,
-                (pickData: any | undefined) => {
-                    pickHandler(pickData, PickObjectType.Text);
-                }
-            );
-            screenSpaceRenderer.poiRenderer?.pickTextElements(
-                screenPosition,
-                (pickData: any | undefined) => {
-                    pickHandler(pickData, PickObjectType.Icon);
-                }
-            );
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas?.pickText(screenPosition, (pickData: any | undefined) => {
+                pickHandler(pickData, PickObjectType.Text);
+            });
         }
+
+        this.m_poiRenderer?.pickTextElements(screenPosition, (pickData: any | undefined) => {
+            pickHandler(pickData, PickObjectType.Icon);
+        });
     }
 
     /**
@@ -661,10 +651,10 @@ export class TextElementsRenderer {
             gpuSize: 0
         };
 
-        for (const screenSpaceRenderer of this.m_screenSpaceRenderers) {
-            screenSpaceRenderer.textCanvas?.getMemoryUsage(memoryUsage);
-            screenSpaceRenderer.poiRenderer?.getMemoryUsage(memoryUsage);
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas?.getMemoryUsage(memoryUsage);
         }
+        this.m_poiRenderer?.getMemoryUsage(memoryUsage);
 
         return memoryUsage;
     }
@@ -717,10 +707,10 @@ export class TextElementsRenderer {
     private reset() {
         this.m_cameraLookAt.copy(this.m_viewState.lookAtVector);
         this.m_screenCollisions.reset();
-        for (const screenSpaceRenderer of this.m_screenSpaceRenderers) {
-            screenSpaceRenderer.textCanvas?.clear();
-            screenSpaceRenderer.poiRenderer?.reset();
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas?.clear();
         }
+        this.m_poiRenderer?.reset();
     }
 
     /**
@@ -779,7 +769,7 @@ export class TextElementsRenderer {
         // Unvisited text elements are never placed.
         assert(groupState.visited);
 
-        if (this.m_screenSpaceRenderers.length === 0) {
+        if (this.m_textCanvases.length === 0 && !this.m_poiRenderer) {
             logger.warn("No renderers initialized.");
             return false;
         }
@@ -1024,39 +1014,24 @@ export class TextElementsRenderer {
 
             catalog.showReplacementGlyphs = this.showReplacementGlyphs;
 
-            this.m_screenSpaceRenderers.push({
-                fontCatalog: name,
-                textCanvas: loadedTextCanvas,
-                poiRenderer: this.m_poiRenderer
-            });
-        };
-        const failureCallback = (name: string, error: Error) => {
-            this.m_screenSpaceRenderers.push({
-                fontCatalog: name,
-                textCanvas: undefined,
-                poiRenderer: this.m_poiRenderer
-            });
+            this.m_textCanvases.push(loadedTextCanvas);
         };
 
         return this.m_fontCatalogLoader
-            .loadCatalogs(catalogCallback, failureCallback)
+            .loadCatalogs(catalogCallback)
             .then(() => {
                 // Find the default TextCanvas and PoiRenderer.
                 let defaultTextCanvas: TextCanvas | undefined;
-                let defaultPoiRenderer: PoiRenderer | undefined;
-                this.m_screenSpaceRenderers.forEach(textRenderer => {
-                    if (!defaultTextCanvas && textRenderer.textCanvas) {
-                        defaultTextCanvas = textRenderer.textCanvas;
-                    }
-                    if (!defaultPoiRenderer && textRenderer.poiRenderer) {
-                        defaultPoiRenderer = textRenderer.poiRenderer;
+                this.m_textCanvases.forEach(textCanvas => {
+                    if (!defaultTextCanvas && textCanvas) {
+                        defaultTextCanvas = textCanvas;
                     }
                 });
 
                 this.m_textStyleCache.initializeTextElementStyles(
-                    defaultPoiRenderer!,
+                    this.m_poiRenderer!,
                     defaultTextCanvas!,
-                    this.m_screenSpaceRenderers
+                    this.m_textCanvases
                 );
             })
             .catch(error => {
@@ -1081,10 +1056,10 @@ export class TextElementsRenderer {
     }
 
     private initializeGlyphDebugMesh() {
-        if (!this.m_screenSpaceRenderers[0].textCanvas) {
+        if (!this.m_textCanvases[0]) {
             return;
         }
-        const defaultFontCatalog = this.m_screenSpaceRenderers[0].textCanvas.fontCatalog;
+        const defaultFontCatalog = this.m_textCanvases[0].fontCatalog;
 
         // Initialize glyph-debugging mesh.
         const planeGeometry = new THREE.PlaneGeometry(
@@ -1121,7 +1096,7 @@ export class TextElementsRenderer {
 
         this.m_debugGlyphTextureCacheWireMesh.name = "glyphDebug";
 
-        this.m_screenSpaceRenderers[0].textCanvas
+        this.m_textCanvases[0]
             .getLayer(DEFAULT_TEXT_CANVAS_LAYER)!
             .storage.scene.add(
                 this.m_debugGlyphTextureCacheMesh,
