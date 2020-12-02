@@ -600,31 +600,22 @@ export class PoiRenderer {
     }
 
     /**
+     * @internal
+     *
+     * Returns all {@link PoiLayer}s of this {@link PoiRenderer}
+     */
+    get layers(): PoiLayer[] {
+        return this.m_layers;
+    }
+
+    /**
      * Renders the content of this `PoiRenderer`.
      *
      * @param camera - Orthographic camera.
-     * @param betweenLayersCallback - Optional callback between layers.
+     * @param layer - The Layer to be rendered.
      */
-    render(
-        camera: THREE.OrthographicCamera,
-        betweenLayersCallback?: (
-            lastRendererdLayerId?: number,
-            nextRenderedLayerId?: number
-        ) => void
-    ) {
-        if (this.m_layers.length <= 0) {
-            betweenLayersCallback?.();
-        } else {
-            for (let i = 0; i < this.m_layers.length; i++) {
-                const layer = this.m_layers[i];
-                if (i === 0) {
-                    betweenLayersCallback?.(undefined, layer.id);
-                }
-                this.update();
-                this.m_renderer.render(layer.scene, camera);
-                betweenLayersCallback?.(layer.id, this.m_layers[i + 1]?.id);
-            }
-        }
+    render(camera: THREE.OrthographicCamera, layer: PoiLayer) {
+        this.m_renderer.render(layer.scene, camera);
     }
 
     /**

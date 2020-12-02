@@ -31,7 +31,7 @@ import { overlayTextElement } from "../geometry/overlayOnElevation";
 import { PickObjectType } from "../PickHandler";
 import { PickListener } from "../PickListener";
 import { PoiManager } from "../poi/PoiManager";
-import { PoiRenderer } from "../poi/PoiRenderer";
+import { PoiLayer, PoiRenderer } from "../poi/PoiRenderer";
 import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
@@ -434,11 +434,18 @@ export class TextElementsRenderer {
 
         this.updateGlyphDebugMesh();
 
-        this.m_poiRenderer.render(camera, (layerBefore, layerAfter) => {
+        let previousLayer: PoiLayer | undefined;
+        this.m_poiRenderer.update();
+        for (const poiLayer of this.m_poiRenderer.layers) {
             for (const textCanvas of this.m_textCanvases) {
-                textCanvas.render(camera, layerBefore, layerAfter, undefined, false);
+                textCanvas.render(camera, previousLayer?.id, poiLayer.id, undefined, false);
             }
-        });
+            this.m_poiRenderer.render(camera, poiLayer);
+            previousLayer = poiLayer;
+        }
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas.render(camera, previousLayer?.id, undefined, undefined, false);
+        }
     }
 
     /**
