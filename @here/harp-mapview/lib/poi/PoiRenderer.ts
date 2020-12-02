@@ -393,27 +393,25 @@ function findImageItem(
     const imageTextureName = poiInfo.imageTextureName!;
 
     let imageItem: ImageItem | undefined;
-    if (imageTexture) {
-        const imageDefinition = imageTexture.image;
-        for (const imageCache of imageCaches) {
-            imageItem =
-                imageCache.findImageByName(imageDefinition) ??
-                imageCache.findImageByName(imageTextureName);
-            if (imageItem) {
-                break;
-            }
+    for (const imageCache of imageCaches) {
+        imageItem = imageTexture
+            ? imageCache.findImageByName(imageTexture.image)
+            : imageCache.findImageByName(imageTextureName);
+        if (imageItem) {
+            break;
         }
-
-        if (!imageItem) {
-            logger.error(`init: No imageItem found with name '${imageDefinition}'`);
-            poiInfo.isValid = false;
-            if (missingTextureName.get(imageTextureName) === undefined) {
-                missingTextureName.set(imageTextureName, true);
-                logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
-            }
-        }
-        return imageItem;
     }
+
+    if (!imageItem) {
+        logger.error(`init: No imageItem found with name
+            '${imageTexture?.image ?? imageTextureName}'`);
+        poiInfo.isValid = false;
+        if (missingTextureName.get(imageTextureName) === undefined) {
+            missingTextureName.set(imageTextureName, true);
+            logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
+        }
+    }
+    return imageItem;
 }
 
 /**
