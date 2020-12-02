@@ -8,24 +8,26 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
-import { MapView } from "../lib/MapView";
-import { PoiBatchRegistry, PoiRenderer } from "../lib/poi/PoiRenderer";
+import { PoiBatchRegistry, PoiLayer } from "../lib/poi/PoiRenderer";
 import { TextElement } from "../lib/text/TextElement";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 
 describe("PoiBatchRegistry", () => {
     const renderer = { capabilities: { isWebGL2: false } } as THREE.WebGLRenderer;
-    const mapView = { update: () => {}, renderer } as MapView;
     let registry: PoiBatchRegistry;
     const textElement = {} as TextElement;
+    const defaultPoiLayer: PoiLayer = {
+        id: 0,
+        scene: new THREE.Scene()
+    };
 
     beforeEach(() => {
-        registry = new PoiBatchRegistry(new PoiRenderer(mapView));
+        registry = new PoiBatchRegistry(renderer.capabilities);
     });
     describe("registerPoi", function() {
         it("marks PoiInfo as invalid if it has no image item", () => {
             const poiInfo = new PoiInfoBuilder().build(textElement);
-            const buffer = registry.registerPoi(poiInfo);
+            const buffer = registry.registerPoi(poiInfo, defaultPoiLayer);
 
             expect(buffer).to.be.undefined;
             expect((poiInfo as any).isValid).to.be.false;
@@ -37,12 +39,13 @@ describe("PoiBatchRegistry", () => {
                 .withImageItem()
                 .build(textElement);
 
-            const buffer1 = registry.registerPoi(poiInfo1);
+            const buffer1 = registry.registerPoi(poiInfo1, defaultPoiLayer);
             const buffer2 = registry.registerPoi(
                 new PoiInfoBuilder()
                     .withImageTexture({ name: "tex2", image: poiInfo1.imageTexture!.image })
                     .withImageItem()
-                    .build(textElement)
+                    .build(textElement),
+                defaultPoiLayer
             );
 
             expect(buffer1).equals(buffer2).and.not.undefined;
@@ -54,12 +57,13 @@ describe("PoiBatchRegistry", () => {
                 .withImageItem()
                 .build(textElement);
 
-            const buffer1 = registry.registerPoi(poiInfo1);
+            const buffer1 = registry.registerPoi(poiInfo1, defaultPoiLayer);
             const buffer2 = registry.registerPoi(
                 new PoiInfoBuilder()
                     .withImageTextureName(poiInfo1.imageTextureName)
                     .withImageItem()
-                    .build(textElement)
+                    .build(textElement),
+                defaultPoiLayer
             );
             expect(buffer1).equals(buffer2).and.not.undefined;
         });
@@ -71,13 +75,17 @@ describe("PoiBatchRegistry", () => {
                 .withRenderOrder(0)
                 .build(textElement);
 
-            const buffer1 = registry.registerPoi(poiInfo1);
+            const buffer1 = registry.registerPoi(poiInfo1, defaultPoiLayer);
             const buffer2 = registry.registerPoi(
                 new PoiInfoBuilder()
                     .withImageTextureName(poiInfo1.imageTextureName)
                     .withImageItem()
                     .withRenderOrder(1)
-                    .build(textElement)
+                    .build(textElement),
+                {
+                    id: 1,
+                    scene: new THREE.Scene()
+                }
             );
             expect(buffer1).not.undefined;
             expect(buffer2).not.undefined;
@@ -97,12 +105,13 @@ describe("PoiBatchRegistry", () => {
                 .withImageItem()
                 .build(textElement);
 
-            const buffer1 = registry.registerPoi(poiInfo1);
+            const buffer1 = registry.registerPoi(poiInfo1, defaultPoiLayer);
             const buffer2 = registry.registerPoi(
                 new PoiInfoBuilder()
                     .withImageTextureName(poiInfo1.imageTextureName)
                     .withImageItem()
-                    .build(textElement)
+                    .build(textElement),
+                defaultPoiLayer
             );
 
             expect(buffer1).equals(buffer2).and.not.undefined;
@@ -114,13 +123,15 @@ describe("PoiBatchRegistry", () => {
                 new PoiInfoBuilder()
                     .withImageTextureName("image1")
                     .withImageItem()
-                    .build(textElement)
+                    .build(textElement),
+                defaultPoiLayer
             );
             const buffer2 = registry.registerPoi(
                 new PoiInfoBuilder()
                     .withImageTextureName("image2")
                     .withImageItem()
-                    .build(textElement)
+                    .build(textElement),
+                defaultPoiLayer
             );
             expect(buffer1).not.undefined;
             expect(buffer2).not.undefined;
@@ -140,7 +151,8 @@ describe("PoiBatchRegistry", () => {
 
         it("resources are disposed when unused", () => {
             const result = registry.registerPoi(
-                new PoiInfoBuilder().withImageItem().build(textElement)
+                new PoiInfoBuilder().withImageItem().build(textElement),
+                defaultPoiLayer
             );
             expect(result).not.undefined;
             const poiBuffer = result!;

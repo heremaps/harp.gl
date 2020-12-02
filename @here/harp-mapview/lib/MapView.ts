@@ -3894,7 +3894,10 @@ export class MapView extends EventDispatcher {
             this.m_screenProjector,
             new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
-            new PoiRenderer(this.m_renderer, this.m_poiManager),
+            new PoiRenderer(this.m_renderer, this.m_poiManager, [
+                this.imageCache,
+                this.userImageCache
+            ]),
             new FontCatalogLoader(fontCatalogs),
             new TextStyleCache(textStyles, defaultTextStyle),
             this.m_options
