@@ -248,7 +248,6 @@ export class PoiBatchRegistry {
      * Create the `PoiBatchRegistry`.
      *
      * @param m_rendererCapabilities - The {@link THREE.WebGLCapabilities} to be used.
-     * i
      */
     constructor(private readonly m_rendererCapabilities: THREE.WebGLCapabilities) {}
 
