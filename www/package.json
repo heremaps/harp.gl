@@ -3,8 +3,8 @@
     "version": "0.21.1",
     "description": "harp.gl website",
     "scripts": {
-        "build": "webpack --config webpack.config.js",
-        "start": "webpack serve --config webpack.config.js"
+        "build": "webpack --config ./webpack.config.js",
+        "start": "webpack serve --config ./webpack.config.js"
     },
     "repository": {
         "type": "git",

@@ -4,6 +4,8 @@ node_js:
   - "12"
 cache:
   yarn: true
+  directories:
+    - "node_modules/.cache"
 
 addons:
   chrome: stable

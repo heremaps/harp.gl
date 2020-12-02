@@ -106,7 +106,13 @@ const commonConfig = {
         new webpack.DefinePlugin({
             THEMES: JSON.stringify(themeList)
         })
-    ]
+    ],
+    cache: process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        }
+    }
 };
 
 const decoderConfig = merge(commonConfig, {

@@ -65,7 +65,13 @@ const commonConfig = {
     performance: {
         hints: false
     },
-    mode: process.env.NODE_ENV || "development"
+    mode: process.env.NODE_ENV || "development",
+    cache: process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        }
+    }
 };
 
 const mainConfig = merge(commonConfig, {
