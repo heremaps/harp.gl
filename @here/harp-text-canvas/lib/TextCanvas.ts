@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as THREE from "three";
 
 import { FontCatalog } from "./rendering/FontCatalog";
@@ -196,6 +195,11 @@ export interface TextCanvasParameters {
      * Material used to render text background.
      */
     backgroundMaterial?: THREE.Material;
+
+    /**
+     * Optional Canvas Name
+     */
+    name?: string;
 }
 
 /**
@@ -222,6 +226,8 @@ export class TextCanvas {
      * Maximum amount of glyphs each [[TextCanvas]] layer can store.
      */
     readonly maxGlyphCount: number;
+
+    readonly name?: string;
 
     private readonly m_renderer: THREE.WebGLRenderer;
     private m_fontCatalog: FontCatalog;
@@ -252,6 +258,7 @@ export class TextCanvas {
         this.m_fontCatalog = params.fontCatalog;
         this.minGlyphCount = params.minGlyphCount;
         this.maxGlyphCount = params.maxGlyphCount;
+        this.name = params.name;
 
         if (params.material === undefined) {
             this.m_ownsMaterial = true;

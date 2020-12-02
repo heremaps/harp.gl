@@ -114,9 +114,9 @@ export class TextStyleCache {
     initializeTextElementStyles(textCanvases: TextCanvas[]) {
         // Initialize default text style.
         if (this.m_defaultStyle.fontCatalog !== undefined) {
-            const styledTextCanvas = textCanvases.find(
-                textCanvas => textCanvas.fontCatalog.name === this.m_defaultStyle.fontCatalog
-            );
+            const styledTextCanvas = textCanvases.find(textCanvas => {
+                return textCanvas.name === this.m_defaultStyle.fontCatalog;
+            });
             this.m_defaultStyle.textCanvas = styledTextCanvas;
         }
         if (this.m_defaultStyle.textCanvas === undefined) {
@@ -143,7 +143,7 @@ export class TextStyleCache {
             if (style.textCanvas === undefined) {
                 if (style.fontCatalog !== undefined) {
                     const styledTextCanvas = textCanvases.find(
-                        textCanvas => textCanvas.fontCatalog.name === style.fontCatalog
+                        textCanvas => textCanvas.name === style.fontCatalog
                     );
                     style.textCanvas = styledTextCanvas;
                 }

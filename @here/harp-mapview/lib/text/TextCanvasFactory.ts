@@ -25,15 +25,17 @@ export class TextCanvasFactory {
     /**
      * Creates text canvas
      * @param fontCatalog - Initial [[FontCatalog]].
+     * @param name - Optional name for the TextCavas
      */
-    createTextCanvas(fontCatalog: FontCatalog): TextCanvas {
+    createTextCanvas(fontCatalog: FontCatalog, name?: string): TextCanvas {
         assert(this.m_maxGlyphCount > 0);
 
         return new TextCanvas({
             renderer: this.m_renderer,
             fontCatalog,
             minGlyphCount: this.m_minGlyphCount,
-            maxGlyphCount: this.m_maxGlyphCount
+            maxGlyphCount: this.m_maxGlyphCount,
+            name
         });
     }
 }

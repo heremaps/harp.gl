@@ -30,7 +30,7 @@ export function stubPoiRenderer(
     // Workaround to capture the value of screenPosition vector on the time of the call,
     // otherwise it's lost afterwards since the same vector is used to pass positions for
     // other pois.
-    stub.renderPoi.callsFake(
+    stub.addPoi.callsFake(
         (
             poiInfo: PoiInfo,
             screenPosition: THREE.Vector2,

@@ -291,20 +291,13 @@ export class PoiBatchRegistry {
      * @param screenBox - Box to render icon into in 2D coordinates.
      * @param viewDistance - Box's distance to camera.
      * @param opacity - Opacity of icon to allow fade in/out.
-     * @param layer - The Layer to add the Poi Icon to.
      */
-    addPoi(
-        poiInfo: PoiInfo,
-        screenBox: Math2D.Box,
-        viewDistance: number,
-        opacity: number,
-        layer: PoiLayer
-    ) {
-        if (poiInfo.isValid === false) {
-            return;
-        }
-        const poiBuffer = poiInfo.buffer ?? this.registerPoi(poiInfo, layer);
-        if (!poiBuffer) {
+    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number) {
+        if (poiInfo.isValid === false || !poiInfo.buffer) {
+            logger.warn(
+                "PoiBatchRegistry: trying to add poiInfo without buffer prepared: ",
+                poiInfo.poiName
+            );
             return;
         }
         assert(poiInfo.uvBox !== undefined);
@@ -320,7 +313,7 @@ export class PoiBatchRegistry {
         } else {
             color = neutralColor;
         }
-        poiBuffer.buffer.addBox(
+        poiInfo.buffer.buffer.addBox(
             screenBox,
             poiInfo.uvBox!,
             color,
@@ -515,7 +508,7 @@ export class PoiRenderer {
     }
 
     /**
-     * Render the icon. Icon will only be rendered if opacity > 0, otherwise only its space will be
+     * Add the icon. Icon will only be added if opacity > 0, otherwise only its space will be
      * allocated.
      *
      * @param poiInfo - PoiInfo containing information for rendering the POI icon.
@@ -527,7 +520,7 @@ export class PoiRenderer {
      * @param opacity - Opacity of icon to allow fade in/out.
      * @returns - `true` if icon has been actually rendered, `false` otherwise.
      */
-    renderPoi(
+    addPoi(
         poiInfo: PoiInfo,
         screenPosition: THREE.Vector2,
         screenCollisions: ScreenCollisions,
@@ -546,14 +539,21 @@ export class PoiRenderer {
         }
 
         if (opacity > 0) {
-            const layer = this.addLayer(poiInfo.renderOrder!);
-            this.m_poiBatchRegistry.addPoi(
-                poiInfo,
-                this.m_tempScreenBox,
-                viewDistance,
-                opacity,
-                layer
-            );
+            if (!poiInfo.buffer) {
+                this.preparePoi(poiInfo.textElement, env);
+            } else if (
+                poiInfo.buffer &&
+                this.m_layers.findIndex(layer => {
+                    return layer === poiInfo.buffer?.layer;
+                }) < 0
+            ) {
+                // Create a new buffer and add to this PoiRenderer
+                poiInfo.buffer = this.m_poiBatchRegistry.registerPoi(
+                    poiInfo,
+                    this.addLayer(poiInfo.renderOrder!)
+                );
+            }
+            this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
         }
     }
 
@@ -677,10 +677,9 @@ export class PoiRenderer {
         if (!imageItem) {
             return;
         }
-        const layer = this.addLayer(poiInfo.renderOrder!);
 
         if (imageItem.loaded) {
-            this.setupPoiInfo(poiInfo, imageItem, env, layer, imageTexture);
+            this.setupPoiInfo(poiInfo, imageItem, env, imageTexture);
             return;
         }
 
@@ -694,7 +693,7 @@ export class PoiRenderer {
             .then(loadedImageItem => {
                 // Skip setup if image was not loaded (cancelled).
                 if (loadedImageItem.image) {
-                    this.setupPoiInfo(poiInfo, loadedImageItem, env, layer, imageTexture);
+                    this.setupPoiInfo(poiInfo, loadedImageItem, env, imageTexture);
                 }
             })
             .catch(error => {
@@ -709,7 +708,6 @@ export class PoiRenderer {
      * @param poiInfo - {@link PoiInfo} to initialize.
      * @param imageTexture - Shared {@link @here/harp-datasource-protocol#ImageTexture},
      *                       defines used area in atlas.
-     * @param layer - The {@PoiLayer} to render to.
      * @param imageItem - Shared {@link ImageItem}, contains cached image for texture.
      * @param env - The current zoom level of {@link MapView}
      */
@@ -717,7 +715,6 @@ export class PoiRenderer {
         poiInfo: PoiInfo,
         imageItem: ImageItem,
         env: Env,
-        layer: PoiLayer,
         imageTexture?: ImageTexture
     ) {
         assert(poiInfo.uvBox === undefined);
@@ -778,7 +775,10 @@ export class PoiRenderer {
         };
         poiInfo.imageItem = imageItem;
         poiInfo.imageTexture = imageTexture;
-        poiInfo.buffer = this.m_poiBatchRegistry.registerPoi(poiInfo, layer);
+        poiInfo.buffer = this.m_poiBatchRegistry.registerPoi(
+            poiInfo,
+            this.addLayer(poiInfo.renderOrder!)
+        );
         poiInfo.isValid = true;
     }
 }

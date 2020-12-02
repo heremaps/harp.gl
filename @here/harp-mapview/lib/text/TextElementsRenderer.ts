@@ -998,7 +998,7 @@ export class TextElementsRenderer {
 
     private async initializeTextCanvases(): Promise<void> {
         const catalogCallback = (name: string, catalog: FontCatalog) => {
-            const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog);
+            const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog, name);
 
             catalog.showReplacementGlyphs = this.showReplacementGlyphs;
 
@@ -1731,7 +1731,7 @@ export class TextElementsRenderer {
                 // that any label blocked by it gets a chance to be placed as soon as any other
                 // surrounding new labels.
                 const allocateSpace = poiInfo!.reserveSpace !== false && !iconRejected;
-                this.m_poiRenderer.renderPoi(
+                this.m_poiRenderer.addPoi(
                     poiInfo!,
                     tempPoiScreenPosition,
                     this.m_screenCollisions,
