@@ -73,8 +73,11 @@ const browserTestsConfig = {
     plugins: [
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
-            NODE_ENV: process.env.NODE_ENV || "development"
+            NODE_ENV: "development"
         }),
+        new webpack.DefinePlugin({
+            'process.platform': JSON.stringify(process.platform)
+            }),
         new CopyWebpackPlugin({
             patterns: [
                 path.join(__dirname, "test/index.html"),
