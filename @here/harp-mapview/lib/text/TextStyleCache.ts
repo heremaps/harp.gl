@@ -113,24 +113,7 @@ export class TextStyleCache {
 
     initializeTextElementStyles(textCanvases: TextCanvas[]) {
         // Initialize default text style.
-        if (this.m_defaultStyle.fontCatalog !== undefined) {
-            const styledTextCanvas = textCanvases.find(textCanvas => {
-                return textCanvas.name === this.m_defaultStyle.fontCatalog;
-            });
-            this.m_defaultStyle.textCanvas = styledTextCanvas;
-        }
-        if (this.m_defaultStyle.textCanvas === undefined) {
-            if (this.m_defaultStyle.fontCatalog !== undefined) {
-                logger.warn(
-                    `FontCatalog '${this.m_defaultStyle.fontCatalog}' set in TextStyle
-                     '${this.m_defaultStyle.name}' not found`
-                );
-            }
-            if (textCanvases.length > 0) {
-                this.m_defaultStyle.textCanvas = textCanvases[0];
-                logger.info(`using default fontCatalog(${textCanvases[0].fontCatalog.name}).`);
-            }
-        }
+        this.initializeTextCanvas(this.m_defaultStyle, textCanvases);
 
         // Initialize theme text styles.
         this.m_textStyleDefinitions!.forEach(element => {
@@ -141,26 +124,7 @@ export class TextStyleCache {
         });
         for (const [, style] of this.m_textStyles) {
             if (style.textCanvas === undefined) {
-                if (style.fontCatalog !== undefined) {
-                    const styledTextCanvas = textCanvases.find(
-                        textCanvas => textCanvas.name === style.fontCatalog
-                    );
-                    style.textCanvas = styledTextCanvas;
-                }
-                if (style.textCanvas === undefined) {
-                    if (style.fontCatalog !== undefined) {
-                        logger.warn(
-                            `FontCatalog '${style.fontCatalog}' set in TextStyle '${style.name}'
-                            not found`
-                        );
-                    }
-                    if (textCanvases.length > 0) {
-                        style.textCanvas = textCanvases[0];
-                        logger.info(
-                            `using default fontCatalog(${textCanvases[0].fontCatalog.name}).`
-                        );
-                    }
-                }
+                this.initializeTextCanvas(style, textCanvases);
             }
         }
     }
@@ -385,6 +349,27 @@ export class TextStyleCache {
         });
 
         return layoutStyle;
+    }
+
+    private initializeTextCanvas(style: TextElementStyle, textCanvases: TextCanvas[]): void {
+        if (style.fontCatalog !== undefined) {
+            const styledTextCanvas = textCanvases.find(textCanvas => {
+                return textCanvas.name === style.fontCatalog;
+            });
+            style.textCanvas = styledTextCanvas;
+        }
+        if (style.textCanvas === undefined) {
+            if (style.fontCatalog !== undefined) {
+                logger.warn(
+                    `FontCatalog '${style.fontCatalog}' set in TextStyle
+                     '${style.name}' not found`
+                );
+            }
+            if (textCanvases.length > 0) {
+                style.textCanvas = textCanvases[0];
+                logger.info(`using default fontCatalog(${textCanvases[0].fontCatalog.name}).`);
+            }
+        }
     }
 
     private createTextElementStyle(

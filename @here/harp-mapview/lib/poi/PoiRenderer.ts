@@ -541,17 +541,6 @@ export class PoiRenderer {
         if (opacity > 0) {
             if (!poiInfo.buffer) {
                 this.preparePoi(poiInfo.textElement, env);
-            } else if (
-                poiInfo.buffer &&
-                this.m_layers.findIndex(layer => {
-                    return layer === poiInfo.buffer?.layer;
-                }) < 0
-            ) {
-                // Create a new buffer and add to this PoiRenderer
-                poiInfo.buffer = this.m_poiBatchRegistry.registerPoi(
-                    poiInfo,
-                    this.addLayer(poiInfo.renderOrder!)
-                );
             }
             this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
         }
