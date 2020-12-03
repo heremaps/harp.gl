@@ -31,8 +31,7 @@ import { overlayTextElement } from "../geometry/overlayOnElevation";
 import { PickObjectType } from "../PickHandler";
 import { PickListener } from "../PickListener";
 import { PoiManager } from "../poi/PoiManager";
-import { PoiRenderer } from "../poi/PoiRenderer";
-import { PoiRendererFactory } from "../poi/PoiRendererFactory";
+import { PoiLayer, PoiRenderer } from "../poi/PoiRenderer";
 import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
@@ -56,7 +55,6 @@ import { PlacementStats } from "./PlacementStats";
 import { RenderState } from "./RenderState";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { TextCanvasFactory } from "./TextCanvasFactory";
-import { TextCanvasRenderer } from "./TextCanvasRenderer";
 import { LoadingState, TextElement, TextPickResult } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
@@ -323,7 +321,7 @@ export class TextElementsRenderer {
     private m_loadPromise: Promise<any> | undefined;
     private readonly m_options: TextElementsRendererOptions;
 
-    private readonly m_textRenderers: TextCanvasRenderer[] = [];
+    private readonly m_textCanvases: TextCanvas[] = [];
 
     private m_overlayTextElements?: TextElement[];
 
@@ -353,7 +351,7 @@ export class TextElementsRenderer {
      *     instances.
      * @param m_screenProjector - Projects 3D coordinates into screen space.
      * @param m_textCanvasFactory - To create TextCanvas instances.
-     * @param m_poiRendererFactory - To create PoiRenderer instances.
+     * @param m_poiRenderer - To render Icons.
      * @param m_poiManager - To prepare pois for rendering.
      * @param m_fontCatalogLoader - To load font catalogs.
      * @param m_textStyleCache - Cache defining  text styles.
@@ -368,7 +366,7 @@ export class TextElementsRenderer {
         private readonly m_screenProjector: ScreenProjector,
         private readonly m_textCanvasFactory: TextCanvasFactory,
         private readonly m_poiManager: PoiManager,
-        private readonly m_poiRendererFactory: PoiRendererFactory,
+        private readonly m_poiRenderer: PoiRenderer,
         private readonly m_fontCatalogLoader: FontCatalogLoader,
         private readonly m_textStyleCache: TextStyleCache,
         options: TextElementsRendererOptions
@@ -419,8 +417,8 @@ export class TextElementsRenderer {
     set showReplacementGlyphs(value: boolean) {
         this.m_options.showReplacementGlyphs = value;
 
-        this.m_textRenderers.forEach(textRenderer => {
-            textRenderer.textCanvas.fontCatalog.showReplacementGlyphs = value;
+        this.m_textCanvases.forEach(textCanvas => {
+            textCanvas.fontCatalog.showReplacementGlyphs = value;
         });
     }
 
@@ -436,8 +434,17 @@ export class TextElementsRenderer {
 
         this.updateGlyphDebugMesh();
 
-        for (const textRenderer of this.m_textRenderers) {
-            textRenderer.textCanvas.render(camera);
+        let previousLayer: PoiLayer | undefined;
+        this.m_poiRenderer.update();
+        for (const poiLayer of this.m_poiRenderer.layers) {
+            for (const textCanvas of this.m_textCanvases) {
+                textCanvas.render(camera, previousLayer?.id, poiLayer.id, undefined, false);
+            }
+            this.m_poiRenderer.render(camera, poiLayer);
+            previousLayer = poiLayer;
+        }
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas.render(camera, previousLayer?.id, undefined, undefined, false);
         }
     }
 
@@ -521,7 +528,6 @@ export class TextElementsRenderer {
             (updateTextElements || anyTextGroupEvicted) && this.m_addNewLabels;
         this.placeTextElements(time, placeNewTextElements);
         this.placeOverlayTextElements();
-        this.updateTextRenderers();
     }
 
     /**
@@ -589,17 +595,15 @@ export class TextElementsRenderer {
             pickListener.addResult(pickResult);
         };
 
-        for (const textRenderer of this.m_textRenderers) {
-            textRenderer.textCanvas.pickText(screenPosition, (pickData: any | undefined) => {
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas.pickText(screenPosition, (pickData: any | undefined) => {
                 pickHandler(pickData, PickObjectType.Text);
             });
-            textRenderer.poiRenderer.pickTextElements(
-                screenPosition,
-                (pickData: any | undefined) => {
-                    pickHandler(pickData, PickObjectType.Icon);
-                }
-            );
         }
+
+        this.m_poiRenderer.pickTextElements(screenPosition, (pickData: any | undefined) => {
+            pickHandler(pickData, PickObjectType.Icon);
+        });
     }
 
     /**
@@ -646,10 +650,10 @@ export class TextElementsRenderer {
             gpuSize: 0
         };
 
-        for (const renderer of this.m_textRenderers) {
-            renderer.textCanvas.getMemoryUsage(memoryUsage);
-            renderer.poiRenderer.getMemoryUsage(memoryUsage);
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas.getMemoryUsage(memoryUsage);
         }
+        this.m_poiRenderer.getMemoryUsage(memoryUsage);
 
         return memoryUsage;
     }
@@ -702,19 +706,10 @@ export class TextElementsRenderer {
     private reset() {
         this.m_cameraLookAt.copy(this.m_viewState.lookAtVector);
         this.m_screenCollisions.reset();
-        for (const textRenderer of this.m_textRenderers) {
-            textRenderer.textCanvas.clear();
-            textRenderer.poiRenderer.reset();
+        for (const textCanvas of this.m_textCanvases) {
+            textCanvas.clear();
         }
-    }
-
-    /**
-     * Update state at the end of a frame.
-     */
-    private updateTextRenderers() {
-        for (const textRenderer of this.m_textRenderers) {
-            textRenderer.poiRenderer.update();
-        }
+        this.m_poiRenderer.reset();
     }
 
     /**
@@ -773,11 +768,6 @@ export class TextElementsRenderer {
         // Unvisited text elements are never placed.
         assert(groupState.visited);
 
-        if (this.m_textRenderers.length === 0) {
-            logger.warn("No text renderers initialized.");
-            return false;
-        }
-
         const shieldGroups: number[][] = [];
         const hiddenKinds = this.m_viewState.hiddenGeometryKinds;
         const projection = this.m_viewState.projection;
@@ -827,11 +817,6 @@ export class TextElementsRenderer {
             // Get the TextElementStyle.
             const textElementStyle = this.m_textStyleCache.getTextElementStyle(textElement.style);
             const textCanvas = textElementStyle.textCanvas;
-            const poiRenderer = textElementStyle.poiRenderer;
-            if (textCanvas === undefined || poiRenderer === undefined) {
-                logger.warn("Text canvas or poi renderer not ready.");
-                continue;
-            }
 
             // TODO: HARP-7648. Discard hidden kinds sooner, before placement.
             // Check if the label should be hidden.
@@ -871,48 +856,61 @@ export class TextElementsRenderer {
             }
 
             const forceNewPassOnLoaded = true;
-            // This ensures that textElement.renderStyle and textElement.layoutStyle are
-            // already instantiated and initialized with theme style values.
-            if (!this.initializeGlyphs(textElement, textElementStyle, forceNewPassOnLoaded)) {
-                continue;
-            }
-
-            const layer = textCanvas.getLayer(textElement.renderOrder ?? DEFAULT_TEXT_CANVAS_LAYER);
-
-            // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
-            if (layer !== undefined) {
-                if (layer.storage.drawCount + textElement.glyphs!.length > layer.storage.capacity) {
-                    if (placementStats) {
-                        ++placementStats.numCannotAdd;
-                    }
-                    logger.warn("layer glyph storage capacity exceeded.");
+            if (textCanvas) {
+                // This ensures that textElement.renderStyle and textElement.layoutStyle are
+                // already instantiated and initialized with theme style values.
+                if (!this.initializeGlyphs(textElement, textElementStyle, forceNewPassOnLoaded)) {
                     continue;
                 }
-            }
 
-            // Set the current style for the canvas.
-            // This means text canvas has always references (not a copy) to text element styles.
-            // The only exception is multi-anchor placement where layoutStyle need to be
-            // modified and thus textCanvas will using its own copy of textElement.layoutStyle.
-            // See: placePointLabel()
-            textCanvas.textRenderStyle = textElement.renderStyle!;
-            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                const layer = textCanvas.getLayer(
+                    textElement.renderOrder ?? DEFAULT_TEXT_CANVAS_LAYER
+                );
+
+                // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
+                if (layer !== undefined) {
+                    if (
+                        layer.storage.drawCount + textElement.glyphs!.length >
+                        layer.storage.capacity
+                    ) {
+                        if (placementStats) {
+                            ++placementStats.numCannotAdd;
+                        }
+                        logger.warn("layer glyph storage capacity exceeded.");
+                        continue;
+                    }
+                }
+
+                // Set the current style for the canvas.
+                // This means text canvas has always references (not a copy) to text element styles.
+                // The only exception is multi-anchor placement where layoutStyle need to be
+                // modified and thus textCanvas will using its own copy of textElement.layoutStyle.
+                // See: placePointLabel()
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+            }
 
             switch (elementType) {
                 case TextElementType.PoiLabel:
-                    this.addPoiLabel(textElementState, poiRenderer, textCanvas, renderParams);
+                    this.addPoiLabel(textElementState, textCanvas, renderParams);
                     break;
                 case TextElementType.LineMarker:
                     this.addLineMarkerLabel(
                         textElementState,
-                        poiRenderer,
                         shieldGroups,
                         textCanvas,
                         renderParams
                     );
                     break;
                 case TextElementType.PathLabel:
-                    this.addPathLabel(textElementState, tempScreenPoints, textCanvas, renderParams);
+                    if (textCanvas) {
+                        this.addPathLabel(
+                            textElementState,
+                            tempScreenPoints,
+                            textCanvas,
+                            renderParams
+                        );
+                    }
             }
         }
         return true;
@@ -1000,35 +998,21 @@ export class TextElementsRenderer {
 
     private async initializeTextCanvases(): Promise<void> {
         const catalogCallback = (name: string, catalog: FontCatalog) => {
-            const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog);
+            const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog, name);
 
             catalog.showReplacementGlyphs = this.showReplacementGlyphs;
 
-            this.m_textRenderers.push({
-                fontCatalog: name,
-                textCanvas: loadedTextCanvas,
-                poiRenderer: this.m_poiRendererFactory.createPoiRenderer(loadedTextCanvas)
-            });
+            this.m_textCanvases.push(loadedTextCanvas);
         };
 
-        return this.m_fontCatalogLoader.loadCatalogs(catalogCallback).then(() => {
-            // Find the default TextCanvas and PoiRenderer.
-            let defaultTextCanvas: TextCanvas | undefined;
-            this.m_textRenderers.forEach(textRenderer => {
-                if (defaultTextCanvas === undefined) {
-                    defaultTextCanvas = textRenderer.textCanvas;
-                }
+        return this.m_fontCatalogLoader
+            .loadCatalogs(catalogCallback)
+            .then(() => {
+                this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
+            })
+            .catch(error => {
+                logger.info("rendering without font catalog, only icons possible");
             });
-            const defaultPoiRenderer = this.m_poiRendererFactory.createPoiRenderer(
-                defaultTextCanvas!
-            );
-
-            this.m_textStyleCache.initializeTextElementStyles(
-                defaultPoiRenderer,
-                defaultTextCanvas!,
-                this.m_textRenderers
-            );
-        });
     }
 
     private updateGlyphDebugMesh() {
@@ -1048,7 +1032,10 @@ export class TextElementsRenderer {
     }
 
     private initializeGlyphDebugMesh() {
-        const defaultFontCatalog = this.m_textRenderers[0].textCanvas.fontCatalog;
+        if (this.m_textCanvases.length === 0) {
+            return;
+        }
+        const defaultFontCatalog = this.m_textCanvases[0].fontCatalog;
 
         // Initialize glyph-debugging mesh.
         const planeGeometry = new THREE.PlaneGeometry(
@@ -1085,7 +1072,7 @@ export class TextElementsRenderer {
 
         this.m_debugGlyphTextureCacheWireMesh.name = "glyphDebug";
 
-        this.m_textRenderers[0].textCanvas
+        this.m_textCanvases[0]
             .getLayer(DEFAULT_TEXT_CANVAS_LAYER)!
             .storage.scene.add(
                 this.m_debugGlyphTextureCacheMesh,
@@ -1561,8 +1548,7 @@ export class TextElementsRenderer {
         labelState: TextElementState,
         position: THREE.Vector3,
         screenPosition: THREE.Vector2,
-        poiRenderer: PoiRenderer,
-        textCanvas: TextCanvas,
+        textCanvas: TextCanvas | undefined,
         renderParams: RenderParams
     ): boolean {
         const pointLabel: TextElement = labelState.element;
@@ -1615,7 +1601,8 @@ export class TextElementsRenderer {
             textDistance,
             this.m_viewState.lookAtDistance
         );
-        const iconReady = renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.env);
+        const iconReady =
+            renderIcon && this.m_poiRenderer.prepareRender(pointLabel, this.m_viewState.env);
         let iconInvisible = false;
         if (iconReady) {
             const result = placeIcon(
@@ -1642,11 +1629,10 @@ export class TextElementsRenderer {
             labelState,
             this.m_viewState.maxVisibilityDist
         );
-        const renderText = shouldRenderPointText(labelState, this.m_viewState, this.m_options);
 
         // Render the label's text...
         // textRenderState is always defined at this point.
-        if (renderText) {
+        if (textCanvas && shouldRenderPointText(labelState, this.m_viewState, this.m_options)) {
             // For the new labels with rejected icons we don't need to go further.
             const newLabel = !labelState.visible;
 
@@ -1688,7 +1674,8 @@ export class TextElementsRenderer {
             const iconIsOptional = poiInfo?.iconIsOptional !== false;
             // Rejected icons are only considered to hide the text if they are valid, so a missing
             // icon image will not keep the text from showing up.
-            const requiredIconRejected: boolean = iconRejected && iconReady && !iconIsOptional;
+            const requiredIconRejected: boolean =
+                iconRejected && iconReady === true && !iconIsOptional;
 
             const textRejected = requiredIconRejected || placeResult === PlacementResult.Rejected;
             if (!iconRejected && !iconInvisible) {
@@ -1743,7 +1730,7 @@ export class TextElementsRenderer {
                 // that any label blocked by it gets a chance to be placed as soon as any other
                 // surrounding new labels.
                 const allocateSpace = poiInfo!.reserveSpace !== false && !iconRejected;
-                poiRenderer.renderPoi(
+                this.m_poiRenderer.addPoi(
                     poiInfo!,
                     tempPoiScreenPosition,
                     this.m_screenCollisions,
@@ -1765,8 +1752,7 @@ export class TextElementsRenderer {
 
     private addPoiLabel(
         labelState: TextElementState,
-        poiRenderer: PoiRenderer,
-        textCanvas: TextCanvas,
+        textCanvas: TextCanvas | undefined,
         renderParams: RenderParams
     ): boolean {
         const worldPosition = getWorldPosition(
@@ -1786,7 +1772,6 @@ export class TextElementsRenderer {
             labelState,
             worldPosition,
             tempScreenPosition,
-            poiRenderer,
             textCanvas,
             renderParams
         );
@@ -1794,16 +1779,15 @@ export class TextElementsRenderer {
 
     private addLineMarkerLabel(
         labelState: TextElementState,
-        poiRenderer: PoiRenderer,
         shieldGroups: number[][],
-        textCanvas: TextCanvas,
+        textCanvas: TextCanvas | undefined,
         renderParams: RenderParams
     ): void {
         const lineMarkerLabel = labelState.element;
 
         // Early exit if the line marker doesn't have the necessary data.
         const poiInfo = lineMarkerLabel.poiInfo!;
-        if (!poiRenderer.prepareRender(lineMarkerLabel, this.m_viewState.env)) {
+        if (!this.m_poiRenderer?.prepareRender(lineMarkerLabel, this.m_viewState.env)) {
             return;
         }
 
@@ -1853,7 +1837,6 @@ export class TextElementsRenderer {
                             labelState,
                             point,
                             tempScreenPosition,
-                            poiRenderer,
                             textCanvas,
                             renderParams
                         )
@@ -1875,14 +1858,7 @@ export class TextElementsRenderer {
 
             // Only process potentially visible labels
             if (this.labelPotentiallyVisible(point, tempScreenPosition)) {
-                this.addPointLabel(
-                    labelState,
-                    point,
-                    tempScreenPosition,
-                    poiRenderer,
-                    textCanvas,
-                    renderParams
-                );
+                this.addPointLabel(labelState, point, tempScreenPosition, textCanvas, renderParams);
             }
         }
     }

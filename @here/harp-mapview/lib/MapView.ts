@@ -66,7 +66,7 @@ import { MapViewThemeManager } from "./MapViewThemeManager";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
-import { PoiRendererFactory } from "./poi/PoiRendererFactory";
+import { PoiRenderer } from "./poi/PoiRenderer";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
 import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
@@ -906,6 +906,7 @@ export class MapView extends EventDispatcher {
 
     private readonly m_poiManager: PoiManager = new PoiManager(this);
 
+    private m_poiRenderer: PoiRenderer;
     private readonly m_poiTableManager: PoiTableManager = new PoiTableManager(this);
 
     private readonly m_collisionDebugCanvas: HTMLCanvasElement | undefined;
@@ -1150,6 +1151,11 @@ export class MapView extends EventDispatcher {
         }
 
         this.m_themeManager = new MapViewThemeManager(this, this.m_uriResolver);
+
+        this.m_poiRenderer = new PoiRenderer(this.m_renderer, this.m_poiManager, [
+            this.imageCache,
+            this.userImageCache
+        ]);
 
         // will initialize with an empty theme and updated when theme is loaded and set
         this.m_textElementsRenderer = this.createTextRenderer();
@@ -3894,7 +3900,7 @@ export class MapView extends EventDispatcher {
             this.m_screenProjector,
             new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
-            new PoiRendererFactory(this),
+            this.m_poiRenderer,
             new FontCatalogLoader(fontCatalogs),
             new TextStyleCache(textStyles, defaultTextStyle),
             this.m_options
@@ -3913,6 +3919,7 @@ export class MapView extends EventDispatcher {
         defaultTextStyle?: TextStyleDefinition
     ): Promise<void> {
         const overlayText = this.m_textElementsRenderer.overlayText;
+        this.m_poiRenderer.reset();
         this.m_textElementsRenderer = this.createTextRenderer(
             fontCatalogs,
             textStyles,
@@ -3943,6 +3950,10 @@ export class MapView extends EventDispatcher {
     private readonly onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
+            this.m_poiRenderer = new PoiRenderer(this.m_renderer, this.m_poiManager, [
+                this.imageCache,
+                this.userImageCache
+            ]);
             this.getTheme().then(theme => {
                 this.m_sceneEnvironment.updateClearColor(theme.clearColor, theme.clearAlpha);
                 this.update();

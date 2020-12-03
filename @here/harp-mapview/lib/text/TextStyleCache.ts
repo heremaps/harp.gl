@@ -37,9 +37,7 @@ import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
 import { ColorCache } from "../ColorCache";
 import { evaluateColorProperty } from "../DecodedTileHelpers";
-import { PoiRenderer } from "../poi/PoiRenderer";
 import { Tile } from "../Tile";
-import { TextCanvasRenderer } from "./TextCanvasRenderer";
 
 const logger = LoggerManager.instance.create("TextStyleCache");
 
@@ -74,7 +72,6 @@ export interface TextElementStyle {
     renderParams: TextRenderParameters;
     layoutParams: TextLayoutParameters;
     textCanvas?: TextCanvas;
-    poiRenderer?: PoiRenderer;
 }
 
 export class TextStyleCache {
@@ -114,34 +111,9 @@ export class TextStyleCache {
         this.m_defaultStyle.fontCatalog = defaultFontCatalogName;
     }
 
-    initializeTextElementStyles(
-        defaultPoiRenderer: PoiRenderer,
-        defaultTextCanvas: TextCanvas,
-        textRenderers: TextCanvasRenderer[]
-    ) {
+    initializeTextElementStyles(textCanvases: TextCanvas[]) {
         // Initialize default text style.
-        if (this.m_defaultStyle.fontCatalog !== undefined) {
-            const styledTextRenderer = textRenderers.find(
-                textRenderer => textRenderer.fontCatalog === this.m_defaultStyle.fontCatalog
-            );
-            this.m_defaultStyle.textCanvas =
-                styledTextRenderer !== undefined ? styledTextRenderer.textCanvas : undefined;
-            this.m_defaultStyle.poiRenderer =
-                styledTextRenderer !== undefined ? styledTextRenderer.poiRenderer : undefined;
-        }
-        if (this.m_defaultStyle.textCanvas === undefined) {
-            if (this.m_defaultStyle.fontCatalog !== undefined) {
-                logger.warn(
-                    `FontCatalog '${this.m_defaultStyle.fontCatalog}' set in TextStyle '${
-                        this.m_defaultStyle.name
-                    }' not found, using default fontCatalog(${
-                        defaultTextCanvas!.fontCatalog.name
-                    }).`
-                );
-            }
-            this.m_defaultStyle.textCanvas = defaultTextCanvas;
-            this.m_defaultStyle.poiRenderer = defaultPoiRenderer;
-        }
+        this.initializeTextCanvas(this.m_defaultStyle, textCanvases);
 
         // Initialize theme text styles.
         this.m_textStyleDefinitions!.forEach(element => {
@@ -152,32 +124,7 @@ export class TextStyleCache {
         });
         for (const [, style] of this.m_textStyles) {
             if (style.textCanvas === undefined) {
-                if (style.fontCatalog !== undefined) {
-                    const styledTextRenderer = textRenderers.find(
-                        textRenderer => textRenderer.fontCatalog === style.fontCatalog
-                    );
-                    style.textCanvas =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.textCanvas
-                            : undefined;
-                    style.poiRenderer =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.poiRenderer
-                            : undefined;
-                }
-                if (style.textCanvas === undefined) {
-                    if (style.fontCatalog !== undefined) {
-                        logger.warn(
-                            `FontCatalog '${style.fontCatalog}' set in TextStyle '${
-                                style.name
-                            }' not found, using default fontCatalog(${
-                                defaultTextCanvas!.fontCatalog.name
-                            }).`
-                        );
-                    }
-                    style.textCanvas = defaultTextCanvas;
-                    style.poiRenderer = defaultPoiRenderer;
-                }
+                this.initializeTextCanvas(style, textCanvases);
             }
         }
     }
@@ -402,6 +349,27 @@ export class TextStyleCache {
         });
 
         return layoutStyle;
+    }
+
+    private initializeTextCanvas(style: TextElementStyle, textCanvases: TextCanvas[]): void {
+        if (style.fontCatalog !== undefined) {
+            const styledTextCanvas = textCanvases.find(textCanvas => {
+                return textCanvas.name === style.fontCatalog;
+            });
+            style.textCanvas = styledTextCanvas;
+        }
+        if (style.textCanvas === undefined) {
+            if (style.fontCatalog !== undefined) {
+                logger.warn(
+                    `FontCatalog '${style.fontCatalog}' set in TextStyle
+                     '${style.name}' not found`
+                );
+            }
+            if (textCanvases.length > 0) {
+                style.textCanvas = textCanvases[0];
+                logger.info(`using default fontCatalog(${textCanvases[0].fontCatalog.name}).`);
+            }
+        }
     }
 
     private createTextElementStyle(

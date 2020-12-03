@@ -1169,4 +1169,164 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             });
         });
     });
+
+    it("renders icon without text, even with invalid FontCatalog", async function() {
+        this.timeout(5000);
+        const imageTexture = "custom-icon";
+
+        const markerStyle: StyleSet = [
+            {
+                when: ["==", ["geometry-type"], "Point"],
+                technique: "labeled-icon",
+                imageTexture,
+                size: 15,
+                iconYOffset: 30
+            }
+        ];
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-no-text-icon",
+            theme: {
+                lights,
+                sky: {
+                    type: "gradient",
+                    topColor: "#161719",
+                    bottomColor: "#262829",
+                    groundColor: "#262829"
+                },
+                clearColor: "#4A4D4E",
+                styles: { geojson: markerStyle },
+                images: {
+                    "custom-icon": {
+                        // tslint:disable-next-line:max-line-length
+                        url:
+                            "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIyLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHdpZHRoPSI0OHB4IiBoZWlnaHQ9IjQ4cHgiIHZlcnNpb249IjEuMSIgaWQ9Imx1aS1pY29uLWRlc3RpbmF0aW9ucGluLW9uZGFyay1zb2xpZC1sYXJnZSIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQ4IDQ4IgoJIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDQ4IDQ4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8ZyBpZD0ibHVpLWljb24tZGVzdGluYXRpb25waW4tb25kYXJrLXNvbGlkLWxhcmdlLWJvdW5kaW5nLWJveCIgb3BhY2l0eT0iMCI+CgkJPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQ3LDF2NDZIMVYxSDQ3IE00OCwwSDB2NDhoNDhWMEw0OCwweiIvPgoJPC9nPgoJPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9IiNmZmZmZmYiIGQ9Ik0yNCwyQzEzLjg3MDgsMiw1LjY2NjcsMTAuMTU4NCw1LjY2NjcsMjAuMjIzMwoJCWMwLDUuMDMyNSwyLjA1MzMsOS41ODg0LDUuMzcxNywxMi44ODgzTDI0LDQ2bDEyLjk2MTctMTIuODg4M2MzLjMxODMtMy4zLDUuMzcxNy03Ljg1NTgsNS4zNzE3LTEyLjg4ODMKCQlDNDIuMzMzMywxMC4xNTg0LDM0LjEyOTIsMiwyNCwyeiBNMjQsMjVjLTIuNzY1LDAtNS0yLjIzNS01LTVzMi4yMzUtNSw1LTVzNSwyLjIzNSw1LDVTMjYuNzY1LDI1LDI0LDI1eiIvPgo8L2c+Cjwvc3ZnPgo=",
+                        preload: true
+                    }
+                },
+                fontCatalogs: [
+                    {
+                        name: "invalid-catalog",
+                        url: "invalid-font_catalog.json"
+                    }
+                ],
+                imageTextures: [
+                    {
+                        name: imageTexture,
+                        image: imageTexture
+                    }
+                ]
+            },
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "Marker" },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3] }
+                    }
+                ]
+            },
+            lookAt: { tilt: 80, zoomLevel: 19 },
+            tileGeoJson: false
+        });
+    });
+
+    it("renders interleaved icon and text", async function() {
+        this.timeout(5000);
+        const imageTexture = "custom-icon";
+
+        const markerStyle: StyleSet = [
+            {
+                id: "baseOrder",
+                when: ["==", ["geometry-type"], "Point"],
+                technique: "labeled-icon",
+                imageTexture,
+                size: 15,
+                iconYOffset: 30,
+                text: ["get", "text"],
+                color: ["get", "color"],
+                renderOrder: ["get", "renderOrder"],
+                textReserveSpace: false,
+                iconReserveSpace: false
+            },
+            {
+                when: ["==", ["renderOrder"], 1],
+                extends: "baseOrder",
+                technique: "none",
+                renderOrder: 1
+            }
+        ];
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-interleaved-icon-text",
+            theme: {
+                lights,
+                sky: {
+                    type: "gradient",
+                    topColor: "#161719",
+                    bottomColor: "#262829",
+                    groundColor: "#262829"
+                },
+                clearColor: "#4A4D4E",
+                styles: { geojson: markerStyle },
+                images: {
+                    "custom-icon": {
+                        // tslint:disable-next-line:max-line-length
+                        url:
+                            "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIyLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHdpZHRoPSI0OHB4IiBoZWlnaHQ9IjQ4cHgiIHZlcnNpb249IjEuMSIgaWQ9Imx1aS1pY29uLWRlc3RpbmF0aW9ucGluLW9uZGFyay1zb2xpZC1sYXJnZSIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQ4IDQ4IgoJIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDQ4IDQ4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8ZyBpZD0ibHVpLWljb24tZGVzdGluYXRpb25waW4tb25kYXJrLXNvbGlkLWxhcmdlLWJvdW5kaW5nLWJveCIgb3BhY2l0eT0iMCI+CgkJPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQ3LDF2NDZIMVYxSDQ3IE00OCwwSDB2NDhoNDhWMEw0OCwweiIvPgoJPC9nPgoJPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9IiNmZmZmZmYiIGQ9Ik0yNCwyQzEzLjg3MDgsMiw1LjY2NjcsMTAuMTU4NCw1LjY2NjcsMjAuMjIzMwoJCWMwLDUuMDMyNSwyLjA1MzMsOS41ODg0LDUuMzcxNywxMi44ODgzTDI0LDQ2bDEyLjk2MTctMTIuODg4M2MzLjMxODMtMy4zLDUuMzcxNy03Ljg1NTgsNS4zNzE3LTEyLjg4ODMKCQlDNDIuMzMzMywxMC4xNTg0LDM0LjEyOTIsMiwyNCwyeiBNMjQsMjVjLTIuNzY1LDAtNS0yLjIzNS01LTVzMi4yMzUtNSw1LTVzNSwyLjIzNSw1LDVTMjYuNzY1LDI1LDI0LDI1eiIvPgo8L2c+Cjwvc3ZnPgo=",
+                        preload: true
+                    }
+                },
+                fontCatalogs: [
+                    {
+                        name: "fira",
+                        url: "../dist/resources/fonts/Default_FontCatalog.json"
+                    }
+                ],
+                imageTextures: [
+                    {
+                        name: imageTexture,
+                        image: imageTexture
+                    }
+                ]
+            },
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: {
+                            text: "Marker0",
+                            color: "red",
+                            renderOrder: 0
+                        },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3] }
+                    },
+                    {
+                        type: "Feature",
+                        properties: {
+                            text: "Marker1",
+                            color: "green",
+                            renderOrder: 1
+                        },
+                        geometry: { type: "Point", coordinates: [14.6, 53.32] }
+                    },
+                    {
+                        type: "Feature",
+                        properties: {
+                            text: "Marker2",
+                            color: "blue",
+                            renderOrder: 2
+                        },
+                        geometry: { type: "Point", coordinates: [14.6, 53.28] }
+                    }
+                ]
+            },
+            lookAt: { tilt: 0, zoomLevel: 10 },
+            tileGeoJson: false
+        });
+    });
 });

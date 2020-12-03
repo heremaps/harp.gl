@@ -39,7 +39,10 @@ export class FontCatalogLoader {
         return defaultFontCatalogName;
     }
 
-    async loadCatalogs(catalogCallback: FontCatalogCallback): Promise<void[]> {
+    async loadCatalogs(
+        catalogCallback: FontCatalogCallback,
+        failureCallback?: (name: string, error: Error) => void
+    ): Promise<void[]> {
         assert(this.m_fontCatalogs !== undefined);
         assert(this.m_fontCatalogs!.length > 0);
 
@@ -51,6 +54,9 @@ export class FontCatalogLoader {
                 .then<void>(catalogCallback.bind(undefined, fontCatalogConfig.name))
                 .catch((error: Error) => {
                     logger.error("Failed to load FontCatalog: ", error);
+                    if (failureCallback) {
+                        failureCallback(fontCatalogConfig.name, error);
+                    }
                 })
                 .finally(() => {
                     this.m_catalogsLoading -= 1;

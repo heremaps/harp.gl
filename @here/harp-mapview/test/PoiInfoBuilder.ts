@@ -3,14 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { ImageTexture, LineMarkerTechnique, PoiTechnique } from "@here/harp-datasource-protocol";
-import { TextCanvasLayer } from "@here/harp-text-canvas";
 import * as THREE from "three";
 
 import { ImageItem } from "../lib/image/Image";
 import { BoxBuffer } from "../lib/poi/BoxBuffer";
-import { PoiBuffer } from "../lib/poi/PoiRenderer";
+import { PoiBuffer, PoiLayer } from "../lib/poi/PoiRenderer";
 import { PoiInfo, TextElement } from "../lib/text/TextElement";
 
 export class PoiInfoBuilder {
@@ -135,11 +133,7 @@ export class PoiInfoBuilder {
             computedHeight: this.m_height,
             textElement,
             renderOrder: this.m_renderOrder,
-            buffer: new PoiBuffer(
-                new BoxBuffer(new THREE.Material()),
-                {} as TextCanvasLayer,
-                () => {}
-            )
+            buffer: new PoiBuffer(new BoxBuffer(new THREE.Material()), {} as PoiLayer, () => {})
         };
     }
 }
