@@ -16,6 +16,7 @@ import { GeoPointLike } from "@here/harp-geoutils";
 import * as turf from "@turf/turf";
 
 import { GeoJsonTest } from "./utils/GeoJsonTest";
+import { ThemeBuilder } from "./utils/ThemeBuilder";
 
 const strokePolygonLayer = (params: Partial<SolidLineTechniqueParams> = {}): Style => {
     return {
@@ -33,7 +34,7 @@ const strokePolygonLayer = (params: Partial<SolidLineTechniqueParams> = {}): Sty
 describe("GeoJson features", function() {
     const geoJsonTest = new GeoJsonTest();
 
-    const { lights } = geoJsonTest;
+    const lights = ThemeBuilder.lights;
 
     afterEach(() => geoJsonTest.dispose());
 
