@@ -52,16 +52,18 @@ inputFiles.forEach(file => {
     ThemeLoader.load(file, {
         resolveResourceUris: false,
         resolveIncludeUris: true
-    }).then(theme => {
-        theme.url = undefined;
-        const filename = `${cliOptions.out}/${path.basename(file)}`;
-        console.log(`Writing ${filename}`);
-        const json = cliOptions.minify
-            ? JSON.stringify(theme)
-            : JSON.stringify(theme, undefined, 4);
-        fs.writeFileSync(filename, json);
-    }).catch(error => {
-        console.error("Error building theme", error);
-        process.exit(1);
-    });
+    })
+        .then(theme => {
+            theme.url = undefined;
+            const filename = `${cliOptions.out}/${path.basename(file)}`;
+            console.log(`Writing ${filename}`);
+            const json = cliOptions.minify
+                ? JSON.stringify(theme)
+                : JSON.stringify(theme, undefined, 4);
+            fs.writeFileSync(filename, json);
+        })
+        .catch(error => {
+            console.error("Error building theme", error);
+            process.exit(1);
+        });
 });
