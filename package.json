@@ -54,7 +54,8 @@
         "typescript": "^3.9.3",
         "webpack": "^5.9.0",
         "webpack-cli": "^4.2.0",
-        "webpack-dev-server": "^3.11.0"
+        "webpack-dev-server": "^3.11.0",
+        "fork-ts-checker-webpack-plugin": "^6.0.5"
     },
     "scripts": {
         "pre-test": "yarn run code-pre-tests --forbid-only && yarn run prettier && yarn eslint",

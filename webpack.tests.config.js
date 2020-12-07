@@ -10,6 +10,7 @@ const webpack = require("webpack");
 const glob = require("glob");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 const testResourceDirs = glob.sync(path.join(__dirname, "@here/*/test/resources"));
 const testResources = testResourceDirs.map(dir => {
@@ -42,7 +43,7 @@ const browserTestsConfig = {
     devtool: "source-map",
     resolve: {
         extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
-        modules: [".", "node_modules"],
+        modules: [__dirname, "node_modules"],
         fallback: {
             fs: false
         }
@@ -56,7 +57,8 @@ const browserTestsConfig = {
                 options: {
                     onlyCompileBundledFiles: true,
                     // use the main tsconfig.json for all compilation
-                    configFile: path.resolve(__dirname, "tsconfig.json")
+                    configFile: path.resolve(__dirname, "tsconfig.json"),
+                    transpileOnly: true
                 }
             }
         ]
@@ -71,6 +73,7 @@ const browserTestsConfig = {
         filename: "[name].bundle.js"
     },
     plugins: [
+        new ForkTsCheckerWebpackPlugin({}),
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
             NODE_ENV: "development"
