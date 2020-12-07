@@ -60,5 +60,8 @@ inputFiles.forEach(file => {
             ? JSON.stringify(theme)
             : JSON.stringify(theme, undefined, 4);
         fs.writeFileSync(filename, json);
-    });
+    }).catch(error => {
+        console.error(`Error building theme ${filename}`, error);
+        process.exit(1);
+    });;
 });
