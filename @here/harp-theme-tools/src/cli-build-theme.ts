@@ -63,5 +63,5 @@ inputFiles.forEach(file => {
     }).catch(error => {
         console.error("Error building theme", error);
         process.exit(1);
-    });;
+    });
 });
