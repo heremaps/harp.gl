@@ -3,8 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { FlatTheme, GeoJson, Light, Theme } from "@here/harp-datasource-protocol";
+import { FlatTheme, GeoJson, Theme } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
@@ -30,6 +29,7 @@ export interface GeoJsonTestOptions extends GeoJsonDataSourceTestOptions {
     tileGeoJson?: boolean;
     dataProvider?: DataProvider;
     extraDataSource?: GeoJsonDataSourceTestOptions;
+    beforeFinishCallback?: (mapView: MapView) => void;
 }
 
 function createDataSource(
@@ -60,26 +60,6 @@ function createDataSource(
 
 export class GeoJsonTest {
     mapView!: MapView;
-
-    lights: Light[] = [
-        {
-            type: "ambient",
-            color: "#FFFFFF",
-            name: "ambientLight",
-            intensity: 0.9
-        },
-        {
-            type: "directional",
-            color: "#FFFFFF",
-            name: "light1",
-            intensity: 0.8,
-            direction: {
-                x: 1,
-                y: 5,
-                z: 0.5
-            }
-        }
-    ];
 
     dispose() {
         this.mapView?.dispose();
@@ -129,6 +109,9 @@ export class GeoJsonTest {
             this.mapView.addDataSource(createDataSource("geojson2", options.extraDataSource));
         }
 
+        if (options.beforeFinishCallback) {
+            await options.beforeFinishCallback?.(this.mapView);
+        }
         await waitForEvent(this.mapView, MapViewEventNames.FrameComplete);
         await ibct.assertCanvasMatchesReference(canvas, options.testImageName);
     }
