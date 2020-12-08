@@ -190,6 +190,9 @@ describe("MapView Picking", async function() {
         });
 
         await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
+        if (mapView.textElementsRenderer.loading) {
+            await mapView.textElementsRenderer.waitLoaded();
+        }
         sinon
             .stub(mapView.textElementsRenderer, "renderText")
             .callsFake((_camera: THREE.OrthographicCamera) => {});

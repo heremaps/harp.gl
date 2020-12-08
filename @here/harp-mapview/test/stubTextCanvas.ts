@@ -110,9 +110,9 @@ export function stubTextCanvas(
 export function stubTextCanvasFactory(
     sandbox: sinon.SinonSandbox,
     textCanvas: TextCanvas
-): TextCanvasFactory {
+): sinon.SinonStubbedInstance<TextCanvasFactory> {
     const textCanvasFactoryStub = sandbox.createStubInstance(TextCanvasFactory);
     textCanvasFactoryStub.createTextCanvas.returns((textCanvas as unknown) as TextCanvas);
 
-    return (textCanvasFactoryStub as unknown) as TextCanvasFactory;
+    return textCanvasFactoryStub;
 }

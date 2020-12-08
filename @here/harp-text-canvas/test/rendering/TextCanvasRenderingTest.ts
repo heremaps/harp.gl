@@ -55,7 +55,7 @@ describe("TextCanvas", function() {
         camera.updateProjectionMatrix();
 
         fontCatalog = await FontCatalog.load(
-            "../@here/harp-fontcatalog/resources/Default_FontCatalog.json",
+            "../dist/resources/fonts/Default_FontCatalog.json",
             16
         );
 

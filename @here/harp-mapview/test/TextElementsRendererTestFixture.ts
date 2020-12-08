@@ -6,7 +6,7 @@
 import { MapEnv, Theme } from "@here/harp-datasource-protocol";
 import { identityProjection, TileKey } from "@here/harp-geoutils";
 import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
-import { TextCanvas } from "@here/harp-text-canvas";
+import { FontCatalog, TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -14,6 +14,8 @@ import * as THREE from "three";
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { ScreenProjector } from "../lib/ScreenProjector";
+import { DEFAULT_FONT_CATALOG_NAME, FontCatalogLoader } from "../lib/text/FontCatalogLoader";
+import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
 import { TextElement } from "../lib/text/TextElement";
 import { TextElementsRenderer } from "../lib/text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "../lib/text/TextElementsRendererOptions";
@@ -30,7 +32,6 @@ import {
     stubElevationProvider
 } from "./stubElevationProvider";
 import { stubFontCatalog } from "./stubFontCatalog";
-import { stubFontCatalogLoader } from "./stubFontCatalogLoader";
 import { stubPoiManager } from "./stubPoiManager";
 import { stubPoiRenderer } from "./stubPoiRenderer";
 import { stubTextCanvas, stubTextCanvasFactory } from "./stubTextCanvas";
@@ -113,6 +114,9 @@ export class TestFixture {
     private m_screenCollisionTestStub: sinon.SinonStub | undefined;
     private m_textCanvasStub: TextCanvas | undefined;
     private m_textRenderer: TextElementsRenderer | undefined;
+    private m_loadCatalogStub: sinon.SinonStub | undefined;
+    private m_textCanvasFactoryStub: sinon.SinonStubbedInstance<TextCanvasFactory> | undefined;
+    private m_fontCatalog: FontCatalog | undefined;
     private m_defaultTile: Tile | undefined;
     private m_allTiles: Tile[] = [];
     private readonly m_allTextElements: TextElement[][] = [];
@@ -132,10 +136,8 @@ export class TestFixture {
 
     /**
      * Sets up required before every test case.
-     * @returns A promise that resolves to true once the setup is finished, to false if there was an
-     * error.
      */
-    setUp(): Promise<boolean> {
+    async setUp(): Promise<void> {
         this.m_defaultTile = this.m_dataSource.getTile(new TileKey(0, 0, TILE_LEVEL));
         this.m_defaultTile.textElementsChanged = true;
         this.m_allTiles = [];
@@ -152,34 +154,32 @@ export class TestFixture {
             labelDistanceScaleMin: 1,
             labelDistanceScaleMax: 1
         };
-        const fontCatalog = stubFontCatalog(this.sandbox);
+        this.m_fontCatalog = stubFontCatalog(this.sandbox);
         this.m_textCanvasStub = stubTextCanvas(
             this.sandbox,
             this.m_addTextSpy,
             this.m_addTextBufferObjSpy,
-            fontCatalog,
+            this.m_fontCatalog,
             DEF_TEXT_WIDTH,
             DEF_TEXT_HEIGHT
         );
         const dummyUpdateCall = () => {};
+        this.m_loadCatalogStub = this.sandbox.stub(FontCatalogLoader, "loadCatalog").resolves();
+        this.m_textCanvasFactoryStub = stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub);
         this.m_textRenderer = new TextElementsRenderer(
             this.m_viewState,
             this.m_camera,
             dummyUpdateCall,
             this.m_screenCollisions,
             this.m_screenProjector,
-            stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub),
+            (this.m_textCanvasFactoryStub as unknown) as TextCanvasFactory,
             stubPoiManager(this.sandbox),
             (this.m_poiRendererStub as unknown) as PoiRenderer,
-            stubFontCatalogLoader(this.sandbox, fontCatalog),
             new TextStyleCache(this.m_theme.textStyles),
             this.m_options
         );
-        // Force renderer initialization by calling render with changed text elements.
-        const time = 0;
-        this.m_textRenderer.placeText(this.tileLists, time);
-        this.clearVisibleTiles();
-        return this.m_textRenderer.waitInitialized();
+        this.m_loadCatalogStub.yieldOn("onSuccess", DEFAULT_FONT_CATALOG_NAME, this.m_fontCatalog);
+        return this.m_textRenderer.waitLoaded();
     }
 
     /**
@@ -348,9 +348,24 @@ export class TestFixture {
         });
     }
 
-    private get textRenderer(): TextElementsRenderer {
+    get textRenderer(): TextElementsRenderer {
         assert(this.m_textRenderer !== undefined);
         return this.m_textRenderer!;
+    }
+
+    get loadCatalogStub(): sinon.SinonStub {
+        assert(this.m_loadCatalogStub !== undefined);
+        return this.m_loadCatalogStub!;
+    }
+
+    get fontCatalog(): FontCatalog {
+        assert(this.m_fontCatalog !== undefined);
+        return this.m_fontCatalog!;
+    }
+
+    get textCanvasFactoryStub(): sinon.SinonStubbedInstance<TextCanvasFactory> {
+        assert(this.m_textCanvasFactoryStub !== undefined);
+        return this.m_textCanvasFactoryStub!;
     }
 
     setElevationProvider(enabled: boolean) {
