@@ -6,11 +6,6 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import * as path from "path";
-import * as nodeUrl from "url";
-
-const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
-
 import { FlatTheme, SolidLineStyle, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import {
@@ -23,19 +18,6 @@ import {
 import { assert } from "chai";
 
 import { ThemeLoader } from "../lib/ThemeLoader";
-
-function makeUrlRelative(baseUrl: string, url: string) {
-    const baseUrlParsed = new URL(baseUrl);
-    const urlParsed = new URL(url, baseUrl);
-
-    if (urlParsed.origin !== baseUrlParsed.origin) {
-        throw new Error("getRelativeUrl: origin mismatch");
-    }
-    if (urlParsed.protocol !== baseUrlParsed.protocol) {
-        throw new Error("getRelativeUrl: protocol mismatch");
-    }
-    return path.relative(baseUrlParsed.pathname, urlParsed.pathname);
-}
 
 describe("ThemeLoader", function() {
     describe("#isThemeLoaded", function() {
@@ -67,19 +49,13 @@ describe("ThemeLoader", function() {
         });
 
         it("resolves absolute theme url of theme loaded from relative url", async function() {
-            // `sampleThemeUrl` may be absolute, but on same host (or fs), so relativize it
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
-            const result = await ThemeLoader.load(relativeToAppUrl);
-            assert.equal(result.url, resolveReferenceUri(appBaseUrl, relativeToAppUrl));
+            const result = await ThemeLoader.load(sampleThemeUrl);
+            assert.equal(result.url, resolveReferenceUri(appBaseUrl, sampleThemeUrl));
         });
 
         it("resolves absolute url of theme loaded from relative url", async function() {
-            // `sampleThemeUrl` may be absolute, but on same host (or fs), so relativize it
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
-            const result = await ThemeLoader.load(relativeToAppUrl);
-            assert.equal(result.url, resolveReferenceUri(appBaseUrl, relativeToAppUrl));
+            const result = await ThemeLoader.load(sampleThemeUrl);
+            assert.equal(result.url, resolveReferenceUri(appBaseUrl, sampleThemeUrl));
         });
 
         it("resolves urls of resources embedded in theme", async function() {
@@ -98,9 +74,7 @@ describe("ThemeLoader", function() {
         });
 
         it("doesn't break if called on already #load-ed theme", async function() {
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
-            const firstLoadResult = await ThemeLoader.load(relativeToAppUrl);
+            const firstLoadResult = await ThemeLoader.load(sampleThemeUrl);
             const firstResultCopy = cloneDeep(firstLoadResult);
             const secondLoadResult = await ThemeLoader.load(firstLoadResult);
 

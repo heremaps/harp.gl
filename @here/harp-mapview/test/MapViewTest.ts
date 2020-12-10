@@ -23,12 +23,9 @@ import {
 } from "@here/harp-test-utils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { FontCatalog } from "@here/harp-text-canvas";
-import { getAppBaseUrl } from "@here/harp-utils";
 import { assert, expect } from "chai";
-import * as path from "path";
 import * as sinon from "sinon";
 import * as THREE from "three";
-import * as nodeUrl from "url";
 
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { DataSource } from "../lib/DataSource";
@@ -49,24 +46,9 @@ import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
-
 declare const global: any;
 
 const projections = [mercatorProjection, sphereProjection];
-
-function makeUrlRelative(baseUrl: string, url: string) {
-    const baseUrlParsed = new URL(baseUrl);
-    const urlParsed = new URL(url, baseUrl);
-
-    if (urlParsed.origin !== baseUrlParsed.origin) {
-        throw new Error("getRelativeUrl: origin mismatch");
-    }
-    if (urlParsed.protocol !== baseUrlParsed.protocol) {
-        throw new Error("getRelativeUrl: protocol mismatch");
-    }
-    return path.relative(baseUrlParsed.pathname, urlParsed.pathname);
-}
 
 describe("MapView", function() {
     const inNodeContext = typeof window === "undefined";
@@ -1652,7 +1634,6 @@ describe("MapView", function() {
     });
 
     describe("theme", function() {
-        const appBaseUrl = getAppBaseUrl();
         const sampleThemeUrl = getTestResourceUrl(
             "@here/harp-mapview",
             "test/resources/baseTheme.json"
@@ -1679,11 +1660,9 @@ describe("MapView", function() {
         });
 
         it("loads theme from url", async function() {
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
             mapView = new MapView({
                 ...mapViewOptions,
-                theme: relativeToAppUrl
+                theme: sampleThemeUrl
             });
             const theme = await mapView.getTheme();
 
@@ -1709,11 +1688,9 @@ describe("MapView", function() {
         });
 
         it("allows to reset theme", async function() {
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
             mapView = new MapView({
                 ...mapViewOptions,
-                theme: relativeToAppUrl
+                theme: sampleThemeUrl
             });
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
 

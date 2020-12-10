@@ -28,7 +28,7 @@ The first time you run the command it will pull the docker image to your system,
 $yarn run-rendering-tests
 yarn run v1.17.3
 $ ./scripts/rendering-tests-reference-platform.sh
-$ webpack -d --config webpack.tests.config.js
+$ webpack --config webpack.tests.config.js
 [hardsource:51b0c007] Writing new cache 51b0c007...
 [hardsource:51b0c007] Tracking node dependencies with: yarn.lock.
 Time: 171135ms

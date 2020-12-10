@@ -10,7 +10,6 @@ const webpack = require("webpack");
 const merge = require("webpack-merge");
 const path = require("path");
 const glob = require("glob");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
@@ -50,19 +49,21 @@ const commonConfig = {
     devtool: prepareOnly ? undefined : "source-map",
     externals: [
         {
-            three: "THREE",
-            fs: "undefined"
+            three: "THREE"
         },
-        function(context, request, callback) {
+        ({ context, request }, cb) => {
             return /three\.module\.js$/.test(request)
-                ? callback(null, "THREE")
-                : callback(undefined, undefined);
+                ? cb(null, "THREE")
+                : cb(undefined, undefined);
         }
     ],
     resolve: {
         extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         alias: {
             "react-native": "react-native-web"
+        },
+        fallback: {
+            fs: false
         }
     },
     module: {
@@ -105,12 +106,14 @@ const commonConfig = {
         new webpack.DefinePlugin({
             THEMES: JSON.stringify(themeList)
         })
-    ]
+    ],
+    cache: process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        }
+    }
 };
-
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    commonConfig.plugins.push(new HardSourceWebpackPlugin());
-}
 
 const decoderConfig = merge(commonConfig, {
     target: "webworker",
