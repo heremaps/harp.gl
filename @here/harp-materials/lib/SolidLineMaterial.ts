@@ -604,6 +604,7 @@ export class SolidLineMaterial extends RawShaderMaterial
      *
      * @param enable - Whether we want to enable the fog.
      */
+    // @ts-ignore
     set fog(enable: boolean) {
         this.m_fog = enable;
         // Function may be called from THREE.js cause we override setter,
@@ -654,6 +655,7 @@ export class SolidLineMaterial extends RawShaderMaterial
     /**
      * Line opacity.
      */
+    // @ts-ignore
     get opacity(): number {
         return this.m_opacity;
     }

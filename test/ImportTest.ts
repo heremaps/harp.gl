@@ -239,6 +239,7 @@ function checkImports() {
 
 describe("ImportCheck", function() {
     it("Uses correct imports", function() {
-        assert.deepEqual(checkImports(), []);
+        const errors = checkImports();
+        assert.deepEqual(errors, []);
     });
 });

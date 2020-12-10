@@ -120,6 +120,7 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
     /**
      * Get circle opacity.
      */
+    // @ts-ignore
     get opacity(): number {
         return this.m_opacity;
     }
