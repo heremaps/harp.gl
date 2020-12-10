@@ -1204,6 +1204,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
     }
 
     /** @override */
+    // @ts-ignore
     get displacementMap(): THREE.Texture | null {
         return super.displacementMap === undefined ? null : super.displacementMap;
     }

@@ -71,9 +71,7 @@ export abstract class CopyrightCoverageProvider implements CopyrightProvider {
     /** Asynchronously retrieves copyright coverage data.
      * @param abortSignal - Optional AbortSignal to cancel the request.
      */
-    abstract async getCopyrightCoverageData(
-        abortSignal?: AbortSignal
-    ): Promise<AreaCopyrightInfo[]>;
+    abstract getCopyrightCoverageData(abortSignal?: AbortSignal): Promise<AreaCopyrightInfo[]>;
 
     /** @inheritdoc */
     getTree(): Promise<any> {
