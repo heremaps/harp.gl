@@ -393,7 +393,10 @@ export class SkyAtmosphereMaterial extends RawShaderMaterial {
     ): { modelViewProjection: THREE.Matrix4; eyePos: THREE.Vector3; eyeHeight: number } {
         if (reverse) {
             const modelMatrix = new THREE.Matrix4().identity();
-            const viewMatrix = new THREE.Matrix4().getInverse(object.matrixWorld).transpose();
+            const viewMatrix = new THREE.Matrix4()
+                .copy(object.matrixWorld)
+                .invert()
+                .transpose();
             const projectionMatrix = camera.projectionMatrix;
 
             const mvpMatrix = new THREE.Matrix4();

@@ -1083,7 +1083,7 @@ export namespace MapViewUtils {
         // and takes the current rotation of the camera into account.
         cache.matrix4[1].multiplyMatrices(
             cache.matrix4[0],
-            cache.matrix4[1].getInverse(mapView.camera.projectionMatrix)
+            cache.matrix4[1].copy(mapView.camera.projectionMatrix).invert()
         );
         // Unproject the point via the unprojection matrix.
         const pointInCameraSpace = pointInNDCPosition.applyMatrix4(cache.matrix4[1]);
@@ -1141,7 +1141,7 @@ export namespace MapViewUtils {
     ) {
         cache.quaternions[0]
             .setFromUnitVectors(fromWorld.normalize(), toWorld.normalize())
-            .inverse();
+            .invert();
         cache.matrix4[0].makeRotationFromQuaternion(cache.quaternions[0]);
         mapView.camera.applyMatrix4(cache.matrix4[0]);
         mapView.camera.updateMatrixWorld();
@@ -1326,7 +1326,10 @@ export namespace MapViewUtils {
         cache.matrix4[1].makeBasis(tangentSpace.x, tangentSpace.y, tangentSpace.z);
 
         // 2. Change the basis of matrixWorld to the tangent space to get the new base axes.
-        cache.matrix4[0].getInverse(cache.matrix4[1]).multiply(object.matrixWorld);
+        cache.matrix4[0]
+            .copy(cache.matrix4[1])
+            .invert()
+            .multiply(object.matrixWorld);
         space.x.setFromMatrixColumn(cache.matrix4[0], 0);
         space.y.setFromMatrixColumn(cache.matrix4[0], 1);
         space.z.setFromMatrixColumn(cache.matrix4[0], 2);

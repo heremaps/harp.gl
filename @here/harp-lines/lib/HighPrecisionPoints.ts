@@ -98,7 +98,7 @@ export class HighPrecisionPoints extends THREE.Points implements HighPrecisionOb
         super.updateMatrixWorld(force);
 
         if (doUpdateMatrixWorldInverse) {
-            this.matrixWorldInverse.getInverse(this.matrixWorld);
+            this.matrixWorldInverse.copy(this.matrixWorld).invert();
         }
     }
 }
