@@ -193,9 +193,7 @@ describe("MapView Picking", async function() {
         if (mapView.textElementsRenderer.loading) {
             await mapView.textElementsRenderer.waitLoaded();
         }
-        sinon
-            .stub(mapView.textElementsRenderer, "renderText")
-            .callsFake((_camera: THREE.OrthographicCamera) => {});
+        sinon.stub(mapView.textElementsRenderer, "renderText").callsFake((_farPlane: number) => {});
 
         const geoJsonDataProvider = new GeoJsonDataProvider("italy_test", GEOJSON_DATA, {
             tiler: new GeoJsonTiler()

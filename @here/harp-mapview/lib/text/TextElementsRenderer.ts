@@ -32,11 +32,12 @@ import * as THREE from "three";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { overlayTextElement } from "../geometry/overlayOnElevation";
+import { MapViewImageCache } from "../image/MapViewImageCache";
 import { PickObjectType } from "../PickHandler";
 import { PickListener } from "../PickListener";
 import { PoiManager } from "../poi/PoiManager";
 import { PoiLayer, PoiRenderer } from "../poi/PoiRenderer";
-import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
+import { IBox, LineWithBound, ScreenCollisions, ScreenCollisionsDebug } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
@@ -140,6 +141,9 @@ const tempPoiScreenPosition = new THREE.Vector2();
 const tmpTextBufferCreationParams: TextBufferCreationParameters = {};
 const tmpAdditionParams: AdditionParameters = {};
 const tmpBufferAdditionParams: TextBufferAdditionParameters = {};
+const cache = {
+    vector2: [new THREE.Vector2()]
+};
 
 class TileTextElements {
     constructor(readonly tile: Tile, readonly group: TextElementGroup) {}
@@ -342,44 +346,59 @@ export class TextElementsRenderer {
     private m_addNewLabels: boolean = true;
 
     private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
+    private readonly m_camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
     private m_defaultFontCatalogConfig: FontCatalogConfig | undefined;
-
+    private m_poiRenderer: PoiRenderer;
+    private m_textStyleCache: TextStyleCache = new TextStyleCache();
+    private m_screenCollisions: ScreenCollisions | ScreenCollisionsDebug = new ScreenCollisions();
+    private m_textCanvasFactory: TextCanvasFactory;
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
      * a preprocessing step, which is not done every frame, and also renders the placed
      * {@link TextElement}s every frame.
      *
      * @param m_viewState - State of the view for which this renderer will draw text.
-     * @param m_viewCamera - Camera used by the view for which this renderer will draw text.
      * @param m_viewUpdateCallback - To be called whenever the view needs to be updated.
-     * @param m_screenCollisions - General 2D screen occlusion management, may be shared between
-     *     instances.
      * @param m_screenProjector - Projects 3D coordinates into screen space.
-     * @param m_textCanvasFactory - To create TextCanvas instances.
-     * @param m_poiRenderer - To render Icons.
      * @param m_poiManager - To prepare pois for rendering.
+     * @param m_renderer - The renderer to be used.
+     * @param m_imageCaches - The Image Caches to look for Icons.
      * @param options - Configuration options for the text renderer. See
      * [[TextElementsRendererOptions]].
      */
     constructor(
         private readonly m_viewState: ViewState,
-        private readonly m_viewCamera: THREE.Camera,
         private readonly m_viewUpdateCallback: ViewUpdateCallback,
-        private readonly m_screenCollisions: ScreenCollisions,
         private readonly m_screenProjector: ScreenProjector,
-        private readonly m_textCanvasFactory: TextCanvasFactory,
         private readonly m_poiManager: PoiManager,
-        private readonly m_poiRenderer: PoiRenderer,
-        private m_textStyleCache: TextStyleCache = new TextStyleCache(),
+        private m_renderer: THREE.WebGLRenderer,
+        private readonly m_imageCaches: MapViewImageCache[],
         options: TextElementsRendererOptions
     ) {
         this.m_options = { ...options };
         initializeDefaultOptions(this.m_options);
+        if (
+            this.m_options.collisionDebugCanvas !== undefined &&
+            this.m_options.collisionDebugCanvas !== null
+        ) {
+            this.m_screenCollisions = new ScreenCollisionsDebug(
+                this.m_options.collisionDebugCanvas
+            );
+        }
 
+        this.m_textCanvasFactory = new TextCanvasFactory(this.m_renderer);
         this.m_textCanvasFactory.setGlyphCountLimits(
             this.m_options.minNumGlyphs!,
             this.m_options.maxNumGlyphs!
         );
+
+        this.m_poiRenderer = new PoiRenderer(
+            this.m_renderer,
+            this.m_poiManager,
+            this.m_imageCaches
+        );
+
+        this.initializeCamera();
 
         this.initializeDefaultFontCatalog();
         this.initializeTextElementStyles();
@@ -410,6 +429,46 @@ export class TextElementsRenderer {
     }
 
     /**
+     * @internal
+     * @hidden
+     *
+     * This is exposed for the usage in testing only
+     */
+    set textCanvasFactory(textCanvasFactory: TextCanvasFactory) {
+        this.m_textCanvasFactory = textCanvasFactory;
+    }
+
+    /**
+     * @internal
+     * @hidden
+     *
+     * This is exposed for the usage in testing only
+     */
+    set poiRenderer(poiRenderer: PoiRenderer) {
+        this.m_poiRenderer = poiRenderer;
+    }
+
+    /**
+     * @internal
+     * @hidden
+     *
+     * This is exposed for the usage in testing only
+     */
+    get screenCollisions(): ScreenCollisions {
+        return this.m_screenCollisions;
+    }
+
+    /**
+     * @internal
+     * @hidden
+     *
+     * This is exposed for the usage in testing only
+     */
+    set screenCollisions(screenCollisions: ScreenCollisions) {
+        this.m_screenCollisions = screenCollisions;
+    }
+
+    /**
      * If `true`, a replacement glyph ("?") is rendered for every missing glyph.
      */
     get showReplacementGlyphs() {
@@ -427,6 +486,16 @@ export class TextElementsRenderer {
                 textCanvas.fontCatalog.showReplacementGlyphs = value;
             }
         });
+    }
+
+    restoreRenderers(renderer: THREE.WebGLRenderer) {
+        this.m_renderer = renderer;
+        this.m_poiRenderer = new PoiRenderer(
+            this.m_renderer,
+            this.m_poiManager,
+            this.m_imageCaches
+        );
+        //TODO: restore TextCanvasRenderers
     }
 
     /**
@@ -487,20 +556,21 @@ export class TextElementsRenderer {
      *
      * @param camera - Orthographic camera to use.
      */
-    renderText(camera: THREE.OrthographicCamera) {
+    renderText(farPlane: number) {
+        this.m_camera.far = farPlane;
         this.updateGlyphDebugMesh();
 
         let previousLayer: PoiLayer | undefined;
         this.m_poiRenderer.update();
         for (const poiLayer of this.m_poiRenderer.layers) {
             for (const [, textCanvas] of this.m_textCanvases) {
-                textCanvas?.render(camera, previousLayer?.id, poiLayer.id, undefined, false);
+                textCanvas?.render(this.m_camera, previousLayer?.id, poiLayer.id, undefined, false);
             }
-            this.m_poiRenderer.render(camera, poiLayer);
+            this.m_poiRenderer.render(this.m_camera, poiLayer);
             previousLayer = poiLayer;
         }
         for (const [, textCanvas] of this.m_textCanvases) {
-            textCanvas?.render(camera, previousLayer?.id, undefined, undefined, false);
+            textCanvas?.render(this.m_camera, previousLayer?.id, undefined, undefined, false);
         }
     }
 
@@ -1007,6 +1077,22 @@ export class TextElementsRenderer {
         return textElement.glyphs !== undefined;
     }
 
+    private initializeCamera() {
+        this.m_camera.position.z = 1;
+        this.m_camera.near = 0;
+    }
+
+    updateCamera() {
+        const { width, height } = this.m_renderer.getSize(cache.vector2[0]);
+        this.m_camera.left = width / -2;
+        this.m_camera.right = width / 2;
+        this.m_camera.bottom = height / -2;
+        this.m_camera.top = height / 2;
+        this.m_camera.updateProjectionMatrix();
+        this.m_camera.updateMatrixWorld(false);
+        this.m_screenCollisions.update(width, height);
+    }
+
     private initializeDefaultFontCatalog() {
         if (this.m_options.fontCatalog) {
             this.m_defaultFontCatalogConfig = FontCatalogLoader.createDefaultFontCatalogConfig(
@@ -1240,7 +1326,6 @@ export class TextElementsRenderer {
                     ? textElementState.lineMarkerIndex
                     : undefined,
                 this.m_viewState,
-                this.m_viewCamera,
                 this.m_poiManager,
                 maxViewDistance
             );

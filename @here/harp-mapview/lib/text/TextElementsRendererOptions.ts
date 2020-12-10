@@ -126,6 +126,11 @@ export interface TextElementsRendererOptions {
      * @default [[DEFAULT_MAX_DISTANCE_TO_BORDER]].
      */
     maxPoiDistanceToBorder?: number;
+
+    /**
+     * An optional canvas element that renders 2D collision debug information.
+     */
+    collisionDebugCanvas?: HTMLCanvasElement;
 }
 
 /**

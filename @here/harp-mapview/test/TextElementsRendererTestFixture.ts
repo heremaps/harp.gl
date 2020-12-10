@@ -12,7 +12,6 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
-import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { ScreenProjector } from "../lib/ScreenProjector";
 import { DEFAULT_FONT_CATALOG_NAME, FontCatalogLoader } from "../lib/text/FontCatalogLoader";
 import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
@@ -20,7 +19,6 @@ import { TextElement } from "../lib/text/TextElement";
 import { TextElementsRenderer } from "../lib/text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "../lib/text/TextElementsRendererOptions";
 import { TextElementType } from "../lib/text/TextElementType";
-import { TextStyleCache } from "../lib/text/TextStyleCache";
 import { ViewState } from "../lib/text/ViewState";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
@@ -98,7 +96,6 @@ function createScreenProjector(): ScreenProjector {
  * Test fixture used to test TextElementsRenderer.
  */
 export class TestFixture {
-    private readonly m_screenCollisions: ScreenCollisions;
     private readonly tileLists: DataSourceTileList[] = [];
     private readonly m_poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>;
     private readonly m_elevationProviderStub: ElevationProviderStub;
@@ -122,8 +119,6 @@ export class TestFixture {
     private readonly m_allTextElements: TextElement[][] = [];
 
     constructor(readonly sandbox: sinon.SinonSandbox) {
-        this.m_screenCollisions = new ScreenCollisions();
-        this.m_screenCollisions.update(SCREEN_WIDTH, SCREEN_HEIGHT);
         this.m_viewState = createViewState(new THREE.Vector3(), sandbox);
         this.m_renderPoiSpy = sandbox.spy();
         this.m_addTextSpy = sandbox.spy();
@@ -131,7 +126,6 @@ export class TestFixture {
         this.m_poiRendererStub = stubPoiRenderer(this.sandbox, this.m_renderPoiSpy);
         this.m_elevationProviderStub = stubElevationProvider(this.sandbox);
         this.m_screenProjector = createScreenProjector();
-        this.syncCamera();
     }
 
     /**
@@ -168,16 +162,18 @@ export class TestFixture {
         this.m_textCanvasFactoryStub = stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub);
         this.m_textRenderer = new TextElementsRenderer(
             this.m_viewState,
-            this.m_camera,
             dummyUpdateCall,
-            this.m_screenCollisions,
             this.m_screenProjector,
-            (this.m_textCanvasFactoryStub as unknown) as TextCanvasFactory,
             stubPoiManager(this.sandbox),
-            (this.m_poiRendererStub as unknown) as PoiRenderer,
-            new TextStyleCache(this.m_theme.textStyles),
+            sinon.createStubInstance(THREE.WebGLRenderer),
+            [],
             this.m_options
         );
+        this.m_textRenderer.screenCollisions.update(SCREEN_WIDTH, SCREEN_HEIGHT);
+        this.m_textRenderer.updateTextStyles(this.m_theme.textStyles);
+        this.m_textRenderer.textCanvasFactory = (this
+            .m_textCanvasFactoryStub as unknown) as TextCanvasFactory;
+        this.m_textRenderer.poiRenderer = (this.m_poiRendererStub as unknown) as PoiRenderer;
         this.m_loadCatalogStub.yieldOn("onSuccess", DEFAULT_FONT_CATALOG_NAME, this.m_fontCatalog);
         return this.m_textRenderer.waitLoaded();
     }
@@ -325,9 +321,13 @@ export class TestFixture {
         if (collisionEnabled && this.m_screenCollisionTestStub !== undefined) {
             this.m_screenCollisionTestStub.restore();
             this.m_screenCollisionTestStub = undefined;
-        } else if (!collisionEnabled && this.m_screenCollisionTestStub === undefined) {
+        } else if (
+            !collisionEnabled &&
+            this.m_screenCollisionTestStub === undefined &&
+            this.m_textRenderer?.screenCollisions
+        ) {
             this.m_screenCollisionTestStub = (this.sandbox
-                .stub(this.m_screenCollisions, "intersectsDetails")
+                .stub(this.m_textRenderer?.screenCollisions, "intersectsDetails")
                 .returns(false) as unknown) as sinon.SinonStub;
         }
         if (this.textRenderer.loading) {
@@ -649,13 +649,5 @@ export class TestFixture {
         // of the next frame.
         const currentFrame = this.m_viewState.frameNumber - 2;
         return "Frame " + currentFrame + ", label '" + textElement.text + "': ";
-    }
-
-    private syncCamera() {
-        this.m_camera.lookAt(
-            this.m_camera.position.add(
-                this.m_viewState.lookAtVector.multiplyScalar(this.m_viewState.lookAtDistance)
-            )
-        );
     }
 }
