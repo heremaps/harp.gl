@@ -440,7 +440,7 @@ export class SolidLineMesh extends THREE.Mesh {
         assert(geometry.index !== null, "Geometry does not have indices");
         const matrixWorld = mesh.matrixWorld;
 
-        tmpInverseMatrix.getInverse(matrixWorld);
+        tmpInverseMatrix.copy(matrixWorld).invert();
         const localRay = tmpRay.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix);
 
         // Test intersection of ray with each of the features within the mesh.

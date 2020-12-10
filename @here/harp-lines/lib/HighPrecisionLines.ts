@@ -99,7 +99,7 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
         super.updateMatrixWorld(force);
 
         if (doUpdateMatrixWorldInverse) {
-            this.matrixWorldInverse.getInverse(this.matrixWorld);
+            this.matrixWorldInverse.copy(this.matrixWorld).invert();
         }
     }
 }
@@ -162,7 +162,7 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
         super.updateMatrixWorld(force);
 
         if (doUpdateMatrixWorldInverse) {
-            this.matrixWorldInverse.getInverse(this.matrixWorld);
+            this.matrixWorldInverse.copy(this.matrixWorld).invert();
         }
     }
 }

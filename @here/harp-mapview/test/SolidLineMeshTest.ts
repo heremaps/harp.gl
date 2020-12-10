@@ -491,7 +491,7 @@ describe("SolidLineMesh", function() {
             vertex1.toArray().concat(vertex2.toArray()),
             bitangent.toArray()
         ).build();
-        const localToWorld = new THREE.Matrix4().getInverse(worldToLocal);
+        const localToWorld = new THREE.Matrix4().copy(worldToLocal).invert();
         mesh.applyMatrix4(localToWorld);
         mesh.updateMatrixWorld();
 
