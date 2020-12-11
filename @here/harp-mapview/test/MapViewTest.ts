@@ -35,7 +35,7 @@ import { MapObjectAdapter } from "../lib/MapObjectAdapter";
 import { MapView, MapViewEventNames, MapViewOptions } from "../lib/MapView";
 import { DEFAULT_CLEAR_COLOR } from "../lib/MapViewEnvironment";
 import { MapViewFog } from "../lib/MapViewFog";
-import { FontCatalogLoader } from "../lib/text/FontCatalogLoader";
+import * as FontCatalogLoader from "../lib/text/FontCatalogLoader";
 import { MapViewUtils } from "../lib/Utils";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
@@ -69,7 +69,7 @@ describe("MapView", function() {
         sandbox
             .stub(THREE, "WebGL1Renderer")
             .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
-        sandbox.stub(FontCatalogLoader, "loadCatalog").resolves();
+        sandbox.stub(FontCatalogLoader, "loadFontCatalog").resolves();
         if (inNodeContext) {
             const theGlobal: any = global;
             theGlobal.window = { window: { devicePixelRatio: 10 } };

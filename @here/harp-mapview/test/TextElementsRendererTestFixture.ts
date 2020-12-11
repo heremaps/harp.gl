@@ -12,8 +12,9 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
+import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { ScreenProjector } from "../lib/ScreenProjector";
-import { DEFAULT_FONT_CATALOG_NAME, FontCatalogLoader } from "../lib/text/FontCatalogLoader";
+import * as FontCatalogLoader from "../lib/text/FontCatalogLoader";
 import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
 import { TextElement } from "../lib/text/TextElement";
 import { TextElementsRenderer } from "../lib/text/TextElementsRenderer";
@@ -96,6 +97,7 @@ function createScreenProjector(): ScreenProjector {
  * Test fixture used to test TextElementsRenderer.
  */
 export class TestFixture {
+    private readonly m_screenCollisions: ScreenCollisions;
     private readonly tileLists: DataSourceTileList[] = [];
     private readonly m_poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>;
     private readonly m_elevationProviderStub: ElevationProviderStub;
@@ -104,7 +106,6 @@ export class TestFixture {
     private readonly m_addTextBufferObjSpy: sinon.SinonSpy;
     private readonly m_dataSource: FakeOmvDataSource = new FakeOmvDataSource({ name: "omv" });
     private readonly m_screenProjector: ScreenProjector;
-    private readonly m_camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
     private readonly m_theme: Theme = {};
     private m_viewState: ViewState;
     private m_options: TextElementsRendererOptions = {};
@@ -119,6 +120,8 @@ export class TestFixture {
     private readonly m_allTextElements: TextElement[][] = [];
 
     constructor(readonly sandbox: sinon.SinonSandbox) {
+        this.m_screenCollisions = new ScreenCollisions();
+        this.m_screenCollisions.update(SCREEN_WIDTH, SCREEN_HEIGHT);
         this.m_viewState = createViewState(new THREE.Vector3(), sandbox);
         this.m_renderPoiSpy = sandbox.spy();
         this.m_addTextSpy = sandbox.spy();
@@ -158,7 +161,8 @@ export class TestFixture {
             DEF_TEXT_HEIGHT
         );
         const dummyUpdateCall = () => {};
-        this.m_loadCatalogStub = this.sandbox.stub(FontCatalogLoader, "loadCatalog").resolves();
+        this.m_loadCatalogStub = this.sandbox.stub(FontCatalogLoader, "loadFontCatalog").resolves();
+
         this.m_textCanvasFactoryStub = stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub);
         this.m_textRenderer = new TextElementsRenderer(
             this.m_viewState,
@@ -167,14 +171,13 @@ export class TestFixture {
             stubPoiManager(this.sandbox),
             sinon.createStubInstance(THREE.WebGLRenderer),
             [],
-            this.m_options
+            this.m_options,
+            (this.m_textCanvasFactoryStub as unknown) as TextCanvasFactory,
+            (this.m_poiRendererStub as unknown) as PoiRenderer,
+            this.m_screenCollisions
         );
-        this.m_textRenderer.screenCollisions.update(SCREEN_WIDTH, SCREEN_HEIGHT);
         this.m_textRenderer.updateTextStyles(this.m_theme.textStyles);
-        this.m_textRenderer.textCanvasFactory = (this
-            .m_textCanvasFactoryStub as unknown) as TextCanvasFactory;
-        this.m_textRenderer.poiRenderer = (this.m_poiRendererStub as unknown) as PoiRenderer;
-        this.m_loadCatalogStub.yieldOn("onSuccess", DEFAULT_FONT_CATALOG_NAME, this.m_fontCatalog);
+        this.m_loadCatalogStub.yieldOn("onSuccess", "default", this.m_fontCatalog);
         return this.m_textRenderer.waitLoaded();
     }
 
@@ -321,13 +324,9 @@ export class TestFixture {
         if (collisionEnabled && this.m_screenCollisionTestStub !== undefined) {
             this.m_screenCollisionTestStub.restore();
             this.m_screenCollisionTestStub = undefined;
-        } else if (
-            !collisionEnabled &&
-            this.m_screenCollisionTestStub === undefined &&
-            this.m_textRenderer?.screenCollisions
-        ) {
+        } else if (!collisionEnabled && this.m_screenCollisionTestStub === undefined) {
             this.m_screenCollisionTestStub = (this.sandbox
-                .stub(this.m_textRenderer?.screenCollisions, "intersectsDetails")
+                .stub(this.m_screenCollisions, "intersectsDetails")
                 .returns(false) as unknown) as sinon.SinonStub;
         }
         if (this.textRenderer.loading) {

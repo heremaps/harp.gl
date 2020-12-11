@@ -42,7 +42,7 @@ import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
 import { DataSourceTileList } from "../VisibleTileSet";
-import { DEFAULT_FONT_CATALOG_NAME, FontCatalogLoader } from "./FontCatalogLoader";
+import { loadFontCatalog } from "./FontCatalogLoader";
 import {
     checkReadyForPlacement,
     computeViewDistance,
@@ -87,6 +87,8 @@ enum Pass {
 }
 
 export type TextCanvases = Map<string, TextCanvas | undefined>;
+
+export const DEFAULT_FONT_CATALOG_NAME = "default";
 
 /**
  * Default distance scale. Will be applied if distanceScale is not defined in the technique.
@@ -320,6 +322,13 @@ function isPlacementTimeExceeded(startTime: number | undefined): boolean {
     return false;
 }
 
+function createDefaultFontCatalogConfig(defaultFontCatalogUrl: string): FontCatalogConfig {
+    return {
+        name: DEFAULT_FONT_CATALOG_NAME,
+        url: defaultFontCatalogUrl
+    };
+}
+
 /**
  *
  * Internal class to manage all text rendering.
@@ -350,8 +359,11 @@ export class TextElementsRenderer {
     private m_defaultFontCatalogConfig: FontCatalogConfig | undefined;
     private m_poiRenderer: PoiRenderer;
     private m_textStyleCache: TextStyleCache = new TextStyleCache();
-    private m_screenCollisions: ScreenCollisions | ScreenCollisionsDebug = new ScreenCollisions();
-    private m_textCanvasFactory: TextCanvasFactory;
+    private readonly m_screenCollisions:
+        | ScreenCollisions
+        | ScreenCollisionsDebug = new ScreenCollisions();
+
+    private readonly m_textCanvasFactory: TextCanvasFactory;
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
      * a preprocessing step, which is not done every frame, and also renders the placed
@@ -364,6 +376,9 @@ export class TextElementsRenderer {
      * @param m_renderer - The renderer to be used.
      * @param m_imageCaches - The Image Caches to look for Icons.
      * @param options - Configuration options for the text renderer. See
+     * @param textCanvasFactory - Optional A TextCanvasFactory to override the default.
+     * @param poiRenderer - Optional A PoiRenderer to override the default.
+     * @param screenCollisions - Optional  ScreenCollisions to override the default.
      * [[TextElementsRendererOptions]].
      */
     constructor(
@@ -373,11 +388,16 @@ export class TextElementsRenderer {
         private readonly m_poiManager: PoiManager,
         private m_renderer: THREE.WebGLRenderer,
         private readonly m_imageCaches: MapViewImageCache[],
-        options: TextElementsRendererOptions
+        options: TextElementsRendererOptions,
+        textCanvasFactory?: TextCanvasFactory,
+        poiRenderer?: PoiRenderer,
+        screenCollisions?: ScreenCollisions
     ) {
         this.m_options = { ...options };
         initializeDefaultOptions(this.m_options);
-        if (
+        if (screenCollisions) {
+            this.m_screenCollisions = screenCollisions;
+        } else if (
             this.m_options.collisionDebugCanvas !== undefined &&
             this.m_options.collisionDebugCanvas !== null
         ) {
@@ -386,17 +406,14 @@ export class TextElementsRenderer {
             );
         }
 
-        this.m_textCanvasFactory = new TextCanvasFactory(this.m_renderer);
+        this.m_textCanvasFactory = textCanvasFactory ?? new TextCanvasFactory(this.m_renderer);
         this.m_textCanvasFactory.setGlyphCountLimits(
             this.m_options.minNumGlyphs!,
             this.m_options.maxNumGlyphs!
         );
 
-        this.m_poiRenderer = new PoiRenderer(
-            this.m_renderer,
-            this.m_poiManager,
-            this.m_imageCaches
-        );
+        this.m_poiRenderer =
+            poiRenderer ?? new PoiRenderer(this.m_renderer, this.m_poiManager, this.m_imageCaches);
 
         this.initializeCamera();
 
@@ -426,46 +443,6 @@ export class TextElementsRenderer {
 
     set delayLabelsUntilMovementFinished(delay: boolean) {
         this.m_options.delayLabelsUntilMovementFinished = delay;
-    }
-
-    /**
-     * @internal
-     * @hidden
-     *
-     * This is exposed for the usage in testing only
-     */
-    set textCanvasFactory(textCanvasFactory: TextCanvasFactory) {
-        this.m_textCanvasFactory = textCanvasFactory;
-    }
-
-    /**
-     * @internal
-     * @hidden
-     *
-     * This is exposed for the usage in testing only
-     */
-    set poiRenderer(poiRenderer: PoiRenderer) {
-        this.m_poiRenderer = poiRenderer;
-    }
-
-    /**
-     * @internal
-     * @hidden
-     *
-     * This is exposed for the usage in testing only
-     */
-    get screenCollisions(): ScreenCollisions {
-        return this.m_screenCollisions;
-    }
-
-    /**
-     * @internal
-     * @hidden
-     *
-     * This is exposed for the usage in testing only
-     */
-    set screenCollisions(screenCollisions: ScreenCollisions) {
-        this.m_screenCollisions = screenCollisions;
     }
 
     /**
@@ -1095,7 +1072,7 @@ export class TextElementsRenderer {
 
     private initializeDefaultFontCatalog() {
         if (this.m_options.fontCatalog) {
-            this.m_defaultFontCatalogConfig = FontCatalogLoader.createDefaultFontCatalogConfig(
+            this.m_defaultFontCatalogConfig = createDefaultFontCatalogConfig(
                 this.m_options.fontCatalog
             );
             this.addDefaultTextCanvas();
@@ -1125,7 +1102,7 @@ export class TextElementsRenderer {
         } else {
             // Reserve map space, until loaded or error
             this.m_textCanvases.set(fontCatalogConfig.name, undefined);
-            const newLoadPromise = FontCatalogLoader.loadCatalog(fontCatalogConfig, catalogCallback)
+            const newLoadPromise = loadFontCatalog(fontCatalogConfig, catalogCallback)
                 .then(() => {
                     --this.m_loadPromisesCount;
                     this.m_viewUpdateCallback();

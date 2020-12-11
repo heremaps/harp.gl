@@ -7,8 +7,8 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
-import { DEFAULT_FONT_CATALOG_NAME } from "../lib/text/FontCatalogLoader";
 import { TextElement } from "../lib/text/TextElement";
+import { DEFAULT_FONT_CATALOG_NAME } from "../lib/text/TextElementsRenderer";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 import {
     DEF_PATH,
