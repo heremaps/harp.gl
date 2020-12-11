@@ -903,7 +903,7 @@ describe("TextElementsRenderer", function() {
             },
             {
                 name: "catalog2",
-                url: "some-url-2"
+                url: "some-other-url-2"
             }
         ]);
         expect(fixture.loadCatalogStub.calledThrice, "no new catalog added").to.be.true;
@@ -941,5 +941,13 @@ describe("TextElementsRenderer", function() {
             }
         ]);
         expect(fixture.loadCatalogStub.callCount).to.equal(6);
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: DEFAULT_FONT_CATALOG_NAME,
+                url: "some-other-url"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.callCount).to.equal(7);
     });
 });
