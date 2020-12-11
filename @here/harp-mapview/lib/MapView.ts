@@ -3853,10 +3853,7 @@ export class MapView extends EventDispatcher {
         textStyles?: TextStyleDefinition[],
         defaultTextStyle?: TextStyleDefinition
     ): Promise<void> {
-        await this.m_textElementsRenderer.updateFontCatalogs(
-            fontCatalogs,
-            !this.m_options.fontCatalog
-        );
+        await this.m_textElementsRenderer.updateFontCatalogs(fontCatalogs);
         await this.m_textElementsRenderer.updateTextStyles(textStyles, defaultTextStyle);
         this.update();
     }

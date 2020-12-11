@@ -479,16 +479,28 @@ export class TextElementsRenderer {
      * Updates the FontCatalogs used by this {@link TextElementsRenderer}.
      *
      * @param fontCatalogs - The new list of {@link FontCatalogConfig}s
-     * @param overrideDefault - Optional, if `true` removes default catalog @default `false`.
      */
-    async updateFontCatalogs(fontCatalogs?: FontCatalogConfig[], overrideDefault: boolean = false) {
-        if (this.m_defaultFontCatalogConfig && !overrideDefault) {
-            // Never remove the default Canvas if set per configuration
-            if (!fontCatalogs) {
-                fontCatalogs = [];
+    async updateFontCatalogs(fontCatalogs?: FontCatalogConfig[]) {
+        if (this.m_defaultFontCatalogConfig) {
+            if (
+                !fontCatalogs ||
+                fontCatalogs.findIndex(config => {
+                    return config.name === DEFAULT_FONT_CATALOG_NAME;
+                }) === -1
+            ) {
+                // not other default catalog available, keep the old one
+                if (!fontCatalogs) {
+                    fontCatalogs = [];
+                }
+                // Never remove the default Canvas if set per configuration
+                fontCatalogs?.unshift(this.m_defaultFontCatalogConfig);
+            } else {
+                if (this.m_textCanvases.has(DEFAULT_FONT_CATALOG_NAME)) {
+                    this.m_textCanvases.delete(DEFAULT_FONT_CATALOG_NAME);
+                }
             }
-            fontCatalogs?.unshift(this.m_defaultFontCatalogConfig);
         }
+
         if (fontCatalogs && fontCatalogs.length > 0) {
             // Remove obsolete ones
             for (const [name] of this.m_textCanvases) {
@@ -508,9 +520,7 @@ export class TextElementsRenderer {
         } else {
             this.m_textCanvases.clear();
         }
-        if (this.hasDefaultTextCanvas()) {
-            this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
-        }
+        this.initializeTextElementStyles();
     }
 
     async updateTextStyles(
@@ -520,6 +530,9 @@ export class TextElementsRenderer {
         // TODO: this is an intermeditate solution, in the end this
         // should not create a new cache, but update the former one
         this.m_textStyleCache = new TextStyleCache(textStyles, defaultTextStyle);
+        if (defaultTextStyle !== undefined) {
+            await this.addDefaultTextCanvas();
+        }
         this.initializeTextElementStyles();
         await this.waitLoaded();
     }

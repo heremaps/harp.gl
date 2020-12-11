@@ -931,18 +931,15 @@ describe("TextElementsRenderer", function() {
             "adds catalog2 back, removed in last step"
         ).to.equal(5);
 
-        await fixture.textRenderer.updateFontCatalogs([], true);
+        await fixture.textRenderer.updateFontCatalogs([]);
         expect(fixture.loadCatalogStub.callCount).to.equal(5);
 
-        await fixture.textRenderer.updateFontCatalogs(
-            [
-                {
-                    name: DEFAULT_FONT_CATALOG_NAME,
-                    url: "some-url"
-                }
-            ],
-            true
-        );
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: DEFAULT_FONT_CATALOG_NAME,
+                url: "some-url"
+            }
+        ]);
         expect(fixture.loadCatalogStub.callCount).to.equal(6);
     });
 });

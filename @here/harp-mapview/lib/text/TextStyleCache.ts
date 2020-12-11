@@ -356,6 +356,10 @@ export class TextStyleCache {
         if (style.fontCatalog !== undefined) {
             const styledTextCanvas = textCanvases.get(style.fontCatalog);
             style.textCanvas = styledTextCanvas;
+            if (textCanvases.has(style.fontCatalog) && !styledTextCanvas) {
+                logger.info(`fontCatalog(${style.fontCatalog}), not yet loaded`);
+                return;
+            }
         }
         if (style.textCanvas === undefined) {
             if (style.fontCatalog !== undefined) {
