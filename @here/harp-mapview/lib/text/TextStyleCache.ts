@@ -38,7 +38,7 @@ import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import { ColorCache } from "../ColorCache";
 import { evaluateColorProperty } from "../DecodedTileHelpers";
 import { Tile } from "../Tile";
-import { TextCanvases } from "./TextElementsRenderer";
+import { DEFAULT_FONT_CATALOG_NAME, TextCanvases } from "./TextElementsRenderer";
 
 const logger = LoggerManager.instance.create("TextStyleCache");
 
@@ -69,7 +69,7 @@ const DEFAULT_STYLE_NAME = "default";
  */
 export interface TextElementStyle {
     name: string;
-    fontCatalog: string;
+    fontCatalog?: string;
     renderParams: TextRenderParameters;
     layoutParams: TextLayoutParameters;
     textCanvas?: TextCanvas;
@@ -79,7 +79,7 @@ export class TextStyleCache {
     private readonly m_textStyles: Map<string, TextElementStyle> = new Map();
     private m_defaultStyle: TextElementStyle = {
         name: DEFAULT_STYLE_NAME,
-        fontCatalog: "",
+        fontCatalog: undefined,
         renderParams: defaultTextRenderStyle.params,
         layoutParams: defaultTextLayoutStyle.params
     };
@@ -110,6 +110,7 @@ export class TextStyleCache {
             this.m_defaultStyle = this.createTextElementStyle(styles[0], DEFAULT_STYLE_NAME);
         }
         this.m_defaultStyle.fontCatalog = defaultFontCatalogName;
+        this.m_defaultStyle.textCanvas = undefined;
     }
 
     initializeTextElementStyles(textCanvases: TextCanvases) {
@@ -368,9 +369,20 @@ export class TextStyleCache {
                      '${style.name}' not found`
                 );
             }
-            if (textCanvases.size > 0) {
-                style.textCanvas = textCanvases.values().next().value;
+            const defaultCanvas = textCanvases.get(DEFAULT_FONT_CATALOG_NAME);
+            if (defaultCanvas) {
+                style.textCanvas = defaultCanvas;
                 logger.info(`using default fontCatalog(${style.textCanvas?.fontCatalog.name}).`);
+            } else if (textCanvases.size > 0) {
+                for (const [, canvas] of textCanvases) {
+                    if (canvas) {
+                        style.textCanvas = canvas;
+                        logger.info(
+                            `using default fontCatalog(${style.textCanvas?.fontCatalog.name}).`
+                        );
+                        break;
+                    }
+                }
             }
         }
     }

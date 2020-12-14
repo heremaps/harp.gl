@@ -418,7 +418,7 @@ export class TextElementsRenderer {
         this.initializeCamera();
 
         this.initializeDefaultFontCatalog();
-        this.initializeTextElementStyles();
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }
 
     /**
@@ -520,7 +520,7 @@ export class TextElementsRenderer {
         } else {
             this.m_textCanvases.clear();
         }
-        this.initializeTextElementStyles();
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }
 
     async updateTextStyles(
@@ -530,15 +530,9 @@ export class TextElementsRenderer {
         // TODO: this is an intermeditate solution, in the end this
         // should not create a new cache, but update the former one
         this.m_textStyleCache = new TextStyleCache(textStyles, defaultTextStyle);
-        if (defaultTextStyle !== undefined) {
-            await this.addDefaultTextCanvas();
-        }
-        this.initializeTextElementStyles();
+        this.m_textStyleCache.initializeDefaultTextElementStyle(DEFAULT_FONT_CATALOG_NAME);
         await this.waitLoaded();
-    }
-
-    private hasDefaultTextCanvas(): boolean {
-        return this.m_textCanvases.values().next().value !== undefined;
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }
 
     /**
@@ -771,11 +765,14 @@ export class TextElementsRenderer {
     }
 
     private async addDefaultTextCanvas(): Promise<void> {
-        if (this.hasDefaultTextCanvas() || !this.m_defaultFontCatalogConfig) {
+        if (
+            this.m_textCanvases.has(DEFAULT_FONT_CATALOG_NAME) ||
+            !this.m_defaultFontCatalogConfig
+        ) {
             return;
         }
         await this.addTextCanvas(this.m_defaultFontCatalogConfig);
-        this.initializeTextElementStyles();
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }
 
     /**
@@ -1092,13 +1089,6 @@ export class TextElementsRenderer {
         }
     }
 
-    private initializeTextElementStyles() {
-        this.m_textStyleCache.initializeDefaultTextElementStyle(DEFAULT_FONT_CATALOG_NAME);
-        if (this.hasDefaultTextCanvas()) {
-            this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
-        }
-    }
-
     private async addTextCanvas(fontCatalogConfig: FontCatalogConfig): Promise<void> {
         const catalogCallback = (name: string, catalog: FontCatalog) => {
             if (this.m_textCanvases.has(name)) {
@@ -1110,12 +1100,19 @@ export class TextElementsRenderer {
                 this.m_textCanvases.set(name, loadedTextCanvas);
             }
         };
+        const errorCallback = () => {
+            this.m_textCanvases.delete(fontCatalogConfig.name);
+        };
         if (this.m_textCanvases.has(fontCatalogConfig.name)) {
             return Promise.resolve();
         } else {
             // Reserve map space, until loaded or error
             this.m_textCanvases.set(fontCatalogConfig.name, undefined);
-            const newLoadPromise = loadFontCatalog(fontCatalogConfig, catalogCallback)
+            const newLoadPromise = loadFontCatalog(
+                fontCatalogConfig,
+                catalogCallback,
+                errorCallback
+            )
                 .then(() => {
                     --this.m_loadPromisesCount;
                     this.m_viewUpdateCallback();
