@@ -493,7 +493,7 @@ export class TextElementsRenderer {
                     fontCatalogs = [];
                 }
                 // Never remove the default Canvas if set per configuration
-                fontCatalogs?.unshift(this.m_defaultFontCatalogConfig);
+                fontCatalogs.unshift(this.m_defaultFontCatalogConfig);
             } else {
                 if (this.m_textCanvases.has(DEFAULT_FONT_CATALOG_NAME)) {
                     this.m_textCanvases.delete(DEFAULT_FONT_CATALOG_NAME);
