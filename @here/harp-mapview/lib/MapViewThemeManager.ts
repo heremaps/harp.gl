@@ -137,10 +137,9 @@ export class MapViewThemeManager {
         this.m_theme.styles = theme.styles ?? {};
         this.m_theme.definitions = theme.definitions;
 
-        // TODO: this is asynchronouse too
         environment.clearBackgroundDataSource();
         for (const dataSource of this.m_mapView.dataSources) {
-            dataSource.setTheme(this.m_theme);
+            await dataSource.setTheme(this.m_theme);
         }
     }
 

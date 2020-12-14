@@ -66,19 +66,14 @@ import { MapViewThemeManager } from "./MapViewThemeManager";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
-import { PoiRenderer } from "./poi/PoiRenderer";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
-import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
-import { FontCatalogLoader } from "./text/FontCatalogLoader";
 import { MapViewState } from "./text/MapViewState";
-import { TextCanvasFactory } from "./text/TextCanvasFactory";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
-import { TextStyleCache } from "./text/TextStyleCache";
 import { Tile } from "./Tile";
 import { TileObjectRenderer } from "./TileObjectsRenderer";
 import { MapViewUtils } from "./Utils";
@@ -458,11 +453,6 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     enablePickTechnique?: boolean;
 
     /**
-     * An optional canvas element that renders 2D collision debug information.
-     */
-    collisionDebugCanvas?: HTMLCanvasElement;
-
-    /**
      * Maximum timeout, in milliseconds, before a [[MOVEMENT_FINISHED_EVENT]] is sent after the
      * latest frame with a camera movement. The default is 300ms.
      */
@@ -794,9 +784,6 @@ export class MapView extends EventDispatcher {
     private m_postEffects?: PostEffects;
 
     private readonly m_screenProjector: ScreenProjector;
-    private readonly m_screenCollisions:
-        | ScreenCollisions
-        | ScreenCollisionsDebug = new ScreenCollisions();
 
     private m_visibleTiles: VisibleTileSet;
     private readonly m_tileObjectRenderer: TileObjectRenderer;
@@ -815,8 +802,6 @@ export class MapView extends EventDispatcher {
     private readonly m_minCameraHeight: number = DEFAULT_MIN_CAMERA_HEIGHT;
     private m_geoMaxBounds?: GeoBox;
     private m_worldMaxBounds?: THREE.Box3 | OrientedBox3;
-
-    private readonly m_screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1);
 
     private readonly m_camera: THREE.PerspectiveCamera;
 
@@ -906,7 +891,6 @@ export class MapView extends EventDispatcher {
 
     private readonly m_poiManager: PoiManager = new PoiManager(this);
 
-    private m_poiRenderer: PoiRenderer;
     private readonly m_poiTableManager: PoiTableManager = new PoiTableManager(this);
 
     private readonly m_collisionDebugCanvas: HTMLCanvasElement | undefined;
@@ -1020,14 +1004,6 @@ export class MapView extends EventDispatcher {
 
         this.m_languages = this.m_options.languages;
         this.m_politicalView = this.m_options.politicalView;
-
-        if (
-            this.m_options.collisionDebugCanvas !== undefined &&
-            this.m_options.collisionDebugCanvas !== null
-        ) {
-            this.m_collisionDebugCanvas = this.m_options.collisionDebugCanvas;
-            this.m_screenCollisions = new ScreenCollisionsDebug(this.m_collisionDebugCanvas);
-        }
 
         this.handleRequestAnimationFrame = this.renderLoop.bind(this);
         this.m_pickHandler = new PickHandler(
@@ -1152,11 +1128,6 @@ export class MapView extends EventDispatcher {
 
         this.m_themeManager = new MapViewThemeManager(this, this.m_uriResolver);
 
-        this.m_poiRenderer = new PoiRenderer(this.m_renderer, this.m_poiManager, [
-            this.imageCache,
-            this.userImageCache
-        ]);
-
         // will initialize with an empty theme and updated when theme is loaded and set
         this.m_textElementsRenderer = this.createTextRenderer();
 
@@ -1253,7 +1224,6 @@ export class MapView extends EventDispatcher {
 
         this.m_enableMixedLod = enableMixedLod;
         this.m_visibleTiles = this.createVisibleTileSet();
-        //FIXME: Why is this needed: this.resetTextRenderer(theme);
         this.update();
     }
 
@@ -3267,15 +3237,9 @@ export class MapView extends EventDispatcher {
         this.m_rteCamera.position.setScalar(0);
         this.m_rteCamera.updateMatrixWorld(true);
 
-        this.m_screenCamera.left = width / -2;
-        this.m_screenCamera.right = width / 2;
-        this.m_screenCamera.bottom = height / -2;
-        this.m_screenCamera.top = height / 2;
-        this.m_screenCamera.updateProjectionMatrix();
-        this.m_screenCamera.updateMatrixWorld(false);
+        this.m_textElementsRenderer?.updateCamera();
 
         this.m_screenProjector.update(this.camera, width, height);
-        this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
         this.m_sceneEnvironment.update();
@@ -3534,7 +3498,6 @@ export class MapView extends EventDispatcher {
             this.m_visibleTiles.allVisibleTilesLoaded &&
             this.m_connectedDataSources.size + this.m_failedDataSources.size ===
                 this.m_tileDataSources.length &&
-            !this.m_textElementsRenderer.initializing &&
             !this.m_textElementsRenderer.loading
         ) {
             this.m_initialTextPlacementDone = true;
@@ -3584,8 +3547,11 @@ export class MapView extends EventDispatcher {
         // The camera used to render the scene.
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
 
-        if (this.renderLabels) {
-            this.prepareRenderTextElements(frameStartTime);
+        if (this.renderLabels && !this.m_pointOfView) {
+            this.m_textElementsRenderer.placeText(
+                this.m_visibleTiles.dataSourceTileList,
+                frameStartTime
+            );
         }
 
         if (gatherStatistics) {
@@ -3603,8 +3569,8 @@ export class MapView extends EventDispatcher {
             drawTime = PerformanceTimer.now();
         }
 
-        if (this.renderLabels) {
-            this.finishRenderTextElements();
+        if (this.renderLabels && !this.m_pointOfView) {
+            this.m_textElementsRenderer.renderText(this.m_viewRanges.maximum);
         }
 
         if (this.m_overlaySceneRoot.children.length > 0) {
@@ -3697,29 +3663,6 @@ export class MapView extends EventDispatcher {
         }
     }
 
-    private prepareRenderTextElements(time: number) {
-        // Disable rendering of text elements for debug camera. TextElements are rendered using an
-        // orthographic camera that covers the entire available screen space. Unfortunately, this
-        // particular camera set up is not compatible with the debug camera.
-        const debugCameraActive = this.m_pointOfView !== undefined;
-
-        if (debugCameraActive) {
-            return;
-        }
-
-        this.m_textElementsRenderer.placeText(this.m_visibleTiles.dataSourceTileList, time);
-    }
-
-    private finishRenderTextElements() {
-        const canRenderTextElements = this.m_pointOfView === undefined;
-
-        if (canRenderTextElements) {
-            // copy far value from scene camera, as the distance to the POIs matter now.
-            this.m_screenCamera.far = this.m_viewRanges.maximum;
-            this.m_textElementsRenderer.renderText(this.m_screenCamera);
-        }
-    }
-
     private setupCamera() {
         const { width, height } = this.getCanvasClientSize();
 
@@ -3744,9 +3687,6 @@ export class MapView extends EventDispatcher {
 
         // ### move & customize
         this.resize(width, height);
-
-        this.m_screenCamera.position.z = 1;
-        this.m_screenCamera.near = 0;
     }
 
     private createVisibleTileSet(): VisibleTileSet {
@@ -3886,26 +3826,18 @@ export class MapView extends EventDispatcher {
         tileObjectRenderer.setupRenderer();
     }
 
-    private createTextRenderer(
-        fontCatalogs?: FontCatalogConfig[],
-        textStyles?: TextStyleDefinition[],
-        defaultTextStyle?: TextStyleDefinition
-    ): TextElementsRenderer {
+    private createTextRenderer(): TextElementsRenderer {
         const updateCallback: ViewUpdateCallback = () => {
             this.update();
         };
 
         return new TextElementsRenderer(
             new MapViewState(this, this.checkIfTilesChanged.bind(this)),
-            this.m_camera,
             updateCallback,
-            this.m_screenCollisions,
             this.m_screenProjector,
-            new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
-            this.m_poiRenderer,
-            new FontCatalogLoader(fontCatalogs),
-            new TextStyleCache(textStyles, defaultTextStyle),
+            this.m_renderer,
+            [this.imageCache, this.userImageCache],
             this.m_options
         );
     }
@@ -3921,18 +3853,9 @@ export class MapView extends EventDispatcher {
         textStyles?: TextStyleDefinition[],
         defaultTextStyle?: TextStyleDefinition
     ): Promise<void> {
-        const overlayText = this.m_textElementsRenderer.overlayText;
-        this.m_poiRenderer.reset();
-        this.m_textElementsRenderer = this.createTextRenderer(
-            fontCatalogs,
-            textStyles,
-            defaultTextStyle
-        );
-        if (overlayText !== undefined) {
-            this.m_textElementsRenderer.addOverlayText(overlayText);
-        }
-        await this.m_textElementsRenderer.waitInitialized();
-        await this.m_textElementsRenderer.waitLoaded();
+        await this.m_textElementsRenderer.updateFontCatalogs(fontCatalogs);
+        await this.m_textElementsRenderer.updateTextStyles(textStyles, defaultTextStyle);
+        this.update();
     }
 
     /**
@@ -3953,10 +3876,7 @@ export class MapView extends EventDispatcher {
     private readonly onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
-            this.m_poiRenderer = new PoiRenderer(this.m_renderer, this.m_poiManager, [
-                this.imageCache,
-                this.userImageCache
-            ]);
+            this.textElementsRenderer.restoreRenderers(this.m_renderer);
             this.getTheme().then(theme => {
                 this.m_sceneEnvironment.updateClearColor(theme.clearColor, theme.clearAlpha);
                 this.update();

@@ -184,7 +184,6 @@ const tmpPlacementBounds = new THREE.Box2();
  * @param textElement - The Text element to check.
  * @param poiIndex - If TextElement is a line marker, the index into the line marker positions
  * @param viewState - The view for which the text element will be placed.
- * @param viewCamera - The view's camera.
  * @param m_poiManager - To prepare pois for rendering.
  * @param maxViewDistance - If specified, text elements farther than this max distance will be
  *                          rejected.
@@ -195,7 +194,6 @@ export function checkReadyForPlacement(
     textElement: TextElement,
     poiIndex: number | undefined,
     viewState: ViewState,
-    viewCamera: THREE.Camera,
     poiManager: PoiManager,
     maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {

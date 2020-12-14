@@ -190,9 +190,10 @@ describe("MapView Picking", async function() {
         });
 
         await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
-        sinon
-            .stub(mapView.textElementsRenderer, "renderText")
-            .callsFake((_camera: THREE.OrthographicCamera) => {});
+        if (mapView.textElementsRenderer.loading) {
+            await mapView.textElementsRenderer.waitLoaded();
+        }
+        sinon.stub(mapView.textElementsRenderer, "renderText").callsFake((_farPlane: number) => {});
 
         const geoJsonDataProvider = new GeoJsonDataProvider("italy_test", GEOJSON_DATA, {
             tiler: new GeoJsonTiler()

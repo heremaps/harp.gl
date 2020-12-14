@@ -3,7 +3,11 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LineMarkerTechnique } from "@here/harp-datasource-protocol";
+import {
+    FontCatalogConfig,
+    LineMarkerTechnique,
+    TextStyleDefinition
+} from "@here/harp-datasource-protocol";
 import { TileKey, Vector3Like } from "@here/harp-geoutils";
 import {
     AdditionParameters,
@@ -28,16 +32,17 @@ import * as THREE from "three";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { overlayTextElement } from "../geometry/overlayOnElevation";
+import { MapViewImageCache } from "../image/MapViewImageCache";
 import { PickObjectType } from "../PickHandler";
 import { PickListener } from "../PickListener";
 import { PoiManager } from "../poi/PoiManager";
 import { PoiLayer, PoiRenderer } from "../poi/PoiRenderer";
-import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
+import { IBox, LineWithBound, ScreenCollisions, ScreenCollisionsDebug } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
 import { DataSourceTileList } from "../VisibleTileSet";
-import { FontCatalogLoader } from "./FontCatalogLoader";
+import { loadFontCatalog } from "./FontCatalogLoader";
 import {
     checkReadyForPlacement,
     computeViewDistance,
@@ -80,6 +85,10 @@ enum Pass {
     PersistentLabels,
     NewLabels
 }
+
+export type TextCanvases = Map<string, TextCanvas | undefined>;
+
+export const DEFAULT_FONT_CATALOG_NAME = "default";
 
 /**
  * Default distance scale. Will be applied if distanceScale is not defined in the technique.
@@ -134,6 +143,9 @@ const tempPoiScreenPosition = new THREE.Vector2();
 const tmpTextBufferCreationParams: TextBufferCreationParameters = {};
 const tmpAdditionParams: AdditionParameters = {};
 const tmpBufferAdditionParams: TextBufferAdditionParameters = {};
+const cache = {
+    vector2: [new THREE.Vector2()]
+};
 
 class TileTextElements {
     constructor(readonly tile: Tile, readonly group: TextElementGroup) {}
@@ -310,18 +322,23 @@ function isPlacementTimeExceeded(startTime: number | undefined): boolean {
     return false;
 }
 
+function createDefaultFontCatalogConfig(defaultFontCatalogUrl: string): FontCatalogConfig {
+    return {
+        name: DEFAULT_FONT_CATALOG_NAME,
+        url: defaultFontCatalogUrl
+    };
+}
+
 /**
  *
  * Internal class to manage all text rendering.
  */
 export class TextElementsRenderer {
-    private m_initialized: boolean = false;
-    private m_initPromise: Promise<void> | undefined;
-    private m_glyphLoadingCount: number = 0;
+    private m_loadPromisesCount: number = 0;
     private m_loadPromise: Promise<any> | undefined;
     private readonly m_options: TextElementsRendererOptions;
 
-    private readonly m_textCanvases: TextCanvas[] = [];
+    private readonly m_textCanvases: TextCanvases = new Map();
 
     private m_overlayTextElements?: TextElement[];
 
@@ -338,46 +355,70 @@ export class TextElementsRenderer {
     private m_addNewLabels: boolean = true;
 
     private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
+    private readonly m_camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
+    private m_defaultFontCatalogConfig: FontCatalogConfig | undefined;
+    private m_poiRenderer: PoiRenderer;
+    private m_textStyleCache: TextStyleCache = new TextStyleCache();
+    private readonly m_screenCollisions:
+        | ScreenCollisions
+        | ScreenCollisionsDebug = new ScreenCollisions();
 
+    private readonly m_textCanvasFactory: TextCanvasFactory;
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
      * a preprocessing step, which is not done every frame, and also renders the placed
      * {@link TextElement}s every frame.
      *
      * @param m_viewState - State of the view for which this renderer will draw text.
-     * @param m_viewCamera - Camera used by the view for which this renderer will draw text.
      * @param m_viewUpdateCallback - To be called whenever the view needs to be updated.
-     * @param m_screenCollisions - General 2D screen occlusion management, may be shared between
-     *     instances.
      * @param m_screenProjector - Projects 3D coordinates into screen space.
-     * @param m_textCanvasFactory - To create TextCanvas instances.
-     * @param m_poiRenderer - To render Icons.
      * @param m_poiManager - To prepare pois for rendering.
-     * @param m_fontCatalogLoader - To load font catalogs.
-     * @param m_textStyleCache - Cache defining  text styles.
+     * @param m_renderer - The renderer to be used.
+     * @param m_imageCaches - The Image Caches to look for Icons.
      * @param options - Configuration options for the text renderer. See
+     * @param textCanvasFactory - Optional A TextCanvasFactory to override the default.
+     * @param poiRenderer - Optional A PoiRenderer to override the default.
+     * @param screenCollisions - Optional  ScreenCollisions to override the default.
      * [[TextElementsRendererOptions]].
      */
     constructor(
         private readonly m_viewState: ViewState,
-        private readonly m_viewCamera: THREE.Camera,
         private readonly m_viewUpdateCallback: ViewUpdateCallback,
-        private readonly m_screenCollisions: ScreenCollisions,
         private readonly m_screenProjector: ScreenProjector,
-        private readonly m_textCanvasFactory: TextCanvasFactory,
         private readonly m_poiManager: PoiManager,
-        private readonly m_poiRenderer: PoiRenderer,
-        private readonly m_fontCatalogLoader: FontCatalogLoader,
-        private readonly m_textStyleCache: TextStyleCache,
-        options: TextElementsRendererOptions
+        private m_renderer: THREE.WebGLRenderer,
+        private readonly m_imageCaches: MapViewImageCache[],
+        options: TextElementsRendererOptions,
+        textCanvasFactory?: TextCanvasFactory,
+        poiRenderer?: PoiRenderer,
+        screenCollisions?: ScreenCollisions
     ) {
         this.m_options = { ...options };
         initializeDefaultOptions(this.m_options);
+        if (screenCollisions) {
+            this.m_screenCollisions = screenCollisions;
+        } else if (
+            this.m_options.collisionDebugCanvas !== undefined &&
+            this.m_options.collisionDebugCanvas !== null
+        ) {
+            this.m_screenCollisions = new ScreenCollisionsDebug(
+                this.m_options.collisionDebugCanvas
+            );
+        }
 
+        this.m_textCanvasFactory = textCanvasFactory ?? new TextCanvasFactory(this.m_renderer);
         this.m_textCanvasFactory.setGlyphCountLimits(
             this.m_options.minNumGlyphs!,
             this.m_options.maxNumGlyphs!
         );
+
+        this.m_poiRenderer =
+            poiRenderer ?? new PoiRenderer(this.m_renderer, this.m_poiManager, this.m_imageCaches);
+
+        this.initializeCamera();
+
+        this.initializeDefaultFontCatalog();
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }
 
     /**
@@ -418,8 +459,80 @@ export class TextElementsRenderer {
         this.m_options.showReplacementGlyphs = value;
 
         this.m_textCanvases.forEach(textCanvas => {
-            textCanvas.fontCatalog.showReplacementGlyphs = value;
+            if (textCanvas?.fontCatalog) {
+                textCanvas.fontCatalog.showReplacementGlyphs = value;
+            }
         });
+    }
+
+    restoreRenderers(renderer: THREE.WebGLRenderer) {
+        this.m_renderer = renderer;
+        this.m_poiRenderer = new PoiRenderer(
+            this.m_renderer,
+            this.m_poiManager,
+            this.m_imageCaches
+        );
+        //TODO: restore TextCanvasRenderers
+    }
+
+    /**
+     * Updates the FontCatalogs used by this {@link TextElementsRenderer}.
+     *
+     * @param fontCatalogs - The new list of {@link FontCatalogConfig}s
+     */
+    async updateFontCatalogs(fontCatalogs?: FontCatalogConfig[]) {
+        if (this.m_defaultFontCatalogConfig) {
+            if (
+                !fontCatalogs ||
+                fontCatalogs.findIndex(config => {
+                    return config.name === DEFAULT_FONT_CATALOG_NAME;
+                }) === -1
+            ) {
+                // not other default catalog available, keep the old one
+                if (!fontCatalogs) {
+                    fontCatalogs = [];
+                }
+                // Never remove the default Canvas if set per configuration
+                fontCatalogs.unshift(this.m_defaultFontCatalogConfig);
+            } else {
+                if (this.m_textCanvases.has(DEFAULT_FONT_CATALOG_NAME)) {
+                    this.m_textCanvases.delete(DEFAULT_FONT_CATALOG_NAME);
+                }
+            }
+        }
+
+        if (fontCatalogs && fontCatalogs.length > 0) {
+            // Remove obsolete ones
+            for (const [name] of this.m_textCanvases) {
+                if (
+                    fontCatalogs.findIndex(catalog => {
+                        return catalog.name === name;
+                    }) < 0
+                ) {
+                    this.m_textCanvases.delete(name);
+                }
+            }
+
+            // Add new catalogs
+            for (const fontCatalog of fontCatalogs) {
+                await this.addTextCanvas(fontCatalog);
+            }
+        } else {
+            this.m_textCanvases.clear();
+        }
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
+    }
+
+    async updateTextStyles(
+        textStyles?: TextStyleDefinition[],
+        defaultTextStyle?: TextStyleDefinition
+    ) {
+        // TODO: this is an intermeditate solution, in the end this
+        // should not create a new cache, but update the former one
+        this.m_textStyleCache = new TextStyleCache(textStyles, defaultTextStyle);
+        this.m_textStyleCache.initializeDefaultTextElementStyle(DEFAULT_FONT_CATALOG_NAME);
+        await this.waitLoaded();
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }
 
     /**
@@ -427,24 +540,21 @@ export class TextElementsRenderer {
      *
      * @param camera - Orthographic camera to use.
      */
-    renderText(camera: THREE.OrthographicCamera) {
-        if (!this.initialized) {
-            return;
-        }
-
+    renderText(farPlane: number) {
+        this.m_camera.far = farPlane;
         this.updateGlyphDebugMesh();
 
         let previousLayer: PoiLayer | undefined;
         this.m_poiRenderer.update();
         for (const poiLayer of this.m_poiRenderer.layers) {
-            for (const textCanvas of this.m_textCanvases) {
-                textCanvas.render(camera, previousLayer?.id, poiLayer.id, undefined, false);
+            for (const [, textCanvas] of this.m_textCanvases) {
+                textCanvas?.render(this.m_camera, previousLayer?.id, poiLayer.id, undefined, false);
             }
-            this.m_poiRenderer.render(camera, poiLayer);
+            this.m_poiRenderer.render(this.m_camera, poiLayer);
             previousLayer = poiLayer;
         }
-        for (const textCanvas of this.m_textCanvases) {
-            textCanvas.render(camera, previousLayer?.id, undefined, undefined, false);
+        for (const [, textCanvas] of this.m_textCanvases) {
+            textCanvas?.render(this.m_camera, previousLayer?.id, undefined, undefined, false);
         }
     }
 
@@ -492,7 +602,8 @@ export class TextElementsRenderer {
 
         const textElementsAvailable =
             this.hasOverlayText() || tileTextElementsChanged || hasTextElements(dataSourceTileList);
-        if (!this.initialize(textElementsAvailable)) {
+
+        if (!textElementsAvailable) {
             return;
         }
 
@@ -513,6 +624,7 @@ export class TextElementsRenderer {
             this.m_viewState.zoomLevel
         );
 
+        // TODO: this seems extremly suboptimal.. review if an update is possible
         this.reset();
         if (this.m_addNewLabels) {
             this.prepopulateScreenWithBlockingElements(dataSourceTileList);
@@ -595,8 +707,8 @@ export class TextElementsRenderer {
             pickListener.addResult(pickResult);
         };
 
-        for (const textCanvas of this.m_textCanvases) {
-            textCanvas.pickText(screenPosition, (pickData: any | undefined) => {
+        for (const [, textCanvas] of this.m_textCanvases) {
+            textCanvas?.pickText(screenPosition, (pickData: any | undefined) => {
                 pickHandler(pickData, PickObjectType.Text);
             });
         }
@@ -610,22 +722,16 @@ export class TextElementsRenderer {
      * `true` if any resource used by any `FontCatalog` is still loading.
      */
     get loading(): boolean {
-        return this.m_fontCatalogLoader.loading || this.m_glyphLoadingCount > 0;
+        return this.m_loadPromisesCount > 0;
     }
 
     /**
      * Waits till all pending resources from any `FontCatalog` are loaded.
      */
-    async waitLoaded(): Promise<boolean> {
-        const initialized = await this.waitInitialized();
-        if (!initialized) {
-            return false;
+    async waitLoaded(): Promise<void> {
+        if (this.m_loadPromise !== undefined) {
+            return await this.m_loadPromise;
         }
-        if (this.m_loadPromise === undefined) {
-            return false;
-        }
-        await this.m_loadPromise;
-        return true;
     }
 
     /**
@@ -650,54 +756,23 @@ export class TextElementsRenderer {
             gpuSize: 0
         };
 
-        for (const textCanvas of this.m_textCanvases) {
-            textCanvas.getMemoryUsage(memoryUsage);
+        for (const [, textCanvas] of this.m_textCanvases) {
+            textCanvas?.getMemoryUsage(memoryUsage);
         }
         this.m_poiRenderer.getMemoryUsage(memoryUsage);
 
         return memoryUsage;
     }
 
-    get initialized(): boolean {
-        return this.m_initialized;
-    }
-
-    get initializing(): boolean {
-        return this.m_initPromise !== undefined;
-    }
-
-    /**
-     * Waits until initialization is done.
-     * @returns Promise resolved to true if initialization was done, false otherwise.
-     */
-    async waitInitialized(): Promise<boolean> {
-        if (this.initialized) {
-            return true;
+    private async addDefaultTextCanvas(): Promise<void> {
+        if (
+            this.m_textCanvases.has(DEFAULT_FONT_CATALOG_NAME) ||
+            !this.m_defaultFontCatalogConfig
+        ) {
+            return;
         }
-
-        if (!this.initializing) {
-            return false;
-        }
-        await this.m_initPromise;
-        return true;
-    }
-
-    /**
-     * Initializes the text renderer once there's any text element available for rendering.
-     * @param textElementsAvailable - Indicates whether there's any text element to be rendered.
-     * @returns Whether the text renderer is initialized.
-     */
-    private initialize(textElementsAvailable: boolean): boolean {
-        if (!this.initialized && !this.initializing && textElementsAvailable) {
-            this.initializeDefaultAssets();
-            this.m_initPromise = this.initializeTextCanvases().then(() => {
-                this.m_initialized = true;
-                this.m_initPromise = undefined;
-                this.invalidateCache(); // Force cache update after initialization.
-                this.m_viewUpdateCallback();
-            });
-        }
-        return this.initialized;
+        await this.addTextCanvas(this.m_defaultFontCatalogConfig);
+        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }
 
     /**
@@ -706,8 +781,8 @@ export class TextElementsRenderer {
     private reset() {
         this.m_cameraLookAt.copy(this.m_viewState.lookAtVector);
         this.m_screenCollisions.reset();
-        for (const textCanvas of this.m_textCanvases) {
-            textCanvas.clear();
+        for (const [, textCanvas] of this.m_textCanvases) {
+            textCanvas?.clear();
         }
         this.m_poiRenderer.reset();
     }
@@ -951,7 +1026,7 @@ export class TextElementsRenderer {
                 const newLoadPromise = textCanvas.fontCatalog
                     .loadCharset(textElement.text, textElement.renderStyle)
                     .then(() => {
-                        --this.m_glyphLoadingCount;
+                        --this.m_loadPromisesCount;
                         textElement.loadingState = LoadingState.Loaded;
                         // Ensure that text elements still loading glyphs get a chance to
                         // be rendered if there's no text element updates in the next frames.
@@ -959,10 +1034,10 @@ export class TextElementsRenderer {
                             this.m_forceNewLabelsPass || forceNewPassOnLoaded;
                         this.m_viewUpdateCallback();
                     });
-                if (this.m_glyphLoadingCount === 0) {
+                if (this.m_loadPromisesCount === 0) {
                     this.m_loadPromise = undefined;
                 }
-                ++this.m_glyphLoadingCount;
+                ++this.m_loadPromisesCount;
 
                 this.m_loadPromise =
                     this.m_loadPromise === undefined
@@ -989,30 +1064,73 @@ export class TextElementsRenderer {
         return textElement.glyphs !== undefined;
     }
 
-    private initializeDefaultAssets(): void {
-        const defaultFontCatalogName = this.m_fontCatalogLoader.initialize(
-            this.m_options.fontCatalog!
-        );
-        this.m_textStyleCache.initializeDefaultTextElementStyle(defaultFontCatalogName);
+    private initializeCamera() {
+        this.m_camera.position.z = 1;
+        this.m_camera.near = 0;
     }
 
-    private async initializeTextCanvases(): Promise<void> {
+    updateCamera() {
+        const { width, height } = this.m_renderer.getSize(cache.vector2[0]);
+        this.m_camera.left = width / -2;
+        this.m_camera.right = width / 2;
+        this.m_camera.bottom = height / -2;
+        this.m_camera.top = height / 2;
+        this.m_camera.updateProjectionMatrix();
+        this.m_camera.updateMatrixWorld(false);
+        this.m_screenCollisions.update(width, height);
+    }
+
+    private initializeDefaultFontCatalog() {
+        if (this.m_options.fontCatalog) {
+            this.m_defaultFontCatalogConfig = createDefaultFontCatalogConfig(
+                this.m_options.fontCatalog
+            );
+            this.addDefaultTextCanvas();
+        }
+    }
+
+    private async addTextCanvas(fontCatalogConfig: FontCatalogConfig): Promise<void> {
         const catalogCallback = (name: string, catalog: FontCatalog) => {
-            const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog, name);
+            if (this.m_textCanvases.has(name)) {
+                const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog, name);
 
-            catalog.showReplacementGlyphs = this.showReplacementGlyphs;
+                catalog.showReplacementGlyphs = this.showReplacementGlyphs;
 
-            this.m_textCanvases.push(loadedTextCanvas);
+                // Check if the textCanvas has not been removed in the meantime
+                this.m_textCanvases.set(name, loadedTextCanvas);
+            }
         };
-
-        return this.m_fontCatalogLoader
-            .loadCatalogs(catalogCallback)
-            .then(() => {
-                this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
-            })
-            .catch(error => {
-                logger.info("rendering without font catalog, only icons possible");
-            });
+        const errorCallback = () => {
+            this.m_textCanvases.delete(fontCatalogConfig.name);
+        };
+        if (this.m_textCanvases.has(fontCatalogConfig.name)) {
+            return Promise.resolve();
+        } else {
+            // Reserve map space, until loaded or error
+            this.m_textCanvases.set(fontCatalogConfig.name, undefined);
+            const newLoadPromise = loadFontCatalog(
+                fontCatalogConfig,
+                catalogCallback,
+                errorCallback
+            )
+                .then(() => {
+                    --this.m_loadPromisesCount;
+                    this.m_viewUpdateCallback();
+                })
+                .catch(error => {
+                    logger.info("rendering without font catalog, only icons possible", error);
+                    --this.m_loadPromisesCount;
+                });
+            if (this.m_loadPromisesCount === 0) {
+                this.m_loadPromise = undefined;
+            }
+            ++this.m_loadPromisesCount;
+            this.m_loadPromise =
+                this.m_loadPromise === undefined
+                    ? newLoadPromise
+                    : Promise.all([this.m_loadPromise, newLoadPromise]);
+            return newLoadPromise;
+        }
     }
 
     private updateGlyphDebugMesh() {
@@ -1032,10 +1150,11 @@ export class TextElementsRenderer {
     }
 
     private initializeGlyphDebugMesh() {
-        if (this.m_textCanvases.length === 0) {
+        if (this.m_textCanvases.size === 0) {
             return;
         }
-        const defaultFontCatalog = this.m_textCanvases[0].fontCatalog;
+        const defaultTextCanvas = this.m_textCanvases.values().next().value;
+        const defaultFontCatalog = defaultTextCanvas.fontCatalog;
 
         // Initialize glyph-debugging mesh.
         const planeGeometry = new THREE.PlaneGeometry(
@@ -1072,7 +1191,7 @@ export class TextElementsRenderer {
 
         this.m_debugGlyphTextureCacheWireMesh.name = "glyphDebug";
 
-        this.m_textCanvases[0]
+        defaultTextCanvas
             .getLayer(DEFAULT_TEXT_CANVAS_LAYER)!
             .storage.scene.add(
                 this.m_debugGlyphTextureCacheMesh,
@@ -1194,7 +1313,6 @@ export class TextElementsRenderer {
                     ? textElementState.lineMarkerIndex
                     : undefined,
                 this.m_viewState,
-                this.m_viewCamera,
                 this.m_poiManager,
                 maxViewDistance
             );

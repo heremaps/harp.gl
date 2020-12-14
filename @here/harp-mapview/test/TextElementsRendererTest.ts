@@ -3,14 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { assert, expect } from "chai";
+import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { TextElement } from "../lib/text/TextElement";
+import { DEFAULT_FONT_CATALOG_NAME } from "../lib/text/TextElementsRenderer";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 import {
     DEF_PATH,
@@ -48,6 +46,8 @@ import {
     InputTile,
     not
 } from "./TextElementsRendererTestUtils";
+
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 /**
  * Definition of a test case for TextElementsRenderer, including input data (tiles, text elements,
@@ -735,8 +735,7 @@ describe("TextElementsRenderer", function() {
         }
 
         fixture = new TestFixture(sandbox);
-        const setupDone = await fixture.setUp();
-        assert(setupDone, "Setup failed.");
+        await fixture.setUp();
     });
 
     afterEach(function() {
@@ -882,4 +881,73 @@ describe("TextElementsRenderer", function() {
             }
         });
     }
+
+    it("updates FontCatalogs", async function() {
+        expect(fixture.loadCatalogStub.calledOnce, "default catalog was set").to.be.true;
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog1",
+                url: "some-url-1"
+            },
+            {
+                name: "catalog2",
+                url: "some-url-2"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.calledThrice).to.be.true;
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog1",
+                url: "some-url-1"
+            },
+            {
+                name: "catalog2",
+                url: "some-other-url-2"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.calledThrice, "no new catalog added").to.be.true;
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog1",
+                url: "some-url-1"
+            },
+            {
+                name: "catalog3",
+                url: "some-url-3"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.callCount, "adds catalog3").to.equal(4);
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog2",
+                url: "some-url-2"
+            }
+        ]);
+        expect(
+            fixture.loadCatalogStub.callCount,
+            "adds catalog2 back, removed in last step"
+        ).to.equal(5);
+
+        await fixture.textRenderer.updateFontCatalogs([]);
+        expect(fixture.loadCatalogStub.callCount).to.equal(5);
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: DEFAULT_FONT_CATALOG_NAME,
+                url: "some-url"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.callCount).to.equal(6);
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: DEFAULT_FONT_CATALOG_NAME,
+                url: "some-other-url"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.callCount).to.equal(7);
+    });
 });
