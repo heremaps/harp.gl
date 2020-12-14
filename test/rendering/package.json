@@ -17,7 +17,7 @@
         "@here/harp-test-utils": "^0.21.0",
         "@here/harp-utils": "^0.21.0",
         "@here/harp-vectortile-datasource": "^0.21.1",
-        "@types/chai": "^4.2.11",
+        "@types/chai": "4.2.14",
         "chai": "^4.2.0",
         "three": "^0.124.0"
     },

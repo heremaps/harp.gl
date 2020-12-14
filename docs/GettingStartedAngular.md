@@ -173,7 +173,7 @@ touch decoder-webpack.config.js
 ```
 
 ```javascript
-const merge = require("webpack-merge");
+const {merge} = require("webpack-merge");
 const path = require("path");
 
 const decoderConfig = {

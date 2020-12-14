@@ -12,12 +12,7 @@ const CopyWebpackPlugin: any = require("copy-webpack-plugin");
 
 import * as HtmlWebpackPlugin from "html-webpack-plugin";
 import { Configuration, WebpackPluginInstance } from "webpack";
-
-// As above, the typings don't work for webpack-merge, see:
-// https://github.com/DefinitelyTyped/DefinitelyTyped/issues/49757
-const WebpackMerge: any = require("webpack-merge");
-// Uncomment this when the above issue is fixed.
-//import * as WebpackMerge from "webpack-merge";
+import merge from "webpack-merge";
 
 export interface HarpWebpackConfig {
     mainEntry?: string;
@@ -57,10 +52,10 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
         }
     };
     const mainConfig = mainEntry?.match(/\.tsx?$/)
-        ? WebpackMerge.smart(baseConfig, typescriptConfig)
+        ? merge(baseConfig, typescriptConfig)
         : baseConfig;
     const bundles = [
-        WebpackMerge.smart(
+        merge(
             {
                 ...mainConfig,
                 plugins: createPlugins(
@@ -79,7 +74,7 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
         )
     ];
     if (mainEntry !== undefined) {
-        bundles[0] = WebpackMerge.smart(
+        bundles[0] = merge(
             {
                 entry: {
                     mapview: mainEntry
@@ -90,10 +85,10 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
     }
     if (harpConfig !== undefined && harpConfig.decoderEntry !== undefined) {
         const decoderConfig = harpConfig.decoderEntry.endsWith(".ts")
-            ? WebpackMerge.smart(baseConfig, typescriptConfig)
+            ? merge(baseConfig, typescriptConfig)
             : baseConfig;
         bundles.push(
-            WebpackMerge.smart(
+            merge(
                 {
                     target: "webworker",
                     entry: {

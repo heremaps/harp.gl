@@ -1,4 +1,4 @@
-/* eslint-disable simple-import-sort/sort */
+/* eslint-disable simple-import-sort/imports */
 /*
  * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
@@ -27,7 +27,6 @@ import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { getProjectionName } from "@here/harp-datasource-protocol";
-import { Camera, Vector3 } from "three";
 
 function setCamera(
     camera: THREE.Camera,

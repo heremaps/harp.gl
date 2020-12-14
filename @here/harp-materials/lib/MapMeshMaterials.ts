@@ -251,7 +251,7 @@ export function hasExtrusionFeature(material: any): material is ExtrusionFeature
     return "extrusionRatio" in material;
 }
 
-namespace DisplacementFeature {
+namespace DisplacementFeatureNS {
     /**
      * Checks if feature is enabled (displacement map defined).
      *
@@ -369,7 +369,7 @@ export class DisplacementFeatureMixin implements DisplacementFeature, MixinShade
     protected setDisplacementMap(map: THREE.Texture | null): void {
         if (map !== this.m_displacementMap) {
             this.m_displacementMap = map;
-            DisplacementFeature.updateDisplacementFeature(this);
+            DisplacementFeatureNS.updateDisplacementFeature(this);
         }
     }
 
@@ -411,11 +411,11 @@ export class DisplacementFeatureMixin implements DisplacementFeature, MixinShade
         }
 
         this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, (shader: THREE.Shader) => {
-            DisplacementFeature.onBeforeCompile(this, shader);
+            DisplacementFeatureNS.onBeforeCompile(this, shader);
         });
 
         // Require material update at least once, because of new shader chunks added.
-        this.needsUpdate = DisplacementFeature.isEnabled(this);
+        this.needsUpdate = DisplacementFeatureNS.isEnabled(this);
     }
 
     /**

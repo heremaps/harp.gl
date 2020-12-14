@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 const webpack = require("webpack");
-const merge = require("webpack-merge");
+const {merge} = require("webpack-merge");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const ScriptExtHtmlWebpackPlugin = require("script-ext-html-webpack-plugin");

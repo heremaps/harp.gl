@@ -10,7 +10,7 @@ const fs = require("fs");
 const webpack = require("webpack");
 
 const path = require("path");
-const merge = require("webpack-merge");
+const {merge} = require("webpack-merge");
 
 const isProduction = process.env.NODE_ENV === "production";
 const bundleSuffix = isProduction ? ".min" : "";

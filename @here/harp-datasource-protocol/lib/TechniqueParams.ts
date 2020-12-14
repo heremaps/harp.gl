@@ -101,7 +101,7 @@ export enum StandardGeometryKind {
  * disabled.
  */
 export type GeometryKind = string | StandardGeometryKind;
-
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GeometryKind = StandardGeometryKind;
 
 /**
