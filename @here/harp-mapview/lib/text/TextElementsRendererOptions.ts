@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const DEFAULT_FONT_CATALOG = "./resources/fonts/Default_FontCatalog.json";
-
 /**
  * Default number of labels/POIs rendered in the scene
  */
@@ -47,7 +45,7 @@ const MAX_GLYPH_COUNT = 32768;
 
 export interface TextElementsRendererOptions {
     /**
-     * The path to the font catalog file. Default is [[DEFAULT_FONT_CATALOG]].
+     * The path to the font catalog file.
      */
     fontCatalog?: string;
     /**
@@ -138,10 +136,6 @@ export interface TextElementsRendererOptions {
  * @param options - The options to be initialized.
  */
 export function initializeDefaultOptions(options: TextElementsRendererOptions) {
-    if (options.fontCatalog === undefined) {
-        options.fontCatalog = DEFAULT_FONT_CATALOG;
-    }
-
     if (options.minNumGlyphs === undefined) {
         options.minNumGlyphs = MIN_GLYPH_COUNT;
     }

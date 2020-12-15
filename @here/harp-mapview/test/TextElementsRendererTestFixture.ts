@@ -149,7 +149,8 @@ export class TestFixture {
         });
         this.m_options = {
             labelDistanceScaleMin: 1,
-            labelDistanceScaleMax: 1
+            labelDistanceScaleMax: 1,
+            fontCatalog: "./resources/fonts/Default_FontCatalog.json"
         };
         this.m_fontCatalog = stubFontCatalog(this.sandbox);
         this.m_textCanvasStub = stubTextCanvas(
