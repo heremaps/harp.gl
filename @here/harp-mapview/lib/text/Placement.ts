@@ -216,6 +216,7 @@ export function checkReadyForPlacement(
     // updatePoiFromPoiTable, since that function may change those values.
     if (
         !textElement.visible ||
+        viewState.zoomLevel === textElement.maxZoomLevel ||
         !MathUtils.isClamped(
             viewState.zoomLevel,
             textElement.minZoomLevel,

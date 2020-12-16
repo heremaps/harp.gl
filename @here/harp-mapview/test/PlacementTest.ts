@@ -32,14 +32,20 @@ import {
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import * as path from "path";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { PoiBuffer } from "../lib/poi/PoiRenderer";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
-import { placeIcon, PlacementResult, placePointLabel } from "../lib/text/Placement";
+import {
+    checkReadyForPlacement,
+    placeIcon,
+    PlacementResult,
+    placePointLabel,
+    PrePlacementResult
+} from "../lib/text/Placement";
 import { RenderState } from "../lib/text/RenderState";
 import { LoadingState, TextElement } from "../lib/text/TextElement";
 import { TextElementState } from "../lib/text/TextElementState";
@@ -1328,6 +1334,87 @@ describe("Placement", function() {
             );
 
             expect(result).to.equal(PlacementResult.Ok);
+        });
+    });
+
+    describe("checkReadyForPlacement", () => {
+        let textElement: TextElement;
+        function checkPlacementResult(
+            textElement: TextElement,
+            viewState: any = {},
+            poiManager?: any
+        ) {
+            return checkReadyForPlacement(
+                textElement,
+                undefined,
+                {
+                    ...viewState,
+                    projection: {},
+                    worldCenter: new THREE.Vector3(),
+                    lookAtVector: new THREE.Vector3()
+                },
+                poiManager ?? {
+                    updatePoiFromPoiTable: () => true
+                },
+                1000
+            ).result;
+        }
+
+        before(async () => {
+            textElement = await createTextElement(textCanvas, "Test", new THREE.Vector3(), {}, {});
+        });
+
+        it("NotReady while if updatePoiFromPoiTable returns false", async () => {
+            assert.equal(
+                checkPlacementResult(
+                    textElement,
+                    {},
+                    {
+                        updatePoiFromPoiTable: () => false
+                    }
+                ),
+                PrePlacementResult.NotReady
+            );
+        });
+
+        it("Invisible if textElement is invisible", async () => {
+            textElement.visible = false;
+            assert.equal(checkPlacementResult(textElement), PrePlacementResult.Invisible);
+        });
+
+        it("Invisible if textElement is out of zoom range", async () => {
+            textElement.visible = true;
+            textElement.minZoomLevel = 6;
+            textElement.maxZoomLevel = 14;
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 5 }),
+                PrePlacementResult.Invisible
+            );
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 7 }),
+                PrePlacementResult.Ok
+            );
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 14 }),
+                PrePlacementResult.Invisible
+            );
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 14.1 }),
+                PrePlacementResult.Invisible
+            );
+        });
+
+        it("Invisible if both min and max zoom range are the same", () => {
+            textElement.minZoomLevel = 7;
+            textElement.maxZoomLevel = 7;
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 7 }),
+                PrePlacementResult.Invisible
+            );
         });
     });
 });
