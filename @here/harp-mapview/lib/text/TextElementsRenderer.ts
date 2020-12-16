@@ -530,7 +530,7 @@ export class TextElementsRenderer {
         // TODO: this is an intermeditate solution, in the end this
         // should not create a new cache, but update the former one
         this.m_textStyleCache = new TextStyleCache(textStyles, defaultTextStyle);
-        this.m_textStyleCache.initializeDefaultTextElementStyle(DEFAULT_FONT_CATALOG_NAME);
+        this.m_textStyleCache.initializeDefaultTextElementStyle();
         await this.waitLoaded();
         this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
     }

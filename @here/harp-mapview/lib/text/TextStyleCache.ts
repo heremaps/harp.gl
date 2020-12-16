@@ -89,11 +89,12 @@ export class TextStyleCache {
         private readonly m_defaultTextStyleDefinition?: TextStyleDefinition
     ) {}
 
-    initializeDefaultTextElementStyle(defaultFontCatalogName: string) {
+    initializeDefaultTextElementStyle() {
         if (this.m_textStyleDefinitions === undefined) {
             this.m_textStyleDefinitions = [];
         }
         const styles = this.m_textStyleDefinitions;
+        this.m_defaultStyle.fontCatalog = undefined;
 
         const themedDefaultStyle = styles.find(style => style.name === DEFAULT_STYLE_NAME);
         if (themedDefaultStyle !== undefined) {
@@ -109,7 +110,6 @@ export class TextStyleCache {
         } else if (styles.length > 0) {
             this.m_defaultStyle = this.createTextElementStyle(styles[0], DEFAULT_STYLE_NAME);
         }
-        this.m_defaultStyle.fontCatalog = defaultFontCatalogName;
         this.m_defaultStyle.textCanvas = undefined;
     }
 
@@ -362,26 +362,37 @@ export class TextStyleCache {
                 return;
             }
         }
+        // specified canvas not found
         if (style.textCanvas === undefined) {
-            if (style.fontCatalog !== undefined) {
+            if (
+                style.fontCatalog !== undefined &&
+                style.fontCatalog !== DEFAULT_FONT_CATALOG_NAME
+            ) {
                 logger.warn(
                     `FontCatalog '${style.fontCatalog}' set in TextStyle
                      '${style.name}' not found`
                 );
             }
-            const defaultCanvas = textCanvases.get(DEFAULT_FONT_CATALOG_NAME);
-            if (defaultCanvas) {
-                style.textCanvas = defaultCanvas;
-                logger.info(`using default fontCatalog(${style.textCanvas?.fontCatalog.name}).`);
-            } else if (textCanvases.size > 0) {
+
+            // find another canvas to use then
+            let alternativeTextCanvas = textCanvases.get(DEFAULT_FONT_CATALOG_NAME);
+            if (!alternativeTextCanvas && textCanvases.size > 0) {
                 for (const [, canvas] of textCanvases) {
                     if (canvas) {
-                        style.textCanvas = canvas;
-                        logger.info(
-                            `using default fontCatalog(${style.textCanvas?.fontCatalog.name}).`
-                        );
+                        alternativeTextCanvas = canvas;
                         break;
                     }
+                }
+            }
+
+            // if an alternative canvas is found, use it
+            if (alternativeTextCanvas) {
+                style.textCanvas = alternativeTextCanvas;
+                if (style.fontCatalog !== undefined) {
+                    logger.info(
+                        `fontCatalog: '${style.fontCatalog}' not found,
+                      using default fontCatalog(${style.textCanvas?.name}).`
+                    );
                 }
             }
         }
