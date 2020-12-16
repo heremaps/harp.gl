@@ -1199,6 +1199,7 @@ export class TileGeometryCreator {
             const posArray = attr.array as Float32Array;
             for (let i = 0; i < posArray.length; i += 3) {
                 tmpVector3.set(posArray[i], posArray[i + 1], posArray[i + 2]);
+                tmpVector3.add(tile.center);
                 projection.reprojectPoint(sourceProjection, tmpVector3, tmpVector3);
                 tmpVector3.sub(tile.center);
                 posArray[i] = tmpVector3.x;
@@ -1211,7 +1212,8 @@ export class TileGeometryCreator {
         const geometries: THREE.BufferGeometry[] = [];
         const sphericalModifier = new SphericalGeometrySubdivisionModifier(
             THREE.MathUtils.degToRad(10),
-            sourceProjection
+            sourceProjection,
+            tile.center
         );
 
         if (mapView.enableMixedLod === false) {
@@ -1264,6 +1266,9 @@ export class TileGeometryCreator {
             projection
                 .reprojectPoint(sourceProjection, worldBBox.max, worldBBox.max)
                 .sub(tile.center);
+        } else {
+            worldBBox.min.sub(tile.center);
+            worldBBox.max.sub(tile.center);
         }
 
         const posAttr = new THREE.BufferAttribute(new Float32Array(12), 3).copyVector3sArray([

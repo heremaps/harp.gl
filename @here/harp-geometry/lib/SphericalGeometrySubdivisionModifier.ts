@@ -22,12 +22,21 @@ export class SphericalGeometrySubdivisionModifier extends SubdivisionModifier {
      * @param angle - The maximum angle in radians between two vertices and the origin.
      * @param projection - The projection that defines the world space of this geometry.
      */
-    constructor(readonly angle: number, readonly projection: Projection = sphereProjection) {
+    constructor(
+        readonly angle: number,
+        readonly projection: Projection = sphereProjection,
+        readonly center?: THREE.Vector3
+    ) {
         super();
     }
 
     /** @override */
     protected shouldSplitTriangle(a: Vector3, b: Vector3, c: Vector3): number | undefined {
+        if (this.center) {
+            a = VERTEX_POSITION_CACHE[0].copy(a).add(this.center);
+            b = VERTEX_POSITION_CACHE[1].copy(b).add(this.center);
+            c = VERTEX_POSITION_CACHE[2].copy(c).add(this.center);
+        }
         const aa = sphereProjection.reprojectPoint(this.projection, a, VERTEX_POSITION_CACHE[0]);
         const bb = sphereProjection.reprojectPoint(this.projection, b, VERTEX_POSITION_CACHE[1]);
         const cc = sphereProjection.reprojectPoint(this.projection, c, VERTEX_POSITION_CACHE[2]);
