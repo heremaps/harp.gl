@@ -8,7 +8,6 @@ import {
     GeoCoordinatesLike,
     GeoPolygonCoordinates,
     mercatorTilingScheme,
-    Projection,
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
@@ -20,7 +19,6 @@ import THREE = require("three");
 import { Vector3 } from "three";
 
 import { BoundsGenerator } from "../lib/BoundsGenerator";
-import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { LookAtParams, MapView, MapViewOptions } from "../lib/MapView";
 import { MapViewUtils } from "../lib/Utils";
 
@@ -488,18 +486,24 @@ describe("BoundsGenerator", function() {
             assert.isNotEmpty(coordinates);
             assert.equal(coordinates?.length, 4);
 
-            const worldCorners = TileGeometryCreator.instance.generateTilePlaneCorners(
-                mercatorTilingScheme.getGeoBox(TileKey.fromRowColumnLevel(0, 0, 0)),
-                mapView!.projection as Projection
-            );
             if (coordinates === undefined) {
                 return;
             }
 
-            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(worldCorners.se));
-            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(worldCorners.sw));
-            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(worldCorners.ne));
-            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(worldCorners.nw));
+            const worldBox = mercatorTilingScheme.getWorldBox(
+                new TileKey(0, 0, 0),
+                new THREE.Box3()
+            ) as THREE.Box3;
+
+            const nw = worldBox.min;
+            const se = worldBox.max;
+            const ne = worldBox.min.clone().setX(worldBox.max.x);
+            const sw = worldBox.max.clone().setX(worldBox.min.x);
+
+            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(nw));
+            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(se));
+            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(ne));
+            assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(sw));
         });
 
         it("generates polygon of world vertically clipped by frustum , w/ tileWrapping", function() {

@@ -66,14 +66,14 @@ export class WebTileLoader extends BaseTileLoader {
                 if (this.dataSource.transparent) {
                     enableBlending(material);
                 }
-                const mesh = TileGeometryCreator.instance.createGroundPlane(
+                TileGeometryCreator.instance.addGroundPlane(
                     this.tile,
+                    this.dataSource.renderOrder, // Remove, as `renderOrder` will be deprecated.
                     material,
-                    true
+                    true,
+                    false
                 );
-                this.tile.objects.push(mesh);
-                // Remove, as `renderOrder` will be deprecated.
-                mesh.renderOrder = this.dataSource.renderOrder;
+
                 this.tile.invalidateResourceInfo();
                 this.dataSource.requestUpdate();
                 onDone(TileLoaderState.Ready);
