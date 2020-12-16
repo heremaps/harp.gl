@@ -5,6 +5,10 @@
  */
 import { convertFragmentShaderToWebGL2, convertVertexShaderToWebGL2 } from "@here/harp-utils";
 import * as THREE from "three";
+import {
+    getShaderMaterialDefine,
+    setShaderMaterialDefine
+} from "./Utils";
 
 /**
  * [[RawShaderMaterial]] parameters.
@@ -50,5 +54,13 @@ export class RawShaderMaterial extends THREE.RawShaderMaterial {
             delete (shaderParams as any).rendererCapabilities;
         }
         super(shaderParams);
+        this.invalidateFog();
     }
+
+    protected invalidateFog() {
+        if (this.defines !== undefined && this.fog !== getShaderMaterialDefine(this, "USE_FOG")) {
+            setShaderMaterialDefine(this, "USE_FOG", this.fog);
+        }
+    }
+
 }

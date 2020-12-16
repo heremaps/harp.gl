@@ -156,7 +156,7 @@ class ImageVectorEncoder implements ImageEncoder {
                         if (err) {
                             reject(new Error("Failed to write and image: " + filePath));
                         } else {
-                            resolve();
+                            resolve(undefined);
                         }
                     });
                 }

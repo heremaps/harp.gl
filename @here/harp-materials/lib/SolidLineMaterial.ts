@@ -426,7 +426,6 @@ export class SolidLineMaterial extends RawShaderMaterial
      * @hidden
      * Material properties overrides.
      */
-    private m_fog: boolean;
     private m_opacity: number;
 
     /**
@@ -519,7 +518,7 @@ export class SolidLineMaterial extends RawShaderMaterial
         // Required to satisfy compiler error if fields has no initializer or are not definitely
         // assigned in the constructor, this also mimics ShaderMaterial set of defaults
         // for overridden props.
-        this.m_fog = fogParam;
+        this.fog = fogParam;
         this.m_opacity = opacityParam;
 
         // initialize the stencil pass
@@ -589,37 +588,14 @@ export class SolidLineMaterial extends RawShaderMaterial
             }
             if (params.fog !== undefined) {
                 this.fog = params.fog;
+                this.invalidateFog();
             }
             this.offset = params.offset ?? 0;
 
             // ShaderMaterial overrides requires invalidation cause super c-tor may set this
             // properties before related `defines` and `uniforms` were created.
-            this.invalidateFog();
             this.invalidateOpacity();
         }
-    }
-
-    /**
-     * Overrides THREE.Material.fog flag to add support for custom shader.
-     *
-     * @param enable - Whether we want to enable the fog.
-     */
-    // @ts-ignore
-    set fog(enable: boolean) {
-        this.m_fog = enable;
-        // Function may be called from THREE.js cause we override setter,
-        // in this case defines are not yet initialized and require late invalidation in
-        // SolidLineMaterial c-tor.
-        if (this.defines !== undefined) {
-            setShaderMaterialDefine(this, "USE_FOG", enable);
-        }
-    }
-
-    /**
-     * Checks if fog is enabled.
-     */
-    get fog(): boolean {
-        return this.m_fog && getShaderMaterialDefine(this, "USE_FOG") === true;
     }
 
     /**
@@ -868,15 +844,9 @@ export class SolidLineMaterial extends RawShaderMaterial
 
     copy(other: SolidLineMaterial): this {
         super.copy(other);
-        this.fog = other.fog;
+        this.invalidateFog();
         this.opacity = other.opacity;
         return this;
-    }
-
-    private invalidateFog() {
-        if (this.m_fog !== getShaderMaterialDefine(this, "USE_FOG")) {
-            setShaderMaterialDefine(this, "USE_FOG", this.m_fog);
-        }
     }
 
     private invalidateOpacity() {
