@@ -121,13 +121,13 @@ describe("WebTileDataSource", function() {
             return fakeMapView;
         });
 
-        const creatorSpy = sinon.spy(TileGeometryCreator.instance, "createGroundPlane");
+        const creatorSpy = sinon.spy(TileGeometryCreator.instance, "addGroundPlane");
 
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         const tile = webTileDataSource.getTile(tileKey);
         await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(creatorSpy.called).to.be.true;
-        expect((creatorSpy.args[0][1] as THREE.MeshBasicMaterial).opacity).to.equal(0.5);
+        expect((creatorSpy.args[0][2] as THREE.MeshBasicMaterial).opacity).to.equal(0.5);
     });
 });

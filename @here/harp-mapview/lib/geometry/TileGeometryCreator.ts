@@ -1149,116 +1149,74 @@ export class TileGeometryCreator {
         }
     }
 
-    /**
-     * Create a ground plane mesh for a tile
-     * @param tile - Tile
-     * @param material - Material
-     * @param createTexCoords - Enable creation of texture coordinates
-     */
-    createGroundPlane(
+    private createGroundPlane(
         tile: Tile,
         material: THREE.Material | THREE.Material[],
         createTexCoords: boolean,
-        shadowsEnabled?: boolean
+        shadowsEnabled: boolean
     ): THREE.Mesh {
         const { dataSource, projection, mapView } = tile;
         const sourceProjection = dataSource.getTilingScheme().projection;
         const shouldSubdivide = projection.type === ProjectionType.Spherical;
-        const tmpV = new THREE.Vector3();
+        const useLocalTargetCoords = !shouldSubdivide;
+
+        const geometry = this.createGroundPlaneGeometry(
+            tile,
+            useLocalTargetCoords,
+            createTexCoords,
+            shadowsEnabled
+        );
+
+        if (!shouldSubdivide) {
+            return new THREE.Mesh(geometry, material);
+        }
 
         function moveTileCenter(geom: THREE.BufferGeometry) {
             const attr = geom.getAttribute("position") as THREE.BufferAttribute;
             const posArray = attr.array as Float32Array;
             for (let i = 0; i < posArray.length; i += 3) {
-                tmpV.set(posArray[i], posArray[i + 1], posArray[i + 2]);
-                projection.reprojectPoint(sourceProjection, tmpV, tmpV);
-                tmpV.sub(tile.center);
-                posArray[i] = tmpV.x;
-                posArray[i + 1] = tmpV.y;
-                posArray[i + 2] = tmpV.z;
+                tmpVector3.set(posArray[i], posArray[i + 1], posArray[i + 2]);
+                projection.reprojectPoint(sourceProjection, tmpVector3, tmpVector3);
+                tmpVector3.sub(tile.center);
+                posArray[i] = tmpVector3.x;
+                posArray[i + 1] = tmpVector3.y;
+                posArray[i + 2] = tmpVector3.z;
             }
             attr.needsUpdate = true;
         }
 
-        const geometry = new THREE.BufferGeometry();
-        // Create plane
-        const tileCorners = this.generateTilePlaneCorners(tile.geoBox, sourceProjection);
-
-        const posAttr = new THREE.BufferAttribute(
-            new Float32Array([
-                ...tileCorners.sw.toArray(),
-                ...tileCorners.se.toArray(),
-                ...tileCorners.nw.toArray(),
-                ...tileCorners.ne.toArray()
-            ]),
-            3
+        const geometries: THREE.BufferGeometry[] = [];
+        const sphericalModifier = new SphericalGeometrySubdivisionModifier(
+            THREE.MathUtils.degToRad(10),
+            sourceProjection
         );
-        geometry.setAttribute("position", posAttr);
-        if (shadowsEnabled === true) {
-            sourceProjection.surfaceNormal(tileCorners.sw, tmpV);
-            // Webmercator needs to have it negated to work correctly.
-            tmpV.negate();
-            const normAttr = new THREE.BufferAttribute(
-                new Float32Array([
-                    ...tmpV.toArray(),
-                    ...tmpV.toArray(),
-                    ...tmpV.toArray(),
-                    ...tmpV.toArray()
-                ]),
-                3
-            );
-            geometry.setAttribute("normal", normAttr);
-        }
-        geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
 
-        if (createTexCoords) {
-            const uvAttr = new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), 2);
-            geometry.setAttribute("uv", uvAttr);
-        }
-
-        let mesh: THREE.Mesh;
-        if (shouldSubdivide) {
-            const geometries: THREE.BufferGeometry[] = [];
-            const sphericalModifier = new SphericalGeometrySubdivisionModifier(
-                THREE.MathUtils.degToRad(10),
-                sourceProjection
-            );
-            const enableMixedLod = mapView.enableMixedLod ?? mapView.enableMixedLod === undefined;
-
-            if (enableMixedLod) {
-                // Use a [[LodMesh]] to adapt tesselation of tile depending on zoom level
-                for (let zoomLevelOffset = 0; zoomLevelOffset < 4; ++zoomLevelOffset) {
-                    const subdivision = Math.pow(2, zoomLevelOffset);
-                    const zoomLevelGeometry = geometry.clone();
-                    if (subdivision > 1) {
-                        const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
-                            subdivision,
-                            tile.geoBox,
-                            SubdivisionMode.All,
-                            sourceProjection
-                        );
-                        edgeModifier.modify(zoomLevelGeometry);
-                    }
-                    sphericalModifier.modify(zoomLevelGeometry);
-                    moveTileCenter(zoomLevelGeometry);
-                    geometries.push(zoomLevelGeometry);
-                }
-                mesh = new LodMesh(geometries, material);
-            } else {
-                // Use static mesh if mixed LOD is disabled
-                sphericalModifier.modify(geometry);
-                moveTileCenter(geometry);
-
-                mesh = new THREE.Mesh(geometry, material);
-            }
-        } else {
-            // Use static mesh for planar projection
+        if (mapView.enableMixedLod === false) {
+            // Use static mesh if mixed LOD is disabled
+            sphericalModifier.modify(geometry);
             moveTileCenter(geometry);
-            mesh = new THREE.Mesh(geometry, material);
+
+            return new THREE.Mesh(geometry, material);
         }
 
-        this.registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
-        return mesh;
+        // Use a [[LodMesh]] to adapt tesselation of tile depending on zoom level
+        for (let zoomLevelOffset = 0; zoomLevelOffset < 4; ++zoomLevelOffset) {
+            const subdivision = Math.pow(2, zoomLevelOffset);
+            const zoomLevelGeometry = geometry.clone();
+            if (subdivision > 1) {
+                const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
+                    subdivision,
+                    tile.geoBox,
+                    SubdivisionMode.All,
+                    sourceProjection
+                );
+                edgeModifier.modify(zoomLevelGeometry);
+            }
+            sphericalModifier.modify(zoomLevelGeometry);
+            moveTileCenter(zoomLevelGeometry);
+            geometries.push(zoomLevelGeometry);
+        }
+        return new LodMesh(geometries, material);
     }
 
     generateTilePlaneCorners(geoBox: GeoBox, sourceProjection: Projection): TileCorners {
@@ -1284,20 +1242,72 @@ export class TileGeometryCreator {
 
     /**
      * Creates and add a background plane for the tile.
-     * @param tile - Tile
-     * @param renderOrder - Render order of the tile
+     * @param tile - The tile to which the ground plane belongs.
+     * @param material - The plane material.
+     * @param renderOrder - The plane render order.
+     * @param createTexCoords - Whether to create texture coordinates.
+     * @param shadowsEnabled - Whether to enable shadows.
      */
-    addGroundPlane(tile: Tile, renderOrder: number) {
-        const shadowsEnabled = tile.mapView.shadowsEnabled;
-        const material = this.createGroundPlaneMaterial(
-            new THREE.Color(tile.mapView.clearColor),
-            tile.mapView.shadowsEnabled,
-            tile.mapView.projection.type === ProjectionType.Spherical
-        );
-        const mesh = this.createGroundPlane(tile, material, false, shadowsEnabled);
+    addGroundPlane(
+        tile: Tile,
+        renderOrder: number,
+        material?: THREE.Material,
+        createTexCoords: boolean = false,
+        shadowsEnabled: boolean = tile.mapView.shadowsEnabled
+    ) {
+        if (!material) {
+            material = this.createGroundPlaneMaterial(
+                new THREE.Color(tile.mapView.clearColor),
+                tile.mapView.shadowsEnabled,
+                tile.mapView.projection.type === ProjectionType.Spherical
+            );
+        }
+        const mesh = this.createGroundPlane(tile, material, createTexCoords, shadowsEnabled);
         mesh.receiveShadow = shadowsEnabled;
         mesh.renderOrder = renderOrder;
+        this.registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
         tile.objects.push(mesh);
+    }
+
+    private createGroundPlaneGeometry(
+        tile: Tile,
+        useLocalTargetCoords: boolean,
+        createTexCoords: boolean,
+        shadowsEnabled: boolean
+    ): THREE.BufferGeometry {
+        const { dataSource, projection } = tile;
+        const sourceProjection = dataSource.getTilingScheme().projection;
+        const tmpV = new THREE.Vector3();
+
+        const geometry = new THREE.BufferGeometry();
+        const tileCorners = this.generateTilePlaneCorners(tile.geoBox, sourceProjection);
+        const cornersArray = [tileCorners.sw, tileCorners.se, tileCorners.nw, tileCorners.ne];
+        if (useLocalTargetCoords) {
+            for (const corner of cornersArray) {
+                projection.reprojectPoint(sourceProjection, corner, corner).sub(tile.center);
+            }
+        }
+
+        const posAttr = new THREE.BufferAttribute(new Float32Array(12), 3).copyVector3sArray(
+            cornersArray
+        );
+        geometry.setAttribute("position", posAttr);
+        if (shadowsEnabled) {
+            // Webmercator needs to have it negated to work correctly.
+            sourceProjection.surfaceNormal(tileCorners.sw, tmpV).negate();
+            const normAttr = new THREE.BufferAttribute(new Float32Array(12), 3).copyVector3sArray(
+                Array(4).fill(tmpV)
+            );
+            geometry.setAttribute("normal", normAttr);
+        }
+        geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
+
+        if (createTexCoords) {
+            const uvAttr = new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), 2);
+            geometry.setAttribute("uv", uvAttr);
+        }
+
+        return geometry;
     }
 
     private createGroundPlaneMaterial(
