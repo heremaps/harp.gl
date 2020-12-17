@@ -62,10 +62,10 @@ describe("CirclePointsMaterial", function() {
         });
     });
 
-    describe("#opacity", function() {
+    describe("#setOpacity", function() {
         it("updates opacity", function() {
             const material = new CirclePointsMaterial();
-            material.opacity = 0.7;
+            material.setOpacity(0.7);
 
             expect(material.opacity).to.equal(0.7);
             expect(material.uniforms.opacity.value).to.equal(0.7);

@@ -277,7 +277,7 @@ async function runAndMeasureGc(testFun: () => void): Promise<{ gcTime: number | 
     // For some reason, in order to get `gc` entries, we need to force async flow before
     // disconnecting ...
     // ... and doesn't work with manually created promises, so we need to poll.
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
         const poll = () => {
             if (perfCountersCollected) {
                 resolve();

@@ -5,7 +5,12 @@
  */
 
 import { ColorUtils, Expr, getPropertyValue, Value } from "@here/harp-datasource-protocol";
-import { disableBlending, enableBlending } from "@here/harp-materials";
+import {
+    CirclePointsMaterial,
+    disableBlending,
+    enableBlending,
+    SolidLineMaterial
+} from "@here/harp-materials";
 import * as THREE from "three";
 
 import { evaluateColorProperty } from "./DecodedTileHelpers";
@@ -237,8 +242,17 @@ export class MapMaterialAdapter {
             color = parsed;
         }
         const { r, g, b, a } = ColorUtils.getRgbaFromHex(color ?? 0xff0000);
+
         const actualOpacity = a * THREE.MathUtils.clamp(opacity ?? 1, 0, 1);
-        this.material.opacity = actualOpacity;
+        if (
+            this.material instanceof CirclePointsMaterial ||
+            this.material instanceof SolidLineMaterial
+        ) {
+            this.material.setOpacity(actualOpacity);
+        } else {
+            this.material.opacity = actualOpacity;
+        }
+
         (this.material as any).color.setRGB(r, g, b);
 
         const opaque = actualOpacity >= 1.0;

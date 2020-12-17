@@ -31,12 +31,18 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
 
     if (Array.isArray(material)) {
         material.forEach(mat => {
-            if (hasDisplacementFeature(mat)) {
+            if (hasDisplacementFeature(mat) && mat.displacementMap !== displacementMap) {
                 mat.displacementMap = displacementMap;
+                mat.needsUpdate = true;
             }
         });
-    } else if (material && hasDisplacementFeature(material)) {
+    } else if (
+        material &&
+        hasDisplacementFeature(material) &&
+        material.displacementMap !== displacementMap
+    ) {
         material.displacementMap = displacementMap;
+        material.needsUpdate = true;
     }
 }
 

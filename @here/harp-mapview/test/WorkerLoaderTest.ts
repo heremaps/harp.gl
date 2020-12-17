@@ -94,7 +94,7 @@ describe("WorkerLoader", function() {
             });
 
             const worker = await WorkerLoader.startWorker(testWorkerUrl);
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 worker.addEventListener("message", event => {
                     assert.isDefined(event.data);
                     assert.equal(event.data.hello, "world");
@@ -147,7 +147,7 @@ describe("WorkerLoader", function() {
                 const blob = new Blob([script], { type: "application/javascript" });
 
                 const worker = await WorkerLoader.startWorker(URL.createObjectURL(blob));
-                await new Promise((resolve, reject) => {
+                await new Promise<void>((resolve, reject) => {
                     worker.addEventListener("message", event => {
                         assert.isDefined(event.data);
                         assert.equal(event.data.hello, "world");
@@ -225,7 +225,7 @@ describe("WorkerLoader", function() {
 
                 await silenceLoggingAroundFunction("WorkerLoader", async () => {
                     const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
-                    await new Promise((resolve, reject) => {
+                    await new Promise<void>((resolve, reject) => {
                         worker.addEventListener("message", event => {
                             assert.isDefined(event.data);
                             assert.equal(event.data.hello, "world");
@@ -273,7 +273,7 @@ describe("WorkerLoader", function() {
                 await silenceLoggingAroundFunction("WorkerLoader", async () => {
                     const worker = await WorkerLoader.startWorker(cspTestScriptUrl);
 
-                    await new Promise((resolve, reject) => {
+                    await new Promise<void>((resolve, reject) => {
                         worker.addEventListener("message", event => {
                             assert.isDefined(event.data);
                             assert.equal(event.data.hello, "world");

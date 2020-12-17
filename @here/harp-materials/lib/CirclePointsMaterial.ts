@@ -61,7 +61,6 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
     static readonly DEFAULT_CIRCLE_SIZE = 1;
 
     private readonly m_color: THREE.Color;
-    private m_opacity: number;
 
     /**
      * Constructs a new `CirclePointsMaterial`.
@@ -90,7 +89,7 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
 
         this.type = "CirclePointsMaterial";
         this.m_color = this.uniforms.diffuse.value;
-        this.m_opacity = this.uniforms.opacity.value;
+        this.setOpacity(this.uniforms.opacity.value);
 
         if (size !== undefined) {
             this.size = size;
@@ -99,7 +98,7 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
             this.color = color;
         }
         if (opacity !== undefined) {
-            this.opacity = opacity;
+            this.setOpacity(opacity);
         }
     }
 
@@ -117,20 +116,9 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
         this.uniforms.size.value = size;
     }
 
-    /**
-     * Get circle opacity.
-     */
-    get opacity(): number {
-        return this.m_opacity;
-    }
-
-    /**
-     * Set circle opacity.
-     */
-    set opacity(opacity: number) {
-        this.m_opacity = opacity;
-
-        // Base constructor may set opacity before uniform being created.
+    setOpacity(opacity: number) {
+        this.opacity = opacity;
+        // Base constructor may set opacity before uniform being created:
         if (this.uniforms && this.uniforms.opacity) {
             this.uniforms.opacity.value = opacity;
         }

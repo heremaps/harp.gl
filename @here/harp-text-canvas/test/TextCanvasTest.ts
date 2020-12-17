@@ -133,7 +133,7 @@ describe("TextCanvas", () => {
                 onProgress?: (event: ProgressEvent) => void,
                 onError?: (event: ErrorEvent) => void
             ) => {
-                return new Promise(resolve => {
+                return new Promise<void>(resolve => {
                     if (onLoad !== undefined) {
                         const image = { width: 1, height: 1 };
                         onLoad(new THREE.Texture(image as HTMLImageElement));

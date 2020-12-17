@@ -254,9 +254,9 @@ describe("StyleSetEvaluator", function() {
 
             assert.equal(techniquesTileC.length, 2);
 
-            // delete _index from result techniques, because it may differ
+            // reset _index from result techniques, because it may differ
             [...techniquesTileA, ...techniquesTileB, ...techniquesTileC].forEach(t => {
-                delete t._index;
+                t._index = 0;
             });
 
             // Now, respective techniques should have same cache key irrespectively to from
