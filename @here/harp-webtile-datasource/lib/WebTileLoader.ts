@@ -5,7 +5,7 @@
  */
 
 import { BaseTileLoader, Tile, TileLoaderState } from "@here/harp-mapview";
-import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { addGroundPlane } from "@here/harp-mapview/lib/geometry/AddGroundPlane";
 import { enableBlending } from "@here/harp-materials";
 import * as THREE from "three";
 
@@ -66,7 +66,7 @@ export class WebTileLoader extends BaseTileLoader {
                 if (this.dataSource.transparent) {
                     enableBlending(material);
                 }
-                TileGeometryCreator.instance.addGroundPlane(
+                addGroundPlane(
                     this.tile,
                     this.dataSource.renderOrder, // Remove, as `renderOrder` will be deprecated.
                     material,

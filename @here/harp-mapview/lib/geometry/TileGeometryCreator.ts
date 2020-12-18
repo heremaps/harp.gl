@@ -14,7 +14,6 @@ import {
     ExtrudedPolygonTechnique,
     FillTechnique,
     Geometry,
-    GeometryKind,
     GeometryKindSet,
     getArrayConstructor,
     getPropertyValue,
@@ -48,11 +47,6 @@ import {
     ExprEvaluatorContext,
     OperatorDescriptor
 } from "@here/harp-datasource-protocol/lib/ExprEvaluator";
-import {
-    EdgeLengthGeometrySubdivisionModifier,
-    SubdivisionMode
-} from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
-import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { EarthConstants, ProjectionType } from "@here/harp-geoutils";
 import {
     EdgeMaterial,
@@ -61,7 +55,6 @@ import {
     FadingFeature,
     hasExtrusionFeature,
     isHighPrecisionLineMaterial,
-    MapMeshBasicMaterial,
     MapMeshDepthMaterial,
     MapMeshStandardMaterial,
     setShaderMaterialDefine,
@@ -85,13 +78,12 @@ import {
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "../MapMaterialAdapter";
-import { MapObjectAdapter, MapObjectAdapterParams } from "../MapObjectAdapter";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElementBuilder } from "../text/TextElementBuilder";
 import { Tile, TileFeatureData } from "../Tile";
-import { LodMesh } from "./LodMesh";
-import { projectTilePlaneCorners } from "./ProjectTilePlaneCorners";
+import { addGroundPlane } from "./AddGroundPlane";
+import { registerTileObject } from "./RegisterTileObject";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
 
@@ -311,7 +303,7 @@ export class TileGeometryCreator {
             // The ground plane is required for when we zoom in and we fall back to the parent
             // (whilst the new tiles are loading), in that case the ground plane ensures that the
             // parent's geometry doesn't show through.
-            TileGeometryCreator.instance.addGroundPlane(tile, -1);
+            addGroundPlane(tile, -1);
         }
     }
 
@@ -370,52 +362,6 @@ export class TileGeometryCreator {
                 }
             }
         });
-    }
-
-    /**
-     * Adds a THREE object to the root of the tile and register [[MapObjectAdapter]].
-     *
-     * Sets the owning tiles datasource.name and the `tileKey` in the `userData` property of the
-     * object, such that the tile it belongs to can be identified during picking.
-     *
-     * @param tile - The {@link Tile} to add the object to.
-     * @param object - The object to add to the root of the tile.
-     * @param geometryKind - The kind of object. Can be used for filtering.
-     * @param mapAdapterParams - additional parameters for [[MapObjectAdapter]]
-     */
-    registerTileObject(
-        tile: Tile,
-        object: THREE.Object3D,
-        geometryKind: GeometryKind | GeometryKindSet | undefined,
-        mapAdapterParams?: MapObjectAdapterParams
-    ) {
-        const kind =
-            geometryKind instanceof Set
-                ? Array.from((geometryKind as GeometryKindSet).values())
-                : Array.isArray(geometryKind)
-                ? geometryKind
-                : [geometryKind];
-
-        MapObjectAdapter.create(object, {
-            dataSource: tile.dataSource,
-            kind,
-            level: tile.tileKey.level,
-            ...mapAdapterParams
-        });
-
-        // TODO legacy fields, encoded directly in `userData to be removed
-        if (object.userData === undefined) {
-            object.userData = {};
-        }
-
-        const userData = object.userData;
-        userData.tileKey = tile.tileKey;
-        userData.dataSource = tile.dataSource.name;
-
-        userData.kind = kind;
-
-        // Force a visibility check of all objects.
-        tile.resetVisibilityCounter();
     }
 
     /**
@@ -840,7 +786,7 @@ export class TileGeometryCreator {
                     this.addUserData(tile, srcGeometry, technique, depthPassMesh);
                     // Set geometry kind for depth pass mesh so that it gets the displacement map
                     // for elevation overlay.
-                    this.registerTileObject(tile, depthPassMesh, techniqueKind, {
+                    registerTileObject(tile, depthPassMesh, techniqueKind, {
                         technique,
                         pickable: false
                     });
@@ -855,7 +801,7 @@ export class TileGeometryCreator {
 
                 // register all objects as pickable except solid lines with outlines, in that case
                 // it's enough to make outlines pickable.
-                this.registerTileObject(tile, object, techniqueKind, {
+                registerTileObject(tile, object, techniqueKind, {
                     technique,
                     pickable: !hasSolidLinesOutlines
                 });
@@ -942,7 +888,7 @@ export class TileGeometryCreator {
                         addToExtrudedMaterials(edgeObj.material, extrudedMaterials);
                     }
 
-                    this.registerTileObject(tile, edgeObj, techniqueKind, {
+                    registerTileObject(tile, edgeObj, techniqueKind, {
                         technique,
                         pickable: false
                     });
@@ -1021,7 +967,7 @@ export class TileGeometryCreator {
 
                     this.addUserData(tile, srcGeometry, technique, outlineObj);
 
-                    this.registerTileObject(tile, outlineObj, techniqueKind, {
+                    registerTileObject(tile, outlineObj, techniqueKind, {
                         technique,
                         pickable: false
                     });
@@ -1078,7 +1024,7 @@ export class TileGeometryCreator {
                         outlineTechnique.secondaryWidth,
                         outlineTechnique.metricUnit
                     );
-                    this.registerTileObject(tile, outlineObj, techniqueKind, { technique });
+                    registerTileObject(tile, outlineObj, techniqueKind, { technique });
                     const mainMaterialAdapter = MapMaterialAdapter.get(material);
 
                     const outlineMaterialAdapter = MapMaterialAdapter.create(outlineMaterial, {
@@ -1134,171 +1080,6 @@ export class TileGeometryCreator {
     preparePois(tile: Tile, decodedTile: DecodedTile) {
         if (decodedTile.poiGeometries !== undefined) {
             tile.mapView.poiManager.addPois(tile, decodedTile);
-        }
-    }
-
-    private createGroundPlane(
-        tile: Tile,
-        material: THREE.Material | THREE.Material[],
-        createTexCoords: boolean,
-        shadowsEnabled: boolean
-    ): THREE.Mesh {
-        const { dataSource, projection, mapView } = tile;
-        const sourceProjection = dataSource.getTilingScheme().projection;
-        const shouldSubdivide = projection.type === ProjectionType.Spherical;
-        const useLocalTargetCoords = !shouldSubdivide;
-
-        const geometry = this.createGroundPlaneGeometry(
-            tile,
-            useLocalTargetCoords,
-            createTexCoords,
-            shadowsEnabled
-        );
-
-        if (!shouldSubdivide) {
-            return new THREE.Mesh(geometry, material);
-        }
-
-        function moveTileCenter(geom: THREE.BufferGeometry) {
-            const attr = geom.getAttribute("position") as THREE.BufferAttribute;
-            const oldArray = attr.array as Float64Array;
-            // Convert to single precision before rendering (WebGL does not support double
-            // precision).
-            const newArray = new Float32Array(oldArray.length);
-            for (let i = 0; i < attr.array.length; i += 1) {
-                tmpVector3.fromBufferAttribute(attr, i);
-                projection
-                    .reprojectPoint(sourceProjection, tmpVector3, tmpVector3)
-                    .sub(tile.center);
-                tmpVector3.toArray(newArray, i * 3);
-            }
-            attr.array = newArray;
-            attr.needsUpdate = true;
-        }
-
-        const geometries: THREE.BufferGeometry[] = [];
-        const sphericalModifier = new SphericalGeometrySubdivisionModifier(
-            THREE.MathUtils.degToRad(10),
-            sourceProjection
-        );
-
-        if (mapView.enableMixedLod === false) {
-            // Use static mesh if mixed LOD is disabled
-            sphericalModifier.modify(geometry);
-            moveTileCenter(geometry);
-
-            return new THREE.Mesh(geometry, material);
-        }
-
-        // Use a [[LodMesh]] to adapt tesselation of tile depending on zoom level
-        for (let zoomLevelOffset = 0; zoomLevelOffset < 4; ++zoomLevelOffset) {
-            const subdivision = Math.pow(2, zoomLevelOffset);
-            const zoomLevelGeometry = geometry.clone();
-            if (subdivision > 1) {
-                const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
-                    subdivision,
-                    tile.geoBox,
-                    SubdivisionMode.All,
-                    sourceProjection
-                );
-                edgeModifier.modify(zoomLevelGeometry);
-            }
-            sphericalModifier.modify(zoomLevelGeometry);
-            moveTileCenter(zoomLevelGeometry);
-            geometries.push(zoomLevelGeometry);
-        }
-        return new LodMesh(geometries, material);
-    }
-
-    /**
-     * Creates and add a background plane for the tile.
-     * @param tile - The tile to which the ground plane belongs.
-     * @param material - The plane material.
-     * @param renderOrder - The plane render order.
-     * @param createTexCoords - Whether to create texture coordinates.
-     * @param shadowsEnabled - Whether to enable shadows.
-     */
-    addGroundPlane(
-        tile: Tile,
-        renderOrder: number,
-        material?: THREE.Material,
-        createTexCoords: boolean = false,
-        shadowsEnabled: boolean = tile.mapView.shadowsEnabled
-    ) {
-        if (!material) {
-            material = this.createGroundPlaneMaterial(
-                new THREE.Color(tile.mapView.clearColor),
-                tile.mapView.shadowsEnabled,
-                tile.mapView.projection.type === ProjectionType.Spherical
-            );
-        }
-        const mesh = this.createGroundPlane(tile, material, createTexCoords, shadowsEnabled);
-        mesh.receiveShadow = shadowsEnabled;
-        mesh.renderOrder = renderOrder;
-        this.registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
-        tile.objects.push(mesh);
-    }
-
-    private createGroundPlaneGeometry(
-        tile: Tile,
-        useLocalTargetCoords: boolean,
-        createTexCoords: boolean,
-        shadowsEnabled: boolean
-    ): THREE.BufferGeometry {
-        const { dataSource, projection } = tile;
-        const sourceProjection = dataSource.getTilingScheme().projection;
-        const tmpV = new THREE.Vector3();
-
-        const geometry = new THREE.BufferGeometry();
-        const tileCorners = projectTilePlaneCorners(tile, sourceProjection);
-        const cornersArray = [tileCorners.sw, tileCorners.se, tileCorners.nw, tileCorners.ne];
-        if (useLocalTargetCoords) {
-            for (const corner of cornersArray) {
-                projection.reprojectPoint(sourceProjection, corner, corner).sub(tile.center);
-            }
-        }
-        // Use 64bits floats for world coordinates to avoid precision issues on coordinate
-        // tranformations. The array must be converted to single precision before rendering.
-        const bufferArray = useLocalTargetCoords ? new Float32Array(12) : new Float64Array(12);
-        const posAttr = new THREE.BufferAttribute(bufferArray, 3).copyVector3sArray(cornersArray);
-        geometry.setAttribute("position", posAttr);
-
-        if (shadowsEnabled) {
-            // Webmercator needs to have it negated to work correctly.
-            sourceProjection.surfaceNormal(tileCorners.sw, tmpV).negate();
-            const normAttr = new THREE.BufferAttribute(new Float32Array(12), 3).copyVector3sArray(
-                Array(4).fill(tmpV)
-            );
-            geometry.setAttribute("normal", normAttr);
-        }
-        geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
-
-        if (createTexCoords) {
-            const uvAttr = new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), 2);
-            geometry.setAttribute("uv", uvAttr);
-        }
-
-        return geometry;
-    }
-
-    private createGroundPlaneMaterial(
-        color: THREE.Color,
-        shadowsEnabled: boolean,
-        depthWrite: boolean
-    ): THREE.Material {
-        if (shadowsEnabled) {
-            return new MapMeshStandardMaterial({
-                color,
-                visible: true,
-                depthWrite,
-                removeDiffuseLight: true
-            });
-        } else {
-            return new MapMeshBasicMaterial({
-                color,
-                visible: true,
-                depthWrite
-            });
         }
     }
 

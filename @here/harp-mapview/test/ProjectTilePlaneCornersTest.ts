@@ -9,9 +9,9 @@ import {
     MercatorConstants,
     mercatorProjection,
     TileKey,
+    TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { TileDataSource } from "@here/harp-mapview-decoder";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -20,9 +20,21 @@ import { DataSource } from "../lib/DataSource";
 import { projectTilePlaneCorners } from "../lib/geometry/ProjectTilePlaneCorners";
 import { Tile } from "../lib/Tile";
 
+class MockDataSource extends DataSource {
+    /** @override */
+    getTilingScheme(): TilingScheme {
+        return webMercatorTilingScheme;
+    }
+
+    /** @override */
+    getTile(tileKey: TileKey): Tile | undefined {
+        return undefined;
+    }
+}
+
 describe("projectTilePlaneCorners", function() {
     it("generates tile corners ", () => {
-        const mockDatasource = sinon.createStubInstance(TileDataSource);
+        const mockDatasource = sinon.createStubInstance(MockDataSource);
         mockDatasource.getTilingScheme.callsFake(() => webMercatorTilingScheme);
         sinon.stub(mockDatasource, "projection").get(() => {
             return mercatorProjection;

@@ -14,18 +14,14 @@ import {
 } from "@here/harp-geoutils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { assert } from "chai";
-import sinon = require("sinon");
-import THREE = require("three");
-
-import { Vector3 } from "three";
+import * as sinon from "sinon";
+import * as THREE from "three";
 
 import { BoundsGenerator } from "../lib/BoundsGenerator";
-import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
-import { LookAtParams, MapView, MapViewOptions } from "../lib/MapView";
-import { MapViewUtils } from "../lib/Utils";
-import { Tile } from "../lib/Tile";
-import { DataSource } from "../lib/DataSource";
 import { projectTilePlaneCorners } from "../lib/geometry/ProjectTilePlaneCorners";
+import { LookAtParams, MapView, MapViewOptions } from "../lib/MapView";
+import { Tile } from "../lib/Tile";
+import { MapViewUtils } from "../lib/Utils";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
@@ -378,9 +374,12 @@ describe("BoundsGenerator", function() {
             for (const vertex of coordinates!) {
                 const worldPoint = mapView!.projection.projectPoint(
                     GeoCoordinates.fromObject(vertex),
-                    new Vector3()
+                    new THREE.Vector3()
                 );
-                const cameraRay = new Vector3().subVectors(mapView!.camera.position, worldPoint);
+                const cameraRay = new THREE.Vector3().subVectors(
+                    mapView!.camera.position,
+                    worldPoint
+                );
                 assert.closeTo(Math.abs(cameraRay.angleTo(worldPoint)), Math.PI / 2, 1e-5);
             }
         });

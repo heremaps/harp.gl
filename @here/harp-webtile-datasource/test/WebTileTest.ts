@@ -3,12 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { GeometryKind } from "@here/harp-datasource-protocol";
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { CopyrightInfo, MapView, Tile } from "@here/harp-mapview";
-import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { LoggerManager } from "@here/harp-utils";
 import { expect } from "chai";
 import * as sinon from "sinon";
+import * as THREE from "three";
 
 import { WebTileDataSource } from "../index";
 
@@ -121,13 +122,14 @@ describe("WebTileDataSource", function() {
             return fakeMapView;
         });
 
-        const creatorSpy = sinon.spy(TileGeometryCreator.instance, "addGroundPlane");
-
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         const tile = webTileDataSource.getTile(tileKey);
         await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
-        expect(creatorSpy.called).to.be.true;
-        expect((creatorSpy.args[0][2] as THREE.MeshBasicMaterial).opacity).to.equal(0.5);
+        expect(tile.objects).to.have.lengthOf(1);
+        const obj = tile.objects[0];
+        expect(obj).to.be.instanceOf(THREE.Mesh);
+        expect(obj.userData).to.haveOwnProperty("kind");
+        expect(obj.userData.kind).contains(GeometryKind.Background);
     });
 });

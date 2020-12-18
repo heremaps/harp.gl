@@ -277,14 +277,6 @@ describe("TileGeometryCreator", () => {
         });
     }
     describe("pickable geometry", () => {
-        it("background geometry is registered as non-pickable", () => {
-            tgc.addGroundPlane(newTile, 0);
-            assert.equal(newTile.objects.length, 1);
-            const adapter = MapObjectAdapter.get(newTile.objects[0]);
-            expect(adapter).not.equals(undefined);
-            expect(adapter!.isPickable(new MapEnv({}))).to.equal(false);
-        });
-
         it("extruded polygon depth prepass and edges geometries are registered as non-pickable", () => {
             const decodedTile: DecodedTile = getExtrudedPolygonTile();
             tgc.createObjects(newTile, decodedTile);
