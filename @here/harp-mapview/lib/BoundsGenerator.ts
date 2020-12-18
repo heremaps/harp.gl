@@ -15,7 +15,7 @@ import {
 import { assert } from "@here/harp-utils";
 import { Frustum, Line3, Matrix4, PerspectiveCamera, Plane, Ray, Vector2, Vector3 } from "three";
 
-import { TileCorners } from "./geometry/TileGeometryCreator";
+import { TileCorners } from "./geometry/ProjectTilePlaneCorners";
 import { CanvasSide, SphereHorizon } from "./SphereHorizon";
 import { MapViewUtils } from "./Utils";
 

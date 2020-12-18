@@ -53,13 +53,7 @@ import {
     SubdivisionMode
 } from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
-import {
-    EarthConstants,
-    GeoBox,
-    GeoCoordinates,
-    Projection,
-    ProjectionType
-} from "@here/harp-geoutils";
+import { EarthConstants, ProjectionType } from "@here/harp-geoutils";
 import {
     EdgeMaterial,
     EdgeMaterialParameters,
@@ -97,6 +91,7 @@ import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElementBuilder } from "../text/TextElementBuilder";
 import { Tile, TileFeatureData } from "../Tile";
 import { LodMesh } from "./LodMesh";
+import { projectTilePlaneCorners } from "./ProjectTilePlaneCorners";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
 
@@ -197,13 +192,6 @@ function addToExtrudedMaterials(
     } else {
         extrudedMaterials.push(material as ExtrusionFeature);
     }
-}
-
-export interface TileCorners {
-    se: THREE.Vector3;
-    sw: THREE.Vector3;
-    ne: THREE.Vector3;
-    nw: THREE.Vector3;
 }
 
 /**
@@ -1222,27 +1210,6 @@ export class TileGeometryCreator {
         return new LodMesh(geometries, material);
     }
 
-    generateTilePlaneCorners(geoBox: GeoBox, sourceProjection: Projection): TileCorners {
-        const { east, west, north, south } = geoBox;
-        const sw = sourceProjection.projectPoint(
-            new GeoCoordinates(south, west),
-            new THREE.Vector3()
-        );
-        const se = sourceProjection.projectPoint(
-            new GeoCoordinates(south, east),
-            new THREE.Vector3()
-        );
-        const nw = sourceProjection.projectPoint(
-            new GeoCoordinates(north, west),
-            new THREE.Vector3()
-        );
-        const ne = sourceProjection.projectPoint(
-            new GeoCoordinates(north, east),
-            new THREE.Vector3()
-        );
-        return { sw, se, nw, ne };
-    }
-
     /**
      * Creates and add a background plane for the tile.
      * @param tile - The tile to which the ground plane belongs.
@@ -1283,7 +1250,7 @@ export class TileGeometryCreator {
         const tmpV = new THREE.Vector3();
 
         const geometry = new THREE.BufferGeometry();
-        const tileCorners = this.generateTilePlaneCorners(tile.geoBox, sourceProjection);
+        const tileCorners = projectTilePlaneCorners(tile, sourceProjection);
         const cornersArray = [tileCorners.sw, tileCorners.se, tileCorners.nw, tileCorners.ne];
         if (useLocalTargetCoords) {
             for (const corner of cornersArray) {

@@ -23,6 +23,9 @@ import { BoundsGenerator } from "../lib/BoundsGenerator";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { LookAtParams, MapView, MapViewOptions } from "../lib/MapView";
 import { MapViewUtils } from "../lib/Utils";
+import { Tile } from "../lib/Tile";
+import { DataSource } from "../lib/DataSource";
+import { projectTilePlaneCorners } from "../lib/geometry/ProjectTilePlaneCorners";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
@@ -488,8 +491,9 @@ describe("BoundsGenerator", function() {
             assert.isNotEmpty(coordinates);
             assert.equal(coordinates?.length, 4);
 
-            const worldCorners = TileGeometryCreator.instance.generateTilePlaneCorners(
-                mercatorTilingScheme.getGeoBox(TileKey.fromRowColumnLevel(0, 0, 0)),
+            const geoBox = mercatorTilingScheme.getGeoBox(TileKey.fromRowColumnLevel(0, 0, 0));
+            const worldCorners = projectTilePlaneCorners(
+                { geoBox } as Tile,
                 mapView!.projection as Projection
             );
             if (coordinates === undefined) {

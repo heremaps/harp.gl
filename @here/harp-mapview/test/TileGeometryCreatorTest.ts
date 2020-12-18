@@ -15,8 +15,6 @@ import {
 import { StyleSetEvaluator, ThreeBufferUtils } from "@here/harp-datasource-protocol/index-decoder";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
-    EarthConstants,
-    MercatorConstants,
     mercatorProjection,
     TileKey,
     TilingScheme,
@@ -474,65 +472,6 @@ describe("TileGeometryCreator", () => {
         // test that the technique used to create the attachment is yellow-polygon
         assert.strictEqual(attachmentObjectMaterial.color.getHexString(), "00ff00");
         assert.strictEqual(attachmentObject.renderOrder, yellowPolygonTechnique.renderOrder);
-    });
-
-    it("generates tile corners ", () => {
-        const delta = 0.0000000000001;
-        const corners = tgc.generateTilePlaneCorners(newTile.geoBox, mercatorProjection);
-
-        //SOUTH WEST
-        assert.equal(corners.sw.x, 0);
-        assert.equal(corners.sw.y, 6.673830935484984e-9);
-        assert.equal(corners.sw.z, 0);
-
-        const southWestGeo = mapView.projection.unprojectPoint(corners.sw);
-        assert.equal(
-            southWestGeo.latitude,
-            -THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE)
-        );
-        assert.equal(southWestGeo.longitude, -180);
-        assert.equal(southWestGeo.altitude, 0);
-
-        //SOUTH EAST
-        assert.closeTo(corners.se.x, EarthConstants.EQUATORIAL_CIRCUMFERENCE, delta);
-        assert.equal(corners.se.y, 6.673830935484984e-9);
-        assert.equal(corners.se.z, 0);
-
-        const southEastGeo = mapView.projection.unprojectPoint(corners.se);
-        assert.equal(
-            southEastGeo.latitude,
-            -THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE)
-        );
-        assert.equal(southEastGeo.longitude, 180);
-        assert.equal(southEastGeo.altitude, 0);
-
-        //NORTH EAST
-        assert.closeTo(corners.ne.x, EarthConstants.EQUATORIAL_CIRCUMFERENCE, delta);
-        assert.closeTo(corners.ne.y, EarthConstants.EQUATORIAL_CIRCUMFERENCE, delta);
-        assert.equal(corners.ne.z, 0);
-
-        const northEastGeo = mapView.projection.unprojectPoint(corners.ne);
-        assert.closeTo(
-            northEastGeo.latitude,
-            THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE),
-            0.0000000000001
-        );
-        assert.equal(northEastGeo.longitude, 180);
-        assert.equal(northEastGeo.altitude, 0);
-
-        //NORTH WEST
-        assert.equal(corners.nw.x, 0);
-        assert.closeTo(corners.nw.y, EarthConstants.EQUATORIAL_CIRCUMFERENCE, delta);
-        assert.equal(corners.nw.z, 0);
-
-        const northWestGeo = mapView.projection.unprojectPoint(corners.nw);
-        assert.closeTo(
-            northWestGeo.latitude,
-            THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE),
-            delta
-        );
-        assert.equal(northWestGeo.longitude, -180);
-        assert.equal(northWestGeo.altitude, 0);
     });
 
     describe("test side of the geometry", () => {
