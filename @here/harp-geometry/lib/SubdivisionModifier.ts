@@ -153,7 +153,10 @@ export abstract class SubdivisionModifier {
             }
         }
 
-        positionAttr.array = new Float32Array(position);
+        positionAttr.array =
+            positionAttr.array instanceof Float32Array
+                ? new Float32Array(position)
+                : new Float64Array(position);
         positionAttr.count = position.length / positionAttr.itemSize;
         positionAttr.needsUpdate = true;
 

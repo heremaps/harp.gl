@@ -1173,15 +1173,18 @@ export class TileGeometryCreator {
 
         function moveTileCenter(geom: THREE.BufferGeometry) {
             const attr = geom.getAttribute("position") as THREE.BufferAttribute;
-            const posArray = attr.array as Float32Array;
-            for (let i = 0; i < posArray.length; i += 3) {
-                tmpVector3.set(posArray[i], posArray[i + 1], posArray[i + 2]);
-                projection.reprojectPoint(sourceProjection, tmpVector3, tmpVector3);
-                tmpVector3.sub(tile.center);
-                posArray[i] = tmpVector3.x;
-                posArray[i + 1] = tmpVector3.y;
-                posArray[i + 2] = tmpVector3.z;
+            const oldArray = attr.array as Float64Array;
+            // Convert to single precision before rendering (WebGL does not support double
+            // precision).
+            const newArray = new Float32Array(oldArray.length);
+            for (let i = 0; i < attr.array.length; i += 1) {
+                tmpVector3.fromBufferAttribute(attr, i);
+                projection
+                    .reprojectPoint(sourceProjection, tmpVector3, tmpVector3)
+                    .sub(tile.center);
+                tmpVector3.toArray(newArray, i * 3);
             }
+            attr.array = newArray;
             attr.needsUpdate = true;
         }
 
@@ -1287,11 +1290,12 @@ export class TileGeometryCreator {
                 projection.reprojectPoint(sourceProjection, corner, corner).sub(tile.center);
             }
         }
-
-        const posAttr = new THREE.BufferAttribute(new Float32Array(12), 3).copyVector3sArray(
-            cornersArray
-        );
+        // Use 64bits floats for world coordinates to avoid precision issues on coordinate
+        // tranformations. The array must be converted to single precision before rendering.
+        const bufferArray = useLocalTargetCoords ? new Float32Array(12) : new Float64Array(12);
+        const posAttr = new THREE.BufferAttribute(bufferArray, 3).copyVector3sArray(cornersArray);
         geometry.setAttribute("position", posAttr);
+
         if (shadowsEnabled) {
             // Webmercator needs to have it negated to work correctly.
             sourceProjection.surfaceNormal(tileCorners.sw, tmpV).negate();
