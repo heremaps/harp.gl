@@ -21,6 +21,7 @@ import { Texture } from "three";
 import {
     WebTileDataProvider,
     WebTileDataSource,
+    WebTileDataSourceOptions,
     WebTileRenderingOptions
 } from "./WebTileDataSource";
 
@@ -29,7 +30,7 @@ const textureLoader = new TextureLoader();
 /**
  * Options for {@link HereWebTileDataSource}.
  */
-interface HereWebTileDataSourceOptions {
+interface HereWebTileDataSourceOptions extends Omit<WebTileDataSourceOptions, "dataProvider"> {
     /**
      * Base URL.
      *
@@ -405,6 +406,7 @@ export class HereWebTileDataSource extends WebTileDataSource {
      */
     constructor(m_options: HereWebTileDataSourceParameters) {
         super({
+            ...m_options,
             minDataLevel: 1,
             maxDataLevel: 20,
             resolution: m_options.resolution,
