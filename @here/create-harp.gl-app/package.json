@@ -37,7 +37,7 @@
     },
     "dependencies": {
         "ansi-bold": "^0.1.1",
-        "global-dirs": "^2.0.1",
+        "global-dirs": "^2.1.0",
         "import-from": "^3.0.0",
         "inquirer": "^7.1.0",
         "log-symbols": "^4.0.0"
