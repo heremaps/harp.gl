@@ -26,7 +26,7 @@ function getSize(): { width: number; height: number } {
  */
 export function getWebGLRendererStub(sandbox: sinon.SinonSandbox, clearColorStub: sinon.SinonStub) {
     return {
-        getClearColor: () => undefined,
+        getClearColor: (target: THREE.Color) => undefined,
         setClearColor: clearColorStub,
         setSize,
         getSize,

@@ -183,7 +183,8 @@ const cache = {
             yAxis: new THREE.Vector3(),
             zAxis: new THREE.Vector3()
         }
-    ]
+    ],
+    color: new THREE.Color()
 };
 
 /**
@@ -1672,7 +1673,7 @@ export class MapView extends EventDispatcher {
      * The color used to clear the view.
      */
     get clearColor() {
-        const rendererClearColor = this.m_renderer.getClearColor();
+        const rendererClearColor = this.m_renderer.getClearColor(cache.color);
         return rendererClearColor !== undefined ? rendererClearColor.getHex() : 0;
     }
 
