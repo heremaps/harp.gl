@@ -455,11 +455,6 @@ export class TestFixture {
         }
     }
 
-    private clearVisibleTiles() {
-        this.tileLists[0].visibleTiles.length = 0;
-        this.tileLists[0].renderedTiles.clear();
-    }
-
     private get visibleTiles(): Tile[] {
         return this.tileLists[0].visibleTiles;
     }
