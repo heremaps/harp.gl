@@ -21,8 +21,7 @@ import { Texture } from "three";
 import {
     WebTileDataProvider,
     WebTileDataSource,
-    WebTileDataSourceOptions,
-    WebTileRenderingOptions
+    WebTileDataSourceOptions
 } from "./WebTileDataSource";
 
 const textureLoader = new TextureLoader();
@@ -70,11 +69,6 @@ interface HereWebTileDataSourceOptions extends Omit<WebTileDataSourceOptions, "d
     tileBaseAddress?: string;
 
     /**
-     * The resolution of Web Tile images, defaults to 512.
-     */
-    resolution?: WebTileDataSource.resolutionValue;
-
-    /**
      * String which is appended to the tile request url, e.g. to add additional parameters
      * to the tile requests as described in
      * @see https://developer.here.com/documentation/map-tile/topics/resource-base-basetile.html
@@ -95,11 +89,6 @@ interface HereWebTileDataSourceOptions extends Omit<WebTileDataSourceOptions, "d
      * @default `true`
      */
     gatherCopyrightInfo?: boolean;
-
-    /**
-     * Options affecting the rendering of the web tiles.
-     */
-    renderingOptions?: WebTileRenderingOptions;
 }
 
 /**
