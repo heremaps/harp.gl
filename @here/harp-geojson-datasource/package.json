@@ -37,7 +37,7 @@
         "mocha": "^7.2.0",
         "sinon": "^9.0.2",
         "source-map-support": "^0.5.19",
-        "three": "^0.123.0",
+        "three": "^0.124.0",
         "typescript": "^3.9.3"
     },
     "publishConfig": {
