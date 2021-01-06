@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { Projection, sphereProjection } from "@here/harp-geoutils";
 import {
     CopyrightInfo,
     LookAtParams,
@@ -28,6 +29,7 @@ describe("MapView + WebTileData rendering test", function() {
     interface WebTileTestOptions {
         mochaTest: Mocha.Context;
         testImageName: string;
+        projection?: Projection;
         getTexture: (tile: Tile) => Promise<[THREE.Texture, CopyrightInfo[]]>;
         lookAt?: Partial<LookAtParams>;
         webTileOptions?: Partial<WebTileDataSourceOptions>;
@@ -44,7 +46,8 @@ describe("MapView + WebTileData rendering test", function() {
             canvas,
             theme: {},
             preserveDrawingBuffer: true,
-            pixelRatio: 1
+            pixelRatio: 1,
+            projection: options.projection
         });
 
         const defaultLookAt: Partial<LookAtParams> = {
@@ -280,6 +283,40 @@ describe("MapView + WebTileData rendering test", function() {
                 name: "webtile-clover"
             },
             runBeforeFinish
+        });
+    });
+
+    it("renders webtiles on antimeridian without cracks for planar projection", async function() {
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-antimeridan-planar",
+            getTexture: (tile: Tile) => {
+                return Promise.all([new TextureLoader().load("../dist/resources/sea.png"), []]);
+            },
+            lookAt: {
+                target: { lat: 64, lng: 180 },
+                zoomLevel: 20
+            }
+        });
+    });
+
+    it("renders webtiles on antimeridian without cracks for sphere projection", async function() {
+        // To be fixed.
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-antimeridan-sphere",
+            getTexture: (tile: Tile) => {
+                return Promise.all([new TextureLoader().load("../dist/resources/sea.png"), []]);
+            },
+            lookAt: {
+                target: { lat: 64, lng: 180 },
+                zoomLevel: 20
+            },
+            projection: sphereProjection
         });
     });
 });

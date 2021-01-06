@@ -8,7 +8,7 @@ import { FlatTheme, Theme } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
 
 import { DataSource } from "./DataSource";
-import { TileGeometryCreator } from "./geometry/TileGeometryCreator";
+import { addGroundPlane } from "./geometry/AddGroundPlane";
 import { Tile } from "./Tile";
 
 /**
@@ -77,7 +77,7 @@ export class BackgroundDataSource extends DataSource {
     getTile(tileKey: TileKey): Tile | undefined {
         const tile = new Tile(this, tileKey);
         tile.forceHasGeometry(true);
-        TileGeometryCreator.instance.addGroundPlane(tile, BackgroundDataSource.GROUND_RENDER_ORDER);
+        addGroundPlane(tile, BackgroundDataSource.GROUND_RENDER_ORDER);
 
         return tile;
     }
