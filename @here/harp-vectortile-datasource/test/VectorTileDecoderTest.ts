@@ -11,8 +11,8 @@ import { VectorTileDecoder } from "../index-worker";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-describe("ThemedTileDecoder", function() {
-    it("#decodeTile does not throw", async function() {
+describe("ThemedTileDecoder", function () {
+    it("#decodeTile does not throw", async function () {
         const target = new VectorTileDecoder();
 
         silenceLoggingAroundFunction("ThemedTileDecoder", async () => {

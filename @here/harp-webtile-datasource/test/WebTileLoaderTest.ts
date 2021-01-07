@@ -20,7 +20,7 @@ import { WebTileLoader } from "../lib/WebTileLoader";
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-describe("WebTileLoader", function() {
+describe("WebTileLoader", function () {
     const tileKey: TileKey = TileKey.fromRowColumnLevel(0, 0, 0);
     const mapView = ({
         projection: webMercatorProjection
@@ -35,7 +35,7 @@ describe("WebTileLoader", function() {
     let tile: Tile;
     let loggerWasEnabled = true;
 
-    before(function() {
+    before(function () {
         const logger = LoggerManager.instance.getLogger("BaseTileLoader");
         if (logger) {
             loggerWasEnabled = logger.enabled;
@@ -43,7 +43,7 @@ describe("WebTileLoader", function() {
         }
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         dataSource = new WebTileDataSource({
             dataProvider,
             renderingOptions: { renderOrder, opacity }
@@ -53,12 +53,12 @@ describe("WebTileLoader", function() {
         getTextureStub.resolves([texture, copyRightInfo]);
     });
 
-    after(function() {
+    after(function () {
         LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
     });
 
-    describe("loadAndDecode()", function() {
-        it("should load textured mesh and copyright info", function() {
+    describe("loadAndDecode()", function () {
+        it("should load textured mesh and copyright info", function () {
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
 
             const loadPromise = tileLoader.loadAndDecode();
@@ -72,17 +72,13 @@ describe("WebTileLoader", function() {
                 expect(tile.objects[0]).instanceOf(THREE.Mesh);
                 const mesh = tile.objects[0] as THREE.Mesh;
                 expect(mesh.renderOrder).equal(renderOrder);
-                expect(mesh.material)
-                    .has.property("map")
-                    .equal(texture);
-                expect(mesh.material)
-                    .has.property("opacity")
-                    .equal(opacity);
+                expect(mesh.material).has.property("map").equal(texture);
+                expect(mesh.material).has.property("opacity").equal(opacity);
                 expect(tile.copyrightInfo).to.equal(copyRightInfo);
             });
         });
 
-        it("should not enforce blending if data source is fully opaque", function() {
+        it("should not enforce blending if data source is fully opaque", function () {
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
 
             const loadPromise = tileLoader.loadAndDecode();
@@ -93,13 +89,11 @@ describe("WebTileLoader", function() {
                 expect(tile.objects).has.lengthOf(1);
                 expect(tile.objects[0]).instanceOf(THREE.Mesh);
                 const mesh = tile.objects[0] as THREE.Mesh;
-                expect(mesh.material)
-                    .has.property("blending")
-                    .that.equals(THREE.NormalBlending);
+                expect(mesh.material).has.property("blending").that.equals(THREE.NormalBlending);
             });
         });
 
-        it("should enable custom blending if data source is transparent", function() {
+        it("should enable custom blending if data source is transparent", function () {
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
             dataSource.opacity = 0.5;
             const loadPromise = tileLoader.loadAndDecode();
@@ -110,13 +104,11 @@ describe("WebTileLoader", function() {
                 expect(tile.objects).has.lengthOf(1);
                 expect(tile.objects[0]).instanceOf(THREE.Mesh);
                 const mesh = tile.objects[0] as THREE.Mesh;
-                expect(mesh.material)
-                    .has.property("blending")
-                    .that.equals(THREE.CustomBlending);
+                expect(mesh.material).has.property("blending").that.equals(THREE.CustomBlending);
             });
         });
 
-        it("should not reload already requested tile", function() {
+        it("should not reload already requested tile", function () {
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
 
             const loadPromise = tileLoader.loadAndDecode();
@@ -129,7 +121,7 @@ describe("WebTileLoader", function() {
             return expect(loadPromise).to.eventually.be.fulfilled;
         });
 
-        it("should forceHasGeometry on tile on empty payload", function() {
+        it("should forceHasGeometry on tile on empty payload", function () {
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
 
             getTextureStub.resolves(undefined);
@@ -145,7 +137,7 @@ describe("WebTileLoader", function() {
             });
         });
 
-        it("should forceHasGeometry on tile on empty texture", function() {
+        it("should forceHasGeometry on tile on empty texture", function () {
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
 
             getTextureStub.resolves([undefined, []]);
@@ -161,7 +153,7 @@ describe("WebTileLoader", function() {
             });
         });
 
-        it("should finish loading on retry", function() {
+        it("should finish loading on retry", function () {
             getTextureStub.rejects(new Error("No connection."));
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
             const loadPromise = tileLoader.loadAndDecode();
@@ -180,8 +172,8 @@ describe("WebTileLoader", function() {
         });
     });
 
-    describe("cancel()", function() {
-        it("should cancel running requests", function() {
+    describe("cancel()", function () {
+        it("should cancel running requests", function () {
             const tileLoader = new WebTileLoader(dataSource, tile, dataProvider);
 
             const loadPromise = tileLoader.loadAndDecode();

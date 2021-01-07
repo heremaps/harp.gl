@@ -32,7 +32,7 @@ class MockDataSource extends DataSource {
     }
 }
 
-describe("projectTilePlaneCorners", function() {
+describe("projectTilePlaneCorners", function () {
     it("generates tile corners ", () => {
         const mockDatasource = sinon.createStubInstance(MockDataSource);
         mockDatasource.getTilingScheme.callsFake(() => webMercatorTilingScheme);

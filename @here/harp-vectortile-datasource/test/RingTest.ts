@@ -18,7 +18,7 @@ import { Ring } from "../lib/Ring";
 
 const DEFAULT_EXTENTS = 4 * 1024;
 
-describe("Ring", function() {
+describe("Ring", function () {
     describe("Empty ring", () => {
         it("Defaults of empty ring", () => {
             const ring = new Ring([]);

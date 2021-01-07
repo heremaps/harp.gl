@@ -500,10 +500,6 @@ function computeBitangent(
             angle = 0;
         }
     }
-    bt.copy(t0)
-        .add(t1)
-        .normalize()
-        .cross(n)
-        .normalize();
+    bt.copy(t0).add(t1).normalize().cross(n).normalize();
     return angle;
 }

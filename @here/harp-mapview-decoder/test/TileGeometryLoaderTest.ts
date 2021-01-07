@@ -93,7 +93,7 @@ function createFakeDecodedTile(): DecodedTile {
 
 const wait = (ms: number = 0) => new Promise(res => setTimeout(res, ms));
 
-describe("TileGeometryLoader", function() {
+describe("TileGeometryLoader", function () {
     let tileKey: TileKey;
     let tile: Tile;
     let dataSource: DataSource;
@@ -101,11 +101,11 @@ describe("TileGeometryLoader", function() {
     let geometryLoader: TileGeometryLoader;
     let sandbox: any;
 
-    before(function() {
+    before(function () {
         tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         mapView = createFakeMapView();
         dataSource = new MockDataSource();
         dataSource.useGeometryLoader = true;
@@ -115,18 +115,18 @@ describe("TileGeometryLoader", function() {
         sandbox = sinon.createSandbox();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
     });
 
-    describe("tile preprocessing", function() {
-        it("should not load geometry before update", function() {
+    describe("tile preprocessing", function () {
+        it("should not load geometry before update", function () {
             expect(geometryLoader.tile.hasGeometry).to.be.false;
 
             expect(geometryLoader.isFinished).to.be.false;
         });
 
-        it("should start load geometry for decoded tile", async function() {
+        it("should start load geometry for decoded tile", async function () {
             // Mimic the tile is being decoded.
             tile.decodedTile = createFakeDecodedTile();
 
@@ -143,7 +143,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.true;
         });
 
-        it("should not start geometry loading for empty tile", async function() {
+        it("should not start geometry loading for empty tile", async function () {
             geometryLoader!.update();
 
             expect(geometryLoader.hasDecodedTile).to.be.false;
@@ -152,8 +152,8 @@ describe("TileGeometryLoader", function() {
         });
     });
 
-    describe("tile geometry creation", function() {
-        it("should start processing geometry for decoded tile only once", async function() {
+    describe("tile geometry creation", function () {
+        it("should start processing geometry for decoded tile only once", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -181,7 +181,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.true;
         });
 
-        it("should create geometry for decoded tile only once (via taskqueue)", async function() {
+        it("should create geometry for decoded tile only once (via taskqueue)", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -208,7 +208,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.true;
         });
 
-        it("should not create geometry for invisible tile", async function() {
+        it("should not create geometry for invisible tile", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -230,7 +230,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.false;
         });
 
-        it("should not create geometry for disposed tile ", async function() {
+        it("should not create geometry for disposed tile ", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -253,7 +253,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.false;
         });
 
-        it("should create geometry for tile which was invisible but now visible", async function() {
+        it("should create geometry for tile which was invisible but now visible", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -291,7 +291,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.true;
         });
 
-        it("should reload geometry for loaded tile that was reset (invalidated)", async function() {
+        it("should reload geometry for loaded tile that was reset (invalidated)", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
@@ -327,7 +327,7 @@ describe("TileGeometryLoader", function() {
             expect(geometryLoader.isFinished).to.be.true;
         });
 
-        it("should load geometry for disposed tile that was reset", async function() {
+        it("should load geometry for disposed tile that was reset", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;

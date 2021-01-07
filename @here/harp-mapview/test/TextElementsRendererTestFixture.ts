@@ -659,9 +659,7 @@ export class TestFixture {
             labelPartDescription +
             " opacity " +
             actualOpacity;
-        expect(actualOpacity, errorMessage)
-            .gte(0)
-            .and.lte(1);
+        expect(actualOpacity, errorMessage).gte(0).and.lte(1);
         if (opacityMatcher !== undefined) {
             assert(opacityMatcher(actualOpacity), errorMessage);
         }

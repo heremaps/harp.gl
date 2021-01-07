@@ -188,10 +188,7 @@ export class SkyGradientTexture {
                     const offsetY = up
                         .copy(cameraUp[faceIdx])
                         .multiplyScalar(((i + 0.5) / this.m_height) * 2.0 - 1.0);
-                    dir.copy(cameraDir[faceIdx])
-                        .add(offsetX)
-                        .add(offsetY)
-                        .normalize();
+                    dir.copy(cameraDir[faceIdx]).add(offsetX).add(offsetY).normalize();
                     const t = Math.max(upDir.dot(dir), 0);
 
                     color

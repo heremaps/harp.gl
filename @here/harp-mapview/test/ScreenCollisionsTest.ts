@@ -28,8 +28,8 @@ function toBox2D(bounds: THREE.Box2): Math2D.Box {
     return tempGlyphBox2D;
 }
 
-describe("ScreenCollisions", function() {
-    it("line intersection test box at center", function() {
+describe("ScreenCollisions", function () {
+    it("line intersection test box at center", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
 
@@ -52,7 +52,7 @@ describe("ScreenCollisions", function() {
         );
         assert.isTrue(intersectsLineWithBoxAtCenter);
     });
-    it("line intersection test box shifted right", function() {
+    it("line intersection test box shifted right", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
@@ -75,7 +75,7 @@ describe("ScreenCollisions", function() {
         );
         assert.isFalse(intersectsLineWithShiftedBox);
     });
-    it("line intersection test line pure vertical", function() {
+    it("line intersection test line pure vertical", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
@@ -98,7 +98,7 @@ describe("ScreenCollisions", function() {
         );
         assert.isTrue(intersectsLineWithShiftedBox);
     });
-    it("line intersection test line pure horizontal", function() {
+    it("line intersection test line pure horizontal", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
@@ -119,7 +119,7 @@ describe("ScreenCollisions", function() {
         const intersectsLineWithShiftedBox = sc["intersectsLine"](box, line);
         assert.isTrue(intersectsLineWithShiftedBox);
     });
-    it("line intersection test via isAllocated method", function() {
+    it("line intersection test via isAllocated method", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
@@ -139,7 +139,7 @@ describe("ScreenCollisions", function() {
         });
         assert.isTrue(sc.isAllocated(box));
     });
-    it("line intersection test fail via isAllocated method", function() {
+    it("line intersection test fail via isAllocated method", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
@@ -160,7 +160,7 @@ describe("ScreenCollisions", function() {
         // The boxes overlap, but the lines don't intersect, so check this returns false.
         assert.isFalse(sc.isAllocated(box));
     });
-    it("test allocate multiple boxes", function() {
+    it("test allocate multiple boxes", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const boxes: IBox[] = [];
@@ -184,7 +184,7 @@ describe("ScreenCollisions", function() {
             )
         );
     });
-    it("intersectsDetails returns false if there's no intersections with detail boxes", function() {
+    it("intersectsDetails returns false if there's no intersections with detail boxes", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
 
@@ -201,7 +201,7 @@ describe("ScreenCollisions", function() {
             sc.intersectsDetails(testBox, [new DetailedCollisionBox(dummyBox, [detailBox])])
         );
     });
-    it("intersectsDetails returns true when there's an intersection with a detail box", function() {
+    it("intersectsDetails returns true when there's an intersection with a detail box", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
 
@@ -218,7 +218,7 @@ describe("ScreenCollisions", function() {
             sc.intersectsDetails(testBox, [new DetailedCollisionBox(dummyBox, [detailBox])])
         );
     });
-    it("intersectsDetails returns true when a candidate does not have detail boxes", function() {
+    it("intersectsDetails returns true when a candidate does not have detail boxes", function () {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
 
@@ -234,7 +234,7 @@ describe("ScreenCollisions", function() {
             ])
         );
     });
-    it("properly handle collision in test space", function() {
+    it("properly handle collision in test space", function () {
         const sc = new ScreenCollisions();
         sc.update(1608, 822);
 

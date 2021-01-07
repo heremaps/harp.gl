@@ -12,8 +12,8 @@ import { MathUtils } from "../lib/math/MathUtils";
 
 const epsilon = 0.000001;
 
-describe("MathUtils", function() {
-    it("angleDistanceDeg", function() {
+describe("MathUtils", function () {
+    it("angleDistanceDeg", function () {
         assert.approximately(MathUtils.angleDistanceDeg(90, 0), 90, epsilon);
         assert.approximately(MathUtils.angleDistanceDeg(0, -90), 90, epsilon);
         assert.approximately(MathUtils.angleDistanceDeg(0, 180), 180, epsilon);
@@ -23,7 +23,7 @@ describe("MathUtils", function() {
         assert.approximately(MathUtils.angleDistanceDeg(359, 1), -2, epsilon);
     });
 
-    it("interpolateAnglesRad basics", function() {
+    it("interpolateAnglesRad basics", function () {
         assert.approximately(MathUtils.interpolateAnglesDeg(0, 90, 0), 0, epsilon);
         assert.approximately(MathUtils.interpolateAnglesDeg(0, 180, 0), 0, epsilon);
         assert.approximately(MathUtils.interpolateAnglesDeg(0, 360, 0), 0, epsilon);
@@ -42,7 +42,7 @@ describe("MathUtils", function() {
         assert.approximately(MathUtils.interpolateAnglesDeg(0, -90, 0.5), -45, epsilon);
     });
 
-    it("interpolateAnglesRad corner cases", function() {
+    it("interpolateAnglesRad corner cases", function () {
         assert.approximately(MathUtils.interpolateAnglesDeg(-1, 1, 0.5), 0, epsilon);
         assert.approximately(MathUtils.interpolateAnglesDeg(-90, 90, 0.5), 0, epsilon);
         assert.approximately(MathUtils.interpolateAnglesDeg(-91, 91, 0.5), -180, epsilon);

@@ -134,8 +134,8 @@ class GlobeControls {
     }
 }
 
-describe("OrientedBox3", function() {
-    it("visible tile obbs are correct", function() {
+describe("OrientedBox3", function () {
+    it("visible tile obbs are correct", function () {
         const controls = new GlobeControls();
 
         controls.set(new GeoCoordinates(53.3, 13.4, 1000));
@@ -144,8 +144,8 @@ describe("OrientedBox3", function() {
 
         assert.equal(visibleTiles.length, 2);
     });
-    describe("distance", function() {
-        it("point inside has zero distance", function() {
+    describe("distance", function () {
+        it("point inside has zero distance", function () {
             const box = new OrientedBox3(
                 new THREE.Vector3(),
                 new THREE.Matrix4(),
@@ -154,7 +154,7 @@ describe("OrientedBox3", function() {
 
             assert.equal(box.distanceToPoint(new THREE.Vector3()), 0);
         });
-        it("points on each side", function() {
+        it("points on each side", function () {
             const box = new OrientedBox3(
                 new THREE.Vector3(),
                 new THREE.Matrix4(),
@@ -168,7 +168,7 @@ describe("OrientedBox3", function() {
             assert.equal(box.distanceToPoint(new THREE.Vector3(0, 0, 20)), 10);
             assert.equal(box.distanceToPoint(new THREE.Vector3(0, 0, -20)), 10);
         });
-        it("arbitrary points", function() {
+        it("arbitrary points", function () {
             const box = new OrientedBox3(
                 new THREE.Vector3(),
                 new THREE.Matrix4(),
@@ -180,7 +180,7 @@ describe("OrientedBox3", function() {
         });
     });
 
-    describe("intersectsRay", function() {
+    describe("intersectsRay", function () {
         interface RayIntersectionTestCase {
             name: string;
             // a test case will be created for each box in the list.
@@ -278,7 +278,7 @@ describe("OrientedBox3", function() {
 
         for (const testCase of testCases) {
             for (const boxParams of testCase.boxes) {
-                it(boxParams.name + ": " + testCase.name, function() {
+                it(boxParams.name + ": " + testCase.name, function () {
                     const box = new OrientedBox3(
                         new THREE.Vector3(),
                         boxParams.basis,

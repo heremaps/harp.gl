@@ -29,9 +29,9 @@ class TestDataSource extends DataSource {
     }
 }
 
-describe("DataSource", function() {
-    describe("constructor", function() {
-        it("creates datasource with default options", function() {
+describe("DataSource", function () {
+    describe("constructor", function () {
+        it("creates datasource with default options", function () {
             const dataSource = new TestDataSource();
 
             expect(dataSource.name).to.not.be.empty;
@@ -43,7 +43,7 @@ describe("DataSource", function() {
             expect(dataSource.storageLevelOffset).to.equal(0);
         });
 
-        it("creates datasource with empty options", function() {
+        it("creates datasource with empty options", function () {
             const dataSource = new TestDataSource({});
 
             expect(dataSource.name).to.not.be.empty;
@@ -55,7 +55,7 @@ describe("DataSource", function() {
             expect(dataSource.storageLevelOffset).to.equal(0);
         });
 
-        it("creates datasource with partial options", function() {
+        it("creates datasource with partial options", function () {
             const dataSource = new TestDataSource({
                 name: "TestDataSource",
                 maxDataLevel: 14
@@ -70,7 +70,7 @@ describe("DataSource", function() {
             expect(dataSource.storageLevelOffset).to.equal(0);
         });
 
-        it("creates datasource with all options set", function() {
+        it("creates datasource with all options set", function () {
             const dataSource = new TestDataSource({
                 name: "TestDataSource",
                 styleSetName: "test",
@@ -92,10 +92,10 @@ describe("DataSource", function() {
         });
     });
 
-    context("with default data source", function() {
+    context("with default data source", function () {
         let mapView: MapView;
         let dataSource: DataSource;
-        beforeEach(function() {
+        beforeEach(function () {
             mapView = {
                 theme: {},
                 projection: {}
@@ -103,13 +103,13 @@ describe("DataSource", function() {
             dataSource = new TestDataSource();
         });
 
-        describe("styleSetName", function() {
-            it("changes style set name", function() {
+        describe("styleSetName", function () {
+            it("changes style set name", function () {
                 dataSource.styleSetName = "test";
                 expect(dataSource.styleSetName).to.equal("test");
             });
 
-            it("updates theme if datasource is added to mapview", function() {
+            it("updates theme if datasource is added to mapview", function () {
                 const setThemeSpy = sinon.spy(dataSource, "setTheme");
                 dataSource.attach(mapView);
                 dataSource.styleSetName = "test";
@@ -118,20 +118,20 @@ describe("DataSource", function() {
             });
         });
 
-        describe("dispose", function() {
-            it("has an empty default implementation", function() {
+        describe("dispose", function () {
+            it("has an empty default implementation", function () {
                 expect(() => dataSource.dispose()).to.not.throw;
             });
         });
 
-        describe("clearCache", function() {
-            it("has an empty default implementation", function() {
+        describe("clearCache", function () {
+            it("has an empty default implementation", function () {
                 expect(() => dataSource.clearCache()).to.not.throw;
             });
         });
 
-        describe("isFullyCovering", function() {
-            it("is fully covering if datasource has a ground plane", function() {
+        describe("isFullyCovering", function () {
+            it("is fully covering if datasource has a ground plane", function () {
                 dataSource.addGroundPlane = true;
                 expect(dataSource.isFullyCovering()).to.be.true;
                 dataSource.addGroundPlane = false;
@@ -139,110 +139,110 @@ describe("DataSource", function() {
             });
         });
 
-        describe("ready", function() {
-            it("returns true", function() {
+        describe("ready", function () {
+            it("returns true", function () {
                 expect(dataSource.ready()).to.be.true;
             });
         });
 
-        describe("mapView", function() {
-            it("returns a mapview if attached", function() {
+        describe("mapView", function () {
+            it("returns a mapview if attached", function () {
                 dataSource.attach(mapView);
                 expect(dataSource.mapView).to.equal(mapView);
                 expect(dataSource.isDetached()).to.be.false;
             });
 
-            it("throws an error if not attached", function() {
+            it("throws an error if not attached", function () {
                 expect(() => dataSource.mapView).to.throw;
             });
         });
 
-        describe("projection", function() {
-            it("returns mapview projection", function() {
+        describe("projection", function () {
+            it("returns mapview projection", function () {
                 dataSource.attach(mapView);
                 expect(dataSource.projection).to.equal(mapView.projection);
                 expect(dataSource.isDetached()).to.be.false;
             });
 
-            it("throws an error if not attached", function() {
+            it("throws an error if not attached", function () {
                 expect(() => dataSource.projection).to.throw;
             });
         });
 
-        describe("connect", function() {
-            it("has an empty default implementation", function() {
+        describe("connect", function () {
+            it("has an empty default implementation", function () {
                 return expect(dataSource.connect()).to.eventually.be.fulfilled;
             });
         });
 
-        describe("attach", function() {
-            it("sets mapview", function() {
+        describe("attach", function () {
+            it("sets mapview", function () {
                 dataSource.attach(mapView);
                 expect(dataSource.mapView).to.equal(mapView);
                 expect(dataSource.isDetached()).to.be.false;
             });
         });
 
-        describe("detach", function() {
-            it("removes mapview", function() {
+        describe("detach", function () {
+            it("removes mapview", function () {
                 dataSource.attach(mapView);
                 dataSource.detach(mapView);
                 expect(dataSource).to.have.property("m_mapView").that.is.undefined;
                 expect(dataSource.isDetached()).to.be.true;
             });
 
-            it("throws if different mapview is passed", function() {
+            it("throws if different mapview is passed", function () {
                 dataSource.attach(mapView);
                 expect(() => dataSource.detach({} as any)).to.throw;
             });
         });
 
-        describe("setTheme", function() {
-            it("has an empty default implementation", function() {
+        describe("setTheme", function () {
+            it("has an empty default implementation", function () {
                 expect(() => dataSource.setTheme({} as any)).to.not.throw;
             });
         });
 
-        describe("setLanguages", function() {
-            it("has an empty default implementation", function() {
+        describe("setLanguages", function () {
+            it("has an empty default implementation", function () {
                 expect(() => dataSource.setLanguages([])).to.not.throw;
             });
         });
 
-        describe("updateTile", function() {
-            it("has an empty default implementation", function() {
+        describe("updateTile", function () {
+            it("has an empty default implementation", function () {
                 expect(() => dataSource.updateTile({} as any)).to.not.throw;
             });
         });
 
-        describe("shouldPreloadTile", function() {
-            it("has a default implementation", function() {
+        describe("shouldPreloadTile", function () {
+            it("has a default implementation", function () {
                 expect(dataSource.shouldPreloadTiles()).to.be.false;
             });
         });
 
-        describe("maxGeometryHeight", function() {
-            it("has getters and setters for max geometry height", function() {
+        describe("maxGeometryHeight", function () {
+            it("has getters and setters for max geometry height", function () {
                 dataSource.maxGeometryHeight = 123.4;
                 expect(dataSource.maxGeometryHeight).to.equal(123.4);
             });
         });
 
-        describe("minGeometryHeight", function() {
-            it("has getters and setters for min geometry height", function() {
+        describe("minGeometryHeight", function () {
+            it("has getters and setters for min geometry height", function () {
                 dataSource.minGeometryHeight = 223.4;
                 expect(dataSource.minGeometryHeight).to.equal(223.4);
             });
         });
 
-        describe("setEnableElevationOverlay", function() {
-            it("has an empty default implementation", function() {
+        describe("setEnableElevationOverlay", function () {
+            it("has an empty default implementation", function () {
                 expect(() => dataSource.setEnableElevationOverlay(true)).to.not.throw;
             });
         });
 
-        describe("getDataZoomLevel", function() {
-            it("limits display zoom level to data level", function() {
+        describe("getDataZoomLevel", function () {
+            it("limits display zoom level to data level", function () {
                 dataSource.minDataLevel = 5;
                 dataSource.maxDataLevel = 10;
                 expect(dataSource.getDataZoomLevel(4)).to.equal(5);
@@ -250,7 +250,7 @@ describe("DataSource", function() {
                 expect(dataSource.getDataZoomLevel(7)).to.equal(7);
             });
 
-            it("takes storage level offset into account", function() {
+            it("takes storage level offset into account", function () {
                 dataSource.storageLevelOffset = -1;
                 expect(dataSource.getDataZoomLevel(1)).to.equal(1);
                 expect(dataSource.getDataZoomLevel(4)).to.equal(3);
@@ -265,8 +265,8 @@ describe("DataSource", function() {
             });
         });
 
-        describe("isVisible", function() {
-            it("is visible within display level range", function() {
+        describe("isVisible", function () {
+            it("is visible within display level range", function () {
                 dataSource.minDisplayLevel = 5;
                 dataSource.maxDisplayLevel = 15;
                 for (let zoomLevel = 1; zoomLevel <= 4; zoomLevel++) {
@@ -281,8 +281,8 @@ describe("DataSource", function() {
             });
         });
 
-        describe("canGetTile", function() {
-            it("has a default implementation", function() {
+        describe("canGetTile", function () {
+            it("has a default implementation", function () {
                 expect(dataSource.canGetTile(5, { level: 5 } as any)).to.be.true;
                 expect(dataSource.canGetTile(5, { level: 4 } as any)).to.be.true;
                 expect(dataSource.canGetTile(4, { level: 4 } as any)).to.be.true;
@@ -290,16 +290,16 @@ describe("DataSource", function() {
             });
         });
 
-        describe("shouldSubdivide", function() {
-            it("subdivides if tilekey is smaller than zoom level", function() {
+        describe("shouldSubdivide", function () {
+            it("subdivides if tilekey is smaller than zoom level", function () {
                 expect(dataSource.shouldSubdivide(5, { level: 1 } as any)).to.be.true;
                 expect(dataSource.shouldSubdivide(5, { level: 5 } as any)).to.be.true;
                 expect(dataSource.shouldSubdivide(5, { level: 6 } as any)).to.be.false;
             });
         });
 
-        describe("shouldRenderText", function() {
-            it("has a default implementation", function() {
+        describe("shouldRenderText", function () {
+            it("has a default implementation", function () {
                 for (
                     let zoomLevel = dataSource.minDataLevel;
                     zoomLevel <= dataSource.maxDataLevel;
@@ -310,8 +310,8 @@ describe("DataSource", function() {
             });
         });
 
-        describe("requestUpdate", function() {
-            it("dispatches an update event", function() {
+        describe("requestUpdate", function () {
+            it("dispatches an update event", function () {
                 const spy = sinon.spy((e: any) => {
                     /* noop */
                 });

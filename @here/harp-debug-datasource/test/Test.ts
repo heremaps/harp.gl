@@ -8,8 +8,8 @@ import { assert } from "chai";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-describe("debug-datasource", function() {
-    it("ok", function() {
+describe("debug-datasource", function () {
+    it("ok", function () {
         assert.isTrue(true);
     });
 });

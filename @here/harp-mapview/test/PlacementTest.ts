@@ -175,7 +175,7 @@ function createTextPlacements(
     return result;
 }
 
-describe("Placement", function() {
+describe("Placement", function () {
     const sandbox = sinon.createSandbox();
     let textCanvas: TextCanvas;
     const screenCollisions: ScreenCollisions = new ScreenCollisions();
@@ -184,7 +184,7 @@ describe("Placement", function() {
     // Canvas padding - padding applied in bounds calculated on TextCanvas.measureText()
     const cPadding = new THREE.Vector2(2, 2);
 
-    before(async function() {
+    before(async function () {
         if (inNodeContext) {
             (global as any).window = {
                 location: {
@@ -203,7 +203,7 @@ describe("Placement", function() {
         textCanvas = await createTextCanvas();
     });
 
-    after(function() {
+    after(function () {
         if (inNodeContext) {
             delete (global as any).window;
             delete (global as any).document;
@@ -211,12 +211,12 @@ describe("Placement", function() {
         sandbox.restore();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         screenCollisions.reset();
     });
 
-    describe("placePointLabel", function() {
-        context("single line text", function() {
+    describe("placePointLabel", function () {
+        context("single line text", function () {
             interface SingleTextPlacementRun {
                 // Test run name.
                 it: string;
@@ -343,8 +343,8 @@ describe("Placement", function() {
                     outPosition: new THREE.Vector2(5 - cPadding.x / 2, 5 - cPadding.y)
                 }
             ];
-            runs.forEach(function(run) {
-                it(run.it, async function() {
+            runs.forEach(function (run) {
+                it(run.it, async function () {
                     const textElement = await createTextElement(
                         textCanvas,
                         "Test 123456",
@@ -384,8 +384,8 @@ describe("Placement", function() {
             });
         });
 
-        context("multi line text", function() {
-            it("places text below", async function() {
+        context("multi line text", function () {
+            it("places text below", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test Test Test Test Test Test Test Test Test",
@@ -418,7 +418,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(-cPadding.y);
             });
 
-            it("places text center", async function() {
+            it("places text center", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test Test Test Test Test Test Test Test Test",
@@ -451,7 +451,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(76 + 0.25);
             });
 
-            it("places text above", async function() {
+            it("places text above", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test Test Test Test Test Test Test Test Test",
@@ -484,7 +484,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(152 + 0.5 + cPadding.y);
             });
 
-            it("places text with offset", async function() {
+            it("places text with offset", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test 123456",
@@ -520,7 +520,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(5 + 19 + 0.5 + cPadding.y);
             });
 
-            it("scales offsets", async function() {
+            it("scales offsets", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test 123456",
@@ -557,7 +557,7 @@ describe("Placement", function() {
             });
         });
 
-        context("single text with and without alternative placement", function() {
+        context("single text with and without alternative placement", function () {
             interface PlacementAlternativesRun {
                 // Test run name.
                 it: string;
@@ -711,8 +711,8 @@ describe("Placement", function() {
                     }
                 }
             ];
-            runs.forEach(function(run) {
-                it(run.it, async function() {
+            runs.forEach(function (run) {
+                it(run.it, async function () {
                     const textElement = await createTextElement(
                         textCanvas,
                         run.text,
@@ -775,7 +775,7 @@ describe("Placement", function() {
             });
         });
 
-        context("single text moving to the screen edge", function() {
+        context("single text moving to the screen edge", function () {
             interface AlternativesWithMovementRun {
                 // Test run name.
                 it: string;
@@ -932,8 +932,8 @@ describe("Placement", function() {
             );
             // Finally process all runs.
             const runs = runsNoFading.concat(runsWithFading);
-            runs.forEach(function(run) {
-                it(run.it, async function() {
+            runs.forEach(function (run) {
+                it(run.it, async function () {
                     const textElement = await createTextElement(
                         textCanvas,
                         run.text,
@@ -962,7 +962,7 @@ describe("Placement", function() {
                     state.update(1);
 
                     // Process each frame sequentially.
-                    run.frames.forEach(function(frame) {
+                    run.frames.forEach(function (frame) {
                         // Move label.
                         const textExtent = new THREE.Vector2(
                             state.element.bounds!.max.x - state.element.bounds!.min.x,
@@ -1006,8 +1006,8 @@ describe("Placement", function() {
             });
         });
 
-        context("texts colliding with alternative placements", function() {
-            it("place two text at almost the same position", async function() {
+        context("texts colliding with alternative placements", function () {
+            it("place two text at almost the same position", async function () {
                 const elements = await createPointTextElements(
                     textCanvas,
                     ["Test 1", "Test 1"],
@@ -1090,7 +1090,7 @@ describe("Placement", function() {
                 expect(results[1]).to.equal(PlacementResult.Ok);
             });
 
-            it("fail to place two centered texts at almost the same position", async function() {
+            it("fail to place two centered texts at almost the same position", async function () {
                 const elements = await createPointTextElements(
                     textCanvas,
                     ["Test 1", "Test 2"],
@@ -1140,7 +1140,7 @@ describe("Placement", function() {
                 expect(results[1]).to.equal(PlacementResult.Rejected);
             });
 
-            it("place two approaching texts", async function() {
+            it("place two approaching texts", async function () {
                 const elements = await createPointTextElements(
                     textCanvas,
                     ["Test 1", "Test 1"],
@@ -1279,7 +1279,7 @@ describe("Placement", function() {
             });
         });
 
-        it("only sets label bounds on successful placement", async function() {
+        it("only sets label bounds on successful placement", async function () {
             const collisionsStub = new ScreenCollisions();
 
             const textElement = await createTextElement(
@@ -1327,8 +1327,8 @@ describe("Placement", function() {
         });
     });
 
-    describe("placeIcon", function() {
-        it("places icon without offset", function() {
+    describe("placeIcon", function () {
+        it("places icon without offset", function () {
             const iconRenderState = new RenderState();
             iconRenderState.updateFading(800, true);
 
@@ -1352,7 +1352,7 @@ describe("Placement", function() {
             expect(result).to.equal(PlacementResult.Ok);
         });
 
-        it("places icon with offset", function() {
+        it("places icon with offset", function () {
             const iconRenderState = new RenderState();
             iconRenderState.updateFading(800, true);
 

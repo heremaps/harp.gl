@@ -13,7 +13,7 @@ import { assert } from "chai";
 import { ColorUtils } from "../lib/ColorUtils";
 import { parseStringEncodedNumeral } from "../lib/StringEncodedNumeral";
 
-describe("StringEncodedNumeral", function() {
+describe("StringEncodedNumeral", function () {
     it("Meters", () => {
         testMetric("m");
     });

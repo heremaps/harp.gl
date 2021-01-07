@@ -24,7 +24,7 @@ import { Tile } from "../lib/Tile";
 
 const MAXIMUM_LATITUDE = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
 
-describe("PolarTileDataSource", function() {
+describe("PolarTileDataSource", function () {
     let dataSource: PolarTileDataSource;
     let mapViewStub: sinon.SinonStubbedInstance<MapView>;
 
@@ -53,8 +53,8 @@ describe("PolarTileDataSource", function() {
     };
     const renderer = { capabilities: { isWebGL2: false } };
 
-    describe("should", function() {
-        it("#canGetTile()", function() {
+    describe("should", function () {
+        it("#canGetTile()", function () {
             dataSource = new PolarTileDataSource({
                 storageLevelOffset: 0,
                 styleSetName: "polar"
@@ -82,7 +82,7 @@ describe("PolarTileDataSource", function() {
             assert.isFalse(dataSource.canGetTile(4, keyOut3), msgOut);
         });
 
-        it("#shouldSubdivide()", function() {
+        it("#shouldSubdivide()", function () {
             dataSource = new PolarTileDataSource({
                 storageLevelOffset: 0
             });
@@ -110,7 +110,7 @@ describe("PolarTileDataSource", function() {
         });
     });
 
-    describe("styles", function() {
+    describe("styles", function () {
         function checkObjectsMaterial(
             object: THREE.Object3D,
             callback: (material: THREE.Material) => void
@@ -139,19 +139,19 @@ describe("PolarTileDataSource", function() {
             }
         }
 
-        beforeEach(function() {
+        beforeEach(function () {
             dataSource = new PolarTileDataSource({});
             mapViewStub = sinon.createStubInstance(MapView);
-            sinon.stub(mapViewStub, "projection").get(function() {
+            sinon.stub(mapViewStub, "projection").get(function () {
                 return sphereProjection;
             });
-            sinon.stub(mapViewStub, "renderer").get(function() {
+            sinon.stub(mapViewStub, "renderer").get(function () {
                 return renderer;
             });
             dataSource.attach((mapViewStub as unknown) as MapView);
         });
 
-        it("Creates empty tile if no pole styles set", function() {
+        it("Creates empty tile if no pole styles set", function () {
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
             const south = dataSource.getTile(TileKey.fromRowColumnLevel(0, 1, 2));
 
@@ -159,7 +159,7 @@ describe("PolarTileDataSource", function() {
             assert.equal(south.objects.length, 0);
         });
 
-        it("Creates tile with objects if has pole styles", async function() {
+        it("Creates tile with objects if has pole styles", async function () {
             await dataSource.setTheme(theme_south);
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
             const south = dataSource.getTile(TileKey.fromRowColumnLevel(0, 1, 2));
@@ -168,7 +168,7 @@ describe("PolarTileDataSource", function() {
             assert.equal(south.objects.length, 1);
         });
 
-        it("Creates meshes with proper materials", async function() {
+        it("Creates meshes with proper materials", async function () {
             await dataSource.setTheme(theme_both);
             const north = dataSource.getTile(TileKey.fromRowColumnLevel(2, 1, 2));
             const south = dataSource.getTile(TileKey.fromRowColumnLevel(0, 1, 2));
@@ -184,7 +184,7 @@ describe("PolarTileDataSource", function() {
             });
         });
 
-        it("Don't create geometries if disposed", async function() {
+        it("Don't create geometries if disposed", async function () {
             await dataSource.setTheme(theme_both);
             dataSource.dispose();
 
@@ -196,7 +196,7 @@ describe("PolarTileDataSource", function() {
         });
     });
 
-    describe("geometry", function() {
+    describe("geometry", function () {
         const v1 = new THREE.Vector3();
         function getTilePoints(tile: Tile): THREE.Vector3[] {
             const points = [];
@@ -216,21 +216,21 @@ describe("PolarTileDataSource", function() {
             return points;
         }
 
-        beforeEach(async function() {
+        beforeEach(async function () {
             dataSource = new PolarTileDataSource({});
 
             mapViewStub = sinon.createStubInstance(MapView);
-            sinon.stub(mapViewStub, "projection").get(function() {
+            sinon.stub(mapViewStub, "projection").get(function () {
                 return sphereProjection;
             });
-            sinon.stub(mapViewStub, "renderer").get(function() {
+            sinon.stub(mapViewStub, "renderer").get(function () {
                 return renderer;
             });
             dataSource.attach((mapViewStub as unknown) as MapView);
             await dataSource.setTheme(theme_both);
         });
 
-        it("Creates empty tile if outside of pole radius", function() {
+        it("Creates empty tile if outside of pole radius", function () {
             const tile1 = dataSource.getTile(TileKey.fromRowColumnLevel(1, 0, 2));
             const tile2 = dataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 5));
 
@@ -238,7 +238,7 @@ describe("PolarTileDataSource", function() {
             assert.equal(tile2.objects.length, 0);
         });
 
-        it("Geometry should not exceed pole radius", function() {
+        it("Geometry should not exceed pole radius", function () {
             this.timeout(5000);
             const EPSILON = 1e-5;
             const minLevel = 1; // at zoomLevel 0 there's no hole at the poles
@@ -380,7 +380,7 @@ describe("PolarTileDataSource", function() {
             }
         }
 
-        it("Match Web Mercator tiles at different storageLevelOffset values", function() {
+        it("Match Web Mercator tiles at different storageLevelOffset values", function () {
             checkFitAtOffset(-1, 2, 7);
             checkFitAtOffset(2, 0, 7);
         });

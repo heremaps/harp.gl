@@ -24,7 +24,7 @@ describe("PoiBatchRegistry", () => {
     beforeEach(() => {
         registry = new PoiBatchRegistry(renderer.capabilities);
     });
-    describe("registerPoi", function() {
+    describe("registerPoi", function () {
         it("marks PoiInfo as invalid if it has no image item", () => {
             const poiInfo = new PoiInfoBuilder().build(textElement);
             const buffer = registry.registerPoi(poiInfo, defaultPoiLayer);

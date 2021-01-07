@@ -126,10 +126,7 @@ function checkImports() {
 
             if (!localModule && !allowedNodeModule) {
                 const importedModuleName = importedModule.startsWith("@")
-                    ? importedModule
-                          .split("/")
-                          .slice(0, 2)
-                          .join("/")
+                    ? importedModule.split("/").slice(0, 2).join("/")
                     : importedModule.split("/")[0];
 
                 if (
@@ -182,7 +179,7 @@ function checkImports() {
             modules.set(moduleName, module);
         }
 
-        modules.forEach(function(module) {
+        modules.forEach(function (module) {
             if (module.index === undefined) {
                 strongConnect(module);
             }
@@ -237,8 +234,8 @@ function checkImports() {
     return errors;
 }
 
-describe("ImportCheck", function() {
-    it("Uses correct imports", function() {
+describe("ImportCheck", function () {
+    it("Uses correct imports", function () {
         const errors = checkImports();
         assert.deepEqual(errors, []);
     });

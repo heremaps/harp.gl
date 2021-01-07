@@ -38,7 +38,7 @@ class OmvDecodedTileEmitterTest extends VectorTileDataEmitter {
     }
 }
 
-describe("OmvDecodedTileEmitter", function() {
+describe("OmvDecodedTileEmitter", function () {
     function createTileEmitter(): {
         tileEmitter: OmvDecodedTileEmitterTest;
         styleSetEvaluator: StyleSetEvaluator;
@@ -89,7 +89,7 @@ describe("OmvDecodedTileEmitter", function() {
         return buffer;
     }
 
-    it("Ring data conversion to polygon data: whole tile square shape", function() {
+    it("Ring data conversion to polygon data: whole tile square shape", function () {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
 
@@ -173,7 +173,7 @@ describe("OmvDecodedTileEmitter", function() {
         assert.closeTo(texCoords[7], 1, eps);
     });
 
-    it("Test splitJaggyLines for short paths", function() {
+    it("Test splitJaggyLines for short paths", function () {
         const { tileEmitter } = createTileEmitter();
 
         const lines = [[0, 0, 0, 1, 1, 0]];
@@ -182,7 +182,7 @@ describe("OmvDecodedTileEmitter", function() {
         assert.equal(splitLines.length, 0, "Line segment too short");
     });
 
-    it("Test splitJaggyLines for multiple short paths", function() {
+    it("Test splitJaggyLines for multiple short paths", function () {
         const { tileEmitter } = createTileEmitter();
 
         const lines = [[0, 0, 0, 1, 0, 0, 1, 1, 0, 10, 10, 0, 20, 20, 0]];
@@ -195,7 +195,7 @@ describe("OmvDecodedTileEmitter", function() {
         assert.equal(splitLines[0][6], 20);
     });
 
-    it("Test splitJaggyLines for path with sharp angle", function() {
+    it("Test splitJaggyLines for path with sharp angle", function () {
         const { tileEmitter } = createTileEmitter();
 
         const lines = [[0, 0, 0, 10, 10, 0, 20, 0, 0]];

@@ -31,14 +31,14 @@ const strokePolygonLayer = (params: Partial<SolidLineTechniqueParams> = {}): Sty
     };
 };
 
-describe("GeoJson features", function() {
+describe("GeoJson features", function () {
     const geoJsonTest = new GeoJsonTest();
 
     const lights = ThemeBuilder.lights;
 
     afterEach(() => geoJsonTest.dispose());
 
-    it("Stroke Circle", async function() {
+    it("Stroke Circle", async function () {
         const pos = [13.2, 53.2];
 
         const circle = turf.circle(pos, 600, {
@@ -67,7 +67,7 @@ describe("GeoJson features", function() {
         });
     });
 
-    it("Extrude Circle", async function() {
+    it("Extrude Circle", async function () {
         const pos = [13.2, 53.2];
 
         const circle = turf.circle(pos, 600, {
@@ -100,11 +100,11 @@ describe("GeoJson features", function() {
         });
     });
 
-    describe("Stroke Arcs", async function() {
+    describe("Stroke Arcs", async function () {
         const lineCaps: LineCaps[] = ["None", "Round", "Square", "TriangleIn", "TriangleOut"];
 
         lineCaps.forEach(caps => {
-            it(`Stroke Arc using from 0 to 300 using '${caps}' caps`, async function() {
+            it(`Stroke Arc using from 0 to 300 using '${caps}' caps`, async function () {
                 const center = [13.2, 53.2];
 
                 const arc = turf.lineArc(center, 5, 0, 300);
@@ -128,11 +128,11 @@ describe("GeoJson features", function() {
         });
     });
 
-    describe("Stroke Circles created using lineArc", async function() {
+    describe("Stroke Circles created using lineArc", async function () {
         const lineCaps: LineCaps[] = ["None", "Round", "Square", "TriangleIn", "TriangleOut"];
 
         lineCaps.forEach(caps => {
-            it(`Stroke Arc from 0 to 360 using '${caps}' caps`, async function() {
+            it(`Stroke Arc from 0 to 360 using '${caps}' caps`, async function () {
                 const center = [13.2, 53.2];
 
                 const arc = turf.lineArc(center, 5, 0, 360);

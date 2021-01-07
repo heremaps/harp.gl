@@ -18,9 +18,7 @@ const fetch = require("node-fetch");
 // including docs and examples (e.g. after yarn run build && yarn run typedoc)
 
 const branch = process.env.TRAVIS_BRANCH;
-const commitHash = execSync("git rev-parse --short HEAD")
-    .toString()
-    .trimRight();
+const commitHash = execSync("git rev-parse --short HEAD").toString().trimRight();
 const refName = branch !== "master" ? commitHash : "master";
 
 // create the following directory structure

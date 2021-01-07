@@ -13,7 +13,7 @@ import * as THREE from "three";
 
 import { WebTileDataSource } from "../index";
 
-describe("WebTileDataSource", function() {
+describe("WebTileDataSource", function () {
     const fakeWebTileProvider = {
         getTexture: sinon.spy((tile: Tile) => {
             return Promise.resolve(([{}, []] as unknown) as [THREE.Texture, CopyrightInfo[]]);
@@ -24,7 +24,7 @@ describe("WebTileDataSource", function() {
         projection: mercatorProjection
     } as MapView;
 
-    it("#createWebTileDataSource has default values", async function() {
+    it("#createWebTileDataSource has default values", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider
         });
@@ -38,7 +38,7 @@ describe("WebTileDataSource", function() {
         );
     });
 
-    it("#createWebTileDataSource with 256px resolution", async function() {
+    it("#createWebTileDataSource with 256px resolution", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider,
             resolution: WebTileDataSource.resolutionValue.resolution256
@@ -48,7 +48,7 @@ describe("WebTileDataSource", function() {
         );
     });
 
-    it("#gets Texture for requested Tile", async function() {
+    it("#gets Texture for requested Tile", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider
         });
@@ -63,7 +63,7 @@ describe("WebTileDataSource", function() {
         expect(tile.hasGeometry).to.be.true;
     });
 
-    it("# creates Tile with geometry for resolve with undefined", async function() {
+    it("# creates Tile with geometry for resolve with undefined", async function () {
         const undefinedProvider = {
             getTexture: sinon.spy((tile: Tile) => {
                 return Promise.resolve(undefined);
@@ -83,7 +83,7 @@ describe("WebTileDataSource", function() {
         expect(tile.hasGeometry).to.be.true;
     });
 
-    it("# disposed tile for rejected Promise", async function() {
+    it("# disposed tile for rejected Promise", async function () {
         const logger = LoggerManager.instance.getLogger("BaseTileLoader");
         let loggerWasEnabled = false;
 
@@ -113,7 +113,7 @@ describe("WebTileDataSource", function() {
         LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
     });
 
-    it("#createWebTileDataSource with renderingOptions opacity", async function() {
+    it("#createWebTileDataSource with renderingOptions opacity", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider,
             renderingOptions: { opacity: 0.5 }

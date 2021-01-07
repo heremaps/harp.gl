@@ -974,7 +974,8 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
  *
  * @see [[Tile#addRenderHelper]]
  */
-export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
+export class MapMeshBasicMaterial
+    extends THREE.MeshBasicMaterial
     implements FadingFeature, ExtrusionFeature, DisplacementFeature {
     /**
      * Constructs a new `FadingMeshBasicMaterial`.
@@ -1152,7 +1153,8 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
  *
  * @see [[Tile#addRenderHelper]]
  */
-export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
+export class MapMeshStandardMaterial
+    extends THREE.MeshStandardMaterial
     implements FadingFeature, ExtrusionFeature, DisplacementFeature {
     uniformsNeedUpdate?: boolean;
 

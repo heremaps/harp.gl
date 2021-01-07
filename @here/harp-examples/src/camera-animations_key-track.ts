@@ -110,15 +110,11 @@ export namespace CameraAnimationExample {
     gui.add(options, "globe").onChange(() => {
         map.projection = options.globe ? sphereProjection : mercatorProjection;
     });
-    gui.add(options, "orbit")
-        .onChange(enableOrbit)
-        .listen();
+    gui.add(options, "orbit").onChange(enableOrbit).listen();
     gui.add(options, "flyTo", [...Object.keys(geoLocations)])
         .onChange(flyTo)
         .listen();
-    gui.add(options, "flyOver")
-        .onChange(enableFlyOver)
-        .listen();
+    gui.add(options, "flyOver").onChange(enableFlyOver).listen();
 
     gui.add(animationOptions, "interpolation", {
         smooth: THREE.InterpolateSmooth,

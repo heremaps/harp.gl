@@ -48,7 +48,7 @@ import { GEOJSON_DATA, THEME } from "./resources/geoJsonData";
 
 declare const global: any;
 
-describe("MapView Picking", async function() {
+describe("MapView Picking", async function () {
     const inNodeContext = typeof window === "undefined";
     const tileKey = new TileKey(0, 0, 0);
 
@@ -76,7 +76,7 @@ describe("MapView Picking", async function() {
         return decodeTile;
     }
 
-    before(function() {
+    before(function () {
         if (inNodeContext) {
             const g = global as any;
             g.window = {
@@ -175,7 +175,7 @@ describe("MapView Picking", async function() {
         } as any;
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         mapView = new MapView({
             canvas,
             decoderCount: 0,
@@ -210,7 +210,7 @@ describe("MapView Picking", async function() {
         await mapView.addDataSource(geoJsonDataSource);
     });
 
-    after(function() {
+    after(function () {
         if (inNodeContext) {
             delete global.window;
             delete global.requestAnimationFrame;
@@ -219,7 +219,7 @@ describe("MapView Picking", async function() {
         }
     });
 
-    describe("Decoded tile tests", async function() {
+    describe("Decoded tile tests", async function () {
         it("Decoded tile is created", async () => {
             const decodeTile = await getDecodedTile();
 
@@ -267,7 +267,7 @@ describe("MapView Picking", async function() {
         });
     });
 
-    describe("Picking tests", async function() {
+    describe("Picking tests", async function () {
         const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
         const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
             .coordinates as number[][])[0];

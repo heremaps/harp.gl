@@ -410,7 +410,8 @@ export interface SolidLineMaterialParameters
 /**
  * Material designed to render solid variable-width lines.
  */
-export class SolidLineMaterial extends RawShaderMaterial
+export class SolidLineMaterial
+    extends RawShaderMaterial
     implements DisplacementFeature, FadingFeature {
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;

@@ -18,7 +18,7 @@ declare const global: any;
 
 const inNodeContext = typeof window === "undefined";
 
-describe("MapControls", function() {
+describe("MapControls", function () {
     const DEFAULT_CANVAS_WIDTH = 800;
     const DEFAULT_CANVAS_HEIGHT = 600;
     let sandbox: sinon.SinonSandbox;
@@ -154,7 +154,7 @@ describe("MapControls", function() {
         } as any);
     }
 
-    before(function() {
+    before(function () {
         if (inNodeContext) {
             const theGlobal: any = global;
             theGlobal.requestAnimationFrame = () => {};
@@ -172,7 +172,7 @@ describe("MapControls", function() {
         }
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         sandbox = sinon.createSandbox();
         domElement = {
             addEventListener: (eventName: string, func: EventListener) => {
@@ -216,12 +216,12 @@ describe("MapControls", function() {
         updateStub.resetHistory();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
         eventMap.clear();
     });
 
-    after(function() {
+    after(function () {
         if (inNodeContext) {
             delete global.requestAnimationFrame;
             delete global.performance;
@@ -229,12 +229,12 @@ describe("MapControls", function() {
         }
     });
 
-    describe("on object creation", function() {
+    describe("on object creation", function () {
         let maxZoom: number;
         let minZoom: number;
         let minCameraHeight: number;
 
-        beforeEach(function() {
+        beforeEach(function () {
             maxZoom = 10;
             minZoom = 5;
             minCameraHeight = 100;
@@ -246,28 +246,28 @@ describe("MapControls", function() {
             mapControls = new MapControls(mapView);
         });
 
-        it("initializes camera property using value from constructor param", function() {
+        it("initializes camera property using value from constructor param", function () {
             expect(mapControls.camera).to.be.equals(camera);
         });
 
-        it("initializes domElement property using value from constructor param", function() {
+        it("initializes domElement property using value from constructor param", function () {
             expect(mapControls.domElement).to.be.equals(domElement);
         });
 
-        it("initializes minZoomLevel property using value from constructor param", function() {
+        it("initializes minZoomLevel property using value from constructor param", function () {
             expect(mapControls.minZoomLevel).to.be.equals(minZoom);
         });
 
-        it("initializes maxZoomLevel property using value from constructor param", function() {
+        it("initializes maxZoomLevel property using value from constructor param", function () {
             expect(mapControls.maxZoomLevel).to.be.equals(maxZoom);
         });
 
-        it("initializes minCameraHeight property using value from constructor param", function() {
+        it("initializes minCameraHeight property using value from constructor param", function () {
             expect(mapControls.minCameraHeight).to.be.equals(minCameraHeight);
         });
     });
 
-    it("correctly updates mapView on mouse move", function() {
+    it("correctly updates mapView on mouse move", function () {
         const controls = new MapControls(mapView);
         sandbox.stub(controls, "dispatchEvent");
         sandbox.stub(controls as any, "getPointerPosition").returns({ x: 0, y: 0 });
@@ -280,7 +280,7 @@ describe("MapControls", function() {
         expect(updateStub.callCount).to.be.equal(1);
     });
 
-    it("correctly updates mapView on touch move", function() {
+    it("correctly updates mapView on touch move", function () {
         const controls = new MapControls(mapView);
         (controls as any).m_touchState.touches = { length: 5 };
         sandbox.stub(controls as any, "updateTouches");
@@ -296,7 +296,7 @@ describe("MapControls", function() {
         expect(updateStub.callCount).to.be.equal(1);
     });
 
-    it("dispose", function() {
+    it("dispose", function () {
         const controls = new MapControls(mapView);
 
         controls.dispose();
@@ -304,7 +304,7 @@ describe("MapControls", function() {
         expect(controls.eventTypes.length).to.be.equal(0, `events not removed.`);
     });
 
-    describe("zoomOnTargetPosition", function() {
+    describe("zoomOnTargetPosition", function () {
         function resetCamera(pitch: number, zoomLevel?: number) {
             const target = GeoCoordinates.fromDegrees(0, 0);
             const heading = 0;
@@ -338,8 +338,8 @@ describe("MapControls", function() {
             { projName: "mercator", projection: mercatorProjection },
             { projName: "sphere", projection: sphereProjection }
         ]) {
-            describe(`${projName} projection`, function() {
-                beforeEach(function() {
+            describe(`${projName} projection`, function () {
+                beforeEach(function () {
                     const worldTarget = projection.projectPoint(
                         GeoCoordinates.fromDegrees(0, 0),
                         new THREE.Vector3()
@@ -354,7 +354,7 @@ describe("MapControls", function() {
                     mapControls = new MapControls(mapView);
                 });
                 for (const pitch of [0, 45]) {
-                    it(`camera is moved along view direction (pitch ${pitch})`, function() {
+                    it(`camera is moved along view direction (pitch ${pitch})`, function () {
                         resetCamera(pitch);
 
                         mapControls.zoomOnTargetPosition(0, 0, 10);
@@ -372,7 +372,7 @@ describe("MapControls", function() {
                         expect(initWorldDir.dot(endWorldDir)).closeTo(1, 1e-5);
                     });
 
-                    it(`camera target is recomputed (pitch ${pitch})`, function() {
+                    it(`camera target is recomputed (pitch ${pitch})`, function () {
                         resetCamera(pitch, 5);
                         mapControls.maxTiltAngle = 90;
 
@@ -395,7 +395,7 @@ describe("MapControls", function() {
                         expect(actualAzimuth).to.be.closeTo(expAzimuth, 1e-5);
                     });
 
-                    it(`zoom target stays at the same screen coords (pitch ${pitch})`, function() {
+                    it(`zoom target stays at the same screen coords (pitch ${pitch})`, function () {
                         resetCamera(pitch);
 
                         const initZoomTarget = MapViewUtils.rayCastWorldCoordinates(
@@ -417,7 +417,7 @@ describe("MapControls", function() {
                         expect(initZoomTarget!.distanceTo(endZoomTarget!)).to.be.closeTo(0, 1);
                     });
 
-                    it(`zl is applied even if target is not valid (pitch ${pitch})`, function() {
+                    it(`zl is applied even if target is not valid (pitch ${pitch})`, function () {
                         const eps = 1e-5;
 
                         resetCamera(pitch, 3);
@@ -442,10 +442,10 @@ describe("MapControls", function() {
         }
     });
 
-    describe("enable/disable interactions", function() {
+    describe("enable/disable interactions", function () {
         const initialZoomLevel = 15;
 
-        beforeEach(function() {
+        beforeEach(function () {
             const cameraPosition = new THREE.Vector3(0, 0, 10);
             camera.position.set(0, 0, 10);
             camera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -474,7 +474,7 @@ describe("MapControls", function() {
             { enabled: false, allEnabled: true, suffix: "disabled with specific flag" },
             { enabled: true, allEnabled: false, suffix: "disabled with general flag" }
         ]) {
-            it(`zoom interactions can be ${suffix}`, function() {
+            it(`zoom interactions can be ${suffix}`, function () {
                 mapControls.zoomEnabled = enabled;
                 mapControls.enabled = allEnabled;
                 const isEnabled = allEnabled && enabled;
@@ -496,7 +496,7 @@ describe("MapControls", function() {
                 expect(mapControls.zoomLevelTargeted - initialZoomLevel !== 0).to.equal(isEnabled);
             });
 
-            it(`pan interactions can be ${suffix}`, function() {
+            it(`pan interactions can be ${suffix}`, function () {
                 const initX = camera.position.x;
                 const initY = camera.position.y;
                 mapControls.panEnabled = enabled;
@@ -512,7 +512,7 @@ describe("MapControls", function() {
                 expect(camera.position.y - initY !== 0).equals(isEnabled);
             });
 
-            it(`tilt interactions can be ${suffix}`, function() {
+            it(`tilt interactions can be ${suffix}`, function () {
                 lookAtStub.resetHistory();
                 orbitAroundScreenPointSpy.resetHistory();
                 mapControls.tiltEnabled = enabled;

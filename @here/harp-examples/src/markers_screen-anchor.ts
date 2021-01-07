@@ -58,15 +58,9 @@ export namespace GeoToScreenExample {
 
     function addGuiElements() {
         const gui = new GUI({ width: 300 });
-        gui.add(geoPosition, "lat")
-            .step(0.0001)
-            .onChange(updateAnchors);
-        gui.add(geoPosition, "lng")
-            .step(0.0001)
-            .onChange(updateAnchors);
-        gui.add(geoPosition, "alt")
-            .step(0.0001)
-            .onChange(updateAnchors);
+        gui.add(geoPosition, "lat").step(0.0001).onChange(updateAnchors);
+        gui.add(geoPosition, "lng").step(0.0001).onChange(updateAnchors);
+        gui.add(geoPosition, "alt").step(0.0001).onChange(updateAnchors);
         gui.add(mapView, "tileWrappingEnabled").onChange((value: boolean) => {
             mapView.tileWrappingEnabled = value;
         });

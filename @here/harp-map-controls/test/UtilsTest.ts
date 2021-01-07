@@ -10,9 +10,9 @@ import { assert } from "chai";
 
 import { safeParseDecimalInt } from "../lib/Utils";
 
-describe("MapControls", function() {
-    describe("Utils", function() {
-        it("safeParseDecimalInt", function() {
+describe("MapControls", function () {
+    describe("Utils", function () {
+        it("safeParseDecimalInt", function () {
             assert.equal(safeParseDecimalInt("0", 1), 0);
             assert.equal(safeParseDecimalInt("123456789", 666), 123456789);
 

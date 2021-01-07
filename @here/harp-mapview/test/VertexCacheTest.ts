@@ -10,8 +10,8 @@ import { expect } from "chai";
 
 import { VertexCache } from "../lib/geometry/VertexCache";
 
-describe("VertexCache", function() {
-    it("get returns a previously set and non-evicted vertex", function() {
+describe("VertexCache", function () {
+    it("get returns a previously set and non-evicted vertex", function () {
         const cache = new VertexCache(3);
         const expectedVertex = { x: 1, y: 4, z: -1 };
         cache.set(5, expectedVertex);
@@ -24,7 +24,7 @@ describe("VertexCache", function() {
         expect(actualVertex).deep.equals(expectedVertex);
     });
 
-    it("clear removes all vertices from cache", function() {
+    it("clear removes all vertices from cache", function () {
         const size = 5;
         const cache = new VertexCache(size);
 
@@ -38,7 +38,7 @@ describe("VertexCache", function() {
         }
     });
 
-    it("set evicts vertices in insertion order if get is never called", function() {
+    it("set evicts vertices in insertion order if get is never called", function () {
         const size = 5;
         const cache = new VertexCache(size);
 
@@ -54,7 +54,7 @@ describe("VertexCache", function() {
         }
     });
 
-    it("set evicts least recently used vertex", function() {
+    it("set evicts least recently used vertex", function () {
         const size = 5;
         const cache = new VertexCache(size);
 

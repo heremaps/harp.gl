@@ -10,16 +10,16 @@ import { assert } from "chai";
 
 import { ColorCache } from "../lib/ColorCache";
 
-describe("ColorCache", function() {
+describe("ColorCache", function () {
     this.beforeEach(() => {
         ColorCache.instance.clear();
     });
 
-    it("empty", function() {
+    it("empty", function () {
         assert.equal(ColorCache.instance.size, 0);
     });
 
-    it("get", function() {
+    it("get", function () {
         const white = ColorCache.instance.getColor("#ffffff");
         const black = ColorCache.instance.getColor("#000000");
 
@@ -37,7 +37,7 @@ describe("ColorCache", function() {
         assert.equal(black.b, 0.0);
     });
 
-    it("clear", function() {
+    it("clear", function () {
         const white = ColorCache.instance.getColor("#ffffff");
         const black = ColorCache.instance.getColor("#000000");
 

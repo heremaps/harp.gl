@@ -13,8 +13,8 @@ import { GeoPolygon, GeoPolygonCoordinates } from "../lib/coordinates/GeoPolygon
 
 const GEOCOORDS_EPSILON = 0.000001;
 
-describe("GeoPolygon", function() {
-    it("creates GeoPolygon from an Array of GeoCoordinates", function() {
+describe("GeoPolygon", function () {
+    it("creates GeoPolygon from an Array of GeoCoordinates", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(-10, 170),
             new GeoCoordinates(-10, -160),
@@ -27,7 +27,7 @@ describe("GeoPolygon", function() {
         assert.equal(geoPolygon.coordinates.length, 4);
     });
 
-    it("creates GeoPolygon from an Array of GeoCoordinates Like", function() {
+    it("creates GeoPolygon from an Array of GeoCoordinates Like", function () {
         const geoPolygon = new GeoPolygon([
             { latitude: -10, longitude: 170 },
             { latitude: -10, longitude: -160 },
@@ -40,7 +40,7 @@ describe("GeoPolygon", function() {
         assert.equal(geoPolygon.coordinates.length, 4);
     });
 
-    it("creates GeoPolygon from an mixed Array ", function() {
+    it("creates GeoPolygon from an mixed Array ", function () {
         const geoPolygon = new GeoPolygon([
             { latitude: -10, longitude: 170 },
             new GeoCoordinates(-10, -160),
@@ -53,7 +53,7 @@ describe("GeoPolygon", function() {
         assert.equal(geoPolygon.coordinates.length, 4);
     });
 
-    it("sorts concave coordinates ccw", function() {
+    it("sorts concave coordinates ccw", function () {
         const coord0 = new GeoCoordinates(-10, 170);
         const coord1 = new GeoCoordinates(10, -160);
         const coord2 = new GeoCoordinates(-10, -160);
@@ -69,7 +69,7 @@ describe("GeoPolygon", function() {
         assert.deepEqual(geoPolygon.coordinates[3], coord3);
     });
 
-    it("creates valid BoundingBox and Centroid", function() {
+    it("creates valid BoundingBox and Centroid", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(2, 160),
             new GeoCoordinates(2, 170),
@@ -99,7 +99,7 @@ describe("GeoPolygon", function() {
         assert.isTrue(geoBBox.contains(centroid));
     });
 
-    it("creates Invalid BoundingBox and NO Centroid for twisted sorted coordinates", function() {
+    it("creates Invalid BoundingBox and NO Centroid for twisted sorted coordinates", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(2, 160),
             new GeoCoordinates(10, 170),
@@ -115,7 +115,7 @@ describe("GeoPolygon", function() {
         assert.equal(geoBBox.longitudeSpan, 0);
     });
 
-    it("creates BoundingBox and Centroid for simple convex polygon", function() {
+    it("creates BoundingBox and Centroid for simple convex polygon", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(2, 160),
             new GeoCoordinates(5, 165),
@@ -147,7 +147,7 @@ describe("GeoPolygon", function() {
         assert.isTrue(geoBBox.contains(centroid));
     });
 
-    it("creates BoundingBox and Centroid for parallel lined convex polygon", function() {
+    it("creates BoundingBox and Centroid for parallel lined convex polygon", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(2, 160),
             new GeoCoordinates(2, 167),
@@ -182,7 +182,7 @@ describe("GeoPolygon", function() {
         assert.isTrue(geoBBox.contains(centroid));
     });
 
-    it("creates valid BoundingBox and Centroid for non axis aligned  polygon", function() {
+    it("creates valid BoundingBox and Centroid for non axis aligned  polygon", function () {
         const geoPolygon = new GeoPolygon(
             [
                 { latitude: 37, longitude: 13, altitude: 0 },
@@ -202,7 +202,7 @@ describe("GeoPolygon", function() {
         assert.equal(geoBBox.south, 4);
     });
 
-    it("creates valid BoundingBox and Centroid for not axis aligned polygon", function() {
+    it("creates valid BoundingBox and Centroid for not axis aligned polygon", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(6, 40),
             new GeoCoordinates(10, 30),
@@ -232,7 +232,7 @@ describe("GeoPolygon", function() {
         assert.isTrue(geoBBox.contains(centroid));
     });
 
-    it("creates valid BoundingBox and Centroid for unnormalized coordinates", function() {
+    it("creates valid BoundingBox and Centroid for unnormalized coordinates", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(2, -340),
             new GeoCoordinates(2, 20),
@@ -262,7 +262,7 @@ describe("GeoPolygon", function() {
         assert.isTrue(geoBBox.contains(centroid));
     });
 
-    it("wraps coordinates around if requested", function() {
+    it("wraps coordinates around if requested", function () {
         const initialCoords: GeoPolygonCoordinates = [
             new GeoCoordinates(-10, 80),
             new GeoCoordinates(-10, -160),
@@ -285,7 +285,7 @@ describe("GeoPolygon", function() {
         ]);
     });
 
-    it("wrapping supports multiple antimeridian crossings for concave polygons", function() {
+    it("wrapping supports multiple antimeridian crossings for concave polygons", function () {
         const initialCoords: GeoPolygonCoordinates = [
             new GeoCoordinates(-10, 150),
             new GeoCoordinates(-20, -170),
@@ -326,7 +326,7 @@ describe("GeoPolygon", function() {
         ]);
     });
 
-    it("supports antimeridian crossing GeoPolygon", function() {
+    it("supports antimeridian crossing GeoPolygon", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(-10, 170),
             new GeoCoordinates(-10, -160),
@@ -359,7 +359,7 @@ describe("GeoPolygon", function() {
         assert.isTrue(geoBBox.contains(centroid));
     });
 
-    it("supports pole wrapping GeoPolygon", function() {
+    it("supports pole wrapping GeoPolygon", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(-90, 170),
             new GeoCoordinates(-90, -160),
@@ -392,7 +392,7 @@ describe("GeoPolygon", function() {
         assert.isTrue(geoBBox.contains(centroid));
     });
 
-    it("might break sorting of convex polygons", function() {
+    it("might break sorting of convex polygons", function () {
         const coord0 = new GeoCoordinates(2, 160);
         const coord1 = new GeoCoordinates(2, 167);
         const coord2 = new GeoCoordinates(9, 162);
@@ -413,7 +413,7 @@ describe("GeoPolygon", function() {
         assert.isDefined(geoPolygon.getCentroid());
     });
 
-    it("ignores altitudes", function() {
+    it("ignores altitudes", function () {
         const geoPolygon = new GeoPolygon([
             new GeoCoordinates(6, 40),
             new GeoCoordinates(10, 30, 50),

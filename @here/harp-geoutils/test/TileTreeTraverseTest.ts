@@ -34,11 +34,11 @@ class TestSubdivisionScheme implements SubdivisionScheme {
     }
 }
 
-describe("TileTreeTraverse", function() {
+describe("TileTreeTraverse", function () {
     let subdivisionScheme: sinon.SinonStubbedInstance<TestSubdivisionScheme>;
     let ttt: TileTreeTraverse;
 
-    beforeEach(function() {
+    beforeEach(function () {
         subdivisionScheme = sinon.createStubInstance(TestSubdivisionScheme);
 
         ttt = new TileTreeTraverse(subdivisionScheme);
@@ -60,7 +60,7 @@ describe("TileTreeTraverse", function() {
         return new TileKey(row, column, level);
     }
 
-    it("get tiles of 1x1 subdivison", function() {
+    it("get tiles of 1x1 subdivison", function () {
         subdivisionScheme.getSubdivisionX.returns(1);
         subdivisionScheme.getSubdivisionY.returns(1);
         subdivisionScheme.getLevelDimensionX.returns(1);
@@ -83,7 +83,7 @@ describe("TileTreeTraverse", function() {
         assert.deepInclude(result4, createTileKey({ row: 0, column: 0, level: 20 }));
     });
 
-    it("get tiles of 2x1 subdivison", function() {
+    it("get tiles of 2x1 subdivison", function () {
         subdivisionScheme.getSubdivisionX.returns(2);
         subdivisionScheme.getSubdivisionY.returns(1);
         subdivisionScheme.getLevelDimensionX.callsFake((level: number) => 1 << level);
@@ -110,7 +110,7 @@ describe("TileTreeTraverse", function() {
         assert.deepInclude(result4, createTileKey({ row: 0, column: 19, level: 15 }));
     });
 
-    it("get tiles of 1x2 subdivison", function() {
+    it("get tiles of 1x2 subdivison", function () {
         subdivisionScheme.getSubdivisionX.returns(1);
         subdivisionScheme.getSubdivisionY.returns(2);
         subdivisionScheme.getLevelDimensionX.returns(1);
@@ -137,7 +137,7 @@ describe("TileTreeTraverse", function() {
         assert.deepInclude(result4, createTileKey({ row: 19, column: 0, level: 15 }));
     });
 
-    it("get tiles of 2x2 subdivison", function() {
+    it("get tiles of 2x2 subdivison", function () {
         subdivisionScheme.getSubdivisionX.returns(2);
         subdivisionScheme.getSubdivisionY.returns(2);
         subdivisionScheme.getLevelDimensionX.callsFake((level: number) => 1 << level);
@@ -158,7 +158,7 @@ describe("TileTreeTraverse", function() {
         assert.deepInclude(result2, createTileKey({ row: 23, column: 15, level: 5 }));
     });
 
-    it("get tiles of double umbrella subdivison", function() {
+    it("get tiles of double umbrella subdivison", function () {
         subdivisionScheme.getSubdivisionX.returns(2);
         subdivisionScheme.getSubdivisionY.callsFake((level: number) => (level === 0 ? 2 : 1));
         subdivisionScheme.getLevelDimensionX.callsFake((level: number) => 1 << level);

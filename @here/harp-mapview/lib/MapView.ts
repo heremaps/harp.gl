@@ -3004,10 +3004,7 @@ export class MapView extends EventDispatcher {
         tangentSpaceMatrix.makeBasis(transform.xAxis, transform.yAxis, transform.zAxis);
 
         // 2. Change the basis of matrixWorld to the tangent space to get the new base axes.
-        cache.matrix4[0]
-            .copy(tangentSpaceMatrix)
-            .invert()
-            .multiply(camera.matrixWorld);
+        cache.matrix4[0].copy(tangentSpaceMatrix).invert().multiply(camera.matrixWorld);
         transform.xAxis.setFromMatrixColumn(cache.matrix4[0], 0);
         transform.yAxis.setFromMatrixColumn(cache.matrix4[0], 1);
         transform.zAxis.setFromMatrixColumn(cache.matrix4[0], 2);

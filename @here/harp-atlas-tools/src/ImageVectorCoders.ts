@@ -31,9 +31,7 @@ export class ImageVectorDecoderConstructor implements ImageDecoderConstructor {
         const fileBuffer: Buffer = await FileSystem.readFile(filePath);
         const resize = this.targetWidth !== 0 && this.targetHeight !== 0;
         const png = resize
-            ? sharp(fileBuffer)
-                  .resize({ width: this.targetWidth, height: this.targetHeight })
-                  .png()
+            ? sharp(fileBuffer).resize({ width: this.targetWidth, height: this.targetHeight }).png()
             : sharp(fileBuffer).png();
         const bitmap: Jimp = await Jimp.read(await png.toBuffer());
         return new ImageVectorDecoder(fileBuffer, bitmap);

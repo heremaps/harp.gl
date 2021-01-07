@@ -17,10 +17,10 @@ import { MapViewEventNames } from "../lib/MapView";
 
 declare const global: any;
 
-describe("EventDispatcher", function() {
+describe("EventDispatcher", function () {
     let eventDispatcher: EventDispatcher | undefined;
 
-    it("eventTypes", function() {
+    it("eventTypes", function () {
         eventDispatcher = new EventDispatcher();
 
         expect(eventDispatcher.eventTypes.length).to.be.equal(
@@ -36,7 +36,7 @@ describe("EventDispatcher", function() {
         );
     });
 
-    it("hasEventListener", function() {
+    it("hasEventListener", function () {
         eventDispatcher = new EventDispatcher();
 
         expect(eventDispatcher.hasEventListener("X")).to.be.equal(
@@ -61,7 +61,7 @@ describe("EventDispatcher", function() {
         );
     });
 
-    it("listeners", function() {
+    it("listeners", function () {
         eventDispatcher = new EventDispatcher();
 
         expect(eventDispatcher.listeners("X")).to.be.equal(undefined, `listeners not empty.`);
@@ -77,7 +77,7 @@ describe("EventDispatcher", function() {
         );
     });
 
-    it("Correctly sets and removes all event listeners by API", function() {
+    it("Correctly sets and removes all event listeners by API", function () {
         const checkEvent = (eventName: string) => {
             eventDispatcher = new EventDispatcher();
 
@@ -106,7 +106,7 @@ describe("EventDispatcher", function() {
         }
     });
 
-    it("#removeAllEventListeners", async function() {
+    it("#removeAllEventListeners", async function () {
         eventDispatcher = new EventDispatcher();
 
         const eventStubs: Map<string, sinon.SinonStub> = new Map();
@@ -156,7 +156,7 @@ describe("EventDispatcher", function() {
         eventDispatcher = undefined!;
     });
 
-    it("dispose", async function() {
+    it("dispose", async function () {
         eventDispatcher = new EventDispatcher();
 
         const callStub = sinon.stub();

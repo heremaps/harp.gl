@@ -187,7 +187,7 @@ describe("TileGeometryCreator", () => {
     let mapView: FakeMapView;
     const sandbox = sinon.createSandbox();
 
-    beforeEach(function() {
+    beforeEach(function () {
         mapView = new FakeMapView();
         mockDatasource = sandbox.createStubInstance(MockDataSource);
         mockDatasource.getTilingScheme.callsFake(() => webMercatorTilingScheme);
@@ -199,7 +199,7 @@ describe("TileGeometryCreator", () => {
         );
     });
 
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
     });
 

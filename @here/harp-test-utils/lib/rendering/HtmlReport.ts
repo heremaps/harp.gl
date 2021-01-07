@@ -230,8 +230,9 @@ export async function genHtmlReport(
                                 <img src="${referencePath}" style="width:100%; height: auto">
                             </div>
                             <div style="flex: 1 1 0%">
-                                <img src="${result.diffImagePath ??
-                                    ""}"  style="width:100%; height: auto">
+                                <img src="${
+                                    result.diffImagePath ?? ""
+                                }"  style="width:100%; height: auto">
                             </div>
                         </div>
                     </div>

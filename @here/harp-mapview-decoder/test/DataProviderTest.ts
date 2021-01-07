@@ -40,10 +40,10 @@ class TimedFakeDataProvider extends FakeDataProvider {
     }
 }
 
-describe("DataProvider", function() {
+describe("DataProvider", function () {
     const clients = [{}, {}];
 
-    it("calls connect only on first registered client", function() {
+    it("calls connect only on first registered client", function () {
         const dataProvider = new FakeDataProvider();
         const connectSpy = sinon.spy(dataProvider, "connect");
 
@@ -55,7 +55,7 @@ describe("DataProvider", function() {
         expect(connectSpy.calledOnce).is.true;
     });
 
-    it("calls dispose only on last unregistered client", function() {
+    it("calls dispose only on last unregistered client", function () {
         const dataProvider = new FakeDataProvider();
         const disposeSpy = sinon.spy(dataProvider, "dispose");
 
@@ -72,7 +72,7 @@ describe("DataProvider", function() {
         expect(disposeSpy.calledOnce).is.true;
     });
 
-    it("calls connect only on first registered client", async function() {
+    it("calls connect only on first registered client", async function () {
         const dataProvider = new TimedFakeDataProvider();
         const connectSpy = sinon.spy(dataProvider, "connect");
 
@@ -84,7 +84,7 @@ describe("DataProvider", function() {
         expect(connectSpy.calledOnce).is.true;
     });
 
-    it("calls connect again after unregister", async function() {
+    it("calls connect again after unregister", async function () {
         const dataProvider = new TimedFakeDataProvider();
         const connectSpy = sinon.spy(dataProvider, "connect");
 
@@ -98,7 +98,7 @@ describe("DataProvider", function() {
         expect(connectSpy.calledTwice).is.true;
     });
 
-    it("calls connect after one provider call unregister", async function() {
+    it("calls connect after one provider call unregister", async function () {
         const dataProvider = new TimedFakeDataProvider();
 
         const promise0 = dataProvider.register(clients[0]);
@@ -120,7 +120,7 @@ describe("DataProvider", function() {
             .true;
     });
 
-    it("subsequent register operations wait for connect", async function() {
+    it("subsequent register operations wait for connect", async function () {
         const dataProvider = new TimedFakeDataProvider();
         const connectSpy = sinon.spy(dataProvider, "connect");
 

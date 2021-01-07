@@ -683,10 +683,7 @@ function placePointLabelAtAnchor(
     // Apply additional persistent margin, keep in mind that text bounds just calculated
     // are not (0, 0, w, h) based, so their coords usually are also non-zero.
     // TODO: Make the margin configurable
-    tmpBox
-        .copy(labelBounds)
-        .expandByVector(persistentPointLabelTextMargin)
-        .translate(textOffset);
+    tmpBox.copy(labelBounds).expandByVector(persistentPointLabelTextMargin).translate(textOffset);
     tmpBox.getCenter(tmpCenter);
     tmpBox.getSize(tmpSize);
 

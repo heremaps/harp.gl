@@ -42,7 +42,7 @@ function evaluateInterpolatedPropertyZoom(property: Expr, level: number) {
     return getPropertyValue(property, new MapEnv({ $zoom: level }));
 }
 
-describe("Interpolation", function() {
+describe("Interpolation", function () {
     it("Discrete", () => {
         const numberProperty = makeNumberInterpolation(["discrete"]);
         const booleanProperty = makeBooleanInterpolation(["discrete"]);

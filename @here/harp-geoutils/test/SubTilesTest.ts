@@ -11,8 +11,8 @@ import { assert } from "chai";
 import { SubTiles } from "../lib/tiling/SubTiles";
 import { TileKey } from "../lib/tiling/TileKey";
 
-describe("SubTiles", function() {
-    it("iterates through all subtiles", function() {
+describe("SubTiles", function () {
+    it("iterates through all subtiles", function () {
         const subTiles = new SubTiles(TileKey.fromRowColumnLevel(0, 0, 0), 1, 2);
         const actualSubtiles: TileKey[] = [];
 

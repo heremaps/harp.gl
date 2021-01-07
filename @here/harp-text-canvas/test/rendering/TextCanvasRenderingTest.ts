@@ -16,7 +16,7 @@ import {
     TextRenderStyle
 } from "../../index";
 
-describe("TextCanvas", function() {
+describe("TextCanvas", function () {
     let renderer: THREE.WebGLRenderer;
     let camera: THREE.OrthographicCamera;
     let fontCatalog: FontCatalog;
@@ -64,7 +64,7 @@ describe("TextCanvas", function() {
         await ibct.assertCanvasMatchesReference(canvas, params.testName);
     }
 
-    it("renders hello world text", async function(this: Mocha.Context) {
+    it("renders hello world text", async function (this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -97,7 +97,7 @@ describe("TextCanvas", function() {
             }
         );
     });
-    it("renders ß", async function(this: Mocha.Context) {
+    it("renders ß", async function (this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -130,7 +130,7 @@ describe("TextCanvas", function() {
             }
         );
     });
-    it("renders ß with dashes", async function(this: Mocha.Context) {
+    it("renders ß with dashes", async function (this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -167,7 +167,7 @@ describe("TextCanvas", function() {
         );
     });
 
-    it("renders rotated hello world text", async function(this: Mocha.Context) {
+    it("renders rotated hello world text", async function (this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -215,7 +215,7 @@ describe("TextCanvas", function() {
         );
     });
 
-    it("renders hello world on path", async function(this: Mocha.Context) {
+    it("renders hello world on path", async function (this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,

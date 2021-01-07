@@ -10,9 +10,9 @@ import { assert } from "chai";
 
 import { loadTestResource } from "../index";
 
-describe("@here/harp-test-utils", function() {
-    describe("#loadTestResource", function() {
-        it(`loads static text file`, async function() {
+describe("@here/harp-test-utils", function () {
+    describe("#loadTestResource", function () {
+        it(`loads static text file`, async function () {
             const textFromFile = await loadTestResource(
                 "@here/harp-test-utils",
                 "./test/resources/test.txt",
@@ -21,7 +21,7 @@ describe("@here/harp-test-utils", function() {
 
             assert.include(textFromFile, "Test message");
         });
-        it(`loads static json file`, async function() {
+        it(`loads static json file`, async function () {
             const jsonFromFile = await loadTestResource(
                 "@here/harp-test-utils",
                 "./test/resources/test.json",
@@ -31,7 +31,7 @@ describe("@here/harp-test-utils", function() {
             assert(jsonFromFile);
             assert.equal(jsonFromFile.message, "Test message");
         });
-        it(`loads static binary file`, async function() {
+        it(`loads static binary file`, async function () {
             const bufferResult = await loadTestResource(
                 "@here/harp-test-utils",
                 "./test/resources/test.bin",
