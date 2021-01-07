@@ -6,7 +6,11 @@
 
 import * as THREE from "three";
 
-import { RawShaderMaterial, RawShaderMaterialParameters } from "./RawShaderMaterial";
+import {
+    RawShaderMaterial,
+    RawShaderMaterialParameters,
+    RendererMaterialParameters
+} from "./RawShaderMaterial";
 import { enforceBlending } from "./Utils";
 
 const vertexShader: string = `
@@ -41,7 +45,9 @@ void main() {
 /**
  * Parameters used when constructing a new {@link HighPrecisionPointMaterial}.
  */
-export interface CirclePointsMaterialParameters extends RawShaderMaterialParameters {
+export interface CirclePointsMaterialParameters
+    extends THREE.ShaderMaterialParameters,
+        RendererMaterialParameters {
     /**
      * Point size.
      */
@@ -68,38 +74,46 @@ export class CirclePointsMaterial extends RawShaderMaterial {
      *
      * @param parameters - The constructor's parameters.
      */
-    constructor(parameters: CirclePointsMaterialParameters = {}) {
-        const { size, color, opacity, ...shaderParams } = parameters;
-        shaderParams.name = "CirclePointsMaterial";
-        shaderParams.vertexShader = vertexShader;
-        shaderParams.fragmentShader = fragmentShader;
-        shaderParams.uniforms = {
-            size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
-            diffuse: new THREE.Uniform(new THREE.Color()),
-            opacity: new THREE.Uniform(1.0)
-        };
-        shaderParams.depthTest = false;
-        shaderParams.extensions = {
-            ...shaderParams.extensions,
-            derivatives: true
-        };
+    constructor(parameters?: CirclePointsMaterialParameters) {
+        let sizeValue, colorValue, opacityValue;
+        let shaderParameters: RawShaderMaterialParameters | undefined;
+        if (parameters) {
+            const { size, color, opacity, ...shaderParams } = parameters;
+            sizeValue = size;
+            colorValue = color;
+            opacityValue = opacity;
 
-        super(shaderParams);
-        // Blending needs to always be enabled to support smooth edges
+            shaderParams.name = "CirclePointsMaterial";
+            shaderParams.vertexShader = vertexShader;
+            shaderParams.fragmentShader = fragmentShader;
+            shaderParams.uniforms = {
+                size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
+                diffuse: new THREE.Uniform(new THREE.Color()),
+                opacity: new THREE.Uniform(1.0)
+            };
+            shaderParams.depthTest = false;
+            shaderParams.extensions = {
+                ...shaderParams.extensions,
+                derivatives: true
+            };
+            shaderParameters = shaderParams;
+        }
+        super(shaderParameters);
+
         enforceBlending(this);
 
         this.type = "CirclePointsMaterial";
         this.m_color = this.uniforms.diffuse.value;
         this.setOpacity(this.uniforms.opacity.value);
 
-        if (size !== undefined) {
-            this.size = size;
+        if (sizeValue !== undefined) {
+            this.size = sizeValue;
         }
-        if (color !== undefined) {
-            this.color = color;
+        if (colorValue !== undefined) {
+            this.color = colorValue;
         }
-        if (opacity !== undefined) {
-            this.setOpacity(opacity);
+        if (opacityValue !== undefined) {
+            this.setOpacity(opacityValue);
         }
     }
 
@@ -115,14 +129,6 @@ export class CirclePointsMaterial extends RawShaderMaterial {
      */
     set size(size: number) {
         this.uniforms.size.value = size;
-    }
-
-    setOpacity(opacity: number) {
-        this.opacity = opacity;
-        // Base constructor may set opacity before uniform being created:
-        if (this.uniforms && this.uniforms.opacity) {
-            this.uniforms.opacity.value = opacity;
-        }
     }
 
     /**
