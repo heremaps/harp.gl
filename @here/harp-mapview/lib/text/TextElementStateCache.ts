@@ -139,7 +139,7 @@ function findDuplicateByText(
     let duplicate: TextElement | undefined;
     let dupDistSquared: number = Infinity;
     const isBetterDuplicate: DuplicateCmp =
-        element.type === TextElementType.PoiLabel ? isBetterPointDuplicate : isBetterPathDuplicate;
+        element.type === TextElementType.PathLabel ? isBetterPathDuplicate : isBetterPointDuplicate;
 
     for (let i = 0; i < entryCount; ++i) {
         const candidateEntry = candidates[i];
