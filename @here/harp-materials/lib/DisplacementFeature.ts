@@ -38,7 +38,10 @@ export function hasDisplacementFeature(material: any): material is DisplacementF
  * @param displacementMap - Texture representing the elevation data used to overlay the object.
  * @param material - The Material to be updated.
  */
-export function setDisplacementMapToMaterial(displacementMap: THREE.DataTexture | null, material: THREE.Mesh["material"]) {
+export function setDisplacementMapToMaterial(
+    displacementMap: THREE.DataTexture | null,
+    material: THREE.Mesh["material"]
+) {
     if (hasDisplacementFeature(material) && material.displacementMap !== displacementMap) {
         material.displacementMap = displacementMap;
         material.needsUpdate = true;
