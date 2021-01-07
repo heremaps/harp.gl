@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { TextStyleDefinition } from "@here/harp-datasource-protocol";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -949,5 +950,69 @@ describe("TextElementsRenderer", function() {
             }
         ]);
         expect(fixture.loadCatalogStub.callCount).to.equal(7);
+    });
+
+    it("updates TextStyles", async function() {
+        const style1: TextStyleDefinition = {
+            name: "style-1",
+            fontCatalogName: "catalog-1"
+        };
+
+        const style2: TextStyleDefinition = {
+            name: "style-2",
+            fontCatalogName: "catalog-2"
+        };
+
+        const style3: TextStyleDefinition = {
+            name: "style-3",
+            fontCatalogName: "catalog-3"
+        };
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default"
+        );
+        await fixture.textRenderer.updateTextStyles();
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default"
+        );
+
+        await fixture.textRenderer.updateTextStyles([]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default"
+        );
+
+        await fixture.textRenderer.updateTextStyles([], style2);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").fontCatalog).to.equal(
+            "catalog-2",
+            "the new default is using style-2"
+        );
+
+        await fixture.textRenderer.updateTextStyles([]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default",
+            "the default is reset to 'default'"
+        );
+
+        await fixture.textRenderer.updateTextStyles([style1, style2]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "style-1",
+            "the style is found in the list"
+        );
+
+        await fixture.textRenderer.updateTextStyles([style3, style2]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default",
+            "style-1 was removed, using default instead"
+        );
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-3").name).to.equal(
+            "style-3",
+            "the style is found in the list"
+        );
     });
 });

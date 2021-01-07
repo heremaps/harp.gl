@@ -358,7 +358,7 @@ export class TextElementsRenderer {
     private readonly m_camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
     private m_defaultFontCatalogConfig: FontCatalogConfig | undefined;
     private m_poiRenderer: PoiRenderer;
-    private m_textStyleCache: TextStyleCache = new TextStyleCache();
+    private readonly m_textStyleCache: TextStyleCache = new TextStyleCache();
     private readonly m_screenCollisions:
         | ScreenCollisions
         | ScreenCollisionsDebug = new ScreenCollisions();
@@ -418,7 +418,7 @@ export class TextElementsRenderer {
         this.initializeCamera();
 
         this.initializeDefaultFontCatalog();
-        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
+        this.m_textStyleCache.updateTextCanvases(this.m_textCanvases);
     }
 
     /**
@@ -520,19 +520,16 @@ export class TextElementsRenderer {
         } else {
             this.m_textCanvases.clear();
         }
-        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
+        this.m_textStyleCache.updateTextCanvases(this.m_textCanvases);
     }
 
     async updateTextStyles(
         textStyles?: TextStyleDefinition[],
         defaultTextStyle?: TextStyleDefinition
     ) {
-        // TODO: this is an intermeditate solution, in the end this
-        // should not create a new cache, but update the former one
-        this.m_textStyleCache = new TextStyleCache(textStyles, defaultTextStyle);
-        this.m_textStyleCache.initializeDefaultTextElementStyle();
+        this.m_textStyleCache.updateTextStyles(textStyles, defaultTextStyle);
         await this.waitLoaded();
-        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
+        this.m_textStyleCache.updateTextCanvases(this.m_textCanvases);
     }
 
     /**
@@ -772,7 +769,7 @@ export class TextElementsRenderer {
             return;
         }
         await this.addTextCanvas(this.m_defaultFontCatalogConfig);
-        this.m_textStyleCache.initializeTextElementStyles(this.m_textCanvases);
+        this.m_textStyleCache.updateTextCanvases(this.m_textCanvases);
     }
 
     /**

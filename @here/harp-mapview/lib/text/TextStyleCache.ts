@@ -84,50 +84,30 @@ export class TextStyleCache {
         layoutParams: defaultTextLayoutStyle.params
     };
 
-    constructor(
-        private m_textStyleDefinitions?: TextStyleDefinition[],
-        private readonly m_defaultTextStyleDefinition?: TextStyleDefinition
-    ) {}
-
-    initializeDefaultTextElementStyle() {
-        if (this.m_textStyleDefinitions === undefined) {
-            this.m_textStyleDefinitions = [];
-        }
-        const styles = this.m_textStyleDefinitions;
-        this.m_defaultStyle.fontCatalog = undefined;
-
-        const themedDefaultStyle = styles.find(style => style.name === DEFAULT_STYLE_NAME);
-        if (themedDefaultStyle !== undefined) {
-            this.m_defaultStyle = this.createTextElementStyle(
-                themedDefaultStyle,
-                DEFAULT_STYLE_NAME
-            );
-        } else if (this.m_defaultTextStyleDefinition !== undefined) {
-            this.m_defaultStyle = this.createTextElementStyle(
-                this.m_defaultTextStyleDefinition,
-                DEFAULT_STYLE_NAME
-            );
-        } else if (styles.length > 0) {
-            this.m_defaultStyle = this.createTextElementStyle(styles[0], DEFAULT_STYLE_NAME);
-        }
-        this.m_defaultStyle.textCanvas = undefined;
+    constructor() {
+        this.updateDefaultTextStyle();
     }
 
-    initializeTextElementStyles(textCanvases: TextCanvases) {
-        // Initialize default text style.
-        this.initializeTextCanvas(this.m_defaultStyle, textCanvases);
-
-        // Initialize theme text styles.
-        this.m_textStyleDefinitions?.forEach(element => {
+    updateTextStyles(
+        textStyleDefinitions?: TextStyleDefinition[],
+        defaultTextStyleDefinition?: TextStyleDefinition
+    ) {
+        this.m_textStyles.clear();
+        textStyleDefinitions?.forEach(element => {
             this.m_textStyles.set(
                 element.name!,
                 this.createTextElementStyle(element, element.name!)
             );
         });
+        this.updateDefaultTextStyle(defaultTextStyleDefinition, textStyleDefinitions);
+    }
+
+    updateTextCanvases(textCanvases: TextCanvases) {
+        // Initialize default text style.
+        this.initializeTextCanvas(this.m_defaultStyle, textCanvases);
+
         for (const [, style] of this.m_textStyles) {
-            if (style.textCanvas === undefined) {
-                this.initializeTextCanvas(style, textCanvases);
-            }
+            this.initializeTextCanvas(style, textCanvases);
         }
     }
 
@@ -353,7 +333,28 @@ export class TextStyleCache {
         return layoutStyle;
     }
 
+    private updateDefaultTextStyle(
+        defaultTextStyleDefinition?: TextStyleDefinition,
+        textStyleDefinitions?: TextStyleDefinition[]
+    ) {
+        this.m_defaultStyle.fontCatalog = undefined;
+
+        const style =
+            textStyleDefinitions?.find(definition => {
+                return definition.name === DEFAULT_STYLE_NAME;
+            }) ??
+            defaultTextStyleDefinition ??
+            textStyleDefinitions?.[0];
+        if (style) {
+            this.m_defaultStyle = this.createTextElementStyle(style, DEFAULT_STYLE_NAME);
+        }
+        this.m_defaultStyle.textCanvas = undefined;
+    }
+
     private initializeTextCanvas(style: TextElementStyle, textCanvases: TextCanvases): void {
+        if (style.textCanvas) {
+            return;
+        }
         if (style.fontCatalog !== undefined) {
             const styledTextCanvas = textCanvases.get(style.fontCatalog);
             style.textCanvas = styledTextCanvas;
