@@ -6,6 +6,7 @@
 
 import * as THREE from "three";
 
+import { RawShaderMaterial, RawShaderMaterialParameters } from "./RawShaderMaterial";
 import { enforceBlending } from "./Utils";
 
 const vertexShader: string = `
@@ -40,7 +41,7 @@ void main() {
 /**
  * Parameters used when constructing a new {@link HighPrecisionPointMaterial}.
  */
-export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialParameters {
+export interface CirclePointsMaterialParameters extends RawShaderMaterialParameters {
     /**
      * Point size.
      */
@@ -57,7 +58,7 @@ export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialPara
  * shape is created with an alpha channel to benefit an antialising that a mere `discard` could
  * not bring.
  */
-export class CirclePointsMaterial extends THREE.ShaderMaterial {
+export class CirclePointsMaterial extends RawShaderMaterial {
     static readonly DEFAULT_CIRCLE_SIZE = 1;
 
     private readonly m_color: THREE.Color;

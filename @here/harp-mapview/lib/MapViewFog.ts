@@ -160,7 +160,6 @@ export class MapViewFog {
                         // is rendered at least once) and thus requires building of new shader
                         // program - force material update.
                         material.invalidateFog();
-                        material.needsUpdate = true;
                     }
                 }
             }

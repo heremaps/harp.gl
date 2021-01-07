@@ -680,7 +680,7 @@ export class PoiRenderer {
             .loadImage()
             .then(loadedImageItem => {
                 // Skip setup if image was not loaded (cancelled).
-                if (loadedImageItem && loadedImageItem.image) {
+                if (loadedImageItem?.image) {
                     this.setupPoiInfo(poiInfo, loadedImageItem, env, imageTexture);
                 }
             })

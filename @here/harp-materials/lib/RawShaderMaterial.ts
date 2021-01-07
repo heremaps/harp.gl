@@ -53,11 +53,27 @@ export class RawShaderMaterial extends THREE.RawShaderMaterial {
         }
         super(shaderParams);
         this.invalidateFog();
+        this.setOpacity(shaderParams?.opacity);
     }
 
     invalidateFog() {
         if (this.defines !== undefined && this.fog !== getShaderMaterialDefine(this, "USE_FOG")) {
             setShaderMaterialDefine(this, "USE_FOG", this.fog);
+        }
+    }
+
+    /**
+     * To set the material's opacity property value and also update the opacity value of the uniforms if needed.
+     * @param opacity If undefined, the value is not set
+     */
+    setOpacity(opacity?: number) {
+        if (opacity !== undefined) {
+            // The base constructor may set the opacity property before,
+            // therefore we don't check unequality of the current and new opacity value:
+            this.opacity = opacity;
+            if (this.uniforms?.opacity) {
+                this.uniforms.opacity.value = opacity;
+            }
         }
     }
 }

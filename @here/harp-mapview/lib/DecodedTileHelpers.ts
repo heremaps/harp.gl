@@ -738,7 +738,7 @@ export function applyBaseColorToMaterial(
     }
 
     opacity = THREE.MathUtils.clamp(opacity, 0, 1);
-    if (material instanceof CirclePointsMaterial || material instanceof SolidLineMaterial) {
+    if (material instanceof RawShaderMaterial) {
         material.setOpacity(opacity);
     } else {
         material.opacity = opacity;

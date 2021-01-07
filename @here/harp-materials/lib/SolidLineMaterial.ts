@@ -585,10 +585,6 @@ export class SolidLineMaterial extends RawShaderMaterial
                 this.invalidateFog();
             }
             this.offset = params.offset ?? 0;
-
-            // ShaderMaterial overrides requires invalidation cause super c-tor may set this
-            // properties before related `defines` and `uniforms` were created.
-            this.invalidateOpacity();
         }
     }
 
@@ -622,18 +618,12 @@ export class SolidLineMaterial extends RawShaderMaterial
         return getShaderMaterialDefine(this, "USE_OUTLINE") === true;
     }
 
-    /**
-     * To set the opacity inclusive updating the uniforms and stencilWrite.
-     */
-    setOpacity(value: number) {
-        this.opacity = value;
-        // Setting opacity before uniform being created requires late invalidation,
-        // call to invalidateOpacity() is done at the end of c-tor.
-        if (this.uniforms?.opacity) {
-            this.uniforms.opacity.value = value;
+    /** @override */
+    setOpacity(opacity: number) {
+        super.setOpacity(opacity);
+        if (opacity !== undefined) {
+            this.stencilWrite = opacity < 0.98;
         }
-
-        this.stencilWrite = value < 0.98;
     }
 
     /**
@@ -836,11 +826,5 @@ export class SolidLineMaterial extends RawShaderMaterial
         this.invalidateFog();
         this.setOpacity(other.opacity);
         return this;
-    }
-
-    private invalidateOpacity() {
-        if (this.opacity !== this.uniforms.opacity.value) {
-            this.uniforms.opacity.value = this.opacity;
-        }
     }
 }
