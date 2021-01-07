@@ -92,28 +92,13 @@ export class TextStyleCache {
         textStyleDefinitions?: TextStyleDefinition[],
         defaultTextStyleDefinition?: TextStyleDefinition
     ) {
-        if (!textStyleDefinitions || textStyleDefinitions.length === 0) {
-            this.m_textStyles.clear();
-        } else {
-            // Update Styles
-            textStyleDefinitions?.forEach(element => {
-                this.m_textStyles.set(
-                    element.name!,
-                    this.createTextElementStyle(element, element.name!)
-                );
-            });
-
-            // Remove obsolete
-            for (const [name] of this.m_textStyles) {
-                if (
-                    textStyleDefinitions.findIndex(definition => {
-                        return definition.name === name;
-                    }) === -1
-                ) {
-                    this.m_textStyles.delete(name);
-                }
-            }
-        }
+        this.m_textStyles.clear();
+        textStyleDefinitions?.forEach(element => {
+            this.m_textStyles.set(
+                element.name!,
+                this.createTextElementStyle(element, element.name!)
+            );
+        });
         this.updateDefaultTextStyle(defaultTextStyleDefinition, textStyleDefinitions);
     }
 
