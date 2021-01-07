@@ -66,7 +66,7 @@ async function main() {
         .command("html-report")
         .description("generate HTML report from all IBCT test results")
         .alias("r")
-        .action(async function() {
+        .action(async function () {
             const results = await loadSavedResults(baseResultsPath);
             const r = await genHtmlReport(results, {}, baseResultsPath);
             const overallTestsResult = r[0];
@@ -85,7 +85,7 @@ async function main() {
         .command("approve")
         .description("approve current results locally")
         .alias("a")
-        .action(async function() {
+        .action(async function () {
             logger.info("approving all actual images");
 
             const results = await loadSavedResults(baseResultsPath);
@@ -98,7 +98,7 @@ async function main() {
         .command("save-reference")
         .description("establish missing reference images")
         .alias("s")
-        .action(async function() {
+        .action(async function () {
             logger.info("saving actual images as reference");
             const results = await loadSavedResults(baseResultsPath);
             createMissingReferences = true;

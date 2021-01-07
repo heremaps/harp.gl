@@ -586,14 +586,14 @@ export function countCalls(): any {
     if (fun !== undefined) {
         // classic functional composition
         // const foo = countCalls(function foo() { })
-        return function(this: any, ...args: any[]) {
+        return function (this: any, ...args: any[]) {
             countCall(name);
             return fun!.call(this, args);
         };
     }
 
     // typescript member function decorator
-    return function(this: any, target: any, key: string, descriptor: PropertyDescriptor) {
+    return function (this: any, target: any, key: string, descriptor: PropertyDescriptor) {
         if (descriptor === undefined) {
             descriptor = Object.getOwnPropertyDescriptor(target, key)!;
         }

@@ -27,7 +27,7 @@ import { MapViewUtils } from "../lib/Utils";
 
 declare const global: any;
 
-describe("BoundsGenerator", function() {
+describe("BoundsGenerator", function () {
     const inNodeContext = typeof window === "undefined";
     let sandbox: sinon.SinonSandbox;
     let clearColorStub: sinon.SinonStub;
@@ -39,7 +39,7 @@ describe("BoundsGenerator", function() {
     let lookAtParams: Partial<LookAtParams>;
     let mapViewOptions: MapViewOptions;
 
-    beforeEach(function() {
+    beforeEach(function () {
         //Setup a stubbed mapview to emulate the camera behaviour
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
@@ -88,7 +88,7 @@ describe("BoundsGenerator", function() {
         );
     });
 
-    afterEach(async function() {
+    afterEach(async function () {
         if (mapView !== undefined) {
             await mapView.getTheme(); // Needed otherwise the dispose will cause log messages
             mapView.dispose();
@@ -188,8 +188,8 @@ describe("BoundsGenerator", function() {
         }
     }
 
-    describe("Sphere Projection", function() {
-        beforeEach(function() {
+    describe("Sphere Projection", function () {
+        beforeEach(function () {
             mapView = new MapView({ ...mapViewOptions, projection: sphereProjection });
             mapView.lookAt({
                 target: new GeoCoordinates(0, 0),
@@ -205,7 +205,7 @@ describe("BoundsGenerator", function() {
             );
         });
 
-        it("generates polygon of canvas corners for canvas filled with map", function() {
+        it("generates polygon of canvas corners for canvas filled with map", function () {
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
             assert.isNotEmpty(coordinates);
             assert.equal(coordinates?.length, 4);
@@ -213,7 +213,7 @@ describe("BoundsGenerator", function() {
             checkCanvasCorners(coordinates!);
         });
 
-        it("generates polygon with wrapped around coords if it crosses antimeridian", function() {
+        it("generates polygon with wrapped around coords if it crosses antimeridian", function () {
             mapView!.lookAt({
                 target: new GeoCoordinates(0, 180)
             });
@@ -228,7 +228,7 @@ describe("BoundsGenerator", function() {
             assert.isAbove(coordinates![2].longitude, 180);
         });
 
-        it("generates polygon with subdivided top/bottom for large longitude spans", function() {
+        it("generates polygon with subdivided top/bottom for large longitude spans", function () {
             mapView!.lookAt({
                 target: new GeoCoordinates(75, 0),
                 zoomLevel: 10,
@@ -248,7 +248,7 @@ describe("BoundsGenerator", function() {
             });
         });
 
-        it("generates polygon with subdivided lateral sides for large latitude spans", function() {
+        it("generates polygon with subdivided lateral sides for large latitude spans", function () {
             mapView!.resize(100, 1000);
             mapView!.lookAt({
                 target: new GeoCoordinates(0, 0),
@@ -266,7 +266,7 @@ describe("BoundsGenerator", function() {
         });
 
         // Horizon cases
-        it("horizon cuts once each lateral canvas side", function() {
+        it("horizon cuts once each lateral canvas side", function () {
             mapView!.lookAt({ tilt: 80 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -281,7 +281,7 @@ describe("BoundsGenerator", function() {
             assert.equal(countVerticesOnCanvasSide(coordinates!, CanvasSides.Left), 2);
         });
 
-        it("horizon cuts once each lateral canvas side and twice at the top", function() {
+        it("horizon cuts once each lateral canvas side and twice at the top", function () {
             mapView!.lookAt({ tilt: 30, zoomLevel: 6 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -295,7 +295,7 @@ describe("BoundsGenerator", function() {
             assert.isAtLeast(countVerticesOnCanvasSide(coordinates!, CanvasSides.Left), 2);
         });
 
-        it("horizon cuts twice each canvas side", function() {
+        it("horizon cuts twice each canvas side", function () {
             mapView!.lookAt({ zoomLevel: 5.5 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -310,7 +310,7 @@ describe("BoundsGenerator", function() {
             assert.isAtLeast(countVerticesOnCanvasSide(coordinates!, CanvasSides.Left), 2);
         });
 
-        it("horizon cuts twice each lateral canvas side", function() {
+        it("horizon cuts twice each lateral canvas side", function () {
             mapView!.resize(800, 1200);
             mapView!.lookAt({ zoomLevel: 4 });
             mapView!.renderSync(); // render once to update camera parameter
@@ -326,7 +326,7 @@ describe("BoundsGenerator", function() {
             assert.isAtLeast(countVerticesOnCanvasSide(coordinates!, CanvasSides.Left), 2);
         });
 
-        it("horizon cuts twice top and bottom canvas sides", function() {
+        it("horizon cuts twice top and bottom canvas sides", function () {
             mapView!.lookAt({ zoomLevel: 4 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -341,7 +341,7 @@ describe("BoundsGenerator", function() {
             assert.equal(countVerticesOnCanvasSide(coordinates!, CanvasSides.Left), 0);
         });
 
-        it("horizon cuts twice the bottom canvas side", function() {
+        it("horizon cuts twice the bottom canvas side", function () {
             mapView!.lookAt({ tilt: 45, zoomLevel: 4 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -356,7 +356,7 @@ describe("BoundsGenerator", function() {
             assert.equal(countVerticesOnCanvasSide(coordinates!, CanvasSides.Left), 0);
         });
 
-        it("horizon is fully visible (no cuts on canvas sides)", function() {
+        it("horizon is fully visible (no cuts on canvas sides)", function () {
             mapView!.lookAt({ zoomLevel: 3 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -385,7 +385,7 @@ describe("BoundsGenerator", function() {
         });
 
         // Pole wrapping
-        it("bounds wrap around the north pole", function() {
+        it("bounds wrap around the north pole", function () {
             mapView!.lookAt({ zoomLevel: 6, target: new GeoCoordinates(90, 0) });
             mapView!.renderSync(); // render once to update camera parameter
             const polygon = (boundsGenerator as BoundsGenerator).generate();
@@ -407,7 +407,7 @@ describe("BoundsGenerator", function() {
             }
         });
 
-        it("bounds wrap around the south pole", function() {
+        it("bounds wrap around the south pole", function () {
             mapView!.lookAt({ zoomLevel: 6, target: new GeoCoordinates(-90, 0) });
             mapView!.renderSync(); // render once to update camera parameter
             const polygon = (boundsGenerator as BoundsGenerator).generate();
@@ -430,8 +430,8 @@ describe("BoundsGenerator", function() {
         });
     });
 
-    describe("Mercator Projection", function() {
-        beforeEach(function() {
+    describe("Mercator Projection", function () {
+        beforeEach(function () {
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: false });
             mapView.lookAt(lookAtParams);
             boundsGenerator = new BoundsGenerator(
@@ -441,7 +441,7 @@ describe("BoundsGenerator", function() {
             );
         });
 
-        it("generates polygon of canvas corners for canvas filled with map", function() {
+        it("generates polygon of canvas corners for canvas filled with map", function () {
             mapView!.lookAt(lookAtParams);
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -451,7 +451,7 @@ describe("BoundsGenerator", function() {
             checkCanvasCorners(coordinates!);
         });
 
-        it("generates polygon for canvas filled with map, w/ tileWrapping", function() {
+        it("generates polygon for canvas filled with map, w/ tileWrapping", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
@@ -483,7 +483,7 @@ describe("BoundsGenerator", function() {
             checkCanvasCorners(coordinates);
         });
 
-        it("generates polygon of world Corners, if whole world plane is visible", function() {
+        it("generates polygon of world Corners, if whole world plane is visible", function () {
             mapView!.lookAt({ zoomLevel: 0 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -505,7 +505,7 @@ describe("BoundsGenerator", function() {
             assert.deepInclude(coordinates, mapView!.projection.unprojectPoint(worldCorners.nw));
         });
 
-        it("generates polygon of world vertically clipped by frustum , w/ tileWrapping", function() {
+        it("generates polygon of world vertically clipped by frustum , w/ tileWrapping", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
@@ -551,7 +551,7 @@ describe("BoundsGenerator", function() {
             });
         });
 
-        it("generates polygon of world horizontally clipped by frustum , w/ tileWrapping", function() {
+        it("generates polygon of world horizontally clipped by frustum , w/ tileWrapping", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
@@ -598,7 +598,7 @@ describe("BoundsGenerator", function() {
             });
         });
 
-        it("generates polygon for tilted map, cut by horizon", function() {
+        it("generates polygon for tilted map, cut by horizon", function () {
             mapView!.lookAt({ tilt: 80 });
             mapView!.renderSync(); // render once to update camera parameter
             const coordinates = (boundsGenerator as BoundsGenerator).generate()?.coordinates;
@@ -608,7 +608,7 @@ describe("BoundsGenerator", function() {
             checkCanvasCorners(coordinates!, CanvasSides.Bottom);
         });
 
-        it("generates polygon for tilted map, cut by horizon, w/ tileWrapping", function() {
+        it("generates polygon for tilted map, cut by horizon, w/ tileWrapping", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
@@ -633,7 +633,7 @@ describe("BoundsGenerator", function() {
             checkCanvasCorners(coordinates, CanvasSides.Bottom);
         });
 
-        it("generates polygon for tilted and heading rotated map, one worldCorner in view", function() {
+        it("generates polygon for tilted and heading rotated map, one worldCorner in view", function () {
             //mapView.setCameraGeolocationAndZoom(new GeoCoordinates(0, 0), 2, 0, 0);
             mapView!.lookAt({
                 target: {
@@ -660,7 +660,7 @@ describe("BoundsGenerator", function() {
             checkCanvasCorners(coordinates, CanvasSides.Bottom);
         });
 
-        it("generates polygon for tilted  and heading rotated map, plane cut 2 times", function() {
+        it("generates polygon for tilted  and heading rotated map, plane cut 2 times", function () {
             //mapView.setCameraGeolocationAndZoom(new GeoCoordinates(0, 0), 2, 0, 0);
             mapView!.lookAt({
                 target: {

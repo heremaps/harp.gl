@@ -91,8 +91,8 @@ function createMockMapView() {
     } as any) as MapView;
 }
 
-describe("TileDataSource", function() {
-    it("#dispose cascades to decoder", function() {
+describe("TileDataSource", function () {
+    it("#dispose cascades to decoder", function () {
         const decoder = createMockTileDecoder();
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
             styleSetName: "",
@@ -105,7 +105,7 @@ describe("TileDataSource", function() {
         testedDataSource.dispose();
         assert.equal(decoder.dispose.callCount, 1);
     });
-    it("uses tileFactory to construct tiles with custom type", function() {
+    it("uses tileFactory to construct tiles with custom type", function () {
         class CustomTile extends Tile {
             constructor(dataSource: DataSource, tileKey: TileKey) {
                 super(dataSource, tileKey);
@@ -125,7 +125,7 @@ describe("TileDataSource", function() {
         assert(mockTile instanceof CustomTile);
     });
 
-    it("#updateTile: tile disposing cancels load, skips decode and tile update", async function() {
+    it("#updateTile: tile disposing cancels load, skips decode and tile update", async function () {
         const mockDataProvider = new MockDataProvider();
 
         const abortController = new AbortController();
@@ -173,7 +173,7 @@ describe("TileDataSource", function() {
         assert.equal(spyTileSetDecodedTile.set.callCount, 0);
     });
 
-    it("subsequent, overlapping #updateTile calls load & decode tile once", async function() {
+    it("subsequent, overlapping #updateTile calls load & decode tile once", async function () {
         const mockDataProvider = new MockDataProvider();
         const getTileSpy = sinon.spy(mockDataProvider, "getTile");
         const mockDecoder = createMockTileDecoder();
@@ -224,7 +224,7 @@ describe("TileDataSource", function() {
         return { testedDataSource, mockDataProvider, mockDecoder };
     }
 
-    it("subsequent, overlapping #getTile calls don't share TileLoader", async function() {
+    it("subsequent, overlapping #getTile calls don't share TileLoader", async function () {
         const mockedDataSource = getDataSource();
         const getTileSpy = sinon.spy(mockedDataSource.mockDataProvider, "getTile");
         const tile1 = mockedDataSource.testedDataSource.getTile(
@@ -251,7 +251,7 @@ describe("TileDataSource", function() {
         assert(spyTileSetDecodedTile2.set.calledWith(fakeEmptyGeometry));
     });
 
-    it("Empty decoded tiles are ignored", async function() {
+    it("Empty decoded tiles are ignored", async function () {
         const mockDataProvider = new MockDataProvider();
         const mockDecoder = createMockTileDecoder();
 
@@ -280,7 +280,7 @@ describe("TileDataSource", function() {
         assert.equal(tile.hasGeometry, true);
     });
 
-    it("Currently used tile loaders aren't canceled", async function() {
+    it("Currently used tile loaders aren't canceled", async function () {
         const mockedDataSource = getDataSource();
         const { testedDataSource } = mockedDataSource;
         const numTiles = 32;
@@ -301,7 +301,7 @@ describe("TileDataSource", function() {
         }
     });
 
-    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
+    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function () {
         silenceLoggingAroundFunction("DataSource", () => {
             const testedDataSource = new TileDataSource(new TileFactory(Tile), {
                 styleSetName: "",
@@ -319,7 +319,7 @@ describe("TileDataSource", function() {
         });
     });
 
-    it("supports setting of theme", async function() {
+    it("supports setting of theme", async function () {
         const mockDecoder = createMockTileDecoder();
         silenceLoggingAroundFunction("DataSource", async () => {
             const testedDataSource = new TileDataSource(new TileFactory(Tile), {
@@ -349,7 +349,7 @@ describe("TileDataSource", function() {
         });
     });
 
-    it("supports setting of languages", async function() {
+    it("supports setting of languages", async function () {
         const mockDecoder = createMockTileDecoder();
         silenceLoggingAroundFunction("DataSource", async () => {
             const testedDataSource = new TileDataSource(new TileFactory(Tile), {

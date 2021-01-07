@@ -19,8 +19,8 @@ import {
 
 declare const global: any;
 
-describe("WorkerChannel", function() {
-    beforeEach(function() {
+describe("WorkerChannel", function () {
+    beforeEach(function () {
         if (typeof self === "undefined") {
             global.self = {
                 postMessage() {
@@ -30,13 +30,13 @@ describe("WorkerChannel", function() {
         }
     });
 
-    afterEach(function() {
+    afterEach(function () {
         if (Object.keys(self).length === 1) {
             delete global.self;
         }
     });
 
-    it("The WorkerChannel post messages with the format of IWorkerChannelMessage.", function() {
+    it("The WorkerChannel post messages with the format of IWorkerChannelMessage.", function () {
         const message1 = "My message : ";
         const message2 = "is original.";
         const loggerName = "myLogger";

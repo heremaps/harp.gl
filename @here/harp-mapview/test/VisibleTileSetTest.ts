@@ -132,7 +132,7 @@ class Fixture {
     }
 }
 
-describe("VisibleTileSet", function() {
+describe("VisibleTileSet", function () {
     let fixture: Fixture;
 
     function setupBerlinCenterCameraFromSamples() {
@@ -243,11 +243,11 @@ describe("VisibleTileSet", function() {
         });
     };
 
-    beforeEach(function() {
+    beforeEach(function () {
         fixture = new Fixture();
     });
 
-    it("#updateRenderList properly culls Berlin center example view", function() {
+    it("#updateRenderList properly culls Berlin center example view", function () {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
@@ -265,7 +265,7 @@ describe("VisibleTileSet", function() {
         assert.equal(renderedTiles.size, 0);
     });
 
-    it("dependencies of tiles are added to visible tile set", function() {
+    it("dependencies of tiles are added to visible tile set", function () {
         const tileKey1 = TileKey.fromMortonCode(371506850);
         const tileKey2 = TileKey.fromMortonCode(371506851);
 
@@ -318,7 +318,7 @@ describe("VisibleTileSet", function() {
         assert.equal(renderedTiles.size, 0);
     });
 
-    it("#no fallback doesn't put loading tiles in renderedTiles", function() {
+    it("#no fallback doesn't put loading tiles in renderedTiles", function () {
         fixture = new Fixture({ quadTreeSearchDistanceDown: 0, quadTreeSearchDistanceUp: 0 });
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
@@ -337,7 +337,7 @@ describe("VisibleTileSet", function() {
         assert.equal(renderedTiles.size, 0);
     });
 
-    it("#updateRenderList properly culls panorama of Berlin center", function() {
+    it("#updateRenderList properly culls panorama of Berlin center", function () {
         fixture.worldCenter = new THREE.Vector3(21526192.124894984, 26932362.99119022, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
@@ -370,7 +370,7 @@ describe("VisibleTileSet", function() {
         assert.equal(renderedTiles.size, 0);
     });
 
-    it("#updateRenderList properly finds parent loaded tiles in Berlin center", function() {
+    it("#updateRenderList properly finds parent loaded tiles in Berlin center", function () {
         setupBerlinCenterCameraFromSamples();
 
         const zoomLevel = 15;
@@ -410,7 +410,7 @@ describe("VisibleTileSet", function() {
         assert.equal(renderedTiles.get(parentKey)!.tileKey.mortonCode(), parentCode);
     });
 
-    it("#updateRenderList properly filters root tiles", function() {
+    it("#updateRenderList properly filters root tiles", function () {
         fixture = new Fixture(
             { tileWrappingEnabled: true },
             {
@@ -430,7 +430,7 @@ describe("VisibleTileSet", function() {
         assert.equal(dataSourceTileList[0]?.visibleTiles[0].tileKey.mortonCode(), 1);
     });
 
-    it("#markTilesDirty properly handles cached & visible tiles", async function() {
+    it("#markTilesDirty properly handles cached & visible tiles", async function () {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
@@ -476,7 +476,7 @@ describe("VisibleTileSet", function() {
         assert(parentDisposeSpy.calledOnce);
     });
 
-    it("#markTilesDirty properly uses passed filter", async function() {
+    it("#markTilesDirty properly uses passed filter", async function () {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
@@ -518,7 +518,7 @@ describe("VisibleTileSet", function() {
         assert(parentDisposeSpy.calledOnce);
     });
 
-    it("caches frustum intersection for data sources with same tiling scheme", async function() {
+    it("caches frustum intersection for data sources with same tiling scheme", async function () {
         setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
@@ -552,7 +552,7 @@ describe("VisibleTileSet", function() {
      * This test shows what happens when a DataSource with a background plane is added with one that
      * `isFullyCovering`.
      */
-    it("background data source is skipped by webtile", async function() {
+    it("background data source is skipped by webtile", async function () {
         setupBerlinCenterCameraFromSamples();
 
         // These tiles will be skipped, because a DataSource that produces [[Tiles]]s without
@@ -568,7 +568,7 @@ describe("VisibleTileSet", function() {
         compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
     });
 
-    it(`background data source is skipped by webtile (reversed order)`, async function() {
+    it(`background data source is skipped by webtile (reversed order)`, async function () {
         setupBerlinCenterCameraFromSamples();
 
         const fullyCoveringDS1 = new BackgroundDataSource();
@@ -587,7 +587,7 @@ describe("VisibleTileSet", function() {
      * This test shows what happens when a DataSource with a background plane is added with one that
      * `isFullyCovering`.
      */
-    it(`background data source skipped by other fully covering tile`, async function() {
+    it(`background data source skipped by other fully covering tile`, async function () {
         setupBerlinCenterCameraFromSamples();
 
         // These tiles won't be skipped, because a DataSource that produces [[Tiles]]s without
@@ -603,7 +603,7 @@ describe("VisibleTileSet", function() {
         compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
     });
 
-    it(`background data source not skipped when different tiling scheme used`, async function() {
+    it(`background data source not skipped when different tiling scheme used`, async function () {
         setupBerlinCenterCameraFromSamples();
 
         const fullyCoveringDS1 = new BackgroundDataSource();
@@ -627,7 +627,7 @@ describe("VisibleTileSet", function() {
      * `isFullyCovering`.
      */
     it(`background data source not skipped
-        when other non covering datasource added`, async function() {
+        when other non covering datasource added`, async function () {
         setupBerlinCenterCameraFromSamples();
 
         // These tiles won't be skipped, because a DataSource that produces [[Tiles]]s without
@@ -647,7 +647,7 @@ describe("VisibleTileSet", function() {
         );
     });
 
-    it("check MapView param tileWrappingEnabled disabled", async function() {
+    it("check MapView param tileWrappingEnabled disabled", async function () {
         fixture = new Fixture({
             tileWrappingEnabled: false,
             enableMixedLod: false
@@ -675,7 +675,7 @@ describe("VisibleTileSet", function() {
         assert.equal(result[0].visibleTiles.length, 5);
     });
 
-    it("check MapView param tileWrappingEnabled enabled", async function() {
+    it("check MapView param tileWrappingEnabled enabled", async function () {
         fixture = new Fixture({
             tileWrappingEnabled: true,
             enableMixedLod: false
@@ -703,7 +703,7 @@ describe("VisibleTileSet", function() {
         assert.equal(result[0].visibleTiles.length, 16);
     });
 
-    it("works with sphere projection", async function() {
+    it("works with sphere projection", async function () {
         fixture = new Fixture({
             enableMixedLod: false,
             projection: sphereProjection
@@ -735,7 +735,7 @@ describe("VisibleTileSet", function() {
         assert.equal(result[0].visibleTiles.length, 100);
     });
 
-    it("checks MapView param enableMixedLod", async function() {
+    it("checks MapView param enableMixedLod", async function () {
         fixture = new Fixture({
             enableMixedLod: true,
             projection: sphereProjection
@@ -767,7 +767,7 @@ describe("VisibleTileSet", function() {
         assert.equal(result[0].visibleTiles.length, 100);
     });
 
-    it("#updateRenderList get tiles from cache", function() {
+    it("#updateRenderList get tiles from cache", function () {
         const vts = fixture.vts;
         const dataSource = fixture.ds[0];
 
@@ -786,7 +786,7 @@ describe("VisibleTileSet", function() {
         assert.equal(tile1, cachedTile1);
     });
 
-    it("#updateRenderList clear all tiles from cache", function() {
+    it("#updateRenderList clear all tiles from cache", function () {
         const vts = fixture.vts;
         const dataSource = fixture.ds[0];
 
@@ -810,7 +810,7 @@ describe("VisibleTileSet", function() {
         assert.isUndefined(cachedTile1);
     });
 
-    it("#updateRenderList clear tiles from cache by datasource", function() {
+    it("#updateRenderList clear tiles from cache by datasource", function () {
         const vts = fixture.vts;
         const dataSource = fixture.ds[0];
 
@@ -834,7 +834,7 @@ describe("VisibleTileSet", function() {
         assert.notEqual(cachedTile1, undefined);
     });
 
-    it("#updateRenderList clear tiles from cache by datasource and predicate", function() {
+    it("#updateRenderList clear tiles from cache by datasource and predicate", function () {
         const vts = fixture.vts;
         const dataSource = fixture.ds[0];
 
@@ -855,7 +855,7 @@ describe("VisibleTileSet", function() {
         assert.notEqual(cachedTile1, undefined);
     });
 
-    it("#updateRenderList clear tiles from cache by predicate", function() {
+    it("#updateRenderList clear tiles from cache by predicate", function () {
         const vts = fixture.vts;
         const dataSource = fixture.ds[0];
 

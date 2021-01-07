@@ -8,8 +8,8 @@ import { assert } from "chai";
 
 import { ColorUtils } from "../lib/ColorUtils";
 
-describe("ColorUtils", function() {
-    it("support rgba in signed int range", function() {
+describe("ColorUtils", function () {
+    it("support rgba in signed int range", function () {
         const encoded = ColorUtils.getHexFromRgba(0.1, 0.5, 1.0, 0.1)!;
         assert.isNumber(encoded);
         assert.isBelow(encoded, 0);

@@ -9,19 +9,16 @@ import { ThemeBuilder } from "./utils/ThemeBuilder";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-describe("ScreenSpaceRendering Test", function() {
+describe("ScreenSpaceRendering Test", function () {
     const geoJsonTest = new GeoJsonTest();
 
-    it("renders icon without text, if fontcatalog not found ", async function() {
+    it("renders icon without text, if fontcatalog not found ", async function () {
         this.timeout(5000);
 
         await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-no-text-icon",
-            theme: new ThemeBuilder()
-                .withInvalidFontCatalog()
-                .withMarkerStyle()
-                .build(),
+            theme: new ThemeBuilder().withInvalidFontCatalog().withMarkerStyle().build(),
             geoJson: {
                 type: "FeatureCollection",
                 features: [
@@ -37,16 +34,13 @@ describe("ScreenSpaceRendering Test", function() {
         });
     });
 
-    it("renders interleaved icon and text", async function() {
+    it("renders interleaved icon and text", async function () {
         this.timeout(5000);
 
         await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-interleaved-icon-text",
-            theme: new ThemeBuilder()
-                .withFontCatalog()
-                .withMarkerStyle()
-                .build(),
+            theme: new ThemeBuilder().withFontCatalog().withMarkerStyle().build(),
             geoJson: {
                 type: "FeatureCollection",
                 features: [
@@ -87,7 +81,7 @@ describe("ScreenSpaceRendering Test", function() {
         });
     });
 
-    it("renders point using marker technique, with theme set to datasource", async function() {
+    it("renders point using marker technique, with theme set to datasource", async function () {
         this.timeout(5000);
 
         await geoJsonTest.run({
@@ -114,7 +108,7 @@ describe("ScreenSpaceRendering Test", function() {
         });
     });
 
-    it("renders point using marker technique, after fontcatalog added in set theme", async function() {
+    it("renders point using marker technique, after fontcatalog added in set theme", async function () {
         this.timeout(5000);
         await geoJsonTest.run({
             mochaTest: this,
@@ -141,15 +135,12 @@ describe("ScreenSpaceRendering Test", function() {
         });
     });
 
-    it("renders point using marker technique, after theme reset", async function() {
+    it("renders point using marker technique, after theme reset", async function () {
         this.timeout(5000);
         await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-point-after-theme-reset",
-            theme: new ThemeBuilder()
-                .withMarkerStyle()
-                .withFontCatalog()
-                .build(),
+            theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
             geoJson: {
                 type: "FeatureCollection",
                 features: [
@@ -164,24 +155,18 @@ describe("ScreenSpaceRendering Test", function() {
             tileGeoJson: false,
             beforeFinishCallback: async mapView => {
                 await mapView.setTheme(
-                    new ThemeBuilder()
-                        .withMarkerStyle()
-                        .withFontCatalog()
-                        .build()
+                    new ThemeBuilder().withMarkerStyle().withFontCatalog().build()
                 );
             }
         });
     });
 
-    it("removes marker, after datasource is removed", async function() {
+    it("removes marker, after datasource is removed", async function () {
         this.timeout(5000);
         await geoJsonTest.run({
             mochaTest: this,
             testImageName: "geojson-after-datasource-removed",
-            theme: new ThemeBuilder()
-                .withMarkerStyle()
-                .withFontCatalog()
-                .build(),
+            theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
             geoJson: {
                 type: "FeatureCollection",
                 features: [

@@ -27,14 +27,14 @@ import { ThemeBuilder } from "./utils/ThemeBuilder";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
+describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function () {
     const geoJsonTest = new GeoJsonTest();
 
     // get the default lighting set up.fterEach(() => geoJsonTest.dispose());
     const lights = ThemeBuilder.lights;
 
     afterEach(() => geoJsonTest.dispose());
-    it("renders flat polygon using fill technique", async function() {
+    it("renders flat polygon using fill technique", async function () {
         this.timeout(5000);
         const greenStyle: StyleSet = [
             {
@@ -54,7 +54,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json"
         });
     });
-    it("renders flat polygon using extruded-polygon technique", async function() {
+    it("renders flat polygon using extruded-polygon technique", async function () {
         this.timeout(5000);
         const greenStyle: StyleSet = [
             {
@@ -88,7 +88,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders japanese flag with enabled as dynamic expression", async function() {
+    it("renders japanese flag with enabled as dynamic expression", async function () {
         this.timeout(50000);
         const greenStyle: StyleSet = [
             {
@@ -110,7 +110,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json"
         });
     });
-    it("renders extruded polygons with height", async function() {
+    it("renders extruded polygons with height", async function () {
         this.timeout(5000);
 
         const ourStyle: StyleSet = [
@@ -140,7 +140,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders extruded polygons with height and color", async function() {
+    it("renders extruded polygons with height and color", async function () {
         this.timeout(5000);
 
         const ourStyle: StyleSet = [
@@ -171,7 +171,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders extruded polygons with height and color - no batching", async function() {
+    it("renders extruded polygons with height and color - no batching", async function () {
         this.timeout(5000);
 
         const ourStyle: StyleSet = [
@@ -201,7 +201,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders extruded polygons with height, without outline", async function() {
+    it("renders extruded polygons with height, without outline", async function () {
         this.timeout(5000);
 
         const ourStyle: StyleSet = [
@@ -233,7 +233,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
     it(
         "renders extruded polygons with height, with lineWidth Expression," + " resulting in 0",
-        async function() {
+        async function () {
             this.timeout(5000);
 
             const ourStyle: StyleSet = [
@@ -271,7 +271,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
     it(
         "renders extruded polygons with height, with lineWidth Expression," + " resulting in 1",
-        async function() {
+        async function () {
             this.timeout(5000);
 
             const ourStyle: StyleSet = [
@@ -307,7 +307,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         }
     );
 
-    it("renders multi line strings", async function() {
+    it("renders multi line strings", async function () {
         this.timeout(5000);
 
         const ourStyle: StyleSet = [
@@ -331,7 +331,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders geometry touching the tile border", async function() {
+    it("renders geometry touching the tile border", async function () {
         this.timeout(5000);
 
         const geoJson: FeatureCollection = {
@@ -380,7 +380,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders geometry crossing the tile border", async function() {
+    it("renders geometry crossing the tile border", async function () {
         this.timeout(5000);
 
         const geoJson: FeatureCollection = {
@@ -429,7 +429,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders geometries touching and crossing tile bounds", async function() {
+    it("renders geometries touching and crossing tile bounds", async function () {
         this.timeout(5000);
 
         const target = GeoCoordinates.fromGeoPoint([0, 51.5]);
@@ -507,7 +507,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders elevated point using marker technique", async function() {
+    it("renders elevated point using marker technique", async function () {
         this.timeout(5000);
         const imageTexture = "custom-icon";
 
@@ -571,7 +571,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders point markers using dataSourceOrder", async function() {
+    it("renders point markers using dataSourceOrder", async function () {
         this.timeout(5000);
 
         const markerStyle: StyleSet = [
@@ -665,7 +665,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    describe("wrap polygon crossing antimeridian", async function() {
+    describe("wrap polygon crossing antimeridian", async function () {
         const ourStyle: StyleSet = [
             {
                 when: ["all", ["==", ["geometry-type"], "Polygon"], ["!has", "fragment"]],
@@ -764,7 +764,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             distance: EarthConstants.EQUATORIAL_CIRCUMFERENCE * 2.5
         };
 
-        it(`polygon to wrap`, async function() {
+        it(`polygon to wrap`, async function () {
             this.timeout(5000);
 
             await geoJsonTest.run({
@@ -776,7 +776,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             });
         });
 
-        it(`wrapped polygon - merged`, async function() {
+        it(`wrapped polygon - merged`, async function () {
             this.timeout(5000);
 
             await geoJsonTest.run({
@@ -803,7 +803,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
             const feature = toGeoPolygonFeature(part);
 
-            it(`wrapped polygon - ${part}`, async function() {
+            it(`wrapped polygon - ${part}`, async function () {
                 this.timeout(5000);
 
                 await geoJsonTest.run({
@@ -820,7 +820,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         }
     });
 
-    describe("wrap linestring crossing antimeridian", async function() {
+    describe("wrap linestring crossing antimeridian", async function () {
         const ourStyle: StyleSet = [
             {
                 when: ["all", ["==", ["geometry-type"], "Polygon"], ["!has", "fragment"]],
@@ -920,7 +920,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             distance: EarthConstants.EQUATORIAL_CIRCUMFERENCE * 2.5
         };
 
-        it(`linestring to wrap`, async function() {
+        it(`linestring to wrap`, async function () {
             this.timeout(5000);
 
             await geoJsonTest.run({
@@ -932,7 +932,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             });
         });
 
-        it(`wrapped linestring - merged`, async function() {
+        it(`wrapped linestring - merged`, async function () {
             this.timeout(5000);
 
             await geoJsonTest.run({
@@ -959,7 +959,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
             const feature = toGeoJsonMultiLineString(part);
 
-            it(`wrapped linestring - ${part}`, async function() {
+            it(`wrapped linestring - ${part}`, async function () {
                 this.timeout(5000);
 
                 await geoJsonTest.run({
@@ -976,8 +976,8 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         }
     });
 
-    describe("clip lines against bounds", async function() {
-        it("clip long line string", async function() {
+    describe("clip lines against bounds", async function () {
+        it("clip long line string", async function () {
             const bounds: GeoPointLike[] = [
                 [-2.8125, -15.28418511407642],
                 [76.9921875, -15.28418511407642],
@@ -1108,8 +1108,8 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    describe("Tiled GeoJson", async function() {
-        it("Circle with an hole with same winding as the outer ring", async function() {
+    describe("Tiled GeoJson", async function () {
+        it("Circle with an hole with same winding as the outer ring", async function () {
             const dataProvider = new (class extends DataProvider {
                 ready(): boolean {
                     return true;

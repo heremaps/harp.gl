@@ -10,8 +10,8 @@ import { assert } from "chai";
 
 import { inBrowserContext, inNodeContext, inWebWorkerContext } from "../lib/TestUtils";
 
-describe("@here/harp-test-utils", function() {
-    describe("#in(Node,Browser, WebWorker)Context", function() {
+describe("@here/harp-test-utils", function () {
+    describe("#in(Node,Browser, WebWorker)Context", function () {
         const platformAnswers = {
             inBrowser: inBrowserContext(),
             inWebWorker: inWebWorkerContext(),
@@ -21,7 +21,7 @@ describe("@here/harp-test-utils", function() {
         let noRestoreWindow = false;
         let oldProcess: any;
 
-        before(function() {
+        before(function () {
             oldWindow = (global as any).window;
             oldProcess = (global as any).process;
         });
@@ -37,11 +37,11 @@ describe("@here/harp-test-utils", function() {
                 (global as any).window = oldWindow;
             }
         }
-        after(function() {
+        after(function () {
             cleanup();
         });
 
-        it(`are not faked by window & process stubs stub`, async function() {
+        it(`are not faked by window & process stubs stub`, async function () {
             try {
                 (global as any).window = { foo: "bar" };
             } catch {

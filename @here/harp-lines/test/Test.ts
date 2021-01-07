@@ -8,8 +8,8 @@
 
 import { assert } from "chai";
 
-describe("lines", function() {
-    it("ok", function() {
+describe("lines", function () {
+    it("ok", function () {
         assert.isTrue(true);
     });
 });

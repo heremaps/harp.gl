@@ -16,7 +16,7 @@ import { LoggerManager } from "../lib/Logger/LoggerManager";
 import { LoggerManagerImpl } from "../lib/Logger/LoggerManagerImpl";
 import { MultiChannel } from "../lib/Logger/MultiChannel";
 
-describe("LoggerManager", function() {
+describe("LoggerManager", function () {
     function printAll(logger: ILogger, msg: string) {
         logger.error(msg);
         logger.warn(msg);
@@ -26,7 +26,7 @@ describe("LoggerManager", function() {
         logger.trace(msg);
     }
 
-    it("Update All", function() {
+    it("Update All", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
         const loggerA = manager.create("A");
@@ -42,7 +42,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Error);
     });
 
-    it("Update named loggers", function() {
+    it("Update named loggers", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
         const loggerA = manager.create("A");
@@ -58,7 +58,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Trace);
     });
 
-    it("Override defaults", function() {
+    it("Override defaults", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
 
@@ -73,7 +73,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Trace);
     });
 
-    it("Dispose logger", function() {
+    it("Dispose logger", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
         const loggerA = manager.create("A");
@@ -90,7 +90,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Error);
     });
 
-    it("Create LoggerManager instance", function() {
+    it("Create LoggerManager instance", function () {
         // Arrange
         const manager = LoggerManager.instance;
 
@@ -98,12 +98,12 @@ describe("LoggerManager", function() {
         assert.exists(manager);
     });
 
-    it("Check default console channel", function() {
+    it("Check default console channel", function () {
         const manager = LoggerManager.instance;
         assert.equal(manager.channel instanceof ConsoleChannel, true);
     });
 
-    it("Replace default console channel", function() {
+    it("Replace default console channel", function () {
         const manager = LoggerManager.instance;
         const multiChannel = new MultiChannel();
         LoggerManager.instance.setChannel(multiChannel);
@@ -111,7 +111,7 @@ describe("LoggerManager", function() {
         assert.equal(manager.channel instanceof ConsoleChannel, false);
     });
 
-    describe("Check channel compliancy", function() {
+    describe("Check channel compliancy", function () {
         const sandbox = sinon.createSandbox();
         let loggerManager: ILoggerManager;
 
@@ -123,7 +123,7 @@ describe("LoggerManager", function() {
             sandbox.restore();
         });
 
-        it("Check channels logging abilities", function() {
+        it("Check channels logging abilities", function () {
             // Arrange
             const consoleChannel = loggerManager.channel;
             const stubs = sandbox.stub(consoleChannel);
@@ -141,7 +141,7 @@ describe("LoggerManager", function() {
             assert.isTrue(stubs.trace.calledWithMatch("foo:", "some message"));
         });
 
-        it("Check channels logging abilities after switching channels", function() {
+        it("Check channels logging abilities after switching channels", function () {
             // Arrange
             const oldChannel = loggerManager.channel;
             const oldChannelStub = sandbox.stub(oldChannel);
@@ -171,7 +171,7 @@ describe("LoggerManager", function() {
             assert.isTrue(newChannelStub.trace.calledWithMatch("foo:", "some message"));
         });
 
-        it("Check MultiChannel logging abilities", function() {
+        it("Check MultiChannel logging abilities", function () {
             // Arrange
             const channel1 = new ConsoleChannel();
             const channel2 = new ConsoleChannel();

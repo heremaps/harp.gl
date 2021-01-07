@@ -50,7 +50,7 @@ declare const global: any;
 
 const projections = [mercatorProjection, sphereProjection];
 
-describe("MapView", function() {
+describe("MapView", function () {
     const inNodeContext = typeof window === "undefined";
     let sandbox: sinon.SinonSandbox;
     let clearColorStub: sinon.SinonStub;
@@ -60,7 +60,7 @@ describe("MapView", function() {
     let mapViewOptions: MapViewOptions;
     let mapView: MapView | undefined;
 
-    beforeEach(function() {
+    beforeEach(function () {
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
         sandbox
@@ -95,7 +95,7 @@ describe("MapView", function() {
         };
     });
 
-    afterEach(async function() {
+    afterEach(async function () {
         if (mapView !== undefined) {
             await mapView.getTheme();
             mapView.dispose();
@@ -116,7 +116,7 @@ describe("MapView", function() {
     //
     // TODO: check who is right? this test or `setCameraGeolocationAndZoom` implementation
     //
-    it.skip("Correctly sets geolocation and zoom", function() {
+    it.skip("Correctly sets geolocation and zoom", function () {
         const coords: GeoCoordinates = new GeoCoordinates(52.5145, 13.3501);
 
         const rotationSpy = sinon.spy(MapViewUtils, "setRotation");
@@ -147,7 +147,7 @@ describe("MapView", function() {
             epsilon: 1e-13
         }
     ]) {
-        describe(`camera positioning - ${projectionName} projection`, function() {
+        describe(`camera positioning - ${projectionName} projection`, function () {
             for (const { testName, lookAtParams } of [
                 {
                     testName: "berlin/18 topView",
@@ -289,7 +289,7 @@ describe("MapView", function() {
                     }
                 }
             ]) {
-                it(`obeys constructor params - ${testName}`, function() {
+                it(`obeys constructor params - ${testName}`, function () {
                     mapView = new MapView({
                         ...mapViewOptions,
                         projection,
@@ -316,7 +316,7 @@ describe("MapView", function() {
                         expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
                     }
                 });
-                it(`obeys #lookAt params - ${testName}`, function() {
+                it(`obeys #lookAt params - ${testName}`, function () {
                     mapView = new MapView({
                         ...mapViewOptions,
                         projection
@@ -415,7 +415,7 @@ describe("MapView", function() {
             }
         });
     }
-    it("Correctly sets target and zoom from options in constructor", function() {
+    it("Correctly sets target and zoom from options in constructor", function () {
         mapView = new MapView({
             ...mapViewOptions,
             target: new GeoCoordinates(52.5145, 13.3501),
@@ -431,7 +431,7 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
-    it("Correctly sets geolocation and zoom from options in constructor with sphere projection", function() {
+    it("Correctly sets geolocation and zoom from options in constructor with sphere projection", function () {
         mapView = new MapView({
             ...mapViewOptions,
             projection: sphereProjection,
@@ -450,7 +450,7 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-3);
     });
 
-    it("Correctly set and get zoom", function() {
+    it("Correctly set and get zoom", function () {
         mapView = new MapView({
             ...mapViewOptions,
             tilt: 45,
@@ -463,7 +463,7 @@ describe("MapView", function() {
         }
     });
 
-    it("Correctly clamp zoom", function() {
+    it("Correctly clamp zoom", function () {
         mapView = new MapView(mapViewOptions);
 
         mapView.zoomLevel = 0;
@@ -473,7 +473,7 @@ describe("MapView", function() {
         expect(mapView.zoomLevel).to.be.equal(20);
     });
 
-    it("Distance bigger than lowest zoomLevel", function() {
+    it("Distance bigger than lowest zoomLevel", function () {
         mapView = new MapView(mapViewOptions);
 
         mapView.zoomLevel = 1;
@@ -483,7 +483,7 @@ describe("MapView", function() {
         expect(mapView.zoomLevel).to.be.equal(1);
     });
 
-    it("Distance lower than highest zoomLevel", function() {
+    it("Distance lower than highest zoomLevel", function () {
         mapView = new MapView(mapViewOptions);
 
         mapView.zoomLevel = 20;
@@ -493,7 +493,7 @@ describe("MapView", function() {
         expect(mapView.zoomLevel).to.be.equal(20);
     });
 
-    it("Correctly set and get tilt", function() {
+    it("Correctly set and get tilt", function () {
         const zoomLevel = 10;
         mapView = new MapView({
             ...mapViewOptions,
@@ -507,7 +507,7 @@ describe("MapView", function() {
         }
     });
 
-    it("Correctly sets geolocation with GeoPointLike as parameter in constructor", function() {
+    it("Correctly sets geolocation with GeoPointLike as parameter in constructor", function () {
         mapView = new MapView({
             ...mapViewOptions,
             target: [13.3501, 52.5145],
@@ -523,7 +523,7 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
-    it("Correctly sets geolocation with GeoCoordinatesLike as parameter in constructor", function() {
+    it("Correctly sets geolocation with GeoCoordinatesLike as parameter in constructor", function () {
         mapView = new MapView({
             ...mapViewOptions,
             target: {
@@ -542,7 +542,7 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
-    it("Correctly sets geolocation with LatLngLike as parameter in constructor", function() {
+    it("Correctly sets geolocation with LatLngLike as parameter in constructor", function () {
         mapView = new MapView({
             ...mapViewOptions,
             target: {
@@ -561,7 +561,7 @@ describe("MapView", function() {
         expect(mapView.heading).to.be.closeTo(20, 1e-13);
     });
 
-    it("Correctly sets geolocation with GeoPointLike", function() {
+    it("Correctly sets geolocation with GeoPointLike", function () {
         mapView = new MapView(mapViewOptions);
 
         mapView.lookAt({
@@ -571,7 +571,7 @@ describe("MapView", function() {
         expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
     });
 
-    it("Correctly sets target with GeoCoordinatesLike", function() {
+    it("Correctly sets target with GeoCoordinatesLike", function () {
         mapView = new MapView(mapViewOptions);
 
         mapView.lookAt({
@@ -584,7 +584,7 @@ describe("MapView", function() {
         expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
     });
 
-    it("Correctly sets target with LatLngLike", function() {
+    it("Correctly sets target with LatLngLike", function () {
         mapView = new MapView(mapViewOptions);
 
         mapView.lookAt({
@@ -597,7 +597,7 @@ describe("MapView", function() {
         expect(mapView.target.longitude).to.be.closeTo(13.3501, 1e-13);
     });
 
-    it("Correctly set and get distance", function() {
+    it("Correctly set and get distance", function () {
         mapView = new MapView({
             ...mapViewOptions,
             tilt: 45,
@@ -610,7 +610,7 @@ describe("MapView", function() {
         }
     });
 
-    it("Correctly sets event listeners and handlers webgl context restored", async function() {
+    it("Correctly sets event listeners and handlers webgl context restored", async function () {
         mapView = new MapView(mapViewOptions);
 
         expect(addEventListenerSpy.callCount).to.be.equal(2);
@@ -646,7 +646,7 @@ describe("MapView", function() {
         });
     });
 
-    it("Correctly sets and removes all event listeners by API", function() {
+    it("Correctly sets and removes all event listeners by API", function () {
         const checkEvent = (eventName: string) => {
             mapView = new MapView(mapViewOptions);
 
@@ -675,7 +675,7 @@ describe("MapView", function() {
         }
     });
 
-    it("correctly set and get tile wrapping mode", function() {
+    it("correctly set and get tile wrapping mode", function () {
         mapView = new MapView({ ...mapViewOptions, projection: mercatorProjection });
         const vts = mapView.visibleTileSet;
         mapView.tileWrappingEnabled = false;
@@ -685,7 +685,7 @@ describe("MapView", function() {
         expect(vts).to.be.not.equal(vts2);
     });
 
-    it("ignore set and get tile wrapping mode for sphere projection", function() {
+    it("ignore set and get tile wrapping mode for sphere projection", function () {
         mapView = new MapView({ ...mapViewOptions, projection: sphereProjection });
         silenceLoggingAroundFunction("MapView", () => {
             mapView!.tileWrappingEnabled = false; // Ignore warning here
@@ -693,7 +693,7 @@ describe("MapView", function() {
         expect(mapView.tileWrappingEnabled).equal(true);
     });
 
-    it("supports #dispose", async function() {
+    it("supports #dispose", async function () {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
         mapView = new MapView(mapViewOptions);
@@ -717,7 +717,7 @@ describe("MapView", function() {
         mapView = undefined!;
     });
 
-    it("#dispose removes event listeners", async function() {
+    it("#dispose removes event listeners", async function () {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView(mapViewOptions);
         await mapView.getTheme();
@@ -771,7 +771,7 @@ describe("MapView", function() {
         mapView = undefined!;
     });
 
-    it("maintains vertical fov limit", function() {
+    it("maintains vertical fov limit", function () {
         const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
@@ -791,7 +791,7 @@ describe("MapView", function() {
         expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
     });
 
-    it("maintains horizontal fov limit", function() {
+    it("maintains horizontal fov limit", function () {
         const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
@@ -813,7 +813,7 @@ describe("MapView", function() {
         expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
     });
 
-    it("changes vertical fov when resizing with dynamic fov", function() {
+    it("changes vertical fov when resizing with dynamic fov", function () {
         const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
@@ -835,7 +835,7 @@ describe("MapView", function() {
         expect(mapView.camera.fov).to.be.not.eq(fov);
     });
 
-    it("not changes horizontal fov when resizing with focal length", function() {
+    it("not changes horizontal fov when resizing with focal length", function () {
         const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
@@ -857,12 +857,12 @@ describe("MapView", function() {
         expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
     });
 
-    it("returns the fog through #fog getter", function() {
+    it("returns the fog through #fog getter", function () {
         mapView = new MapView(mapViewOptions);
         expect(mapView.fog instanceof MapViewFog).to.equal(true);
     });
 
-    it("converts screen coords to geo to screen w/ different pixel ratio", async function() {
+    it("converts screen coords to geo to screen w/ different pixel ratio", async function () {
         const customCanvas = {
             clientWidth: 1920,
             clientHeight: 1080,
@@ -896,7 +896,7 @@ describe("MapView", function() {
             }
         }
     });
-    it("converts screen coords to world to screen w/ different pixel ratio", async function() {
+    it("converts screen coords to world to screen w/ different pixel ratio", async function () {
         const customCanvas = {
             clientWidth: 1920,
             clientHeight: 1080,
@@ -934,7 +934,7 @@ describe("MapView", function() {
     projections.forEach(projection => {
         const projectionName = getProjectionName(projection);
 
-        it(`convert screen to geo different tilt ${projectionName}`, async function() {
+        it(`convert screen to geo different tilt ${projectionName}`, async function () {
             const sphere = projection === sphereProjection;
             const eps = projection === sphereProjection ? 1e-9 : 1e-10;
             const target = new GeoCoordinates(52.5145, 13.3501);
@@ -1024,7 +1024,7 @@ describe("MapView", function() {
     projections.forEach(projection => {
         const projectionName = getProjectionName(projection);
 
-        it(`convert screen to geo different zoom ${projectionName}`, async function() {
+        it(`convert screen to geo different zoom ${projectionName}`, async function () {
             const sphere = projection === sphereProjection;
             const eps = 1e-10;
             const target = new GeoCoordinates(52.5145, 13.3501);
@@ -1112,7 +1112,7 @@ describe("MapView", function() {
     projections.forEach(projection => {
         const projectionName = getProjectionName(projection);
 
-        it(`convert screen to geo north pole ${projectionName}`, async function() {
+        it(`convert screen to geo north pole ${projectionName}`, async function () {
             const sphere = projection === sphereProjection;
             const target = new GeoCoordinates(
                 THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE),
@@ -1156,7 +1156,7 @@ describe("MapView", function() {
 
     projections.forEach(projection => {
         const projectionName = getProjectionName(projection);
-        it(`convert screen to geo south pole ${projectionName}`, async function() {
+        it(`convert screen to geo south pole ${projectionName}`, async function () {
             const sphere = projection === sphereProjection;
             const target = new GeoCoordinates(
                 -THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE),
@@ -1202,7 +1202,7 @@ describe("MapView", function() {
     projections.forEach(projection => {
         const projectionName = getProjectionName(projection);
 
-        it(`convert screen to geo anti meridian east ${projectionName} wrapped`, async function() {
+        it(`convert screen to geo anti meridian east ${projectionName} wrapped`, async function () {
             const sphere = projection === sphereProjection;
             const target = new GeoCoordinates(0, 180);
             const eps = 1e-10;
@@ -1244,7 +1244,7 @@ describe("MapView", function() {
     projections.forEach(projection => {
         const projectionName = getProjectionName(projection);
 
-        it(`convert screen to geo anti meridian west ${projectionName} wrapped`, async function() {
+        it(`convert screen to geo anti meridian west ${projectionName} wrapped`, async function () {
             const sphere = projection === sphereProjection;
             const target = new GeoCoordinates(0, -180);
             const eps = 1e-10;
@@ -1283,7 +1283,7 @@ describe("MapView", function() {
         });
     });
 
-    it("convert screen to geo anti meridian east mercator not-wrapped", async function() {
+    it("convert screen to geo anti meridian east mercator not-wrapped", async function () {
         const target = new GeoCoordinates(0, 180);
         const eps = 1e-10;
 
@@ -1312,7 +1312,7 @@ describe("MapView", function() {
         assert.closeTo(top!.altitude!, 0, eps);
     });
 
-    it("convert screen to geo anti meridian west mercator not-wrapped", async function() {
+    it("convert screen to geo anti meridian west mercator not-wrapped", async function () {
         const target = new GeoCoordinates(0, -180);
         const eps = 1e-10;
 
@@ -1341,7 +1341,7 @@ describe("MapView", function() {
         assert.closeTo(top!.altitude!, 0, eps);
     });
 
-    it("updates scene materials, objects & skips transparent ones", async function() {
+    it("updates scene materials, objects & skips transparent ones", async function () {
         if (inNodeContext) {
             let time = 0;
             global.requestAnimationFrame = (callback: FrameRequestCallback) => {
@@ -1440,7 +1440,7 @@ describe("MapView", function() {
         }
     });
 
-    it("updates background storage level offset", async function() {
+    it("updates background storage level offset", async function () {
         if (inNodeContext) {
             global.requestAnimationFrame = (callback: FrameRequestCallback) => {
                 return setTimeout(() => {
@@ -1475,7 +1475,7 @@ describe("MapView", function() {
         expect(updateStorageOffsetSpy.called);
     });
 
-    it("languages set in MapView are also set in datasources", async function() {
+    it("languages set in MapView are also set in datasources", async function () {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ ...mapViewOptions, theme: {} });
         await mapView.getTheme();
@@ -1488,7 +1488,7 @@ describe("MapView", function() {
         assert.equal(dataSource.getLanguages()![0], "Goblin", "Wrong language set in datasource");
     });
 
-    it("languages set in MapView are also set in datasources added later", async function() {
+    it("languages set in MapView are also set in datasources added later", async function () {
         const dataSource = new FakeOmvDataSource({ name: "omv" });
         mapView = new MapView({ ...mapViewOptions, theme: {} });
         await mapView.getTheme();
@@ -1501,11 +1501,11 @@ describe("MapView", function() {
         assert.equal(dataSource.getLanguages()![0], "Goblin", "Wrong language set in datasource");
     });
 
-    describe("elevation source", function() {
+    describe("elevation source", function () {
         let fakeElevationSource: DataSource;
         let fakeElevationRangeSource: ElevationRangeSource;
         let fakeElevationProvider: ElevationProvider;
-        beforeEach(function() {
+        beforeEach(function () {
             fakeElevationSource = {
                 name: "terrain",
                 attach(mapView: MapView) {
@@ -1544,8 +1544,8 @@ describe("MapView", function() {
             } as any;
         });
 
-        describe("setElevationSource", function() {
-            it("can add an elevation source", async function() {
+        describe("setElevationSource", function () {
+            it("can add an elevation source", async function () {
                 mapView = new MapView(mapViewOptions);
                 await mapView.setElevationSource(
                     fakeElevationSource,
@@ -1567,7 +1567,7 @@ describe("MapView", function() {
                     .that.equals(fakeElevationProvider);
                 expect(fakeElevationSource.mapView).to.equal(mapView);
             });
-            it("can replace an elevation source", async function() {
+            it("can replace an elevation source", async function () {
                 const secondElevationSource: DataSource = {
                     ...fakeElevationSource
                 } as any;
@@ -1611,8 +1611,8 @@ describe("MapView", function() {
             });
         });
 
-        describe("clearElevationSource", function() {
-            it("removes an elevation source", async function() {
+        describe("clearElevationSource", function () {
+            it("removes an elevation source", async function () {
                 mapView = new MapView(mapViewOptions);
                 await mapView.setElevationSource(
                     fakeElevationSource,
@@ -1633,13 +1633,13 @@ describe("MapView", function() {
         });
     });
 
-    describe("theme", function() {
+    describe("theme", function () {
         const sampleThemeUrl = getTestResourceUrl(
             "@here/harp-mapview",
             "test/resources/baseTheme.json"
         );
 
-        it("loads a default theme", async function() {
+        it("loads a default theme", async function () {
             mapView = new MapView(mapViewOptions);
             await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
             expect(await mapView.getTheme()).to.deep.equal({
@@ -1659,7 +1659,7 @@ describe("MapView", function() {
             });
         });
 
-        it("loads theme from url", async function() {
+        it("loads theme from url", async function () {
             mapView = new MapView({
                 ...mapViewOptions,
                 theme: sampleThemeUrl
@@ -1669,7 +1669,7 @@ describe("MapView", function() {
             expect(theme.styles).to.not.be.empty;
         });
 
-        it("loads a 'flat' theme ", async function() {
+        it("loads a 'flat' theme ", async function () {
             mapView = new MapView({
                 ...mapViewOptions,
                 theme: {
@@ -1687,7 +1687,7 @@ describe("MapView", function() {
             expect(theme.styles?.tilezen).to.not.be.undefined;
         });
 
-        it("allows to reset theme", async function() {
+        it("allows to reset theme", async function () {
             mapView = new MapView({
                 ...mapViewOptions,
                 theme: sampleThemeUrl
@@ -1730,13 +1730,13 @@ describe("MapView", function() {
         });
     });
 
-    describe("frame complete", function() {
-        it("MapView emits frame complete for empty map", async function() {
+    describe("frame complete", function () {
+        it("MapView emits frame complete for empty map", async function () {
             this.timeout(100);
             mapView = new MapView(mapViewOptions);
             return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
-        it("MapView emits frame complete after map initialized", async function() {
+        it("MapView emits frame complete after map initialized", async function () {
             this.timeout(100);
             mapView = new MapView(mapViewOptions);
 
@@ -1745,7 +1745,7 @@ describe("MapView", function() {
 
             return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
-        it("MapView emits frame complete again after map update", async function() {
+        it("MapView emits frame complete again after map update", async function () {
             this.timeout(100);
             mapView = new MapView(mapViewOptions);
 

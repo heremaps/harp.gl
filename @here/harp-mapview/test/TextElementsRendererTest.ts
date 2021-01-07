@@ -488,9 +488,7 @@ const tests: TestCase[] = [
                 labels: [
                     [
                         // location of replacement is disregarded when feature ids match.
-                        poiBuilder()
-                            .withFeatureId(1)
-                            .withPosition(WORLD_SCALE, WORLD_SCALE),
+                        poiBuilder().withFeatureId(1).withPosition(WORLD_SCALE, WORLD_SCALE),
                         fadedOut(FADE_IN.length).concat(
                             fadedIn(FADE_2_CYCLES.length - FADE_IN.length)
                         )
@@ -800,13 +798,13 @@ const tests: TestCase[] = [
     }
 ];
 
-describe("TextElementsRenderer", function() {
+describe("TextElementsRenderer", function () {
     const inNodeContext = typeof window === "undefined";
 
     let fixture: TestFixture;
     const sandbox = sinon.createSandbox();
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         if (inNodeContext) {
             (global as any).window = { location: { href: "http://harp.gl" } };
         }
@@ -815,7 +813,7 @@ describe("TextElementsRenderer", function() {
         await fixture.setUp();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
         if (inNodeContext) {
             delete (global as any).window;
@@ -855,9 +853,7 @@ describe("TextElementsRenderer", function() {
             );
             // Only used to identify some text elements for testing purposes.
             const dummyUserData = {};
-            const element = builder(inputElement)
-                .withUserData(dummyUserData)
-                .build();
+            const element = builder(inputElement).withUserData(dummyUserData).build();
             elementFrameStates.push([
                 element,
                 textFrameStates as FadeState[][],
@@ -939,7 +935,7 @@ describe("TextElementsRenderer", function() {
     }
 
     for (const test of tests) {
-        it(test.name, async function() {
+        it(test.name, async function () {
             const { elementFrameStates, prevOpacities } = await initTest(test);
 
             for (let frameIdx = 0; frameIdx < test.frameTimes.length; ++frameIdx) {
@@ -975,7 +971,7 @@ describe("TextElementsRenderer", function() {
         });
     }
 
-    it("updates FontCatalogs", async function() {
+    it("updates FontCatalogs", async function () {
         expect(fixture.loadCatalogStub.calledOnce, "default catalog was set").to.be.true;
         await fixture.textRenderer.updateFontCatalogs([
             {
@@ -1044,7 +1040,7 @@ describe("TextElementsRenderer", function() {
         expect(fixture.loadCatalogStub.callCount).to.equal(7);
     });
 
-    it("updates TextStyles", async function() {
+    it("updates TextStyles", async function () {
         const style1: TextStyleDefinition = {
             name: "style-1",
             fontCatalogName: "catalog-1"

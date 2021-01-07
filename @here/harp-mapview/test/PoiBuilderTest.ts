@@ -10,7 +10,7 @@ import { expect } from "chai";
 import { PoiBuilder } from "../lib/poi/PoiBuilder";
 import { TextElement } from "../lib/text/TextElement";
 
-describe("PoiBuilder", function() {
+describe("PoiBuilder", function () {
     const env = new Env();
 
     function buildPoiTechnique(properties: {}): PoiTechnique & IndexedTechniqueParams {
@@ -39,9 +39,7 @@ describe("PoiBuilder", function() {
             .build({} as TextElement);
         const poiInfo2 = builder.withIcon("").build({} as TextElement);
 
-        expect(poiInfo1?.technique)
-            .equals(poiInfo2?.technique)
-            .and.equals(poiTechnique);
+        expect(poiInfo1?.technique).equals(poiInfo2?.technique).and.equals(poiTechnique);
     });
 
     it("reuses same imageTextureName and shield group index between calls to withIcon", () => {
@@ -55,9 +53,7 @@ describe("PoiBuilder", function() {
             .build({} as TextElement);
         const poiInfo2 = builder.build({} as TextElement);
 
-        expect(poiInfo1?.imageTextureName)
-            .equals(poiInfo2?.imageTextureName)
-            .and.equals(iconName);
+        expect(poiInfo1?.imageTextureName).equals(poiInfo2?.imageTextureName).and.equals(iconName);
         expect(poiInfo1?.shieldGroupIndex)
             .equals(poiInfo2?.shieldGroupIndex)
             .and.equals(shieldGroupIndex);

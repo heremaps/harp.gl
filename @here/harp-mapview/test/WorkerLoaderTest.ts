@@ -30,7 +30,7 @@ const describeWithWorker = workerDefined ? describe : xdescribe;
 
 const testWorkerUrl = getTestResourceUrl("@here/harp-mapview", "test/resources/testWorker.js");
 
-describeWithWorker("Web Worker API", function() {
+describeWithWorker("Web Worker API", function () {
     it("Worker is able to load worker from blob", done => {
         // note, for this test to work, CSP (Content Security Policy)
         // must allow for executing workers from blob:
@@ -68,9 +68,9 @@ describeWithWorker("Web Worker API", function() {
     });
 });
 
-describe("WorkerLoader", function() {
+describe("WorkerLoader", function () {
     let sandbox: sinon.SinonSandbox;
-    beforeEach(function() {
+    beforeEach(function () {
         sandbox = sinon.createSandbox();
         if (typeof window === "undefined") {
             // fake Worker constructor for node environment
@@ -78,7 +78,7 @@ describe("WorkerLoader", function() {
         }
     });
 
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
         if (typeof window === "undefined") {
             delete global.Worker;
@@ -86,8 +86,8 @@ describe("WorkerLoader", function() {
         WorkerLoader.directlyFallbackToBlobBasedLoading = false;
     });
 
-    describe("works in mocked environment", function() {
-        it("#startWorker starts worker not swalling first message", async function() {
+    describe("works in mocked environment", function () {
+        it("#startWorker starts worker not swalling first message", async function () {
             const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
             willExecuteWorkerScript(workerConstructorStub, (self, scriptUrl) => {
                 self.postMessage({ hello: "world" });
@@ -109,7 +109,7 @@ describe("WorkerLoader", function() {
             assert.equal(workerConstructorStub.firstCall.args[0], testWorkerUrl);
         });
 
-        it("#startWorker fails on timeout", async function() {
+        it("#startWorker fails on timeout", async function () {
             const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
             willExecuteWorkerScript(workerConstructorStub, () => {
                 // We intentionally do not send anything, so waitForWorkerInitialized
@@ -120,7 +120,7 @@ describe("WorkerLoader", function() {
             await assertRejected(WorkerLoader.startWorker(testWorkerUrl, 10), /timeout/i);
         });
 
-        it("#startWorker fails on error in script", async function() {
+        it("#startWorker fails on error in script", async function () {
             const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
             willExecuteWorkerScript(workerConstructorStub, () => {
                 // We intentionally throw error in global context to see if it is caught by
@@ -136,9 +136,9 @@ describe("WorkerLoader", function() {
         });
     });
 
-    describeWithWorker("real Workers integration", function() {
-        describe("basic operations", function() {
-            it("#startWorker starts worker not swalling first message", async function() {
+    describeWithWorker("real Workers integration", function () {
+        describe("basic operations", function () {
+            it("#startWorker starts worker not swalling first message", async function () {
                 const script = `
                     self.postMessage({ hello: 'world' });
                 `;
@@ -158,7 +158,7 @@ describe("WorkerLoader", function() {
                     });
                 });
             });
-            it("#startWorker fails on timeout", async function() {
+            it("#startWorker fails on timeout", async function () {
                 const script = `
                     // We intentionally throw error in global context to see if it is caught by
                     // workerLoader.
@@ -174,7 +174,7 @@ describe("WorkerLoader", function() {
                 );
             });
 
-            it("#startWorker catches error in worker global context", function() {
+            it("#startWorker catches error in worker global context", function () {
                 const script = `
                     // We intentionally do not send anything, so waitForWorkerInitialized
                     // should raise timeout error.
@@ -195,10 +195,10 @@ describe("WorkerLoader", function() {
             });
         });
 
-        describe("loading of cross-origin scripts", function() {
+        describe("loading of cross-origin scripts", function () {
             const cspTestScriptUrl = "https://example.com/foo.js";
 
-            it("#startWorker falls back to blob in case of sync error", async function() {
+            it("#startWorker falls back to blob in case of sync error", async function () {
                 // setup an environment in which any attempt to load worker from from non-blob,
                 // cross-origin URL which fails, so we check if WorkerLoader will attempt to
                 // load using blob: fallback
@@ -208,7 +208,7 @@ describe("WorkerLoader", function() {
 
                 const originalWorkerConstructor = Worker;
                 const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker") as any;
-                workerConstructorStub.callsFake(function(this: Worker, scriptUrl: string) {
+                workerConstructorStub.callsFake(function (this: Worker, scriptUrl: string) {
                     if (!scriptUrl.startsWith("blob:")) {
                         throw new Error("content policy violated, ouch");
                     } else {
@@ -243,7 +243,7 @@ describe("WorkerLoader", function() {
                 });
             });
 
-            it("#startWorker falls back to blob in case of async error", async function() {
+            it("#startWorker falls back to blob in case of async error", async function () {
                 // setup an environment in which any attempt to load worker from from non-blob,
                 // cross-origin URL which fails, so we check if WorkerLoader will attempt to
                 // load using blob: fallback
@@ -253,7 +253,7 @@ describe("WorkerLoader", function() {
 
                 const originalWorkerConstructor = Worker;
                 const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker") as any;
-                workerConstructorStub.callsFake(function(this: Worker, scriptUrl: string) {
+                workerConstructorStub.callsFake(function (this: Worker, scriptUrl: string) {
                     const actualWorker = new originalWorkerConstructor(scriptUrl);
                     if (!scriptUrl.startsWith("blob:")) {
                         setTimeout(() => {

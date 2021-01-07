@@ -36,7 +36,7 @@ function createPerspectiveCamera(width: number, height: number): THREE.Perspecti
     return camera;
 }
 
-describe("Rendering lines: ", function() {
+describe("Rendering lines: ", function () {
     const maxColumnCount = 3;
     const cellSize = 150;
 
@@ -293,7 +293,7 @@ describe("Rendering lines: ", function() {
         await ibct.assertCanvasMatchesReference(canvas, `${name}`);
     }
 
-    it("renders solid lines - lineWidth: 2", async function(this: Mocha.Context) {
+    it("renders solid lines - lineWidth: 2", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 2,
             color: "#FFF",
@@ -302,7 +302,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "solid-lines-1px", lineStyle);
     });
 
-    it("renders solid lines - lineWidth: 2 - offset: 2", async function(this: Mocha.Context) {
+    it("renders solid lines - lineWidth: 2 - offset: 2", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 2,
             color: "#FFF",
@@ -312,7 +312,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "solid-lines-1px-offset-2", lineStyle);
     });
 
-    it("renders solid lines - lineWidth: 2 - offset: -2", async function(this: Mocha.Context) {
+    it("renders solid lines - lineWidth: 2 - offset: -2", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 2,
             color: "#FFF",
@@ -322,7 +322,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "solid-lines-1px-offset--2", lineStyle);
     });
 
-    it("renders undisplaced solid lines - perspective camera", async function(this: Mocha.Context) {
+    it("renders undisplaced solid lines - perspective camera", async function (this: Mocha.Context) {
         const config = displacedLinesConfig;
         const { width, height } = getCanvasSize(config);
         const camera = createPerspectiveCamera(width, height);
@@ -335,7 +335,7 @@ describe("Rendering lines: ", function() {
         await renderLines(config, this, "undisplaced-solid-lines-persective", lineStyle, camera);
     });
 
-    it("renders displaced solid lines - perspective camera", async function(this: Mocha.Context) {
+    it("renders displaced solid lines - perspective camera", async function (this: Mocha.Context) {
         const config = displacedLinesConfig;
         const { width, height } = getCanvasSize(config);
         const camera = createPerspectiveCamera(width, height);
@@ -350,7 +350,7 @@ describe("Rendering lines: ", function() {
         await renderLines(config, this, "displaced-solid-lines-persective", lineStyle, camera);
     });
 
-    it("renders solid lines - lineWidth: 20", async function(this: Mocha.Context) {
+    it("renders solid lines - lineWidth: 20", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -359,7 +359,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "solid-lines-20px", lineStyle);
     });
 
-    it("renders solid lines with outline - outlineWidth: 5", async function(this: Mocha.Context) {
+    it("renders solid lines with outline - outlineWidth: 5", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 20,
             color: "#F00",
@@ -370,7 +370,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "solid-lines-outline", lineStyle);
     });
 
-    it("renders dashed lines with outline - outlineWidth: 3, dashSize: 4", async function(this: Mocha.Context) {
+    it("renders dashed lines with outline - outlineWidth: 3, dashSize: 4", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 8,
             color: "#F00",
@@ -384,7 +384,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-outline", lineStyle);
     });
 
-    it("renders dashed lines with outline - transparent", async function(this: Mocha.Context) {
+    it("renders dashed lines with outline - transparent", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 8,
             color: "#F00",
@@ -397,7 +397,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-outline-alpha", lineStyle);
     });
 
-    it("renders dashed lines - lineWidth: 2, gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
+    it("renders dashed lines - lineWidth: 2, gapSize: 2, dashSize: 2", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 2,
             color: "#FFF",
@@ -408,7 +408,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-1px", lineStyle);
     });
 
-    it("renders dashed lines with dashColor: #F00", async function(this: Mocha.Context) {
+    it("renders dashed lines with dashColor: #F00", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 2,
             color: "#FFF",
@@ -420,7 +420,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-color", lineStyle);
     });
 
-    it("renders dashed lines - lineWidth: 20,gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
+    it("renders dashed lines - lineWidth: 20,gapSize: 2, dashSize: 2", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -431,7 +431,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-20px", lineStyle);
     });
 
-    it("renders solid lines - overdraw check", async function(this: Mocha.Context) {
+    it("renders solid lines - overdraw check", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -442,7 +442,7 @@ describe("Rendering lines: ", function() {
         await renderLines(checkOverDrawLines, this, "solid-lines-overdraw-20px", lineStyle);
     });
 
-    it("renders dashed lines - overdraw check", async function(this: Mocha.Context) {
+    it("renders dashed lines - overdraw check", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -455,7 +455,7 @@ describe("Rendering lines: ", function() {
         await renderLines(checkOverDrawLines, this, "dashed-lines-overdraw-20px", lineStyle);
     });
 
-    it("renders dashed lines with round dashes - no outline, dashSize: 16", async function(this: Mocha.Context) {
+    it("renders dashed lines with round dashes - no outline, dashSize: 16", async function (this: Mocha.Context) {
         const lineStyle = {
             dashes: "Round",
             lineWidth: 16,
@@ -473,7 +473,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders dashed lines with round dashes - outlineWidth: 3, dashSize: 16", async function(this: Mocha.Context) {
+    it("renders dashed lines with round dashes - outlineWidth: 3, dashSize: 16", async function (this: Mocha.Context) {
         const lineStyle = {
             dashes: "Round",
             lineWidth: 16,
@@ -493,7 +493,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders dashed lines with diamond dashes - no outline, dashSize: 16", async function(this: Mocha.Context) {
+    it("renders dashed lines with diamond dashes - no outline, dashSize: 16", async function (this: Mocha.Context) {
         const lineStyle = {
             dashes: "Diamond",
             lineWidth: 16,
@@ -511,7 +511,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders dashed lines w/ diamond dashes - outlineWidth: 3, dashSize: 16", async function(this: Mocha.Context) {
+    it("renders dashed lines w/ diamond dashes - outlineWidth: 3, dashSize: 16", async function (this: Mocha.Context) {
         const lineStyle = {
             dashes: "Diamond",
             lineWidth: 16,
@@ -531,7 +531,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders dashed lines with stretched diamond dashes", async function(this: Mocha.Context) {
+    it("renders dashed lines with stretched diamond dashes", async function (this: Mocha.Context) {
         const lineStyle = {
             dashes: "Diamond",
             lineWidth: 16,
@@ -549,7 +549,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check round", async function(this: Mocha.Context) {
+    it("renders solid lines - caps check round", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -566,7 +566,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check none", async function(this: Mocha.Context) {
+    it("renders solid lines - caps check none", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -583,7 +583,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check square", async function(this: Mocha.Context) {
+    it("renders solid lines - caps check square", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -600,7 +600,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check triangle out", async function(this: Mocha.Context) {
+    it("renders solid lines - caps check triangle out", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",
@@ -617,7 +617,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check triangle in", async function(this: Mocha.Context) {
+    it("renders solid lines - caps check triangle in", async function (this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 40,
             color: "#FFF",

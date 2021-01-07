@@ -14,7 +14,7 @@ import * as sinon from "sinon";
  * https://stackoverflow.com/questions/17575790/environment-detection-node-js-or-browser
  */
 export function inBrowserContext() {
-    return function(this: any) {
+    return function (this: any) {
         return typeof window !== "undefined" && this === window;
     }.call(undefined);
 }
@@ -30,7 +30,7 @@ export function inWebWorkerContext() {
  * Define a suite that is executed only in Node.JS environment.
  */
 export function inNodeContext() {
-    return function(this: any) {
+    return function (this: any) {
         return typeof global !== "undefined" && this === global;
     }.call(undefined);
 }
@@ -311,7 +311,7 @@ function reportAsyncFailuresAfterTestEnd(this: any) {
 }
 
 if (typeof beforeEach !== "undefined") {
-    beforeEach(function(this: Mocha.Context) {
+    beforeEach(function (this: Mocha.Context) {
         // Save current test so willEventually && waitForEvent can check that current test is still
         // executing.
         mochaCurrentTest = this.currentTest;

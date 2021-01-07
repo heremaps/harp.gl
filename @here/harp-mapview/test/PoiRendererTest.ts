@@ -17,9 +17,9 @@ import * as THREE from "three";
 
 import { PoiBuffer, PoiRenderer } from "../lib/poi/PoiRenderer";
 
-describe("PoiRenderer", function() {
-    describe("computeIconScreenBox", function() {
-        it("computes screen box without offset", function() {
+describe("PoiRenderer", function () {
+    describe("computeIconScreenBox", function () {
+        it("computes screen box without offset", function () {
             const poiInfo = {
                 computedWidth: 32,
                 computedHeight: 32,
@@ -43,7 +43,7 @@ describe("PoiRenderer", function() {
             expect(screenBox.h).to.equal(32);
         });
 
-        it("computes screen box with offset", function() {
+        it("computes screen box with offset", function () {
             const poiInfo = {
                 computedWidth: 32,
                 computedHeight: 32,
@@ -70,7 +70,7 @@ describe("PoiRenderer", function() {
             expect(screenBox.h).to.equal(32);
         });
 
-        it("computes screen box with scale", function() {
+        it("computes screen box with scale", function () {
             const poiInfo = {
                 computedWidth: 32,
                 computedHeight: 32,

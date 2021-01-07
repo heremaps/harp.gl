@@ -20,7 +20,7 @@ import { Vector3 } from "three";
 import { TextElementBuilder } from "../lib/text/TextElementBuilder";
 import { TileTextStyleCache } from "../lib/text/TileTextStyleCache";
 
-describe("TextElementBuilder", function() {
+describe("TextElementBuilder", function () {
     const env = new Env();
     const renderStyle = new TextRenderStyle();
     const layoutStyle = new TextLayoutStyle();
@@ -48,9 +48,7 @@ describe("TextElementBuilder", function() {
         const label1 = builder.withTechnique(textTechnique).build("one", new Vector3(), 0);
         const label2 = builder.build("two", new Vector3(), 0);
 
-        expect(label1?.priority)
-            .equals(label2?.priority)
-            .and.equals(textTechnique.priority);
+        expect(label1?.priority).equals(label2?.priority).and.equals(textTechnique.priority);
     });
 
     it("reuses same imageTextureName and shield group index between calls to withIcon", () => {

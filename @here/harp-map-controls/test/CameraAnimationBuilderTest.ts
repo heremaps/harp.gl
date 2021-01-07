@@ -14,7 +14,7 @@ import { CameraKeyTrackAnimationOptions, ControlPoint } from "../lib/CameraKeyTr
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-describe("MapControls", function() {
+describe("MapControls", function () {
     let animationOptions: CameraKeyTrackAnimationOptions;
     let controlPoint_0: ControlPoint;
     let controlPoint_1: ControlPoint;
@@ -22,7 +22,7 @@ describe("MapControls", function() {
     let sandbox: sinon.SinonSandbox;
     let mapView: MapView;
     let camera: THREE.Camera;
-    beforeEach(function() {
+    beforeEach(function () {
         controlPoint_0 = new ControlPoint({
             target: new GeoCoordinates(0, 0),
             timestamp: 0
@@ -44,8 +44,8 @@ describe("MapControls", function() {
         sandbox.stub(mapView, "camera").get(() => camera);
         sandbox.stub(mapView, "projection").get(() => mercatorProjection);
     });
-    describe("CameraAnimationBuilder", function() {
-        it("prepends a control point with default time", function() {
+    describe("CameraAnimationBuilder", function () {
+        it("prepends a control point with default time", function () {
             CameraAnimationBuilder.prependControlPoint(animationOptions, controlPoint_2);
 
             assert.equal(animationOptions.controlPoints.length, 3);
@@ -55,7 +55,7 @@ describe("MapControls", function() {
             assert.notEqual(animationOptions.controlPoints[1].timestamp, 0);
         });
 
-        it("prepends a control point with specified time", function() {
+        it("prepends a control point with specified time", function () {
             CameraAnimationBuilder.prependControlPoint(animationOptions, controlPoint_2, 20);
 
             assert.equal(animationOptions.controlPoints.length, 3);
@@ -65,7 +65,7 @@ describe("MapControls", function() {
             assert.equal(animationOptions.controlPoints[1].timestamp, 20);
         });
 
-        it("append a control point with fitting time", function() {
+        it("append a control point with fitting time", function () {
             CameraAnimationBuilder.appendControlPoint(animationOptions, controlPoint_2);
 
             assert.equal(animationOptions.controlPoints.length, 3);
@@ -73,7 +73,7 @@ describe("MapControls", function() {
             assert.equal(animationOptions.controlPoints[2].timestamp, 200);
         });
 
-        it("appends a control point with timestamp smaller then the preceding one ", function() {
+        it("appends a control point with timestamp smaller then the preceding one ", function () {
             controlPoint_2.timestamp = 0;
             CameraAnimationBuilder.appendControlPoint(animationOptions, controlPoint_2);
 
@@ -85,7 +85,7 @@ describe("MapControls", function() {
         it(
             "appends a control point with timestamp smaller then the preceding one, and set" +
                 "appendTime",
-            function() {
+            function () {
                 controlPoint_2.timestamp = 0;
                 CameraAnimationBuilder.appendControlPoint(animationOptions, controlPoint_2, 20);
 
@@ -95,7 +95,7 @@ describe("MapControls", function() {
             }
         );
 
-        it("appends a control point to an empty control point list", function() {
+        it("appends a control point to an empty control point list", function () {
             const options: CameraKeyTrackAnimationOptions = { controlPoints: [] };
             CameraAnimationBuilder.appendControlPoint(options, controlPoint_2);
 
@@ -104,7 +104,7 @@ describe("MapControls", function() {
             assert.equal(options.controlPoints[0].timestamp, 200);
         });
 
-        it("creates Bow Fly To options with defaults", function() {
+        it("creates Bow Fly To options with defaults", function () {
             const bowOptions = CameraAnimationBuilder.createBowFlyToOptions(
                 mapView,
                 controlPoint_0,
@@ -123,7 +123,7 @@ describe("MapControls", function() {
             assert.equal(bowOptions.controlPoints[3].timestamp, 10);
         });
 
-        it("creates Bow Fly To options with specified altitude and duration", function() {
+        it("creates Bow Fly To options with specified altitude and duration", function () {
             const bowOptions = CameraAnimationBuilder.createBowFlyToOptions(
                 mapView,
                 controlPoint_0,
@@ -143,7 +143,7 @@ describe("MapControls", function() {
             assert.equal(bowOptions.controlPoints[2].timestamp, 10);
             assert.equal(bowOptions.controlPoints[3].timestamp, 15);
         });
-        it("creates orbit options", function() {
+        it("creates orbit options", function () {
             const orbitOptions = CameraAnimationBuilder.createOrbitOptions(controlPoint_0);
 
             assert.equal(orbitOptions.controlPoints.length, 4);

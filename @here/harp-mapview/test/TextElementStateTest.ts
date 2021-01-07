@@ -19,14 +19,14 @@ import * as THREE from "three";
 import { TextElementState } from "../lib/text/TextElementState";
 import { TextElementType } from "../lib/text/TextElementType";
 
-describe("TextElementState", function() {
-    describe("initialized", function() {
-        it("returns false for uninitialized state", function() {
+describe("TextElementState", function () {
+    describe("initialized", function () {
+        it("returns false for uninitialized state", function () {
             const textElementState = new TextElementState({} as any);
             expect(textElementState.initialized).to.be.false;
         });
 
-        it("returns true for initialized state", function() {
+        it("returns true for initialized state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel
             } as any);
@@ -35,13 +35,13 @@ describe("TextElementState", function() {
         });
     });
 
-    describe("visible", function() {
-        it("returns false for uninitialized state", function() {
+    describe("visible", function () {
+        it("returns false for uninitialized state", function () {
             const textElementState = new TextElementState({} as any);
             expect(textElementState.visible).to.be.false;
         });
 
-        it("returns false when text is initialized but invisible", function() {
+        it("returns false when text is initialized but invisible", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel
             } as any);
@@ -49,7 +49,7 @@ describe("TextElementState", function() {
             expect(textElementState.visible).to.be.false;
         });
 
-        it("returns false when text and icon are initialized but invisible", function() {
+        it("returns false when text and icon are initialized but invisible", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -60,7 +60,7 @@ describe("TextElementState", function() {
             expect(textElementState.visible).to.be.false;
         });
 
-        it("returns true when text is initialized and visible", function() {
+        it("returns true when text is initialized and visible", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel
             } as any);
@@ -71,7 +71,7 @@ describe("TextElementState", function() {
             expect(textElementState.visible).to.be.true;
         });
 
-        it("returns true when icon is initialized and visible", function() {
+        it("returns true when icon is initialized and visible", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -85,7 +85,7 @@ describe("TextElementState", function() {
             expect(textElementState.visible).to.be.true;
         });
 
-        it("returns true when icons are initialized and visible", function() {
+        it("returns true when icons are initialized and visible", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.LineMarker,
                 poiInfo: {
@@ -104,14 +104,14 @@ describe("TextElementState", function() {
         });
     });
 
-    describe("reset", function() {
-        it("resets uninitialized state", function() {
+    describe("reset", function () {
+        it("resets uninitialized state", function () {
             const textElementState = new TextElementState({} as any);
             expect(() => textElementState.reset()).to.not.throw();
             expect(textElementState.viewDistance).to.be.undefined;
         });
 
-        it("resets text render state", function() {
+        it("resets text render state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel
             } as any);
@@ -122,7 +122,7 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.be.undefined;
         });
 
-        it("resets text layout state", function() {
+        it("resets text layout state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -151,7 +151,7 @@ describe("TextElementState", function() {
             expect(textElementState.element.bounds).to.be.undefined;
         });
 
-        it("resets text and icon state", function() {
+        it("resets text and icon state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -166,7 +166,7 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.be.undefined;
         });
 
-        it("resets text and icons state", function() {
+        it("resets text and icons state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.LineMarker,
                 poiInfo: {
@@ -185,8 +185,8 @@ describe("TextElementState", function() {
         });
     });
 
-    describe("replace", function() {
-        it("replaces an existing text element", function() {
+    describe("replace", function () {
+        it("replaces an existing text element", function () {
             const predecessorState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -225,7 +225,7 @@ describe("TextElementState", function() {
             expect(textElementState["m_textLayoutState"]).to.equal(predecessorLayout);
         });
 
-        it("reuses text element glyphs", function() {
+        it("reuses text element glyphs", function () {
             const predecessorState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -252,7 +252,7 @@ describe("TextElementState", function() {
             expect(textElementState.element.glyphCaseArray).to.equal(predecessorGlyphCaseArray);
         });
 
-        it("invalidates text element bounds", function() {
+        it("invalidates text element bounds", function () {
             const predecessorState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -280,7 +280,7 @@ describe("TextElementState", function() {
             expect(textElementState.element.bounds).to.undefined;
         });
 
-        it("invalidates text buffer", function() {
+        it("invalidates text buffer", function () {
             const predecessorState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -306,8 +306,8 @@ describe("TextElementState", function() {
         });
     });
 
-    describe("update", function() {
-        it("does not initialize a text element state if view distance is undefined", function() {
+    describe("update", function () {
+        it("does not initialize a text element state if view distance is undefined", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -321,7 +321,7 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.be.undefined;
         });
 
-        it("initializes a text element state and sets view distance", function() {
+        it("initializes a text element state and sets view distance", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -335,7 +335,7 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.equal(100);
         });
 
-        it("uses fading time from technique", function() {
+        it("uses fading time from technique", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -355,7 +355,7 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.equal(100);
         });
 
-        it("uses fading time from technique for line marker", function() {
+        it("uses fading time from technique for line marker", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.LineMarker,
                 poiInfo: {
@@ -378,7 +378,7 @@ describe("TextElementState", function() {
             expect(textElementState.viewDistance).to.equal(100);
         });
 
-        it("updates a initialized text element state", function() {
+        it("updates a initialized text element state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -396,8 +396,8 @@ describe("TextElementState", function() {
         });
     });
 
-    describe("renderDistance", function() {
-        it("returns 0 if element is always on top", function() {
+    describe("renderDistance", function () {
+        it("returns 0 if element is always on top", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -410,7 +410,7 @@ describe("TextElementState", function() {
             expect(textElementState.renderDistance).to.equal(0);
         });
 
-        it("returns inversed view distance", function() {
+        it("returns inversed view distance", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -422,7 +422,7 @@ describe("TextElementState", function() {
             expect(textElementState.renderDistance).to.equal(-100);
         });
 
-        it("returns 0 if view distance ", function() {
+        it("returns 0 if view distance ", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -435,8 +435,8 @@ describe("TextElementState", function() {
         });
     });
 
-    describe("updateFading", function() {
-        it("ignores uninitialized states", function() {
+    describe("updateFading", function () {
+        it("ignores uninitialized states", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -449,7 +449,7 @@ describe("TextElementState", function() {
             expect(textElementState.iconRenderState).to.be.undefined;
         });
 
-        it("updates text render state", function() {
+        it("updates text render state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel
             } as any);
@@ -463,7 +463,7 @@ describe("TextElementState", function() {
             expect(textElementState.textRenderState!.opacity).to.equal(0.0022182464599609375);
         });
 
-        it("updates icon render state", function() {
+        it("updates icon render state", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.PoiLabel,
                 poiInfo: {
@@ -486,7 +486,7 @@ describe("TextElementState", function() {
             expect(textElementState.iconRenderState!.opacity).to.equal(0.0022182464599609375);
         });
 
-        it("updates icon render states", function() {
+        it("updates icon render states", function () {
             const textElementState = new TextElementState({
                 type: TextElementType.LineMarker,
                 poiInfo: {

@@ -12,8 +12,8 @@ import * as sinon from "sinon";
 import { ConcurrentWorkerSet } from "../lib/ConcurrentWorkerSet";
 import { WorkerBasedDecoder } from "../lib/WorkerBasedDecoder";
 
-describe("WorkerBasedDecoder", function() {
-    it("#dispose releases associates workerSet", function() {
+describe("WorkerBasedDecoder", function () {
+    it("#dispose releases associates workerSet", function () {
         const workerSetStub = sinon.createStubInstance<ConcurrentWorkerSet>(ConcurrentWorkerSet);
 
         const target = new WorkerBasedDecoder((workerSetStub as any) as ConcurrentWorkerSet, "foo");

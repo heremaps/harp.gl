@@ -24,8 +24,8 @@ function createTexture(array: number[]) {
 function getPos(attribute: DisplacedBufferAttribute, index: number): number[] {
     return [attribute.getX(index), attribute.getY(index), attribute.getZ(index)];
 }
-describe("DisplacedBufferAttribute", function() {
-    it("after reset new attributes and displacement map are used", function() {
+describe("DisplacedBufferAttribute", function () {
+    it("after reset new attributes and displacement map are used", function () {
         const oldPositions = createBuffer([1, 1, 1], 3);
         const oldNormals = createBuffer([0, 0, 1], 3);
         const oldUvs = createBuffer([0, 0], 2);
@@ -46,7 +46,7 @@ describe("DisplacedBufferAttribute", function() {
         expect(getPos(displacedAttribute, 0)).deep.equals([9, 9, 9]);
     });
 
-    it("after reset old displaced geometry is dicarded", function() {
+    it("after reset old displaced geometry is dicarded", function () {
         const oldPositions = createBuffer([1, 1, 1], 3);
         const oldNormals = createBuffer([0, 0, 1], 3);
         const oldUvs = createBuffer([0, 0], 2);
@@ -65,7 +65,7 @@ describe("DisplacedBufferAttribute", function() {
         expect(getPos(displacedAttribute, 0)).deep.equals([2, 1, 2]);
     });
 
-    it("consecutive calls to getX/Y/Z with the same index reuse computed position", function() {
+    it("consecutive calls to getX/Y/Z with the same index reuse computed position", function () {
         const oldPositions = createBuffer([1, 1, 1], 3);
         const oldNormals = createBuffer([0, 0, 1], 3);
         const oldUvs = createBuffer([0, 0], 2);

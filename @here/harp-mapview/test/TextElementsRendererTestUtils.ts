@@ -101,7 +101,7 @@ export function firstNFrames(frames: number[], n: number): boolean[] {
 }
 
 export function not(input: boolean[]): boolean[] {
-    return input.map(function(e: boolean) {
+    return input.map(function (e: boolean) {
         return !e;
     });
 }

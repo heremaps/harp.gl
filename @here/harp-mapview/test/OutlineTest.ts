@@ -38,18 +38,18 @@ const rendererMock: any = {
     }
 };
 
-describe("Outline", function() {
+describe("Outline", function () {
     function createOutlineEffect(): OutlineEffect {
         const outlineEffect = new OutlineEffect(rendererMock as THREE.WebGLRenderer);
         return outlineEffect;
     }
 
-    it("create", function() {
+    it("create", function () {
         const outlineEffect = createOutlineEffect();
         expect(outlineEffect).to.not.be.equal(undefined);
     });
 
-    it("create accessors", function() {
+    it("create accessors", function () {
         const renderer: any = {
             autoClear: false,
             domElement: undefined,
@@ -65,7 +65,7 @@ describe("Outline", function() {
         expect(outlineEffect.shadowMap).to.be.equal(renderer.shadowMap);
     });
 
-    it("render", function() {
+    it("render", function () {
         const outlineEffect = createOutlineEffect();
         const traverseStub = sinon.stub(sceneMock, "traverse");
         const renderStub = sinon.stub(rendererMock, "render");

@@ -11,10 +11,10 @@ import * as path from "path";
 
 const licenseRegEx = /\/\*\n \* Copyright \(C\) (\d\d\d\d)-?(\d\d\d\d)? HERE Europe.B\.V\.\n \* Licensed under Apache 2\.0\, see full license in LICENSE\n \* SPDX\-License\-Identifier\: Apache\-2\.0\n \*\//;
 
-describe("LicenseHeaderCheck", function() {
+describe("LicenseHeaderCheck", function () {
     let sourceFiles: string[];
 
-    before(function() {
+    before(function () {
         sourceFiles = glob
             .sync(path.join(__dirname, "..", "**/*.ts"))
             .filter(file => !file.includes("/node_modules/"))
@@ -22,7 +22,7 @@ describe("LicenseHeaderCheck", function() {
             .filter(file => !file.endsWith(".d.ts"));
     });
 
-    it("Contains license header", function() {
+    it("Contains license header", function () {
         const failedFiles = new Array<string>();
         for (const sourceFile of sourceFiles) {
             let contents = fs.readFileSync(sourceFile, { encoding: "utf8" });

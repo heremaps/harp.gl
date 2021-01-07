@@ -10,8 +10,8 @@ import { assert } from "chai";
 
 import { debugContext } from "../lib/DebugContext";
 
-describe("debug-context", function() {
-    it("ok", function() {
+describe("debug-context", function () {
+    it("ok", function () {
         assert.isTrue(true);
 
         assert.isTrue(typeof debugContext === "object");

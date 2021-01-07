@@ -12,8 +12,8 @@ import * as THREE from "three";
 
 import { SphericalGeometrySubdivisionModifier } from "../lib/SphericalGeometrySubdivisionModifier";
 
-describe("SphericalGeometrySubdivisionModifier", function() {
-    it("SubdivideTileBounds", function() {
+describe("SphericalGeometrySubdivisionModifier", function () {
+    it("SubdivideTileBounds", function () {
         const geoPoint = new geo.GeoCoordinates(53.3, 13.4);
 
         const tileKey = geo.webMercatorTilingScheme.getTileKey(geoPoint, 3);

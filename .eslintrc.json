@@ -5,7 +5,13 @@
         "project": "./tsconfig.json"
     },
     "rules": {
-        "prettier/prettier": "error",
+        "prettier/prettier": [
+            "error",
+            {
+                "arrowParens": "avoid",
+                "trailingComma": "none"
+            }
+        ],
 
         "@typescript-eslint/no-unused-vars": [
             "error",

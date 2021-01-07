@@ -21,13 +21,13 @@ const inNodeContext = typeof window === "undefined";
 const texturePath = getTestResourceUrl("@here/harp-mapview", "test/resources/headshot.png");
 const jpgTexturePath = getTestResourceUrl("@here/harp-mapview", "test/resources/headshot.jpg");
 
-describe("TextureLoader", function() {
-    describe("load", function() {
+describe("TextureLoader", function () {
+    describe("load", function () {
         if (inNodeContext) {
             return;
         }
 
-        it("loads images without request headers", async function() {
+        it("loads images without request headers", async function () {
             const textureLoader = new TextureLoader();
             const texture = await textureLoader.load(texturePath);
 
@@ -35,7 +35,7 @@ describe("TextureLoader", function() {
             expect(texture.format).to.equal(THREE.RGBAFormat);
         });
 
-        it("loads jpg images without request headers", async function() {
+        it("loads jpg images without request headers", async function () {
             const textureLoader = new TextureLoader();
             const texture = await textureLoader.load(jpgTexturePath);
 
@@ -43,7 +43,7 @@ describe("TextureLoader", function() {
             expect(texture.format).to.equal(THREE.RGBFormat);
         });
 
-        it("loads images with request headers", async function() {
+        it("loads images with request headers", async function () {
             const textureLoader = new TextureLoader();
             const texture = await textureLoader.load(texturePath, {
                 Authorization: "Bearer Foo123"
@@ -53,7 +53,7 @@ describe("TextureLoader", function() {
             expect(texture.format).to.equal(THREE.RGBAFormat);
         });
 
-        it("loads jpg images with request headers", async function() {
+        it("loads jpg images with request headers", async function () {
             const textureLoader = new TextureLoader();
             const texture = await textureLoader.load(jpgTexturePath, {
                 Authorization: "Bearer Foo123"
@@ -63,7 +63,7 @@ describe("TextureLoader", function() {
             expect(texture.format).to.equal(THREE.RGBFormat);
         });
 
-        it("throws an error if image can not be loaded", async function() {
+        it("throws an error if image can not be loaded", async function () {
             const textureLoader = new TextureLoader();
 
             expect(textureLoader.load("unknown_image.png")).to.eventually.be.rejectedWith(

@@ -11,7 +11,7 @@ import { assert } from "chai";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { GeoPointLike, isGeoPointLike } from "../lib/coordinates/GeoPointLike";
 
-describe("GeoCoordinates", function() {
+describe("GeoCoordinates", function () {
     const tests = [
         { args: [90, 180], expected: [90, 180] },
         { args: [-90, -180], expected: [-90, -180] },
@@ -34,7 +34,7 @@ describe("GeoCoordinates", function() {
         { args: [361, 4534, 50], expected: [90, -146, 50] }
     ];
 
-    it("API compatibility", function() {
+    it("API compatibility", function () {
         tests.forEach(sample => {
             const [latitude, longitude, altitude] = sample.args; // decomposed input
 
@@ -72,7 +72,7 @@ describe("GeoCoordinates", function() {
         });
     });
 
-    tests.forEach(function(test) {
+    tests.forEach(function (test) {
         it(
             "normalized GeoCoordinates { " +
                 test.args[0] +
@@ -81,7 +81,7 @@ describe("GeoCoordinates", function() {
                 ", " +
                 test.args[2] +
                 " }",
-            function() {
+            function () {
                 const normalized = new GeoCoordinates(
                     test.args[0],
                     test.args[1],
@@ -102,7 +102,7 @@ describe("GeoCoordinates", function() {
             }
         );
     });
-    it("minLongitudeSpanTo returns minimum span between two geocoordinates", function() {
+    it("minLongitudeSpanTo returns minimum span between two geocoordinates", function () {
         assert.equal(
             GeoCoordinates.fromDegrees(0, -50).minLongitudeSpanTo(
                 GeoCoordinates.fromDegrees(0, 100)
@@ -156,18 +156,18 @@ describe("GeoCoordinates", function() {
         );
     });
 
-    describe("lerp", function() {
-        it("returns first coords if factor is 0", function() {
+    describe("lerp", function () {
+        it("returns first coords if factor is 0", function () {
             const start = new GeoCoordinates(10, 50, 1000);
             const end = new GeoCoordinates(20, 5, 500);
             assert.deepEqual(GeoCoordinates.lerp(start, end, 0), start);
         });
-        it("returns second coords if factor is 1", function() {
+        it("returns second coords if factor is 1", function () {
             const start = new GeoCoordinates(10, 50, 1000);
             const end = new GeoCoordinates(20, 5, 500);
             assert.deepEqual(GeoCoordinates.lerp(start, end, 1), end);
         });
-        it("interpolates given coords if factor >0 and <1", function() {
+        it("interpolates given coords if factor >0 and <1", function () {
             const start = new GeoCoordinates(10, 50, 1000);
             const end = new GeoCoordinates(20, 10, 500);
             assert.deepEqual(
@@ -175,7 +175,7 @@ describe("GeoCoordinates", function() {
                 new GeoCoordinates(12.5, 40, 875)
             );
         });
-        it("normalizes result if requested", function() {
+        it("normalizes result if requested", function () {
             const start = new GeoCoordinates(10, 180);
             const end = new GeoCoordinates(20, 190);
             assert.deepEqual(
@@ -183,7 +183,7 @@ describe("GeoCoordinates", function() {
                 new GeoCoordinates(15, -175, 0)
             );
         });
-        it("wraps coordinates if requested", function() {
+        it("wraps coordinates if requested", function () {
             const start = new GeoCoordinates(10, 170, 1000);
             const end = new GeoCoordinates(20, -140, 500);
             assert.deepEqual(
@@ -191,7 +191,7 @@ describe("GeoCoordinates", function() {
                 new GeoCoordinates(12.5, 182.5, 875)
             );
         });
-        it("reverses interpolation direction when wrapping if needed", function() {
+        it("reverses interpolation direction when wrapping if needed", function () {
             const start = new GeoCoordinates(20, -140, 500);
             const end = new GeoCoordinates(10, 170, 1000);
             assert.deepEqual(

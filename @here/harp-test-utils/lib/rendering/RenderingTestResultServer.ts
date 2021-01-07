@@ -128,9 +128,7 @@ export async function getIbctReport(req: express.Request, res: express.Response)
     try {
         const [failed, report] = await genHtmlReport(currentResults, {}, outputBasePath);
         logger.log("Tests failed: ", failed);
-        res.status(200)
-            .contentType("text/html")
-            .send(report);
+        res.status(200).contentType("text/html").send(report);
     } catch (error) {
         logger.error("error", error);
         res.status(500).send(`error: ${error}\n${error.stack}`);

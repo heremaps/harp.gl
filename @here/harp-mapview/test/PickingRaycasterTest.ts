@@ -22,15 +22,15 @@ function createFakeObject<T extends THREE.Object3D>(type: new () => T): T {
     });
     return object;
 }
-describe("PickingRaycaster", function() {
+describe("PickingRaycaster", function () {
     let raycaster: PickingRaycaster;
 
-    beforeEach(function() {
+    beforeEach(function () {
         raycaster = new PickingRaycaster(0, 0, new MapEnv({}));
     });
 
-    describe("intersectObject(s)", function() {
-        it("skips invisible objects", function() {
+    describe("intersectObject(s)", function () {
+        it("skips invisible objects", function () {
             const object = createFakeObject(THREE.Object3D);
             object.visible = false;
             {
@@ -43,7 +43,7 @@ describe("PickingRaycaster", function() {
             }
         });
 
-        it("skips fully transparent objects", function() {
+        it("skips fully transparent objects", function () {
             const mesh = createFakeObject(THREE.Mesh);
             mesh.material = new THREE.Material();
             mesh.material.opacity = 0;
@@ -58,7 +58,7 @@ describe("PickingRaycaster", function() {
             }
         });
 
-        it("skips non-pickable objects", function() {
+        it("skips non-pickable objects", function () {
             const object = createFakeObject(THREE.Object3D);
             MapObjectAdapter.create(object, { pickable: false });
             {
@@ -71,7 +71,7 @@ describe("PickingRaycaster", function() {
             }
         });
 
-        it("tests pickable objects", function() {
+        it("tests pickable objects", function () {
             const object = createFakeObject(THREE.Object3D);
             const mesh = createFakeObject(THREE.Mesh);
             mesh.material = new THREE.Material();
@@ -88,7 +88,7 @@ describe("PickingRaycaster", function() {
             }
         });
 
-        it("tests object descendants if recursive is true", function() {
+        it("tests object descendants if recursive is true", function () {
             const object = createFakeObject(THREE.Object3D);
             const child = createFakeObject(THREE.Object3D);
             const grandchild = createFakeObject(THREE.Object3D);
@@ -104,7 +104,7 @@ describe("PickingRaycaster", function() {
             }
         });
 
-        it("skips object descendants if recursive is false", function() {
+        it("skips object descendants if recursive is false", function () {
             const object = createFakeObject(THREE.Object3D);
             const child = createFakeObject(THREE.Object3D);
             const grandchild = createFakeObject(THREE.Object3D);

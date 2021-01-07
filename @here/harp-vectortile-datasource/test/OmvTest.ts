@@ -91,15 +91,15 @@ export class RoadsToRailroads implements OmvFeatureModifier {
 /**
  * FIXME: HARP-1152 Add unit tests for OmvFeatureFilterDescriptionBuilder
  */
-describe("OmvFeatureFilterDescriptionBuilder", function() {
-    it("setup", function() {
+describe("OmvFeatureFilterDescriptionBuilder", function () {
+    it("setup", function () {
         const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
         const filterDescr = filterBuilder.createDescription();
 
         assert.isObject(filterDescr);
     });
 
-    it("addFilters", function() {
+    it("addFilters", function () {
         const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
 
         // load roads only on levels 0-13
@@ -116,7 +116,7 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
         // * assert that there *is* road data
     });
 
-    it("addFilters2", function() {
+    it("addFilters2", function () {
         const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
 
         filterBuilder.processLayer("road");
@@ -135,7 +135,7 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
         // * assert that there is no road data of class "street"
     });
 
-    it("addKindFilters", function() {
+    it("addKindFilters", function () {
         const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
 
         filterBuilder.ignoreKinds(["area"]);
@@ -150,7 +150,7 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
         // * proper kinds (kind tags)
     });
 
-    it("addAttributeFilters", function() {
+    it("addAttributeFilters", function () {
         const createItems = (layer: string, key: string, value: Value): OmvFilterDescription[] => {
             const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
             filterBuilder.processPolygons({ layer, featureAttribute: { key, value } });

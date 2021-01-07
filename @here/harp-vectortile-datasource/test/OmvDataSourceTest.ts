@@ -48,8 +48,8 @@ class MockDataProvider extends DataProvider {
     }
 }
 
-describe("DataProviders", function() {
-    it("Creates a OmvDataSource with a custom DataProvider", function() {
+describe("DataProviders", function () {
+    it("Creates a OmvDataSource with a custom DataProvider", function () {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
@@ -59,7 +59,7 @@ describe("DataProviders", function() {
         assert.isTrue(omvDataSource.dataProvider() instanceof MockDataProvider);
     });
 
-    it("Creates a OmvDataSource with a REST based DataProvider with proper params", function() {
+    it("Creates a OmvDataSource with a REST based DataProvider with proper params", function () {
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
@@ -83,7 +83,7 @@ describe("DataProviders", function() {
         );
     });
 
-    it("Creates OmvDataSource with custom DataProvider, ignoring other attributes", function() {
+    it("Creates OmvDataSource with custom DataProvider, ignoring other attributes", function () {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
@@ -95,7 +95,7 @@ describe("DataProviders", function() {
         assert.isTrue(omvDataSource.dataProvider() instanceof MockDataProvider);
     });
 
-    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
+    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function () {
         const mockDataProvider = new MockDataProvider();
         silenceLoggingAroundFunction("DataSource", () => {
             const omvDataSource = new VectorTileDataSource({
@@ -114,7 +114,7 @@ describe("DataProviders", function() {
         });
     });
 
-    it("supports minDataLevel and maxDataLevel in constructor", function() {
+    it("supports minDataLevel and maxDataLevel in constructor", function () {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
@@ -134,8 +134,8 @@ describe("DataProviders", function() {
         });
     });
 
-    describe("storageLevelOffset", function() {
-        it("updates storageLevelOffset in decoder options", function() {
+    describe("storageLevelOffset", function () {
+        it("updates storageLevelOffset in decoder options", function () {
             const mapView = {
                 markTilesDirty() {
                     /* noop */
@@ -157,7 +157,7 @@ describe("DataProviders", function() {
         });
     });
 
-    it("DataProvider clears the cache", function() {
+    it("DataProvider clears the cache", function () {
         const geojson: FeatureCollection = {
             type: "FeatureCollection",
             features: []

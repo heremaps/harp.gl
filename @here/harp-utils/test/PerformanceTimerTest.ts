@@ -10,8 +10,8 @@ import { assert } from "chai";
 
 import { PerformanceTimer } from "../lib/PerformanceTimer";
 
-describe("PerformanceTimer", function() {
-    it("#now", async function() {
+describe("PerformanceTimer", function () {
+    it("#now", async function () {
         const t0 = PerformanceTimer.now();
         let t1 = 0;
         assert.isNumber(t0);

@@ -35,7 +35,7 @@ class MockDataSource extends DataSource {
     }
 }
 
-describe("addGroundPlaneTest", function() {
+describe("addGroundPlaneTest", function () {
     let tile: Tile;
     let mapView: MapView;
     let mockDataSource: sinon.SinonStubbedInstance<MockDataSource>;

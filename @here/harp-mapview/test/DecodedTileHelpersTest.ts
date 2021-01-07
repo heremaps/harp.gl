@@ -21,11 +21,11 @@ function assertLogsError(testCode: () => void, errorMessagePattern: string | Reg
     return assertLogsSync(testCode, LoggerManager.instance.channel, "error", errorMessagePattern);
 }
 
-describe("DecodedTileHelpers", function() {
+describe("DecodedTileHelpers", function () {
     const env = new MapEnv({ $zoom: 10, $pixelToMeters: 2 });
     const rendererCapabilities = { isWebGL2: false } as any;
-    describe("#createMaterial", function() {
-        it("supports #rgba in base material colors", function() {
+    describe("#createMaterial", function () {
+        it("supports #rgba in base material colors", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
                 lineWidth: 10,
@@ -43,7 +43,7 @@ describe("DecodedTileHelpers", function() {
             assert.equal(material.color.getHex(), 0xff00ff);
             assert.equal(material.transparent, false);
         });
-        it("ignores alpha when applying #rgba to secondary colors", function() {
+        it("ignores alpha when applying #rgba to secondary colors", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
                 lineWidth: 10,
@@ -62,7 +62,7 @@ describe("DecodedTileHelpers", function() {
             assert.equal(material.color.getHex(), 0xff00ff);
             assert.equal(material.transparent, false);
         });
-        it("ignores invalid colors", function() {
+        it("ignores invalid colors", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
                 lineWidth: 10,
@@ -78,7 +78,7 @@ describe("DecodedTileHelpers", function() {
             }, /Unsupported color format/);
         });
 
-        it("disables depthTest for solid lines by default", function() {
+        it("disables depthTest for solid lines by default", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
                 lineWidth: 10,
@@ -93,7 +93,7 @@ describe("DecodedTileHelpers", function() {
             assert.isFalse(material.depthTest);
         });
 
-        it("enables depthTest for solid lines if specified in the technique", function() {
+        it("enables depthTest for solid lines if specified in the technique", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
                 lineWidth: 10,
@@ -109,7 +109,7 @@ describe("DecodedTileHelpers", function() {
             assert.isTrue(material.depthTest);
         });
     });
-    it("#applyBaseColorToMaterial toggles opacity with material", function() {
+    it("#applyBaseColorToMaterial toggles opacity with material", function () {
         const material = new THREE.MeshBasicMaterial();
         assert.equal(material.blending, THREE.NormalBlending);
         const technique: SolidLineTechnique = {
@@ -133,13 +133,13 @@ describe("DecodedTileHelpers", function() {
         assert.equal(material.color.getHex(), 0xff00ff);
         assert.equal(material.transparent, false);
     });
-    describe("#evaluateColorProperty", function() {
-        it("leaves numbers untouched", function() {
+    describe("#evaluateColorProperty", function () {
+        it("leaves numbers untouched", function () {
             assert.strictEqual(evaluateColorProperty(0, env), 0);
             assert.strictEqual(evaluateColorProperty(0xff00ff, env), 0xff00ff);
             assert.strictEqual(evaluateColorProperty(0x7aff00ff, env), 0x7aff00ff);
         });
-        it("converts invalid inputs to undefined", function() {
+        it("converts invalid inputs to undefined", function () {
             assertLogsError(() => {
                 assert.strictEqual(evaluateColorProperty("aa", env), undefined);
             }, /Unsupported color format/);
@@ -154,15 +154,15 @@ describe("DecodedTileHelpers", function() {
                 assert.strictEqual(evaluateColorProperty(true, env), undefined);
             }, /Unsupported color format/);
         });
-        it("evaluates string encoded numerals", function() {
+        it("evaluates string encoded numerals", function () {
             assert.strictEqual(evaluateColorProperty("#ff00ff", env), 0xff00ff);
             assert.strictEqual(evaluateColorProperty("rgb(255, 0, 0)", env), 0xff0000);
             assert.strictEqual(evaluateColorProperty("rgba(255, 0, 0, 0.5)", env), -2130771968);
         });
     });
 
-    describe("#getPropertyValue", function() {
-        it("returns literals untouched", function() {
+    describe("#getPropertyValue", function () {
+        it("returns literals untouched", function () {
             assert.equal(getPropertyValue(0, env), 0);
             assert.equal(getPropertyValue("a", env), "a");
             assert.equal(getPropertyValue(true, env), true);
@@ -170,20 +170,20 @@ describe("DecodedTileHelpers", function() {
             assert.equal(getPropertyValue(null, env), null);
             assert.deepEqual(getPropertyValue({ foo: "bar" }, env), { foo: "bar" });
         });
-        it("flattens null & undefiled to null", function() {
+        it("flattens null & undefiled to null", function () {
             assert.equal(getPropertyValue(undefined, env), null);
         });
-        it("evaluates basic expressions", function() {
+        it("evaluates basic expressions", function () {
             assert.equal(getPropertyValue(Expr.fromJSON(null), env), null);
             assert.equal(getPropertyValue(Expr.fromJSON(["+", 2, 2]), env), 4);
             assert.equal(getPropertyValue(Expr.fromJSON(["get", "$zoom"]), env), 10);
         });
-        it("evaluates errorneous expressions to null", function() {
+        it("evaluates errorneous expressions to null", function () {
             assertLogsError(() => {
                 assert.equal(getPropertyValue(Expr.fromJSON(["-", 2, "not-a-number"]), env), null);
             }, /failed to evaluate expression/);
         });
-        it("evaluates string encoded numerals", function() {
+        it("evaluates string encoded numerals", function () {
             assert.equal(getPropertyValue("2m", env), 2);
             assert.equal(getPropertyValue("2px", env), 4);
             assert.strictEqual(getPropertyValue("#ff00ff", env), 0xff00ff);

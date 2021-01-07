@@ -30,9 +30,8 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "./custom_decoder_defs";
 const MIN_GEOMETRY_HEIGHT = -100;
 
 export // snippet:custom_datasource_example_custom_decoder.ts
-class CustomDecoder extends ThemedTileDecoder
-// end:custom_datasource_example_custom_decoder.ts
-{
+class CustomDecoder extends ThemedTileDecoder {
+    // end:custom_datasource_example_custom_decoder.ts
     /** @override */
     connect() {
         return Promise.resolve();

@@ -28,18 +28,18 @@ function clearCache() {
     (ImageCache.instance as any).m_images.clear();
 }
 
-describe("MapViewImageCache", function() {
-    beforeEach(function() {
+describe("MapViewImageCache", function () {
+    beforeEach(function () {
         clearCache();
     });
 
-    it("#empty", function() {
+    it("#empty", function () {
         const cache = new MapViewImageCache();
         assert.equal(getNameCount(cache), 0);
         assert.notExists(cache.findImageByName("xxx"));
     });
 
-    it("#addImage with data", function() {
+    it("#addImage with data", function () {
         const cache = new MapViewImageCache();
 
         const imageData = new ImageData(16, 16);
@@ -54,7 +54,7 @@ describe("MapViewImageCache", function() {
         assert.equal(imageData, testImage1!.image);
     });
 
-    it("#addImage with url", function() {
+    it("#addImage with url", function () {
         const cache = new MapViewImageCache();
         cache.clear();
 
@@ -72,7 +72,7 @@ describe("MapViewImageCache", function() {
     });
 
     if (typeof document !== "undefined") {
-        it("#addImage with load", async function() {
+        it("#addImage with load", async function () {
             const cache = new MapViewImageCache();
             cache.clear();
 
@@ -103,7 +103,7 @@ describe("MapViewImageCache", function() {
             }
         });
 
-        it("#addImage (load cancelled)", async function() {
+        it("#addImage (load cancelled)", async function () {
             const cache = new MapViewImageCache();
             cache.clear();
 
@@ -137,7 +137,7 @@ describe("MapViewImageCache", function() {
             }
         });
 
-        it("#loadImage", async function() {
+        it("#loadImage", async function () {
             const cache = new MapViewImageCache();
             cache.clear();
 
@@ -170,7 +170,7 @@ describe("MapViewImageCache", function() {
         });
     }
 
-    it("#clear", function() {
+    it("#clear", function () {
         const cache = new MapViewImageCache();
 
         const imageData = new ImageData(16, 16);
@@ -185,7 +185,7 @@ describe("MapViewImageCache", function() {
         assert.equal(getNameCount(cache), 0, "wrong number of names");
     });
 
-    it("#add images", function() {
+    it("#add images", function () {
         const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
@@ -204,7 +204,7 @@ describe("MapViewImageCache", function() {
         assert.equal(imageData2, testImage2!.image);
     });
 
-    it("#add images with same url but differing names", function() {
+    it("#add images with same url but differing names", function () {
         const cache = new MapViewImageCache();
 
         cache.addImage("testImage1", "httpx://naxos.de", false);
@@ -219,7 +219,7 @@ describe("MapViewImageCache", function() {
         assert.deepEqual(testImage1, testImage2);
     });
 
-    it("#add images with same name but differing urls", function() {
+    it("#add images with same name but differing urls", function () {
         const cache = new MapViewImageCache();
         assert.throws(() => {
             cache.addImage("testImage", "httpx://naxos.de", false);
@@ -227,7 +227,7 @@ describe("MapViewImageCache", function() {
         });
     });
 
-    it("#remove image", function() {
+    it("#remove image", function () {
         const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
@@ -244,7 +244,7 @@ describe("MapViewImageCache", function() {
         assert.equal(getNameCount(cache), 0, "wrong number of names");
     });
 
-    it("#remove image 2", function() {
+    it("#remove image 2", function () {
         const cache = new MapViewImageCache();
 
         cache.addImage("testImage1", "httpx://naxos.de", false);
@@ -263,7 +263,7 @@ describe("MapViewImageCache", function() {
         assert.exists(cache.findImageByName("testImage1"));
     });
 
-    it("#remove image by name", function() {
+    it("#remove image by name", function () {
         const cache = new MapViewImageCache();
 
         const imageData1 = new ImageData(16, 16);
@@ -280,33 +280,33 @@ describe("MapViewImageCache", function() {
         assert.equal(ImageCache.instance.size, 1);
     });
 
-    it("#remove non-existent image returns false", function() {
+    it("#remove non-existent image returns false", function () {
         const cache = new MapViewImageCache();
 
         assert.equal(cache.removeImage("xxx"), false);
     });
 });
 
-describe("ImageCache", function() {
-    beforeEach(function() {
+describe("ImageCache", function () {
+    beforeEach(function () {
         clearCache();
     });
 
-    it("#instance", function() {
+    it("#instance", function () {
         const cache = ImageCache.instance;
         const instance2 = ImageCache.instance;
         assert.exists(cache);
         assert.equal(cache, instance2);
     });
 
-    it("#empty", function() {
+    it("#empty", function () {
         const cache = ImageCache.instance;
         assert.equal(cache.size, 0);
         const found = cache.findImage("xxx");
         assert.notExists(found);
     });
 
-    it("#registerImage", function() {
+    it("#registerImage", function () {
         const owner = new MapViewImageCache();
         const cache = ImageCache.instance;
         const imageData = new ImageData(16, 16);
@@ -333,7 +333,7 @@ describe("ImageCache", function() {
         const image = document.createElement("img");
         image.src = getTestResourceUrl("@here/harp-mapview", "test/resources/headshot.png");
 
-        it("#addImage, from url", async function() {
+        it("#addImage, from url", async function () {
             const owner = new MapViewImageCache();
             const cache = ImageCache.instance;
 
@@ -363,7 +363,7 @@ describe("ImageCache", function() {
             }
         });
 
-        it("#loadImage, from url", async function() {
+        it("#loadImage, from url", async function () {
             const owner = {};
             const cache = ImageCache.instance;
 
@@ -399,7 +399,7 @@ describe("ImageCache", function() {
             { element: canvas, name: "HtmlCanvasElement" },
             { element: image, name: "HtmlImageElement" }
         ].forEach(testSetting => {
-            it("#loadImage, from htmlElement " + testSetting.name, async function() {
+            it("#loadImage, from htmlElement " + testSetting.name, async function () {
                 const owner = {};
                 const cache = ImageCache.instance;
 
@@ -431,7 +431,7 @@ describe("ImageCache", function() {
             });
         });
 
-        it("#loadImage, from bad url", async function() {
+        it("#loadImage, from bad url", async function () {
             const owner = {};
             const cache = ImageCache.instance;
 
@@ -466,7 +466,7 @@ describe("ImageCache", function() {
             }
         });
 
-        it("#loadImage, from bad HtmlImageElement", async function() {
+        it("#loadImage, from bad HtmlImageElement", async function () {
             const url = "dummy";
             const badImage = document.createElement("img");
             badImage.src = "bad source";
@@ -487,7 +487,7 @@ describe("ImageCache", function() {
         });
     }
 
-    it("#dispose", function() {
+    it("#dispose", function () {
         const owner = new MapViewImageCache();
 
         const imageData = new ImageData(16, 16);
@@ -498,7 +498,7 @@ describe("ImageCache", function() {
         assert.equal(ImageCache.instance.size, 0);
     });
 
-    it("#register same image in multiple MapViews", function() {
+    it("#register same image in multiple MapViews", function () {
         const cache = ImageCache.instance;
 
         const owner1 = new MapViewImageCache();
@@ -517,7 +517,7 @@ describe("ImageCache", function() {
         assert.equal(imageData1, testImage!.image);
     });
 
-    it("#register different images in multiple MapViews", function() {
+    it("#register different images in multiple MapViews", function () {
         const cache = ImageCache.instance;
 
         const owner1 = new MapViewImageCache();
@@ -540,7 +540,7 @@ describe("ImageCache", function() {
         assert.equal(imageData2, testImage2!.image);
     });
 
-    it("#clear images in multiple MapViews", function() {
+    it("#clear images in multiple MapViews", function () {
         const cache = ImageCache.instance;
 
         const owner1 = new MapViewImageCache();
@@ -560,7 +560,7 @@ describe("ImageCache", function() {
         assert.exists(cache.findImage("httpx://naxos.de-2"));
     });
 
-    it("#remove image", function() {
+    it("#remove image", function () {
         const cache = ImageCache.instance;
         const owner1 = new MapViewImageCache();
 
@@ -575,7 +575,7 @@ describe("ImageCache", function() {
         assert.equal(cache.size, 0, "wrong cache size");
     });
 
-    it("#clear images shared in multiple MapViews", function() {
+    it("#clear images shared in multiple MapViews", function () {
         const owner1 = new MapViewImageCache();
         const owner2 = new MapViewImageCache();
 
@@ -607,7 +607,7 @@ describe("ImageCache", function() {
         assert.equal(getNameCount(cache1), 0);
     });
 
-    it("#share images in multiple MapViews", function() {
+    it("#share images in multiple MapViews", function () {
         const cache0 = new MapViewImageCache();
         const cache1 = new MapViewImageCache();
 
@@ -627,7 +627,7 @@ describe("ImageCache", function() {
         assert.equal(imageItem1, cache1.findImageByName("img1"));
     });
 
-    it("#remove images shared in multiple MapViews", function() {
+    it("#remove images shared in multiple MapViews", function () {
         const cache0 = new MapViewImageCache();
         const cache1 = new MapViewImageCache();
 

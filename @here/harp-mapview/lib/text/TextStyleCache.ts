@@ -501,10 +501,7 @@ function parseTechniquePlacements(placementsString: string | undefined | null): 
     // Parse placement properties if available.
     const placements: TextPlacements = [];
     const placementsTokens = placementsString
-        ? placementsString!
-              .toUpperCase()
-              .replace(" ", "")
-              .split(",")
+        ? placementsString!.toUpperCase().replace(" ", "").split(",")
         : [];
     placementsTokens.forEach(p => {
         const val = parseTechniquePlacementValue(p);

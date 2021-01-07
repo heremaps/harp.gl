@@ -13,7 +13,7 @@ import * as THREE from "three";
 import { TiltViewClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { MapViewUtils } from "../lib/Utils";
 
-describe("ClipPlanesEvaluator sphereProjection", function() {
+describe("ClipPlanesEvaluator sphereProjection", function () {
     const evaluator = new TiltViewClipPlanesEvaluator();
     const projection = sphereProjection;
     const vFov = 90;
@@ -51,7 +51,7 @@ describe("ClipPlanesEvaluator sphereProjection", function() {
         { zoomLevel: 20, far: 38, near: 1 }
     ];
     tests.forEach((test: Test) => {
-        it("evaluateClipPlanes", function() {
+        it("evaluateClipPlanes", function () {
             const canvasHeight = 500;
             const focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
                 THREE.MathUtils.degToRad(vFov),
