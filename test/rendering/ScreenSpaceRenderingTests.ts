@@ -172,4 +172,31 @@ describe("ScreenSpaceRendering Test", function() {
             }
         });
     });
+
+    it("removes marker, after datasource is removed", async function() {
+        this.timeout(5000);
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-after-datasource-removed",
+            theme: new ThemeBuilder()
+                .withMarkerStyle()
+                .withFontCatalog()
+                .build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "Marker", renderOrder: 1, color: "blue" },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3] }
+                    }
+                ]
+            },
+            lookAt: { tilt: 0, zoomLevel: 10 },
+            tileGeoJson: false,
+            beforeFinishCallback: async mapView => {
+                await mapView.removeDataSource(mapView.getDataSourceByName("geojson")!);
+            }
+        });
+    });
 });
