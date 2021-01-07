@@ -48,7 +48,7 @@ export class TextElementState {
      * @hidden
      * Stores index into path for TextElements that are of type LineMarker.
      */
-    private m_lineMarkerIndex?: number;
+    private readonly m_lineMarkerIndex?: number;
 
     /**
      *
@@ -173,7 +173,6 @@ export class TextElementState {
         this.m_textRenderState = predecessor.m_textRenderState;
         this.m_textLayoutState = predecessor.m_textLayoutState;
         this.m_iconRenderState = predecessor.m_iconRenderState;
-        this.m_lineMarkerIndex = predecessor.lineMarkerIndex;
         predecessor.m_textRenderState = undefined;
         predecessor.m_textLayoutState = undefined;
         predecessor.m_iconRenderState = undefined;
