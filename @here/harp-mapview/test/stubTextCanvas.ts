@@ -91,8 +91,9 @@ export function stubTextCanvas(
         .stub(textCanvas, "addTextBufferObject")
         .callsFake((textBufferObject: TextBufferObject, params?: TextBufferAdditionParameters) => {
             addTextBufferObjSpy(
-                textBufferObject,
-                params === undefined ? undefined : params.opacity
+                params?.pickingData,
+                params?.opacity,
+                params?.position?.toArray().slice(0, 2)
             );
             return true;
         });
