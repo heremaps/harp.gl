@@ -22,7 +22,9 @@ describe("CirclePointsMaterial", function() {
         });
 
         it("creates material with empty parameters", function() {
-            const material = new CirclePointsMaterial({});
+            const material = new CirclePointsMaterial({
+                rendererCapabilities: { isWebGL2: false } as any
+            });
 
             expect(material.size).to.equal(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE);
             expect(material.color.getHex()).to.equal(0xffffff);
@@ -31,7 +33,8 @@ describe("CirclePointsMaterial", function() {
 
         it("creates material with partial parameters object", function() {
             const material = new CirclePointsMaterial({
-                color: new THREE.Color(0xfefefe)
+                color: new THREE.Color(0xfefefe),
+                rendererCapabilities: { isWebGL2: false } as any
             });
 
             expect(material.size).to.equal(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE);
@@ -43,7 +46,8 @@ describe("CirclePointsMaterial", function() {
             const material = new CirclePointsMaterial({
                 size: 32,
                 color: new THREE.Color(0xfefefe),
-                opacity: 0.5
+                opacity: 0.5,
+                rendererCapabilities: { isWebGL2: false } as any
             });
 
             expect(material.size).to.equal(32);
