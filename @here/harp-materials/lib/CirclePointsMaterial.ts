@@ -100,6 +100,7 @@ export class CirclePointsMaterial extends RawShaderMaterial {
         }
         super(shaderParameters);
 
+        // Blending needs to always be enabled to support smooth edges
         enforceBlending(this);
 
         this.type = "CirclePointsMaterial";
