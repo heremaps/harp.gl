@@ -32,3 +32,18 @@ export interface DisplacementFeature extends HiddenThreeJSMaterialProperties {
 export function hasDisplacementFeature(material: any): material is DisplacementFeature {
     return "displacementMap" in material;
 }
+
+/**
+ * Sets the displacement map to the given material.
+ * @param displacementMap - Texture representing the elevation data used to overlay the object.
+ * @param material - The Material to be updated.
+ */
+export function setDisplacementMapToMaterial(displacementMap: THREE.DataTexture | null, material: THREE.Mesh["material"]) {
+    if (hasDisplacementFeature(material) && material.displacementMap !== displacementMap) {
+        material.displacementMap = displacementMap;
+        material.needsUpdate = true;
+        if (material.displacementMap !== null) {
+            material.displacementMap.needsUpdate = true;
+        }
+    }
+}
