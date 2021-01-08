@@ -3549,10 +3549,7 @@ export class MapView extends EventDispatcher {
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
 
         if (this.renderLabels && !this.m_pointOfView) {
-            this.m_textElementsRenderer.placeText(
-                this.m_visibleTiles.dataSourceTileList,
-                frameStartTime
-            );
+            this.m_textElementsRenderer.placeText(renderList, frameStartTime);
         }
 
         if (gatherStatistics) {

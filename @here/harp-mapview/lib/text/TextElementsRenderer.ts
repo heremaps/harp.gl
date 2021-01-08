@@ -600,7 +600,11 @@ export class TextElementsRenderer {
         const textElementsAvailable =
             this.hasOverlayText() || tileTextElementsChanged || hasTextElements(dataSourceTileList);
 
-        if (!textElementsAvailable) {
+        if (
+            !textElementsAvailable &&
+            !this.m_cacheInvalidated &&
+            !this.m_viewState.renderedTilesChanged
+        ) {
             return;
         }
 
@@ -609,11 +613,11 @@ export class TextElementsRenderer {
             tileTextElementsChanged ||
             this.m_viewState.renderedTilesChanged;
 
-        if (updateTextElements && this.m_addNewLabels) {
+        const findReplacements = updateTextElements && this.m_addNewLabels;
+        if (findReplacements) {
             this.m_textElementStateCache.clearVisited();
             this.updateTextElements(dataSourceTileList);
         }
-        const findReplacements = updateTextElements && this.m_addNewLabels;
         const anyTextGroupEvicted = this.m_textElementStateCache.update(
             time,
             this.m_options.disableFading!,
