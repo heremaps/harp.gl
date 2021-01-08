@@ -251,6 +251,8 @@ export function hasExtrusionFeature(material: any): material is ExtrusionFeature
     return "extrusionRatio" in material;
 }
 
+// See https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-redeclare.md#ignoredeclarationmerge
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 namespace DisplacementFeature {
     /**
      * Checks if feature is enabled (displacement map defined).
