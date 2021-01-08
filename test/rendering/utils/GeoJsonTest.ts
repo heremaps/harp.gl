@@ -103,10 +103,10 @@ export class GeoJsonTest {
         const dataSource = createDataSource("geojson", options);
 
         this.mapView.setDynamicProperty("enabled", true);
-        this.mapView.addDataSource(dataSource);
+        await this.mapView.addDataSource(dataSource);
 
         if (options.extraDataSource) {
-            this.mapView.addDataSource(createDataSource("geojson2", options.extraDataSource));
+            await this.mapView.addDataSource(createDataSource("geojson2", options.extraDataSource));
         }
 
         if (options.beforeFinishCallback) {
