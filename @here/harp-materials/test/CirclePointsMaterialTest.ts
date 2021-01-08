@@ -15,10 +15,7 @@ describe("CirclePointsMaterial", function() {
     describe("#constructor()", function() {
         it("creates material with default parameters", function() {
             const material = new CirclePointsMaterial();
-
-            expect(material.size).to.equal(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE);
-            expect(material.color.getHex()).to.equal(0xffffff);
-            expect(material.opacity).to.equal(1.0);
+            expect(material).to.be.an.instanceof(CirclePointsMaterial);
         });
 
         it("creates material with empty parameters", function() {
@@ -58,7 +55,9 @@ describe("CirclePointsMaterial", function() {
 
     describe("#size", function() {
         it("updates size", function() {
-            const material = new CirclePointsMaterial();
+            const material = new CirclePointsMaterial({
+                rendererCapabilities: { isWebGL2: false } as any
+            });
             material.size = 32;
 
             expect(material.size).to.equal(32);
@@ -68,7 +67,9 @@ describe("CirclePointsMaterial", function() {
 
     describe("#setOpacity", function() {
         it("updates opacity", function() {
-            const material = new CirclePointsMaterial();
+            const material = new CirclePointsMaterial({
+                rendererCapabilities: { isWebGL2: false } as any
+            });
             material.setOpacity(0.7);
 
             expect(material.opacity).to.equal(0.7);
@@ -78,7 +79,9 @@ describe("CirclePointsMaterial", function() {
 
     describe("#color", function() {
         it("updates color", function() {
-            const material = new CirclePointsMaterial();
+            const material = new CirclePointsMaterial({
+                rendererCapabilities: { isWebGL2: false } as any
+            });
             material.color = new THREE.Color(0xfefefe);
 
             expect(material.color.getHex()).to.equal(0xfefefe);
@@ -87,7 +90,9 @@ describe("CirclePointsMaterial", function() {
         });
 
         it("updates color with set", function() {
-            const material = new CirclePointsMaterial();
+            const material = new CirclePointsMaterial({
+                rendererCapabilities: { isWebGL2: false } as any
+            });
             material.color.set(0xfefefe);
 
             expect(material.color.getHex()).to.equal(0xfefefe);

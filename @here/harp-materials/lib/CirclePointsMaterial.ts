@@ -72,9 +72,11 @@ export class CirclePointsMaterial extends RawShaderMaterial {
     /**
      * Constructs a new `CirclePointsMaterial`.
      *
-     * @param parameters - The constructor's parameters.
+     * @param parameters - The constructor's parameters. Always required except when cloning another
      */
     constructor(parameters?: CirclePointsMaterialParameters) {
+        let defaultColor = new THREE.Color(),
+            defaultOpacity = 1.0;
         let sizeValue, colorValue, opacityValue;
         let shaderParameters: RawShaderMaterialParameters | undefined;
         if (parameters) {
@@ -88,8 +90,8 @@ export class CirclePointsMaterial extends RawShaderMaterial {
             shaderParams.fragmentShader = fragmentShader;
             shaderParams.uniforms = {
                 size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
-                diffuse: new THREE.Uniform(new THREE.Color()),
-                opacity: new THREE.Uniform(1.0)
+                diffuse: new THREE.Uniform(defaultColor),
+                opacity: new THREE.Uniform(defaultOpacity)
             };
             shaderParams.depthTest = false;
             shaderParams.extensions = {
@@ -104,8 +106,8 @@ export class CirclePointsMaterial extends RawShaderMaterial {
         enforceBlending(this);
 
         this.type = "CirclePointsMaterial";
-        this.m_color = this.uniforms.diffuse.value;
-        this.setOpacity(this.uniforms.opacity.value);
+        this.m_color = defaultColor;
+        this.setOpacity(defaultOpacity);
 
         if (sizeValue !== undefined) {
             this.size = sizeValue;
