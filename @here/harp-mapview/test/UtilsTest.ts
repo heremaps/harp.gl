@@ -1,4 +1,3 @@
-/* eslint-disable simple-import-sort/sort */
 /*
  * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
@@ -7,6 +6,7 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { getProjectionName } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
     GeoBox,
@@ -18,16 +18,13 @@ import {
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
+import * as THREE from "three";
 
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
-
-import { assert, expect } from "chai";
-import * as sinon from "sinon";
-import * as THREE from "three";
-import { getProjectionName } from "@here/harp-datasource-protocol";
-import { Camera, Vector3 } from "three";
 
 function setCamera(
     camera: THREE.Camera,

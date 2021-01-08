@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-declare function require(module: any): any;
-
 import {
     ContextualArabicConverter,
     FontCatalog,

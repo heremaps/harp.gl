@@ -15,8 +15,6 @@ import { MapViewEventNames } from "../lib/MapView";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-declare const global: any;
-
 describe("EventDispatcher", function () {
     let eventDispatcher: EventDispatcher | undefined;
 

@@ -102,6 +102,8 @@ export enum StandardGeometryKind {
  */
 export type GeometryKind = string | StandardGeometryKind;
 
+// See https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-redeclare.md#ignoredeclarationmerge
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GeometryKind = StandardGeometryKind;
 
 /**
