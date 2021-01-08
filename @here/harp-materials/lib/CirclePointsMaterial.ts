@@ -75,8 +75,8 @@ export class CirclePointsMaterial extends RawShaderMaterial {
      * @param parameters - The constructor's parameters. Always required except when cloning another
      */
     constructor(parameters?: CirclePointsMaterialParameters) {
-        let defaultColor = new THREE.Color(),
-            defaultOpacity = 1.0;
+        const defaultColor = new THREE.Color();
+        const defaultOpacity = 1.0;
         let sizeValue, colorValue, opacityValue;
         let shaderParameters: RawShaderMaterialParameters | undefined;
         if (parameters) {
