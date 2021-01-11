@@ -15,6 +15,10 @@ import { enforceBlending } from "./Utils";
 
 const vertexShader: string = `
 uniform float size;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+attribute vec3 position;
 
 void main() {
     vec3 transformed = vec3(position);
@@ -26,6 +30,9 @@ void main() {
 `;
 
 const fragmentShader: string = `
+precision highp float;
+precision highp int;
+
 uniform vec3 diffuse;
 uniform float opacity;
 
