@@ -202,32 +202,32 @@
   resolved "https://registry.yarnpkg.com/@here/harp-fontcatalog/-/harp-fontcatalog-0.1.6.tgz#e06a6088d0b6f60321f034ee1278bfa72ee1bf6e"
   integrity sha512-CdtsKtkX3paYBN5K7gJXLNDdekFLxcPHDjgFL1arz4IHN+9apVbWfW1Gq6oYLGPYLt1N0uzg/LU0G0hEffLV3w==
 
-"@here/olp-sdk-core@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@here/olp-sdk-core/-/olp-sdk-core-1.1.0.tgz#0cfe753f9d16234377a36b0f1edb5dee62ee58c9"
-  integrity sha512-12C7WSRC4syFOZwOS98Zv1ROAIWBTtFJH4xmpkO0izf1/W/cARnEt3KuGjQUHcDXeeeEi1dxx6Zv0x/2WUBIyw==
+"@here/olp-sdk-core@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-core/-/olp-sdk-core-1.3.0.tgz#ed9f66af25c3b2e546640515d7a3725b24fe5efb"
+  integrity sha512-F78cW9lmYKtSIa+UCzC3aFDbStYn9taOFcGx2rY9SKLIYIyw9PVIZ+xxW/r9dJPDX0V8k1X+p5qgN+ZIbhLekw==
   dependencies:
-    "@here/olp-sdk-dataservice-api" "^1.6.0"
-    "@here/olp-sdk-fetch" "^1.6.0"
+    "@here/olp-sdk-dataservice-api" "^1.8.0"
+    "@here/olp-sdk-fetch" "^1.8.0"
 
-"@here/olp-sdk-dataservice-api@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-api/-/olp-sdk-dataservice-api-1.6.0.tgz#17d64788d1a4eaec1de5e6a3f52259850480a223"
-  integrity sha512-L7ANO0Cwy1Tpt5h5Mcw+QzMuFfvlvKvh3aF0v8JxZtc5VPpOraojLDQOrKBEUDCzi+TImXK3G8y7Xe3NuPz4ZA==
+"@here/olp-sdk-dataservice-api@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-api/-/olp-sdk-dataservice-api-1.8.0.tgz#0d6bd5c7494b9de4ab7b1ca786523cebf173e81c"
+  integrity sha512-xcbUe50oC8LBQOOKXW3a2PQoLo5oQxEedvRsJFv6BhppjJTXp5g2mg1rtr9KEQBKzS39T1E7Kyw4t9R9Nlm4QQ==
 
-"@here/olp-sdk-dataservice-read@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-read/-/olp-sdk-dataservice-read-1.6.0.tgz#c7493f9d32d1494e4dea7b2f90c5c00a934a9b1b"
-  integrity sha512-EkBs8GvNpJY+kxK6vPf9wLm9nttJp8alDGSpYq0My02eHxQB8t+WfXTvxzRrAnIjvHHnBneBpbY+yuZApTiPVA==
+"@here/olp-sdk-dataservice-read@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-read/-/olp-sdk-dataservice-read-1.8.0.tgz#118f738753ef6f23415d8367fe36fee3a4366a17"
+  integrity sha512-8dX1wY4LLmxYvUS9lFIXJNQki3AoI7Czw9hwgqSqCoMOBzmLO8a9dRN49z/mdsClFZc38TKblTZTp9PR6mP5XA==
   dependencies:
-    "@here/olp-sdk-core" "^1.1.0"
-    "@here/olp-sdk-dataservice-api" "^1.6.0"
-    "@here/olp-sdk-fetch" "^1.6.0"
+    "@here/olp-sdk-core" "^1.3.0"
+    "@here/olp-sdk-dataservice-api" "^1.8.0"
+    "@here/olp-sdk-fetch" "^1.8.0"
 
-"@here/olp-sdk-fetch@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@here/olp-sdk-fetch/-/olp-sdk-fetch-1.6.0.tgz#bf1b6c980688eb996e0323f8955636f5e96b666a"
-  integrity sha512-DOhAQ8vn7he3Qmwl6dMl0/xwBlGs5099IIhsIp35BbAFCqiPp7VG0is8LY0H3KzpAHTzXgQ+k4QZNQr1p0oJJw==
+"@here/olp-sdk-fetch@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-fetch/-/olp-sdk-fetch-1.8.0.tgz#6a616d32431da4dd8657df2194f56c504220acce"
+  integrity sha512-43Rzo2voqGfBsg6cPHRTrzJSex3Ev0jyzJNyTHLCNs6wThG17yAE2+ffmFqDvcsvn22lJyZz5Xh7C4AIL5CHPw==
   dependencies:
     node-fetch "^2.6.0"
 
