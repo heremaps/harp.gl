@@ -22,8 +22,8 @@
         "@here/harp-mapview": "^0.21.1",
         "@here/harp-utils": "^0.21.0",
         "@here/harp-vectortile-datasource": "^0.21.1",
-        "copy-webpack-plugin": "^6.3.2",
-        "css-loader": "^3.5.3",
+        "copy-webpack-plugin": "^7.0.0",
+        "css-loader": "^5.0.1",
         "file-loader": "^6.0.0",
         "html-inline-css-webpack-plugin": "^1.8.0",
         "mini-css-extract-plugin": "^1.3.2",
@@ -32,8 +32,8 @@
         "three": "^0.124.0",
         "ts-loader": "^8.0.7",
         "typescript": "^4.1.2",
-        "webpack": "^5.9.0",
-        "webpack-cli": "^4.2.0",
+        "webpack": "^5.12.3",
+        "webpack-cli": "^4.3.1",
         "webpack-dev-server": "^3.11.0"
     }
 }
