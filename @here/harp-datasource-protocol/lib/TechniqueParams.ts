@@ -264,7 +264,7 @@ export interface BaseTechniqueParams {
     minZoomLevel?: DynamicProperty<number>;
 
     /**
-     * Maximum zoom level. If the current zoom level is larger, the technique will not be used.
+     * Maximum zoom level. If the current zoom level is equal to or greater, the technique will not be used.
      */
     maxZoomLevel?: DynamicProperty<number>;
 }

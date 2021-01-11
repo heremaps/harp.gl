@@ -588,8 +588,8 @@ describe("StyleSetEvaluator", function() {
             ])
         );
 
-        assert.isNotEmpty(
-            getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
+        assert.isEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 13.9 }, [
                 {
                     when: ["==", ["geometry-type"], "Polygon"],
                     technique: "extruded-polygon",
@@ -600,6 +600,17 @@ describe("StyleSetEvaluator", function() {
         );
 
         assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 14 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: 14,
+                    maxZoomLevel: 15
+                }
+            ])
+        );
+
+        assert.isEmpty(
             getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
                 {
                     when: ["==", ["geometry-type"], "Polygon"],
@@ -631,14 +642,17 @@ describe("StyleSetEvaluator", function() {
         );
 
         assert.isNotEmpty(
-            getMatchingTechniques({ ...defaultProperties, $zoom: 15, minLevel: 14, maxLevel: 15 }, [
-                {
-                    when: ["==", ["geometry-type"], "Polygon"],
-                    technique: "extruded-polygon",
-                    minZoomLevel: ["get", "minLevel"],
-                    maxZoomLevel: ["get", "maxLevel"]
-                }
-            ])
+            getMatchingTechniques(
+                { ...defaultProperties, $zoom: 14.5, minLevel: 14, maxLevel: 15 },
+                [
+                    {
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "extruded-polygon",
+                        minZoomLevel: ["get", "minLevel"],
+                        maxZoomLevel: ["get", "maxLevel"]
+                    }
+                ]
+            )
         );
 
         assert.isEmpty(

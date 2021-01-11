@@ -238,7 +238,7 @@ export class TileObjectRenderer {
             return false;
         }
 
-        if (typeof maxZoomLevel === "number" && zoomLevel > maxZoomLevel) {
+        if (typeof maxZoomLevel === "number" && zoomLevel >= maxZoomLevel) {
             return false;
         }
 
