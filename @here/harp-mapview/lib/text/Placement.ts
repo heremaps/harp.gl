@@ -176,7 +176,6 @@ export enum PrePlacementResult {
 }
 
 const tmpPlacementPosition = new THREE.Vector3();
-const tmpPlacementBounds = new THREE.Box2();
 
 /**
  * Applies early rejection tests for a given text element meant to avoid trying to place labels
@@ -254,6 +253,7 @@ export function checkReadyForPlacement(
  * Computes the offset for a point text accordingly to text alignment (and icon, if any).
  * @param textElement - The text element of which the offset will computed. It must be a point
  * label with [[layoutStyle]] and [[bounds]] already computed.
+ * @param textBounds - The text screen bounds.
  * @param placement - The relative anchor placement (may be different then original alignment).
  * @param scale - The scaling factor (due to distance, etc.).
  * @param env - The {@link @here/harp-datasource-protocol#Env} used
@@ -262,6 +262,7 @@ export function checkReadyForPlacement(
  */
 function computePointTextOffset(
     textElement: TextElement,
+    textBounds: THREE.Box2,
     placement: TextPlacement,
     scale: number,
     env: Env,
@@ -272,7 +273,6 @@ function computePointTextOffset(
             textElement.type === TextElementType.LineMarker
     );
     assert(textElement.layoutStyle !== undefined);
-    assert(textElement.bounds !== undefined);
 
     offset.x = textElement.xOffset;
     offset.y = textElement.yOffset;
@@ -280,23 +280,23 @@ function computePointTextOffset(
     switch (placement.h) {
         case HorizontalPlacement.Left:
             // Already accounts for any margin that is already applied to the text element bounds.
-            offset.x -= textElement.bounds!.max.x;
+            offset.x -= textBounds.max.x;
             break;
         case HorizontalPlacement.Right:
             // Account for any margin applied as above.
-            offset.x -= textElement.bounds!.min.x;
+            offset.x -= textBounds.min.x;
             break;
     }
     switch (placement.v) {
         case VerticalPlacement.Top:
-            offset.y -= textElement.bounds!.min.y;
+            offset.y -= textBounds.min.y;
             break;
         case VerticalPlacement.Center:
-            offset.y -= 0.5 * (textElement.bounds!.max.y + textElement.bounds!.min.y);
+            offset.y -= 0.5 * (textBounds.max.y + textBounds.min.y);
             break;
         case VerticalPlacement.Bottom:
             // Accounts for vertical margin that may be applied to the text bounds.
-            offset.y -= textElement.bounds!.max.y;
+            offset.y -= textBounds.max.y;
             break;
     }
 
@@ -360,6 +360,7 @@ function computePointTextOffset(
 }
 
 const tmpBox = new THREE.Box2();
+const tmpBounds = new THREE.Box2();
 const tmpBoxes: THREE.Box2[] = [];
 const tmpMeasurementParams: MeasurementParameters = {};
 const tmpCollisionBoxes: CollisionBox[] = [];
@@ -511,7 +512,6 @@ function placePointLabelChoosingAnchor(
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
     assert(labelState.element.layoutStyle !== undefined);
-
     const label = labelState.element;
 
     // Store label state - persistent or new label.
@@ -528,6 +528,7 @@ function placePointLabelChoosingAnchor(
     assert(matchIdx >= 0);
     // Will be true if all text placements are invisible.
     let allInvisible: boolean = true;
+
     // Iterate all placements starting from current one.
     for (let i = matchIdx; i < placementsNum + matchIdx; ++i) {
         const anchorPlacement = placements[i % placementsNum];
@@ -545,39 +546,21 @@ function placePointLabelChoosingAnchor(
             env,
             screenCollisions,
             !isLastPlacement,
-            outScreenPosition
+            tmpPlacementPosition
         );
 
-        // Store last successful (previous) placement coordinates in temp variables.
+        if (placementResult === PlacementResult.Ok) {
+            outScreenPosition.copy(tmpPlacementPosition);
+            return PlacementResult.Ok;
+        }
+        // Store last successful (previous frame) position even if it's now rejected (to fade out).
         if (isLastPlacement) {
-            assert(label.bounds !== undefined);
-            tmpPlacementPosition.copy(outScreenPosition);
-            tmpPlacementBounds.copy(label.bounds!);
+            outScreenPosition.copy(tmpPlacementPosition);
         }
 
-        // Check the text allocation
-        if (placementResult === PlacementResult.Invisible) {
-            // Persistent label out of screen or the new label that is colliding - next iteration.
-            continue;
-        } else {
-            // This placement is visible, but surely colliding.
-            allInvisible = false;
-        }
-
-        // If text rejected (label collides), proceed to test further placements.
-        if (placementResult === PlacementResult.Rejected) {
-            continue;
-        }
-
-        // Proper placement found.
-        return PlacementResult.Ok;
+        // Invisible = Persistent label out of screen or the new label that is colliding.
+        allInvisible = allInvisible && placementResult === PlacementResult.Invisible;
     }
-    // Revert recent screen position and bounds.
-    outScreenPosition.copy(tmpPlacementPosition);
-    label.bounds!.copy(tmpPlacementBounds);
-    // Revert back text canvas layout of the last placement.
-    // In case of label rejected this allows to fade out text in the last position.
-    applyTextPlacement(textCanvas, lastPlacement);
 
     return allInvisible
         ? // All text's placements out of the screen.
@@ -669,38 +652,41 @@ function placePointLabelAtAnchor(
     assert(label.glyphs !== undefined);
     assert(label.layoutStyle !== undefined);
 
-    const measureText = label.bounds === undefined || forceInvalidation;
-    if (label.bounds === undefined) {
-        label.bounds = new THREE.Box2();
-    }
+    const measureText = !label.bounds || forceInvalidation;
 
-    // Override label text layout (on TextCanvas) for measurements and text buffer creation.
-    applyTextPlacement(textCanvas, placement);
-
+    const labelBounds = measureText ? tmpBounds : label.bounds!;
     if (measureText) {
-        // Setup measurements parameters for textCanvas.measureText().
+        // Override text canvas layout style for measurement.
+        applyTextPlacement(textCanvas, placement);
+
         tmpMeasurementParams.outputCharacterBounds = undefined;
         tmpMeasurementParams.path = undefined;
         tmpMeasurementParams.pathOverflow = false;
         tmpMeasurementParams.letterCaseArray = label.glyphCaseArray!;
         // Compute label bounds according to layout settings.
-        textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
+        textCanvas.measureText(label.glyphs!, labelBounds, tmpMeasurementParams);
     }
 
     // Compute text offset from the anchor point
-    const textOffset = computePointTextOffset(label, placement, scale, env, tmpTextOffset);
-    textOffset.add(screenPosition);
+    const textOffset = computePointTextOffset(
+        label,
+        labelBounds,
+        placement,
+        scale,
+        env,
+        tmpTextOffset
+    ).add(screenPosition);
 
     // Update output screen position.
     outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
 
-    tmpBox.copy(label.bounds!);
     // Apply additional persistent margin, keep in mind that text bounds just calculated
     // are not (0, 0, w, h) based, so their coords usually are also non-zero.
     // TODO: Make the margin configurable
-    tmpBox.expandByVector(persistentPointLabelTextMargin);
-    tmpBox.translate(textOffset);
-
+    tmpBox
+        .copy(labelBounds)
+        .expandByVector(persistentPointLabelTextMargin)
+        .translate(textOffset);
     tmpBox.getCenter(tmpCenter);
     tmpBox.getSize(tmpSize);
 
@@ -747,6 +733,10 @@ function placePointLabelAtAnchor(
     // re-created.
     if (measureText) {
         label.textBufferObject = undefined;
+        label.bounds = label.bounds ? label.bounds.copy(labelBounds) : labelBounds.clone();
+    } else {
+        // Override text canvas layout style for placement.
+        applyTextPlacement(textCanvas, placement);
     }
 
     // Save current placement in label state.
