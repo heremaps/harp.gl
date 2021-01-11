@@ -74,8 +74,6 @@ export interface CirclePointsMaterialParameters
 export class CirclePointsMaterial extends RawShaderMaterial {
     static readonly DEFAULT_CIRCLE_SIZE = 1;
 
-    private readonly m_color: THREE.Color;
-
     /**
      * Constructs a new `CirclePointsMaterial`.
      *
@@ -95,11 +93,14 @@ export class CirclePointsMaterial extends RawShaderMaterial {
             shaderParams.name = "CirclePointsMaterial";
             shaderParams.vertexShader = vertexShader;
             shaderParams.fragmentShader = fragmentShader;
-            shaderParams.uniforms = {
-                size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
-                diffuse: new THREE.Uniform(defaultColor),
-                opacity: new THREE.Uniform(defaultOpacity)
-            };
+            shaderParams.uniforms = THREE.UniformsUtils.merge([
+                {
+                    size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
+                    diffuse: new THREE.Uniform(defaultColor),
+                    opacity: new THREE.Uniform(defaultOpacity)
+                },
+                THREE.UniformsLib.fog
+            ]);
             shaderParams.depthTest = false;
             shaderParams.extensions = {
                 ...shaderParams.extensions,
@@ -113,7 +114,6 @@ export class CirclePointsMaterial extends RawShaderMaterial {
         enforceBlending(this);
 
         this.type = "CirclePointsMaterial";
-        this.m_color = defaultColor;
         this.setOpacity(defaultOpacity);
 
         if (sizeValue !== undefined) {
@@ -141,17 +141,11 @@ export class CirclePointsMaterial extends RawShaderMaterial {
         this.uniforms.size.value = size;
     }
 
-    /**
-     * Gets the diffuse.
-     */
     get color(): THREE.Color {
-        return this.m_color;
+        return this.uniforms.diffuse.value as THREE.Color;
     }
 
-    /**
-     * Sets the diffuse.
-     */
-    set color(color: THREE.Color) {
-        this.m_color.set(color);
+    set color(value: THREE.Color) {
+        this.uniforms.diffuse.value.copy(value);
     }
 }
