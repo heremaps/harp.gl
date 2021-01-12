@@ -14,6 +14,7 @@ import {
     VerticalPlacement
 } from "@here/harp-text-canvas/lib/rendering/TextStyle";
 import { expect } from "chai";
+import * as THREE from "three";
 
 import { TextElementState } from "../lib/text/TextElementState";
 import { TextElementType } from "../lib/text/TextElementType";
@@ -134,6 +135,7 @@ describe("TextElementState", function() {
                     verticalAlignment: VerticalAlignment.Above
                 }
             } as any);
+            textElementState.element.bounds = new THREE.Box2();
             textElementState.update(0);
             // Override with alternative text placement
             textElementState.textPlacement = {
@@ -146,6 +148,7 @@ describe("TextElementState", function() {
             expect(textPlacement.h).to.be.equal(HorizontalPlacement.Left);
             expect(textPlacement.v).to.be.equal(VerticalPlacement.Top);
             expect(textElementState.isBaseTextPlacement(textPlacement)).to.be.true;
+            expect(textElementState.element.bounds).to.be.undefined;
         });
 
         it("resets text and icon state", function() {
