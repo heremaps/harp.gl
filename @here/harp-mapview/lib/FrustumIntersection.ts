@@ -359,7 +359,15 @@ export class FrustumIntersection {
 
         return {
             area: objectSize * objectSize,
-            distance: projectedPoint.z / projectedPoint.w
+            //Dividing by w means we loose information for whether the point is behind the camera
+            //(i.e. it is in front of the near plane) or beyond the far plane, hence we first clamp
+            //to [-1, 1] range, before doing the division.
+            distance:
+                projectedPoint.z <= -projectedPoint.w
+                    ? -1
+                    : projectedPoint.z >= projectedPoint.w
+                    ? 1
+                    : projectedPoint.z / projectedPoint.w
         };
     }
 
