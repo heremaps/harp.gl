@@ -6,7 +6,7 @@
 
 import { GeometryKind } from "@here/harp-datasource-protocol";
 import { Projection } from "@here/harp-geoutils";
-import { hasDisplacementFeature } from "@here/harp-materials";
+import { setDisplacementMapToMaterial } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -26,17 +26,13 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
     if (!("material" in object)) {
         return;
     }
-
+    const setDisplacementMap = setDisplacementMapToMaterial.bind(null, displacementMap);
     const material = (object as any).material as THREE.Mesh["material"];
 
     if (Array.isArray(material)) {
-        material.forEach(mat => {
-            if (hasDisplacementFeature(mat)) {
-                mat.displacementMap = displacementMap;
-            }
-        });
-    } else if (material && hasDisplacementFeature(material)) {
-        material.displacementMap = displacementMap;
+        material.forEach(setDisplacementMap);
+    } else if (material) {
+        setDisplacementMap(material);
     }
 }
 

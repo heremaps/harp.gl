@@ -6,10 +6,19 @@
 
 import * as THREE from "three";
 
+import {
+    RawShaderMaterial,
+    RawShaderMaterialParameters,
+    RendererMaterialParameters
+} from "./RawShaderMaterial";
 import { enforceBlending } from "./Utils";
 
 const vertexShader: string = `
 uniform float size;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+attribute vec3 position;
 
 void main() {
     vec3 transformed = vec3(position);
@@ -21,6 +30,9 @@ void main() {
 `;
 
 const fragmentShader: string = `
+precision highp float;
+precision highp int;
+
 uniform vec3 diffuse;
 uniform float opacity;
 
@@ -40,7 +52,9 @@ void main() {
 /**
  * Parameters used when constructing a new {@link HighPrecisionPointMaterial}.
  */
-export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialParameters {
+export interface CirclePointsMaterialParameters
+    extends THREE.ShaderMaterialParameters,
+        RendererMaterialParameters {
     /**
      * Point size.
      */
@@ -57,49 +71,59 @@ export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialPara
  * shape is created with an alpha channel to benefit an antialising that a mere `discard` could
  * not bring.
  */
-export class CirclePointsMaterial extends THREE.ShaderMaterial {
+export class CirclePointsMaterial extends RawShaderMaterial {
     static readonly DEFAULT_CIRCLE_SIZE = 1;
-
-    private readonly m_color: THREE.Color;
-    private m_opacity: number;
 
     /**
      * Constructs a new `CirclePointsMaterial`.
      *
-     * @param parameters - The constructor's parameters.
+     * @param parameters - The constructor's parameters. Always required except when cloning another
      */
-    constructor(parameters: CirclePointsMaterialParameters = {}) {
-        const { size, color, opacity, ...shaderParams } = parameters;
-        shaderParams.name = "CirclePointsMaterial";
-        shaderParams.vertexShader = vertexShader;
-        shaderParams.fragmentShader = fragmentShader;
-        shaderParams.uniforms = {
-            size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
-            diffuse: new THREE.Uniform(new THREE.Color()),
-            opacity: new THREE.Uniform(1.0)
-        };
-        shaderParams.depthTest = false;
-        shaderParams.extensions = {
-            ...shaderParams.extensions,
-            derivatives: true
-        };
+    constructor(parameters?: CirclePointsMaterialParameters) {
+        const defaultColor = new THREE.Color();
+        const defaultOpacity = 1.0;
+        let sizeValue, colorValue, opacityValue;
+        let shaderParameters: RawShaderMaterialParameters | undefined;
+        if (parameters) {
+            const { size, color, opacity, ...shaderParams } = parameters;
+            sizeValue = size;
+            colorValue = color;
+            opacityValue = opacity;
 
-        super(shaderParams);
+            shaderParams.name = "CirclePointsMaterial";
+            shaderParams.vertexShader = vertexShader;
+            shaderParams.fragmentShader = fragmentShader;
+            shaderParams.uniforms = THREE.UniformsUtils.merge([
+                {
+                    size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
+                    diffuse: new THREE.Uniform(defaultColor),
+                    opacity: new THREE.Uniform(defaultOpacity)
+                },
+                THREE.UniformsLib.fog
+            ]);
+            shaderParams.depthTest = false;
+            shaderParams.extensions = {
+                ...shaderParams.extensions,
+                derivatives: true
+            };
+            shaderParameters = shaderParams;
+        }
+        super(shaderParameters);
+
         // Blending needs to always be enabled to support smooth edges
         enforceBlending(this);
 
         this.type = "CirclePointsMaterial";
-        this.m_color = this.uniforms.diffuse.value;
-        this.m_opacity = this.uniforms.opacity.value;
+        this.setOpacity(defaultOpacity);
 
-        if (size !== undefined) {
-            this.size = size;
+        if (sizeValue !== undefined) {
+            this.size = sizeValue;
         }
-        if (color !== undefined) {
-            this.color = color;
+        if (colorValue !== undefined) {
+            this.color = colorValue;
         }
-        if (opacity !== undefined) {
-            this.opacity = opacity;
+        if (opacityValue !== undefined) {
+            this.setOpacity(opacityValue);
         }
     }
 
@@ -117,36 +141,11 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
         this.uniforms.size.value = size;
     }
 
-    /**
-     * Get circle opacity.
-     */
-    get opacity(): number {
-        return this.m_opacity;
-    }
-
-    /**
-     * Set circle opacity.
-     */
-    set opacity(opacity: number) {
-        this.m_opacity = opacity;
-
-        // Base constructor may set opacity before uniform being created.
-        if (this.uniforms && this.uniforms.opacity) {
-            this.uniforms.opacity.value = opacity;
-        }
-    }
-
-    /**
-     * Gets the diffuse.
-     */
     get color(): THREE.Color {
-        return this.m_color;
+        return this.uniforms.diffuse.value as THREE.Color;
     }
 
-    /**
-     * Sets the diffuse.
-     */
-    set color(color: THREE.Color) {
-        this.m_color.set(color);
+    set color(value: THREE.Color) {
+        this.uniforms.diffuse.value.copy(value);
     }
 }

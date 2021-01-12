@@ -1203,27 +1203,6 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         return this;
     }
 
-    /** @override */
-    get displacementMap(): THREE.Texture | null {
-        return super.displacementMap === undefined ? null : super.displacementMap;
-    }
-
-    /** @override */
-    set displacementMap(map: THREE.Texture | null) {
-        if (map === this.displacementMap) {
-            return;
-        }
-
-        if (!map || !this.displacementMap) {
-            this.needsUpdate = true;
-        }
-
-        if (map) {
-            map.needsUpdate = true;
-        }
-        super.displacementMap = map;
-    }
-
     // Only here to make the compiler happy, these methods will be overriden: The actual
     // implementations are those in FadingFeatureMixin and ExtrusionFeatureMixin, see below:
     //

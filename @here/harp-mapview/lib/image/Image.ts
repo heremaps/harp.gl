@@ -29,7 +29,7 @@ export class ImageItem {
     /** Turns to `true` if the loading has been cancelled. */
     cancelled?: boolean;
     /** `loadingPromise` is only used during loading/generating the image. */
-    private loadingPromise?: Promise<ImageItem>;
+    private loadingPromise?: Promise<ImageItem | undefined>;
 
     /**
      * Create the `ImageItem`.
@@ -56,7 +56,7 @@ export class ImageItem {
      * @param imageItem - `ImageItem` containing the URL to load image from.
      * @returns An {@link ImageItem} if the image has already been loaded, a promise otherwise.
      */
-    loadImage(): Promise<ImageItem> {
+    loadImage(): Promise<ImageItem | undefined> {
         if (this.loaded) {
             return Promise.resolve(this);
         }

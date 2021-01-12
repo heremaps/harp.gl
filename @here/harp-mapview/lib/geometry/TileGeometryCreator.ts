@@ -57,6 +57,7 @@ import {
     isHighPrecisionLineMaterial,
     MapMeshDepthMaterial,
     MapMeshStandardMaterial,
+    setDisplacementMapToMaterial,
     setShaderMaterialDefine,
     SolidLineMaterial
 } from "@here/harp-materials";
@@ -1123,7 +1124,7 @@ export class TileGeometryCreator {
             stdMaterial.color.set(terrainColor);
             // Remove displacement map, otherwise it would elevate terrain geometry and make it
             // twice as high as it should be.
-            stdMaterial.displacementMap = null;
+            setDisplacementMapToMaterial(null, stdMaterial);
             return;
         }
 

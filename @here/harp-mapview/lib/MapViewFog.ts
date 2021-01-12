@@ -5,6 +5,7 @@
  */
 import { Fog } from "@here/harp-datasource-protocol";
 import { HighPrecisionLineMaterial } from "@here/harp-materials";
+import { RawShaderMaterial } from "@here/harp-materials/lib/RawShaderMaterial";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -144,25 +145,24 @@ export class MapViewFog {
      */
     private setFogInRawShaderMaterials(enableFog: boolean) {
         this.m_scene.traverse(object => {
-            if (!(object instanceof THREE.Mesh)) {
-                return;
+            if (object instanceof THREE.Mesh) {
+                const material = object.material;
+                if (
+                    material instanceof THREE.Material &&
+                    // HighPrecisionLineMaterial does not support fog:
+                    !(material instanceof HighPrecisionLineMaterial) &&
+                    // We may skip redundant updates:
+                    material.fog !== enableFog
+                ) {
+                    material.fog = enableFog;
+                    if (material instanceof RawShaderMaterial) {
+                        // Fog properties can't be easily changed at runtime (once the material
+                        // is rendered at least once) and thus requires building of new shader
+                        // program - force material update.
+                        material.invalidateFog();
+                    }
+                }
             }
-            if (!(object.material instanceof THREE.Material)) {
-                return;
-            }
-            // HighPrecisionLineMaterial does not support fog
-            if (object.material instanceof HighPrecisionLineMaterial) {
-                return;
-            }
-            // We may skip redundant updates.
-            if (object.material.fog === enableFog) {
-                return;
-            }
-            object.material.fog = enableFog;
-            // Fog properties can't be easily changed at runtime (once the material
-            // is rendered at least once) and thus requires building of new shader
-            // program - force material update.
-            object.material.needsUpdate = true;
         });
     }
 }
