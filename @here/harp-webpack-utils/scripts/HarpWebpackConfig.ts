@@ -8,16 +8,16 @@
 // see: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/49528
 const CopyWebpackPlugin: any = require("copy-webpack-plugin");
 // Uncomment this when the above issue is fixed.
-//import * as CopyWebpackPlugin from "copy-webpack-plugin";
+// import * as CopyWebpackPlugin from "copy-webpack-plugin";
 
 import * as HtmlWebpackPlugin from "html-webpack-plugin";
 import { Configuration, WebpackPluginInstance } from "webpack";
-
 // As above, the typings don't work for webpack-merge, see:
 // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/49757
-const WebpackMerge: any = require("webpack-merge");
+// const WebpackMerge: any = require("webpack-merge");
 // Uncomment this when the above issue is fixed.
-//import * as WebpackMerge from "webpack-merge";
+// import * as WebpackMerge from "webpack-merge";
+import { CustomizeRule, mergeWithRules } from "webpack-merge";
 
 export interface HarpWebpackConfig {
     mainEntry?: string;
@@ -32,6 +32,17 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
     const userConfig = config !== undefined ? config : {};
     const mode = process.env.NODE_ENV === "production" ? "production" : "development";
     const mainEntry = harpConfig === undefined ? undefined : harpConfig.mainEntry;
+    const WebpackMergeMatchLoader = mergeWithRules({
+        module: {
+            rules: {
+                test: CustomizeRule.Match,
+                use: {
+                    loader: CustomizeRule.Match,
+                    options: CustomizeRule.Merge
+                }
+            }
+        }
+    });
     const baseConfig: Configuration = {
         output: {
             filename: "[name].bundle.js"
@@ -56,11 +67,13 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
             rules: [{ test: /\.tsx?$/, loader: "ts-loader" }]
         }
     };
+
     const mainConfig = mainEntry?.match(/\.tsx?$/)
-        ? WebpackMerge.smart(baseConfig, typescriptConfig)
+        ? WebpackMergeMatchLoader(baseConfig, typescriptConfig)
         : baseConfig;
+
     const bundles = [
-        WebpackMerge.smart(
+        WebpackMergeMatchLoader(
             {
                 ...mainConfig,
                 plugins: createPlugins(
@@ -78,8 +91,9 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
             userConfig
         )
     ];
+
     if (mainEntry !== undefined) {
-        bundles[0] = WebpackMerge.smart(
+        bundles[0] = WebpackMergeMatchLoader(
             {
                 entry: {
                     mapview: mainEntry
@@ -90,10 +104,10 @@ export function addHarpWebpackConfig(config?: Configuration, harpConfig?: HarpWe
     }
     if (harpConfig !== undefined && harpConfig.decoderEntry !== undefined) {
         const decoderConfig = harpConfig.decoderEntry.endsWith(".ts")
-            ? WebpackMerge.smart(baseConfig, typescriptConfig)
+            ? WebpackMergeMatchLoader(baseConfig, typescriptConfig)
             : baseConfig;
         bundles.push(
-            WebpackMerge.smart(
+            WebpackMergeMatchLoader(
                 {
                     target: "webworker",
                     entry: {
