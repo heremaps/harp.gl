@@ -814,28 +814,9 @@ export class VectorTileDataEmitter {
                 const rings: Ring[] = [];
 
                 for (const outline of polygon.rings) {
-                    let coords = outline;
-                    let clippedPointIndices: Set<number> | undefined;
+                    const coords = clipPolygon(outline, extents);
 
-                    // disable clipping for the polygon geometries
-                    // rendered using the extruded-polygon technique.
-                    // We can't clip these polygons for now because
-                    // otherwise we could break the current assumptions
-                    // used to add oultines around the extruded geometries.
-                    if (isPolygon && !isExtruded) {
-                        const shouldClipPolygon = coords.some(
-                            p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
-                        );
-
-                        if (shouldClipPolygon) {
-                            coords = clipPolygon(coords, extents);
-                            clippedPointIndices = Ring.computeClippedPointIndices(coords, outline);
-                        } else {
-                            clippedPointIndices = new Set();
-                        }
-                    }
-
-                    if (coords.length === 0) {
+                    if (coords.length < 3) {
                         continue;
                     }
 
@@ -845,7 +826,7 @@ export class VectorTileDataEmitter {
                         textureCoords = coords.map(coord => computeTexCoords(coord, extents));
                     }
 
-                    rings.push(new Ring(coords, textureCoords, extents, clippedPointIndices));
+                    rings.push(new Ring(coords, textureCoords, extents));
                 }
 
                 if (rings.length === 0) {
@@ -1306,7 +1287,7 @@ export class VectorTileDataEmitter {
 
         const styleSetConstantHeight = getOptionValue(
             extrudedPolygonTechnique.constantHeight,
-            false
+            this.m_decodeInfo.tileKey.level < 12
         );
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
@@ -1944,11 +1925,13 @@ export class VectorTileDataEmitter {
                 if (firstRingVertex === undefined) {
                     firstRingVertex = currRingVertex;
                 }
+
                 if (currRingVertex < featureVertexCount) {
                     maxRingVertex = Math.max(maxRingVertex, currRingVertex);
                 }
 
                 const nextRingVertex = vertices[currRingVertex * vertexStride + featureStride];
+
                 if (nextRingVertex < 0) {
                     break;
                 } else {
@@ -1996,10 +1979,13 @@ export class VectorTileDataEmitter {
                                 }
                             }
                         } else {
-                            indices.push(
-                                featureBaseVertex + currRingVertex * 2,
-                                featureBaseVertex + currRingVertex * 2 + 1
-                            );
+                            const nextEdge = vertices[featureBaseVertex + currRingVertex * 2 + 2];
+                            if (nextEdge === -1) {
+                                indices.push(
+                                    featureBaseVertex + currRingVertex * 2,
+                                    featureBaseVertex + currRingVertex * 2 + 1
+                                );
+                            }
                         }
                     }
                     prevRingVertex = currRingVertex;

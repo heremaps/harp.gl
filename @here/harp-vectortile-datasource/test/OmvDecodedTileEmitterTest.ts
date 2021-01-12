@@ -101,7 +101,8 @@ describe("OmvDecodedTileEmitter", function () {
             new GeoCoordinates(geoBox.south, geoBox.west),
             new GeoCoordinates(geoBox.south, geoBox.east),
             new GeoCoordinates(geoBox.north, geoBox.east),
-            new GeoCoordinates(geoBox.north, geoBox.west)
+            new GeoCoordinates(geoBox.north, geoBox.west),
+            new GeoCoordinates(geoBox.south, geoBox.west)
         ];
 
         const tileLocalCoords = coordinates.map(p => {
@@ -155,7 +156,7 @@ describe("OmvDecodedTileEmitter", function () {
         );
 
         const firstGeometry = geometries[0];
-        const vertexCount = 4;
+        const vertexCount = 5;
         checkVertexAttribute(firstGeometry, 0, "position", vertexCount);
         const texCoords = checkVertexAttribute(firstGeometry, 1, "uv", vertexCount);
 

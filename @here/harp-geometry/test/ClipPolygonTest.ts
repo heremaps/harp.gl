@@ -17,23 +17,44 @@ describe("ClipPolygon", () => {
         new Vector2(0, 0),
         new Vector2(extents, 0),
         new Vector2(extents, extents),
-        new Vector2(0, extents)
+        new Vector2(0, extents),
+        new Vector2(0, 0)
     ];
 
     it("Full quad convering the tile (outer ring)", () => {
-        const polygon = [...tileBounds];
+        const polygon = tileBounds.map(p => p.clone());
         const clippedPolygon = clipPolygon(polygon, extents);
+
+        const expectedClippedPolygon = [
+            { x: 0, y: 0 },
+            { x: extents, y: 0 },
+            { x: extents, y: extents },
+            { x: 0, y: extents },
+            { x: 0, y: 0 }
+        ];
+
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
         assert.strictEqual(ShapeUtils.area(clippedPolygon), ShapeUtils.area(polygon));
+        assert.strictEqual(JSON.stringify(clippedPolygon), JSON.stringify(expectedClippedPolygon));
     });
 
     it("Full quad convering the tile (inter ring)", () => {
-        const polygon = [...tileBounds].reverse();
+        const polygon = tileBounds.map(p => p.clone()).reverse();
+
+        const expectedClippedPolygon = [
+            { x: 0, y: 0 },
+            { x: extents, y: 0 },
+            { x: extents, y: extents },
+            { x: 0, y: extents },
+            { x: 0, y: 0 }
+        ].reverse();
+
         const clippedPolygon = clipPolygon(polygon, extents);
         assert.notStrictEqual(clippedPolygon, polygon);
         assert.strictEqual(ShapeUtils.isClockWise(clippedPolygon), ShapeUtils.isClockWise(polygon));
         assert.strictEqual(ShapeUtils.area(clippedPolygon), ShapeUtils.area(polygon));
+        assert.strictEqual(JSON.stringify(clippedPolygon), JSON.stringify(expectedClippedPolygon));
     });
 
     it("Full quad with margin (outer ring)", () => {
@@ -127,11 +148,11 @@ describe("ClipPolygon", () => {
             new Vector2(-1000, 1000)
         ];
 
-        const expectedClippedPolygon: Vector2[] = [
-            new Vector2(0, 0),
-            new Vector2(20, 0),
-            new Vector2(20, 1000),
-            new Vector2(0, 1000)
+        const expectedClippedPolygon = [
+            { x: 0, y: 0, isClipped: true },
+            { x: 20, y: 0 },
+            { x: 20, y: 1000 },
+            { x: 0, y: 1000, isClipped: true }
         ];
 
         const clippedPolygon = clipPolygon(polygon, extents);

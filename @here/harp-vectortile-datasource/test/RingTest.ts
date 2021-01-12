@@ -217,21 +217,21 @@ describe("Ring", function () {
 
         it("outlines", () => {
             const ring = new Ring(points, texCoords);
-            assert.strictEqual(ring.isProperEdge(0), false);
-            assert.strictEqual(ring.isProperEdge(1), true);
-            assert.strictEqual(ring.isProperEdge(2), true);
-            assert.strictEqual(ring.isProperEdge(3), false);
-            assert.strictEqual(ring.isProperEdge(4), false);
+
+            const properEdges = ring.points.map((_, i) => ring.isProperEdge(i));
+
+            assert.deepEqual(properEdges, [true, true, true, true, true]);
         });
     });
 
     describe("Concave polygon resulting into 2 parts after clipping", () => {
         const polygon: Vector2[] = [
-            new Vector2(-100, 0),
+            new Vector2(-100, 0), // outside bounds
             new Vector2(4096, 0),
-            new Vector2(-50, 2048),
+            new Vector2(-50, 2048), // outside bounds
             new Vector2(4096, 4096),
-            new Vector2(-100, 4096)
+            new Vector2(-100, 4096), // outside bounds
+            new Vector2(-100, 0) // outside bounds
         ];
 
         const clippedPolygon = clipPolygon(polygon, DEFAULT_EXTENTS);
@@ -239,14 +239,15 @@ describe("Ring", function () {
         it("edge outlines", () => {
             const ring = new Ring(clippedPolygon, undefined, DEFAULT_EXTENTS);
             assert.strictEqual(ring.winding, false);
-            const outlines = ring.points.map((_, i) => ring.isProperEdge(i));
 
             assert.deepEqual(
                 ring.toArray().map(x => x | 0),
                 [0, 0, 4096, 0, 0, 2023, 0, 2073, 4096, 4096, 0, 4096]
             );
 
-            assert.deepEqual(outlines, [false, true, false, true, false, false]);
+            const properEdges = ring.points.map((_, i) => ring.isProperEdge(i));
+
+            assert.deepEqual(properEdges, [false, true, false, true, false, false]);
         });
     });
 });

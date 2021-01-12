@@ -4,27 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ClippedVertex } from "@here/harp-geometry/lib/ClipPolygon";
 import { ShapeUtils, Vector2 } from "three";
 
 /**
  * A class representing a ring of a polygon geometry.
  */
 export class Ring {
-    /**
-     * Returns a `Set` containing the indices of the elements
-     * of `clippedPoints` that are clipped (not included in `originalPoints`).
-     *
-     * @param clippedPoints `Array` of clipped positions.
-     * @param originalPoints `Array` of unclipped positions.
-     */
-    static computeClippedPointIndices(
-        clippedPoints: Vector2[],
-        originalPoints: Vector2[]
-    ): Set<number> {
-        const isClipped = (p: THREE.Vector2) => originalPoints.find(q => q.equals(p)) === undefined;
-        return new Set(clippedPoints.map((p, i) => (isClipped(p) ? i : -1)).filter(i => i !== -1));
-    }
-
     /**
      * The signed area of this `Ring`.
      *
@@ -53,13 +39,11 @@ export class Ring {
      * @param points The coordinates of the rings.
      * @param textureCoords The optional `Array` of texture coordinates.
      * @param extents The extents of the tile bounds.
-     * @param clippedPointIndices Optional `Set` containing the indices of the clipped points.
      */
     constructor(
         readonly points: Vector2[],
         readonly textureCoords?: Vector2[],
-        readonly extents: number = 4 * 1024,
-        readonly clippedPointIndices?: Set<number>
+        readonly extents: number = 4 * 1024
     ) {
         if (textureCoords !== undefined && textureCoords.length !== points.length) {
             throw new Error(
@@ -99,45 +83,36 @@ export class Ring {
     isProperEdge(index: number): boolean {
         const extents = this.extents;
         const nextIdx = (index + 1) % this.points.length;
-        const curr = this.points[index];
-        const next = this.points[nextIdx];
+        const curr: ClippedVertex = this.points[index];
+        const next: ClippedVertex = this.points[nextIdx];
 
-        if (this.clippedPointIndices !== undefined) {
-            if (curr.x !== next.x && curr.y !== next.y) {
-                // `curr` and `next` must be connected with a line
-                // because they don't form a vertical or horizontal lines.
-                return true;
-            }
-
-            const currAtEdge = curr.x % this.extents === 0 || curr.y % this.extents === 0;
-
-            if (!currAtEdge) {
-                // the points are connected with a line
-                // because at least one of the points is not on
-                // the tile boundary.
-                return true;
-            }
-
-            const nextAtEdge = next.x % this.extents === 0 || next.y % this.extents === 0;
-
-            if (!nextAtEdge) {
-                // the points are connected with a line
-                // because at least one of the points is not on
-                // the tile boundary.
-                return true;
-            }
-
-            const currWasClipped = this.clippedPointIndices.has(index);
-            const nextWasClipped = this.clippedPointIndices.has(nextIdx);
-
-            return !currWasClipped && !nextWasClipped;
+        if (curr.x !== next.x && curr.y !== next.y) {
+            // `curr` and `next` must be connected with a line
+            // because they don't form a vertical or horizontal lines.
+            return true;
         }
 
-        return !(
-            (curr.x <= 0 && next.x <= 0) ||
-            (curr.x >= extents && next.x >= extents) ||
-            (curr.y <= 0 && next.y <= 0) ||
-            (curr.y >= extents && next.y >= extents)
-        );
+        const currAtEdge = curr.x % extents === 0 || curr.y % extents === 0;
+
+        if (!currAtEdge) {
+            // the points are connected with a line
+            // because at least one of the points is not on
+            // the tile boundary.
+            return true;
+        }
+
+        const nextAtEdge = next.x % extents === 0 || next.y % extents === 0;
+
+        if (!nextAtEdge) {
+            // the points are connected with a line
+            // because at least one of the points is not on
+            // the tile boundary.
+            return true;
+        }
+
+        const currWasClipped = curr.isClipped === true;
+        const nextWasClipped = next.isClipped === true;
+
+        return !currWasClipped && !nextWasClipped;
     }
 }
