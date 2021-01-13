@@ -360,11 +360,11 @@ describe("VisibleTileSet", function() {
         assert.equal(dataSourceTileList[0].visibleTiles.length, 5);
 
         const visibleTiles = dataSourceTileList[0].visibleTiles;
-        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506849);
-        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506848);
-        assert.equal(visibleTiles[2].tileKey.mortonCode(), 371506165);
-        assert.equal(visibleTiles[3].tileKey.mortonCode(), 371506827);
-        assert.equal(visibleTiles[4].tileKey.mortonCode(), 371506850);
+        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506850);
+        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506849);
+        assert.equal(visibleTiles[2].tileKey.mortonCode(), 371506848);
+        assert.equal(visibleTiles[3].tileKey.mortonCode(), 371506165);
+        assert.equal(visibleTiles[4].tileKey.mortonCode(), 371506827);
 
         const renderedTiles = dataSourceTileList[0].renderedTiles;
         assert.equal(renderedTiles.size, 0);
