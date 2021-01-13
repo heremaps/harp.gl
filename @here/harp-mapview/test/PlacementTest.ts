@@ -954,16 +954,11 @@ describe("Placement", function() {
                     textCanvas.textLayoutStyle = textElement.layoutStyle!;
                     // Run placement firstly without multi-anchor support, just to calculate base
                     // label bounds for relative movement in the next frames.
-                    placePointLabel(
-                        state,
-                        inPosition,
-                        1.0,
-                        textCanvas,
-                        new Env(),
-                        screenCollisions,
-                        outPosition,
-                        false
-                    );
+                    textElement.bounds = new THREE.Box2();
+                    textCanvas.measureText(textElement.glyphs!, textElement.bounds, {
+                        pathOverflow: false,
+                        letterCaseArray: textElement.glyphCaseArray
+                    });
                     state.update(1);
 
                     // Process each frame sequentially.
@@ -1282,6 +1277,53 @@ describe("Placement", function() {
                 // state, it may start fading out now.
                 expect(results[1]).to.equal(PlacementResult.Rejected);
             });
+        });
+
+        it("only sets label bounds on successful placement", async function() {
+            const collisionsStub = new ScreenCollisions();
+
+            const textElement = await createTextElement(
+                textCanvas,
+                "Text",
+                new THREE.Vector3(),
+                {},
+                {
+                    horizontalAlignment: HorizontalAlignment.Right,
+                    verticalAlignment: VerticalAlignment.Below,
+                    placements: createTextPlacements(
+                        HorizontalPlacement.Left,
+                        VerticalPlacement.Bottom
+                    )
+                }
+            );
+            const state = new TextElementState(textElement);
+            const screenPos = new THREE.Vector2(0, 0);
+            const scale = 1.0;
+            const env = new Env();
+            const outPos = new THREE.Vector3();
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+            const visibleStub = sandbox.stub(collisionsStub, "isVisible").returns(false);
+            const allocatedStub = sandbox.stub(collisionsStub, "isAllocated").returns(false);
+
+            placePointLabel(state, screenPos, scale, textCanvas, env, collisionsStub, outPos, true);
+
+            expect(textElement.bounds).to.be.undefined;
+
+            visibleStub.returns(true);
+            allocatedStub.returns(true);
+
+            placePointLabel(state, screenPos, scale, textCanvas, env, collisionsStub, outPos, true);
+
+            expect(textElement.bounds).to.be.undefined;
+
+            visibleStub.returns(true);
+            allocatedStub.returns(false);
+
+            placePointLabel(state, screenPos, scale, textCanvas, env, collisionsStub, outPos, true);
+
+            expect(textElement.bounds).to.not.be.undefined;
         });
     });
 

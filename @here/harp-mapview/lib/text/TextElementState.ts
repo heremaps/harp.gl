@@ -162,6 +162,7 @@ export class TextElementState {
         }
         this.m_viewDistance = undefined;
         this.element.textBufferObject = undefined;
+        this.element.bounds = undefined;
     }
 
     /**

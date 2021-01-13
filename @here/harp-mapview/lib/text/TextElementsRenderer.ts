@@ -1776,15 +1776,7 @@ export class TextElementsRenderer {
                     placementStats.numPoiTextsInvisible++;
                 }
                 if (!renderIcon || iconInvisible) {
-                    // Reset only the iconRenderState for line markers, not the shared
-                    // textRenderState, since some icons may be invisible while others are visible.
-                    // The labelState has to be reset by the calling function if no icons are
-                    // placed to reset the textRenderState properly.
-                    if (isLineMarker) {
-                        iconRenderState.reset();
-                    } else {
-                        labelState.reset();
-                    }
+                    labelState.reset();
                     return false;
                 }
                 textRenderState!.reset();
