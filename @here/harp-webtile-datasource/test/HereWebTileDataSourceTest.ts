@@ -70,4 +70,23 @@ describe("HereWebTileDataSource", function() {
     it("#createWebTileDataSource throws w/ missing appId", async function() {
         assert.throw(() => new HereWebTileDataSource({ appCode: "42" } as any));
     });
+    it("#createWebTileDataSource check storageLevelOffset", async function() {
+        const apikey = "123";
+        for (let storageLevelOffset = -2; storageLevelOffset <= 2; storageLevelOffset++) {
+            const webTileDataSource = new HereWebTileDataSource({
+                apikey,
+                tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE,
+                storageLevelOffset
+            });
+            assert(webTileDataSource.storageLevelOffset === storageLevelOffset);
+        }
+
+        // Test the default value
+        const webTileDataSource = new HereWebTileDataSource({
+            apikey,
+            tileBaseAddress: HereTileProvider.TILE_AERIAL_SATELLITE,
+            storageLevelOffset: undefined
+        });
+        assert(webTileDataSource.storageLevelOffset === -1);
+    });
 });

@@ -399,10 +399,10 @@ export class HereWebTileDataSource extends WebTileDataSource {
             minDataLevel: 1,
             maxDataLevel: 20,
             resolution: m_options.resolution,
-            dataProvider: new HereTileProvider(m_options)
+            dataProvider: new HereTileProvider(m_options),
+            storageLevelOffset: m_options.storageLevelOffset ?? -1
         });
         this.cacheable = true;
-        this.storageLevelOffset = -1;
         if (this.resolution === WebTileDataSource.resolutionValue.resolution512) {
             this.maxDataLevel = 19; // 512x512 tiles do not have z19
         }
