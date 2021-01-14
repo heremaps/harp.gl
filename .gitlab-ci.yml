@@ -1,0 +1,42 @@
+stages:
+  - build
+  - trigger
+
+default:
+  interruptible: true
+
+workflow:
+  rules:
+    - if: $CI_EXTERNAL_PULL_REQUEST_IID
+
+trigger_internal_ci:
+  stage: build
+  image: node
+  tags: 
+    - docker-prod
+  variables:
+    DOWNSTREAM_PROJECT_ID: $DOWNSTREAM_PROJECT_ID
+    DOWNSTREAM_PROJECT_NAME: $DOWNSTREAM_PROJECT_NAME
+  script:
+    - |
+      set -e
+      echo $CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+      export TRIGGER_BRANCH=$CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+      #Creating a new branch
+        curl --request POST --header \
+        "PRIVATE-TOKEN: $SVC_HLS_RENDER_API" \
+        "${CI_SERVER_URL}/api/v4/projects/$DOWNSTREAM_PROJECT_ID/repository/branches?branch=$CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME&ref=master" || echo "error creating branch $CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME"
+
+      scripts/generate-config.sh
+  artifacts:
+     paths:
+      - generated-config.yml
+
+
+bridge_for_bridge:
+  stage: trigger
+  trigger:
+    include:
+      - artifact: generated-config.yml
+        job: trigger_internal_ci
+    strategy: depend
