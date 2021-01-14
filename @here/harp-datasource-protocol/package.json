@@ -11,7 +11,7 @@
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
         "build": "tsc --build $EXTRA_TSC_ARGS",
         "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS",
-        "generate-json-schema": "ts-json-schema-generator --no-type-check --path ./lib/Theme.ts --type Theme --validationKeywords defaultSnippets > theme.schema.json"
+        "generate-json-schema": "ts-json-schema-generator --no-type-check --path ./lib/Theme.ts --type LegacyOrFlatTheme --validationKeywords defaultSnippets > theme.schema.json"
     },
     "repository": {
         "type": "git",

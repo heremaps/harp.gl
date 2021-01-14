@@ -29,7 +29,7 @@ import {
  * Map theme is used to define what features are shown and how the map is styled, for example
  * which lightning is used or whether fog should be displayed.
  */
-export interface Theme {
+export interface BaseTheme {
     /**
      * The URI of the JSON schema describing themes.
      */
@@ -43,7 +43,7 @@ export interface Theme {
      * overwrite these defined in base theme.
      */
 
-    extends?: string | Theme | Array<string | Theme>;
+    extends?: string | Theme | Array<string | Theme | FlatTheme>;
 
     //
     // TODO: We support also [[FlatTheme]], but it's not exposed here since ts-json-schema-generator
@@ -94,11 +94,6 @@ export interface Theme {
      * The definitions exported by these theme.
      */
     definitions?: Definitions;
-
-    /**
-     * Map styles available for datasources used to render the map.
-     */
-    styles?: Styles;
 
     /**
      * Define the style to render different types of text used on the map.
@@ -197,17 +192,34 @@ export interface StylePriority {
 }
 
 /**
- * A type representing HARP themes with all the styleset declarations
- * grouped in one `Array`.
- *
- * @internal This type will merge with {@link Theme}.
+ * Map theme is used to define what features are shown and how the map is styled, for example
+ * which lightning is used or whether fog should be displayed.
  */
-export type FlatTheme = Omit<Theme, "styles"> & {
+export interface Theme extends BaseTheme {
+    /**
+     * Map styles available for datasources used to render the map.
+     */
+    styles?: Styles;
+}
+
+/**
+ * Map theme is used to define what features are shown and how the map is styled, for example
+ * which lightning is used or whether fog should be displayed.
+ */
+export interface FlatTheme extends BaseTheme {
     /**
      * The style rules used to render the map.
      */
     styles?: StyleSet;
-};
+}
+
+/**
+ * Map theme is used to define what features are shown and how the map is styled, for example
+ * which lightning is used or whether fog should be displayed.
+ *
+ * @internal
+ */
+export type LegacyOrFlatTheme = Theme | FlatTheme;
 
 /**
  * Value definition commons.
