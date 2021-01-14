@@ -15,6 +15,18 @@ const { merge } = require("webpack-merge");
 const isProduction = process.env.NODE_ENV === "production";
 const bundleSuffix = isProduction ? ".min" : "";
 
+
+function getCacheConfig(name) {
+    // Use a separate cache for each configuration, otherwise cache writing fails.
+    return process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        },
+        name: "harp.gl_" + name
+    }
+}
+
 /** @type{webpack.Configuration} */
 const commonConfig = {
     devtool: "source-map",
@@ -82,7 +94,9 @@ const mapComponentConfig = merge(commonConfig, {
                 ? callback(null, "THREE")
                 : callback(undefined, undefined)
         }
-    ]
+    ],
+    // @ts-ignore
+    cache: getCacheConfig("index")
 });
 
 const mapComponentDecoderConfig = merge(commonConfig, {
@@ -99,7 +113,9 @@ const mapComponentDecoderConfig = merge(commonConfig, {
                 ? callback(null, "THREE")
                 : callback(undefined, undefined)
         }
-    ]
+    ],
+    // @ts-ignore
+    cache: getCacheConfig("decoder")
 });
 
 module.exports = [mapComponentConfig, mapComponentDecoderConfig];

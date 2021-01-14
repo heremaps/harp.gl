@@ -31,6 +31,17 @@ const themeList = {
     berlinOutlines: "resources/berlin_tilezen_effects_outlines.json"
 };
 
+function getCacheConfig(name) {
+    // Use a separate cache for each configuration, otherwise cache writing fails.
+    return process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        },
+        name: "harp-examples_" + name
+    }
+}
+
 function resolveOptional(path, message) {
     try {
         return require.resolve(path);
@@ -106,20 +117,16 @@ const commonConfig = {
         new webpack.DefinePlugin({
             THEMES: JSON.stringify(themeList)
         })
-    ],
-    cache: process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
-        type: "filesystem",
-        buildDependencies: {
-            config: [ __filename ]
-        }
-    }
+    ]
 };
 
 const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
         decoder: "./decoder/decoder.ts"
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("decoder")
 });
 
 const webpackEntries = glob
@@ -168,19 +175,25 @@ const browserConfig = merge(commonConfig, {
             minSize: 1000,
             name: "common"
         }
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("browser")
 });
 
 const exampleBrowserConfig = merge(commonConfig, {
     entry: {
         "example-browser": "./example-browser.ts"
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("example_browser")
 });
 
 const codeBrowserConfig = merge(commonConfig, {
     entry: {
         codebrowser: "./codebrowser.ts"
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("code_browser")
 });
 
 browserConfig.plugins.push(
