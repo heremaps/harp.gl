@@ -1741,6 +1741,7 @@ export class TextElementsRenderer {
             // Ensure that text elements still loading icons get a chance to be rendered if
             // there are no text element updates in the next frames.
             this.m_forceNewLabelsPass = true;
+            this.m_viewUpdateCallback();
         }
 
         const distanceFadeFactor = this.getDistanceFadingFactor(
