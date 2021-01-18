@@ -1226,9 +1226,9 @@ export class VectorTileDataEmitter {
         });
     }
 
-    private applyPolygonTechnique(
+    private applyExtrudedPolygonTechnique(
         polygons: Ring[][],
-        technique: Technique,
+        extrudedPolygonTechnique: ExtrudedPolygonTechnique,
         techniqueIndex: number,
         featureId: number | undefined,
         context: AttrEvaluationContext,
@@ -1238,21 +1238,17 @@ export class VectorTileDataEmitter {
             return;
         }
 
-        const isExtruded = isExtrudedPolygonTechnique(technique);
+        const geometryType = GeometryType.ExtrudedPolygon;
 
-        const geometryType = isExtruded ? GeometryType.ExtrudedPolygon : GeometryType.Polygon;
         const meshBuffers = this.findOrCreateMeshBuffers(techniqueIndex, geometryType);
 
         if (meshBuffers === undefined) {
             return;
         }
 
-        const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
-        const fillTechnique = technique as FillTechnique;
         const boundaryWalls = extrudedPolygonTechnique.boundaryWalls === true;
 
-        const isFilled = isFillTechnique(technique);
-        const texCoordType = this.getTextureCoordinateType(technique);
+        const texCoordType = this.getTextureCoordinateType(extrudedPolygonTechnique);
 
         let height = evaluateTechniqueAttr<number>(context, extrudedPolygonTechnique.height);
 
@@ -1278,7 +1274,7 @@ export class VectorTileDataEmitter {
 
         if (floorHeight === undefined) {
             const featureMinHeight = context.env.lookup("min_height") as number;
-            floorHeight = featureMinHeight !== undefined && !isFilled ? featureMinHeight : 0;
+            floorHeight = featureMinHeight !== undefined ? featureMinHeight : 0;
         }
 
         // Prevent that extruded buildings are completely flat (can introduce errors in normal
@@ -1305,38 +1301,38 @@ export class VectorTileDataEmitter {
 
         const isSpherical = this.m_decodeInfo.targetProjection.type === ProjectionType.Spherical;
 
-        const edgeWidth = isExtruded
-            ? extrudedPolygonTechnique.lineWidth ?? 0.0
-            : isFilled
-            ? fillTechnique.lineWidth ?? 0.0
-            : 0.0;
+        const edgeWidth = extrudedPolygonTechnique.lineWidth ?? 0.0;
+
         const hasEdges = typeof edgeWidth === "number" ? edgeWidth > 0.0 : true;
 
         let color: THREE.Color | undefined;
-        if (isExtrudedPolygonTechnique(technique)) {
-            if (getOptionValue(technique.vertexColors, false)) {
-                let colorValue = evaluateTechniqueAttr<StyleColor>(context, technique.color);
-                if (colorValue === undefined) {
-                    const featureColor = context.env.lookup("color");
-                    if (this.isColorStringValid(featureColor)) {
-                        colorValue = String(featureColor);
-                    }
-                }
-                if (colorValue === undefined) {
-                    colorValue = evaluateTechniqueAttr<number | string>(
-                        context,
-                        technique.defaultColor,
-                        0x000000
-                    );
-                }
 
-                if (colorValue === undefined) {
-                    colorValue = 0x000000;
-                }
-                tmpColor.set(colorValue as any);
+        if (getOptionValue(extrudedPolygonTechnique.vertexColors, false)) {
+            let colorValue = evaluateTechniqueAttr<StyleColor>(
+                context,
+                extrudedPolygonTechnique.color
+            );
 
-                color = tmpColor;
+            if (colorValue === undefined) {
+                const featureColor = context.env.lookup("color");
+                if (this.isColorStringValid(featureColor)) {
+                    colorValue = String(featureColor);
+                }
             }
+            if (colorValue === undefined) {
+                colorValue = evaluateTechniqueAttr<number | string>(
+                    context,
+                    extrudedPolygonTechnique.defaultColor,
+                    0x000000
+                );
+            }
+
+            if (colorValue === undefined) {
+                colorValue = 0x000000;
+            }
+            tmpColor.set(colorValue as any);
+
+            color = tmpColor;
         }
 
         for (const polygon of polygons) {
@@ -1417,6 +1413,341 @@ export class VectorTileDataEmitter {
                         const positionArray = [];
                         const uvArray = [];
                         const edgeArray = [];
+
+                        // Transform to global webMercator coordinates to be able to reproject to
+                        // sphere.
+                        for (let i = 0; i < vertices.length; i += vertexStride) {
+                            const worldPos = tile2world(
+                                extents,
+                                this.m_decodeInfo,
+                                tmpV2.set(vertices[i], vertices[i + 1]),
+                                true,
+                                tmpV3r
+                            );
+                            positionArray.push(worldPos.x, worldPos.y, 0);
+                            if (texCoordType !== undefined) {
+                                uvArray.push(vertices[i + 2], vertices[i + 3]);
+                            }
+                            edgeArray.push(vertices[i + featureStride]);
+                        }
+
+                        // Create the temporary geometry used for subdivision.
+                        const posAttr = new THREE.BufferAttribute(
+                            new Float32Array(positionArray),
+                            3
+                        );
+                        geom.setAttribute("position", posAttr);
+                        let uvAttr: THREE.BufferAttribute | undefined;
+                        if (texCoordType !== undefined) {
+                            uvAttr = new THREE.BufferAttribute(new Float32Array(uvArray), 2);
+                            geom.setAttribute("uv", uvAttr);
+                        }
+                        const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);
+                        geom.setAttribute("edge", edgeAttr);
+                        const index = createIndexBufferAttribute(triangles, posAttr.count - 1);
+                        const indexAttr =
+                            index.type === "uint32"
+                                ? new THREE.Uint32BufferAttribute(index.buffer, 1)
+                                : new THREE.Uint16BufferAttribute(index.buffer, 1);
+                        geom.setIndex(indexAttr);
+
+                        // Increase tesselation of polygons for certain zoom levels
+                        // to remove mixed LOD cracks
+                        const zoomLevel = this.m_decodeInfo.tileKey.level;
+                        if (zoomLevel >= 3 && zoomLevel < 9) {
+                            const subdivision = Math.pow(2, 9 - zoomLevel);
+                            const { geoBox } = this.m_decodeInfo;
+                            const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
+                                subdivision,
+                                geoBox,
+                                SubdivisionMode.NoDiagonals,
+                                webMercatorProjection
+                            );
+                            edgeModifier.modify(geom);
+                        }
+
+                        // FIXME(HARP-5700): Subdivision modifier ignores texture coordinates.
+                        const modifier = new SphericalGeometrySubdivisionModifier(
+                            THREE.MathUtils.degToRad(10),
+                            webMercatorProjection
+                        );
+                        modifier.modify(geom);
+
+                        // Reassemble the vertex buffer, transforming the subdivided global
+                        // webMercator points back to local space.
+                        vertices.length = 0;
+                        triangles.length = 0;
+                        for (let i = 0; i < posAttr.array.length; i += 3) {
+                            const tilePos = world2tile(
+                                extents,
+                                this.m_decodeInfo,
+                                tmpV3.set(posAttr.array[i], posAttr.array[i + 1], 0),
+                                true,
+                                tmpV2r
+                            );
+                            vertices.push(tilePos.x, tilePos.y);
+                            if (texCoordType !== undefined) {
+                                vertices.push(uvArray[(i / 3) * 2]);
+                                vertices.push(uvArray[(i / 3) * 2 + 1]);
+                            }
+                            vertices.push(edgeArray[i / 3]);
+                        }
+
+                        const geomIndex = geom.getIndex();
+                        if (geomIndex !== null) {
+                            triangles.push(...(geomIndex.array as Float32Array));
+                        }
+                    }
+
+                    // Add the footprint/roof vertices to the position buffer.
+                    tempVertNormal.set(0, 0, 1);
+
+                    // Assemble the vertex buffer.
+                    for (let i = 0; i < vertices.length; i += vertexStride) {
+                        webMercatorTile2TargetTile(
+                            extents,
+                            this.m_decodeInfo,
+                            tmpV2.set(vertices[i], vertices[i + 1]),
+                            tmpV3,
+                            true
+                        );
+
+                        let scaleFactor = 1.0;
+                        if (styleSetConstantHeight !== true) {
+                            tempVertOrigin.set(
+                                tempTileOrigin.x + tmpV3.x,
+                                tempTileOrigin.y + tmpV3.y,
+                                tempTileOrigin.z + tmpV3.z
+                            );
+                            scaleFactor = this.m_decodeInfo.targetProjection.getScaleFactor(
+                                tempVertOrigin
+                            );
+                        }
+                        this.m_maxGeometryHeight = Math.max(
+                            this.m_maxGeometryHeight,
+                            scaleFactor * height
+                        );
+                        this.m_minGeometryHeight = Math.min(
+                            this.m_minGeometryHeight,
+                            scaleFactor * height
+                        );
+
+                        if (isSpherical) {
+                            tempVertNormal
+                                .set(tmpV3.x, tmpV3.y, tmpV3.z)
+                                .add(this.center)
+                                .normalize();
+                        }
+
+                        tempFootDisp.copy(tempVertNormal).multiplyScalar(floorHeight * scaleFactor);
+                        positions.push(
+                            tmpV3.x + tempFootDisp.x,
+                            tmpV3.y + tempFootDisp.y,
+                            tmpV3.z + tempFootDisp.z
+                        );
+                        if (texCoordType !== undefined) {
+                            textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
+                        }
+                        if (this.m_enableElevationOverlay) {
+                            normals.push(...tempVertNormal.toArray());
+                        }
+                        tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
+                        positions.push(
+                            tmpV3.x + tempRoofDisp.x,
+                            tmpV3.y + tempRoofDisp.y,
+                            tmpV3.z + tempRoofDisp.z
+                        );
+                        extrusionAxis.push(
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            tempRoofDisp.x - tempFootDisp.x,
+                            tempRoofDisp.y - tempFootDisp.y,
+                            tempRoofDisp.z - tempFootDisp.z,
+                            1.0
+                        );
+                        if (texCoordType !== undefined) {
+                            textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
+                        }
+                        if (this.m_enableElevationOverlay) {
+                            normals.push(...tempVertNormal.toArray());
+                        }
+                        if (color !== undefined) {
+                            colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
+                        }
+                    }
+
+                    // Add the footprint/roof indices to the index buffer.
+                    for (let i = 0; i < triangles.length; i += 3) {
+                        // When extruding we duplicate the vertices, so that all even vertices
+                        // belong to the bottom and all odd vertices belong to the top.
+                        const i0 = polygonBaseVertex + triangles[i + 0] * 2 + 1;
+                        const i1 = polygonBaseVertex + triangles[i + 1] * 2 + 1;
+                        const i2 = polygonBaseVertex + triangles[i + 2] * 2 + 1;
+                        indices.push(i0, i1, i2);
+                    }
+
+                    // Assemble the index buffer for edges (follow vertices as linked list).
+                    if (hasEdges) {
+                        this.addEdges(
+                            polygonBaseVertex,
+                            originalVertexCount,
+                            vertexStride,
+                            featureStride,
+                            positions,
+                            vertices,
+                            edgeIndices,
+                            true,
+                            extrudedPolygonTechnique.footprint,
+                            extrudedPolygonTechnique.maxSlope
+                        );
+                    }
+                    this.addWalls(
+                        polygonBaseVertex,
+                        originalVertexCount,
+                        vertexStride,
+                        featureStride,
+                        vertices,
+                        indices
+                    );
+                } catch (err) {
+                    logger.error(`cannot triangulate geometry`, err);
+                }
+            }
+
+            if (this.m_gatherFeatureAttributes) {
+                meshBuffers.objInfos.push(context.env.entries);
+                meshBuffers.featureStarts.push(startIndexCount);
+                meshBuffers.edgeFeatureStarts.push(edgeStartIndexCount);
+            }
+
+            const count = indices.length - startIndexCount;
+            if (count > 0) {
+                groups.push({
+                    start: startIndexCount,
+                    count,
+                    technique: techniqueIndex
+                });
+            }
+        }
+    }
+
+    private applyFlatPolygonTechnique(
+        polygons: Ring[][],
+        technique: Technique,
+        techniqueIndex: number,
+        featureId: number | undefined,
+        context: AttrEvaluationContext,
+        extents: number
+    ): void {
+        if (polygons.length === 0) {
+            return;
+        }
+
+        const geometryType = GeometryType.Polygon;
+
+        const meshBuffers = this.findOrCreateMeshBuffers(techniqueIndex, geometryType);
+
+        if (meshBuffers === undefined) {
+            return;
+        }
+
+        const fillTechnique = technique as FillTechnique;
+
+        const texCoordType = this.getTextureCoordinateType(technique);
+
+        this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
+
+        const {
+            positions,
+            normals,
+            textureCoordinates,
+            indices,
+            edgeIndices,
+            groups
+        } = meshBuffers;
+
+        const isSpherical = this.m_decodeInfo.targetProjection.type === ProjectionType.Spherical;
+
+        const edgeWidth = fillTechnique.lineWidth ?? 0.0;
+        const hasEdges = typeof edgeWidth === "number" ? edgeWidth > 0.0 : true;
+
+        for (const polygon of polygons) {
+            const startIndexCount = indices.length;
+            const edgeStartIndexCount = edgeIndices.length;
+
+            for (let ringIndex = 0; ringIndex < polygon.length; ) {
+                const vertices: number[] = [];
+                const polygonBaseVertex = positions.length / 3;
+
+                const ring = polygon[ringIndex++];
+
+                const featureStride = ring.vertexStride;
+                const vertexStride = featureStride + 2;
+                const winding = ring.winding;
+
+                for (let i = 0; i < ring.points.length; ++i) {
+                    const point = ring.points[i];
+
+                    // Invert the Y component to preserve the correct winding without transforming
+                    // from webMercator's local to global space.
+                    vertices.push(point.x, -point.y);
+
+                    if (ring.textureCoords !== undefined) {
+                        vertices.push(ring.textureCoords[i].x, ring.textureCoords[i].y);
+                    }
+
+                    const nextIdx = (i + 1) % ring.points.length;
+
+                    const properEdge = ring.isProperEdge(i);
+
+                    // Calculate nextEdge and nextWall.
+                    vertices.push(properEdge ? nextIdx : -1, properEdge ? nextIdx : -1);
+                }
+
+                // Iterate over the inner rings. The inner rings have the opposite winding
+                // of the outer rings.
+                const holes: number[] = [];
+                while (ringIndex < polygon.length && polygon[ringIndex].winding !== winding) {
+                    const vertexOffset = vertices.length / vertexStride;
+                    holes.push(vertexOffset);
+
+                    const hole = polygon[ringIndex++];
+                    for (let i = 0; i < hole.points.length; ++i) {
+                        const nextIdx = (i + 1) % hole.points.length;
+                        const point = hole.points[i];
+
+                        // Invert the Y component to preserve the correct winding without
+                        // transforming from webMercator's local to global space.
+                        vertices.push(point.x, -point.y);
+
+                        if (hole.textureCoords !== undefined) {
+                            vertices.push(hole.textureCoords[i].x, hole.textureCoords[i].y);
+                        }
+
+                        // Calculate nextEdge and nextWall.
+                        const insideExtents = hole.isProperEdge(i);
+
+                        vertices.push(
+                            insideExtents ? vertexOffset + nextIdx : -1,
+                            insideExtents ? vertexOffset + nextIdx : -1
+                        );
+                    }
+                }
+
+                try {
+                    // Triangulate the footprint polyline.
+                    const triangles = earcut(vertices, holes, vertexStride);
+                    const originalVertexCount = vertices.length / vertexStride;
+
+                    // Subdivide for spherical projections if needed.
+                    if (isSpherical) {
+                        const geom = new THREE.BufferGeometry();
+
+                        const positionArray = [];
+                        const uvArray = [];
+                        const edgeArray = [];
                         const wallArray = [];
 
                         // Transform to global webMercator coordinates to be able to reproject to
@@ -1451,7 +1782,7 @@ export class VectorTileDataEmitter {
                         const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);
                         geom.setAttribute("edge", edgeAttr);
                         const wallAttr = new THREE.BufferAttribute(new Float32Array(wallArray), 1);
-                        geom.setAttribute("wall", edgeAttr);
+                        geom.setAttribute("wall", wallAttr);
                         const index = createIndexBufferAttribute(triangles, posAttr.count - 1);
                         const indexAttr =
                             index.type === "uint32"
@@ -1521,26 +1852,6 @@ export class VectorTileDataEmitter {
                             true
                         );
 
-                        let scaleFactor = 1.0;
-                        if (isExtruded && styleSetConstantHeight !== true) {
-                            tempVertOrigin.set(
-                                tempTileOrigin.x + tmpV3.x,
-                                tempTileOrigin.y + tmpV3.y,
-                                tempTileOrigin.z + tmpV3.z
-                            );
-                            scaleFactor = this.m_decodeInfo.targetProjection.getScaleFactor(
-                                tempVertOrigin
-                            );
-                        }
-                        this.m_maxGeometryHeight = Math.max(
-                            this.m_maxGeometryHeight,
-                            scaleFactor * height
-                        );
-                        this.m_minGeometryHeight = Math.min(
-                            this.m_minGeometryHeight,
-                            scaleFactor * height
-                        );
-
                         if (isSpherical) {
                             tempVertNormal
                                 .set(tmpV3.x, tmpV3.y, tmpV3.z)
@@ -1548,62 +1859,23 @@ export class VectorTileDataEmitter {
                                 .normalize();
                         }
 
-                        tempFootDisp.copy(tempVertNormal).multiplyScalar(floorHeight * scaleFactor);
-                        positions.push(
-                            tmpV3.x + tempFootDisp.x,
-                            tmpV3.y + tempFootDisp.y,
-                            tmpV3.z + tempFootDisp.z
-                        );
+                        positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
+
                         if (texCoordType !== undefined) {
                             textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
                         }
+
                         if (this.m_enableElevationOverlay) {
                             normals.push(...tempVertNormal.toArray());
-                        }
-                        if (isExtruded) {
-                            tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
-                            positions.push(
-                                tmpV3.x + tempRoofDisp.x,
-                                tmpV3.y + tempRoofDisp.y,
-                                tmpV3.z + tempRoofDisp.z
-                            );
-                            extrusionAxis.push(
-                                0.0,
-                                0.0,
-                                0.0,
-                                0.0,
-                                tempRoofDisp.x - tempFootDisp.x,
-                                tempRoofDisp.y - tempFootDisp.y,
-                                tempRoofDisp.z - tempFootDisp.z,
-                                1.0
-                            );
-                            if (texCoordType !== undefined) {
-                                textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
-                            }
-                            if (this.m_enableElevationOverlay) {
-                                normals.push(...tempVertNormal.toArray());
-                            }
-                            if (color !== undefined) {
-                                colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
-                            }
                         }
                     }
 
                     // Add the footprint/roof indices to the index buffer.
                     for (let i = 0; i < triangles.length; i += 3) {
-                        if (isExtruded) {
-                            // When extruding we duplicate the vertices, so that all even vertices
-                            // belong to the bottom and all odd vertices belong to the top.
-                            const i0 = polygonBaseVertex + triangles[i + 0] * 2 + 1;
-                            const i1 = polygonBaseVertex + triangles[i + 1] * 2 + 1;
-                            const i2 = polygonBaseVertex + triangles[i + 2] * 2 + 1;
-                            indices.push(i0, i1, i2);
-                        } else {
-                            const i0 = polygonBaseVertex + triangles[i + 0];
-                            const i1 = polygonBaseVertex + triangles[i + 1];
-                            const i2 = polygonBaseVertex + triangles[i + 2];
-                            indices.push(i0, i1, i2);
-                        }
+                        const i0 = polygonBaseVertex + triangles[i + 0];
+                        const i1 = polygonBaseVertex + triangles[i + 1];
+                        const i2 = polygonBaseVertex + triangles[i + 2];
+                        indices.push(i0, i1, i2);
                     }
 
                     // Assemble the index buffer for edges (follow vertices as linked list).
@@ -1616,19 +1888,7 @@ export class VectorTileDataEmitter {
                             positions,
                             vertices,
                             edgeIndices,
-                            isExtruded,
-                            extrudedPolygonTechnique.footprint,
-                            extrudedPolygonTechnique.maxSlope
-                        );
-                    }
-                    if (isExtruded) {
-                        this.addWalls(
-                            polygonBaseVertex,
-                            originalVertexCount,
-                            vertexStride,
-                            featureStride,
-                            vertices,
-                            indices
+                            false
                         );
                     }
                 } catch (err) {
@@ -1650,6 +1910,39 @@ export class VectorTileDataEmitter {
                     technique: techniqueIndex
                 });
             }
+        }
+    }
+
+    private applyPolygonTechnique(
+        polygons: Ring[][],
+        technique: Technique,
+        techniqueIndex: number,
+        featureId: number | undefined,
+        context: AttrEvaluationContext,
+        extents: number
+    ): void {
+        if (polygons.length === 0) {
+            return;
+        }
+
+        if (isExtrudedPolygonTechnique(technique)) {
+            this.applyExtrudedPolygonTechnique(
+                polygons,
+                technique,
+                techniqueIndex,
+                featureId,
+                context,
+                extents
+            );
+        } else {
+            this.applyFlatPolygonTechnique(
+                polygons,
+                technique,
+                techniqueIndex,
+                featureId,
+                context,
+                extents
+            );
         }
     }
 
