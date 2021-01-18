@@ -1768,4 +1768,17 @@ describe("MapView", function () {
 
         expect(markTilesDirtySpy.calledWith(dataSource, tileFilter)).to.be.true;
     });
+
+    it("projection setter disposes of old tile resources", () => {
+        const mapView = new MapView(mapViewOptions);
+        const oldVisibleTileSet = mapView.visibleTileSet;
+        const clearCacheSpy = sinon.spy(oldVisibleTileSet, "clearTileCache");
+        const disposeSpy = sinon.spy(oldVisibleTileSet, "disposePendingTiles");
+
+        mapView.projection = sphereProjection;
+
+        expect(mapView.visibleTileSet).not.equals(oldVisibleTileSet);
+        expect(clearCacheSpy.called).to.be.true;
+        expect(disposeSpy.called).to.be.true;
+    });
 });

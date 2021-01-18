@@ -1069,9 +1069,19 @@ export class MapView extends EventDispatcher {
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
-        // Must be initialized before setupCamera, because the VisibleTileSet is created as part
-        // of the setupCamera method and it needs the TaskQueue instance, same for environment
+        // Scheduler must be initialized before VisibleTileSet.
         this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
+        this.m_tileGeometryManager = new TileGeometryManager(this);
+
+        if (options.enableMixedLod !== undefined) {
+            this.m_enableMixedLod = options.enableMixedLod;
+        }
+        if (options.lodMinTilePixelSize !== undefined) {
+            this.m_lodMinTilePixelSize = options.lodMinTilePixelSize;
+        }
+        // this.m_visibleTiles is set in createVisibleTileSet, set it here again only to let tsc
+        // know the member is set in the constructor.
+        this.m_visibleTiles = this.createVisibleTileSet();
         this.m_sceneEnvironment = new MapViewEnvironment(this, options);
 
         // setup camera with initial position
@@ -1092,16 +1102,6 @@ export class MapView extends EventDispatcher {
             this.m_options.dynamicPixelRatio,
             mapPassAntialiasSettings
         );
-
-        this.m_tileGeometryManager = new TileGeometryManager(this);
-
-        if (options.enableMixedLod !== undefined) {
-            this.m_enableMixedLod = options.enableMixedLod;
-        }
-        if (options.lodMinTilePixelSize !== undefined) {
-            this.m_lodMinTilePixelSize = options.lodMinTilePixelSize;
-        }
-        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
@@ -1224,7 +1224,7 @@ export class MapView extends EventDispatcher {
         }
 
         this.m_enableMixedLod = enableMixedLod;
-        this.m_visibleTiles = this.createVisibleTileSet();
+        this.createVisibleTileSet();
         this.update();
     }
 
@@ -1239,7 +1239,7 @@ export class MapView extends EventDispatcher {
         }
         if (enabled !== this.m_tileWrappingEnabled) {
             this.m_tileWrappingEnabled = enabled;
-            this.m_visibleTiles = this.createVisibleTileSet();
+            this.createVisibleTileSet();
         }
         this.update();
     }
@@ -3659,10 +3659,11 @@ export class MapView extends EventDispatcher {
     }
 
     private setupCamera() {
+        assert(this.m_visibleTiles !== undefined);
+
         const { width, height } = this.getCanvasClientSize();
 
         this.calculateFocalLength(height);
-        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_options.target = GeoCoordinates.fromObject(
             getOptionValue(this.m_options.target, MapViewDefaults.target)
@@ -3685,12 +3686,20 @@ export class MapView extends EventDispatcher {
     }
 
     private createVisibleTileSet(): VisibleTileSet {
+        assert(this.m_tileGeometryManager !== undefined);
+
+        if (this.m_visibleTiles) {
+            // Dispose of all resources before the old instance is replaced.
+            this.m_visibleTiles.clearTileCache();
+            this.m_visibleTiles.disposePendingTiles();
+        }
+
         const enableMixedLod =
             this.m_enableMixedLod === undefined
                 ? this.projection.type === ProjectionType.Spherical
                 : this.m_enableMixedLod;
 
-        return new VisibleTileSet(
+        this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
                 this,
@@ -3703,6 +3712,7 @@ export class MapView extends EventDispatcher {
             this.m_visibleTileSetOptions,
             this.taskQueue
         );
+        return this.m_visibleTiles;
     }
 
     private movementStarted() {
