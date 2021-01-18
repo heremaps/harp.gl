@@ -1839,6 +1839,8 @@ export class TextElementsRenderer {
                 // that any label blocked by it gets a chance to be placed as soon as any other
                 // surrounding new labels.
                 const allocateSpace = poiInfo!.reserveSpace !== false && !iconRejected;
+
+                const surfaceNormal = this.m_viewState.projection.surfaceNormal(position);
                 this.m_poiRenderer.addPoi(
                     poiInfo!,
                     tempPoiScreenPosition,
@@ -1847,7 +1849,8 @@ export class TextElementsRenderer {
                     distanceScaleFactor,
                     allocateSpace,
                     opacity,
-                    this.m_viewState.env
+                    this.m_viewState.env,
+                    surfaceNormal
                 );
 
                 if (placementStats) {

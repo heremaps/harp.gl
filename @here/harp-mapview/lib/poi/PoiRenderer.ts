@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Env, getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
+import { Vector3Like } from "@here/harp-geoutils";
 import { IconMaterial } from "@here/harp-materials";
 import { MemoryUsage } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
@@ -290,8 +291,9 @@ export class PoiBatchRegistry {
      * @param screenBox - Box to render icon into in 2D coordinates.
      * @param viewDistance - Box's distance to camera.
      * @param opacity - Opacity of icon to allow fade in/out.
+     * @param surfaceNormal - The normal that defines elevation direction of the icon.
      */
-    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number) {
+    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number, surfaceNormal: Vector3Like) {
         if (poiInfo.isValid === false || !poiInfo.buffer) {
             logger.warn(
                 "PoiBatchRegistry: trying to add poiInfo without buffer prepared: ",
@@ -318,7 +320,9 @@ export class PoiBatchRegistry {
             color,
             opacity,
             viewDistance,
-            poiInfo.textElement
+            surfaceNormal,
+            poiInfo.textElement,
+            poiInfo.technique.iconStickHeight
         );
     }
 
@@ -527,7 +531,8 @@ export class PoiRenderer {
         scale: number,
         allocateScreenSpace: boolean,
         opacity: number,
-        env: Env
+        env: Env,
+        surfaceNormal: Vector3Like
     ): void {
         assert(poiInfo.buffer !== undefined);
 
@@ -541,7 +546,7 @@ export class PoiRenderer {
             if (!poiInfo.buffer) {
                 this.preparePoi(poiInfo.textElement, env);
             }
-            this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
+            this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity, surfaceNormal);
         }
     }
 

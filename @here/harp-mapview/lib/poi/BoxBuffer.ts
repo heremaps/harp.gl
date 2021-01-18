@@ -32,13 +32,15 @@ const MAX_BOX_BUFFER_SIZE = 32 * 1024;
 
 /**
  * Number of vertices per box/glyph element: 4 corners.
+ * Number of vertices per stick element: 4 corners.
  */
-const NUM_VERTICES_PER_ELEMENT = 4;
+const NUM_VERTICES_PER_ELEMENT = 8;
 
 /**
  * Number of indices added per box/glyph: 2 triangles, 6 indices.
+ * Number of indices per stick under the box: 2 triangles, 6 indices
  */
-const NUM_INDICES_PER_ELEMENT = 6;
+const NUM_INDICES_PER_ELEMENT = 12;
 
 /**
  * Number of values per position.
@@ -49,6 +51,21 @@ const NUM_POSITION_VALUES_PER_VERTEX = 3;
  * Number of values per color.
  */
 const NUM_COLOR_VALUES_PER_VERTEX = 4;
+
+/**
+ * Number of values needed for the stick height.
+ */
+const NUM_STICK_HEIGHT_VALUES_PER_VERTEX = 1;
+
+/**
+ * Number of values needed to determine if vertex belongs to the stick.
+ */
+const NUM_IS_STICK_VALUES_PER_VERTEX = 1;
+
+/**
+ * Number of values per surface normal.
+ */
+const NUM_SURFACE_NORMAL_VALUES_PER_VERTEX = 3;
 
 /**
  * Number of values per UV.
@@ -64,6 +81,11 @@ const NUM_INDEX_VALUES_PER_VERTEX = 1;
  * Number of bytes for float in an Float32Array.
  */
 const NUM_BYTES_PER_FLOAT = 4;
+
+/**
+ * Number of bytes for integer number in an UInt16Array.
+ */
+const NUM_BYTES_PER_INT16 = 2;
 
 /**
  * Number of bytes for integer number in an UInt32Array.
@@ -110,6 +132,21 @@ export class BoxBuffer {
      * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` color data.
      */
     private m_colorAttribute?: THREE.BufferAttribute;
+
+    /**
+     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` iconStickHeight data.
+     */
+    private m_stickHeightAttribute?: THREE.BufferAttribute;
+
+    /**
+     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` isStickAttribute data.
+     */
+    private m_isStickAttribute?: THREE.BufferAttribute;
+
+    /**
+     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` surface normal data.
+     */
+    private m_surfaceNormalAttribute?: THREE.BufferAttribute;
 
     /**
      * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` uv data.
@@ -187,6 +224,9 @@ export class BoxBuffer {
         if (this.m_positionAttribute !== undefined) {
             this.m_positionAttribute.count = 0;
             this.m_colorAttribute!.count = 0;
+            this.m_stickHeightAttribute!.count = 0;
+            this.m_isStickAttribute!.count = 0;
+            this.m_surfaceNormalAttribute!.count = 0;
             this.m_uvAttribute!.count = 0;
             this.m_indexAttribute!.count = 0;
             this.m_pickInfos!.length = 0;
@@ -253,6 +293,7 @@ export class BoxBuffer {
      * @param color - Box's color.
      * @param opacity - Box's opacity.
      * @param distance - Box's distance to camera.
+     * @param surfaceNormal - elevation direction of the marker.
      * @param pickInfo - Box's picking information.
      */
     addBox(
@@ -261,7 +302,9 @@ export class BoxBuffer {
         color: THREE.Color,
         opacity: number,
         distance: number,
-        pickInfo?: any
+        surfaceNormal: any,
+        pickInfo?: any,
+        iconStickHeight = 0,
     ): boolean {
         if (!this.canAddElements()) {
             return false;
@@ -280,34 +323,100 @@ export class BoxBuffer {
         const colorAttribute = this.m_colorAttribute!;
         const uvAttribute = this.m_uvAttribute!;
         const indexAttribute = this.m_indexAttribute!;
+        const stickHeightAttribute = this.m_stickHeightAttribute!;
+        const isStickAttribute = this.m_isStickAttribute!;
+        const surfaceNormalAttribute = this.m_surfaceNormalAttribute!;
 
         const baseVertex = positionAttribute.count;
         const baseIndex = indexAttribute.count;
 
+        // the box:
         positionAttribute.setXYZ(baseVertex, x, y, distance);
         positionAttribute.setXYZ(baseVertex + 1, x + w, y, distance);
         positionAttribute.setXYZ(baseVertex + 2, x, y + h, distance);
         positionAttribute.setXYZ(baseVertex + 3, x + w, y + h, distance);
+        // the stick under the box:
+        const stickXPosition = x + w / 2;
+        positionAttribute.setXYZ(baseVertex + 4, stickXPosition - 0.5, y, distance);
+        positionAttribute.setXYZ(baseVertex + 5, stickXPosition + 0.5, y, distance);
+        positionAttribute.setXYZ(baseVertex + 6, stickXPosition - 0.5, y, distance);
+        positionAttribute.setXYZ(baseVertex + 7, stickXPosition + 0.5, y, distance);
 
+        // the box:
         colorAttribute.setXYZW(baseVertex, r, g, b, a);
         colorAttribute.setXYZW(baseVertex + 1, r, g, b, a);
         colorAttribute.setXYZW(baseVertex + 2, r, g, b, a);
         colorAttribute.setXYZW(baseVertex + 3, r, g, b, a);
+        // the stick under the box:
+        colorAttribute.setXYZW(baseVertex + 4, r, g, b, a);
+        colorAttribute.setXYZW(baseVertex + 5, r, g, b, a);
+        colorAttribute.setXYZW(baseVertex + 6, r, g, b, a);
+        colorAttribute.setXYZW(baseVertex + 7, r, g, b, a);
 
+        // the box:
+        stickHeightAttribute.setX(baseVertex, iconStickHeight);
+        stickHeightAttribute.setX(baseVertex + 1, iconStickHeight);
+        stickHeightAttribute.setX(baseVertex + 2, iconStickHeight);
+        stickHeightAttribute.setX(baseVertex + 3, iconStickHeight);
+        // the stick under the box:
+        stickHeightAttribute.setX(baseVertex + 4, iconStickHeight);
+        stickHeightAttribute.setX(baseVertex + 5, iconStickHeight);
+        stickHeightAttribute.setX(baseVertex + 6, iconStickHeight);
+        stickHeightAttribute.setX(baseVertex + 7, iconStickHeight);
+
+        // the box:
+        isStickAttribute.setX(baseVertex, 0);
+        isStickAttribute.setX(baseVertex + 1, 0);
+        isStickAttribute.setX(baseVertex + 2, 0);
+        isStickAttribute.setX(baseVertex + 3, 0);
+        // the stick under the box:
+        isStickAttribute.setX(baseVertex + 4, 1);
+        isStickAttribute.setX(baseVertex + 5, 1);
+        isStickAttribute.setX(baseVertex + 6, 1);
+        isStickAttribute.setX(baseVertex + 7, 1);
+
+        // the box:
+        surfaceNormalAttribute.setXYZ(baseVertex, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXYZ(baseVertex + 1, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXYZ(baseVertex + 2, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXYZ(baseVertex + 3, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        // the stick under the box:
+        surfaceNormalAttribute.setXYZ(baseVertex + 4, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXYZ(baseVertex + 5, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXYZ(baseVertex + 6, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXYZ(baseVertex + 7, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+
+        // the box:
         uvAttribute.setXY(baseVertex, s0, t0);
         uvAttribute.setXY(baseVertex + 1, s1, t0);
         uvAttribute.setXY(baseVertex + 2, s0, t1);
         uvAttribute.setXY(baseVertex + 3, s1, t1);
+        // the stick under the box:
+        uvAttribute.setXY(baseVertex + 4, s0, t0);
+        uvAttribute.setXY(baseVertex + 5, s1, t0);
+        uvAttribute.setXY(baseVertex + 6, s0, t1);
+        uvAttribute.setXY(baseVertex + 7, s1, t1);
 
+        // the box:
         indexAttribute.setX(baseIndex, baseVertex);
         indexAttribute.setX(baseIndex + 1, baseVertex + 1);
         indexAttribute.setX(baseIndex + 2, baseVertex + 2);
         indexAttribute.setX(baseIndex + 3, baseVertex + 2);
         indexAttribute.setX(baseIndex + 4, baseVertex + 1);
         indexAttribute.setX(baseIndex + 5, baseVertex + 3);
+        // the stick under the box:
+        indexAttribute.setX(baseIndex + 6, baseVertex + 4);
+        indexAttribute.setX(baseIndex + 7, baseVertex + 5);
+        indexAttribute.setX(baseIndex + 8, baseVertex + 6);
+        indexAttribute.setX(baseIndex + 9, baseVertex + 6);
+        indexAttribute.setX(baseIndex + 10, baseVertex + 5);
+        indexAttribute.setX(baseIndex + 11, baseVertex + 7);
 
         positionAttribute.count += NUM_VERTICES_PER_ELEMENT;
         colorAttribute.count += NUM_VERTICES_PER_ELEMENT;
+        stickHeightAttribute.count += NUM_VERTICES_PER_ELEMENT;
+        isStickAttribute.count += NUM_VERTICES_PER_ELEMENT;
+        surfaceNormalAttribute.count += NUM_VERTICES_PER_ELEMENT;
         uvAttribute.count += NUM_VERTICES_PER_ELEMENT;
         indexAttribute.count += NUM_INDICES_PER_ELEMENT;
 
@@ -474,6 +583,9 @@ export class BoxBuffer {
 
         this.m_geometry.setAttribute("position", this.m_positionAttribute!);
         this.m_geometry.setAttribute("color", this.m_colorAttribute!);
+        this.m_geometry.setAttribute("stickHeight", this.m_stickHeightAttribute!);
+        this.m_geometry.setAttribute("isStick", this.m_isStickAttribute!);
+        this.m_geometry.setAttribute("surfaceNormal", this.m_surfaceNormalAttribute!);
         this.m_geometry.setAttribute("uv", this.m_uvAttribute!);
         this.m_geometry.setIndex(this.m_indexAttribute!);
         this.m_geometry.addGroup(0, this.m_indexAttribute!.count);
@@ -496,6 +608,9 @@ export class BoxBuffer {
         const numBytes =
             this.m_positionAttribute!.count * NUM_POSITION_VALUES_PER_VERTEX * NUM_BYTES_PER_FLOAT +
             this.m_colorAttribute!.count * NUM_COLOR_VALUES_PER_VERTEX +
+            this.m_stickHeightAttribute!.count * NUM_STICK_HEIGHT_VALUES_PER_VERTEX * NUM_BYTES_PER_INT16 +
+            this.m_isStickAttribute!.count * NUM_IS_STICK_VALUES_PER_VERTEX +
+            this.m_surfaceNormalAttribute!.count * NUM_SURFACE_NORMAL_VALUES_PER_VERTEX * NUM_BYTES_PER_FLOAT +
             this.m_uvAttribute!.count * NUM_UV_VALUES_PER_VERTEX * NUM_BYTES_PER_FLOAT +
             this.m_indexAttribute!.count * NUM_BYTES_PER_INT32; // May be UInt16, so we overestimate
 
@@ -538,6 +653,9 @@ export class BoxBuffer {
         this.m_positionAttribute = undefined;
         this.m_colorAttribute = undefined;
         this.m_uvAttribute = undefined;
+        this.m_stickHeightAttribute = undefined;
+        this.m_isStickAttribute = undefined;
+        this.m_surfaceNormalAttribute = undefined;
         this.m_indexAttribute = undefined;
         this.resize(START_BOX_BUFFER_SIZE, true);
     }
@@ -584,6 +702,60 @@ export class BoxBuffer {
             );
             this.m_colorAttribute.count = 0;
             this.m_colorAttribute.setUsage(THREE.DynamicDrawUsage);
+        }
+
+        const newStickHeightArray = new Uint16Array(
+            newSize * NUM_VERTICES_PER_ELEMENT * NUM_STICK_HEIGHT_VALUES_PER_VERTEX
+        );
+        if (this.m_stickHeightAttribute !== undefined) {
+            const stickHeightAttributeCount = this.m_stickHeightAttribute.count;
+            newStickHeightArray.set(this.m_stickHeightAttribute.array);
+            this.m_stickHeightAttribute.array = newStickHeightArray;
+            this.m_stickHeightAttribute.count = stickHeightAttributeCount;
+        } else {
+            this.m_stickHeightAttribute = new THREE.BufferAttribute(
+                newStickHeightArray,
+                NUM_STICK_HEIGHT_VALUES_PER_VERTEX,
+                false
+            );
+            this.m_stickHeightAttribute.count = 0;
+            this.m_stickHeightAttribute.setUsage(THREE.DynamicDrawUsage);
+        }
+
+        const newIsStickArray = new Uint8Array(
+            newSize * NUM_VERTICES_PER_ELEMENT * NUM_IS_STICK_VALUES_PER_VERTEX
+        );
+        if (this.m_isStickAttribute !== undefined) {
+            const isStickAttributeCount = this.m_isStickAttribute.count;
+            newIsStickArray.set(this.m_isStickAttribute.array);
+            this.m_isStickAttribute.array = newIsStickArray;
+            this.m_isStickAttribute.count = isStickAttributeCount;
+        } else {
+            this.m_isStickAttribute = new THREE.BufferAttribute(
+                newIsStickArray,
+                NUM_IS_STICK_VALUES_PER_VERTEX,
+                false
+            );
+            this.m_isStickAttribute.count = 0;
+            this.m_isStickAttribute.setUsage(THREE.DynamicDrawUsage);
+        }
+
+        const newSurfaceNormalArray = new Float32Array(
+            newSize * NUM_VERTICES_PER_ELEMENT * NUM_SURFACE_NORMAL_VALUES_PER_VERTEX
+        );
+        if (this.m_surfaceNormalAttribute !== undefined) {
+            const surfaceNormalAttributeCount = this.m_surfaceNormalAttribute.count;
+            newSurfaceNormalArray.set(this.m_surfaceNormalAttribute.array);
+            this.m_surfaceNormalAttribute.array = newSurfaceNormalArray;
+            this.m_surfaceNormalAttribute.count = surfaceNormalAttributeCount;
+        } else {
+            this.m_surfaceNormalAttribute = new THREE.BufferAttribute(
+                newSurfaceNormalArray,
+                NUM_SURFACE_NORMAL_VALUES_PER_VERTEX,
+                true
+            );
+            this.m_surfaceNormalAttribute.count = 0;
+            this.m_surfaceNormalAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const newUvArray = new Float32Array(

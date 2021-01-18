@@ -41,7 +41,7 @@ export namespace ElevatedGeoJsonMarkersExample {
                         type: "Feature",
                         id: 0,
                         properties: { text: "Fernsehturm" },
-                        geometry: { type: "Point", coordinates: [13.4094, 52.52085, 245] }
+                        geometry: { type: "Point", coordinates: [13.40942318428955, 52.520803535061745, 0] }
                     }
                 ]
             });
@@ -72,13 +72,14 @@ export namespace ElevatedGeoJsonMarkersExample {
                             text: ["get", "text"],
                             iconYOffset: 35,
                             size: 15,
-                            priority: 1000
+                            priority: 1000,
+                            iconStickHeight: 200
                         }
                     ]
                 }
             },
-            target: new GeoCoordinates(52.5237, 13.4089),
-            zoomLevel: 17.4,
+            target: new GeoCoordinates(52.520803535061745, 13.40942318428955),
+            zoomLevel: 16.4,
             tilt: 78
         });
 
