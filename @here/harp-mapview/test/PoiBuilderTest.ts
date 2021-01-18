@@ -77,4 +77,14 @@ describe("PoiBuilder", function () {
             .build({} as TextElement);
         expect(poiInfo).undefined;
     });
+
+    it("text and icon are not optional by default", () => {
+        const poiTechnique = buildPoiTechnique({});
+        const poiInfo = new PoiBuilder(env)
+            .withTechnique(poiTechnique)
+            .withIcon("dummy")
+            .build({} as TextElement);
+        expect(poiInfo?.textIsOptional).to.be.false;
+        expect(poiInfo?.iconIsOptional).to.be.false;
+    });
 });

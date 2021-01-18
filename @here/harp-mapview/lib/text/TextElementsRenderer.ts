@@ -290,8 +290,8 @@ function shouldRenderPointText(
         return false;
     }
 
-    // Do not render text if POI cannot be rendered and is not optional.
-    return poiInfo === undefined || poiInfo.isValid === true || poiInfo.iconIsOptional !== false;
+    // If there's an icon, render text only if icon is valid or optional.
+    return !poiInfo || poiInfo.isValid === true || poiInfo.iconIsOptional === true;
 }
 
 function shouldRenderPoiText(labelState: TextElementState, viewState: ViewState) {
@@ -1783,16 +1783,13 @@ export class TextElementsRenderer {
                 textRenderState!.reset();
             }
 
-            const iconIsOptional = poiInfo?.iconIsOptional !== false;
+            const iconIsOptional = poiInfo?.iconIsOptional === true;
             // Rejected icons are only considered to hide the text if they are valid, so a missing
             // icon image will not keep the text from showing up.
-            const requiredIconRejected: boolean =
-                iconRejected && iconReady === true && !iconIsOptional;
-
+            const requiredIconRejected = iconRejected && iconReady && !iconIsOptional;
             const textRejected = requiredIconRejected || placeResult === PlacementResult.Rejected;
             if (!iconRejected && !iconInvisible) {
-                const textIsOptional: boolean =
-                    pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
+                const textIsOptional = pointLabel.poiInfo?.textIsOptional === true;
                 iconRejected = textRejected && !textIsOptional;
             }
 

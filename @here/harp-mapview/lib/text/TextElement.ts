@@ -99,8 +99,8 @@ export interface PoiInfo {
     textIsOptional?: boolean;
 
     /**
-     * If true, the text will appear even if the icon cannot be rendered because of missing icon
-     * graphics. Defaults to `true`.
+     * If true, the text will appear even if the icon is blocked by other labels or if it cannot be
+     * rendered because of missing icon graphics. Defaults to `false`.
      */
     iconIsOptional?: boolean;
 

@@ -660,10 +660,9 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      */
     minDistance?: number;
     /**
-     * If true, the text will appear even if the icon cannot be rendered because of missing icon
-     * graphics.
+     * If `true`, text will appear even if the icon is blocked by other labels.
      *
-     * @defaultValue `true`
+     * @defaultValue `false`
      */
     iconIsOptional?: boolean;
     /**
