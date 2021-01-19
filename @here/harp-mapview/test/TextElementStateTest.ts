@@ -340,8 +340,7 @@ describe("TextElementState", function () {
                 type: TextElementType.PoiLabel,
                 poiInfo: {
                     technique: {
-                        textFadeTime: 100,
-                        iconFadeTime: 100
+                        iconFadeTime: 0.1 // technique's iconFadeTime is in seconds.
                     }
                 },
                 textFadeTime: 100
@@ -360,8 +359,7 @@ describe("TextElementState", function () {
                 type: TextElementType.LineMarker,
                 poiInfo: {
                     technique: {
-                        textFadeTime: 100,
-                        iconFadeTime: 100
+                        iconFadeTime: 0.1 // technique's iconFadeTime is in seconds.
                     }
                 },
                 textFadeTime: 100,
