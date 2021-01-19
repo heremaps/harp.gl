@@ -1329,8 +1329,8 @@ export namespace MapViewUtils {
 
         // Decompose rotation matrix into Z0 X Z1 Euler angles.
         const d = space.z.dot(cache.vector3[1].set(0, 0, 1));
-        if (d < 1.0 - epsilon) {
-            if (d > -1.0 + epsilon) {
+        if (d < 1.0 - Number.EPSILON) {
+            if (d > -1.0 + Number.EPSILON) {
                 yaw = Math.atan2(space.z.x, -space.z.y);
                 pitch = Math.acos(space.z.z);
                 roll = Math.atan2(space.x.z, space.y.z);
@@ -1387,7 +1387,7 @@ export namespace MapViewUtils {
         // Get point to object vector in `cache.vector3[1]` and deduce `tilt` from the angle with
         // tangent Z.
         cache.vector3[1].copy(object.position).sub(cache.vector3[0]).normalize();
-        if (cache.vector3[1].dot(tangentSpace.z) > 1 - epsilon) {
+        if (cache.vector3[1].dot(tangentSpace.z) > 1 - Number.EPSILON) {
             // Top down view: the azimuth of the object would be opposite the yaw, and clockwise.
             azimuth = Math.PI - extractAttitude(mapView, object).yaw;
             // Wrap between -PI and PI.
@@ -1450,7 +1450,7 @@ export namespace MapViewUtils {
         dirVec.divideScalar(dirLen);
 
         const cosTheta = dirVec.dot(tangentSpace.z);
-        if (cosTheta > 1 - epsilon) {
+        if (cosTheta >= 1 - Number.EPSILON) {
             // Top down view.
             return 0;
         }
