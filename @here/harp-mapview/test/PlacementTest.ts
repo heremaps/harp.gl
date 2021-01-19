@@ -1325,6 +1325,48 @@ describe("Placement", function () {
 
             expect(textElement.bounds).to.not.be.undefined;
         });
+
+        it("returns rejected for visible new labels with no available space", async function () {
+            const collisionsStub = new ScreenCollisions();
+
+            const textElement = await createTextElement(
+                textCanvas,
+                "Text",
+                new THREE.Vector3(),
+                {},
+                {
+                    horizontalAlignment: HorizontalAlignment.Right,
+                    verticalAlignment: VerticalAlignment.Below,
+                    placements: createTextPlacements(
+                        HorizontalPlacement.Left,
+                        VerticalPlacement.Bottom
+                    )
+                }
+            );
+            const state = new TextElementState(textElement);
+            const screenPos = new THREE.Vector2(0, 0);
+            const scale = 1.0;
+            const env = new Env();
+            const outPos = new THREE.Vector3();
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+            sandbox.stub(collisionsStub, "isVisible").returns(true);
+            sandbox.stub(collisionsStub, "isAllocated").returns(true);
+
+            const result = placePointLabel(
+                state,
+                screenPos,
+                scale,
+                textCanvas,
+                env,
+                collisionsStub,
+                outPos,
+                true
+            );
+
+            expect(result).equals(PlacementResult.Rejected);
+        });
     });
 
     describe("placeIcon", function () {
