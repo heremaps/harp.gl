@@ -21,6 +21,7 @@ export interface MapObjectAdapterParams {
     kind?: GeometryKind[];
     pickable?: boolean;
     level?: number;
+    forcePickable?: boolean;
 
     // TODO: Move here in following refactor.
     //featureData?: TileFeatureData;
@@ -81,6 +82,7 @@ export class MapObjectAdapter {
     readonly level: number | undefined;
 
     private readonly m_pickable: boolean;
+    private readonly m_forcePickable: boolean;
     private m_lastUpdateFrameNumber = -1;
     private m_notCompletlyTransparent = true;
 
@@ -90,6 +92,7 @@ export class MapObjectAdapter {
         this.kind = params.kind;
         this.dataSource = params.dataSource;
         this.m_pickable = params.pickable ?? true;
+        this.m_forcePickable = params.forcePickable ?? false;
         this.m_notCompletlyTransparent = this.getObjectMaterials().some(
             material => material.opacity > 0
         );
@@ -139,13 +142,18 @@ export class MapObjectAdapter {
      * @param env - Property lookup environment.
      */
     isPickable(env: MapEnv) {
-        // An object is pickable only if it's visible, not transient and it's not explicitely marked
+        // An object is pickable only if it's visible or forcePickable set,
+        // not transient and it's not explicitely marked
         // as non-pickable.
         return (
             this.m_pickable &&
-            this.isVisible() &&
+            (this.isVisible() || this.m_forcePickable) &&
             getPropertyValue(this.technique?.transient, env) !== true
         );
+    }
+
+    get forcePickable(): boolean {
+        return this.m_forcePickable;
     }
 
     private updateMaterials(context: MapAdapterUpdateEnv) {

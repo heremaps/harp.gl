@@ -207,7 +207,7 @@ export class TileObjectRenderer {
 
         if (mapObjectAdapter) {
             mapObjectAdapter.ensureUpdated(tile.mapView);
-            if (!mapObjectAdapter.isVisible()) {
+            if (!mapObjectAdapter.isVisible() && !mapObjectAdapter.forcePickable) {
                 return false;
             }
         }

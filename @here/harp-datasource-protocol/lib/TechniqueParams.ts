@@ -1142,6 +1142,11 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
      * Width of the lines. Currently limited to the [0, 1] range.
      */
     lineWidth?: DynamicProperty<number>;
+
+    /**
+     * Force the object to be pickable, even when its invisible.
+     */
+    forcePickable?: boolean;
 }
 
 /**

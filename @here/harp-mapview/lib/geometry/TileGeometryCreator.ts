@@ -804,7 +804,8 @@ export class TileGeometryCreator {
                 // it's enough to make outlines pickable.
                 registerTileObject(tile, object, techniqueKind, {
                     technique,
-                    pickable: !hasSolidLinesOutlines
+                    pickable: !hasSolidLinesOutlines,
+                    forcePickable: (technique as FillTechnique).forcePickable ?? false
                 });
                 objects.push(object);
 
@@ -970,7 +971,8 @@ export class TileGeometryCreator {
 
                     registerTileObject(tile, outlineObj, techniqueKind, {
                         technique,
-                        pickable: false
+                        pickable: false,
+                        forcePickable: technique.forcePickable
                     });
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,

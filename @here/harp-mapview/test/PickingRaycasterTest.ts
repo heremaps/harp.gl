@@ -71,6 +71,21 @@ describe("PickingRaycaster", function () {
             }
         });
 
+        it("picks invisible but force-pickable objects", function () {
+            const object = createFakeObject(THREE.Mesh);
+            object.material = new THREE.Material();
+            object.material.opacity = 0;
+            MapObjectAdapter.create(object, { forcePickable: true });
+            {
+                const intersections = raycaster.intersectObject(object);
+                expect(intersections).to.have.length(1);
+            }
+            {
+                const intersections = raycaster.intersectObjects([object, object]);
+                expect(intersections).to.have.length(2);
+            }
+        });
+
         it("tests pickable objects", function () {
             const object = createFakeObject(THREE.Object3D);
             const mesh = createFakeObject(THREE.Mesh);
