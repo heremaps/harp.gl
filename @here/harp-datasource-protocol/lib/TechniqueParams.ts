@@ -1216,7 +1216,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * If `true`, the height of the extruded buildings will not be modified by the mercator
      * projection distortion that happens around the poles.
      *
-     * @defaultValue `false`
+     * @defaultValue `true` for geometries stored at level less than `12`.
      */
     constantHeight?: boolean;
 

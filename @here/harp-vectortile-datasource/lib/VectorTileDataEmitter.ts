@@ -1304,9 +1304,17 @@ export class VectorTileDataEmitter {
         // computation and extrusion).
         height = Math.max(floorHeight + ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT, height);
 
-        const styleSetConstantHeight = getOptionValue(
+        const tileLevel = this.m_decodeInfo.tileKey.level;
+
+        const SCALED_EXTRUSION_MIN_STORAGE_LEVEL = 12;
+
+        // Unless explicitly defined do not apply the projection
+        // scale factor to convert meters to world space units
+        // if the tile's level is less than `SCALED_EXTRUSION_MIN_STORAGE_LEVEL`.
+        const styleSetConstantHeight = evaluateTechniqueAttr(
+            context,
             extrudedPolygonTechnique.constantHeight,
-            false
+            tileLevel < SCALED_EXTRUSION_MIN_STORAGE_LEVEL
         );
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
