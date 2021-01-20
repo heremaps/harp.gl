@@ -16,9 +16,7 @@ const vertexSource: string = `
 attribute vec4 position;
 attribute vec4 color;
 attribute vec2 uv;
-attribute float stickHeight;
 attribute float isStick;
-attribute vec2 surfaceNormal;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -31,13 +29,7 @@ void main() {
     vUv = uv;
     vColor = color;
     vIsStick = isStick;
-    vec3 pos = position.xyz;
-
-    // If the vertex belongs to the icon box or to the top of the stick:
-    if (isStick == 0.0 || (isStick == 1.0 && uv[1] == 0.0)) {
-        pos.xy += surfaceNormal;
-    }
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1.0);
 }`;
 
 const fragmentSource: string = `

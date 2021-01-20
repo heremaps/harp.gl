@@ -144,11 +144,6 @@ export class BoxBuffer {
     private m_isStickAttribute?: THREE.BufferAttribute;
 
     /**
-     * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` surface normal data.
-     */
-    private m_surfaceNormalAttribute?: THREE.BufferAttribute;
-
-    /**
      * {@link @here/harp-datasource-protocol#BufferAttribute} holding the `BoxBuffer` uv data.
      */
     private m_uvAttribute?: THREE.BufferAttribute;
@@ -226,7 +221,6 @@ export class BoxBuffer {
             this.m_colorAttribute!.count = 0;
             this.m_stickHeightAttribute!.count = 0;
             this.m_isStickAttribute!.count = 0;
-            this.m_surfaceNormalAttribute!.count = 0;
             this.m_uvAttribute!.count = 0;
             this.m_indexAttribute!.count = 0;
             this.m_pickInfos!.length = 0;
@@ -325,22 +319,21 @@ export class BoxBuffer {
         const indexAttribute = this.m_indexAttribute!;
         const stickHeightAttribute = this.m_stickHeightAttribute!;
         const isStickAttribute = this.m_isStickAttribute!;
-        const surfaceNormalAttribute = this.m_surfaceNormalAttribute!;
 
         const baseVertex = positionAttribute.count;
         const baseIndex = indexAttribute.count;
 
         // the box:
-        positionAttribute.setXYZ(baseVertex, x, y, distance);
-        positionAttribute.setXYZ(baseVertex + 1, x + w, y, distance);
-        positionAttribute.setXYZ(baseVertex + 2, x, y + h, distance);
-        positionAttribute.setXYZ(baseVertex + 3, x + w, y + h, distance);
+        positionAttribute.setXYZ(baseVertex, surfaceNormal.x + x, surfaceNormal.y + y, distance);
+        positionAttribute.setXYZ(baseVertex + 1, surfaceNormal.x + x + w, surfaceNormal.y + y, distance);
+        positionAttribute.setXYZ(baseVertex + 2, surfaceNormal.x + x, surfaceNormal.y + y + h, distance);
+        positionAttribute.setXYZ(baseVertex + 3, surfaceNormal.x + x + w, surfaceNormal.y + y + h, distance);
         // the stick under the box:
         const stickXPosition = x + w / 2;
         positionAttribute.setXYZ(baseVertex + 4, stickXPosition - 0.5, y, distance);
         positionAttribute.setXYZ(baseVertex + 5, stickXPosition + 0.5, y, distance);
-        positionAttribute.setXYZ(baseVertex + 6, stickXPosition - 0.5, y, distance);
-        positionAttribute.setXYZ(baseVertex + 7, stickXPosition + 0.5, y, distance);
+        positionAttribute.setXYZ(baseVertex + 6, surfaceNormal.x + stickXPosition - 0.5, surfaceNormal.y + y, distance);
+        positionAttribute.setXYZ(baseVertex + 7, surfaceNormal.x + stickXPosition + 0.5, surfaceNormal.y + y, distance);
 
         // the box:
         colorAttribute.setXYZW(baseVertex, r, g, b, a);
@@ -375,18 +368,6 @@ export class BoxBuffer {
         isStickAttribute.setX(baseVertex + 6, 1);
         isStickAttribute.setX(baseVertex + 7, 1);
 
-        console.log(surfaceNormal);
-        // the box:
-        surfaceNormalAttribute.setXY(baseVertex, surfaceNormal.x, surfaceNormal.y);
-        surfaceNormalAttribute.setXY(baseVertex + 1, surfaceNormal.x, surfaceNormal.y);
-        surfaceNormalAttribute.setXY(baseVertex + 2, surfaceNormal.x, surfaceNormal.y);
-        surfaceNormalAttribute.setXY(baseVertex + 3, surfaceNormal.x, surfaceNormal.y);
-        // the stick under the box:
-        surfaceNormalAttribute.setXY(baseVertex + 4, surfaceNormal.x, surfaceNormal.y);
-        surfaceNormalAttribute.setXY(baseVertex + 5, surfaceNormal.x, surfaceNormal.y);
-        surfaceNormalAttribute.setXY(baseVertex + 6, surfaceNormal.x, surfaceNormal.y);
-        surfaceNormalAttribute.setXY(baseVertex + 7, surfaceNormal.x, surfaceNormal.y);
-
         // the box:
         uvAttribute.setXY(baseVertex, s0, t0);
         uvAttribute.setXY(baseVertex + 1, s1, t0);
@@ -417,7 +398,6 @@ export class BoxBuffer {
         colorAttribute.count += NUM_VERTICES_PER_ELEMENT;
         stickHeightAttribute.count += NUM_VERTICES_PER_ELEMENT;
         isStickAttribute.count += NUM_VERTICES_PER_ELEMENT;
-        surfaceNormalAttribute.count += NUM_VERTICES_PER_ELEMENT;
         uvAttribute.count += NUM_VERTICES_PER_ELEMENT;
         indexAttribute.count += NUM_INDICES_PER_ELEMENT;
 
@@ -586,7 +566,6 @@ export class BoxBuffer {
         this.m_geometry.setAttribute("color", this.m_colorAttribute!);
         this.m_geometry.setAttribute("stickHeight", this.m_stickHeightAttribute!);
         this.m_geometry.setAttribute("isStick", this.m_isStickAttribute!);
-        this.m_geometry.setAttribute("surfaceNormal", this.m_surfaceNormalAttribute!);
         this.m_geometry.setAttribute("uv", this.m_uvAttribute!);
         this.m_geometry.setIndex(this.m_indexAttribute!);
         this.m_geometry.addGroup(0, this.m_indexAttribute!.count);
@@ -611,7 +590,6 @@ export class BoxBuffer {
             this.m_colorAttribute!.count * NUM_COLOR_VALUES_PER_VERTEX +
             this.m_stickHeightAttribute!.count * NUM_STICK_HEIGHT_VALUES_PER_VERTEX * NUM_BYTES_PER_INT16 +
             this.m_isStickAttribute!.count * NUM_IS_STICK_VALUES_PER_VERTEX +
-            this.m_surfaceNormalAttribute!.count * NUM_SURFACE_NORMAL_VALUES_PER_VERTEX * NUM_BYTES_PER_FLOAT +
             this.m_uvAttribute!.count * NUM_UV_VALUES_PER_VERTEX * NUM_BYTES_PER_FLOAT +
             this.m_indexAttribute!.count * NUM_BYTES_PER_INT32; // May be UInt16, so we overestimate
 
@@ -656,7 +634,6 @@ export class BoxBuffer {
         this.m_uvAttribute = undefined;
         this.m_stickHeightAttribute = undefined;
         this.m_isStickAttribute = undefined;
-        this.m_surfaceNormalAttribute = undefined;
         this.m_indexAttribute = undefined;
         this.resize(START_BOX_BUFFER_SIZE, true);
     }
@@ -739,24 +716,6 @@ export class BoxBuffer {
             );
             this.m_isStickAttribute.count = 0;
             this.m_isStickAttribute.setUsage(THREE.DynamicDrawUsage);
-        }
-
-        const newSurfaceNormalArray = new Float32Array(
-            newSize * NUM_VERTICES_PER_ELEMENT * NUM_SURFACE_NORMAL_VALUES_PER_VERTEX
-        );
-        if (this.m_surfaceNormalAttribute !== undefined) {
-            const surfaceNormalAttributeCount = this.m_surfaceNormalAttribute.count;
-            newSurfaceNormalArray.set(this.m_surfaceNormalAttribute.array);
-            this.m_surfaceNormalAttribute.array = newSurfaceNormalArray;
-            this.m_surfaceNormalAttribute.count = surfaceNormalAttributeCount;
-        } else {
-            this.m_surfaceNormalAttribute = new THREE.BufferAttribute(
-                newSurfaceNormalArray,
-                NUM_SURFACE_NORMAL_VALUES_PER_VERTEX,
-                false
-            );
-            this.m_surfaceNormalAttribute.count = 0;
-            this.m_surfaceNormalAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const newUvArray = new Float32Array(
