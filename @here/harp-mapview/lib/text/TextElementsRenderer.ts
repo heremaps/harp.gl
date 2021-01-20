@@ -1846,14 +1846,16 @@ export class TextElementsRenderer {
 
                 const surfaceNormal = this.m_viewState.projection.surfaceNormal(position);
                 const elevationVector = new THREE.Vector3(surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-                // TODO: convert stickHeight to world units instead of 200
-                elevationVector.multiplyScalar(200);
+                if (iconStickHeight) {
+                    const pixelsToMeters = this.m_viewState.env.lookup('$pixelToMeters') as number;
+                    elevationVector.multiplyScalar(iconStickHeight * pixelsToMeters);
+                }
 
-                const projectedPosition =
-                    this.m_screenProjector.project(position, new THREE.Vector2());
-                const projectedElevatedPosition = this.m_screenProjector.project(position.clone().add(elevationVector), new THREE.Vector2());
+                const elevatedPosition = position.clone().add(elevationVector);
+                const projectedPosition = this.m_screenProjector.project(position, new THREE.Vector2());
+                const projectedElevatedPosition = this.m_screenProjector.project(elevatedPosition, new THREE.Vector2());
                 let projectedSurfaceNormal = new THREE.Vector2(0, 0);
-                if (projectedPosition && projectedElevatedPosition && iconStickHeight) {
+                if (projectedPosition && projectedElevatedPosition) {
                     projectedSurfaceNormal = projectedElevatedPosition.clone().sub(projectedPosition);
                 }
 
