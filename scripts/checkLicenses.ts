@@ -53,11 +53,14 @@ function checkYear(
                     (hasRange && copyrightStart === copyrightEnd)
                 ) {
                     // Since a new commit is needed to fix it, the new commit must contain the current year:
-                    callback(
-                        `${sourceFile} expected: ${firstCommit}${
-                            firstCommit !== currentYear ? "-" + currentYear : ""
-                        }, found: ${found}`
-                    );
+                    const expected = `${firstCommit}${
+                        firstCommit !== currentYear ? "-" + currentYear : ""
+                    }`;
+                    if (found !== expected) {
+                        callback(`${sourceFile} expected: ${expected}, found: ${found}`);
+                    } else {
+                        callback();
+                    }
                 } else {
                     callback();
                 }
