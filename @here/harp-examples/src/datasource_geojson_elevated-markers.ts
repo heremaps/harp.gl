@@ -58,14 +58,14 @@ export namespace ElevatedGeoJsonMarkersExample {
                     {
                         type: "Feature",
                         id: 3,
-                        properties: { text: "Marker 3" },
-                        geometry: { type: "Point", coordinates: [13.414451639468634, 52.517733421392876, 0] }
+                        properties: { text: "Elevated Marker 1" },
+                        geometry: { type: "Point", coordinates: [13.414451639468634, 52.517733421392876, 200] }
                     },
                     {
                         type: "Feature",
                         id: 4,
-                        properties: { text: "Marker 4" },
-                        geometry: { type: "Point", coordinates: [13.415615888182256, 52.526919975235764, 0] }
+                        properties: { text: "Elevated Marker 2" },
+                        geometry: { type: "Point", coordinates: [13.415615888182256, 52.526919975235764, 400] }
                     }
                 ]
             });
