@@ -125,7 +125,7 @@ export class PoiBuilder {
         }
 
         const textIsOptional = technique.textIsOptional === true;
-        const iconIsOptional = technique.iconIsOptional !== false;
+        const iconIsOptional = technique.iconIsOptional === true;
         const renderTextDuringMovements = !(technique.renderTextDuringMovements === false);
         const iconMayOverlap = technique.iconMayOverlap ?? technique.textMayOverlap;
 

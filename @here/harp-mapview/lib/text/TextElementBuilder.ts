@@ -239,7 +239,8 @@ export class TextElementBuilder {
         textElement.kind = technique.kind;
         // Get the userData for text element picking.
         textElement.userData = attributes;
-        textElement.textFadeTime = technique.textFadeTime;
+        textElement.textFadeTime =
+            technique.textFadeTime !== undefined ? technique.textFadeTime * 1000 : undefined;
         textElement.pathLengthSqr = pathLengthSqr;
         textElement.alwaysOnTop = this.m_alwaysOnTop;
         textElement.renderOrder = this.m_renderOrder;

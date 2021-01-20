@@ -565,11 +565,8 @@ function placePointLabelChoosingAnchor(
     return allInvisible
         ? // All text's placements out of the screen.
           PlacementResult.Invisible
-        : persistent
-        ? // All placements are either colliding or out of screen for persistent label.
-          PlacementResult.Rejected
-        : // No placement found for the new label.
-          PlacementResult.Invisible;
+        : // All placements are either colliding or out of screen .
+          PlacementResult.Rejected;
 }
 
 /**
