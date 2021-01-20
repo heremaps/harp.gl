@@ -321,8 +321,7 @@ export class PoiBatchRegistry {
             opacity,
             viewDistance,
             surfaceNormal,
-            poiInfo.textElement,
-            poiInfo.technique.iconStickHeight
+            poiInfo.textElement
         );
     }
 

@@ -28,6 +28,7 @@ import {
     PerformanceTimer
 } from "@here/harp-utils";
 import * as THREE from "three";
+import { Vector3 } from "three";
 import { threadId } from "worker_threads";
 
 import { DataSource } from "../DataSource";
@@ -1843,6 +1844,7 @@ export class TextElementsRenderer {
 
                 // const surfaceNormal = this.m_viewState.projection.surfaceNormal(position) as THREE.Vector3;
 
+                const iconStickHeight = poiInfo?.technique.iconStickHeight;
                 const projectedPosition =
                     this.m_screenProjector.project(position, new THREE.Vector2());
                 // TODO:
@@ -1851,7 +1853,7 @@ export class TextElementsRenderer {
                 const projectedElevatedPosition =
                     this.m_screenProjector.project(new THREE.Vector3(position.x, position.y, 200), new THREE.Vector2());
                 let projectedSurfaceNormal = new THREE.Vector2(0, 0);
-                if (projectedPosition && projectedElevatedPosition) {
+                if (projectedPosition && projectedElevatedPosition && iconStickHeight) {
                     projectedSurfaceNormal = projectedElevatedPosition.clone().sub(projectedPosition);
                 }
                 // if (poiInfo?.textElement.text == 'Fernsehturm') {
