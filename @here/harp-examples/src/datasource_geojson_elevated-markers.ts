@@ -42,6 +42,30 @@ export namespace ElevatedGeoJsonMarkersExample {
                         id: 0,
                         properties: { text: "Fernsehturm" },
                         geometry: { type: "Point", coordinates: [13.40942318428955, 52.520803535061745, 0] }
+                    },
+                    {
+                        type: "Feature",
+                        id: 1,
+                        properties: { text: "Marker 1" },
+                        geometry: { type: "Point", coordinates: [13.412656497705475, 52.52240612530023, 0] }
+                    },
+                    {
+                        type: "Feature",
+                        id: 2,
+                        properties: { text: "Marker 2" },
+                        geometry: { type: "Point", coordinates: [13.399611146591866, 52.52413615462365, 0] }
+                    },
+                    {
+                        type: "Feature",
+                        id: 3,
+                        properties: { text: "Marker 3" },
+                        geometry: { type: "Point", coordinates: [13.414451639468634, 52.517733421392876, 0] }
+                    },
+                    {
+                        type: "Feature",
+                        id: 4,
+                        properties: { text: "Marker 4" },
+                        geometry: { type: "Point", coordinates: [13.415615888182256, 52.526919975235764, 0] }
                     }
                 ]
             });
