@@ -293,7 +293,7 @@ export class PoiBatchRegistry {
      * @param opacity - Opacity of icon to allow fade in/out.
      * @param surfaceNormal - The normal that defines elevation direction of the icon.
      */
-    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number, surfaceNormal: Vector3Like) {
+    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number, surfaceNormal: THREE.Vector2) {
         if (poiInfo.isValid === false || !poiInfo.buffer) {
             logger.warn(
                 "PoiBatchRegistry: trying to add poiInfo without buffer prepared: ",
@@ -532,7 +532,7 @@ export class PoiRenderer {
         allocateScreenSpace: boolean,
         opacity: number,
         env: Env,
-        surfaceNormal: Vector3Like
+        surfaceNormal: THREE.Vector2
     ): void {
         assert(poiInfo.buffer !== undefined);
 

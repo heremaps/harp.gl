@@ -28,6 +28,7 @@ import {
     PerformanceTimer
 } from "@here/harp-utils";
 import * as THREE from "three";
+import { threadId } from "worker_threads";
 
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
@@ -1840,7 +1841,22 @@ export class TextElementsRenderer {
                 // surrounding new labels.
                 const allocateSpace = poiInfo!.reserveSpace !== false && !iconRejected;
 
-                const surfaceNormal = this.m_viewState.projection.surfaceNormal(position);
+                // const surfaceNormal = this.m_viewState.projection.surfaceNormal(position) as THREE.Vector3;
+
+                const projectedPosition =
+                    this.m_screenProjector.project(position, new THREE.Vector2());
+                // TODO:
+                // 1. elevate along surfaceNormal, not along (0, 0, 1), otherwise it won't work for globe
+                // 2. convert stickHeight to world units instead of 200
+                const projectedElevatedPosition =
+                    this.m_screenProjector.project(new THREE.Vector3(position.x, position.y, 200), new THREE.Vector2());
+                let projectedSurfaceNormal = new THREE.Vector2(0, 0);
+                if (projectedPosition && projectedElevatedPosition) {
+                    projectedSurfaceNormal = projectedElevatedPosition.clone().sub(projectedPosition);
+                }
+                // if (poiInfo?.textElement.text == 'Fernsehturm') {
+                    // console.log(projectedSurfaceNormal);
+                // }
                 this.m_poiRenderer.addPoi(
                     poiInfo!,
                     tempPoiScreenPosition,
@@ -1850,7 +1866,7 @@ export class TextElementsRenderer {
                     allocateSpace,
                     opacity,
                     this.m_viewState.env,
-                    surfaceNormal
+                    projectedSurfaceNormal as THREE.Vector2
                 );
 
                 if (placementStats) {

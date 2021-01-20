@@ -18,14 +18,10 @@ attribute vec4 color;
 attribute vec2 uv;
 attribute float stickHeight;
 attribute float isStick;
-attribute vec3 surfaceNormal;
+attribute vec2 surfaceNormal;
 
-// uniform mat4 modelViewMatrix;
-// uniform mat4 projectionMatrix;
-
+uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelMatrix;
 
 varying vec4 vColor;
 varying float vIsStick;
@@ -38,10 +34,10 @@ void main() {
     vec3 pos = position.xyz;
 
     // If the vertex belongs to the icon box or to the top of the stick:
-    // if (isStick == 0.0 || (isStick == 1.0 && uv[1] == 0.0)) {
-        pos += surfaceNormal * 100.0;
-    // }
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(pos, 1.0);
+    if (isStick == 0.0 || (isStick == 1.0 && uv[1] == 0.0)) {
+        pos.xy += surfaceNormal;
+    }
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }`;
 
 const fragmentSource: string = `

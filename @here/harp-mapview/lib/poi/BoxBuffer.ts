@@ -65,7 +65,7 @@ const NUM_IS_STICK_VALUES_PER_VERTEX = 1;
 /**
  * Number of values per surface normal.
  */
-const NUM_SURFACE_NORMAL_VALUES_PER_VERTEX = 3;
+const NUM_SURFACE_NORMAL_VALUES_PER_VERTEX = 2;
 
 /**
  * Number of values per UV.
@@ -302,7 +302,7 @@ export class BoxBuffer {
         color: THREE.Color,
         opacity: number,
         distance: number,
-        surfaceNormal: any,
+        surfaceNormal: THREE.Vector2,
         pickInfo?: any,
         iconStickHeight = 0,
     ): boolean {
@@ -375,16 +375,17 @@ export class BoxBuffer {
         isStickAttribute.setX(baseVertex + 6, 1);
         isStickAttribute.setX(baseVertex + 7, 1);
 
+        console.log(surfaceNormal);
         // the box:
-        surfaceNormalAttribute.setXYZ(baseVertex, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-        surfaceNormalAttribute.setXYZ(baseVertex + 1, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-        surfaceNormalAttribute.setXYZ(baseVertex + 2, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-        surfaceNormalAttribute.setXYZ(baseVertex + 3, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXY(baseVertex, surfaceNormal.x, surfaceNormal.y);
+        surfaceNormalAttribute.setXY(baseVertex + 1, surfaceNormal.x, surfaceNormal.y);
+        surfaceNormalAttribute.setXY(baseVertex + 2, surfaceNormal.x, surfaceNormal.y);
+        surfaceNormalAttribute.setXY(baseVertex + 3, surfaceNormal.x, surfaceNormal.y);
         // the stick under the box:
-        surfaceNormalAttribute.setXYZ(baseVertex + 4, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-        surfaceNormalAttribute.setXYZ(baseVertex + 5, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-        surfaceNormalAttribute.setXYZ(baseVertex + 6, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
-        surfaceNormalAttribute.setXYZ(baseVertex + 7, surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+        surfaceNormalAttribute.setXY(baseVertex + 4, surfaceNormal.x, surfaceNormal.y);
+        surfaceNormalAttribute.setXY(baseVertex + 5, surfaceNormal.x, surfaceNormal.y);
+        surfaceNormalAttribute.setXY(baseVertex + 6, surfaceNormal.x, surfaceNormal.y);
+        surfaceNormalAttribute.setXY(baseVertex + 7, surfaceNormal.x, surfaceNormal.y);
 
         // the box:
         uvAttribute.setXY(baseVertex, s0, t0);
@@ -752,7 +753,7 @@ export class BoxBuffer {
             this.m_surfaceNormalAttribute = new THREE.BufferAttribute(
                 newSurfaceNormalArray,
                 NUM_SURFACE_NORMAL_VALUES_PER_VERTEX,
-                true
+                false
             );
             this.m_surfaceNormalAttribute.count = 0;
             this.m_surfaceNormalAttribute.setUsage(THREE.DynamicDrawUsage);
