@@ -85,7 +85,7 @@ export namespace ElevatedGeoJsonMarkersExample {
         const map = new MapView({
             canvas,
             theme: {
-                extends: "resources/berlin_tilezen_day_reduced.json",
+                extends: "resources/berlin_tilezen_base.json",
                 styles: {
                     // Specify the styling for the markers.
                     geojson: [
