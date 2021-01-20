@@ -808,30 +808,31 @@ export class VectorTileDataEmitter {
                 isFilled ||
                 isStandard ||
                 (isShaderTechnique(technique) && technique.primitive === "mesh");
+
             const computeTexCoords = this.getComputeTexCoordsFunc(technique, objectBounds);
+
+            const shouldClipPolygons = isPolygon && !isExtruded;
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
 
                 for (const outline of polygon.rings) {
                     let coords = outline;
-                    let clippedPointIndices: Set<number> | undefined;
 
                     // disable clipping for the polygon geometries
                     // rendered using the extruded-polygon technique.
                     // We can't clip these polygons for now because
                     // otherwise we could break the current assumptions
                     // used to add oultines around the extruded geometries.
-                    if (isPolygon && !isExtruded) {
-                        const shouldClipPolygon = coords.some(
+                    if (shouldClipPolygons) {
+                        // quick test to avoid clipping if all the coords
+                        // of the current polygon are inside the tile bounds.
+                        const hasCoordsOutsideTileBounds = coords.some(
                             p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
                         );
 
-                        if (shouldClipPolygon) {
+                        if (hasCoordsOutsideTileBounds) {
                             coords = clipPolygon(coords, extents);
-                            clippedPointIndices = Ring.computeClippedPointIndices(coords, outline);
-                        } else {
-                            clippedPointIndices = new Set();
                         }
                     }
 
@@ -845,7 +846,7 @@ export class VectorTileDataEmitter {
                         textureCoords = coords.map(coord => computeTexCoords(coord, extents));
                     }
 
-                    rings.push(new Ring(coords, textureCoords, extents, clippedPointIndices));
+                    rings.push(new Ring(coords, textureCoords, extents, shouldClipPolygons));
                 }
 
                 if (rings.length === 0) {
