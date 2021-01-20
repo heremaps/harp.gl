@@ -73,9 +73,10 @@ function checkYear(
  *                      IMPORTANT, RegExp match should match the whole license and in the match groups returns the
  *                      following:
  *                      - match[1] - copyright start year
- *                      - match[3] - copyright end year (if specified)
+ *                      - match[2] - copyright end year (if specified)
  * @param callback The callback function to execute upon completion. Array of errors strings is passed back,
  *                 in case not matching file is found.
+ * @param [fix=false] Flag indicating whether correct licenses should be automatically fixed. Default is false.
  */
 export function checkLicenses(
     sourceFiles: string[],
@@ -100,7 +101,7 @@ export function checkLicenses(
             errors.push(`${sourceFile} has no valid copyright notice`);
             checkIfDone();
         } else {
-            checkYear(sourceFile, [match[1], match[3]], error => {
+            checkYear(sourceFile, [match[1], match[2]], error => {
                 if (error) {
                     // Let's fix it in case of wrong year(s) found and AUTO_FIX is activated:
                     const errorMatch = /expected: (.+), found: (.+)/.exec(error);

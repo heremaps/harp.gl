@@ -10,7 +10,7 @@ import * as path from "path";
 
 import { checkLicenses } from "../scripts/checkLicenses";
 
-const APACHE_LICENSE = /\/\*\n \* Copyright \(C\) (\d{4})(-(\d{4}))? HERE Europe B\.V\.\n \* Licensed under Apache 2\.0\, see full license in LICENSE\n \* SPDX\-License\-Identifier\: Apache\-2\.0\n \*\//;
+const APACHE_LICENSE = /\/\*\n \* Copyright \(C\) (\d{4})(?:-(\d{4}))? HERE Europe B\.V\.\n \* Licensed under Apache 2\.0\, see full license in LICENSE\n \* SPDX\-License\-Identifier\: Apache\-2\.0\n \*\//;
 // To fix wrong year(s) of the copyright notice on a local machine automatically:
 const AUTO_FIX = process.argv.slice(2).includes("--fix");
 
