@@ -53,19 +53,9 @@ const NUM_POSITION_VALUES_PER_VERTEX = 3;
 const NUM_COLOR_VALUES_PER_VERTEX = 4;
 
 /**
- * Number of values needed for the stick height.
- */
-const NUM_STICK_HEIGHT_VALUES_PER_VERTEX = 1;
-
-/**
  * Number of values needed to determine if vertex belongs to the stick.
  */
 const NUM_IS_STICK_VALUES_PER_VERTEX = 1;
-
-/**
- * Number of values per surface normal.
- */
-const NUM_SURFACE_NORMAL_VALUES_PER_VERTEX = 2;
 
 /**
  * Number of values per UV.
