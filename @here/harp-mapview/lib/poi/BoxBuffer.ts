@@ -73,11 +73,6 @@ const NUM_INDEX_VALUES_PER_VERTEX = 1;
 const NUM_BYTES_PER_FLOAT = 4;
 
 /**
- * Number of bytes for integer number in an UInt16Array.
- */
-const NUM_BYTES_PER_INT16 = 2;
-
-/**
  * Number of bytes for integer number in an UInt32Array.
  */
 const NUM_BYTES_PER_INT32 = 4;
