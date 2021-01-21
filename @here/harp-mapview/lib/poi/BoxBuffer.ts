@@ -302,15 +302,40 @@ export class BoxBuffer {
 
         // the box:
         positionAttribute.setXYZ(baseVertex, surfaceNormal.x + x, surfaceNormal.y + y, distance);
-        positionAttribute.setXYZ(baseVertex + 1, surfaceNormal.x + x + w, surfaceNormal.y + y, distance);
-        positionAttribute.setXYZ(baseVertex + 2, surfaceNormal.x + x, surfaceNormal.y + y + h, distance);
-        positionAttribute.setXYZ(baseVertex + 3, surfaceNormal.x + x + w, surfaceNormal.y + y + h, distance);
+        positionAttribute.setXYZ(
+            baseVertex + 1,
+            surfaceNormal.x + x + w,
+            surfaceNormal.y + y,
+            distance
+        );
+        positionAttribute.setXYZ(
+            baseVertex + 2,
+            surfaceNormal.x + x,
+            surfaceNormal.y + y + h,
+            distance
+        );
+        positionAttribute.setXYZ(
+            baseVertex + 3,
+            surfaceNormal.x + x + w,
+            surfaceNormal.y + y + h,
+            distance
+        );
         // the stick under the box:
         const stickXPosition = x + w / 2;
         positionAttribute.setXYZ(baseVertex + 4, stickXPosition - 0.5, y, distance);
         positionAttribute.setXYZ(baseVertex + 5, stickXPosition + 0.5, y, distance);
-        positionAttribute.setXYZ(baseVertex + 6, surfaceNormal.x + stickXPosition - 0.5, surfaceNormal.y + y, distance);
-        positionAttribute.setXYZ(baseVertex + 7, surfaceNormal.x + stickXPosition + 0.5, surfaceNormal.y + y, distance);
+        positionAttribute.setXYZ(
+            baseVertex + 6,
+            surfaceNormal.x + stickXPosition - 0.5,
+            surfaceNormal.y + y,
+            distance
+        );
+        positionAttribute.setXYZ(
+            baseVertex + 7,
+            surfaceNormal.x + stickXPosition + 0.5,
+            surfaceNormal.y + y,
+            distance
+        );
 
         // the box:
         colorAttribute.setXYZW(baseVertex, r, g, b, a);

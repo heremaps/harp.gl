@@ -28,8 +28,6 @@ import {
     PerformanceTimer
 } from "@here/harp-utils";
 import * as THREE from "three";
-import { Vector3 } from "three";
-import { threadId } from "worker_threads";
 
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
@@ -1845,18 +1843,30 @@ export class TextElementsRenderer {
                 const iconStickHeight = poiInfo?.technique.iconStickHeight;
 
                 const surfaceNormal = this.m_viewState.projection.surfaceNormal(position);
-                const elevationVector = new THREE.Vector3(surfaceNormal.x, surfaceNormal.y, surfaceNormal.z);
+                const elevationVector = new THREE.Vector3(
+                    surfaceNormal.x,
+                    surfaceNormal.y,
+                    surfaceNormal.z
+                );
                 if (iconStickHeight) {
-                    const pixelsToMeters = this.m_viewState.env.lookup('$pixelToMeters') as number;
+                    const pixelsToMeters = this.m_viewState.env.lookup("$pixelToMeters") as number;
                     elevationVector.multiplyScalar(iconStickHeight * pixelsToMeters);
                 }
 
                 const elevatedPosition = position.clone().add(elevationVector);
-                const projectedPosition = this.m_screenProjector.project(position, new THREE.Vector2());
-                const projectedElevatedPosition = this.m_screenProjector.project(elevatedPosition, new THREE.Vector2());
+                const projectedPosition = this.m_screenProjector.project(
+                    position,
+                    new THREE.Vector2()
+                );
+                const projectedElevatedPosition = this.m_screenProjector.project(
+                    elevatedPosition,
+                    new THREE.Vector2()
+                );
                 let projectedSurfaceNormal = new THREE.Vector2(0, 0);
                 if (projectedPosition && projectedElevatedPosition) {
-                    projectedSurfaceNormal = projectedElevatedPosition.clone().sub(projectedPosition);
+                    projectedSurfaceNormal = projectedElevatedPosition
+                        .clone()
+                        .sub(projectedPosition);
                 }
 
                 this.m_poiRenderer.addPoi(

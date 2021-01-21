@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Env, getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
-import { Vector3Like } from "@here/harp-geoutils";
 import { IconMaterial } from "@here/harp-materials";
 import { MemoryUsage } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
@@ -293,7 +292,13 @@ export class PoiBatchRegistry {
      * @param opacity - Opacity of icon to allow fade in/out.
      * @param surfaceNormal - The normal that defines elevation direction of the icon.
      */
-    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number, surfaceNormal: THREE.Vector2) {
+    addPoi(
+        poiInfo: PoiInfo,
+        screenBox: Math2D.Box,
+        viewDistance: number,
+        opacity: number,
+        surfaceNormal: THREE.Vector2
+    ) {
         if (poiInfo.isValid === false || !poiInfo.buffer) {
             logger.warn(
                 "PoiBatchRegistry: trying to add poiInfo without buffer prepared: ",
@@ -545,7 +550,13 @@ export class PoiRenderer {
             if (!poiInfo.buffer) {
                 this.preparePoi(poiInfo.textElement, env);
             }
-            this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity, surfaceNormal);
+            this.m_poiBatchRegistry.addPoi(
+                poiInfo,
+                this.m_tempScreenBox,
+                viewDistance,
+                opacity,
+                surfaceNormal
+            );
         }
     }
 

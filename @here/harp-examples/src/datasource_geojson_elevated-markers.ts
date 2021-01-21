@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
+import { GeoCoordinates, sphereProjection, TileKey } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
@@ -41,31 +41,58 @@ export namespace ElevatedGeoJsonMarkersExample {
                         type: "Feature",
                         id: 0,
                         properties: { text: "Fernsehturm" },
-                        geometry: { type: "Point", coordinates: [13.40942318428955, 52.520803535061745, 0] }
+                        geometry: {
+                            type: "Point",
+                            coordinates: [13.40942318428955, 52.520803535061745, 0]
+                        }
                     },
                     {
                         type: "Feature",
                         id: 1,
                         properties: { text: "Marker 1" },
-                        geometry: { type: "Point", coordinates: [13.412656497705475, 52.52240612530023, 0] }
+                        geometry: {
+                            type: "Point",
+                            coordinates: [13.412656497705475, 52.52240612530023, 0]
+                        }
                     },
                     {
                         type: "Feature",
                         id: 2,
                         properties: { text: "Marker 2" },
-                        geometry: { type: "Point", coordinates: [13.399611146591866, 52.52413615462365, 0] }
+                        geometry: {
+                            type: "Point",
+                            coordinates: [13.399611146591866, 52.52413615462365, 0]
+                        }
                     },
                     {
                         type: "Feature",
                         id: 3,
                         properties: { text: "Elevated Marker 1" },
-                        geometry: { type: "Point", coordinates: [13.414451639468634, 52.517733421392876, 200] }
+                        geometry: {
+                            type: "Point",
+                            coordinates: [13.414451639468634, 52.517733421392876, 200]
+                        }
                     },
                     {
                         type: "Feature",
                         id: 4,
                         properties: { text: "Elevated Marker 2" },
-                        geometry: { type: "Point", coordinates: [13.415615888182256, 52.526919975235764, 400] }
+                        geometry: {
+                            type: "Point",
+                            coordinates: [13.415615888182256, 52.526919975235764, 300]
+                        }
+                    },
+                    {
+                        type: "Feature",
+                        id: 5,
+                        properties: { text: "Elevated Marker 3" },
+                        geometry: { type: "Point", coordinates: [-0.2416811, 51.5285582, 200] }
+                    },
+                    {
+                        type: "Feature",
+                        id: 6,
+                        properties: { text: "Elevated Marker 4" },
+                        geometry: { type: "Point", coordinates: [-74.3477568, 40.7128, 1000] }
                     }
                 ]
             });
@@ -97,14 +124,18 @@ export namespace ElevatedGeoJsonMarkersExample {
                             iconYOffset: 35,
                             size: 15,
                             priority: 1000,
-                            iconStickHeight: 200
+                            iconStickHeight: 100,
+                            iconMayOverlap: true,
+                            textMayOverlap: true
+                            // iconStickColor: "red" // TODO: to be implemented
                         }
                     ]
                 }
             },
             target: new GeoCoordinates(52.520803535061745, 13.40942318428955),
             zoomLevel: 16.4,
-            tilt: 78
+            tilt: 78,
+            projection: sphereProjection
         });
 
         // Register the icon image referenced in the style.
