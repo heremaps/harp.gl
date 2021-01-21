@@ -7,6 +7,9 @@ cache:
   directories:
     - "node_modules/.cache"
 
+git:
+  depth: false
+
 addons:
   chrome: stable
   firefox: latest
