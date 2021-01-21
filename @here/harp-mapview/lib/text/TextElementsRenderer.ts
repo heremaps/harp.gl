@@ -1886,7 +1886,7 @@ export class TextElementsRenderer {
                 surfaceNormal.x,
                 surfaceNormal.y,
                 surfaceNormal.z
-            ).multiplyScalar(iconStickHeight * pixelsToMeters);
+            ).multiplyScalar((iconStickHeight as number) * pixelsToMeters);
             worldPosition.add(elevationVector);
             // Calculate vector between the original
             // position and elevated position in the screen space:

@@ -121,12 +121,13 @@ export namespace ElevatedGeoJsonMarkersExample {
                             technique: "labeled-icon",
                             imageTexture,
                             text: ["get", "text"],
-                            iconYOffset: 35,
+                            placements: "T",
+                            // iconXOffset: 10, // TODO: should not offset the bottom of the stick
                             size: 15,
                             priority: 1000,
-                            iconStickHeight: 100 // in px
-                            // iconStickColor: "red",   // TODO: to be implemented
-                            // iconMayOverlap: true,
+                            iconStickHeight: 200, // in px
+                            // iconStickColor: "red", // TODO: to be implemented
+                            iconMayOverlap: true
                             // textMayOverlap: true
                         }
                     ]
