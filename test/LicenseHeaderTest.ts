@@ -16,6 +16,9 @@ const AUTO_FIX = process.argv.slice(2).includes("--fix");
 
 describe("LicenseHeaderCheck", function () {
     it("Contains correct license header", function (done) {
+        // In some cases (coverage run on CI) --no-timeouts flag is not passed,
+        // so we have to set it here specifically.
+        this.timeout(180000); // 3 mins
         const sourceFiles = glob
             .sync(path.join(__dirname, "..", "**/*.ts"))
             .filter(file => !file.includes("/node_modules/"))
