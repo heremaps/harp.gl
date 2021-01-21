@@ -37,12 +37,9 @@ function checkYear(
             } else if (stdErr) {
                 callback(stdErr.toString());
             } else if (stdOut.toString() === "") {
-                // The file is not in Git repository yet:
-                if (found !== currentYear) {
-                    callback(`${sourceFile} expected: ${currentYear}, found: ${found}`);
-                } else {
-                    callback();
-                }
+                // The file is not in Git repository yet, we can't detect the years.
+                // Please commit first and re-run.
+                callback();
             } else if (!/^\d{4}\n\d{4}\n$/.test(stdOut.toString())) {
                 callback(`Can't determine first/last year of Git commit for file ${sourceFile}`);
             } else {
