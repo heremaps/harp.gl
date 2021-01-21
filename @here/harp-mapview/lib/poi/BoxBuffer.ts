@@ -266,7 +266,7 @@ export class BoxBuffer {
      * @param color - Box's color.
      * @param opacity - Box's opacity.
      * @param distance - Box's distance to camera.
-     * @param surfaceNormal - elevation direction of the marker.
+     * @param iconStickProjectionVector - the vector that defines icon stick direction in the screen space.
      * @param pickInfo - Box's picking information.
      */
     addBox(
@@ -275,7 +275,7 @@ export class BoxBuffer {
         color: THREE.Color,
         opacity: number,
         distance: number,
-        surfaceNormal: THREE.Vector2,
+        iconStickProjectionVector: THREE.Vector2,
         pickInfo?: any
     ): boolean {
         if (!this.canAddElements()) {
@@ -301,41 +301,26 @@ export class BoxBuffer {
         const baseIndex = indexAttribute.count;
 
         // the box:
-        positionAttribute.setXYZ(baseVertex, surfaceNormal.x + x, surfaceNormal.y + y, distance);
-        positionAttribute.setXYZ(
-            baseVertex + 1,
-            surfaceNormal.x + x + w,
-            surfaceNormal.y + y,
-            distance
-        );
-        positionAttribute.setXYZ(
-            baseVertex + 2,
-            surfaceNormal.x + x,
-            surfaceNormal.y + y + h,
-            distance
-        );
-        positionAttribute.setXYZ(
-            baseVertex + 3,
-            surfaceNormal.x + x + w,
-            surfaceNormal.y + y + h,
-            distance
-        );
+        positionAttribute.setXYZ(baseVertex, x, y, distance);
+        positionAttribute.setXYZ(baseVertex + 1, x + w, y, distance);
+        positionAttribute.setXYZ(baseVertex + 2, x, y + h, distance);
+        positionAttribute.setXYZ(baseVertex + 3, x + w, y + h, distance);
         // the stick under the box:
         const stickXPosition = x + w / 2;
-        positionAttribute.setXYZ(baseVertex + 4, stickXPosition - 0.5, y, distance);
-        positionAttribute.setXYZ(baseVertex + 5, stickXPosition + 0.5, y, distance);
         positionAttribute.setXYZ(
-            baseVertex + 6,
-            surfaceNormal.x + stickXPosition - 0.5,
-            surfaceNormal.y + y,
+            baseVertex + 4,
+            iconStickProjectionVector.x + stickXPosition - 0.5,
+            iconStickProjectionVector.y + y,
             distance
         );
         positionAttribute.setXYZ(
-            baseVertex + 7,
-            surfaceNormal.x + stickXPosition + 0.5,
-            surfaceNormal.y + y,
+            baseVertex + 5,
+            iconStickProjectionVector.x + stickXPosition + 0.5,
+            iconStickProjectionVector.y + y,
             distance
         );
+        positionAttribute.setXYZ(baseVertex + 6, stickXPosition - 0.5, y, distance);
+        positionAttribute.setXYZ(baseVertex + 7, stickXPosition + 0.5, y, distance);
 
         // the box:
         colorAttribute.setXYZW(baseVertex, r, g, b, a);

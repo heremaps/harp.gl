@@ -124,10 +124,10 @@ export namespace ElevatedGeoJsonMarkersExample {
                             iconYOffset: 35,
                             size: 15,
                             priority: 1000,
-                            iconStickHeight: 100,
-                            iconMayOverlap: true,
-                            textMayOverlap: true
-                            // iconStickColor: "red" // TODO: to be implemented
+                            iconStickHeight: 100 // in px
+                            // iconStickColor: "red",   // TODO: to be implemented
+                            // iconMayOverlap: true,
+                            // textMayOverlap: true
                         }
                     ]
                 }

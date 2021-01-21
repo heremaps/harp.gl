@@ -290,14 +290,14 @@ export class PoiBatchRegistry {
      * @param screenBox - Box to render icon into in 2D coordinates.
      * @param viewDistance - Box's distance to camera.
      * @param opacity - Opacity of icon to allow fade in/out.
-     * @param surfaceNormal - The normal that defines elevation direction of the icon.
+     * @param iconStickProjectionVector - the vector that defines icon stick direction in the screen space.
      */
     addPoi(
         poiInfo: PoiInfo,
         screenBox: Math2D.Box,
         viewDistance: number,
         opacity: number,
-        surfaceNormal: THREE.Vector2
+        iconStickProjectionVector: THREE.Vector2
     ) {
         if (poiInfo.isValid === false || !poiInfo.buffer) {
             logger.warn(
@@ -325,7 +325,7 @@ export class PoiBatchRegistry {
             color,
             opacity,
             viewDistance,
-            surfaceNormal,
+            iconStickProjectionVector,
             poiInfo.textElement
         );
     }
@@ -525,6 +525,7 @@ export class PoiRenderer {
      * @param scale - Scaling factor to apply to text and icon.
      * @param allocateScreenSpace - If `true` screen space will be allocated for the icon.
      * @param opacity - Opacity of icon to allow fade in/out.
+     * @param iconStickProjectionVector - the vector that defines icon stick direction in the screen space.
      * @returns - `true` if icon has been actually rendered, `false` otherwise.
      */
     addPoi(
@@ -536,7 +537,7 @@ export class PoiRenderer {
         allocateScreenSpace: boolean,
         opacity: number,
         env: Env,
-        surfaceNormal: THREE.Vector2
+        iconStickProjectionVector: THREE.Vector2
     ): void {
         assert(poiInfo.buffer !== undefined);
 
@@ -555,7 +556,7 @@ export class PoiRenderer {
                 this.m_tempScreenBox,
                 viewDistance,
                 opacity,
-                surfaceNormal
+                iconStickProjectionVector
             );
         }
     }

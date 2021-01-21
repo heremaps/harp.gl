@@ -1668,7 +1668,8 @@ export class TextElementsRenderer {
         position: THREE.Vector3,
         screenPosition: THREE.Vector2,
         textCanvas: TextCanvas | undefined,
-        renderParams: RenderParams
+        renderParams: RenderParams,
+        iconStickProjectionVector = new THREE.Vector2(0, 0)
     ): boolean {
         const pointLabel: TextElement = labelState.element;
         const textRenderState: RenderState | undefined = labelState.textRenderState;
@@ -1840,35 +1841,6 @@ export class TextElementsRenderer {
                 // surrounding new labels.
                 const allocateSpace = poiInfo!.reserveSpace !== false && !iconRejected;
 
-                const iconStickHeight = poiInfo?.technique.iconStickHeight;
-
-                const surfaceNormal = this.m_viewState.projection.surfaceNormal(position);
-                const elevationVector = new THREE.Vector3(
-                    surfaceNormal.x,
-                    surfaceNormal.y,
-                    surfaceNormal.z
-                );
-                if (iconStickHeight) {
-                    const pixelsToMeters = this.m_viewState.env.lookup("$pixelToMeters") as number;
-                    elevationVector.multiplyScalar(iconStickHeight * pixelsToMeters);
-                }
-
-                const elevatedPosition = position.clone().add(elevationVector);
-                const projectedPosition = this.m_screenProjector.project(
-                    position,
-                    new THREE.Vector2()
-                );
-                const projectedElevatedPosition = this.m_screenProjector.project(
-                    elevatedPosition,
-                    new THREE.Vector2()
-                );
-                let projectedSurfaceNormal = new THREE.Vector2(0, 0);
-                if (projectedPosition && projectedElevatedPosition) {
-                    projectedSurfaceNormal = projectedElevatedPosition
-                        .clone()
-                        .sub(projectedPosition);
-                }
-
                 this.m_poiRenderer.addPoi(
                     poiInfo!,
                     tempPoiScreenPosition,
@@ -1878,7 +1850,7 @@ export class TextElementsRenderer {
                     allocateSpace,
                     opacity,
                     this.m_viewState.env,
-                    projectedSurfaceNormal as THREE.Vector2
+                    iconStickProjectionVector
                 );
 
                 if (placementStats) {
@@ -1902,6 +1874,37 @@ export class TextElementsRenderer {
             this.m_tmpVector3
         );
 
+        const iconStickHeight = labelState.element.poiInfo?.technique.iconStickHeight;
+        let iconStickProjectionVector = new THREE.Vector2(0, 0);
+        if (iconStickHeight) {
+            // Store the original worldPosition given by user:
+            const stickBottomWorldPosition = worldPosition.clone();
+            // Elevate worldPosition to put it on top of the stick:
+            const pixelsToMeters = this.m_viewState.env.lookup("$pixelToMeters") as number;
+            const surfaceNormal = this.m_viewState.projection.surfaceNormal(worldPosition);
+            const elevationVector = new THREE.Vector3(
+                surfaceNormal.x,
+                surfaceNormal.y,
+                surfaceNormal.z
+            ).multiplyScalar(iconStickHeight * pixelsToMeters);
+            worldPosition.add(elevationVector);
+            // Calculate vector between the original
+            // position and elevated position in the screen space:
+            const projectedStickBottomPosition = this.m_screenProjector.project(
+                stickBottomWorldPosition,
+                new THREE.Vector2()
+            );
+            const projectedPosition = this.m_screenProjector.project(
+                worldPosition,
+                new THREE.Vector2()
+            );
+            if (projectedStickBottomPosition && projectedPosition) {
+                iconStickProjectionVector = projectedStickBottomPosition
+                    .clone()
+                    .sub(projectedPosition);
+            }
+        }
+
         // Only process labels that are potentially within the frustum.
         if (!this.labelPotentiallyVisible(worldPosition, tempScreenPosition)) {
             return false;
@@ -1913,7 +1916,8 @@ export class TextElementsRenderer {
             worldPosition,
             tempScreenPosition,
             textCanvas,
-            renderParams
+            renderParams,
+            iconStickProjectionVector
         );
     }
 
