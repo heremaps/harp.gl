@@ -442,3 +442,27 @@ export function getFeatureText(
 
     return getFeatureName(env, propName, useAbbreviation, useIsoCode, languages);
 }
+
+/**
+ * Determine whether to scale heights by the projection scale factor for geometry
+ * using the given technique.
+ * @remarks Unless explicitly defined, the scale factor to convert meters to world space units
+ * won't be applied if the tile's level is less than a fixed storage level.
+ * @param context - Context for evaluation of technique attributes.
+ * @param technique - Technique to be evaluated.
+ * @param tileLevel - The level of the tile where the geometry is stored.
+ * @returns `true` if height must be scaled, `false` otherwise.
+ */
+export function scaleHeight(
+    context: Env | AttrEvaluationContext,
+    technique: Technique,
+    tileLevel: number
+): boolean {
+    const SCALED_HEIGHT_MIN_STORAGE_LEVEL = 12;
+    const useConstantHeight = evaluateTechniqueAttr(
+        context,
+        technique.constantHeight,
+        tileLevel < SCALED_HEIGHT_MIN_STORAGE_LEVEL
+    );
+    return !useConstantHeight;
+}
