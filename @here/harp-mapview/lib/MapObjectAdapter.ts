@@ -3,8 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { GeometryKind, getPropertyValue, MapEnv, Technique } from "@here/harp-datasource-protocol";
+import { GeometryKind, MapEnv, Pickability, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
 import { DataSource } from "./DataSource";
@@ -19,9 +18,8 @@ export interface MapObjectAdapterParams {
     dataSource?: DataSource;
     technique?: Technique;
     kind?: GeometryKind[];
-    pickable?: boolean;
     level?: number;
-    forcePickable?: boolean;
+    pickability?: Pickability;
 
     // TODO: Move here in following refactor.
     //featureData?: TileFeatureData;
@@ -81,8 +79,7 @@ export class MapObjectAdapter {
      */
     readonly level: number | undefined;
 
-    private readonly m_pickable: boolean;
-    private readonly m_forcePickable: boolean;
+    private readonly m_pickability: Pickability;
     private m_lastUpdateFrameNumber = -1;
     private m_notCompletlyTransparent = true;
 
@@ -91,8 +88,7 @@ export class MapObjectAdapter {
         this.technique = params.technique;
         this.kind = params.kind;
         this.dataSource = params.dataSource;
-        this.m_pickable = params.pickable ?? true;
-        this.m_forcePickable = params.forcePickable ?? false;
+        this.m_pickability = params.pickability ?? Pickability.onlyVisible;
         this.m_notCompletlyTransparent = this.getObjectMaterials().some(
             material => material.opacity > 0
         );
@@ -142,18 +138,16 @@ export class MapObjectAdapter {
      * @param env - Property lookup environment.
      */
     isPickable(env: MapEnv) {
-        // An object is pickable only if it's visible or forcePickable set,
-        // not transient and it's not explicitely marked
-        // as non-pickable.
+        // An object is pickable only if it's visible and Pickabilty.onlyVisible or
+        //  Pickabililty.all set.
         return (
-            this.m_pickable &&
-            (this.isVisible() || this.m_forcePickable) &&
-            getPropertyValue(this.technique?.transient, env) !== true
+            (this.pickability === Pickability.onlyVisible && this.isVisible()) ||
+            this.m_pickability === Pickability.all
         );
     }
 
-    get forcePickable(): boolean {
-        return this.m_forcePickable;
+    get pickability(): Pickability {
+        return this.m_pickability;
     }
 
     private updateMaterials(context: MapAdapterUpdateEnv) {
