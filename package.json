@@ -37,7 +37,7 @@
         "fs-extra": "^9.0.0",
         "geckodriver": "^1.21.1",
         "glob": "^7.1.4",
-        "karma": "^5.2.3",
+        "karma": "^6.0.1",
         "karma-chrome-launcher": "^3.1.0",
         "karma-firefox-launcher": "^2.1.0",
         "karma-mocha": "^2.0.1",
