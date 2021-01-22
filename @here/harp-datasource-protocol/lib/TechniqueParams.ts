@@ -13,6 +13,19 @@ import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 export type LineCaps = "Square" | "Round" | "None" | "TriangleOut" | "TriangleIn";
 
 /**
+ * The style type of the line caps.
+ * - `Round`
+ *   Rounds off the corners of a shape by filling an additional sector of disc centered at the common endpoint of
+ *   connected segments. The radius for these rounded corners is equal to the line width.
+ * - `Bevel`
+ *   A join with a squared-off end.
+ * - `Miter`
+ *    Connected segments are joined by extending their outside edges to connect at a single point,
+ *    with the effect of filling an additional area.
+ */
+export type LineJoins = "Bevel" | "Round" | "Miter";
+
+/**
  * The style type of the line dashes.
  */
 export type LineDashes = "Square" | "Round" | "Diamond";
@@ -1072,6 +1085,11 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * @defaultValue `"Round"`.
      */
     caps?: DynamicProperty<LineCaps>;
+    /**
+     * Describes the style of the line joins.
+     * @defaultValue `"Round"`
+     */
+    joins?: DynamicProperty<LineJoins>;
     /**
      * Color of secondary line geometry in hexadecimal or CSS-style notation, for example:
      * `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.

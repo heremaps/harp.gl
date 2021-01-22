@@ -205,6 +205,7 @@ const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTechnique
             gapSize: AttrScope.TechniqueRendering,
             outlineColor: { scope: AttrScope.TechniqueRendering, automatic: true },
             caps: { scope: AttrScope.TechniqueRendering, automatic: true },
+            joins: { scope: AttrScope.TechniqueRendering, automatic: true },
             drawRangeStart: { scope: AttrScope.TechniqueRendering, automatic: true },
             drawRangeEnd: { scope: AttrScope.TechniqueRendering, automatic: true },
             dashes: { scope: AttrScope.TechniqueRendering, automatic: true },

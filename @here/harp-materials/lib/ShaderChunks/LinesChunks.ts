@@ -15,6 +15,15 @@ export enum LineCapsModes {
     CAPS_TRIANGLE_OUT
 }
 
+/**
+ * Lists supported line joins.
+ */
+export enum LineJoinModes {
+    JOINS_ROUND = 0,
+    JOINS_BEVEL,
+    JOINS_MITER
+}
+
 export default {
     extrude_line_vert_func: `
 vec3 extrudeLine(

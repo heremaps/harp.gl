@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LineCaps, LineDashes } from "@here/harp-datasource-protocol";
+import { LineCaps, LineDashes, LineJoins } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
 import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";
@@ -14,7 +14,7 @@ import {
     RawShaderMaterialParameters,
     RendererMaterialParameters
 } from "./RawShaderMaterial";
-import linesShaderChunk, { LineCapsModes } from "./ShaderChunks/LinesChunks";
+import linesShaderChunk, { LineCapsModes, LineJoinModes } from "./ShaderChunks/LinesChunks";
 import {
     enforceBlending,
     getShaderMaterialDefine,
@@ -38,6 +38,21 @@ const DefinesLineCapsMapping: { [key: number]: LineCaps } = Object.keys(
     r[defineValue] = defineKey;
     return r;
 }, ({} as any) as { [key: number]: LineCaps });
+
+const LineJoinsDefinesMapping: { [key in LineJoins]: number } = {
+    Round: LineJoinModes.JOINS_ROUND,
+    Bevel: LineJoinModes.JOINS_BEVEL,
+    Miter: LineJoinModes.JOINS_MITER
+};
+
+const DefinesLineJoinsMapping: { [key: number]: LineJoins } = Object.keys(
+    LineJoinsDefinesMapping
+).reduce((r, lineJoinsName) => {
+    const defineKey = lineJoinsName as keyof typeof LineJoinsDefinesMapping;
+    const defineValue: number = LineJoinsDefinesMapping[defineKey];
+    r[defineValue] = defineKey;
+    return r;
+}, ({} as any) as { [key: number]: LineJoins });
 
 export enum LineDashesModes {
     DASHES_SQUARE = 0,
@@ -369,6 +384,12 @@ export interface SolidLineMaterialParameters
     caps?: LineCaps;
 
     /**
+     * Describes line caps type (`"Round"`, `"Bevel"`, `"Miter"`).
+     * Default is `"Round"`.
+     */
+    joins?: LineJoins;
+
+    /**
      * Describes the starting drawing position for the line (in the range [0...1]).
      * Default is `0.0`.
      */
@@ -437,6 +458,7 @@ export class SolidLineMaterial
         // Setup default defines.
         const defines: { [key: string]: any } = {
             CAPS_MODE: LineCapsModes.CAPS_ROUND,
+            JOINS_MODE: LineJoinModes.JOINS_ROUND,
             DASHES_MODE: LineDashesModes.DASHES_SQUARE
         };
 
@@ -561,6 +583,9 @@ export class SolidLineMaterial
             }
             if (params.caps !== undefined) {
                 this.caps = params.caps;
+            }
+            if (params.joins !== undefined) {
+                this.joins = params.joins;
             }
             if (params.drawRangeStart !== undefined) {
                 this.drawRangeStart = params.drawRangeStart;
@@ -739,6 +764,27 @@ export class SolidLineMaterial
         // for correctness and provide string to define mapping in fragment shader.
         if (LineCapsDefinesMapping.hasOwnProperty(value)) {
             setShaderMaterialDefine(this, "CAPS_MODE", LineCapsDefinesMapping[value]);
+        }
+    }
+
+    /**
+     * Joins mode.
+     */
+    get joins(): LineJoins {
+        let result: LineJoins = "Round";
+        const joinsMode = getShaderMaterialDefine(this, "JOINS_MODE");
+        // Sanity check if material define is numerical and has direct mapping to LineCaps type.
+        if (typeof joinsMode === "number" && DefinesLineJoinsMapping.hasOwnProperty(joinsMode)) {
+            result = DefinesLineJoinsMapping[joinsMode];
+        }
+        return result;
+    }
+
+    set joins(value: LineJoins) {
+        // Line caps mode may be set directly from theme, thus we need to check value
+        // for correctness and provide string to define mapping in fragment shader.
+        if (LineJoinsDefinesMapping.hasOwnProperty(value)) {
+            setShaderMaterialDefine(this, "JOINS_MODE", LineJoinsDefinesMapping[value]);
         }
     }
 
