@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-geojson-datasource",
-    "version": "0.21.1",
+    "version": "0.22.0",
     "description": "Provides support for GeoJSON datasource",
     "main": "index.js",
     "typings": "index",
@@ -24,11 +24,11 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-utils": "^0.21.0",
-        "@here/harp-vectortile-datasource": "^0.21.1"
+        "@here/harp-utils": "^0.22.0",
+        "@here/harp-vectortile-datasource": "^0.22.0"
     },
     "devDependencies": {
-        "@here/harp-test-utils": "^0.21.0",
+        "@here/harp-test-utils": "^0.22.0",
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.2.0",
         "@types/node": "^14.0.5",
