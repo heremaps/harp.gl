@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2018-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -738,7 +738,12 @@ export function applyBaseColorToMaterial(
     }
 
     opacity = THREE.MathUtils.clamp(opacity, 0, 1);
-    material.opacity = opacity;
+    if (material instanceof RawShaderMaterial) {
+        material.setOpacity(opacity);
+    } else {
+        material.opacity = opacity;
+    }
+
     materialColor.setRGB(r, g, b);
 
     const opaque = opacity >= 1.0;

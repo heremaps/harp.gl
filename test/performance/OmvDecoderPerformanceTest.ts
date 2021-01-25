@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -72,12 +72,12 @@ export function createOMVDecoderPerformanceTest(
 ) {
     const repeats = options.repeats ?? 10;
     const styleSetName = options.styleSetName ?? "tilezen";
-    describe(`OMVDecoderPerformanceTest - ${name}`, function() {
+    describe(`OMVDecoderPerformanceTest - ${name}`, function () {
         this.timeout(0);
         let omvTiles: Array<[TileKey, ArrayBuffer]>;
         let theme: Theme;
 
-        before(async function() {
+        before(async function () {
             this.timeout(10000);
             const omvDataProvider = new OmvRestClient(options.omvRestClientOptions);
 
@@ -112,7 +112,7 @@ export function createOMVDecoderPerformanceTest(
                 processPointFeature(
                     layerName: string,
                     layerExtents: number,
-                    geometry: THREE.Vector2[],
+                    geometry: THREE.Vector3[],
                     env: MapEnv
                 ) {
                     styleSetEvaluator.getMatchingTechniques(env, layerName, "point");
@@ -136,7 +136,7 @@ export function createOMVDecoderPerformanceTest(
                 }
             };
 
-            await measurePerformanceSync(counterName, repeats, function() {
+            await measurePerformanceSync(counterName, repeats, function () {
                 for (const [tileKey, tileData] of omvTiles) {
                     const decoder = new OmvDataAdapter(geometryProcessor, undefined);
                     const decodeInfo = new DecodeInfo("profiler", mercatorProjection, tileKey, 0);
@@ -156,7 +156,7 @@ export function createOMVDecoderPerformanceTest(
                 definitions: theme.definitions
             });
 
-            await measurePerformanceSync(counterName, repeats, function() {
+            await measurePerformanceSync(counterName, repeats, function () {
                 for (const [tileKey, tileData] of omvTiles) {
                     const decoder = new VectorTileDataProcessor(
                         projection,
@@ -180,7 +180,7 @@ export function createOMVDecoderPerformanceTest(
                 definitions: theme.definitions
             });
 
-            await measurePerformanceSync(counterName, repeats, function() {
+            await measurePerformanceSync(counterName, repeats, function () {
                 for (const [tileKey, tileData] of omvTiles) {
                     const decoder = new VectorTileDataProcessor(
                         projection,

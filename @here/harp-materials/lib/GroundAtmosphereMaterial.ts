@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -475,7 +475,7 @@ export class GroundAtmosphereMaterial extends RawShaderMaterial {
     ): { modelViewProjection: THREE.Matrix4; eyePos: THREE.Vector3; eyeHeight: number } {
         if (reverse) {
             const modelMatrix = new THREE.Matrix4().identity();
-            const viewMatrix = new THREE.Matrix4().getInverse(object.matrixWorld).transpose();
+            const viewMatrix = new THREE.Matrix4().copy(object.matrixWorld).invert().transpose();
             const projectionMatrix = camera.projectionMatrix;
 
             const mvpMatrix = new THREE.Matrix4();

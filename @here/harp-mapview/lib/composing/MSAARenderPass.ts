@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -67,6 +67,8 @@ export class MSAARenderPass extends Pass {
         new THREE.PlaneBufferGeometry(2, 2),
         this.m_quadMaterial
     );
+
+    private readonly m_tmpColor = new THREE.Color();
 
     /**
      * The constructor for `MSAARenderPass`. It builds an internal scene with a camera looking at a
@@ -139,7 +141,7 @@ export class MSAARenderPass extends Pass {
 
         const offsets = MSAARenderPass.OffsetVectors[this.samplingLevel];
 
-        const rendererClearColor = renderer.getClearColor();
+        const rendererClearColor = renderer.getClearColor(this.m_tmpColor);
         const oldClearColor = rendererClearColor !== undefined ? rendererClearColor.getHex() : 0;
 
         // The method `camera.setViewOffset` will be called in the next loop. In order to maintain

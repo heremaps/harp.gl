@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -618,6 +618,9 @@ export class MapControls extends EventDispatcher {
             this.m_tiltRequested = undefined;
         }
 
+        // Whether the tilt animation has reached full duration & a final frame is rendered. We need
+        // this to know when to stop the tilt (and hence deregister the methon )
+        let tiltAnimationFinished = false;
         if (this.inertiaEnabled) {
             if (!this.m_tiltIsAnimated) {
                 this.m_tiltIsAnimated = true;
@@ -625,12 +628,12 @@ export class MapControls extends EventDispatcher {
             }
             const currentTime = performance.now();
             this.m_tiltAnimationTime = (currentTime - this.m_tiltAnimationStartTime) / 1000;
-            const tiltFinished = this.m_tiltAnimationTime > this.tiltToggleDuration;
+            const tiltFinished = this.m_tiltAnimationTime >= this.tiltToggleDuration;
             if (tiltFinished) {
                 if (this.m_needsRenderLastFrame) {
                     this.m_needsRenderLastFrame = false;
                     this.m_tiltAnimationTime = this.tiltToggleDuration;
-                    this.stopTilt();
+                    tiltAnimationFinished = true;
                 }
             } else {
                 this.m_needsRenderLastFrame = true;
@@ -650,6 +653,10 @@ export class MapControls extends EventDispatcher {
 
         MapViewUtils.orbitAroundScreenPoint(this.mapView, 0, 0, 0, deltaAngle, this.m_maxTiltAngle);
         this.updateMapView();
+
+        if (tiltAnimationFinished) {
+            this.stopTilt();
+        }
     }
 
     private stopTilt() {

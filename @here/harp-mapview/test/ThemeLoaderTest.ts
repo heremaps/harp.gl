@@ -1,15 +1,10 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import * as path from "path";
-import * as nodeUrl from "url";
-
-const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 import { FlatTheme, SolidLineStyle, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { getTestResourceUrl } from "@here/harp-test-utils";
@@ -24,22 +19,9 @@ import { assert } from "chai";
 
 import { ThemeLoader } from "../lib/ThemeLoader";
 
-function makeUrlRelative(baseUrl: string, url: string) {
-    const baseUrlParsed = new URL(baseUrl);
-    const urlParsed = new URL(url, baseUrl);
-
-    if (urlParsed.origin !== baseUrlParsed.origin) {
-        throw new Error("getRelativeUrl: origin mismatch");
-    }
-    if (urlParsed.protocol !== baseUrlParsed.protocol) {
-        throw new Error("getRelativeUrl: protocol mismatch");
-    }
-    return path.relative(baseUrlParsed.pathname, urlParsed.pathname);
-}
-
-describe("ThemeLoader", function() {
-    describe("#isThemeLoaded", function() {
-        it("checks for external dependencies", function() {
+describe("ThemeLoader", function () {
+    describe("#isThemeLoaded", function () {
+        it("checks for external dependencies", function () {
             assert.isFalse(
                 ThemeLoader.isThemeLoaded({
                     extends: ["base_theme.json"]
@@ -54,35 +36,29 @@ describe("ThemeLoader", function() {
         });
     });
 
-    describe("#load url handling", function() {
+    describe("#load url handling", function () {
         const appBaseUrl = getAppBaseUrl();
         const sampleThemeUrl = getTestResourceUrl(
             "@here/harp-mapview",
             "test/resources/baseTheme.json"
         );
 
-        it("resolves absolute url of theme passed as object", async function() {
+        it("resolves absolute url of theme passed as object", async function () {
             const result = await ThemeLoader.load({});
             assert.equal(result.url, appBaseUrl);
         });
 
-        it("resolves absolute theme url of theme loaded from relative url", async function() {
-            // `sampleThemeUrl` may be absolute, but on same host (or fs), so relativize it
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
-            const result = await ThemeLoader.load(relativeToAppUrl);
-            assert.equal(result.url, resolveReferenceUri(appBaseUrl, relativeToAppUrl));
+        it("resolves absolute theme url of theme loaded from relative url", async function () {
+            const result = await ThemeLoader.load(sampleThemeUrl);
+            assert.equal(result.url, resolveReferenceUri(appBaseUrl, sampleThemeUrl));
         });
 
-        it("resolves absolute url of theme loaded from relative url", async function() {
-            // `sampleThemeUrl` may be absolute, but on same host (or fs), so relativize it
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
-            const result = await ThemeLoader.load(relativeToAppUrl);
-            assert.equal(result.url, resolveReferenceUri(appBaseUrl, relativeToAppUrl));
+        it("resolves absolute url of theme loaded from relative url", async function () {
+            const result = await ThemeLoader.load(sampleThemeUrl);
+            assert.equal(result.url, resolveReferenceUri(appBaseUrl, sampleThemeUrl));
         });
 
-        it("resolves urls of resources embedded in theme", async function() {
+        it("resolves urls of resources embedded in theme", async function () {
             const absoluteSampleThemeUrl = resolveReferenceUri(appBaseUrl, sampleThemeUrl);
 
             const result = await ThemeLoader.load(absoluteSampleThemeUrl);
@@ -97,17 +73,15 @@ describe("ThemeLoader", function() {
             assert.equal(result.fontCatalogs![0].url, expectedFontCatalogUrl);
         });
 
-        it("doesn't break if called on already #load-ed theme", async function() {
-            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
-
-            const firstLoadResult = await ThemeLoader.load(relativeToAppUrl);
+        it("doesn't break if called on already #load-ed theme", async function () {
+            const firstLoadResult = await ThemeLoader.load(sampleThemeUrl);
             const firstResultCopy = cloneDeep(firstLoadResult);
             const secondLoadResult = await ThemeLoader.load(firstLoadResult);
 
             assert.deepEqual(firstResultCopy, secondLoadResult);
         });
 
-        it("obeys `uriResolver` option", async function() {
+        it("obeys `uriResolver` option", async function () {
             // new PrefixMapUriResolver({
             //     "fonts://fira": "ACTUAL_FONT_LOCATION",
             //     "icons://": "ACTUAL_ICONS_LOCATION"
@@ -143,8 +117,8 @@ describe("ThemeLoader", function() {
             assert.equal(r.images!.icons_day_maki.atlas, "icons://resolved!icons/maki_icons.json");
         });
     });
-    describe("#resolveStyleSet", function() {
-        it("resolves ref expression in technique attr values", async function() {
+    describe("#resolveStyleSet", function () {
+        it("resolves ref expression in technique attr values", async function () {
             const theme: Theme = {
                 definitions: {
                     roadColor: { value: "#f00" },
@@ -184,7 +158,7 @@ describe("ThemeLoader", function() {
             assert.equal(roadStyleCasted.attr?.outlineWidth, 33);
         });
 
-        it("resolves ref expressions in Style", async function() {
+        it("resolves ref expressions in Style", async function () {
             const theme: Theme = {
                 definitions: {
                     roadColor: { type: "color", value: "#f00" },
@@ -220,7 +194,7 @@ describe("ThemeLoader", function() {
             assert.equal(roadStyleCasted.attr!.lineColor, "#f00");
         });
 
-        it("resolves refs embedded in expressions", async function() {
+        it("resolves refs embedded in expressions", async function () {
             const theme: Theme = {
                 definitions: {
                     roadColor: { type: "color", value: "#f00" },
@@ -262,7 +236,7 @@ describe("ThemeLoader", function() {
         });
     });
 
-    describe("#resolveBaseTheme", function() {
+    describe("#resolveBaseTheme", function () {
         const baseThemeRoads: Theme = {
             definitions: {
                 roadColor: { type: "color", value: "#f00" },
@@ -293,7 +267,7 @@ describe("ThemeLoader", function() {
                 waterColor: { type: "color", value: "#44f" }
             }
         };
-        it("supports single inheritance", async function() {
+        it("supports single inheritance", async function () {
             const inheritedTheme: Theme = {
                 extends: baseThemeRoads,
                 definitions: {
@@ -308,7 +282,7 @@ describe("ThemeLoader", function() {
             assert.exists(result.definitions!.roadColor);
             assert.deepEqual(result.definitions!.roadColor, { type: "color", value: "#fff" });
         });
-        it("supports multiple inheritance", async function() {
+        it("supports multiple inheritance", async function () {
             const inheritedTheme: Theme = {
                 extends: [
                     baseThemeRoads,
@@ -334,7 +308,7 @@ describe("ThemeLoader", function() {
         });
     });
 
-    describe("#load support for inheritance and optional reference resolving", function() {
+    describe("#load support for inheritance and optional reference resolving", function () {
         const baseThemeUrl = getTestResourceUrl(
             "@here/harp-mapview",
             "test/resources/baseTheme.json"
@@ -371,14 +345,14 @@ describe("ThemeLoader", function() {
                 }
             }
         ];
-        it("loads theme from actual URL and resolves definitions", async function() {
+        it("loads theme from actual URL and resolves definitions", async function () {
             const result = await ThemeLoader.load(baseThemeUrl, { resolveDefinitions: true });
             assert.exists(result);
             assert.exists(result.styles!.tilezen);
             assert.deepEqual(result.styles!.tilezen, expectedBaseStyleSet);
         });
 
-        it("supports definitions override with actual files", async function() {
+        it("supports definitions override with actual files", async function () {
             const inheritedThemeUrl = getTestResourceUrl(
                 "@here/harp-mapview",
                 "test/resources/inheritedStyleBasic.json"
@@ -389,7 +363,7 @@ describe("ThemeLoader", function() {
             assert.deepEqual(result.styles!.tilezen, expectedOverridenStyleSet);
         });
 
-        it("empty inherited theme just loads base", async function() {
+        it("empty inherited theme just loads base", async function () {
             const result = await ThemeLoader.load(
                 { extends: baseThemeUrl },
                 { resolveDefinitions: true }
@@ -399,7 +373,7 @@ describe("ThemeLoader", function() {
             assert.deepEqual(result.styles!.tilezen, expectedBaseStyleSet);
         });
 
-        it("supports local definitions override", async function() {
+        it("supports local definitions override", async function () {
             const result = await ThemeLoader.load(
                 {
                     extends: baseThemeUrl,
@@ -415,7 +389,7 @@ describe("ThemeLoader", function() {
         });
     });
 
-    describe("flat themes", function() {
+    describe("flat themes", function () {
         it("load flat theme", async () => {
             const flatTheme: FlatTheme = {
                 styles: [
@@ -456,7 +430,7 @@ describe("ThemeLoader", function() {
         });
     });
 
-    describe("merge style sets", function() {
+    describe("merge style sets", function () {
         it("merge themes", async () => {
             const baseTheme: Theme = {
                 styles: {

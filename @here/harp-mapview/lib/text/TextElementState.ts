@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -30,12 +30,9 @@ export class TextElementState {
 
     /**
      * @hidden
-     * Used during rendering. The array type is used for line markers only, which have a points
-     * array and multiple icon positions to render. Since line markers use the same renderState
-     * for text part and icon, there is no separate array of [[RenderState]]s for the text parts
-     * of the line markers.
+     * Used during rendering.
      */
-    private m_iconRenderStates?: RenderState | RenderState[];
+    private m_iconRenderState?: RenderState;
 
     /**
      * @hidden
@@ -47,11 +44,23 @@ export class TextElementState {
      * Used to store recently used text layout.
      */
     private m_textLayoutState?: LayoutState;
+    /**
+     * @hidden
+     * Stores index into path for TextElements that are of type LineMarker.
+     */
+    private readonly m_lineMarkerIndex?: number;
 
-    constructor(readonly element: TextElement) {}
+    /**
+     *
+     * @param element - TextElement this state represents
+     * @param positionIndex - Optional index for TextElements of type LineMarker.
+     */
+    constructor(readonly element: TextElement, positionIndex?: number) {
+        this.m_lineMarkerIndex = positionIndex;
+    }
 
     get initialized(): boolean {
-        return this.m_textRenderState !== undefined || this.m_iconRenderStates !== undefined;
+        return this.m_textRenderState !== undefined || this.m_iconRenderState !== undefined;
     }
 
     /**
@@ -67,16 +76,6 @@ export class TextElementState {
             return true;
         }
 
-        const iconRenderStates = this.iconRenderStates;
-        if (iconRenderStates === undefined) {
-            return false;
-        }
-
-        for (const state of iconRenderStates) {
-            if (state.isVisible()) {
-                return true;
-            }
-        }
         return false;
     }
 
@@ -159,14 +158,11 @@ export class TextElementState {
         }
 
         if (this.iconRenderState) {
-            (this.m_iconRenderStates as RenderState).reset();
-        } else if (this.m_iconRenderStates !== undefined) {
-            for (const renderState of this.m_iconRenderStates as RenderState[]) {
-                renderState.reset();
-            }
+            (this.m_iconRenderState as RenderState).reset();
         }
         this.m_viewDistance = undefined;
         this.element.textBufferObject = undefined;
+        this.element.bounds = undefined;
     }
 
     /**
@@ -177,10 +173,10 @@ export class TextElementState {
     replace(predecessor: TextElementState) {
         this.m_textRenderState = predecessor.m_textRenderState;
         this.m_textLayoutState = predecessor.m_textLayoutState;
-        this.m_iconRenderStates = predecessor.m_iconRenderStates;
+        this.m_iconRenderState = predecessor.m_iconRenderState;
         predecessor.m_textRenderState = undefined;
         predecessor.m_textLayoutState = undefined;
-        predecessor.m_iconRenderStates = undefined;
+        predecessor.m_iconRenderState = undefined;
 
         if (this.element.glyphs === undefined) {
             // Use the predecessor glyphs and case array until proper ones are computed.
@@ -248,32 +244,33 @@ export class TextElementState {
      * @returns The icon render state if the text element has a single icon, otherwise undefined.
      */
     get iconRenderState(): RenderState | undefined {
-        if (this.m_iconRenderStates === undefined) {
-            return undefined;
-        }
-
-        return this.m_iconRenderStates instanceof RenderState ? this.m_iconRenderStates : undefined;
+        return this.m_iconRenderState;
     }
 
     /**
-     * Returns the icon render states for text elements with multiple icons.
-     * @returns The icon render states if the text element has multiple icons, otherwise undefined.
+     * Returns the index into the path of the TextElement if the TextElement is of type LineMarker,
+     * `undefined` otherwise.
      */
-    get iconRenderStates(): RenderState[] | undefined {
-        if (this.m_iconRenderStates === undefined) {
-            return undefined;
-        }
+    public get lineMarkerIndex(): number | undefined {
+        return this.m_lineMarkerIndex;
+    }
 
-        return this.m_iconRenderStates instanceof RenderState
-            ? undefined
-            : (this.m_iconRenderStates as RenderState[]);
+    /**
+     * Returns the position of the TextElement. If this TextElementState belongs to a TextElement
+     * of type LineMarker, it returns the position of the marker at the references index in the
+     * path of the TextElement.
+     */
+    public get position(): THREE.Vector3 {
+        return this.element.path !== undefined && this.m_lineMarkerIndex !== undefined
+            ? this.element.path[this.m_lineMarkerIndex]
+            : this.element.position;
     }
 
     /**
      * Updates the fading state to the specified time.
      * @param time - The current time.
      * @param disableFading - If `True` there will be no fading transitions, i.e., state will go
-     * directly from FadedIn to FadedOut and viceversa.
+     * directly from FadedIn to FadedOut and vice versa.
      */
     updateFading(time: number, disableFading: boolean): void {
         if (this.m_textRenderState !== undefined) {
@@ -281,12 +278,7 @@ export class TextElementState {
         }
 
         if (this.iconRenderState !== undefined) {
-            const iconRenderState = this.m_iconRenderStates as RenderState;
-            iconRenderState.updateFading(time, disableFading);
-        } else if (this.iconRenderStates !== undefined) {
-            for (const renderState of this.m_iconRenderStates as RenderState[]) {
-                renderState.updateFading(time, disableFading);
-            }
+            this.iconRenderState.updateFading(time, disableFading);
         }
     }
 
@@ -296,24 +288,29 @@ export class TextElementState {
     private initializeRenderStates() {
         assert(this.m_textRenderState === undefined);
         assert(this.m_textLayoutState === undefined);
-        assert(this.m_iconRenderStates === undefined);
+        assert(this.m_iconRenderState === undefined);
 
         const { textFadeTime } = this.element;
         this.m_textRenderState = new RenderState(textFadeTime);
 
-        const iconFadeTime = this.element.poiInfo?.technique.iconFadeTime;
-        if (this.element.type === TextElementType.LineMarker) {
-            this.m_iconRenderStates = new Array<RenderState>();
-            for (const _point of this.element.points as THREE.Vector3[]) {
-                const iconRenderStates = this.m_iconRenderStates as RenderState[];
-                const renderState = new RenderState(iconFadeTime);
-                iconRenderStates.push(renderState);
-            }
-            return;
-        }
-
-        if (this.element.type === TextElementType.PoiLabel) {
-            this.m_iconRenderStates = new RenderState(iconFadeTime);
+        if (
+            this.element.type === TextElementType.PoiLabel ||
+            this.element.type === TextElementType.LineMarker
+        ) {
+            // If there's no fade time for icon, use same as text to keep fading of text and icon
+            // in sync.
+            const techniqueIconFadeTime = this.element.poiInfo?.technique.iconFadeTime;
+            const iconFadeTime =
+                techniqueIconFadeTime !== undefined ? techniqueIconFadeTime * 1000 : textFadeTime;
+            this.m_iconRenderState = new RenderState(iconFadeTime);
         }
     }
+}
+
+/**
+ * Test if the TextElement this {@link TextElementState} refers to is of type LineMarker.
+ * @param state - Text element state to test.
+ */
+export function isLineMarkerElementState(state: TextElementState) {
+    return (state as any).m_lineMarkerIndex !== undefined;
 }

@@ -6,7 +6,7 @@
 
 ### [harp.gl site](https://www.harp.gl/)
 
-### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/) Registration available [here](http://t.her.is/slack).
+### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/) Registration available [here](https://join.slack.com/t/heredev/shared_invite/zt-km24s2k3-lYwF3L96ml51Ue_SBoUM3A).
 
 ## Overview
 
@@ -25,68 +25,17 @@ that can display a map using our default style. You can get results like the one
 
 ## Getting started with harp.gl
 
-You can consume the harp.gl api with two different methods:
+There are three methods to get up and running with harp.gl quickly, in order of difficulty:
 
--   linking a simple bundle as a `<script>` tag in your html
--   installing a set of node modules from npm
+1. Using the [yeoman generator](https://developer.here.com/tutorials/harpgl/#method-1-using-the-harp.gl-yeoman-generator-beginner).
+1. linking a [simple bundle as a `<script>` tag in your html](https://developer.here.com/tutorials/harpgl/#method-2-linking-a-single-script-bundle-to-your-html-intermediate)
+1. installing a [set of node modules from npm](https://github.com/heremaps/harp.gl/blob/master/docs/GettingStartedGuide.md#integrate)
 
 If you want to learn more about the applications you can create, please check the [Getting Started Guide](docs/GettingStartedGuide.md).
 
-### Simple bundle
+## Authentication
 
-Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
-
-```html
-<html>
-    <head>
-        <style>
-            body,
-            html {
-                border: 0;
-                margin: 0;
-                padding: 0;
-            }
-            #map {
-                height: 100vh;
-                width: 100vw;
-            }
-        </style>
-        <script src="https://unpkg.com/three/build/three.min.js"></script>
-        <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
-    </head>
-    <body>
-        <canvas id="map"></canvas>
-        <script src="index.js"></script>
-    </body>
-</html>
-```
-
-Initialize the map:
-
-```javascript
-const map = new harp.MapView({
-    canvas: document.getElementById("map"),
-    theme:
-        "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json"
-});
-const controls = new harp.MapControls(map);
-const omvDataSource = new harp.OmvDataSource({
-    baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-    authenticationCode: "YOUR-APIKEY"
-});
-map.addDataSource(omvDataSource);
-```
-
-> How to get access to the data? How to get your apikey?
-> Please see the [Acquiring credentials section](docs/GettingStartedGuide.md#credentials)
-
-### Node modules
-
-Generate a simple app using the package initializer:
-
-```shell
-npm init @here/harp.gl-app
-```
+Regardless of how you structure your project, you need some means to authenticate, please see the [following guide](https://developer.here.com/tutorials/harpgl/#acquire-credentials) to generate a token.
 
 ## About This Repository
 

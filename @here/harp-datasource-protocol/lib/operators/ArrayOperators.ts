@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -89,6 +89,30 @@ const operators = {
                 throw new Error(`expected an array`);
             }
             return index >= 0 && index < value.length ? value[index] : null;
+        }
+    },
+
+    slice: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            if (call.args.length < 2) {
+                throw new Error("not enough arguments");
+            }
+            const input = context.evaluate(call.args[0]);
+            if (!(typeof input === "string" || Array.isArray(input))) {
+                throw new Error("input must be a string or an array");
+            }
+            const start = context.evaluate(call.args[1]);
+            if (typeof start !== "number") {
+                throw new Error("expected an index");
+            }
+            let end: number | undefined;
+            if (call.args.length > 2) {
+                end = context.evaluate(call.args[2]) as any;
+                if (typeof end !== "number") {
+                    throw new Error("expected an index");
+                }
+            }
+            return input.slice(start, end);
         }
     }
 };

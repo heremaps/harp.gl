@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,11 +18,11 @@ function createIntersection(dataSource: string | undefined): THREE.Intersection 
     object.userData = { dataSource };
     return { distance: 0, point: new THREE.Vector3(), object };
 }
-describe("PickListener", function() {
+describe("PickListener", function () {
     const point = new THREE.Vector3();
 
-    describe("addResult", function() {
-        it("adds all results for new features", function() {
+    describe("addResult", function () {
+        it("adds all results for new features", function () {
             const listener = new PickListener();
             const userData = {};
             const intersection = createIntersection("ds1");
@@ -77,7 +77,7 @@ describe("PickListener", function() {
             expect(listener.results).to.have.lengthOf(5);
         });
 
-        it("ignores a result for the same feature of an older closer result", function() {
+        it("ignores a result for the same feature of an older closer result", function () {
             const userData = {};
             const intersection = createIntersection("ds1");
 
@@ -133,7 +133,7 @@ describe("PickListener", function() {
             }
         });
 
-        it("replaces an older result with a closer result for the same feature", function() {
+        it("replaces an older result with a closer result for the same feature", function () {
             const listener = new PickListener();
             const userData = {};
             const intersection = createIntersection("ds1");
@@ -161,8 +161,8 @@ describe("PickListener", function() {
         });
     });
 
-    describe("finish", function() {
-        it("orders the results", function() {
+    describe("finish", function () {
+        it("orders the results", function () {
             const listener = new PickListener();
             const expectedResults: PickResult[] = [
                 {
@@ -192,7 +192,7 @@ describe("PickListener", function() {
             expect(listener.results).to.have.ordered.members(expectedResults);
         });
 
-        it("keeps only the closest maximum result count if specified", function() {
+        it("keeps only the closest maximum result count if specified", function () {
             const maxResultCount = 1;
             const listener = new PickListener({ maxResultCount });
             const results: PickResult[] = [
@@ -218,13 +218,13 @@ describe("PickListener", function() {
         });
     });
 
-    describe("closestResult", function() {
-        it("returns undefined if there's no results", function() {
+    describe("closestResult", function () {
+        it("returns undefined if there's no results", function () {
             const listener = new PickListener();
             expect(listener.closestResult).to.be.undefined;
         });
 
-        it("returns closest result when there's some results", function() {
+        it("returns closest result when there's some results", function () {
             const listener = new PickListener();
             const results: PickResult[] = [
                 {
@@ -248,13 +248,13 @@ describe("PickListener", function() {
         });
     });
 
-    describe("furthestResult", function() {
-        it("returns undefined if there's no results", function() {
+    describe("furthestResult", function () {
+        it("returns undefined if there's no results", function () {
             const listener = new PickListener();
             expect(listener.furthestResult).to.be.undefined;
         });
 
-        it("returns furtherst result when there's some results", function() {
+        it("returns furtherst result when there's some results", function () {
             const listener = new PickListener();
             const results: PickResult[] = [
                 {

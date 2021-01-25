@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -68,7 +68,6 @@ interface VTJsonTileInterface {
     layer: string;
 }
 
-const tmpPos = new Vector2();
 const worldPos = new Vector3();
 
 /**
@@ -134,7 +133,7 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
                         const x = (pointGeometry as VTJsonPosition)[0];
                         const y = (pointGeometry as VTJsonPosition)[1];
 
-                        const position = new Vector2(x, y);
+                        const position = new Vector3(x, y, 0);
 
                         this.m_processor.processPointFeature(
                             tile.layer,
@@ -172,8 +171,7 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
 
                     lines.forEach(line => {
                         (line as any).untiledPositions = line.positions.map(tilePos => {
-                            tile2world(VT_JSON_EXTENTS, decodeInfo, tilePos, false, tmpPos);
-                            worldPos.set(tmpPos.x, tmpPos.y, 0);
+                            tile2world(VT_JSON_EXTENTS, decodeInfo, tilePos, false, worldPos);
                             return webMercatorProjection.unprojectPoint(worldPos);
                         });
                     });

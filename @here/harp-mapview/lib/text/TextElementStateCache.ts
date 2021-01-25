@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,7 +10,7 @@ import { assert, LoggerManager, LogLevel } from "@here/harp-utils";
 import { TextElement } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
-import { TextElementState } from "./TextElementState";
+import { isLineMarkerElementState, TextElementState } from "./TextElementState";
 import { TextElementType } from "./TextElementType";
 
 const logger = LoggerManager.instance.create("TextElementsStateCache", { level: LogLevel.Log });
@@ -80,14 +80,6 @@ function findDuplicateById(
         return undefined;
     }
 
-    if (
-        elementState.iconRenderStates !== undefined &&
-        candidateElement.iconRenderStates !== undefined &&
-        elementState.iconRenderStates.length !== candidateElement.iconRenderStates.length
-    ) {
-        // Cached line marker element needs the same number of icons to fit.
-        return undefined;
-    }
     return duplicateIndex;
 }
 
@@ -140,18 +132,21 @@ function findDuplicateByText(
     const element = elementState.element;
     const maxSqDistError = getDedupSqDistTolerance(zoomLevel);
     const entryCount = candidates.length;
-    const elementPosition = element.position;
+    const elementPosition = elementState.position;
     const elementVisible = elementState.visible;
+    const isLineMarker = isLineMarkerElementState(elementState);
     let dupIndex: number = -1;
     let duplicate: TextElement | undefined;
     let dupDistSquared: number = Infinity;
     const isBetterDuplicate: DuplicateCmp =
-        element.type === TextElementType.PoiLabel ? isBetterPointDuplicate : isBetterPathDuplicate;
+        element.type === TextElementType.PathLabel ? isBetterPathDuplicate : isBetterPointDuplicate;
 
     for (let i = 0; i < entryCount; ++i) {
         const candidateEntry = candidates[i];
         const cachedElement = candidateEntry.element;
-        const areDiffType = element.type !== cachedElement.type;
+        const areDiffType =
+            element.type !== cachedElement.type ||
+            isLineMarker !== isLineMarkerElementState(candidateEntry);
         const areBothVisible = elementVisible && candidateEntry.visible;
         if (areDiffType || areBothVisible) {
             // Two text elements with different type or visible at the same time are always
@@ -161,15 +156,6 @@ function findDuplicateByText(
         const distSquared = elementPosition.distanceToSquared(cachedElement.position);
         if (distSquared > maxSqDistError) {
             // Cached text element is too far away to be a duplicate.
-            continue;
-        }
-
-        if (
-            elementState.iconRenderStates !== undefined &&
-            candidateEntry.iconRenderStates !== undefined &&
-            elementState.iconRenderStates.length !== candidateEntry.iconRenderStates.length
-        ) {
-            // Cached line marker element needs the same number of icons to fit.
             continue;
         }
 
@@ -216,7 +202,6 @@ export class TextElementStateCache {
         let groupState = this.get(textElementGroup);
 
         if (groupState !== undefined) {
-            assert(groupState.size === textElementGroup.elements.length);
             groupState.updateElements(textElementFilter);
             return [groupState, true];
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -258,7 +258,7 @@ export interface TextGeometry {
     positions: BufferAttribute;
     texts: number[];
     technique?: number;
-    stringCatalog?: Array<string | undefined>;
+    stringCatalog: Array<string | undefined>;
     objInfos?: AttributeMap[];
 }
 
@@ -274,7 +274,7 @@ export interface PoiGeometry {
      */
     imageTextures?: number[];
     technique?: number;
-    stringCatalog?: Array<string | undefined>;
+    stringCatalog: Array<string | undefined>;
     objInfos?: AttributeMap[];
     // Angle in degrees from north clockwise specifying the directions the icons can be shifted.
     offsetDirections?: number[];

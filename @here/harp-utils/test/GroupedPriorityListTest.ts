@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,8 +14,8 @@ interface Item {
     priority: number;
 }
 
-describe("GroupedPriorityList", function() {
-    it("#add", function() {
+describe("GroupedPriorityList", function () {
+    it("#add", function () {
         const priorityList = new GroupedPriorityList<Item>();
 
         for (let i = 0; i < 100; i++) {
@@ -40,7 +40,7 @@ describe("GroupedPriorityList", function() {
         }
     });
 
-    it("#clear", function() {
+    it("#clear", function () {
         const priorityList = new GroupedPriorityList<Item>();
 
         for (let i = 0; i < 100; i++) {
@@ -54,7 +54,7 @@ describe("GroupedPriorityList", function() {
         assert.equal(priorityList.groups.size, 0);
     });
 
-    it("#remove", function() {
+    it("#remove", function () {
         const priorityList = new GroupedPriorityList<Item>();
 
         const element1 = { priority: 1 };
@@ -80,7 +80,7 @@ describe("GroupedPriorityList", function() {
         assert.isFalse(result1b);
     });
 
-    it("#merge", function() {
+    it("#merge", function () {
         const priorityList1 = new GroupedPriorityList<Item>();
         const priorityList2 = new GroupedPriorityList<Item>();
 
@@ -111,7 +111,7 @@ describe("GroupedPriorityList", function() {
             }
         }
     });
-    it("#count", function() {
+    it("#count", function () {
         const priorityList = new GroupedPriorityList<Item>();
 
         for (let i = 99; i >= 0; i--) {

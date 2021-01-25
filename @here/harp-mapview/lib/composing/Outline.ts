@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -492,7 +492,7 @@ export class OutlineEffect {
 
         // Copy available fading params to the outline material.
         if (
-            material.defines.USE_FADING !== undefined &&
+            material.defines?.USE_FADING !== undefined &&
             originalUniforms.fadeNear !== undefined &&
             originalUniforms.fadeFar !== undefined &&
             originalUniforms.fadeFar.value >= 0.0

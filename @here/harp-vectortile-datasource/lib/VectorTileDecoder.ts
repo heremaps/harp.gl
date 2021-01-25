@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -21,8 +21,8 @@ import {
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { GeoJsonVtDataAdapter } from "./adapters/geojson-vt/GeoJsonVtDataAdapter";
 import { GeoJsonDataAdapter } from "./adapters/geojson/GeoJsonDataAdapter";
+import { GeoJsonVtDataAdapter } from "./adapters/geojson-vt/GeoJsonVtDataAdapter";
 import { OmvDataAdapter } from "./adapters/omv/OmvDataAdapter";
 import { DataAdapter } from "./DataAdapter";
 import { DecodeInfo } from "./DecodeInfo";
@@ -129,10 +129,11 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         return this.m_decodedTileEmitter.getDecodedTile();
     }
 
+    /** @override */
     processPointFeature(
         layer: string,
         extents: number,
-        geometry: THREE.Vector2[],
+        geometry: THREE.Vector3[],
         env: MapEnv,
         storageLevel: number
     ): void {
@@ -178,6 +179,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         }
     }
 
+    /** @override */
     processLineFeature(
         layer: string,
         extents: number,
@@ -229,6 +231,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         }
     }
 
+    /** @override */
     processPolygonFeature(
         layer: string,
         extents: number,

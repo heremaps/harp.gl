@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -153,7 +153,10 @@ export abstract class SubdivisionModifier {
             }
         }
 
-        positionAttr.array = new Float32Array(position);
+        positionAttr.array =
+            positionAttr.array instanceof Float32Array
+                ? new Float32Array(position)
+                : new Float64Array(position);
         positionAttr.count = position.length / positionAttr.itemSize;
         positionAttr.needsUpdate = true;
 

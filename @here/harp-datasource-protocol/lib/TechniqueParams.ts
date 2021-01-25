@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -102,6 +102,8 @@ export enum StandardGeometryKind {
  */
 export type GeometryKind = string | StandardGeometryKind;
 
+// See https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-redeclare.md#ignoredeclarationmerge
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GeometryKind = StandardGeometryKind;
 
 /**
@@ -257,6 +259,16 @@ export interface BaseTechniqueParams {
      * See https://threejs.org/docs/#api/en/materials/Material.side.
      */
     side?: DynamicProperty<number>;
+
+    /**
+     * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
+     */
+    minZoomLevel?: DynamicProperty<number>;
+
+    /**
+     * Maximum zoom level. If the current zoom level is equal to or greater, the technique will not be used.
+     */
+    maxZoomLevel?: DynamicProperty<number>;
 }
 
 export enum TextureCoordinateType {
@@ -550,19 +562,19 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Minimum zoomLevel at which to display the label text. No default.
      */
-    textMinZoomLevel?: number;
+    textMinZoomLevel?: DynamicProperty<number>;
     /**
      * Maximum zoomLevel at which to display the label text. No default.
      */
-    textMaxZoomLevel?: number;
+    textMaxZoomLevel?: DynamicProperty<number>;
     /**
      * Minimum zoomLevel at which to display the label icon. No default.
      */
-    iconMinZoomLevel?: number;
+    iconMinZoomLevel?: DynamicProperty<number>;
     /**
      * Maximum zoomLevel at which to display the label icon. No default.
      */
-    iconMaxZoomLevel?: number;
+    iconMaxZoomLevel?: DynamicProperty<number>;
 
     /**
      * Icon color.
@@ -648,10 +660,9 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      */
     minDistance?: number;
     /**
-     * If true, the text will appear even if the icon cannot be rendered because of missing icon
-     * graphics.
+     * If `true`, text will appear even if the icon is blocked by other labels.
      *
-     * @defaultValue `true`
+     * @defaultValue `false`
      */
     iconIsOptional?: boolean;
     /**
@@ -707,11 +718,13 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      */
     poiNameField?: string;
     /**
-     * Name of [[ImageTexture]] definition to use.
+     * The name of either the {@link ImageTexture} in {@link Theme.imageTextures} or the user image
+     * cached in {@link @here/harp-mapview#userImageCache} to be rendered as marker.
      */
     imageTexture?: DynamicProperty<string>;
     /**
-     * Field name to extract imageTexture content from.
+     * Field name to extract imageTexture content from, if imageTexture refers to an
+     * [[ImageTexture]] definition.
      */
     imageTextureField?: string;
     /**
@@ -1203,7 +1216,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * If `true`, the height of the extruded buildings will not be modified by the mercator
      * projection distortion that happens around the poles.
      *
-     * @defaultValue `false`
+     * @defaultValue `true` for geometries stored at level less than `12`.
      */
     constantHeight?: boolean;
 
@@ -1333,14 +1346,6 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      * Priority of text, defaults to `0`. Elements with highest priority get placed first.
      */
     priority?: DynamicProperty<number>;
-    /**
-     * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
-     */
-    minZoomLevel?: number;
-    /**
-     * Maximum zoom level. If the current zoom level is larger, the technique will not be used.
-     */
-    maxZoomLevel?: number;
     /**
      * Scaling factor of the text. Defaults to 0.5, reducing the size ot 50% in the distance.
      */

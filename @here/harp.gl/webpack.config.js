@@ -8,13 +8,24 @@
 
 const fs = require("fs");
 const webpack = require("webpack");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 
 const path = require("path");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 
 const isProduction = process.env.NODE_ENV === "production";
 const bundleSuffix = isProduction ? ".min" : "";
+
+
+function getCacheConfig(name) {
+    // Use a separate cache for each configuration, otherwise cache writing fails.
+    return process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        },
+        name: "harp.gl_" + name
+    }
+}
 
 /** @type{webpack.Configuration} */
 const commonConfig = {
@@ -49,19 +60,24 @@ const commonConfig = {
     plugins: [
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
-            NODE_ENV: process.env.NODE_ENV || "development"
-        })
+            NODE_ENV: "development"
+        }),
+        new webpack.DefinePlugin({
+            'process.platform': JSON.stringify(process.platform)
+            }),
     ],
     performance: {
         hints: false
     },
     // @ts-ignore
-    mode: process.env.NODE_ENV || "development"
+    mode: process.env.NODE_ENV || "development",
+    cache: process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        }
+    }
 };
-
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    commonConfig.plugins.push(new HardSourceWebpackPlugin());
-}
 
 const mapComponentConfig = merge(commonConfig, {
     entry: path.resolve(__dirname, "./lib/index.ts"),
@@ -73,11 +89,14 @@ const mapComponentConfig = merge(commonConfig, {
         {
             three: "THREE"
         },
-        function(context, request, callback) {
-            // @ts-ignore
-            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        ({context, request}, callback) => {
+            return /three\.module\.js$/.test(request)
+                ? callback(null, "THREE")
+                : callback(undefined, undefined)
         }
-    ]
+    ],
+    // @ts-ignore
+    cache: getCacheConfig("index")
 });
 
 const mapComponentDecoderConfig = merge(commonConfig, {
@@ -89,11 +108,14 @@ const mapComponentDecoderConfig = merge(commonConfig, {
         {
             three: "THREE"
         },
-        function(context, request, callback) {
-            // @ts-ignore
-            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        ({context, request}, callback) => {
+            return /three\.module\.js$/.test(request)
+                ? callback(null, "THREE")
+                : callback(undefined, undefined)
         }
-    ]
+    ],
+    // @ts-ignore
+    cache: getCacheConfig("decoder")
 });
 
 module.exports = [mapComponentConfig, mapComponentDecoderConfig];

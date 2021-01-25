@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -54,7 +54,8 @@ export function stubElevationProvider(sandbox: sinon.SinonSandbox): ElevationPro
     return stub;
 }
 
-const dummyTexture = new THREE.Texture();
+const empty: Float32Array = new Float32Array();
+const dummyTexture = new THREE.DataTexture(empty, 32, 32);
 const dummyDisplacementMap: DisplacementMap = {
     xCountVertices: 32,
     yCountVertices: 32,

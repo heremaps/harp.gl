@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -87,6 +87,37 @@ export class ScreenProjector {
     ): THREE.Vector2 | undefined {
         const p = this.projectVector(source, ScreenProjector.tempV3);
         if (isInRange(p)) {
+            return this.ndcToScreen(p, target);
+        }
+        return undefined;
+    }
+
+    /**
+     * Test if the area around the specified point is visible on the screen.
+     *
+     * @param {(Vector3Like)} source The centered source vector to project.
+     * @param {(Number)} halfWidth Half of the width of the area in screen space [0..1].
+     * @param {(Number)} halfHeight Half of the height of the area in screen space [0..1].
+     * @param {THREE.Vector2} target The target vector.
+     * @returns {THREE.Vector2} The projected vector (the parameter 'target') or undefined if
+     * the area is completely outside the screen.
+     */
+    projectAreaToScreen(
+        source: Vector3Like,
+        halfWidth: number,
+        halfHeight: number,
+        target: THREE.Vector2 = new THREE.Vector2()
+    ): THREE.Vector2 | undefined {
+        halfWidth *= 2;
+        halfHeight *= 2;
+        const p = this.projectVector(source, ScreenProjector.tempV3);
+        if (
+            isInRange(p) &&
+            p.x + halfWidth >= -1 &&
+            p.x - halfWidth <= 1 &&
+            p.y + halfHeight >= -1 &&
+            p.y - halfHeight <= 1
+        ) {
             return this.ndcToScreen(p, target);
         }
         return undefined;

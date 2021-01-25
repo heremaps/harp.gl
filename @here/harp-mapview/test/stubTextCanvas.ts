@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -91,8 +91,9 @@ export function stubTextCanvas(
         .stub(textCanvas, "addTextBufferObject")
         .callsFake((textBufferObject: TextBufferObject, params?: TextBufferAdditionParameters) => {
             addTextBufferObjSpy(
-                textBufferObject,
-                params === undefined ? undefined : params.opacity
+                params?.pickingData,
+                params?.opacity,
+                params?.position?.toArray().slice(0, 2)
             );
             return true;
         });
@@ -110,9 +111,9 @@ export function stubTextCanvas(
 export function stubTextCanvasFactory(
     sandbox: sinon.SinonSandbox,
     textCanvas: TextCanvas
-): TextCanvasFactory {
+): sinon.SinonStubbedInstance<TextCanvasFactory> {
     const textCanvasFactoryStub = sandbox.createStubInstance(TextCanvasFactory);
     textCanvasFactoryStub.createTextCanvas.returns((textCanvas as unknown) as TextCanvas);
 
-    return (textCanvasFactoryStub as unknown) as TextCanvasFactory;
+    return textCanvasFactoryStub;
 }

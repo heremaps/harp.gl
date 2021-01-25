@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -173,47 +173,49 @@ export namespace GeoJsonStylingGame {
             correct: boolean;
         }
 
-        geoJsonDataSource.setStyleSet({
-            styleSet: [
-                {
-                    description: "GeoJson polygon",
-                    when: ["==", ["geometry-type"], "Polygon"],
-                    renderOrder: 1000,
-                    technique: "fill",
-                    attr: {
-                        color: "#37afaa",
-                        lineColor: "#267874",
-                        lineWidth: 1
-                    }
-                },
-                {
-                    description: "GeoJson polygons selection",
-                    when: ["==", ["geometry-type"], "Polygon"],
-                    renderOrder: 1010,
-                    technique: "fill",
-                    attr: {
-                        // enable geometries created by this technique only when
-                        // the feature's name is equal to the value stored
-                        // in the dynamic property named `selected`
-                        enabled: [
-                            "==",
-                            ["get", "name"],
-                            ["get", "selected", ["dynamic-properties"]]
-                        ],
+        geoJsonDataSource.setTheme({
+            styles: {
+                geojson: [
+                    {
+                        description: "GeoJson polygon",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        renderOrder: 1000,
+                        technique: "fill",
+                        attr: {
+                            color: "#37afaa",
+                            lineColor: "#267874",
+                            lineWidth: 1
+                        }
+                    },
+                    {
+                        description: "GeoJson polygons selection",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        renderOrder: 1010,
+                        technique: "fill",
+                        attr: {
+                            // enable geometries created by this technique only when
+                            // the feature's name is equal to the value stored
+                            // in the dynamic property named `selected`
+                            enabled: [
+                                "==",
+                                ["get", "name"],
+                                ["get", "selected", ["dynamic-properties"]]
+                            ],
 
-                        // select the color based on the the value of the dynamic property `correct`.
-                        color: [
-                            "case",
-                            ["get", "correct", ["dynamic-properties"]],
-                            "#009900",
-                            "#ff4422"
-                        ],
+                            // select the color based on the the value of the dynamic property `correct`.
+                            color: [
+                                "case",
+                                ["get", "correct", ["dynamic-properties"]],
+                                "#009900",
+                                "#ff4422"
+                            ],
 
-                        // avoid picking
-                        transient: true
+                            // avoid picking
+                            transient: true
+                        }
                     }
-                }
-            ]
+                ]
+            }
         });
 
         // snippet:harp_gl_gamestyleset.ts

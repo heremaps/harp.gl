@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -410,7 +410,8 @@ export interface SolidLineMaterialParameters
 /**
  * Material designed to render solid variable-width lines.
  */
-export class SolidLineMaterial extends RawShaderMaterial
+export class SolidLineMaterial
+    extends RawShaderMaterial
     implements DisplacementFeature, FadingFeature {
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;
@@ -421,13 +422,6 @@ export class SolidLineMaterial extends RawShaderMaterial
     static DEFAULT_DASH_SIZE: number = 1.0;
     static DEFAULT_GAP_SIZE: number = 1.0;
     static DEFAULT_OFFSET: number = 0.0;
-
-    /**
-     * @hidden
-     * Material properties overrides.
-     */
-    private m_fog: boolean;
-    private m_opacity: number;
 
     /**
      * Constructs a new `SolidLineMaterial`.
@@ -519,8 +513,8 @@ export class SolidLineMaterial extends RawShaderMaterial
         // Required to satisfy compiler error if fields has no initializer or are not definitely
         // assigned in the constructor, this also mimics ShaderMaterial set of defaults
         // for overridden props.
-        this.m_fog = fogParam;
-        this.m_opacity = opacityParam;
+        this.fog = fogParam;
+        this.setOpacity(opacityParam);
 
         // initialize the stencil pass
         this.stencilFunc = THREE.NotEqualStencilFunc;
@@ -548,7 +542,7 @@ export class SolidLineMaterial extends RawShaderMaterial
                 this.outlineWidth = params.outlineWidth;
             }
             if (params.opacity !== undefined) {
-                this.opacity = params.opacity;
+                this.setOpacity(params.opacity);
             }
             if (params.depthTest !== undefined) {
                 this.depthTest = params.depthTest;
@@ -589,36 +583,10 @@ export class SolidLineMaterial extends RawShaderMaterial
             }
             if (params.fog !== undefined) {
                 this.fog = params.fog;
+                this.invalidateFog();
             }
             this.offset = params.offset ?? 0;
-
-            // ShaderMaterial overrides requires invalidation cause super c-tor may set this
-            // properties before related `defines` and `uniforms` were created.
-            this.invalidateFog();
-            this.invalidateOpacity();
         }
-    }
-
-    /**
-     * Overrides THREE.Material.fog flag to add support for custom shader.
-     *
-     * @param enable - Whether we want to enable the fog.
-     */
-    set fog(enable: boolean) {
-        this.m_fog = enable;
-        // Function may be called from THREE.js cause we override setter,
-        // in this case defines are not yet initialized and require late invalidation in
-        // SolidLineMaterial c-tor.
-        if (this.defines !== undefined) {
-            setShaderMaterialDefine(this, "USE_FOG", enable);
-        }
-    }
-
-    /**
-     * Checks if fog is enabled.
-     */
-    get fog(): boolean {
-        return this.m_fog && getShaderMaterialDefine(this, "USE_FOG") === true;
     }
 
     /**
@@ -651,22 +619,12 @@ export class SolidLineMaterial extends RawShaderMaterial
         return getShaderMaterialDefine(this, "USE_OUTLINE") === true;
     }
 
-    /**
-     * Line opacity.
-     */
-    get opacity(): number {
-        return this.m_opacity;
-    }
-
-    set opacity(value: number) {
-        this.m_opacity = value;
-        // Setting opacity before uniform being created requires late invalidation,
-        // call to invalidateOpacity() is done at the end of c-tor.
-        if (this.uniforms?.opacity) {
-            this.uniforms.opacity.value = value;
+    /** @override */
+    setOpacity(opacity: number) {
+        super.setOpacity(opacity);
+        if (opacity !== undefined) {
+            this.stencilWrite = opacity < 0.98;
         }
-
-        this.stencilWrite = this.m_opacity < 0.98;
     }
 
     /**
@@ -759,7 +717,7 @@ export class SolidLineMaterial extends RawShaderMaterial
         setShaderMaterialDefine(this, "USE_DASHED_LINE", value > 0.0);
 
         if (this.uniforms?.gapSize?.value === 0) {
-            this.stencilWrite = this.m_opacity < 0.98;
+            this.stencilWrite = this.opacity < 0.98;
         }
     }
 
@@ -866,20 +824,8 @@ export class SolidLineMaterial extends RawShaderMaterial
 
     copy(other: SolidLineMaterial): this {
         super.copy(other);
-        this.fog = other.fog;
-        this.opacity = other.opacity;
+        this.invalidateFog();
+        this.setOpacity(other.opacity);
         return this;
-    }
-
-    private invalidateFog() {
-        if (this.m_fog !== getShaderMaterialDefine(this, "USE_FOG")) {
-            setShaderMaterialDefine(this, "USE_FOG", this.m_fog);
-        }
-    }
-
-    private invalidateOpacity() {
-        if (this.m_opacity !== this.uniforms.opacity.value) {
-            this.uniforms.opacity.value = this.m_opacity;
-        }
     }
 }

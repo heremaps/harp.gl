@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -29,8 +29,8 @@ function checkVerticalAndHorizontalLines(
     }
 }
 
-describe("EdgeLengthGeometrySubdivisionModifier", function() {
-    it("Does not support spherical projections", function() {
+describe("EdgeLengthGeometrySubdivisionModifier", function () {
+    it("Does not support spherical projections", function () {
         const geoPoint = new geo.GeoCoordinates(53.3, 13.4);
         const tileKey = geo.webMercatorTilingScheme.getTileKey(geoPoint, 3);
         const geobox = geo.webMercatorTilingScheme.getGeoBox(tileKey!);
@@ -46,12 +46,12 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
         ).to.throw;
     });
 
-    describe("Webmercator tiling scheme", function() {
+    describe("Webmercator tiling scheme", function () {
         let geobox: geo.GeoBox;
         let geometry: THREE.BufferGeometry;
         let posAttr: THREE.BufferAttribute;
 
-        beforeEach(function() {
+        beforeEach(function () {
             const geoPoint = new geo.GeoCoordinates(53.3, 13.4);
             const tileKey = geo.webMercatorTilingScheme.getTileKey(geoPoint, 3);
 
@@ -82,7 +82,7 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
             geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
         });
 
-        it("subdivides tile bounds plane", function() {
+        it("subdivides tile bounds plane", function () {
             const modifier = new EdgeLengthGeometrySubdivisionModifier(
                 2,
                 geobox,
@@ -127,7 +127,7 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
             }
         });
 
-        it("subdivides only horizontal and vertical lines", function() {
+        it("subdivides only horizontal and vertical lines", function () {
             const modifier = new EdgeLengthGeometrySubdivisionModifier(
                 2,
                 geobox,
@@ -178,12 +178,12 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
         });
     });
 
-    describe("Here tiling scheme", function() {
+    describe("Here tiling scheme", function () {
         let geobox: geo.GeoBox;
         let geometry: THREE.BufferGeometry;
         let posAttr: THREE.BufferAttribute;
 
-        beforeEach(function() {
+        beforeEach(function () {
             const geoPoint = new geo.GeoCoordinates(53.3, 13.4);
             const tileKey = geo.hereTilingScheme.getTileKey(geoPoint, 3);
 
@@ -214,7 +214,7 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
             geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
         });
 
-        it("subdivides tile bounds plane", function() {
+        it("subdivides tile bounds plane", function () {
             const modifier = new EdgeLengthGeometrySubdivisionModifier(
                 2,
                 geobox,
@@ -259,7 +259,7 @@ describe("EdgeLengthGeometrySubdivisionModifier", function() {
             }
         });
 
-        it("subdivides only horizontal and vertical lines", function() {
+        it("subdivides only horizontal and vertical lines", function () {
             const modifier = new EdgeLengthGeometrySubdivisionModifier(
                 2,
                 geobox,

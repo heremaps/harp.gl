@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -104,7 +104,7 @@ export class TileDecoderService extends WorkerService {
             }
         };
 
-        decodedTile.geometries.forEach(geom => {
+        decodedTile?.geometries.forEach(geom => {
             geom.vertexAttributes?.forEach(attr => transferBufferAttribute(attr));
             geom.interleavedVertexAttributes?.forEach(attr => transferBufferAttribute(attr));
             transferBufferAttribute(geom.index);
@@ -128,7 +128,7 @@ export class TileDecoderService extends WorkerService {
             }
         });
 
-        decodedTile.techniques.forEach(technique => {
+        decodedTile?.techniques.forEach(technique => {
             addBuffersToTransferList(technique, transferList);
         });
 

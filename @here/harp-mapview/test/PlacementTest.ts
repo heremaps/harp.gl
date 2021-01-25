@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -32,13 +32,20 @@ import {
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import * as path from "path";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
+import { PoiBuffer } from "../lib/poi/PoiRenderer";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
-import { placeIcon, PlacementResult, placePointLabel } from "../lib/text/Placement";
+import {
+    checkReadyForPlacement,
+    placeIcon,
+    PlacementResult,
+    placePointLabel,
+    PrePlacementResult
+} from "../lib/text/Placement";
 import { RenderState } from "../lib/text/RenderState";
 import { LoadingState, TextElement } from "../lib/text/TextElement";
 import { TextElementState } from "../lib/text/TextElementState";
@@ -168,7 +175,7 @@ function createTextPlacements(
     return result;
 }
 
-describe("Placement", function() {
+describe("Placement", function () {
     const sandbox = sinon.createSandbox();
     let textCanvas: TextCanvas;
     const screenCollisions: ScreenCollisions = new ScreenCollisions();
@@ -177,7 +184,7 @@ describe("Placement", function() {
     // Canvas padding - padding applied in bounds calculated on TextCanvas.measureText()
     const cPadding = new THREE.Vector2(2, 2);
 
-    before(async function() {
+    before(async function () {
         if (inNodeContext) {
             (global as any).window = {
                 location: {
@@ -196,7 +203,7 @@ describe("Placement", function() {
         textCanvas = await createTextCanvas();
     });
 
-    after(function() {
+    after(function () {
         if (inNodeContext) {
             delete (global as any).window;
             delete (global as any).document;
@@ -204,12 +211,12 @@ describe("Placement", function() {
         sandbox.restore();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         screenCollisions.reset();
     });
 
-    describe("placePointLabel", function() {
-        context("single line text", function() {
+    describe("placePointLabel", function () {
+        context("single line text", function () {
             interface SingleTextPlacementRun {
                 // Test run name.
                 it: string;
@@ -336,8 +343,8 @@ describe("Placement", function() {
                     outPosition: new THREE.Vector2(5 - cPadding.x / 2, 5 - cPadding.y)
                 }
             ];
-            runs.forEach(function(run) {
-                it(run.it, async function() {
+            runs.forEach(function (run) {
+                it(run.it, async function () {
                     const textElement = await createTextElement(
                         textCanvas,
                         "Test 123456",
@@ -377,8 +384,8 @@ describe("Placement", function() {
             });
         });
 
-        context("multi line text", function() {
-            it("places text below", async function() {
+        context("multi line text", function () {
+            it("places text below", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test Test Test Test Test Test Test Test Test",
@@ -411,7 +418,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(-cPadding.y);
             });
 
-            it("places text center", async function() {
+            it("places text center", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test Test Test Test Test Test Test Test Test",
@@ -444,7 +451,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(76 + 0.25);
             });
 
-            it("places text above", async function() {
+            it("places text above", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test Test Test Test Test Test Test Test Test",
@@ -477,7 +484,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(152 + 0.5 + cPadding.y);
             });
 
-            it("places text with offset", async function() {
+            it("places text with offset", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test 123456",
@@ -513,7 +520,7 @@ describe("Placement", function() {
                 expect(position.y).to.equal(5 + 19 + 0.5 + cPadding.y);
             });
 
-            it("scales offsets", async function() {
+            it("scales offsets", async function () {
                 const textElement = await createTextElement(
                     textCanvas,
                     "Test 123456",
@@ -550,7 +557,7 @@ describe("Placement", function() {
             });
         });
 
-        context("single text with and without alternative placement", function() {
+        context("single text with and without alternative placement", function () {
             interface PlacementAlternativesRun {
                 // Test run name.
                 it: string;
@@ -704,8 +711,8 @@ describe("Placement", function() {
                     }
                 }
             ];
-            runs.forEach(function(run) {
-                it(run.it, async function() {
+            runs.forEach(function (run) {
+                it(run.it, async function () {
                     const textElement = await createTextElement(
                         textCanvas,
                         run.text,
@@ -768,7 +775,7 @@ describe("Placement", function() {
             });
         });
 
-        context("single text moving to the screen edge", function() {
+        context("single text moving to the screen edge", function () {
             interface AlternativesWithMovementRun {
                 // Test run name.
                 it: string;
@@ -925,8 +932,8 @@ describe("Placement", function() {
             );
             // Finally process all runs.
             const runs = runsNoFading.concat(runsWithFading);
-            runs.forEach(function(run) {
-                it(run.it, async function() {
+            runs.forEach(function (run) {
+                it(run.it, async function () {
                     const textElement = await createTextElement(
                         textCanvas,
                         run.text,
@@ -947,20 +954,15 @@ describe("Placement", function() {
                     textCanvas.textLayoutStyle = textElement.layoutStyle!;
                     // Run placement firstly without multi-anchor support, just to calculate base
                     // label bounds for relative movement in the next frames.
-                    placePointLabel(
-                        state,
-                        inPosition,
-                        1.0,
-                        textCanvas,
-                        new Env(),
-                        screenCollisions,
-                        outPosition,
-                        false
-                    );
+                    textElement.bounds = new THREE.Box2();
+                    textCanvas.measureText(textElement.glyphs!, textElement.bounds, {
+                        pathOverflow: false,
+                        letterCaseArray: textElement.glyphCaseArray
+                    });
                     state.update(1);
 
                     // Process each frame sequentially.
-                    run.frames.forEach(function(frame) {
+                    run.frames.forEach(function (frame) {
                         // Move label.
                         const textExtent = new THREE.Vector2(
                             state.element.bounds!.max.x - state.element.bounds!.min.x,
@@ -1004,8 +1006,8 @@ describe("Placement", function() {
             });
         });
 
-        context("texts colliding with alternative placements", function() {
-            it("place two text at almost the same position", async function() {
+        context("texts colliding with alternative placements", function () {
+            it("place two text at almost the same position", async function () {
                 const elements = await createPointTextElements(
                     textCanvas,
                     ["Test 1", "Test 1"],
@@ -1088,7 +1090,7 @@ describe("Placement", function() {
                 expect(results[1]).to.equal(PlacementResult.Ok);
             });
 
-            it("fail to place two centered texts at almost the same position", async function() {
+            it("fail to place two centered texts at almost the same position", async function () {
                 const elements = await createPointTextElements(
                     textCanvas,
                     ["Test 1", "Test 2"],
@@ -1138,7 +1140,7 @@ describe("Placement", function() {
                 expect(results[1]).to.equal(PlacementResult.Rejected);
             });
 
-            it("place two approaching texts", async function() {
+            it("place two approaching texts", async function () {
                 const elements = await createPointTextElements(
                     textCanvas,
                     ["Test 1", "Test 1"],
@@ -1276,10 +1278,99 @@ describe("Placement", function() {
                 expect(results[1]).to.equal(PlacementResult.Rejected);
             });
         });
+
+        it("only sets label bounds on successful placement", async function () {
+            const collisionsStub = new ScreenCollisions();
+
+            const textElement = await createTextElement(
+                textCanvas,
+                "Text",
+                new THREE.Vector3(),
+                {},
+                {
+                    horizontalAlignment: HorizontalAlignment.Right,
+                    verticalAlignment: VerticalAlignment.Below,
+                    placements: createTextPlacements(
+                        HorizontalPlacement.Left,
+                        VerticalPlacement.Bottom
+                    )
+                }
+            );
+            const state = new TextElementState(textElement);
+            const screenPos = new THREE.Vector2(0, 0);
+            const scale = 1.0;
+            const env = new Env();
+            const outPos = new THREE.Vector3();
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+            const visibleStub = sandbox.stub(collisionsStub, "isVisible").returns(false);
+            const allocatedStub = sandbox.stub(collisionsStub, "isAllocated").returns(false);
+
+            placePointLabel(state, screenPos, scale, textCanvas, env, collisionsStub, outPos, true);
+
+            expect(textElement.bounds).to.be.undefined;
+
+            visibleStub.returns(true);
+            allocatedStub.returns(true);
+
+            placePointLabel(state, screenPos, scale, textCanvas, env, collisionsStub, outPos, true);
+
+            expect(textElement.bounds).to.be.undefined;
+
+            visibleStub.returns(true);
+            allocatedStub.returns(false);
+
+            placePointLabel(state, screenPos, scale, textCanvas, env, collisionsStub, outPos, true);
+
+            expect(textElement.bounds).to.not.be.undefined;
+        });
+
+        it("returns rejected for visible new labels with no available space", async function () {
+            const collisionsStub = new ScreenCollisions();
+
+            const textElement = await createTextElement(
+                textCanvas,
+                "Text",
+                new THREE.Vector3(),
+                {},
+                {
+                    horizontalAlignment: HorizontalAlignment.Right,
+                    verticalAlignment: VerticalAlignment.Below,
+                    placements: createTextPlacements(
+                        HorizontalPlacement.Left,
+                        VerticalPlacement.Bottom
+                    )
+                }
+            );
+            const state = new TextElementState(textElement);
+            const screenPos = new THREE.Vector2(0, 0);
+            const scale = 1.0;
+            const env = new Env();
+            const outPos = new THREE.Vector3();
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+            sandbox.stub(collisionsStub, "isVisible").returns(true);
+            sandbox.stub(collisionsStub, "isAllocated").returns(true);
+
+            const result = placePointLabel(
+                state,
+                screenPos,
+                scale,
+                textCanvas,
+                env,
+                collisionsStub,
+                outPos,
+                true
+            );
+
+            expect(result).equals(PlacementResult.Rejected);
+        });
     });
 
-    describe("placeIcon", function() {
-        it("places icon without offset", function() {
+    describe("placeIcon", function () {
+        it("places icon without offset", function () {
             const iconRenderState = new RenderState();
             iconRenderState.updateFading(800, true);
 
@@ -1287,7 +1378,7 @@ describe("Placement", function() {
                 computedWidth: 32,
                 computedHeight: 32,
                 mayOverlap: false,
-                poiRenderBatch: 1,
+                buffer: {} as PoiBuffer,
                 technique: {}
             };
 
@@ -1303,7 +1394,7 @@ describe("Placement", function() {
             expect(result).to.equal(PlacementResult.Ok);
         });
 
-        it("places icon with offset", function() {
+        it("places icon with offset", function () {
             const iconRenderState = new RenderState();
             iconRenderState.updateFading(800, true);
 
@@ -1311,7 +1402,7 @@ describe("Placement", function() {
                 computedWidth: 32,
                 computedHeight: 32,
                 mayOverlap: false,
-                poiRenderBatch: 1,
+                buffer: {} as PoiBuffer,
                 technique: {
                     iconYOffset: -16
                 }
@@ -1327,6 +1418,87 @@ describe("Placement", function() {
             );
 
             expect(result).to.equal(PlacementResult.Ok);
+        });
+    });
+
+    describe("checkReadyForPlacement", () => {
+        let textElement: TextElement;
+        function checkPlacementResult(
+            textElement: TextElement,
+            viewState: any = {},
+            poiManager?: any
+        ) {
+            return checkReadyForPlacement(
+                textElement,
+                undefined,
+                {
+                    ...viewState,
+                    projection: {},
+                    worldCenter: new THREE.Vector3(),
+                    lookAtVector: new THREE.Vector3()
+                },
+                poiManager ?? {
+                    updatePoiFromPoiTable: () => true
+                },
+                1000
+            ).result;
+        }
+
+        before(async () => {
+            textElement = await createTextElement(textCanvas, "Test", new THREE.Vector3(), {}, {});
+        });
+
+        it("NotReady while if updatePoiFromPoiTable returns false", async () => {
+            assert.equal(
+                checkPlacementResult(
+                    textElement,
+                    {},
+                    {
+                        updatePoiFromPoiTable: () => false
+                    }
+                ),
+                PrePlacementResult.NotReady
+            );
+        });
+
+        it("Invisible if textElement is invisible", async () => {
+            textElement.visible = false;
+            assert.equal(checkPlacementResult(textElement), PrePlacementResult.Invisible);
+        });
+
+        it("Invisible if textElement is out of zoom range", async () => {
+            textElement.visible = true;
+            textElement.minZoomLevel = 6;
+            textElement.maxZoomLevel = 14;
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 5 }),
+                PrePlacementResult.Invisible
+            );
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 7 }),
+                PrePlacementResult.Ok
+            );
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 14 }),
+                PrePlacementResult.Invisible
+            );
+
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 14.1 }),
+                PrePlacementResult.Invisible
+            );
+        });
+
+        it("Invisible if both min and max zoom range are the same", () => {
+            textElement.minZoomLevel = 7;
+            textElement.maxZoomLevel = 7;
+            assert.equal(
+                checkPlacementResult(textElement, { zoomLevel: 7 }),
+                PrePlacementResult.Invisible
+            );
         });
     });
 });

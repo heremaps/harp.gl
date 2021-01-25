@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -35,14 +35,6 @@ export type TileObject = THREE.Object3D & {
      * Distance of this object from the {@link Tile}'s center.
      */
     displacement?: THREE.Vector3;
-
-    /**
-     * This stores the THREE.Object3D renderOrder property, we need to back it up because we need to
-     * reduce it if the tile is used as fall back. When it is used normally, the renderOrder needs
-     * to be reset.
-     * @hidden
-     */
-    _backupRenderOrder?: number;
 };
 
 interface DisposableObject {
@@ -974,6 +966,9 @@ export class Tile implements CachedResource {
         }
         this.textElementsChanged = true;
         this.m_pathBlockingElements.splice(0);
+        this.textElementGroups.forEach((element: TextElement) => {
+            element.dispose();
+        });
         this.textElementGroups.clear();
     }
 

@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 
-import { ImageItem } from "./Image";
+import { ImageItem, TexturizableImage } from "./Image";
 
 const isNode = typeof window === "undefined";
 
@@ -54,10 +54,10 @@ export class MipMapGenerator {
             throw new Error("MipMapGenerator only works in browser.");
         }
 
-        if (image.imageData === undefined) {
+        if (image.image === undefined) {
             throw new Error("Can not generate mip maps. Image data not loaded!");
         }
-        const imageData = image.imageData;
+        const imageData = image.image;
         const mipMaps: ImageData[] = [];
 
         // Add initial texture with padding as level 0
@@ -93,7 +93,7 @@ export class MipMapGenerator {
      * @returns Canvas with image and padding.
      */
     private copyImageWithPadding(
-        image: ImageData | ImageBitmap,
+        image: TexturizableImage,
         width: number,
         height: number
     ): HTMLCanvasElement {
@@ -101,10 +101,10 @@ export class MipMapGenerator {
         this.m_paddingCanvas!.height = height;
 
         this.m_paddingContext!.clearRect(0, 0, width, height);
-        if (image instanceof ImageBitmap) {
-            this.m_paddingContext!.drawImage(image, 0, 0);
-        } else {
+        if (image instanceof ImageData) {
             this.m_paddingContext!.putImageData(image, 0, 0);
+        } else {
+            this.m_paddingContext!.drawImage(image, 0, 0);
         }
 
         // Add horizontal padding

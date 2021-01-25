@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,6 +12,9 @@ import {
 } from "@here/harp-datasource-protocol";
 import { StyleSetEvaluator, StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, TileKey } from "@here/harp-geoutils";
+import { LoggerManager } from "@here/harp-utils";
+
+const logger = LoggerManager.instance.create("ThemedTileDecoder");
 
 /**
  * `ThemedTileDecoder` implements an [[ITileDecoder]] which uses a [[Theme]] to apply styles to the
@@ -35,9 +38,10 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection
-    ): Promise<DecodedTile> {
+    ): Promise<DecodedTile | undefined> {
         if (this.m_styleSetEvaluator === undefined) {
-            return Promise.reject(new Error("No style is defined"));
+            logger.info("cannot decode tile, as there is not style available");
+            return Promise.resolve(undefined);
         }
 
         return this.decodeThemedTile(data, tileKey, this.m_styleSetEvaluator, projection);

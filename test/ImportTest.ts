@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2018-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -126,10 +126,7 @@ function checkImports() {
 
             if (!localModule && !allowedNodeModule) {
                 const importedModuleName = importedModule.startsWith("@")
-                    ? importedModule
-                          .split("/")
-                          .slice(0, 2)
-                          .join("/")
+                    ? importedModule.split("/").slice(0, 2).join("/")
                     : importedModule.split("/")[0];
 
                 if (
@@ -182,7 +179,7 @@ function checkImports() {
             modules.set(moduleName, module);
         }
 
-        modules.forEach(function(module) {
+        modules.forEach(function (module) {
             if (module.index === undefined) {
                 strongConnect(module);
             }
@@ -237,8 +234,9 @@ function checkImports() {
     return errors;
 }
 
-describe("ImportCheck", function() {
-    it("Uses correct imports", function() {
-        assert.deepEqual(checkImports(), []);
+describe("ImportCheck", function () {
+    it("Uses correct imports", function () {
+        const errors = checkImports();
+        assert.deepEqual(errors, []);
     });
 });

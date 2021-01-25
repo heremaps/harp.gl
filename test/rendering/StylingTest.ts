@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -58,7 +58,7 @@ function baseRenderingTest(
         // We can ignore error here, as _if_ this file was really needed, then test
         // will try to resolve this promise and report failure in test context.
     });
-    it(name, async function() {
+    it(name, async function () {
         let canvas: HTMLCanvasElement | undefined;
         // TODO: remove `module` name from RenderingTestHalper API
         try {
@@ -135,7 +135,7 @@ function mapViewFeaturesRenderingTest(
     baseRenderingTest(
         name,
         options,
-        async function(canvas) {
+        async function (canvas) {
             //document.body.appendChild(canvas);
             mapView = new MapView({
                 canvas,
@@ -199,7 +199,7 @@ function mapViewFeaturesRenderingTest(
     );
 }
 
-describe("MapView Styling Test", function() {
+describe("MapView Styling Test", function () {
     const referenceBackground: Feature = {
         // background polygon, taking about half of view
         type: "Feature",
@@ -231,7 +231,7 @@ describe("MapView Styling Test", function() {
         fontCatalogs: [
             {
                 name: "fira",
-                url: "../@here/harp-fontcatalog/resources/Default_FontCatalog.json"
+                url: "../dist/resources/fonts/Default_FontCatalog.json"
             }
         ],
         images: {
@@ -249,7 +249,7 @@ describe("MapView Styling Test", function() {
         ]
     };
 
-    describe("point features", function() {
+    describe("point features", function () {
         const points: Feature[] = [
             {
                 type: "Feature",
@@ -380,7 +380,7 @@ describe("MapView Styling Test", function() {
             }
         }
 
-        describe("text", function() {
+        describe("text", function () {
             makePointTextTestCases(
                 {
                     "point-text-basic": { color: "#f0f", size: 16 },
@@ -398,7 +398,7 @@ describe("MapView Styling Test", function() {
             );
         });
 
-        describe("poi", function() {
+        describe("poi", function () {
             makePointPoiTestCases(
                 {
                     "poi-basic-icon-only": {
@@ -431,7 +431,7 @@ describe("MapView Styling Test", function() {
             );
         });
 
-        describe("circles", function() {
+        describe("circles", function () {
             makePointTestCases(
                 {
                     "point-circles-basic": { color: "#ca6", size: 10 },
@@ -445,7 +445,7 @@ describe("MapView Styling Test", function() {
             );
         });
     });
-    describe("line features", function() {
+    describe("line features", function () {
         const straightLine: Feature = {
             type: "Feature",
             geometry: {
@@ -511,8 +511,8 @@ describe("MapView Styling Test", function() {
             }
         }
 
-        describe("solid-line technique", function() {
-            describe("basic", function() {
+        describe("solid-line technique", function () {
+            describe("basic", function () {
                 makeLineTestCase({
                     "basic-100m": { lineWidth: 100, color: "#0b97c4" },
                     "basic-dash-100m": {
@@ -618,7 +618,7 @@ describe("MapView Styling Test", function() {
                 );
             });
 
-            describe("with outline", function() {
+            describe("with outline", function () {
                 makeLineTestCase({
                     "outline-10px-2px": {
                         // BUGGY ?
@@ -673,7 +673,7 @@ describe("MapView Styling Test", function() {
                 );
             });
         });
-        describe("text from lines", function() {
+        describe("text from lines", function () {
             mapViewFeaturesRenderingTest(`line-text-basic`, {
                 width: 200,
                 height: 200,
@@ -720,7 +720,7 @@ describe("MapView Styling Test", function() {
             });
         });
     });
-    describe("polygon features", function() {
+    describe("polygon features", function () {
         const lights: Light[] = [
             {
                 type: "ambient",
@@ -827,14 +827,14 @@ describe("MapView Styling Test", function() {
                 });
             }
         }
-        describe("fill technique", function() {
-            describe("no outline", function() {
+        describe("fill technique", function () {
+            describe("no outline", function () {
                 makePolygonTestCases("fill", {
                     fill: { color: "#0b97c4" },
                     "fill-rgba": { color: "#0b97c470" }
                 });
             });
-            describe("with outline", function() {
+            describe("with outline", function () {
                 makePolygonTestCases("fill", {
                     // all tests are buggy ? because all outlines have 1px width
                     "fill-outline-200m": { color: "#0b97c4", lineColor: "#7f7", lineWidth: 200 },
@@ -869,7 +869,7 @@ describe("MapView Styling Test", function() {
                 });
             });
         });
-        describe("standard technique", function() {
+        describe("standard technique", function () {
             mapViewFeaturesRenderingTest(
                 `polygon-standard-texture`,
                 {
@@ -945,7 +945,7 @@ describe("MapView Styling Test", function() {
             );
         });
 
-        describe("extruded-polygon technique", function() {
+        describe("extruded-polygon technique", function () {
             const tower: Feature = {
                 // sample polygon, that is smaller and higher than previous one
                 type: "Feature",
@@ -973,7 +973,7 @@ describe("MapView Styling Test", function() {
                     heading: 30
                 }
             };
-            describe("flat", function() {
+            describe("flat", function () {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
@@ -989,7 +989,7 @@ describe("MapView Styling Test", function() {
                     viewOptions
                 );
             });
-            describe("3d", function() {
+            describe("3d", function () {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {
@@ -1025,7 +1025,7 @@ describe("MapView Styling Test", function() {
                     viewOptions
                 );
             });
-            describe("3d overlapping", function() {
+            describe("3d overlapping", function () {
                 makePolygonTestCases(
                     "extruded-polygon",
                     {

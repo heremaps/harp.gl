@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { GradientSky, Light, Sky, Theme } from "@here/harp-datasource-protocol";
+import { GradientSky, Light, Sky } from "@here/harp-datasource-protocol";
 import { ProjectionType, Vector3Like } from "@here/harp-geoutils";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import THREE = require("three");
@@ -78,9 +78,9 @@ export class MapViewEnvironment {
         }
     }
 
-    setBackgroundTheme(theme?: Theme) {
-        if (theme !== undefined && this.m_backgroundDataSource !== undefined) {
-            this.m_backgroundDataSource.setTheme(theme);
+    clearBackgroundDataSource() {
+        if (this.m_backgroundDataSource !== undefined) {
+            this.m_mapView.clearTileCache(this.m_backgroundDataSource.name);
         }
     }
 
@@ -95,32 +95,29 @@ export class MapViewEnvironment {
         this.updateLights();
     }
 
-    updateClearColor(theme?: Theme) {
-        if (theme !== undefined && theme.clearColor !== undefined) {
-            this.m_mapView.renderer.setClearColor(
-                new THREE.Color(theme.clearColor),
-                theme.clearAlpha
-            );
+    updateClearColor(clearColor?: string, clearAlpha?: number) {
+        if (clearColor !== undefined) {
+            this.m_mapView.renderer.setClearColor(new THREE.Color(clearColor), clearAlpha);
         } else {
-            this.m_mapView.renderer.setClearColor(DEFAULT_CLEAR_COLOR, theme?.clearAlpha);
+            this.m_mapView.renderer.setClearColor(DEFAULT_CLEAR_COLOR, clearAlpha);
         }
     }
 
-    updateSkyBackground(theme: Theme) {
-        if (this.m_skyBackground instanceof SkyBackground && theme.sky !== undefined) {
+    updateSkyBackground(sky?: Sky, clearColor?: string) {
+        if (this.m_skyBackground instanceof SkyBackground && sky !== undefined) {
             // there is a sky in the view and there is a sky option in the theme. Update the colors
-            this.updateSkyBackgroundColors(theme.sky, theme.clearColor);
-        } else if (this.m_skyBackground === undefined && theme.sky !== undefined) {
+            this.updateSkyBackgroundColors(sky, clearColor);
+        } else if (this.m_skyBackground === undefined && sky !== undefined) {
             // there is no sky in the view but there is a sky option in the theme
-            this.addNewSkyBackground(theme.sky, theme.clearColor);
+            this.addNewSkyBackground(sky, clearColor);
             return;
-        } else if (this.m_skyBackground instanceof SkyBackground && theme.sky === undefined) {
+        } else if (this.m_skyBackground instanceof SkyBackground && sky === undefined) {
             // there is a sky in the view, but not in the theme
             this.removeSkyBackGround();
         }
     }
 
-    updateLighting(theme: Theme) {
+    updateLighting(lights?: Light[]) {
         if (this.m_createdLights) {
             this.m_createdLights.forEach((light: THREE.Light) => {
                 this.m_mapView.scene.remove(light);
@@ -134,11 +131,11 @@ export class MapViewEnvironment {
             }
         });
 
-        if (theme.lights !== undefined) {
+        if (lights !== undefined) {
             this.m_createdLights = [];
             this.m_overlayCreatedLights = [];
 
-            theme.lights.forEach((lightDescription: Light) => {
+            lights.forEach((lightDescription: Light) => {
                 const light = createLight(lightDescription);
                 if (!light) {
                     logger.warn(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,19 +10,18 @@ import { assert } from "chai";
 
 import { loadTestResource } from "../index";
 
-describe("@here/harp-test-utils", function() {
-    describe("#loadTestResource", function() {
-        it(`loads static text file`, async function() {
+describe("@here/harp-test-utils", function () {
+    describe("#loadTestResource", function () {
+        it(`loads static text file`, async function () {
             const textFromFile = await loadTestResource(
                 "@here/harp-test-utils",
                 "./test/resources/test.txt",
                 "text"
             );
 
-            assert(textFromFile);
-            assert.equal(textFromFile, "Test message\n");
+            assert.include(textFromFile, "Test message");
         });
-        it(`loads static json file`, async function() {
+        it(`loads static json file`, async function () {
             const jsonFromFile = await loadTestResource(
                 "@here/harp-test-utils",
                 "./test/resources/test.json",
@@ -32,7 +31,7 @@ describe("@here/harp-test-utils", function() {
             assert(jsonFromFile);
             assert.equal(jsonFromFile.message, "Test message");
         });
-        it(`loads static binary file`, async function() {
+        it(`loads static binary file`, async function () {
             const bufferResult = await loadTestResource(
                 "@here/harp-test-utils",
                 "./test/resources/test.bin",

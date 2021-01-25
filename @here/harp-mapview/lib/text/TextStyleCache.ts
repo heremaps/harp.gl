@@ -1,9 +1,8 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2018-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     ColorUtils,
     getPropertyValue,
@@ -13,8 +12,7 @@ import {
     PlacementToken,
     PoiTechnique,
     TextStyleDefinition,
-    TextTechnique,
-    Theme
+    TextTechnique
 } from "@here/harp-datasource-protocol";
 import {
     DefaultTextStyle,
@@ -39,9 +37,8 @@ import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
 import { ColorCache } from "../ColorCache";
 import { evaluateColorProperty } from "../DecodedTileHelpers";
-import { PoiRenderer } from "../poi/PoiRenderer";
 import { Tile } from "../Tile";
-import { TextCanvasRenderer } from "./TextCanvasRenderer";
+import { DEFAULT_FONT_CATALOG_NAME, TextCanvases } from "./TextElementsRenderer";
 
 const logger = LoggerManager.instance.create("TextStyleCache");
 
@@ -72,112 +69,45 @@ const DEFAULT_STYLE_NAME = "default";
  */
 export interface TextElementStyle {
     name: string;
-    fontCatalog: string;
+    fontCatalog?: string;
     renderParams: TextRenderParameters;
     layoutParams: TextLayoutParameters;
     textCanvas?: TextCanvas;
-    poiRenderer?: PoiRenderer;
 }
 
 export class TextStyleCache {
     private readonly m_textStyles: Map<string, TextElementStyle> = new Map();
     private m_defaultStyle: TextElementStyle = {
         name: DEFAULT_STYLE_NAME,
-        fontCatalog: "",
+        fontCatalog: undefined,
         renderParams: defaultTextRenderStyle.params,
         layoutParams: defaultTextLayoutStyle.params
     };
 
-    constructor(private m_theme: Theme) {}
-
-    initializeDefaultTextElementStyle(defaultFontCatalogName: string) {
-        if (this.m_theme.textStyles === undefined) {
-            this.m_theme.textStyles = [];
-        }
-        const styles = this.m_theme.textStyles;
-
-        const themedDefaultStyle = styles.find(style => style.name === DEFAULT_STYLE_NAME);
-        if (themedDefaultStyle !== undefined) {
-            this.m_defaultStyle = this.createTextElementStyle(
-                themedDefaultStyle,
-                DEFAULT_STYLE_NAME
-            );
-        } else if (this.m_theme.defaultTextStyle !== undefined) {
-            this.m_defaultStyle = this.createTextElementStyle(
-                this.m_theme.defaultTextStyle,
-                DEFAULT_STYLE_NAME
-            );
-        } else if (styles.length > 0) {
-            this.m_defaultStyle = this.createTextElementStyle(styles[0], DEFAULT_STYLE_NAME);
-        }
-        this.m_defaultStyle.fontCatalog = defaultFontCatalogName;
+    constructor() {
+        this.updateDefaultTextStyle();
     }
 
-    initializeTextElementStyles(
-        defaultPoiRenderer: PoiRenderer,
-        defaultTextCanvas: TextCanvas,
-        textRenderers: TextCanvasRenderer[]
+    updateTextStyles(
+        textStyleDefinitions?: TextStyleDefinition[],
+        defaultTextStyleDefinition?: TextStyleDefinition
     ) {
-        // Initialize default text style.
-        if (this.m_defaultStyle.fontCatalog !== undefined) {
-            const styledTextRenderer = textRenderers.find(
-                textRenderer => textRenderer.fontCatalog === this.m_defaultStyle.fontCatalog
-            );
-            this.m_defaultStyle.textCanvas =
-                styledTextRenderer !== undefined ? styledTextRenderer.textCanvas : undefined;
-            this.m_defaultStyle.poiRenderer =
-                styledTextRenderer !== undefined ? styledTextRenderer.poiRenderer : undefined;
-        }
-        if (this.m_defaultStyle.textCanvas === undefined) {
-            if (this.m_defaultStyle.fontCatalog !== undefined) {
-                logger.warn(
-                    `FontCatalog '${this.m_defaultStyle.fontCatalog}' set in TextStyle '${
-                        this.m_defaultStyle.name
-                    }' not found, using default fontCatalog(${
-                        defaultTextCanvas!.fontCatalog.name
-                    }).`
-                );
-            }
-            this.m_defaultStyle.textCanvas = defaultTextCanvas;
-            this.m_defaultStyle.poiRenderer = defaultPoiRenderer;
-        }
-
-        // Initialize theme text styles.
-        this.m_theme.textStyles!.forEach(element => {
+        this.m_textStyles.clear();
+        textStyleDefinitions?.forEach(element => {
             this.m_textStyles.set(
                 element.name!,
                 this.createTextElementStyle(element, element.name!)
             );
         });
+        this.updateDefaultTextStyle(defaultTextStyleDefinition, textStyleDefinitions);
+    }
+
+    updateTextCanvases(textCanvases: TextCanvases) {
+        // Initialize default text style.
+        this.initializeTextCanvas(this.m_defaultStyle, textCanvases);
+
         for (const [, style] of this.m_textStyles) {
-            if (style.textCanvas === undefined) {
-                if (style.fontCatalog !== undefined) {
-                    const styledTextRenderer = textRenderers.find(
-                        textRenderer => textRenderer.fontCatalog === style.fontCatalog
-                    );
-                    style.textCanvas =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.textCanvas
-                            : undefined;
-                    style.poiRenderer =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.poiRenderer
-                            : undefined;
-                }
-                if (style.textCanvas === undefined) {
-                    if (style.fontCatalog !== undefined) {
-                        logger.warn(
-                            `FontCatalog '${style.fontCatalog}' set in TextStyle '${
-                                style.name
-                            }' not found, using default fontCatalog(${
-                                defaultTextCanvas!.fontCatalog.name
-                            }).`
-                        );
-                    }
-                    style.textCanvas = defaultTextCanvas;
-                    style.poiRenderer = defaultPoiRenderer;
-                }
-            }
+            this.initializeTextCanvas(style, textCanvases);
         }
     }
 
@@ -403,6 +333,72 @@ export class TextStyleCache {
         return layoutStyle;
     }
 
+    private updateDefaultTextStyle(
+        defaultTextStyleDefinition?: TextStyleDefinition,
+        textStyleDefinitions?: TextStyleDefinition[]
+    ) {
+        this.m_defaultStyle.fontCatalog = undefined;
+
+        const style =
+            textStyleDefinitions?.find(definition => {
+                return definition.name === DEFAULT_STYLE_NAME;
+            }) ??
+            defaultTextStyleDefinition ??
+            textStyleDefinitions?.[0];
+        if (style) {
+            this.m_defaultStyle = this.createTextElementStyle(style, DEFAULT_STYLE_NAME);
+        }
+        this.m_defaultStyle.textCanvas = undefined;
+    }
+
+    private initializeTextCanvas(style: TextElementStyle, textCanvases: TextCanvases): void {
+        if (style.textCanvas) {
+            return;
+        }
+        if (style.fontCatalog !== undefined) {
+            const styledTextCanvas = textCanvases.get(style.fontCatalog);
+            style.textCanvas = styledTextCanvas;
+            if (textCanvases.has(style.fontCatalog) && !styledTextCanvas) {
+                logger.info(`fontCatalog(${style.fontCatalog}), not yet loaded`);
+                return;
+            }
+        }
+        // specified canvas not found
+        if (style.textCanvas === undefined) {
+            if (
+                style.fontCatalog !== undefined &&
+                style.fontCatalog !== DEFAULT_FONT_CATALOG_NAME
+            ) {
+                logger.warn(
+                    `FontCatalog '${style.fontCatalog}' set in TextStyle
+                     '${style.name}' not found`
+                );
+            }
+
+            // find another canvas to use then
+            let alternativeTextCanvas = textCanvases.get(DEFAULT_FONT_CATALOG_NAME);
+            if (!alternativeTextCanvas && textCanvases.size > 0) {
+                for (const [, canvas] of textCanvases) {
+                    if (canvas) {
+                        alternativeTextCanvas = canvas;
+                        break;
+                    }
+                }
+            }
+
+            // if an alternative canvas is found, use it
+            if (alternativeTextCanvas) {
+                style.textCanvas = alternativeTextCanvas;
+                if (style.fontCatalog !== undefined) {
+                    logger.info(
+                        `fontCatalog: '${style.fontCatalog}' not found,
+                      using default fontCatalog(${style.textCanvas?.name}).`
+                    );
+                }
+            }
+        }
+    }
+
     private createTextElementStyle(
         style: TextStyleDefinition,
         styleName: string
@@ -505,10 +501,7 @@ function parseTechniquePlacements(placementsString: string | undefined | null): 
     // Parse placement properties if available.
     const placements: TextPlacements = [];
     const placementsTokens = placementsString
-        ? placementsString!
-              .toUpperCase()
-              .replace(" ", "")
-              .split(",")
+        ? placementsString!.toUpperCase().replace(" ", "").split(",")
         : [];
     placementsTokens.forEach(p => {
         const val = parseTechniquePlacementValue(p);

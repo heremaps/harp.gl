@@ -1,9 +1,15 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { EarthConstants, webMercatorProjection } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    isVector3Like,
+    Vector2Like,
+    Vector3Like,
+    webMercatorProjection
+} from "@here/harp-geoutils";
 import * as THREE from "three";
 
 import { DecodeInfo } from "./DecodeInfo";
@@ -62,13 +68,13 @@ export function createWorldTileTransformationCookie(extents: number, decodeInfo:
 /**
  * @hidden
  */
-export function tile2world(
+export function tile2world<VectorType extends Vector3Like>(
     extents: number,
     decodeInfo: DecodeInfo,
-    position: THREE.Vector2,
+    position: Vector2Like,
     flipY: boolean = false,
-    target: THREE.Vector2
-): THREE.Vector2 {
+    target: VectorType
+): VectorType {
     if (
         decodeInfo.worldTileProjectionCookie === undefined ||
         decodeInfo.worldTileProjectionCookie.extents !== extents
@@ -82,22 +88,23 @@ export function tile2world(
     const { top, left, scale } = decodeInfo.worldTileProjectionCookie;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
-    return target.set(
-        ((left + position.x) / scale) * R,
-        ((top + (flipY ? -position.y : position.y)) / scale) * R
-    );
+    target.x = ((left + position.x) / scale) * R;
+    target.y = ((top + (flipY ? -position.y : position.y)) / scale) * R;
+    target.z = isVector3Like(position) ? position.z : 0;
+
+    return target;
 }
 
 /**
  * @hidden
  */
-export function world2tile(
+export function world2tile<VectorType extends Vector2Like>(
     extents: number,
     decodeInfo: DecodeInfo,
-    position: THREE.Vector2,
+    position: Vector3Like,
     flipY: boolean = false,
-    target: THREE.Vector2
-): THREE.Vector2 {
+    target: VectorType
+): VectorType {
     if (
         decodeInfo.worldTileProjectionCookie === undefined ||
         decodeInfo.worldTileProjectionCookie.extents !== extents
@@ -110,30 +117,29 @@ export function world2tile(
     const { top, left, scale } = decodeInfo.worldTileProjectionCookie;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
-    return target.set(
-        (position.x / R) * scale - left,
-        (flipY ? -1 : 1) * ((position.y / R) * scale - top)
-    );
+    target.x = (position.x / R) * scale - left;
+    target.y = (flipY ? -1 : 1) * ((position.y / R) * scale - top);
+    if (isVector3Like(target)) {
+        target.z = position.z;
+    }
+    return target;
 }
-
-const tempWorldPos = new THREE.Vector2();
 
 export function webMercatorTile2TargetWorld(
     extents: number,
     decodeInfo: DecodeInfo,
-    position: THREE.Vector2,
+    position: THREE.Vector2 | THREE.Vector3,
     target: THREE.Vector3,
     flipY: boolean = false
 ) {
-    const worldPos = tile2world(extents, decodeInfo, position, flipY, tempWorldPos);
-    target.set(worldPos.x, worldPos.y, 0);
+    tile2world(extents, decodeInfo, position, flipY, target);
     decodeInfo.targetProjection.reprojectPoint(webMercatorProjection, target, target);
 }
 
 export function webMercatorTile2TargetTile(
     extents: number,
     decodeInfo: DecodeInfo,
-    position: THREE.Vector2,
+    position: THREE.Vector2 | THREE.Vector3,
     target: THREE.Vector3,
     flipY: boolean = false
 ) {

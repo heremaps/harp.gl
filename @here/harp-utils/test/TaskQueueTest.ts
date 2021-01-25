@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,14 +10,14 @@ import { assert } from "chai";
 
 import { Task, TaskQueue } from "../lib/TaskQueue";
 
-describe("TaskQueue", function() {
-    it("create TaskQueue", function() {
+describe("TaskQueue", function () {
+    it("create TaskQueue", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         assert.equal(taskQueue.numItemsLeft(), 0);
         assert.isFalse(taskQueue.processNext("group1"));
     });
 
-    it("add task of not existent group", function() {
+    it("add task of not existent group", function () {
         const taskQueue = new TaskQueue({ groups: ["group2"] });
         assert.isFalse(
             taskQueue.add({
@@ -35,7 +35,7 @@ describe("TaskQueue", function() {
         assert.isFalse(taskQueue.processNext("group1"));
     });
 
-    it("add already added task ", function() {
+    it("add already added task ", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         const task = {
             execute: () => {
@@ -56,7 +56,7 @@ describe("TaskQueue", function() {
         assert.equal(taskQueue.numItemsLeft(), 0);
     });
 
-    it("add Task and process", function() {
+    it("add Task and process", function () {
         const taskQueue = new TaskQueue({ groups: ["group1", "group2"] });
         assert.isTrue(
             taskQueue.add({
@@ -81,7 +81,7 @@ describe("TaskQueue", function() {
         assert.isFalse(taskQueue.processNext("group1"));
     });
 
-    it("update and remove expired", function() {
+    it("update and remove expired", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -143,7 +143,7 @@ describe("TaskQueue", function() {
         assert.equal(testValue, 7);
     });
 
-    it("updates with default sort priority", function() {
+    it("updates with default sort priority", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -188,7 +188,7 @@ describe("TaskQueue", function() {
         assert.equal(taskQueue.processNext("group1"), false);
     });
 
-    it("updates with custom sort priority", function() {
+    it("updates with custom sort priority", function () {
         const taskQueue = new TaskQueue({
             groups: ["group1"],
             prioSortFn: (a: Task, b: Task) => {
@@ -239,7 +239,7 @@ describe("TaskQueue", function() {
         assert.equal(taskQueue.processNext("group1"), false);
     });
 
-    it("updates with a Tasks updated priority", function() {
+    it("updates with a Tasks updated priority", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         let changingPriority = 8;
@@ -290,7 +290,7 @@ describe("TaskQueue", function() {
         assert.equal(taskQueue.processNext("group1"), false);
     });
 
-    it("process a task", function() {
+    it("process a task", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -307,7 +307,7 @@ describe("TaskQueue", function() {
         assert.equal(testValue, 6);
     });
 
-    it("process multiple tasks", function() {
+    it("process multiple tasks", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -335,7 +335,7 @@ describe("TaskQueue", function() {
         assert.equal(testValue, 6);
     });
 
-    it("process multiple tasks, with one expired", function() {
+    it("process multiple tasks, with one expired", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -366,7 +366,7 @@ describe("TaskQueue", function() {
         assert.equal(testValue, 4);
     });
 
-    it("process an task when the next is an expired task", function() {
+    it("process an task when the next is an expired task", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -397,7 +397,7 @@ describe("TaskQueue", function() {
         assert.equal(testValue, 6);
     });
 
-    it("process an task with unmet processing condition", function() {
+    it("process an task with unmet processing condition", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -417,7 +417,7 @@ describe("TaskQueue", function() {
         assert.equal(testValue, 0);
     });
 
-    it("process an task with unmet processing condition, when next is expired", function() {
+    it("process an task with unmet processing condition, when next is expired", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         let testValue = 0;
         taskQueue.add({
@@ -450,12 +450,12 @@ describe("TaskQueue", function() {
         assert.equal(testValue, 0);
     });
 
-    it("request process of an empty list", function() {
+    it("request process of an empty list", function () {
         const taskQueue = new TaskQueue({ groups: ["group1"] });
         assert.isFalse(taskQueue.processNext("group1"));
     });
 
-    it("adding task exceeds max length", function() {
+    it("adding task exceeds max length", function () {
         //TODO: implement
         assert.isTrue(true);
     });

@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    Definitions,
+    FlatTheme,
     ITileDecoder,
+    OptionsMap,
     StyleSet,
     Theme,
     TileInfo
 } from "@here/harp-datasource-protocol";
-import { StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -21,6 +21,7 @@ import {
     Tile,
     TileLoaderState
 } from "@here/harp-mapview";
+import { ThemeLoader } from "@here/harp-mapview/lib/ThemeLoader";
 import { ILogger, LoggerManager } from "@here/harp-utils";
 
 import { DataProvider } from "./DataProvider";
@@ -132,20 +133,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         private readonly m_tileFactory: TileFactory<TileType>,
         private readonly m_options: TileDataSourceOptions
     ) {
-        super({
-            name: m_options.name,
-            styleSetName: m_options.styleSetName,
-            minZoomLevel: m_options.minZoomLevel,
-            maxZoomLevel: m_options.maxZoomLevel,
-            minDataLevel: m_options.minDataLevel,
-            maxDataLevel: m_options.maxDataLevel,
-            minDisplayLevel: m_options.minDisplayLevel,
-            maxDisplayLevel: m_options.maxDisplayLevel,
-            storageLevelOffset: m_options.storageLevelOffset,
-            allowOverlappingTiles: m_options.allowOverlappingTiles,
-            minGeometryHeight: m_options.minGeometryHeight,
-            maxGeometryHeight: m_options.maxGeometryHeight
-        });
+        super(m_options);
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
         } else if (m_options.concurrentDecoderServiceName) {
@@ -164,7 +152,7 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         this.cacheable = true;
 
         this.m_unregisterClearTileCache = this.dataProvider().onDidInvalidate?.(() =>
-            this.mapView.clearTileCache(this.name)
+            this.mapView.markTilesDirty(this)
         );
     }
 
@@ -193,50 +181,55 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
         await Promise.all([this.m_options.dataProvider.register(this), this.m_decoder.connect()]);
         this.m_isReady = true;
 
-        this.m_decoder.configure(undefined, {
-            storageLevelOffset: this.m_options.storageLevelOffset
-        });
+        let customOptions: OptionsMap = {};
+        if (this.m_options.storageLevelOffset !== undefined) {
+            customOptions = {
+                storageLevelOffset: this.m_options.storageLevelOffset
+            };
+        }
+        this.m_decoder.configure({ languages: this.languages }, customOptions);
     }
 
-    /** @override */
-    setStyleSet(
-        options: StyleSetOptions | StyleSet,
-        definitions?: Definitions,
-        languages?: string[]
-    ): void {
-        if (!options?.hasOwnProperty("styleSet")) {
-            this.m_decoder.configure({
-                styleSet: options as StyleSet,
-                definitions,
-                languages
-            });
-        } else {
-            this.m_decoder.configure(options as StyleSetOptions);
-        }
+    /**
+     * @override
+     */
+    setLanguages(languages: string[]): void {
+        this.languages = languages;
+
+        this.m_decoder.configure({
+            languages: this.languages
+        });
         this.mapView.clearTileCache(this.name);
     }
 
     /**
-     * Apply the [[Theme]] to this data source.
+     * Apply the {@link @here/harp-datasource-protocol#Theme} to this data source.
      *
-     * Applies new [[StyleSet]] and definitions from theme only if matching styleset (see
-     * `styleSetName` property) is found in `theme`.
+     * Applies new {@here/harp-datasource-protocol StyleSet} and definitions from theme only
+     * if matching styleset (see `styleSetName` property) is found in `theme`.
      * @override
      */
-    setTheme(theme: Theme, languages?: string[]): void {
-        const styleSet =
-            this.styleSetName !== undefined && theme.styles
-                ? theme.styles[this.styleSetName]
-                : undefined;
+    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
+        // Seems superfluent, but the call to  ThemeLoader.load will resolve extends etc.
+        theme = await ThemeLoader.load(theme);
+
+        let styleSet: StyleSet | undefined;
+        if (this.styleSetName !== undefined && theme.styles !== undefined) {
+            styleSet = theme.styles[this.styleSetName];
+        }
+        if (languages !== undefined) {
+            this.languages = languages;
+        }
 
         if (styleSet !== undefined) {
-            this.setStyleSet({
+            this.m_decoder.configure({
                 styleSet,
                 definitions: theme.definitions,
                 priorities: theme.priorities,
                 labelPriorities: theme.labelPriorities,
                 languages
             });
+            this.mapView.clearTileCache(this.name);
         }
     }
 

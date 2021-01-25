@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { Vector2 } from "three";
+import { Vector2, Vector3 } from "three";
 
 /**
  * An interface to represent polygon geometries.
@@ -69,14 +69,14 @@ export interface IGeometryProcessor {
      *
      * @param layerName - The name of the enclosing layer.
      * @param layerExtents - The extents of the enclosing layer.
-     * @param geometry - The positions of the point features in the projected world coordinates.
+     * @param geometry - The positions of the point features in local webMercator coordinates.
      * @param env - The environment containing the properties of the geometry.
      * @param storageLevel - The storage level of the data.
      */
     processPointFeature(
         layerName: string,
         layerExtents: number,
-        geometry: Vector2[],
+        geometry: Vector3[],
         env: MapEnv,
         storageLevel: number
     ): void;

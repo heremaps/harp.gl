@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -69,10 +69,10 @@ function validate(type: string, response: any, validationExpectedToFail: boolean
     assert.strictEqual(!result, validationExpectedToFail);
 }
 
-describeOnlyNode("Theme typings test", function(this: Mocha.Suite) {
+describeOnlyNode("Theme typings test", function (this: Mocha.Suite) {
     this.timeout(30000);
 
-    it("syntax test for properly defined Theme object", function(this: Mocha.Context) {
+    it("syntax test for properly defined Theme object", function (this: Mocha.Context) {
         this.timeout(30000);
 
         const ProperTheme = {
@@ -98,7 +98,7 @@ describeOnlyNode("Theme typings test", function(this: Mocha.Suite) {
         validate("Theme", ProperTheme);
     });
 
-    it("syntax test for improperly defined Theme object (excessive properties)", function(this: Mocha.Context) {
+    it("syntax test for improperly defined Theme object (excessive properties)", function (this: Mocha.Context) {
         this.timeout(30000);
 
         const ImproperTheme = {

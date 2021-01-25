@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -71,9 +71,7 @@ export abstract class CopyrightCoverageProvider implements CopyrightProvider {
     /** Asynchronously retrieves copyright coverage data.
      * @param abortSignal - Optional AbortSignal to cancel the request.
      */
-    abstract async getCopyrightCoverageData(
-        abortSignal?: AbortSignal
-    ): Promise<AreaCopyrightInfo[]>;
+    abstract getCopyrightCoverageData(abortSignal?: AbortSignal): Promise<AreaCopyrightInfo[]>;
 
     /** @inheritdoc */
     getTree(): Promise<any> {

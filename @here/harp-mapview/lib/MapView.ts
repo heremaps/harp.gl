@@ -1,9 +1,18 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Env, MapEnv, PostEffects, Theme, Value } from "@here/harp-datasource-protocol";
+import {
+    Env,
+    FlatTheme,
+    FontCatalogConfig,
+    MapEnv,
+    PostEffects,
+    TextStyleDefinition,
+    Theme,
+    Value
+} from "@here/harp-datasource-protocol";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     EarthConstants,
@@ -57,19 +66,14 @@ import { MapViewThemeManager } from "./MapViewThemeManager";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
-import { PoiRendererFactory } from "./poi/PoiRendererFactory";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
-import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
-import { FontCatalogLoader } from "./text/FontCatalogLoader";
 import { MapViewState } from "./text/MapViewState";
-import { TextCanvasFactory } from "./text/TextCanvasFactory";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
-import { TextStyleCache } from "./text/TextStyleCache";
 import { Tile } from "./Tile";
 import { TileObjectRenderer } from "./TileObjectsRenderer";
 import { MapViewUtils } from "./Utils";
@@ -179,7 +183,8 @@ const cache = {
             yAxis: new THREE.Vector3(),
             zAxis: new THREE.Vector3()
         }
-    ]
+    ],
+    color: new THREE.Color()
 };
 
 /**
@@ -313,7 +318,7 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      *
      * @see {@link ThemeLoader.load} for details how theme is loaded
      */
-    theme?: string | Theme | Promise<Theme>;
+    theme?: string | Theme | FlatTheme | Promise<Theme>;
 
     /**
      * Resolve `URI` referenced in `MapView` assets using this resolver.
@@ -447,11 +452,6 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      * Set to `true` to allow picking of technique information associated with objects.
      */
     enablePickTechnique?: boolean;
-
-    /**
-     * An optional canvas element that renders 2D collision debug information.
-     */
-    collisionDebugCanvas?: HTMLCanvasElement;
 
     /**
      * Maximum timeout, in milliseconds, before a [[MOVEMENT_FINISHED_EVENT]] is sent after the
@@ -785,9 +785,6 @@ export class MapView extends EventDispatcher {
     private m_postEffects?: PostEffects;
 
     private readonly m_screenProjector: ScreenProjector;
-    private readonly m_screenCollisions:
-        | ScreenCollisions
-        | ScreenCollisionsDebug = new ScreenCollisions();
 
     private m_visibleTiles: VisibleTileSet;
     private readonly m_tileObjectRenderer: TileObjectRenderer;
@@ -806,8 +803,6 @@ export class MapView extends EventDispatcher {
     private readonly m_minCameraHeight: number = DEFAULT_MIN_CAMERA_HEIGHT;
     private m_geoMaxBounds?: GeoBox;
     private m_worldMaxBounds?: THREE.Box3 | OrientedBox3;
-
-    private readonly m_screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1);
 
     private readonly m_camera: THREE.PerspectiveCamera;
 
@@ -892,7 +887,7 @@ export class MapView extends EventDispatcher {
 
     private readonly m_pickHandler: PickHandler;
 
-    private readonly m_userImageCache: MapViewImageCache = new MapViewImageCache(this);
+    private readonly m_userImageCache: MapViewImageCache = new MapViewImageCache();
     private readonly m_env: MapEnv = new MapEnv({});
 
     private readonly m_poiManager: PoiManager = new PoiManager(this);
@@ -1011,14 +1006,6 @@ export class MapView extends EventDispatcher {
         this.m_languages = this.m_options.languages;
         this.m_politicalView = this.m_options.politicalView;
 
-        if (
-            this.m_options.collisionDebugCanvas !== undefined &&
-            this.m_options.collisionDebugCanvas !== null
-        ) {
-            this.m_collisionDebugCanvas = this.m_options.collisionDebugCanvas;
-            this.m_screenCollisions = new ScreenCollisionsDebug(this.m_collisionDebugCanvas);
-        }
-
         this.handleRequestAnimationFrame = this.renderLoop.bind(this);
         this.m_pickHandler = new PickHandler(
             this,
@@ -1056,7 +1043,8 @@ export class MapView extends EventDispatcher {
         // correct rendering data from ThreeJS.
         this.m_renderer.info.autoReset = false;
 
-        this.setupRenderer();
+        this.m_tileObjectRenderer = new TileObjectRenderer(this.m_env, this.m_renderer);
+        this.setupRenderer(this.m_tileObjectRenderer);
 
         this.m_options.fovCalculation =
             this.m_options.fovCalculation === undefined
@@ -1081,15 +1069,24 @@ export class MapView extends EventDispatcher {
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
-        // Must be initialized before setupCamera, because the VisibleTileSet is created as part
-        // of the setupCamera method and it needs the TaskQueue instance, same for environment
+        // Scheduler must be initialized before VisibleTileSet.
         this.m_taskScheduler = new MapViewTaskScheduler(this.maxFps);
+        this.m_tileGeometryManager = new TileGeometryManager(this);
+
+        if (options.enableMixedLod !== undefined) {
+            this.m_enableMixedLod = options.enableMixedLod;
+        }
+        if (options.lodMinTilePixelSize !== undefined) {
+            this.m_lodMinTilePixelSize = options.lodMinTilePixelSize;
+        }
+        // this.m_visibleTiles is set in createVisibleTileSet, set it here again only to let tsc
+        // know the member is set in the constructor.
+        this.m_visibleTiles = this.createVisibleTileSet();
         this.m_sceneEnvironment = new MapViewEnvironment(this, options);
 
         // setup camera with initial position
         this.setupCamera();
 
-        this.m_tileObjectRenderer = new TileObjectRenderer(this.m_env);
         this.m_raycaster = new PickingRaycaster(width, height, this.m_env);
 
         this.m_movementDetector = new CameraMovementDetector(
@@ -1105,16 +1102,6 @@ export class MapView extends EventDispatcher {
             this.m_options.dynamicPixelRatio,
             mapPassAntialiasSettings
         );
-
-        this.m_tileGeometryManager = new TileGeometryManager(this);
-
-        if (options.enableMixedLod !== undefined) {
-            this.m_enableMixedLod = options.enableMixedLod;
-        }
-        if (options.lodMinTilePixelSize !== undefined) {
-            this.m_lodMinTilePixelSize = options.lodMinTilePixelSize;
-        }
-        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
@@ -1237,8 +1224,7 @@ export class MapView extends EventDispatcher {
         }
 
         this.m_enableMixedLod = enableMixedLod;
-        this.m_visibleTiles = this.createVisibleTileSet();
-        //FIXME: Why is this needed: this.resetTextRenderer(theme);
+        this.createVisibleTileSet();
         this.update();
     }
 
@@ -1253,7 +1239,7 @@ export class MapView extends EventDispatcher {
         }
         if (enabled !== this.m_tileWrappingEnabled) {
             this.m_tileWrappingEnabled = enabled;
-            this.m_visibleTiles = this.createVisibleTileSet();
+            this.createVisibleTileSet();
         }
         this.update();
     }
@@ -1317,6 +1303,8 @@ export class MapView extends EventDispatcher {
         // Destroy the facade if the there are no workers active anymore.
         ConcurrentDecoderFacade.destroyIfTerminated();
         ConcurrentTilerFacade.destroyIfTerminated();
+
+        this.m_taskScheduler.clearQueuedTasks();
 
         // Remove all event handlers.
         super.dispose();
@@ -1453,7 +1441,7 @@ export class MapView extends EventDispatcher {
     /**
      * Changes the `Theme`used by this `MapView`to style map elements.
      */
-    async setTheme(theme: Theme | string): Promise<Theme> {
+    async setTheme(theme: Theme | FlatTheme | string): Promise<Theme> {
         const newTheme = await this.m_themeManager.setTheme(theme);
 
         this.THEME_LOADED_EVENT.time = Date.now();
@@ -1685,7 +1673,7 @@ export class MapView extends EventDispatcher {
      * The color used to clear the view.
      */
     get clearColor() {
-        const rendererClearColor = this.m_renderer.getClearColor();
+        const rendererClearColor = this.m_renderer.getClearColor(cache.color);
         return rendererClearColor !== undefined ? rendererClearColor.getHex() : 0;
     }
 
@@ -1876,6 +1864,7 @@ export class MapView extends EventDispatcher {
     }
 
     /**
+     * @internal
      * Get the {@link ImageCache} that belongs to this `MapView`.
      *
      * Images stored in this cache are primarily used for POIs (icons) and they are used with the
@@ -1891,8 +1880,7 @@ export class MapView extends EventDispatcher {
     /**
      * Get the {@link ImageCache} for user images that belongs to this `MapView`.
      *
-     * Images added to this cache can be removed if no longer required. If images with identical
-     * names are stored in imageCache and userImageCache, the userImageCache will take precedence.
+     * Images added to this cache can be removed if no longer required.
      */
     get userImageCache(): MapViewImageCache {
         return this.m_userImageCache;
@@ -1900,6 +1888,7 @@ export class MapView extends EventDispatcher {
 
     /**
      * @hidden
+     * @internal
      * Get the {@link PoiManager} that belongs to this `MapView`.
      */
     get poiManager(): PoiManager {
@@ -2148,7 +2137,7 @@ export class MapView extends EventDispatcher {
             dataSource.setLanguages(this.m_languages);
 
             if (theme !== undefined && theme.styles !== undefined) {
-                dataSource.setTheme(theme);
+                await dataSource.setTheme(theme);
             }
 
             this.m_connectedDataSources.add(dataSource.name);
@@ -3015,7 +3004,7 @@ export class MapView extends EventDispatcher {
         tangentSpaceMatrix.makeBasis(transform.xAxis, transform.yAxis, transform.zAxis);
 
         // 2. Change the basis of matrixWorld to the tangent space to get the new base axes.
-        cache.matrix4[0].getInverse(tangentSpaceMatrix).multiply(camera.matrixWorld);
+        cache.matrix4[0].copy(tangentSpaceMatrix).invert().multiply(camera.matrixWorld);
         transform.xAxis.setFromMatrixColumn(cache.matrix4[0], 0);
         transform.yAxis.setFromMatrixColumn(cache.matrix4[0], 1);
         transform.zAxis.setFromMatrixColumn(cache.matrix4[0], 2);
@@ -3246,15 +3235,9 @@ export class MapView extends EventDispatcher {
         this.m_rteCamera.position.setScalar(0);
         this.m_rteCamera.updateMatrixWorld(true);
 
-        this.m_screenCamera.left = width / -2;
-        this.m_screenCamera.right = width / 2;
-        this.m_screenCamera.bottom = height / -2;
-        this.m_screenCamera.top = height / 2;
-        this.m_screenCamera.updateProjectionMatrix();
-        this.m_screenCamera.updateMatrixWorld(false);
+        this.m_textElementsRenderer?.updateCamera();
 
         this.m_screenProjector.update(this.camera, width, height);
-        this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
         this.m_sceneEnvironment.update();
@@ -3488,6 +3471,7 @@ export class MapView extends EventDispatcher {
                 this.m_tileObjectRenderer.render(
                     tile,
                     zoomLevel,
+                    this.zoomLevel,
                     this.m_camera.position,
                     this.m_sceneRoot
                 );
@@ -3507,13 +3491,11 @@ export class MapView extends EventDispatcher {
             !this.m_initialTextPlacementDone &&
             !this.m_firstFrameComplete &&
             !this.isDynamicFrame &&
-            !this.m_themeManager.isLoading() &&
             !this.m_themeManager.isUpdating() &&
             this.m_poiTableManager.finishedLoading &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
             this.m_connectedDataSources.size + this.m_failedDataSources.size ===
                 this.m_tileDataSources.length &&
-            !this.m_textElementsRenderer.initializing &&
             !this.m_textElementsRenderer.loading
         ) {
             this.m_initialTextPlacementDone = true;
@@ -3563,8 +3545,8 @@ export class MapView extends EventDispatcher {
         // The camera used to render the scene.
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
 
-        if (this.renderLabels) {
-            this.prepareRenderTextElements(frameStartTime);
+        if (this.renderLabels && !this.m_pointOfView) {
+            this.m_textElementsRenderer.placeText(renderList, frameStartTime);
         }
 
         if (gatherStatistics) {
@@ -3582,8 +3564,8 @@ export class MapView extends EventDispatcher {
             drawTime = PerformanceTimer.now();
         }
 
-        if (this.renderLabels) {
-            this.finishRenderTextElements();
+        if (this.renderLabels && !this.m_pointOfView) {
+            this.m_textElementsRenderer.renderText(this.m_viewRanges.maximum);
         }
 
         if (this.m_overlaySceneRoot.children.length > 0) {
@@ -3676,34 +3658,12 @@ export class MapView extends EventDispatcher {
         }
     }
 
-    private prepareRenderTextElements(time: number) {
-        // Disable rendering of text elements for debug camera. TextElements are rendered using an
-        // orthographic camera that covers the entire available screen space. Unfortunately, this
-        // particular camera set up is not compatible with the debug camera.
-        const debugCameraActive = this.m_pointOfView !== undefined;
-
-        if (debugCameraActive) {
-            return;
-        }
-
-        this.m_textElementsRenderer.placeText(this.m_visibleTiles.dataSourceTileList, time);
-    }
-
-    private finishRenderTextElements() {
-        const canRenderTextElements = this.m_pointOfView === undefined;
-
-        if (canRenderTextElements) {
-            // copy far value from scene camera, as the distance to the POIs matter now.
-            this.m_screenCamera.far = this.m_viewRanges.maximum;
-            this.m_textElementsRenderer.renderText(this.m_screenCamera);
-        }
-    }
-
     private setupCamera() {
+        assert(this.m_visibleTiles !== undefined);
+
         const { width, height } = this.getCanvasClientSize();
 
         this.calculateFocalLength(height);
-        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_options.target = GeoCoordinates.fromObject(
             getOptionValue(this.m_options.target, MapViewDefaults.target)
@@ -3723,18 +3683,23 @@ export class MapView extends EventDispatcher {
 
         // ### move & customize
         this.resize(width, height);
-
-        this.m_screenCamera.position.z = 1;
-        this.m_screenCamera.near = 0;
     }
 
     private createVisibleTileSet(): VisibleTileSet {
+        assert(this.m_tileGeometryManager !== undefined);
+
+        if (this.m_visibleTiles) {
+            // Dispose of all resources before the old instance is replaced.
+            this.m_visibleTiles.clearTileCache();
+            this.m_visibleTiles.disposePendingTiles();
+        }
+
         const enableMixedLod =
             this.m_enableMixedLod === undefined
                 ? this.projection.type === ProjectionType.Spherical
                 : this.m_enableMixedLod;
 
-        return new VisibleTileSet(
+        this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
                 this,
@@ -3747,6 +3712,7 @@ export class MapView extends EventDispatcher {
             this.m_visibleTileSetOptions,
             this.taskQueue
         );
+        return this.m_visibleTiles;
     }
 
     private movementStarted() {
@@ -3856,45 +3822,45 @@ export class MapView extends EventDispatcher {
         new PerformanceStatistics(enable, 1000);
     }
 
-    private setupRenderer() {
+    private setupRenderer(tileObjectRenderer: TileObjectRenderer) {
         this.m_scene.add(this.m_sceneRoot);
         this.m_overlayScene.add(this.m_overlaySceneRoot);
 
         this.shadowsEnabled = this.m_options.enableShadows ?? false;
+
+        tileObjectRenderer.setupRenderer();
     }
 
-    private createTextRenderer(theme: Theme = {}): TextElementsRenderer {
+    private createTextRenderer(): TextElementsRenderer {
         const updateCallback: ViewUpdateCallback = () => {
             this.update();
         };
 
         return new TextElementsRenderer(
             new MapViewState(this, this.checkIfTilesChanged.bind(this)),
-            this.m_camera,
             updateCallback,
-            this.m_screenCollisions,
             this.m_screenProjector,
-            new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
-            new PoiRendererFactory(this),
-            new FontCatalogLoader(theme),
-            new TextStyleCache(theme),
+            this.m_renderer,
+            [this.imageCache, this.userImageCache],
             this.m_options
         );
     }
 
     /**
      * @internal
-     * @param theme
+     * @param fontCatalogs
+     * @param textStyles
+     * @param defaultTextStyle
      */
-    public async resetTextRenderer(theme: Theme): Promise<void> {
-        const overlayText = this.m_textElementsRenderer.overlayText;
-        this.m_textElementsRenderer = this.createTextRenderer(theme);
-        if (overlayText !== undefined) {
-            this.m_textElementsRenderer.addOverlayText(overlayText);
-        }
-        await this.m_textElementsRenderer.waitInitialized();
-        await this.m_textElementsRenderer.waitLoaded();
+    public async resetTextRenderer(
+        fontCatalogs?: FontCatalogConfig[],
+        textStyles?: TextStyleDefinition[],
+        defaultTextStyle?: TextStyleDefinition
+    ): Promise<void> {
+        await this.m_textElementsRenderer.updateFontCatalogs(fontCatalogs);
+        await this.m_textElementsRenderer.updateTextStyles(textStyles, defaultTextStyle);
+        this.update();
     }
 
     /**
@@ -3915,8 +3881,11 @@ export class MapView extends EventDispatcher {
     private readonly onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(this.CONTEXT_RESTORED_EVENT);
         if (this.m_renderer !== undefined) {
-            this.m_sceneEnvironment.updateClearColor(this.theme);
-            this.update();
+            this.textElementsRenderer.restoreRenderers(this.m_renderer);
+            this.getTheme().then(theme => {
+                this.m_sceneEnvironment.updateClearColor(theme.clearColor, theme.clearAlpha);
+                this.update();
+            });
         }
         logger.warn("WebGL context restored", event);
     };

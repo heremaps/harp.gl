@@ -1,9 +1,10 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LoggerManager, LogLevel } from "@here/harp-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 
@@ -13,7 +14,7 @@ import * as sinon from "sinon";
  * https://stackoverflow.com/questions/17575790/environment-detection-node-js-or-browser
  */
 export function inBrowserContext() {
-    return function(this: any) {
+    return function (this: any) {
         return typeof window !== "undefined" && this === window;
     }.call(undefined);
 }
@@ -29,7 +30,7 @@ export function inWebWorkerContext() {
  * Define a suite that is executed only in Node.JS environment.
  */
 export function inNodeContext() {
-    return function(this: any) {
+    return function (this: any) {
         return typeof global !== "undefined" && this === global;
     }.call(undefined);
 }
@@ -310,9 +311,41 @@ function reportAsyncFailuresAfterTestEnd(this: any) {
 }
 
 if (typeof beforeEach !== "undefined") {
-    beforeEach(function(this: Mocha.Context) {
+    beforeEach(function (this: Mocha.Context) {
         // Save current test so willEventually && waitForEvent can check that current test is still
         // executing.
         mochaCurrentTest = this.currentTest;
     });
+}
+
+/**
+ * Sets the specified loggers to only log at the given minLogLevel. Only use this function when you
+ * know that you can safely ignore a warning, otherwise you should consider to fix the issue. All
+ * previous logging levels are reset after the function is executed.
+ * @param loggerName The loggerName, or array of names to set to error
+ * @param func The function to execute with the changed logging
+ * @param minLogLevel The minimum log level that is shown, defaults to LogLevel.Error
+ */
+export async function silenceLoggingAroundFunction(
+    loggerName: string | string[],
+    func: () => void,
+    minLogLevel: LogLevel = LogLevel.Error
+) {
+    const previousLogLevels: Array<{ level: LogLevel; loggerName: string }> = [];
+    const loggers = !Array.isArray(loggerName) ? [loggerName] : loggerName;
+    for (const loggerName of loggers) {
+        const logger = LoggerManager.instance.getLogger(loggerName);
+        if (logger) {
+            previousLogLevels.push({ loggerName, level: logger.level });
+            LoggerManager.instance.setLogLevel(loggerName, minLogLevel);
+        }
+    }
+
+    try {
+        await func();
+    } finally {
+        for (const logger of previousLogLevels) {
+            LoggerManager.instance.setLogLevel(logger.loggerName, logger.level);
+        }
+    }
 }

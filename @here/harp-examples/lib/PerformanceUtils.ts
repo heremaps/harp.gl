@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -307,7 +307,7 @@ export namespace PerformanceUtils {
             waitForFinish !== true || !MapViewUtils.mapViewIsLoading(mapViewApp.mapView);
 
         if (numFrames > 1 || !isFinished) {
-            return await new Promise<FrameResults>((resolve, reject) => {
+            return await new Promise<FrameResults | undefined>((resolve, reject) => {
                 recordFrames(mapViewApp, numFrames - 1, waitForFinish)
                     .then(results => {
                         resolve(results);
@@ -339,13 +339,13 @@ export namespace PerformanceUtils {
             frameResults.renderedFrames = numFrames;
         }
 
-        return await new Promise<FrameResults>((resolve, reject) => {
+        return await new Promise<FrameResults | undefined>((resolve, reject) => {
             resolve(frameResults);
         });
     }
 
-    function recordRendering(mapViewApp: MapViewApp): Promise<SimpleFrameStatistics> {
-        return new Promise<SimpleFrameStatistics>((resolve, reject) => {
+    function recordRendering(mapViewApp: MapViewApp): Promise<SimpleFrameStatistics | undefined> {
+        return new Promise<SimpleFrameStatistics | undefined>((resolve, reject) => {
             ensureRenderFinished(mapViewApp).then(() => {
                 const decodingStatistics: any = {};
 
@@ -406,8 +406,8 @@ export namespace PerformanceUtils {
         long: number,
         height: number,
         showLabels: boolean
-    ): Promise<SimpleFrameStatistics> {
-        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
+    ): Promise<SimpleFrameStatistics | undefined> {
+        return await new Promise<SimpleFrameStatistics | undefined>((resolve, reject) => {
             setMapCenter(mapViewApp, lat, long, height, true).then(() => {
                 applyDataFilter(mapViewApp.mapView, showLabels);
 
@@ -476,8 +476,8 @@ export namespace PerformanceUtils {
         zoomLevel: number,
         tilt: number,
         showLabels: boolean
-    ): Promise<SimpleFrameStatistics> {
-        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
+    ): Promise<SimpleFrameStatistics | undefined> {
+        return await new Promise<SimpleFrameStatistics | undefined>((resolve, reject) => {
             ensureRenderFinished(mapViewApp).then(() => {
                 PerformanceStatistics.instance.clear();
                 mapViewApp.mapView.clearTileCache();
@@ -575,7 +575,7 @@ export namespace PerformanceUtils {
         locations: PerformanceTestData.FlyoverLocation[],
         waitForFrameLoaded: boolean,
         isCancelled?: () => boolean
-    ): Promise<SimpleFrameStatistics> {
+    ): Promise<SimpleFrameStatistics | undefined> {
         const mapView = mapViewApp.mapView;
         const firstLocation = locations[0];
         setCamera(
@@ -599,7 +599,7 @@ export namespace PerformanceUtils {
         );
         const startTime = PerformanceTimer.now();
 
-        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
+        return await new Promise<SimpleFrameStatistics | undefined>((resolve, reject) => {
             const renderCallback = () => {
                 if (isCancelled !== undefined && isCancelled()) {
                     mapView.endAnimation();
@@ -715,7 +715,7 @@ export namespace PerformanceUtils {
         showLabels: boolean,
         laps: number = 1,
         isCancelled?: () => boolean
-    ): Promise<SimpleFrameStatistics> {
+    ): Promise<SimpleFrameStatistics | undefined> {
         assert(
             spline.controlPoints.length / 2 === spline.zoomLevels.length,
             "Control points and zoom levels must have same number of entries"
@@ -727,7 +727,7 @@ export namespace PerformanceUtils {
 
         applyDataFilter(mapViewApp.mapView, showLabels);
 
-        return await new Promise<SimpleFrameStatistics>((resolve, reject) => {
+        return await new Promise<SimpleFrameStatistics | undefined>((resolve, reject) => {
             const numberOfDrawPoints =
                 numFramesOverride !== undefined ? numFramesOverride : spline.numberOfDrawPoints;
             const segments = Math.ceil(numberOfDrawPoints / (spline.controlPoints.length / 2 - 1));

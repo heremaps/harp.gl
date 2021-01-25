@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,7 +13,7 @@ import * as sinon from "sinon";
 
 import { TransferManager } from "../index";
 
-describe("TransferManager", function() {
+describe("TransferManager", function () {
     const fakeDataUrl = `https://download.example.url`;
 
     function createMockDownloadResponse() {
@@ -30,7 +30,7 @@ describe("TransferManager", function() {
         return mock;
     }
 
-    it("#downloadJson handles successful download response", async function() {
+    it("#downloadJson handles successful download response", async function () {
         // Arrange
         const mock = createMockDownloadResponse();
         mock.json.resolves({ version: "4" });
@@ -46,7 +46,7 @@ describe("TransferManager", function() {
         assert.deepEqual(response, { version: "4" });
     });
 
-    it("#downloadJson handles HTTP 404 status response", async function() {
+    it("#downloadJson handles HTTP 404 status response", async function () {
         // Arrange
         const mock = createMockDownloadResponse();
         mock.status = 404;
@@ -73,7 +73,7 @@ describe("TransferManager", function() {
         assert.deepEqual(data, { version: "4" });
     });
 
-    it("#downloadJson handles HTTP 503 status response with max retries", async function() {
+    it("#downloadJson handles HTTP 503 status response with max retries", async function () {
         // This test is slower than others, because it waits `TransferManager.retryTimeout` *
         // retryCount ms, which means it gets longer and longer each time it fails.
         this.timeout(10000);
@@ -102,7 +102,7 @@ describe("TransferManager", function() {
         assert(fetchStub.getCall(0).args[0] === fakeDataUrl);
     });
 
-    it("#instance handles returning same single static instance correctly", async function() {
+    it("#instance handles returning same single static instance correctly", async function () {
         const downloadMgr1 = TransferManager.instance();
         const downloadMgr2 = TransferManager.instance();
 
@@ -113,7 +113,7 @@ describe("TransferManager", function() {
      * Note, TransferManager limits the number of html headers sent to MAX_PARALLEL_DOWNLOADS, but
      * will allow more then MAX_PARALLEL_DOWNLOADS of parallel download under the hood.
      */
-    it("#downloadJson performs download with maxParallelDownloads exceeded", async function() {
+    it("#downloadJson performs download with maxParallelDownloads exceeded", async function () {
         // Arrange
         const MAX_PARALLEL_DOWNLOADS = 16;
         const CALLS_NUMBER = 32;
@@ -142,7 +142,7 @@ describe("TransferManager", function() {
         assert(fetchStub.getCall(MAX_PARALLEL_DOWNLOADS - 1).args[0] === fakeDataUrl);
     });
 
-    it("#Maximum parallel downloads", async function() {
+    it("#Maximum parallel downloads", async function () {
         let numberOfFetches = 0;
         let numberOfJsonDownloads = 0;
         let numberOfArrayBufferDownloads = 0;

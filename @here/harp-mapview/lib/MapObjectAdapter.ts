@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,17 +7,20 @@
 import { GeometryKind, getPropertyValue, MapEnv, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
+import { DataSource } from "./DataSource";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "./MapMaterialAdapter";
 
 /**
  * @hidden
  *
- * Construction params of [[MapObjectAdapter]].
+ * Construction params of `MapObjectAdapter`.
  */
 export interface MapObjectAdapterParams {
+    dataSource?: DataSource;
     technique?: Technique;
     kind?: GeometryKind[];
     pickable?: boolean;
+    level?: number;
 
     // TODO: Move here in following refactor.
     //featureData?: TileFeatureData;
@@ -28,7 +31,7 @@ export interface MapObjectAdapterParams {
  *
  * {@link MapView} specific data assigned to `THREE.Object3D` instance in installed in `userData`.
  *
- * [[MapObjectAdapter]] is registered in `usedData.mapAdapter` property of `THREE.Object3D`.
+ * `MapObjectAdapter` is registered in `usedData.mapAdapter` property of `THREE.Object3D`.
  */
 export class MapObjectAdapter {
     /**
@@ -70,6 +73,13 @@ export class MapObjectAdapter {
      */
     readonly kind: GeometryKind[] | undefined;
 
+    readonly dataSource?: DataSource;
+
+    /**
+     * Which level this object exists on, must match the TileKey's level.
+     */
+    readonly level: number | undefined;
+
     private readonly m_pickable: boolean;
     private m_lastUpdateFrameNumber = -1;
     private m_notCompletlyTransparent = true;
@@ -78,10 +88,12 @@ export class MapObjectAdapter {
         this.object = object;
         this.technique = params.technique;
         this.kind = params.kind;
+        this.dataSource = params.dataSource;
         this.m_pickable = params.pickable ?? true;
         this.m_notCompletlyTransparent = this.getObjectMaterials().some(
             material => material.opacity > 0
         );
+        this.level = params.level;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -251,6 +251,8 @@ export function hasExtrusionFeature(material: any): material is ExtrusionFeature
     return "extrusionRatio" in material;
 }
 
+// See https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-redeclare.md#ignoredeclarationmerge
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 namespace DisplacementFeature {
     /**
      * Checks if feature is enabled (displacement map defined).
@@ -974,7 +976,8 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
  *
  * @see [[Tile#addRenderHelper]]
  */
-export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
+export class MapMeshBasicMaterial
+    extends THREE.MeshBasicMaterial
     implements FadingFeature, ExtrusionFeature, DisplacementFeature {
     /**
      * Constructs a new `FadingMeshBasicMaterial`.
@@ -1152,7 +1155,8 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
  *
  * @see [[Tile#addRenderHelper]]
  */
-export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
+export class MapMeshStandardMaterial
+    extends THREE.MeshStandardMaterial
     implements FadingFeature, ExtrusionFeature, DisplacementFeature {
     uniformsNeedUpdate?: boolean;
 
@@ -1201,27 +1205,6 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         this.copyFadingParameters(source);
         this.copyExtrusionParameters(source);
         return this;
-    }
-
-    /** @override */
-    get displacementMap(): THREE.Texture | null {
-        return super.displacementMap === undefined ? null : super.displacementMap;
-    }
-
-    /** @override */
-    set displacementMap(map: THREE.Texture | null) {
-        if (map === this.displacementMap) {
-            return;
-        }
-
-        if (!map || !this.displacementMap) {
-            this.needsUpdate = true;
-        }
-
-        if (map) {
-            map.needsUpdate = true;
-        }
-        super.displacementMap = map;
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual

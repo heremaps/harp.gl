@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { BaseTileLoader, Tile, TileLoaderState } from "@here/harp-mapview";
-import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { addGroundPlane } from "@here/harp-mapview/lib/geometry/AddGroundPlane";
 import { enableBlending } from "@here/harp-materials";
 import * as THREE from "three";
 
@@ -66,13 +66,14 @@ export class WebTileLoader extends BaseTileLoader {
                 if (this.dataSource.transparent) {
                     enableBlending(material);
                 }
-                const mesh = TileGeometryCreator.instance.createGroundPlane(
+                addGroundPlane(
                     this.tile,
+                    this.dataSource.renderOrder, // Remove, as `renderOrder` will be deprecated.
                     material,
-                    true
+                    true,
+                    false
                 );
-                this.tile.objects.push(mesh);
-                mesh.renderOrder = this.dataSource.renderOrder;
+
                 this.tile.invalidateResourceInfo();
                 this.dataSource.requestUpdate();
                 onDone(TileLoaderState.Ready);

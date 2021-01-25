@@ -1,20 +1,16 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    Definitions,
+    FlatTheme,
     StandardGeometryKind,
     StyleSet,
     Technique,
     Theme
 } from "@here/harp-datasource-protocol";
-import {
-    MapEnv,
-    StyleSetEvaluator,
-    StyleSetOptions
-} from "@here/harp-datasource-protocol/index-decoder";
+import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
     MercatorConstants,
@@ -28,6 +24,7 @@ import * as THREE from "three";
 import { DataSource, DataSourceOptions } from "./DataSource";
 import { createMaterial } from "./DecodedTileHelpers";
 import { MapObjectAdapter } from "./MapObjectAdapter";
+import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 
 export interface PolarTileDataSourceOptions extends DataSourceOptions {
@@ -64,7 +61,7 @@ export class PolarTileDataSource extends DataSource {
 
     constructor({
         name = "polar",
-        styleSetName,
+        styleSetName = "polar",
         minDataLevel,
         maxDataLevel,
         minDisplayLevel,
@@ -130,44 +127,26 @@ export class PolarTileDataSource extends DataSource {
     }
 
     /** @override */
-    setStyleSet(
-        options: StyleSetOptions | StyleSet,
-        definitions?: Definitions,
-        languages?: string[]
-    ): void {
-        this.dispose();
-
-        if (!options?.hasOwnProperty("styleSet")) {
-            this.m_styleSetEvaluator = new StyleSetEvaluator({
-                styleSet: options as StyleSet,
-                definitions,
-                languages
-            });
-        } else {
-            this.m_styleSetEvaluator = new StyleSetEvaluator(options as StyleSetOptions);
-        }
-
-        this.m_northPoleEntry = this.createTechiqueEntry("north_pole");
-        this.m_southPoleEntry = this.createTechiqueEntry("south_pole");
-
-        this.mapView.markTilesDirty(this);
-    }
-
-    /** @override */
-    setTheme(theme: Theme, languages?: string[]): void {
+    async setTheme(theme: Theme | FlatTheme): Promise<void> {
+        // Seems superfluent, but the call to  ThemeLoader.load will resolve extends etc.
+        theme = await ThemeLoader.load(theme);
         let styleSet: StyleSet | undefined;
 
         if (this.styleSetName !== undefined && theme.styles !== undefined) {
             styleSet = theme.styles[this.styleSetName];
         }
 
-        this.setStyleSet({
+        this.m_styleSetEvaluator = new StyleSetEvaluator({
             styleSet: styleSet ?? [],
             definitions: theme.definitions,
             priorities: theme.priorities,
-            labelPriorities: theme.labelPriorities,
-            languages
+            labelPriorities: theme.labelPriorities
         });
+
+        this.m_northPoleEntry = this.createTechiqueEntry("north_pole");
+        this.m_southPoleEntry = this.createTechiqueEntry("south_pole");
+
+        this.mapView.markTilesDirty(this);
     }
 
     /** @override */
@@ -384,6 +363,7 @@ export class PolarTileDataSource extends DataSource {
         }
 
         MapObjectAdapter.create(mesh, {
+            dataSource: this,
             technique: techniqueEntry.technique,
             kind: [isNorthPole ? StandardGeometryKind.Water : StandardGeometryKind.Background]
         });

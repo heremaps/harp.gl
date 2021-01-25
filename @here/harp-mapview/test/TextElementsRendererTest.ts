@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { assert, expect } from "chai";
+import { TextStyleDefinition } from "@here/harp-datasource-protocol";
+import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { TextElement } from "../lib/text/TextElement";
+import { DEFAULT_FONT_CATALOG_NAME } from "../lib/text/TextElementsRenderer";
+import { TextElementType } from "../lib/text/TextElementType";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 import {
+    createPath,
     DEF_PATH,
     lineMarkerBuilder,
     pathTextBuilder,
@@ -49,6 +50,8 @@ import {
     not
 } from "./TextElementsRendererTestUtils";
 
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 /**
  * Definition of a test case for TextElementsRenderer, including input data (tiles, text elements,
  * frame times...) and expected output (text element fade states at each frame).
@@ -80,7 +83,7 @@ const tests: TestCase[] = [
     },
     {
         name: "Newly visited, visible line marker fades in",
-        tiles: [{ labels: [[lineMarkerBuilder(WORLD_SCALE), FADE_IN]] }],
+        tiles: [{ labels: [[lineMarkerBuilder(WORLD_SCALE), [FADE_IN, FADE_IN], [], []]] }],
         frameTimes: FADE_CYCLE
     },
     {
@@ -112,7 +115,17 @@ const tests: TestCase[] = [
         name: "Non-visited, persistent line marker is not rendered",
         tiles: [
             {
-                labels: [[lineMarkerBuilder(WORLD_SCALE), fadeInAndFadedOut(FADE_2_CYCLES.length)]],
+                labels: [
+                    [
+                        lineMarkerBuilder(WORLD_SCALE),
+                        [
+                            fadeInAndFadedOut(FADE_2_CYCLES.length),
+                            fadeInAndFadedOut(FADE_2_CYCLES.length)
+                        ],
+                        [],
+                        []
+                    ]
+                ],
                 frames: firstNFrames(FADE_2_CYCLES, FADE_IN.length)
             }
         ],
@@ -259,10 +272,17 @@ const tests: TestCase[] = [
         tiles: [
             {
                 labels: [
-                    [lineMarkerBuilder(WORLD_SCALE, "P0").withPriority(0), FADE_IN_OUT],
+                    [
+                        lineMarkerBuilder(WORLD_SCALE, "P0").withPriority(0),
+                        [FADE_IN_OUT, FADE_IN_OUT],
+                        [],
+                        []
+                    ],
                     [
                         lineMarkerBuilder(WORLD_SCALE, "P1").withPriority(1),
-                        fadeIn(FADE_IN_OUT.length)
+                        [fadeIn(FADE_IN_OUT.length), fadeIn(FADE_IN_OUT.length)],
+                        [],
+                        []
                     ]
                 ]
             }
@@ -468,9 +488,7 @@ const tests: TestCase[] = [
                 labels: [
                     [
                         // location of replacement is disregarded when feature ids match.
-                        poiBuilder()
-                            .withFeatureId(1)
-                            .withPosition(WORLD_SCALE, WORLD_SCALE),
+                        poiBuilder().withFeatureId(1).withPosition(WORLD_SCALE, WORLD_SCALE),
                         fadedOut(FADE_IN.length).concat(
                             fadedIn(FADE_2_CYCLES.length - FADE_IN.length)
                         )
@@ -614,6 +632,56 @@ const tests: TestCase[] = [
         ],
         frameTimes: FADE_2_CYCLES
     },
+    {
+        name: "Line marker replaces predecessor with same text and nearby location without fading",
+        tiles: [
+            {
+                labels: [
+                    [
+                        lineMarkerBuilder(WORLD_SCALE).withPath(
+                            createPath(WORLD_SCALE, [
+                                new THREE.Vector3(0, 0, 0),
+                                new THREE.Vector3(0.3, 0.3, 0),
+                                new THREE.Vector3(0.6, 0.6, 0)
+                            ])
+                        ),
+                        [
+                            fadeInAndFadedOut(FADE_2_CYCLES.length),
+                            fadeInAndFadedOut(FADE_2_CYCLES.length),
+                            fadeInAndFadedOut(FADE_2_CYCLES.length)
+                        ],
+                        [], // all frames enabled
+                        [] // same frame states for icons and text.
+                    ]
+                ],
+                frames: firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+            },
+            {
+                labels: [
+                    [
+                        lineMarkerBuilder(WORLD_SCALE).withPath(
+                            createPath(WORLD_SCALE, [
+                                new THREE.Vector3(0.3, 0.3, 0),
+                                new THREE.Vector3(0.9, 0.9, 0)
+                            ])
+                        ),
+                        [
+                            fadedOut(FADE_IN.length).concat(
+                                fadedIn(FADE_2_CYCLES.length - FADE_IN.length)
+                            ),
+                            fadedOut(FADE_IN.length).concat(
+                                fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                            )
+                        ],
+                        [], // all frames enabled
+                        [] // same frame states for icons and text.
+                    ]
+                ],
+                frames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
     // TERRAIN OVERLAY TEST CASES
     {
         name: "Point text only fades in when terrain is available",
@@ -656,9 +724,16 @@ const tests: TestCase[] = [
                 labels: [
                     [
                         lineMarkerBuilder(WORLD_SCALE),
-                        fadedOut(FADE_IN.length).concat(
-                            fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
-                        )
+                        [
+                            fadedOut(FADE_IN.length).concat(
+                                fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                            ),
+                            fadedOut(FADE_IN.length).concat(
+                                fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                            )
+                        ],
+                        [],
+                        []
                     ]
                 ],
                 terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
@@ -723,66 +798,78 @@ const tests: TestCase[] = [
     }
 ];
 
-describe("TextElementsRenderer", function() {
+describe("TextElementsRenderer", function () {
     const inNodeContext = typeof window === "undefined";
 
     let fixture: TestFixture;
     const sandbox = sinon.createSandbox();
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         if (inNodeContext) {
             (global as any).window = { location: { href: "http://harp.gl" } };
         }
 
         fixture = new TestFixture(sandbox);
-        const setupDone = await fixture.setUp();
-        assert(setupDone, "Setup failed.");
+        await fixture.setUp();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
         if (inNodeContext) {
             delete (global as any).window;
         }
     });
 
+    type ElementFrameStates = Array<[TextElement, FadeState[][], FadeState[][] | undefined]>;
     function buildLabels(
         inputElements: InputTextElement[] | undefined,
-        elementFrameStates: Array<[TextElement, FadeState[], FadeState[] | undefined]>,
+        elementFrameStates: ElementFrameStates,
         frameCount: number
     ): TextElement[] {
         if (!inputElements) {
             return [];
         }
         return inputElements.map((inputElement: InputTextElement) => {
-            expect(frameStates(inputElement).length).equal(
-                frameCount,
-                "frameStates of inputElement equals frameCount"
-            );
-            const iconStates = iconFrameStates(inputElement);
-            if (iconStates !== undefined) {
-                expect(iconStates.length).equal(
-                    frameCount,
-                    "iconFrameStates of inputElement equals frameCount"
-                );
+            let textFrameStates = frameStates(inputElement);
+            let iconStates = iconFrameStates(inputElement);
+
+            expect(textFrameStates).not.empty;
+
+            if (!Array.isArray(textFrameStates[0])) {
+                textFrameStates = [textFrameStates as FadeState[]];
+                if (iconStates !== undefined) {
+                    iconStates = [iconStates as FadeState[]];
+                }
+            } else if (iconStates && iconStates.length > 0) {
+                expect(iconStates).has.lengthOf(textFrameStates.length);
             }
+
+            textFrameStates.forEach((e: any) =>
+                expect(e).lengthOf(frameCount, "one state per frame required")
+            );
+
+            iconStates?.forEach((e: any) =>
+                expect(e).lengthOf(frameCount, "one state per frame required")
+            );
             // Only used to identify some text elements for testing purposes.
             const dummyUserData = {};
-            const element = builder(inputElement)
-                .withUserData(dummyUserData)
-                .build();
-            elementFrameStates.push([element, frameStates(inputElement), iconStates]);
+            const element = builder(inputElement).withUserData(dummyUserData).build();
+            elementFrameStates.push([
+                element,
+                textFrameStates as FadeState[][],
+                iconStates as FadeState[][]
+            ]);
             return element;
         });
     }
     async function initTest(
         test: TestCase
     ): Promise<{
-        elementFrameStates: Array<[TextElement, FadeState[], FadeState[]]>;
-        prevOpacities: number[];
+        elementFrameStates: ElementFrameStates;
+        prevOpacities: Array<[number, number]>;
     }> {
         // Array with all text elements and their corresponding expected frame states.
-        const elementFrameStates = new Array<[TextElement, FadeState[], FadeState[]]>();
+        const elementFrameStates: ElementFrameStates = new Array();
 
         let enableElevation = false;
         const allTileIndices: number[] = [];
@@ -808,7 +895,7 @@ describe("TextElementsRenderer", function() {
         });
 
         // Keeps track of the opacity that text elements had in the previous frame.
-        const prevOpacities: number[] = new Array(elementFrameStates.length).fill(0);
+        const prevOpacities = new Array(elementFrameStates.length).fill([0, 0]);
 
         // Extra frame including all tiles to set the glyph loading state of all text elements
         // to initialized.
@@ -848,7 +935,7 @@ describe("TextElementsRenderer", function() {
     }
 
     for (const test of tests) {
-        it(test.name, async function() {
+        it(test.name, async function () {
             const { elementFrameStates, prevOpacities } = await initTest(test);
 
             for (let frameIdx = 0; frameIdx < test.frameTimes.length; ++frameIdx) {
@@ -859,27 +946,161 @@ describe("TextElementsRenderer", function() {
                 prepareTextElements(frameIdx, test.tiles, tileIdcs);
                 await fixture.renderFrame(frameTime, tileIdcs, terrainTileIdcs, collisionEnabled);
 
-                let elementIdx = 0;
+                let opacityIdx = 0;
+
                 for (const [
                     textElement,
                     expectedStates,
                     expectedIconStates
                 ] of elementFrameStates) {
-                    const expectedState = expectedStates[frameIdx];
-                    const expectedIconState = expectedIconStates
-                        ? expectedIconStates[frameIdx]
-                        : undefined;
-
-                    const prevOpacity = prevOpacities[elementIdx];
-                    const newOpacity = fixture.checkTextElementState(
-                        textElement,
-                        expectedState,
-                        expectedIconState,
-                        prevOpacity
-                    );
-                    prevOpacities[elementIdx++] = newOpacity;
+                    let stateIdx = 0;
+                    for (const textState of expectedStates) {
+                        const elementNewOpacities = fixture.checkTextElementState(
+                            textElement,
+                            textState[frameIdx],
+                            expectedIconStates?.[stateIdx][frameIdx],
+                            prevOpacities[opacityIdx],
+                            textElement.type === TextElementType.LineMarker ? stateIdx : undefined
+                        );
+                        prevOpacities[opacityIdx] = elementNewOpacities;
+                        opacityIdx++;
+                        stateIdx++;
+                    }
                 }
             }
         });
     }
+
+    it("updates FontCatalogs", async function () {
+        expect(fixture.loadCatalogStub.calledOnce, "default catalog was set").to.be.true;
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog1",
+                url: "some-url-1"
+            },
+            {
+                name: "catalog2",
+                url: "some-url-2"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.calledThrice).to.be.true;
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog1",
+                url: "some-url-1"
+            },
+            {
+                name: "catalog2",
+                url: "some-other-url-2"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.calledThrice, "no new catalog added").to.be.true;
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog1",
+                url: "some-url-1"
+            },
+            {
+                name: "catalog3",
+                url: "some-url-3"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.callCount, "adds catalog3").to.equal(4);
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: "catalog2",
+                url: "some-url-2"
+            }
+        ]);
+        expect(
+            fixture.loadCatalogStub.callCount,
+            "adds catalog2 back, removed in last step"
+        ).to.equal(5);
+
+        await fixture.textRenderer.updateFontCatalogs([]);
+        expect(fixture.loadCatalogStub.callCount).to.equal(5);
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: DEFAULT_FONT_CATALOG_NAME,
+                url: "some-url"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.callCount).to.equal(6);
+
+        await fixture.textRenderer.updateFontCatalogs([
+            {
+                name: DEFAULT_FONT_CATALOG_NAME,
+                url: "some-other-url"
+            }
+        ]);
+        expect(fixture.loadCatalogStub.callCount).to.equal(7);
+    });
+
+    it("updates TextStyles", async function () {
+        const style1: TextStyleDefinition = {
+            name: "style-1",
+            fontCatalogName: "catalog-1"
+        };
+
+        const style2: TextStyleDefinition = {
+            name: "style-2",
+            fontCatalogName: "catalog-2"
+        };
+
+        const style3: TextStyleDefinition = {
+            name: "style-3",
+            fontCatalogName: "catalog-3"
+        };
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default"
+        );
+        await fixture.textRenderer.updateTextStyles();
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default"
+        );
+
+        await fixture.textRenderer.updateTextStyles([]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default"
+        );
+
+        await fixture.textRenderer.updateTextStyles([], style2);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").fontCatalog).to.equal(
+            "catalog-2",
+            "the new default is using style-2"
+        );
+
+        await fixture.textRenderer.updateTextStyles([]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default",
+            "the default is reset to 'default'"
+        );
+
+        await fixture.textRenderer.updateTextStyles([style1, style2]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "style-1",
+            "the style is found in the list"
+        );
+
+        await fixture.textRenderer.updateTextStyles([style3, style2]);
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-1").name).to.equal(
+            "default",
+            "style-1 was removed, using default instead"
+        );
+
+        expect(fixture.textRenderer.styleCache.getTextElementStyle("style-3").name).to.equal(
+            "style-3",
+            "the style is found in the list"
+        );
+    });
 });

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,7 +24,7 @@ import { getPropertyValue } from "../lib/PropertyValue";
 
 const EPSILON = 1e-8;
 
-describe("ExprEvaluator", function() {
+describe("ExprEvaluator", function () {
     const defaultEnv = {
         on: true,
         off: false,
@@ -73,8 +73,8 @@ describe("ExprEvaluator", function() {
         return new MapEnv({ $zoom: zoom });
     }
 
-    describe("Operator 'all'", function() {
-        it("evaluate", function() {
+    describe("Operator 'all'", function () {
+        it("evaluate", function () {
             assert.isTrue(
                 Boolean(
                     evaluate([
@@ -94,28 +94,28 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'any'", function() {
-        it("evaluate", function() {
+    describe("Operator 'any'", function () {
+        it("evaluate", function () {
             assert.isTrue(Boolean(evaluate(["any", 1, true, "string", ["get", "on"]])));
             assert.isFalse(Boolean(evaluate(["any", 0, false, "", ["get", "off"]])));
         });
     });
 
-    describe("Operator 'get'", function() {
+    describe("Operator 'get'", function () {
         Object.getOwnPropertyNames(defaultEnv).forEach((property: any) => {
             const propertyName = property as keyof typeof defaultEnv;
-            it(`get property '${propertyName}'`, function() {
+            it(`get property '${propertyName}'`, function () {
                 assert.strictEqual(evaluate(["get", propertyName]), defaultEnv[propertyName]);
             });
         });
 
-        it("Ensure builtin symbols are not accessible", function() {
+        it("Ensure builtin symbols are not accessible", function () {
             assert.strictEqual(evaluate(["get", "has"]), null);
             assert.strictEqual(evaluate(["get", "get"]), null);
             assert.strictEqual(evaluate(["get", "length"]), null);
         });
 
-        it("Object access", function() {
+        it("Object access", function () {
             const object = { x: 1, y: 2, z: 3, k: "point" };
             assert.strictEqual(evaluate(["literal", object]), object);
             assert.strictEqual(evaluate(["get", "x", ["literal", object]]), object.x);
@@ -127,31 +127,31 @@ describe("ExprEvaluator", function() {
             assert.strictEqual(evaluate(["get", ["string", "k"], ["literal", object]]), object.k);
         });
 
-        it("Serialize object access", function() {
+        it("Serialize object access", function () {
             const expr = ["get", "x", ["literal", { x: 1 }]];
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
         });
 
-        it("Serialize access", function() {
+        it("Serialize access", function () {
             const expr = ["get", "x"];
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
         });
     });
 
-    describe("Operator 'has'", function() {
+    describe("Operator 'has'", function () {
         Object.getOwnPropertyNames(defaultEnv).forEach(property => {
-            it(`has property '${property}'`, function() {
+            it(`has property '${property}'`, function () {
                 assert.isTrue(evaluate(["has", property]));
             });
         });
 
-        it("Ensure builtin symbols are not accessible", function() {
+        it("Ensure builtin symbols are not accessible", function () {
             assert.isFalse(evaluate(["has", "has"]));
             assert.isFalse(evaluate(["has", "get"]));
             assert.isFalse(evaluate(["has", "length"]));
         });
 
-        it("Object access", function() {
+        it("Object access", function () {
             const object = { x: 1, y: 2, z: 3, k: "point" };
             assert.isTrue(evaluate(["has", "x", ["literal", object]]));
             assert.isTrue(evaluate(["has", "y", ["literal", object]]));
@@ -160,31 +160,31 @@ describe("ExprEvaluator", function() {
             assert.isFalse(evaluate(["has", "w", ["literal", object]]));
         });
 
-        it("Serialize object access", function() {
+        it("Serialize object access", function () {
             const expr = ["has", "x", ["literal", { x: 1 }]];
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
         });
 
-        it("Serialize access", function() {
+        it("Serialize access", function () {
             const expr = ["has", "x"];
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
         });
     });
 
-    describe("Operator '!has'", function() {
+    describe("Operator '!has'", function () {
         Object.getOwnPropertyNames(defaultEnv).forEach(property => {
-            it(`has property '${property}'`, function() {
+            it(`has property '${property}'`, function () {
                 assert.isFalse(evaluate(["!has", property]));
             });
         });
 
-        it("Ensure builtin symbols are not accessible", function() {
+        it("Ensure builtin symbols are not accessible", function () {
             assert.isTrue(evaluate(["!has", "has"]));
             assert.isTrue(evaluate(["!has", "get"]));
             assert.isTrue(evaluate(["!has", "length"]));
         });
 
-        it("Object access", function() {
+        it("Object access", function () {
             const object = { x: 1, y: 2, z: 3, k: "point" };
             assert.isFalse(evaluate(["!has", "x", ["literal", object]]));
             assert.isFalse(evaluate(["!has", "y", ["literal", object]]));
@@ -194,8 +194,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'dynamic-properties'", function() {
-        it("evaluation scope", function() {
+    describe("Operator 'dynamic-properties'", function () {
+        it("evaluation scope", function () {
             // the ["dynamic-properties"] in a dynamic scope should return the current environment.
             assert.isTrue(
                 Env.isEnv(evaluate(["dynamic-properties"], undefined, ExprScope.Dynamic))
@@ -220,7 +220,7 @@ describe("ExprEvaluator", function() {
             });
         });
 
-        it("get", function() {
+        it("get", function () {
             const values: ValueMap = { x: 123 };
 
             assert.strictEqual(
@@ -238,8 +238,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'length'", function() {
-        it("evaluate", function() {
+    describe("Operator 'length'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["length", "ciao"]), 4);
 
             assert.strictEqual(
@@ -262,8 +262,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'in'", function() {
-        it("evaluate", function() {
+    describe("Operator 'in'", function () {
+        it("evaluate", function () {
             assert.isTrue(evaluate(["in", "x", ["literal", ["x"]]]));
             assert.isFalse(evaluate(["in", "x", ["literal", ["y"]]]));
             assert.isTrue(evaluate(["in", "hello", "hello world"]));
@@ -292,8 +292,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator '!in'", function() {
-        it("evaluate", function() {
+    describe("Operator '!in'", function () {
+        it("evaluate", function () {
             assert.isFalse(evaluate(["!in", "x", ["literal", ["x"]]]));
             assert.isTrue(evaluate(["!in", "x", ["literal", ["y"]]]));
             assert.isFalse(evaluate(["!in", "hello", "hello world"]));
@@ -312,8 +312,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator '!'", function() {
-        it("evaluate", function() {
+    describe("Operator '!'", function () {
+        it("evaluate", function () {
             assert.isTrue(evaluate(["!", false]));
             assert.isFalse(evaluate(["!", ["!", false]]));
             assert.isTrue(evaluate(["!", ["!", ["!", false]]]));
@@ -330,8 +330,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'concat'", function() {
-        it("evaluate", function() {
+    describe("Operator 'concat'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["concat", 1, 2, 3]), "123");
             assert.strictEqual(evaluate(["concat", "hello", " ", "world"]), "hello world");
             assert.strictEqual(evaluate(["concat", "string", "_", 123]), "string_123");
@@ -344,8 +344,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'downcase'", function() {
-        it("evaluate", function() {
+    describe("Operator 'downcase'", function () {
+        it("evaluate", function () {
             assert.strictEqual(
                 evaluate(["downcase", ["get", "someText"]]),
                 defaultEnv.someText.toLocaleLowerCase()
@@ -353,8 +353,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'upcase'", function() {
-        it("evaluate", function() {
+    describe("Operator 'upcase'", function () {
+        it("evaluate", function () {
             assert.strictEqual(
                 evaluate(["upcase", ["get", "someText"]]),
                 defaultEnv.someText.toLocaleUpperCase()
@@ -362,14 +362,14 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator '+'", function() {
-        it("evaluate", function() {
+    describe("Operator '+'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["+", 123, 321]), 123 + 321);
         });
     });
 
-    describe("Operator '-'", function() {
-        it("evaluate", function() {
+    describe("Operator '-'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["-", 123, 321]), 123 - 321);
             assert.strictEqual(evaluate(["-", 123]), -123);
             assert.throws(() => evaluate(["-", "a"]));
@@ -377,14 +377,14 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator '*'", function() {
-        it("evaluate", function() {
+    describe("Operator '*'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["*", 1, 2, 3, 4]), 1 * 2 * 3 * 4);
         });
     });
 
-    describe("Operator 'number'", function() {
-        it("evaluate", function() {
+    describe("Operator 'number'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["boolean", true]), true);
             assert.strictEqual(evaluate(["boolean", false]), false);
             assert.strictEqual(evaluate(["boolean", "x", true]), true);
@@ -394,8 +394,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'number'", function() {
-        it("evaluate", function() {
+    describe("Operator 'number'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["number", 123]), 123);
             assert.approximately(Number(evaluate(["number", 123])), 123, EPSILON);
             assert.strictEqual(evaluate(["number", "x", "y", 123, "z", 321]), 123);
@@ -403,8 +403,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'string'", function() {
-        it("evaluate", function() {
+    describe("Operator 'string'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["string", "x", "y"]), "x");
             assert.strictEqual(evaluate(["string", 123, "y"]), "y");
             assert.strictEqual(
@@ -414,8 +414,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'array'", function() {
-        it("array of numbers", function() {
+    describe("Operator 'array'", function () {
+        it("array of numbers", function () {
             assert.deepStrictEqual(evaluate(["array", ["literal", [1, 2, 3]]]), [1, 2, 3]);
             assert.deepStrictEqual(evaluate(["array", "number", ["literal", [1, 2, 3]]]), [
                 1,
@@ -429,7 +429,7 @@ describe("ExprEvaluator", function() {
             ]);
         });
 
-        it("array of strings", function() {
+        it("array of strings", function () {
             assert.deepStrictEqual(evaluate(["array", ["literal", ["x", "y", "z"]]]), [
                 "x",
                 "y",
@@ -447,7 +447,7 @@ describe("ExprEvaluator", function() {
             ]);
         });
 
-        it("array of booleans", function() {
+        it("array of booleans", function () {
             assert.deepStrictEqual(evaluate(["array", ["literal", [true, false]]]), [true, false]);
             assert.deepStrictEqual(evaluate(["array", "boolean", ["literal", [true, false]]]), [
                 true,
@@ -459,12 +459,12 @@ describe("ExprEvaluator", function() {
             ]);
         });
 
-        it("feature data", function() {
+        it("feature data", function () {
             const speeds = [100, 120, 140];
             assert.deepStrictEqual(evaluate(["array", ["get", "speeds"]], { speeds }), speeds);
         });
 
-        it("array expected type", function() {
+        it("array expected type", function () {
             assert.throws(
                 () => evaluate(["array", "number", ["literal", [1, false]]]),
                 "expected array element at index 1 to have type 'number'"
@@ -476,14 +476,14 @@ describe("ExprEvaluator", function() {
             );
         });
 
-        it("array expected length", function() {
+        it("array expected length", function () {
             assert.throws(
                 () => evaluate(["array", "number", 2, ["literal", [1, 2, 3]]]),
                 "the array must have 2 element(s)"
             );
         });
 
-        it("syntax", function() {
+        it("syntax", function () {
             assert.throws(() => evaluate(["array"]), "not enough arguments");
 
             assert.throws(() => evaluate(["array", "object"]), "'object' is not an array");
@@ -502,8 +502,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'make-array'", function() {
-        it("create", function() {
+    describe("Operator 'make-array'", function () {
+        it("create", function () {
             assert.deepEqual(evaluate(["make-array", 1, 2, 3]), [1, 2, 3]);
             assert.deepEqual(evaluate(["make-array", "x", 2, true]), ["x", 2, true]);
 
@@ -516,13 +516,13 @@ describe("ExprEvaluator", function() {
             ]);
         });
 
-        it("syntax", function() {
+        it("syntax", function () {
             assert.throws(() => evaluate(["make-array"]), "not enough arguments");
         });
     });
 
-    describe("Operator 'make-vector'", function() {
-        it("create", function() {
+    describe("Operator 'make-vector'", function () {
+        it("create", function () {
             assert.isTrue(
                 new THREE.Vector2(1, 2).equals(evaluate(["make-vector", 1, 2]) as THREE.Vector2)
             );
@@ -540,7 +540,7 @@ describe("ExprEvaluator", function() {
             );
         });
 
-        it("syntax", function() {
+        it("syntax", function () {
             assert.throws(() => evaluate(["make-vector"]), "not enough arguments");
             assert.throws(() => evaluate(["make-vector", 1]), "not enough arguments");
             assert.throws(() => evaluate(["make-vector", 1, 2, 3, 4, 5]), "too many arguments");
@@ -555,8 +555,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'vector2/3/4'", function() {
-        it("evaluate", function() {
+    describe("Operator 'vector2/3/4'", function () {
+        it("evaluate", function () {
             const v2 = new THREE.Vector2(10, 20);
             const v3 = new THREE.Vector3(10, 20, 30);
             const v4 = new THREE.Vector4(10, 20, 30, 40);
@@ -604,8 +604,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'to-vector2/3/4'", function() {
-        it("evaluate", function() {
+    describe("Operator 'to-vector2/3/4'", function () {
+        it("evaluate", function () {
             const v2 = new THREE.Vector2(10, 20);
             const v3 = new THREE.Vector3(10, 20, 30);
             const v4 = new THREE.Vector4(10, 20, 30, 40);
@@ -652,7 +652,7 @@ describe("ExprEvaluator", function() {
             );
         });
 
-        it("convert from array", function() {
+        it("convert from array", function () {
             const v2 = [10, 20];
             const v3 = [10, 20, 30];
             const v4 = [10, 20, 30, 40];
@@ -678,8 +678,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'typeof'", function() {
-        it("evaluate", function() {
+    describe("Operator 'typeof'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["typeof", "x"]), "string");
             assert.strictEqual(evaluate(["typeof", 123]), "number");
             assert.strictEqual(evaluate(["typeof", false]), "boolean");
@@ -688,28 +688,28 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'min'", function() {
-        it("evaluate", function() {
+    describe("Operator 'min'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["min", 1, 2, 3]), 1);
             assert.strictEqual(evaluate(["min", 3, 2, 1]), 1);
         });
     });
 
-    describe("Operator 'max'", function() {
-        it("evaluate", function() {
+    describe("Operator 'max'", function () {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["max", 1, 2, 3]), 3);
             assert.strictEqual(evaluate(["max", 3, 2, 1]), 3);
         });
     });
 
-    describe("Operator 'pi'", function() {
-        it("evaluate", function() {
+    describe("Operator 'pi'", function () {
+        it("evaluate", function () {
             assert.approximately(Number(evaluate(["pi"])), Math.PI, EPSILON);
         });
     });
 
-    describe("Operator 'to-boolean'", function() {
-        it("evaluate", function() {
+    describe("Operator 'to-boolean'", function () {
+        it("evaluate", function () {
             assert.equal(evaluate(["to-boolean", true]), true);
             assert.equal(evaluate(["to-boolean", false]), false);
             assert.equal(evaluate(["to-boolean", 0]), false);
@@ -718,8 +718,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'to-number'", function() {
-        it("evaluate", function() {
+    describe("Operator 'to-number'", function () {
+        it("evaluate", function () {
             assert.equal(evaluate(["to-number", true]), 1);
             assert.equal(evaluate(["to-number", false]), 0);
             assert.equal(evaluate(["to-number", "123"]), 123);
@@ -732,16 +732,16 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'to-string'", function() {
-        it("evaluate", function() {
+    describe("Operator 'to-string'", function () {
+        it("evaluate", function () {
             assert.equal(evaluate(["to-string", true]), "true");
             assert.equal(evaluate(["to-string", false]), "false");
             assert.equal(evaluate(["to-string", 123]), "123");
         });
     });
 
-    describe("Operator 'match'", function() {
-        it("evaluate", function() {
+    describe("Operator 'match'", function () {
+        it("evaluate", function () {
             assert.equal(
                 evaluate([
                     "match",
@@ -758,13 +758,13 @@ describe("ExprEvaluator", function() {
             assert.equal(evaluate(["match", ["get", "two"], [0, 1], false, 2, true, false]), true);
         });
 
-        it("serialize", function() {
+        it("serialize", function () {
             const expr = ["match", ["get", "someText"], ["some text", "y"], 1, "z", 2, 3];
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
             assert.equal(evaluate(expr), 1);
         });
 
-        it("parse", function() {
+        it("parse", function () {
             assert.throw(() => Expr.fromJSON(["match"]), "not enough arguments");
             assert.throw(() => Expr.fromJSON(["match", ["get", "x"]]), "not enough arguments");
             assert.throw(
@@ -782,8 +782,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'case'", function() {
-        it("evaluate", function() {
+    describe("Operator 'case'", function () {
+        it("evaluate", function () {
             assert.equal(evaluate(["case", true, 123, 321]), 123);
             assert.equal(evaluate(["case", false, 123, 321]), 321);
             assert.equal(evaluate(["case", ["has", "one"], 123, 321]), 123);
@@ -802,7 +802,7 @@ describe("ExprEvaluator", function() {
             assert.equal(evaluate(["case", false, 123, ["has", "something"], 123, 321]), 321);
         });
 
-        it("serialize", function() {
+        it("serialize", function () {
             const expr = [
                 "case",
                 ["has", "something"],
@@ -814,7 +814,7 @@ describe("ExprEvaluator", function() {
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
         });
 
-        it("parse", function() {
+        it("parse", function () {
             assert.throw(() => Expr.fromJSON(["case"]), "not enough arguments");
 
             assert.throw(() => Expr.fromJSON(["case", ["get", "x"]]), "not enough arguments");
@@ -838,8 +838,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'literal'", function() {
-        it("evaluate", function() {
+    describe("Operator 'literal'", function () {
+        it("evaluate", function () {
             assert.isTrue(evaluate(["==", ["typeof", ["literal", { x: 10, y: 20 }]], "object"]));
             assert.isTrue(evaluate(["==", ["typeof", ["literal", [10, 20, 30]]], "object"]));
             assert.isTrue(evaluate(["==", ["typeof", ["literal", ["x", "y", "z"]]], "object"]));
@@ -848,8 +848,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'at'", function() {
-        it("retrieve array element", function() {
+    describe("Operator 'at'", function () {
+        it("retrieve array element", function () {
             assert.equal(evaluate(["at", 0, ["literal", ["x", "y", "z"]]]), "x");
             assert.equal(evaluate(["at", 1, ["literal", ["x", "y", "z"]]]), "y");
             assert.equal(evaluate(["at", 2, ["literal", ["x", "y", "z"]]]), "z");
@@ -861,8 +861,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'interpolate'", function() {
-        it("parse", function() {
+    describe("Operator 'interpolate'", function () {
+        it("parse", function () {
             assert.isNotNull(evaluate(["interpolate", ["linear"], ["zoom"], 0, 0, 1, 1, 2, 2]));
 
             assert.isNotNull(evaluate(["interpolate", ["discrete"], ["zoom"], 0, 0, 1, 1, 2, 2]));
@@ -950,7 +950,7 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'zoom'", function() {
+    describe("Operator 'zoom'", function () {
         it("['zoom'] in a static scope should return itself", () => {
             assert.strictEqual(JSON.stringify(evaluate(["zoom"])), JSON.stringify(["zoom"]));
 
@@ -1139,13 +1139,13 @@ describe("ExprEvaluator", function() {
             );
         });
 
-        it("evaluate", function() {
+        it("evaluate", function () {
             assert.strictEqual(evaluate(["zoom"], { $zoom: 10 }, ExprScope.Condition), 10);
         });
     });
 
-    describe("Operator 'step'", function() {
-        it("parse", function() {
+    describe("Operator 'step'", function () {
+        it("parse", function () {
             assert.throws(() => evaluate(["step"]), "expected the input of the 'step' operator");
 
             assert.throws(
@@ -1198,7 +1198,7 @@ describe("ExprEvaluator", function() {
             );
         });
 
-        it("condition", function() {
+        it("condition", function () {
             assert.isFalse(
                 evaluate(
                     ["step", ["zoom"], false, 13, true],
@@ -1259,7 +1259,7 @@ describe("ExprEvaluator", function() {
             }
         });
 
-        it("Operator 'id'", function() {
+        it("Operator 'id'", function () {
             assert.strictEqual(evaluate(["id"], { $id: 123 }), 123);
             assert.strictEqual(evaluate(["id"], { $id: "473843" }), "473843");
             assert.strictEqual(evaluate(["id"]), null);
@@ -1270,7 +1270,7 @@ describe("ExprEvaluator", function() {
             });
         });
 
-        it("Operator 'geometry-type'", function() {
+        it("Operator 'geometry-type'", function () {
             // Returns a string representing the feature type using the GoeJSON conversion,
             // Point, LineString, or Polygon.
 
@@ -1292,7 +1292,7 @@ describe("ExprEvaluator", function() {
             });
         });
 
-        it("dynamic interpolation (without step 0)", function() {
+        it("dynamic interpolation (without step 0)", function () {
             const interpolation = evaluate(["step", ["zoom"], "#ff0000", 13, "#000000"]);
             for (let zoom = 0; zoom < 13; ++zoom) {
                 assert.strictEqual(
@@ -1308,7 +1308,7 @@ describe("ExprEvaluator", function() {
             }
         });
 
-        it("dynamic interpolation (with step 0)", function() {
+        it("dynamic interpolation (with step 0)", function () {
             const interpolation = evaluate([
                 "step",
                 ["zoom"],
@@ -1339,7 +1339,7 @@ describe("ExprEvaluator", function() {
         });
 
         for (const scope of [ExprScope.Value, ExprScope.Condition]) {
-            it(`selection for scope '${ExprScope[scope]}'`, function() {
+            it(`selection for scope '${ExprScope[scope]}'`, function () {
                 for (let i = 0; i < 5; ++i) {
                     assert.strictEqual(
                         evaluate(
@@ -1381,7 +1381,7 @@ describe("ExprEvaluator", function() {
             });
         }
 
-        it("default value of a step", function() {
+        it("default value of a step", function () {
             assert.strictEqual(
                 evaluate(
                     ["step", ["get", "x"], "default value", 0, "value"],
@@ -1395,7 +1395,7 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    it("Dependencies", function() {
+    it("Dependencies", function () {
         assert.deepEqual(dependencies(true), { properties: [], dynamic: false });
         assert.deepEqual(dependencies(["get", "x"]), { properties: ["x"], dynamic: false });
         assert.deepEqual(dependencies(["has", "x"]), { properties: ["x"], dynamic: false });
@@ -1431,8 +1431,8 @@ describe("ExprEvaluator", function() {
         );
     });
 
-    describe("Operator 'hsl'", function() {
-        it("call", function() {
+    describe("Operator 'hsl'", function () {
+        it("call", function () {
             assert.strictEqual(
                 new THREE.Color(evaluate(["hsl", 20, 100, 50]) as string).getHexString(),
                 new THREE.Color("hsl(20, 100%, 50%)").getHexString()
@@ -1460,8 +1460,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'rgb'", function() {
-        it("call", function() {
+    describe("Operator 'rgb'", function () {
+        it("call", function () {
             assert.strictEqual(
                 new THREE.Color(evaluate(["rgb", 255, 0, 0]) as string).getHexString(),
                 new THREE.Color("rgb(255, 0, 0)").getHexString()
@@ -1492,8 +1492,8 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'rgba'", function() {
-        it("call", function() {
+    describe("Operator 'rgba'", function () {
+        it("call", function () {
             assert.strictEqual(
                 new THREE.Color(evaluate(["rgba", 0, 0, 0, 1.0]) as string).getHexString(),
                 new THREE.Color("rgb(0, 0, 0)").getHexString()
@@ -1585,9 +1585,9 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Operator 'alpha'", function() {
+    describe("Operator 'alpha'", function () {
         const EPS = 0.01;
-        it("call", function() {
+        it("call", function () {
             assert.approximately(evaluate(["alpha", ["rgba", 0, 0, 0, 0.5]]) as number, 0.5, EPS);
             assert.approximately(evaluate(["alpha", ["rgba", 0, 0, 0, 0.2]]) as number, 0.2, EPS);
             assert.approximately(evaluate(["alpha", "#ff000000"]) as number, 0, EPS);
@@ -1595,7 +1595,7 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("getPropertyValue", function() {
+    describe("getPropertyValue", function () {
         const env = new MapEnv(
             {
                 $zoom: 14,
@@ -1605,7 +1605,7 @@ describe("ExprEvaluator", function() {
             new MapEnv(defaultEnv)
         );
 
-        it("evaluate", function() {
+        it("evaluate", function () {
             assert.strictEqual(
                 getPropertyValue(Expr.fromJSON(["rgb", 255, 0, ["*", ["get", "time"], 255]]), env),
                 0xff00ff
@@ -1655,7 +1655,7 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Interpolations with duplicate keys", function() {
+    describe("Interpolations with duplicate keys", function () {
         // prettier-ignore
         const interp =  Expr.fromJSON(["interpolate", ["linear"], ["zoom"],
             0, 0,
@@ -1675,7 +1675,7 @@ describe("ExprEvaluator", function() {
         }
     });
 
-    describe("Instantiations", function() {
+    describe("Instantiations", function () {
         const instantiationEnv = new MapEnv({
             y: 123
         });
@@ -1685,12 +1685,10 @@ describe("ExprEvaluator", function() {
             env: Env = instantiationEnv,
             preserve = new Set<string>(["z"])
         ) {
-            return Expr.fromJSON(expr)
-                .instantiate({ env, preserve })
-                .toJSON();
+            return Expr.fromJSON(expr).instantiate({ env, preserve }).toJSON();
         }
 
-        it("basic", function() {
+        it("basic", function () {
             assert.deepStrictEqual(instantiate(["get", "x"]), null);
             assert.deepStrictEqual(instantiate(["has", "x"]), false);
 
@@ -1705,7 +1703,7 @@ describe("ExprEvaluator", function() {
             assert.deepStrictEqual(instantiate(["+", ["get", "z"], 1]), ["+", ["get", "z"], 1]);
         });
 
-        it("zoom", function() {
+        it("zoom", function () {
             assert.deepStrictEqual(instantiate(["step", ["zoom"], ["get", "y"], 5, 10]), [
                 "step",
                 ["zoom"],
@@ -1720,7 +1718,7 @@ describe("ExprEvaluator", function() {
             );
         });
 
-        it("nested", function() {
+        it("nested", function () {
             assert.deepStrictEqual(
                 instantiate(["case", ["has", "y"], ["+", ["get", "y"], 1], 321]),
                 ["+", 123, 1]
@@ -1784,12 +1782,12 @@ describe("ExprEvaluator", function() {
         });
     });
 
-    describe("Expression Dynamic State", function() {
+    describe("Expression Dynamic State", function () {
         function isDynamic(expr: JsonArray) {
             return Expr.fromJSON(expr).isDynamic();
         }
 
-        it("expressions", function() {
+        it("expressions", function () {
             assert.isTrue(
                 isDynamic([
                     "match",
@@ -2000,6 +1998,78 @@ describe("ExprEvaluator", function() {
                 evaluate(["feature-state", "time"], new FeatureEnv(1), ExprScope.Dynamic),
                 241276
             );
+        });
+    });
+
+    describe("Operator 'slice'", () => {
+        it("parse", () => {
+            assert.throw(() => evaluate(["slice"]), "not enough arguments");
+            assert.throw(() => evaluate(["slice", "abc"]), "not enough arguments");
+            assert.throw(() => evaluate(["slice", 123, 0]), "input must be a string or an array");
+        });
+
+        it("slice of strings", () => {
+            assert.deepStrictEqual(evaluate(["slice", "abc", 0]), "abc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 1]), "bc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 2]), "c");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 3]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 4]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -1]), "c");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -2]), "bc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -3]), "abc");
+            assert.deepStrictEqual(evaluate(["slice", "abc", -4]), "abc");
+        });
+
+        it("empty string slices", () => {
+            assert.deepStrictEqual(evaluate(["slice", "abc", 0, 0]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 1, 1]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 2, 2]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 3, 3]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 4, 4]), "");
+        });
+
+        it("extracts slices of one character from strings", () => {
+            assert.deepStrictEqual(evaluate(["slice", "abc", 0, 1]), "a");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 1, 2]), "b");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 2, 3]), "c");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 3, 4]), "");
+            assert.deepStrictEqual(evaluate(["slice", "abc", 4, 5]), "");
+        });
+
+        it("slice of arrays", () => {
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 0]), [10, 20, 30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 1]), [20, 30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 2]), [30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 3]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 4]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -1]), [30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -2]), [20, 30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -3]), [
+                10,
+                20,
+                30
+            ]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], -4]), [
+                10,
+                20,
+                30
+            ]);
+        });
+
+        it("extracts empty slices", () => {
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 0, 0]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 1, 1]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 2, 2]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 3, 3]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 4, 4]), []);
+        });
+
+        it("extracts slices of one element from arrays", () => {
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 0, 1]), [10]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 1, 2]), [20]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 2, 3]), [30]);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 3, 4]), []);
+            assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 4, 5]), []);
         });
     });
 });

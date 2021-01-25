@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,26 +10,26 @@ import { expect } from "chai";
 
 import { DEFAULT_FADE_TIME, FadingState, RenderState } from "../lib/text/RenderState";
 
-describe("RenderState", function() {
-    describe("constructor", function() {
-        it("sets default fade time", function() {
+describe("RenderState", function () {
+    describe("constructor", function () {
+        it("sets default fade time", function () {
             const renderState = new RenderState();
             expect(renderState.fadeTime).to.equal(DEFAULT_FADE_TIME);
         });
 
-        it("sets default fade time when undefined is given as fade time", function() {
+        it("sets default fade time when undefined is given as fade time", function () {
             const renderState = new RenderState(undefined);
             expect(renderState.fadeTime).to.equal(DEFAULT_FADE_TIME);
         });
 
-        it("sets given fade time", function() {
+        it("sets given fade time", function () {
             const renderState = new RenderState(123);
             expect(renderState.fadeTime).to.equal(123);
         });
     });
 
-    describe("reset", function() {
-        it("resets a new render state", function() {
+    describe("reset", function () {
+        it("resets a new render state", function () {
             const renderState = new RenderState();
             renderState.reset();
             expect(renderState.isUndefined()).to.be.true;
@@ -38,7 +38,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("resets a fading in render state", function() {
+        it("resets a fading in render state", function () {
             const renderState = new RenderState();
             renderState.value = 1.0;
             renderState.startTime = 2.0;
@@ -52,8 +52,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("isUndefined", function() {
-        it("returns true for undefined render states", function() {
+    describe("isUndefined", function () {
+        it("returns true for undefined render states", function () {
             const renderState = new RenderState();
             expect(renderState.isUndefined()).to.be.true;
             (renderState as any).m_state = FadingState.FadingIn;
@@ -67,8 +67,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("isFading", function() {
-        it("returns true for fading in and fading out render states", function() {
+    describe("isFading", function () {
+        it("returns true for fading in and fading out render states", function () {
             const renderState = new RenderState();
             expect(renderState.isFading()).to.be.false;
             (renderState as any).m_state = FadingState.FadingIn;
@@ -82,8 +82,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("isFadingIn", function() {
-        it("returns true for fading in out render states", function() {
+    describe("isFadingIn", function () {
+        it("returns true for fading in out render states", function () {
             const renderState = new RenderState();
             expect(renderState.isFadingIn()).to.be.false;
             (renderState as any).m_state = FadingState.FadingIn;
@@ -97,8 +97,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("isFadingOut", function() {
-        it("returns true for fading out render states", function() {
+    describe("isFadingOut", function () {
+        it("returns true for fading out render states", function () {
             const renderState = new RenderState();
             expect(renderState.isFadingOut()).to.be.false;
             (renderState as any).m_state = FadingState.FadingIn;
@@ -112,8 +112,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("isFadedIn", function() {
-        it("returns true for faded in render states", function() {
+    describe("isFadedIn", function () {
+        it("returns true for faded in render states", function () {
             const renderState = new RenderState();
             expect(renderState.isFadedIn()).to.be.false;
             (renderState as any).m_state = FadingState.FadingIn;
@@ -127,8 +127,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("isFadedOut", function() {
-        it("returns true for faded out render states", function() {
+    describe("isFadedOut", function () {
+        it("returns true for faded out render states", function () {
             const renderState = new RenderState();
             expect(renderState.isFadedOut()).to.be.false;
             (renderState as any).m_state = FadingState.FadingIn;
@@ -142,8 +142,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("isVisible", function() {
-        it("returns true if render states are not undefined or faded out, and opacity > 0", function() {
+    describe("isVisible", function () {
+        it("returns true if render states are not undefined or faded out, and opacity > 0", function () {
             const renderState = new RenderState();
             renderState.opacity = 0.5;
             expect(renderState.isVisible()).to.be.false;
@@ -157,7 +157,7 @@ describe("RenderState", function() {
             expect(renderState.isVisible()).to.be.false;
         });
 
-        it("returns false if render states are not undefined or faded out and opacity is 0", function() {
+        it("returns false if render states are not undefined or faded out and opacity is 0", function () {
             const renderState = new RenderState();
             expect(renderState.isVisible()).to.be.false;
             (renderState as any).m_state = FadingState.FadingIn;
@@ -171,8 +171,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("startFadeIn", function() {
-        it("transitions an undefined state to fade in", function() {
+    describe("startFadeIn", function () {
+        it("transitions an undefined state to fade in", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100);
 
@@ -182,7 +182,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("fade in transitions to final state if fading disabled", function() {
+        it("fade in transitions to final state if fading disabled", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100, true);
 
@@ -192,7 +192,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(1.0);
         });
 
-        it("does not change an already fading in state", function() {
+        it("does not change an already fading in state", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100);
             renderState.startFadeIn(200);
@@ -203,7 +203,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("does not change an already faded in state", function() {
+        it("does not change an already faded in state", function () {
             const renderState = new RenderState();
             renderState.value = 1.0;
             renderState.startTime = 100;
@@ -217,7 +217,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(1.0);
         });
 
-        it("sets a fading out state to fading in", function() {
+        it("sets a fading out state to fading in", function () {
             const renderState = new RenderState();
             renderState.value = 0.6;
             renderState.startTime = 100;
@@ -231,7 +231,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.6);
         });
 
-        it("fades in a faded out state", function() {
+        it("fades in a faded out state", function () {
             const renderState = new RenderState();
             renderState.value = 0.0;
             renderState.startTime = 100;
@@ -247,8 +247,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("startFadeOut", function() {
-        it("transitions an undefined state to fading out", function() {
+    describe("startFadeOut", function () {
+        it("transitions an undefined state to fading out", function () {
             const renderState = new RenderState();
             renderState.startFadeOut(100);
 
@@ -258,7 +258,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("does not change an already fading out state", function() {
+        it("does not change an already fading out state", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100, true);
             renderState.startFadeOut(100);
@@ -270,7 +270,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(1.0);
         });
 
-        it("does not change an already faded out state", function() {
+        it("does not change an already faded out state", function () {
             const renderState = new RenderState();
             renderState.value = 1.0;
             renderState.startTime = 100;
@@ -285,7 +285,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("sets a fading in state to fading out", function() {
+        it("sets a fading in state to fading out", function () {
             const renderState = new RenderState();
             renderState.value = 0.6;
             renderState.startTime = 100;
@@ -300,7 +300,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.6);
         });
 
-        it("fades out a faded in state", function() {
+        it("fades out a faded in state", function () {
             const renderState = new RenderState();
             renderState.value = 1.0;
             renderState.startTime = 100;
@@ -316,8 +316,8 @@ describe("RenderState", function() {
         });
     });
 
-    describe("updateFading", function() {
-        it("does not update undefined states", function() {
+    describe("updateFading", function () {
+        it("does not update undefined states", function () {
             const renderState = new RenderState();
             renderState.updateFading(100, false);
 
@@ -327,7 +327,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("does not update faded in states", function() {
+        it("does not update faded in states", function () {
             const renderState = new RenderState();
             renderState.value = 1.0;
             renderState.startTime = 0;
@@ -342,7 +342,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(1.0);
         });
 
-        it("does not update faded out states", function() {
+        it("does not update faded out states", function () {
             const renderState = new RenderState();
             renderState.value = 1.0;
             renderState.startTime = 0;
@@ -357,7 +357,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("updates fading in states", function() {
+        it("updates fading in states", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100);
             renderState.updateFading(200, false);
@@ -368,7 +368,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.01605224609375);
         });
 
-        it("switches to faded in after fading time passed", function() {
+        it("switches to faded in after fading time passed", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100);
             renderState.updateFading(100 + DEFAULT_FADE_TIME, false);
@@ -379,7 +379,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(1.0);
         });
 
-        it("skips fading in when fading is disabled", function() {
+        it("skips fading in when fading is disabled", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100);
             renderState.updateFading(200, true);
@@ -390,7 +390,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(1.0);
         });
 
-        it("updates fading out states", function() {
+        it("updates fading out states", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100, false);
             renderState.startFadeOut(100);
@@ -402,7 +402,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.98394775390625);
         });
 
-        it("switches to faded out after fading time passed", function() {
+        it("switches to faded out after fading time passed", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100, false);
             renderState.startFadeOut(100);
@@ -414,7 +414,7 @@ describe("RenderState", function() {
             expect(renderState.opacity).to.equal(0.0);
         });
 
-        it("skips fading out when fading is disabled", function() {
+        it("skips fading out when fading is disabled", function () {
             const renderState = new RenderState();
             renderState.startFadeIn(100, false);
             renderState.startFadeOut(100);

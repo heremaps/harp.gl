@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,25 +8,19 @@ import {
     AttributeMap,
     composeTechniqueTextureName,
     DecodedTile,
-    getFeatureId,
-    getPropertyValue,
     ImageTexture,
     IndexedTechnique,
-    IndexedTechniqueParams,
     isLineMarkerTechnique,
     isPoiTechnique,
-    LineMarkerTechnique,
-    PoiGeometry,
-    PoiTechnique
+    MapEnv,
+    PoiGeometry
 } from "@here/harp-datasource-protocol";
-import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, assertExists, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { ColorCache } from "../ColorCache";
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";
-import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
+import { TextElementBuilder } from "../text/TextElementBuilder";
 import { Tile } from "../Tile";
 import { PoiTable } from "./PoiTableManager";
 
@@ -42,6 +36,38 @@ interface ImageTextureDef {
     width: number;
     height: number;
     pixelRatio?: number;
+}
+
+function getImageTexture(poiGeometry: PoiGeometry, index: number = 0): string | undefined {
+    if (poiGeometry.imageTextures) {
+        const textureNameIndex = poiGeometry.imageTextures[index];
+        if (textureNameIndex >= 0) {
+            assert(poiGeometry.imageTextures.length > index);
+            return poiGeometry.stringCatalog[textureNameIndex];
+        }
+    }
+    return undefined;
+}
+
+function getAttributes(poiGeometry: PoiGeometry, index: number = 0): AttributeMap | undefined {
+    return poiGeometry.objInfos ? poiGeometry.objInfos[index] : undefined;
+}
+
+function getPosition(
+    positionAttribute: THREE.BufferAttribute,
+    worldOffsetX: number,
+    index: number = 0
+): THREE.Vector3 {
+    const position = new THREE.Vector3().fromBufferAttribute(positionAttribute, index);
+    position.x += worldOffsetX;
+    return position;
+}
+
+function getText(poiGeometry: PoiGeometry, index: number = 0): string {
+    assert(poiGeometry.texts.length > index);
+    const stringIndex = poiGeometry.texts[index];
+    assert(poiGeometry.stringCatalog.length > stringIndex);
+    return poiGeometry.stringCatalog[stringIndex] ?? "";
 }
 
 /**
@@ -125,6 +151,15 @@ export class PoiManager {
         const poiGeometries = assertExists(decodedTile.poiGeometries);
         const worldOffsetX = tile.computeWorldOffsetX();
 
+        const mapView = tile.mapView;
+        const discreteZoomLevel = Math.floor(mapView.zoomLevel);
+        const intZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
+        const poiBuilder = new TextElementBuilder(
+            intZoomEnv,
+            tile.textStyleCache,
+            tile.dataSource.dataSourceOrder
+        );
+
         for (const poiGeometry of poiGeometries) {
             assert(poiGeometry.technique !== undefined);
             const techniqueIndex = assertExists(poiGeometry.technique);
@@ -137,8 +172,6 @@ export class PoiManager {
                 continue;
             }
 
-            // The POI may be in the data, and there may be a Technique, but the technique may
-            // specify to not show it.
             if (technique.showOnMap === false) {
                 continue;
             }
@@ -148,10 +181,12 @@ export class PoiManager {
                 poiGeometry.positions.itemCount
             );
 
+            poiBuilder.withTechnique(technique);
+
             if (isLineMarkerTechnique(technique) && positions.count > 0) {
-                this.addLineMarker(tile, poiGeometry, technique, positions, worldOffsetX);
+                this.addLineMarker(poiBuilder, tile, poiGeometry, positions, worldOffsetX);
             } else if (isPoiTechnique(technique)) {
-                this.addPoi(tile, poiGeometry, technique, positions, worldOffsetX);
+                this.addPoi(poiBuilder, tile, poiGeometry, positions, worldOffsetX);
             }
         }
     }
@@ -256,11 +291,7 @@ export class PoiManager {
         const poiInfo = pointLabel.poiInfo;
         // PoiTable requires poiName to be defined otherwise mapping via PoiTable is
         // not possible, such as table key is not defined.
-        if (
-            poiInfo === undefined ||
-            poiInfo.poiTableName === undefined ||
-            poiInfo.poiName === undefined
-        ) {
+        if (!poiInfo || poiInfo.poiTableName === undefined || poiInfo.poiName === undefined) {
             return true;
         }
 
@@ -269,7 +300,7 @@ export class PoiManager {
         const poiTable = this.mapView.poiTableManager.getPoiTable(poiTableName);
 
         // Check if PoiTable is found, but its still loading.
-        if (poiTable !== undefined && poiTable.isLoading) {
+        if (poiTable && poiTable.isLoading) {
             // The PoiTable is still loading, we have to try again.
             return false;
         }
@@ -278,7 +309,7 @@ export class PoiManager {
         poiInfo.poiTableName = undefined;
 
         // PoiTable not found or can not be loaded.
-        if (poiTable === undefined || !poiTable.loadedOk) {
+        if (!poiTable || !poiTable.loadedOk) {
             PoiManager.notifyMissingPoiTable(poiTableName, poiTable);
             return true;
         }
@@ -286,7 +317,7 @@ export class PoiManager {
         // Try to acquire PoiTableEntry.
         const poiName = poiInfo.poiName;
         const poiTableEntry = poiTable.getEntry(poiName);
-        if (poiTableEntry === undefined) {
+        if (!poiTableEntry) {
             PoiManager.notifyMissingPoi(poiName, poiTableName);
             return true;
         }
@@ -298,28 +329,14 @@ export class PoiManager {
             );
         }
 
-        pointLabel.visible =
-            poiTableEntry.visible !== undefined ? poiTableEntry.visible : pointLabel.visible;
-        pointLabel.priority =
-            poiTableEntry.priority !== undefined ? poiTableEntry.priority : pointLabel.priority;
-        poiInfo.iconMinZoomLevel =
-            poiTableEntry.iconMinLevel !== undefined
-                ? poiTableEntry.iconMinLevel
-                : poiInfo.iconMinZoomLevel;
-        poiInfo.iconMaxZoomLevel =
-            poiTableEntry.iconMaxLevel !== undefined
-                ? poiTableEntry.iconMaxLevel
-                : poiInfo.iconMaxZoomLevel;
-        poiInfo.textMinZoomLevel =
-            poiTableEntry.textMinLevel !== undefined
-                ? poiTableEntry.textMinLevel
-                : poiInfo.textMinZoomLevel;
-        poiInfo.textMaxZoomLevel =
-            poiTableEntry.textMaxLevel !== undefined
-                ? poiTableEntry.textMaxLevel
-                : poiInfo.textMaxZoomLevel;
+        pointLabel.visible = poiTableEntry.visible ?? pointLabel.visible;
+        pointLabel.priority = poiTableEntry.priority ?? pointLabel.priority;
+        poiInfo.iconMinZoomLevel = poiTableEntry.iconMinLevel ?? poiInfo.iconMinZoomLevel;
+        poiInfo.iconMaxZoomLevel = poiTableEntry.iconMaxLevel ?? poiInfo.iconMaxZoomLevel;
+        poiInfo.textMinZoomLevel = poiTableEntry.textMinLevel ?? poiInfo.textMinZoomLevel;
+        poiInfo.textMaxZoomLevel = poiTableEntry.textMaxLevel ?? poiInfo.textMaxZoomLevel;
 
-        pointLabel.updateMinMaxZoomLevelsFromPoiInfo();
+        TextElementBuilder.alignZoomLevelRanges(pointLabel);
 
         return true;
     }
@@ -333,84 +350,35 @@ export class PoiManager {
     }
 
     /**
-     * Add the LineMarker as a POI with a series of positions. Make sure that the LineMarkers
-     * having the same visual all get their `shieldGroupIndex` set appropriately, so it can be taken
-     * care of later that not too many of them are rendered (obey `minDistance` attribute).
+     * Add the LineMarker as a POI with multiple positions sharing the same `shieldGroupIndex`.
      */
     private addLineMarker(
+        poiBuilder: TextElementBuilder,
         tile: Tile,
         poiGeometry: PoiGeometry,
-        technique: LineMarkerTechnique & IndexedTechniqueParams,
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
-        const env = this.mapView.env;
-
-        let imageTextureName: string | undefined =
-            technique.imageTexture !== undefined
-                ? composeTechniqueTextureName(
-                      getPropertyValue(technique.imageTexture, env),
-                      technique
-                  )
-                : undefined;
-
-        let text: string = "";
-        let userData: AttributeMap | undefined;
-        let featureId: number | undefined;
-
-        if (poiGeometry.stringCatalog !== undefined) {
-            assert(poiGeometry.texts.length > 0);
-            text = poiGeometry.stringCatalog[poiGeometry.texts[0]] ?? "";
-            if (poiGeometry.objInfos !== undefined) {
-                userData = poiGeometry.objInfos[0];
-                featureId = getFeatureId(userData);
-            }
-
-            if (poiGeometry.imageTextures !== undefined) {
-                assert(poiGeometry.imageTextures.length > 0);
-                imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[0]];
-            }
-        }
+        const text = getText(poiGeometry);
+        const imageTextureName = getImageTexture(poiGeometry);
 
         // let the combined image texture name (name of image in atlas, not the URL) and
-        // text of the shield be the group key, at worst scenario it may be:
-        // "undefined-"
-        const groupKey = String(imageTextureName) + "-" + text;
+        // text of the shield be the group key, at worst scenario it may be: "undefined-"
+        const groupKey = imageTextureName + "-" + text;
         let shieldGroupIndex = this.m_poiShieldGroups.get(groupKey);
         if (shieldGroupIndex === undefined) {
             shieldGroupIndex = this.m_poiShieldGroups.size;
             this.m_poiShieldGroups.set(groupKey, shieldGroupIndex);
         }
 
-        // Debugging help to identify the group of a shield :
-        // text = groupKey + ": " + text;
-
         const positionArray: THREE.Vector3[] = [];
         for (let i = 0; i < positions.count; i += 3) {
-            const x = positions.getX(i) + worldOffsetX;
-            const y = positions.getY(i);
-            const z = positions.getZ(i);
-            positionArray.push(new THREE.Vector3(x, y, z));
+            positionArray.push(getPosition(positions, worldOffsetX, i));
         }
-        const textElement = this.checkCreateTextElement(
-            tile,
-            text,
-            technique,
-            imageTextureName,
-            undefined, // TBD for road shields
-            undefined,
-            shieldGroupIndex,
-            featureId,
-            positionArray,
-            undefined,
-            undefined,
-            undefined,
-            userData
-        );
+        const textElement = poiBuilder
+            .withIcon(imageTextureName, shieldGroupIndex)
+            .build(text, positionArray, tile.offset, getAttributes(poiGeometry));
 
-        // If the poi icon is rendered, the label that shows text should also be rendered.
-        // The distance rule of the icon should apply, not the one for text (only) labels.
-        textElement.ignoreDistance = false;
         tile.addTextElement(textElement);
     }
 
@@ -418,208 +386,27 @@ export class PoiManager {
      * Create and add POI {@link TextElement}s to tile with a series of positions.
      */
     private addPoi(
+        poiBuilder: TextElementBuilder,
         tile: Tile,
         poiGeometry: PoiGeometry,
-        technique: PoiTechnique & IndexedTechniqueParams,
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
-        if (poiGeometry.stringCatalog === undefined) {
-            return;
-        }
-
-        const env = tile.mapView.env;
-
-        const techniqueTextureName: string | undefined =
-            technique.imageTexture !== undefined
-                ? composeTechniqueTextureName(
-                      getPropertyValue(technique.imageTexture, env),
-                      technique
-                  )
-                : undefined;
-
-        const poiTechnique = technique as PoiTechnique;
-        const poiTableName = poiTechnique.poiTable;
-        let poiName = poiTechnique.poiName;
-
         for (let i = 0; i < positions.count; ++i) {
-            const x = positions.getX(i) + worldOffsetX;
-            const y = positions.getY(i);
-            const z = positions.getZ(i);
+            const offsetDirection = poiGeometry.offsetDirections?.[i] ?? 0;
 
-            assert(poiGeometry.texts.length > i);
-            let imageTextureName = techniqueTextureName;
-            const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] ?? "";
-            const userData =
-                poiGeometry.objInfos !== undefined ? poiGeometry.objInfos[i] : undefined;
-            const featureId = getFeatureId(userData);
-            const offsetDirection =
-                poiGeometry.offsetDirections === undefined ? 0 : poiGeometry.offsetDirections[i];
-            if (poiGeometry.imageTextures !== undefined && poiGeometry.imageTextures[i] >= 0) {
-                assert(poiGeometry.imageTextures.length > i);
-                imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[i]];
-            }
-            if (poiTableName !== undefined) {
-                // The POI name to be used is taken from the data, since it will
-                // specify the name of the texture to use.
-
-                // The POI name in the technique may override the POI name from the
-                // data.
-                poiName =
-                    poiTechnique.poiName === undefined ? imageTextureName : poiTechnique.poiName;
-
-                imageTextureName = undefined;
-            }
-
-            const textElement = this.checkCreateTextElement(
-                tile,
-                text,
-                technique,
-                imageTextureName,
-                poiTableName,
-                poiName,
-                0,
-                featureId,
-                x,
-                y,
-                z,
-                offsetDirection,
-                userData
-            );
+            const textElement = poiBuilder
+                .withIcon(getImageTexture(poiGeometry, i))
+                .build(
+                    getText(poiGeometry, i),
+                    getPosition(positions, worldOffsetX, i),
+                    tile.offset,
+                    getAttributes(poiGeometry, i),
+                    undefined,
+                    offsetDirection
+                );
 
             tile.addTextElement(textElement);
         }
-    }
-
-    /**
-     * Create the {@link TextElement} for a POI.
-     *
-     * @remarks
-     * Even if the POI has no text, it is required that there
-     * is a {@link TextElement}, since POIs are hooked onto {@link TextElement}s
-     * for sorting.(Sorted by priority attribute).
-     */
-    private checkCreateTextElement(
-        tile: Tile,
-        text: string,
-        technique: (PoiTechnique | LineMarkerTechnique) & IndexedTechniqueParams,
-        imageTextureName: string | undefined,
-        poiTableName: string | undefined,
-        poiName: string | undefined,
-        shieldGroupIndex: number,
-        featureId: number | undefined,
-        x: number | THREE.Vector3[],
-        y: number | undefined,
-        z: number | undefined,
-        offsetDirection?: number,
-        userData?: {}
-    ): TextElement {
-        const priority = technique.priority !== undefined ? technique.priority : 0;
-        const positions = Array.isArray(x) ? (x as THREE.Vector3[]) : new THREE.Vector3(x, y, z);
-
-        // The current zoomlevel of mapview. Since this method is called for all tiles in the
-        // VisibleTileSet we can be sure that the current zoomlevel matches the zoomlevel where
-        // the tile should be shown.
-        const env = this.mapView.env;
-        const fadeNear =
-            technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, env)
-                : technique.fadeNear;
-        const fadeFar =
-            technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, env)
-                : technique.fadeFar;
-        const xOffset = getPropertyValue(technique.xOffset, env);
-        const yOffset = getPropertyValue(technique.yOffset, env);
-
-        const textElement: TextElement = new TextElement(
-            ContextualArabicConverter.instance.convert(text),
-            positions,
-            tile.textStyleCache.getRenderStyle(technique),
-            tile.textStyleCache.getLayoutStyle(technique),
-            getPropertyValue(priority, env),
-            xOffset !== undefined ? xOffset : 0.0,
-            yOffset !== undefined ? yOffset : 0.0,
-            featureId,
-            technique.style,
-            fadeNear,
-            fadeFar,
-            tile.offset,
-            offsetDirection
-        );
-
-        textElement.mayOverlap = technique.textMayOverlap === true;
-        textElement.reserveSpace = technique.textReserveSpace !== false;
-        textElement.alwaysOnTop = technique.alwaysOnTop === true;
-        textElement.userData = userData;
-
-        // imageTextureName may be undefined if a poiTable is used.
-        if (imageTextureName === undefined && poiTableName !== undefined) {
-            imageTextureName = "";
-        } else if (imageTextureName !== undefined && poiTableName !== undefined) {
-            logger.warn(
-                "Possible duplicate POI icon definition via imageTextureName and poiTable!"
-            );
-        }
-
-        if (imageTextureName !== undefined) {
-            const textIsOptional = technique.textIsOptional === true;
-            const iconIsOptional = technique.iconIsOptional !== false;
-            const renderTextDuringMovements = !(technique.renderTextDuringMovements === false);
-            const iconMayOverlap =
-                technique.iconMayOverlap === undefined
-                    ? textElement.textMayOverlap
-                    : technique.iconMayOverlap === true;
-            const iconReserveSpace =
-                technique.iconReserveSpace === undefined
-                    ? textElement.textReservesSpace
-                    : technique.iconReserveSpace !== false;
-
-            const iconColorRaw = technique.iconColor
-                ? getPropertyValue(technique.iconColor, env)
-                : null;
-            const iconColor =
-                iconColorRaw !== null ? ColorCache.instance.getColor(iconColorRaw) : undefined;
-
-            textElement.poiInfo = {
-                technique,
-                imageTextureName,
-                poiTableName,
-                poiName,
-                shieldGroupIndex,
-                textElement,
-                textIsOptional,
-                iconIsOptional,
-                renderTextDuringMovements,
-                mayOverlap: iconMayOverlap,
-                reserveSpace: iconReserveSpace,
-                featureId,
-                iconBrightness: technique.iconBrightness,
-                iconColor,
-                iconMinZoomLevel: technique.iconMinZoomLevel,
-                iconMaxZoomLevel: technique.iconMaxZoomLevel,
-                textMinZoomLevel: technique.textMinZoomLevel,
-                textMaxZoomLevel: technique.textMaxZoomLevel
-            };
-            textElement.updateMinMaxZoomLevelsFromPoiInfo();
-        } else {
-            // Select the smaller/larger one of the two min/max values, because the TextElement
-            // is a container for both.
-            if (textElement.minZoomLevel === undefined) {
-                textElement.minZoomLevel = technique.textMinZoomLevel;
-            }
-
-            if (textElement.maxZoomLevel === undefined) {
-                textElement.maxZoomLevel = technique.textMaxZoomLevel;
-            }
-        }
-
-        textElement.distanceScale =
-            technique.distanceScale !== undefined
-                ? technique.distanceScale
-                : DEFAULT_TEXT_DISTANCE_SCALE;
-
-        textElement.kind = technique.kind;
-        return textElement;
     }
 }

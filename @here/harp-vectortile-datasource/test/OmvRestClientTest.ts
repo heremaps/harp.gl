@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -37,18 +37,18 @@ class MockTransferManager extends TransferManager {
 }
 const mockDownloadManager = new MockTransferManager();
 
-describe("OmvRestClient", function() {
+describe("OmvRestClient", function () {
     let downloadSpy: sinon.SinonSpy;
 
-    beforeEach(function() {
+    beforeEach(function () {
         downloadSpy = (sinon.spy(mockDownloadManager, "download") as any) as sinon.SinonSpy;
     });
 
-    afterEach(function() {
+    afterEach(function () {
         downloadSpy.restore();
     });
 
-    it("supports url pattern", async function() {
+    it("supports url pattern", async function () {
         const restClient = new OmvRestClient({
             url: "https://some.base.url/somepath/{z}/{x}/{y}/omv",
             downloadManager: mockDownloadManager
@@ -57,7 +57,7 @@ describe("OmvRestClient", function() {
         assert.equal(downloadSpy.args[0][0], "https://some.base.url/somepath/3/2/1/omv");
     });
 
-    it("supports url pattern and custom `urlParams`", async function() {
+    it("supports url pattern and custom `urlParams`", async function () {
         const restClient = new OmvRestClient({
             url: "https://some.base.url/somepath/{z}/{x}/{y}.mvt",
             urlParams: {
@@ -72,7 +72,7 @@ describe("OmvRestClient", function() {
         );
     });
 
-    it("generates proper Url with HEREV1 Format", async function() {
+    it("generates proper Url with HEREV1 Format", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
@@ -82,7 +82,7 @@ describe("OmvRestClient", function() {
         assert.equal(downloadSpy.args[0][0], "https://some.base.url/3/2/1/omv");
     });
 
-    it("generates proper Url with MapBox Format", async function() {
+    it("generates proper Url with MapBox Format", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
@@ -96,7 +96,7 @@ describe("OmvRestClient", function() {
         );
     });
 
-    it("generates proper Url with TomTom Format", async function() {
+    it("generates proper Url with TomTom Format", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://a.tomtom.base.url",
             apiFormat: APIFormat.TomtomV1,
@@ -107,7 +107,7 @@ describe("OmvRestClient", function() {
         assert.equal(downloadSpy.args[0][0], "https://a.tomtom.base.url/3/2/1.pbf?key=123");
     });
 
-    it("generates proper Url with XYZ OMV Format", async function() {
+    it("generates proper Url with XYZ OMV Format", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
@@ -121,7 +121,7 @@ describe("OmvRestClient", function() {
         );
     });
 
-    it("supports custom authentication method based on query string key", async function() {
+    it("supports custom authentication method based on query string key", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
@@ -136,7 +136,7 @@ describe("OmvRestClient", function() {
         assert.equal(downloadSpy.args[0][0], "https://some.base.url/3/2/1/omv?customKey=12345");
     });
 
-    it("generates authentication header with bearer token from a function", async function() {
+    it("generates authentication header with bearer token from a function", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
@@ -157,7 +157,7 @@ describe("OmvRestClient", function() {
         }
     });
 
-    it("bearer auth token with custom query params", async function() {
+    it("bearer auth token with custom query params", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
@@ -185,7 +185,7 @@ describe("OmvRestClient", function() {
         }
     });
 
-    it("query param auth with custom query param", async function() {
+    it("query param auth with custom query param", async function () {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,

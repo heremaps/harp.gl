@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -321,7 +321,8 @@ export abstract class BufferedGeometryAccessor extends BufferedGeometryAccessorB
 /**
  * Accessor for nonindexed line geometry.
  */
-export class BufferedGeometryLineAccessor extends BufferedGeometryAccessor
+export class BufferedGeometryLineAccessor
+    extends BufferedGeometryAccessor
     implements ILineAccessor {
     constructor(
         readonly object: THREE.Mesh,
@@ -345,7 +346,8 @@ export class BufferedGeometryLineAccessor extends BufferedGeometryAccessor
 /**
  * Accessor for nonindexed unspecified (`Object3D`) geometry.
  */
-export class BufferedGeometryObject3dAccessor extends BufferedGeometryAccessor
+export class BufferedGeometryObject3dAccessor
+    extends BufferedGeometryAccessor
     implements IObject3dAccessor {
     constructor(
         readonly object: THREE.Mesh,
@@ -436,7 +438,8 @@ export abstract class IndexedBufferedGeometryAccessor extends BufferedGeometryAc
 /**
  * Accessor for lines in an indexed geometry.
  */
-export class IndexedBufferedGeometryLineAccessor extends IndexedBufferedGeometryAccessor
+export class IndexedBufferedGeometryLineAccessor
+    extends IndexedBufferedGeometryAccessor
     implements ILineAccessor {
     constructor(
         readonly object: THREE.Mesh,

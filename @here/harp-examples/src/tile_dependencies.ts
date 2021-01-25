@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -265,7 +265,11 @@ export namespace TileDependenciesExample {
     const instructions = `
 Pan to the left / right until the tile in the center disappears.<br/>
 To enable usage of the tile dependencies, check the checkbox,<br/>
-the geometry will now always be visible.`;
+the geometry will now always be visible.
+Clicking on the geometry will show a box showing where you clicked.
+If the tile dependencies checkbox is disabled, this will only work in
+the center tile, because otherwise we assume that the contents of any
+given tile remain in its boundaries.`;
     const message = document.createElement("div");
     message.style.position = "absolute";
     message.style.cssFloat = "right";

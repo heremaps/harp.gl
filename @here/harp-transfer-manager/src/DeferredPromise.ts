@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,7 +16,7 @@ export class DeferredPromise<T> {
      * Internal promise to store the result of the deferred executor function.
      */
     readonly promise: Promise<T>;
-    private resolveFunc?: (result?: T) => void;
+    private resolveFunc?: (result: T) => void;
     private rejectFunc?: (reason?: any) => void;
 
     /**

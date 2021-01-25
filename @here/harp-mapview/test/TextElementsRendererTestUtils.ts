@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -101,7 +101,7 @@ export function firstNFrames(frames: number[], n: number): boolean[] {
 }
 
 export function not(input: boolean[]): boolean[] {
-    return input.map(function(e: boolean) {
+    return input.map(function (e: boolean) {
         return !e;
     });
 }
@@ -118,20 +118,22 @@ export function allFrames(frames: number[]): boolean[] {
  * Types to hold input data for TextElementsRenderer tests.
  */
 export type InputTextElement =
-    | [TextElementBuilder, FadeState[]]
-    | [TextElementBuilder, FadeState[], boolean[]]
-    | [TextElementBuilder, FadeState[], boolean[], FadeState[]];
+    | [TextElementBuilder, FadeState[]] // Text-only element.
+    | [TextElementBuilder, FadeState[], boolean[]] // booleans mark frames where element is present.
+    | [TextElementBuilder, FadeState[], boolean[], FadeState[]] // POIs (icon and text)
+    | [TextElementBuilder, FadeState[][], boolean[], FadeState[][]]; // line marker
 
-export function builder(input: InputTextElement) {
+export function builder(input: InputTextElement): TextElementBuilder {
     return input[0];
 }
 
-export function frameStates(input: InputTextElement) {
+export function frameStates(input: InputTextElement): FadeState[] | FadeState[][] {
     return input[1];
 }
 
-export function iconFrameStates(input: InputTextElement) {
-    return input[3];
+// If frame states array is empty, same text frame states are used also for icons.
+export function iconFrameStates(input: InputTextElement): FadeState[] | FadeState[][] | undefined {
+    return input.length > 3 ? (input[3]!.length > 0 ? input[3] : input[1]) : undefined;
 }
 
 export function framesEnabled(input: InputTextElement): boolean[] | undefined {

@@ -1,55 +1,49 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { Theme } from "@here/harp-datasource-protocol";
+import { Fog as FogConfig } from "@here/harp-datasource-protocol";
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assert } from "chai";
 import { BoxGeometry, Fog, Mesh, Scene } from "three";
 
 import { MapViewFog } from "../lib/MapViewFog";
 
-describe("MapViewFog", function() {
-    it("adds fog if defined in the provided theme", function() {
-        const theme: Theme = {
-            fog: { color: "#ffff12", startRatio: 0.8 }
-        }; // Theme with a fog definition.
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+describe("MapViewFog", function () {
+    it("adds fog if defined in the provided theme", function () {
+        const fogConfig: FogConfig = { color: "#ffff12", startRatio: 0.8 };
         const scene = new Scene(); // Scene without fog.
         const fog = new MapViewFog(scene);
-        fog.reset(theme);
+        fog.reset(fogConfig);
 
         assert.equal(scene.fog !== null, true);
         assert.equal(scene.fog instanceof Fog, true);
         assert.equal((scene.fog as Fog).color.getHexString(), "ffff12");
     });
 
-    it("handles fog disabling via MapViewFog#enabled", function() {
-        const theme: Theme = {
-            fog: { color: "#ffff12", startRatio: 0.8 }
-        }; // Theme with a fog definition.
+    it("handles fog disabling via MapViewFog#enabled", function () {
+        const fogConfig: FogConfig = { color: "#ffff12", startRatio: 0.8 };
         const scene = new Scene(); // Scene without fog.
         const fog = new MapViewFog(scene);
-        fog.reset(theme); // This should enable fog.
+        fog.reset(fogConfig); // This should enable fog.
         fog.enabled = false; // But this should then remove it.
 
         assert.equal(scene.fog, null);
     });
 
-    it("handles fog disabling if not defined in the provided theme", function() {
-        const theme: Theme = {}; // Theme with no fog definition.
+    it("handles fog disabling if not defined in the provided theme", function () {
         const scene = new Scene();
         scene.fog = new Fog(0x000000); // Scene with fog.
         const fog = new MapViewFog(scene);
-        fog.reset(theme);
+        fog.reset();
 
         assert.equal(scene.fog, null); // Fog should be removed.
     });
 
-    it("handles RawShaderMaterial fog", function() {
+    it("handles RawShaderMaterial fog", function () {
         const scene = new Scene();
         const box = new Mesh(
             new BoxGeometry(1, 1, 1),

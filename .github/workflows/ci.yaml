@@ -22,7 +22,7 @@ jobs:
       matrix:
         node_version: [12]
         os: [ubuntu-latest,macOS-latest,windows-latest]
-      fail-fast: false
+      fail-fast: true
 
     steps:
     - name: Reset git settings (Windows)
@@ -75,25 +75,20 @@ jobs:
       shell: bash
     - name: Tests on Chrome (Windows)
       run: |
-        export PATH=`pwd`:$PATH
-        cp node_modules/chromedriver/lib/chromedriver/chromedriver.exe .
-        yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
+        yarn karma-headless
       shell: bash
       if: matrix.os == 'windows-latest'
     - name: Tests on Firefox (Windows)
       run: |
-        export PATH=`pwd`:$PATH
-        cp node_modules/geckodriver/geckodriver.exe .
-        yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
+        yarn karma-headless-firefox
       if: matrix.os == 'windows-latest'
-      shell: bash
     - name: Tests on Chrome (Linux)
       run: |
         set -ex
         yarn --frozen-lockfile
         google-chrome --version
         whereis google-chrome
-        yarn test-browser --headless-chrome --timeout ${{ env.browserTestTimeout }}
+        yarn karma-headless
       shell: bash
       if: matrix.os == 'ubuntu-latest'
     - name: Tests on Firefox (Linux)
@@ -101,7 +96,7 @@ jobs:
         set -ex
         firefox --version
         whereis firefox
-        yarn test-browser --headless-firefox --timeout ${{ env.browserTestTimeout }}
+        yarn karma-headless-firefox
       shell: bash
       if: matrix.os == 'ubuntu-latest'
     - name: Build bundle

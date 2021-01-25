@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -378,13 +378,6 @@ export class VectorTileDataSource extends TileDataSource {
     /** @override */
     shouldPreloadTiles(): boolean {
         return true;
-    }
-
-    /** @override */
-    setLanguages(languages?: string[]): void {
-        if (languages !== undefined) {
-            this.configureDecoder({ languages }, undefined);
-        }
     }
 
     /** @override */

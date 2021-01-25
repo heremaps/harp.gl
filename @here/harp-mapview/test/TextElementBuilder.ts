@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -31,16 +31,18 @@ export function poiBuilder(text: string = DEF_TEXT): TextElementBuilder {
         .withPoiInfo(new PoiInfoBuilder().withPoiTechnique());
 }
 
+export function createPath(coordScale: number, points: THREE.Vector3[]) {
+    return points.map((point: THREE.Vector3) => point.clone().multiplyScalar(coordScale));
+}
+
 export function pathTextBuilder(coordScale: number, text: string = DEF_TEXT): TextElementBuilder {
-    return new TextElementBuilder()
-        .withText(text)
-        .withPath(DEF_PATH.map((point: THREE.Vector3) => point.clone().multiplyScalar(coordScale)));
+    return new TextElementBuilder().withText(text).withPath(createPath(coordScale, DEF_PATH));
 }
 
 export function lineMarkerBuilder(coordScale: number, text: string = DEF_TEXT): TextElementBuilder {
     return new TextElementBuilder()
         .withText(text)
-        .withPath(DEF_PATH.map((point: THREE.Vector3) => point.clone().multiplyScalar(coordScale)))
+        .withPath(createPath(coordScale, DEF_PATH))
         .withPoiInfo(new PoiInfoBuilder().withLineMarkerTechnique());
 }
 

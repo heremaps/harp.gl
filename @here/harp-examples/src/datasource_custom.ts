@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -108,9 +108,8 @@ export namespace CustomDatasourceExample {
     const MIN_GEOMETRY_HEIGHT = -100;
 
     // snippet:custom_datasource_example_custom_data_provider.ts
-    class CustomDataProvider extends DataProvider
-    // end:custom_datasource_example_custom_data_provider.ts
-    {
+    class CustomDataProvider extends DataProvider {
+        // end:custom_datasource_example_custom_data_provider.ts
         connect() {
             // Here you could connect to the service.
             return Promise.resolve();
@@ -148,9 +147,8 @@ export namespace CustomDatasourceExample {
     class CustomTile extends Tile {}
 
     // snippet:custom_datasource_example_custom_data_source.ts
-    class CustomDataSource extends TileDataSource<CustomTile>
-    // end:custom_datasource_example_custom_data_source.ts
-    {
+    class CustomDataSource extends TileDataSource<CustomTile> {
+        // end:custom_datasource_example_custom_data_source.ts
         constructor(options: TileDataSourceOptions) {
             super(new TileFactory<CustomTile>(CustomTile), options);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -35,9 +35,9 @@ function createGeometry(): THREE.BufferGeometry {
     geometry.drawRange = { start: 0, count: 2 };
     return geometry;
 }
-describe("DisplacedBufferGeometry", function() {
+describe("DisplacedBufferGeometry", function () {
     it("constructor sets all properties except position attributes with same values as in original \
-    geometry", function() {
+    geometry", function () {
         const originalGeometry = createGeometry();
         const displacementMap = createTexture([1]);
         const displacementRange: DisplacementRange = { min: 1, max: 1 };
@@ -58,7 +58,7 @@ describe("DisplacedBufferGeometry", function() {
         expect(displacedGeometry.attributes).deep.equals(originalGeometry.attributes);
     });
 
-    it("after reset new geometry and displacement map are used", function() {
+    it("after reset new geometry and displacement map are used", function () {
         const originalGeometry = createGeometry();
         const displacementMap = createTexture([1]);
         const displacementRange: DisplacementRange = { min: 1, max: 1 };
@@ -90,7 +90,7 @@ describe("DisplacedBufferGeometry", function() {
         expect(displacedGeometry.attributes).deep.equals(newGeometry.attributes);
     });
 
-    it("reset keeps valid bounding volumes", function() {
+    it("reset keeps valid bounding volumes", function () {
         const originalGeometry = createGeometry();
         const displacementMap = createTexture([1]);
         const displacementRange: DisplacementRange = { min: 1, max: 1 };
@@ -110,7 +110,7 @@ describe("DisplacedBufferGeometry", function() {
         expect(computeBSphereSpy.called).equals(false);
     });
 
-    it("reset with new geometry updates old bounding volumes", function() {
+    it("reset with new geometry updates old bounding volumes", function () {
         const originalGeometry = createGeometry();
         const displacementMap = createTexture([1]);
         const displacementRange: DisplacementRange = { min: 1, max: 1 };
@@ -143,7 +143,7 @@ describe("DisplacedBufferGeometry", function() {
         expect(computeBSphereSpy.called).equals(true);
     });
 
-    it("reset with new displacement min/max updates old bounding volumes", function() {
+    it("reset with new displacement min/max updates old bounding volumes", function () {
         const originalGeometry = createGeometry();
         const displacementMap = createTexture([1]);
         const displacementRange: DisplacementRange = { min: 1, max: 1 };
@@ -163,7 +163,7 @@ describe("DisplacedBufferGeometry", function() {
         expect(computeBSphereSpy.called).equals(true);
     });
 
-    it("computeBoundingBox creates bbox containing all possible displaced positions", function() {
+    it("computeBoundingBox creates bbox containing all possible displaced positions", function () {
         const originalGeometry = createGeometry();
         const displacementMap = createTexture([1]);
         originalGeometry.attributes.position = createBuffer([1, 1, 1, 2, 2, 2], 3);

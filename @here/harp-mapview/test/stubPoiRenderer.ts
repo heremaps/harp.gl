@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,7 +10,6 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { PoiRenderer } from "../lib/poi/PoiRenderer";
-import { PoiRendererFactory } from "../lib/poi/PoiRendererFactory";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { PoiInfo } from "../lib/text/TextElement";
 
@@ -31,7 +30,7 @@ export function stubPoiRenderer(
     // Workaround to capture the value of screenPosition vector on the time of the call,
     // otherwise it's lost afterwards since the same vector is used to pass positions for
     // other pois.
-    stub.renderPoi.callsFake(
+    stub.addPoi.callsFake(
         (
             poiInfo: PoiInfo,
             screenPosition: THREE.Vector2,
@@ -60,20 +59,4 @@ export function stubPoiRenderer(
     );
 
     return stub;
-}
-
-/**
- * Creates a PoiRendererFactory stub.
- * @param sandbox - Sinon sandbox used to keep track of created stubs.
- * @param poiRendererStub - Poi renderer that will be returned by the factory.
- * @returns PoiRendererFactory stub.
- */
-export function stubPoiRendererFactory(
-    sandbox: sinon.SinonSandbox,
-    poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>
-) {
-    const factoryStub = sandbox.createStubInstance(PoiRendererFactory);
-    factoryStub.createPoiRenderer.returns((poiRendererStub as unknown) as PoiRenderer);
-
-    return (factoryStub as unknown) as PoiRendererFactory;
 }

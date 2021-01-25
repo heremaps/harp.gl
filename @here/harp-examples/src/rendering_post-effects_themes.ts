@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -76,9 +76,8 @@ export namespace EffectsExample {
     };
     const selector = gui.add(options, "theme", options.theme);
     selector
-        .onChange((value: string) => {
-            map.clearTileCache();
-            map.setTheme(value);
+        .onChange(async (value: string) => {
+            await map.setTheme(value);
             map.loadPostEffects((options.postEffects as { [key: string]: string })[value]);
         })
         .setValue(options.theme.streets);

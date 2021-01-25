@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -11,11 +11,12 @@ import * as sinon from "sinon";
 
 import { ConsoleChannel } from "../lib/Logger/ConsoleChannel";
 import { ILogger, LogLevel } from "../lib/Logger/ILogger";
+import { ILoggerManager } from "../lib/Logger/ILoggerManager";
 import { LoggerManager } from "../lib/Logger/LoggerManager";
 import { LoggerManagerImpl } from "../lib/Logger/LoggerManagerImpl";
 import { MultiChannel } from "../lib/Logger/MultiChannel";
 
-describe("LoggerManager", function() {
+describe("LoggerManager", function () {
     function printAll(logger: ILogger, msg: string) {
         logger.error(msg);
         logger.warn(msg);
@@ -25,7 +26,7 @@ describe("LoggerManager", function() {
         logger.trace(msg);
     }
 
-    it("Update All", function() {
+    it("Update All", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
         const loggerA = manager.create("A");
@@ -41,7 +42,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Error);
     });
 
-    it("Update named loggers", function() {
+    it("Update named loggers", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
         const loggerA = manager.create("A");
@@ -57,7 +58,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Trace);
     });
 
-    it("Override defaults", function() {
+    it("Override defaults", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
 
@@ -72,7 +73,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Trace);
     });
 
-    it("Dispose logger", function() {
+    it("Dispose logger", function () {
         // Arrange
         const manager = new LoggerManagerImpl();
         const loggerA = manager.create("A");
@@ -89,7 +90,7 @@ describe("LoggerManager", function() {
         assert.equal(loggerB.level, LogLevel.Error);
     });
 
-    it("Create LoggerManager instance", function() {
+    it("Create LoggerManager instance", function () {
         // Arrange
         const manager = LoggerManager.instance;
 
@@ -97,12 +98,12 @@ describe("LoggerManager", function() {
         assert.exists(manager);
     });
 
-    it("Check default console channel", function() {
+    it("Check default console channel", function () {
         const manager = LoggerManager.instance;
         assert.equal(manager.channel instanceof ConsoleChannel, true);
     });
 
-    it("Replace default console channel", function() {
+    it("Replace default console channel", function () {
         const manager = LoggerManager.instance;
         const multiChannel = new MultiChannel();
         LoggerManager.instance.setChannel(multiChannel);
@@ -110,15 +111,23 @@ describe("LoggerManager", function() {
         assert.equal(manager.channel instanceof ConsoleChannel, false);
     });
 
-    describe("Check channel compliancy", function() {
+    describe("Check channel compliancy", function () {
         const sandbox = sinon.createSandbox();
-        LoggerManager.instance.setLogLevelForAll(LogLevel.Trace);
+        let loggerManager: ILoggerManager;
 
-        it("Check channels logging abilities", function() {
+        beforeEach(() => {
+            loggerManager = new LoggerManagerImpl();
+        });
+
+        afterEach(() => {
+            sandbox.restore();
+        });
+
+        it("Check channels logging abilities", function () {
             // Arrange
-            const consoleChannel = LoggerManager.instance.channel;
+            const consoleChannel = loggerManager.channel;
             const stubs = sandbox.stub(consoleChannel);
-            const logger = LoggerManager.instance.create("foo");
+            const logger = loggerManager.create("foo", { level: LogLevel.Trace });
 
             // Act
             printAll(logger, "some message");
@@ -132,18 +141,17 @@ describe("LoggerManager", function() {
             assert.isTrue(stubs.trace.calledWithMatch("foo:", "some message"));
         });
 
-        it("Check channels logging abilities after switching channels", function() {
+        it("Check channels logging abilities after switching channels", function () {
             // Arrange
-            sandbox.restore();
-            const oldChannel = LoggerManager.instance.channel;
+            const oldChannel = loggerManager.channel;
             const oldChannelStub = sandbox.stub(oldChannel);
 
             const newChannel = new ConsoleChannel();
             const newChannelStub = sandbox.stub(newChannel);
 
-            LoggerManager.instance.setChannel(newChannel);
+            loggerManager.setChannel(newChannel);
 
-            const logger = LoggerManager.instance.create("foo");
+            const logger = loggerManager.create("foo", { level: LogLevel.Trace });
 
             // Act
             printAll(logger, "some message");
@@ -163,7 +171,7 @@ describe("LoggerManager", function() {
             assert.isTrue(newChannelStub.trace.calledWithMatch("foo:", "some message"));
         });
 
-        it("Check MultiChannel logging abilities", function() {
+        it("Check MultiChannel logging abilities", function () {
             // Arrange
             const channel1 = new ConsoleChannel();
             const channel2 = new ConsoleChannel();
@@ -172,9 +180,9 @@ describe("LoggerManager", function() {
             const channel1Stub = sandbox.stub(channel1);
             const channel2Stub = sandbox.stub(channel2);
 
-            LoggerManager.instance.setChannel(multiChannel);
+            loggerManager.setChannel(multiChannel);
 
-            const logger = LoggerManager.instance.create("foo");
+            const logger = loggerManager.create("foo", { level: LogLevel.Trace });
 
             // Act
             printAll(logger, "some message");

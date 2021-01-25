@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -738,10 +738,7 @@ export namespace MapViewUtils {
             tangentSpace.z.copy(result).normalize();
 
             // Get the Y axis (north axis in tangent space):
-            tangentSpace.y
-                .set(0, 0, 1)
-                .projectOnPlane(tangentSpace.z)
-                .normalize();
+            tangentSpace.y.set(0, 0, 1).projectOnPlane(tangentSpace.z).normalize();
 
             // Rotate this north axis by the given yaw, giving the camera direction relative to
             // the target.
@@ -915,10 +912,7 @@ export namespace MapViewUtils {
         const halfHorzFovTan = 1 / Math.tan(halfHorzFov);
 
         const cameraToTarget = cache.vector3[1];
-        cameraToTarget
-            .copy(cameraPos)
-            .sub(worldTarget)
-            .negate();
+        cameraToTarget.copy(cameraPos).sub(worldTarget).negate();
 
         const cameraToTargetNormalized = new THREE.Vector3().copy(cameraToTarget).normalize();
 
@@ -934,10 +928,7 @@ export namespace MapViewUtils {
             fovFactor: number
         ) {
             referencePlane.projectPoint(point, pointOnRefPlane);
-            cameraToPointOnRefPlane
-                .copy(cameraPos)
-                .sub(pointOnRefPlane)
-                .negate();
+            cameraToPointOnRefPlane.copy(cameraPos).sub(pointOnRefPlane).negate();
 
             const viewAngle = cameraToTarget.angleTo(cameraToPointOnRefPlane);
 
@@ -1083,7 +1074,7 @@ export namespace MapViewUtils {
         // and takes the current rotation of the camera into account.
         cache.matrix4[1].multiplyMatrices(
             cache.matrix4[0],
-            cache.matrix4[1].getInverse(mapView.camera.projectionMatrix)
+            cache.matrix4[1].copy(mapView.camera.projectionMatrix).invert()
         );
         // Unproject the point via the unprojection matrix.
         const pointInCameraSpace = pointInNDCPosition.applyMatrix4(cache.matrix4[1]);
@@ -1141,7 +1132,7 @@ export namespace MapViewUtils {
     ) {
         cache.quaternions[0]
             .setFromUnitVectors(fromWorld.normalize(), toWorld.normalize())
-            .inverse();
+            .invert();
         cache.matrix4[0].makeRotationFromQuaternion(cache.quaternions[0]);
         mapView.camera.applyMatrix4(cache.matrix4[0]);
         mapView.camera.updateMatrixWorld();
@@ -1326,7 +1317,7 @@ export namespace MapViewUtils {
         cache.matrix4[1].makeBasis(tangentSpace.x, tangentSpace.y, tangentSpace.z);
 
         // 2. Change the basis of matrixWorld to the tangent space to get the new base axes.
-        cache.matrix4[0].getInverse(cache.matrix4[1]).multiply(object.matrixWorld);
+        cache.matrix4[0].copy(cache.matrix4[1]).invert().multiply(object.matrixWorld);
         space.x.setFromMatrixColumn(cache.matrix4[0], 0);
         space.y.setFromMatrixColumn(cache.matrix4[0], 1);
         space.z.setFromMatrixColumn(cache.matrix4[0], 2);
@@ -1338,8 +1329,8 @@ export namespace MapViewUtils {
 
         // Decompose rotation matrix into Z0 X Z1 Euler angles.
         const d = space.z.dot(cache.vector3[1].set(0, 0, 1));
-        if (d < 1.0 - epsilon) {
-            if (d > -1.0 + epsilon) {
+        if (d < 1.0 - Number.EPSILON) {
+            if (d > -1.0 + Number.EPSILON) {
                 yaw = Math.atan2(space.z.x, -space.z.y);
                 pitch = Math.acos(space.z.z);
                 roll = Math.atan2(space.x.z, space.y.z);
@@ -1395,11 +1386,8 @@ export namespace MapViewUtils {
 
         // Get point to object vector in `cache.vector3[1]` and deduce `tilt` from the angle with
         // tangent Z.
-        cache.vector3[1]
-            .copy(object.position)
-            .sub(cache.vector3[0])
-            .normalize();
-        if (cache.vector3[1].dot(tangentSpace.z) > 1 - epsilon) {
+        cache.vector3[1].copy(object.position).sub(cache.vector3[0]).normalize();
+        if (cache.vector3[1].dot(tangentSpace.z) > 1 - Number.EPSILON) {
             // Top down view: the azimuth of the object would be opposite the yaw, and clockwise.
             azimuth = Math.PI - extractAttitude(mapView, object).yaw;
             // Wrap between -PI and PI.
@@ -1462,7 +1450,7 @@ export namespace MapViewUtils {
         dirVec.divideScalar(dirLen);
 
         const cosTheta = dirVec.dot(tangentSpace.z);
-        if (cosTheta > 1 - epsilon) {
+        if (cosTheta >= 1 - Number.EPSILON) {
             // Top down view.
             return 0;
         }

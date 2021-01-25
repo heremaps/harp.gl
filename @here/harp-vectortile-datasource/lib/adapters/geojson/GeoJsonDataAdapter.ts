@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
+import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
+import { Vector2Like } from "@here/harp-geoutils/lib/math/Vector2Like";
 import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
 
@@ -86,19 +88,23 @@ function convertGeometryType(type: string): string {
 }
 
 const worldP = new Vector3();
-const localP = new Vector2();
 
 /**
  * Converts a `geoPoint` to local tile space.
  *
  * @param geoPoint - The input [[GeoPointLike]].
  * @param decodeInfo - The [[DecodeInfo]].
+ * @param target - A [[VectorLike]] used as target of the converted coordinates.
+ * @return A [[VectorLike]] with the converted point.
  * @hidden
  */
-function convertPoint(geoPoint: GeoPointLike, decodeInfo: DecodeInfo): Vector2 {
+function convertPoint<VectorType extends Vector2Like>(
+    geoPoint: GeoPointLike,
+    decodeInfo: DecodeInfo,
+    target: VectorType
+): VectorType {
     webMercatorProjection.projectPoint(GeoCoordinates.fromGeoPoint(geoPoint), worldP);
-    localP.set(worldP.x, worldP.y);
-    return world2tile(DEFAULT_EXTENTS, decodeInfo, localP, false, new Vector2());
+    return world2tile(DEFAULT_EXTENTS, decodeInfo, worldP, false, target);
 }
 
 function convertLineStringGeometry(
@@ -109,7 +115,9 @@ function convertLineStringGeometry(
         return GeoCoordinates.fromGeoPoint(geoPoint);
     });
 
-    const positions = coordinates.map(geoPoint => convertPoint(geoPoint, decodeInfo));
+    const positions = coordinates.map(geoPoint =>
+        convertPoint(geoPoint, decodeInfo, new Vector2())
+    );
 
     return { untiledPositions, positions };
 }
@@ -127,9 +135,25 @@ function convertLineGeometry(
     );
 }
 
+function signedPolygonArea(contour: GeoPointLike[]): number {
+    const n = contour.length;
+    let area = 0.0;
+    for (let p = n - 1, q = 0; q < n; p = q++) {
+        area += contour[p][0] * contour[q][1] - contour[q][0] * contour[p][1];
+    }
+    return area * 0.5;
+}
+
 function convertRings(coordinates: GeoPointLike[][], decodeInfo: DecodeInfo): IPolygonGeometry {
-    const rings = coordinates.map(ring => {
+    let outerWinding: boolean | undefined;
+    const rings = coordinates.map((ring, i) => {
         const { positions } = convertLineStringGeometry(ring, decodeInfo);
+        const winding = signedPolygonArea(ring) < 0;
+        if (i === 0) {
+            outerWinding = winding;
+        } else if (winding === outerWinding) {
+            positions.reverse();
+        }
         return positions;
     });
     return { rings };
@@ -149,12 +173,12 @@ function convertPolygonGeometry(
 function convertPointGeometry(
     geometry: GeoJsonPointGeometry | GeoJsonMultiPointGeometry,
     decodeInfo: DecodeInfo
-): Vector2[] {
+): Vector3[] {
     if (geometry.type === "Point") {
-        return [convertPoint(geometry.coordinates, decodeInfo)];
+        return [convertPoint(geometry.coordinates, decodeInfo, new Vector3())];
     }
 
-    return geometry.coordinates.map(geoPoint => convertPoint(geoPoint, decodeInfo));
+    return geometry.coordinates.map(geoPoint => convertPoint(geoPoint, decodeInfo, new Vector3()));
 }
 
 export class GeoJsonDataAdapter implements DataAdapter {
@@ -199,14 +223,36 @@ export class GeoJsonDataAdapter implements DataAdapter {
             switch (feature.geometry.type) {
                 case "LineString":
                 case "MultiLineString": {
-                    const geometry = convertLineGeometry(feature.geometry, decodeInfo);
-                    this.m_processor.processLineFeature(
-                        $layer,
-                        DEFAULT_EXTENTS,
-                        geometry,
-                        env,
-                        $level
-                    );
+                    let geometry = convertLineGeometry(feature.geometry, decodeInfo);
+
+                    const clippedGeometries: ILineGeometry[] = [];
+
+                    const DEFAULT_BORDER = 100;
+
+                    geometry.forEach(g => {
+                        const clipped = clipLineString(
+                            g.positions,
+                            -DEFAULT_BORDER,
+                            -DEFAULT_BORDER,
+                            DEFAULT_EXTENTS + DEFAULT_BORDER,
+                            DEFAULT_EXTENTS + DEFAULT_BORDER
+                        );
+                        clipped.forEach(positions => {
+                            clippedGeometries.push({ positions });
+                        });
+                    });
+
+                    geometry = clippedGeometries;
+
+                    if (geometry.length > 0) {
+                        this.m_processor.processLineFeature(
+                            $layer,
+                            DEFAULT_EXTENTS,
+                            clippedGeometries,
+                            env,
+                            $level
+                        );
+                    }
                     break;
                 }
                 case "Polygon":

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -98,25 +98,35 @@ function createMockMapView() {
     } as any) as MapView;
 }
 
-describe("TileLoader", function() {
+describe("TileLoader", function () {
     let tileKey: TileKey;
     let mapView: MapView;
     let dataSource: DataSource;
     let dataProvider: MockDataProvider;
+    let loggerWasEnabled = true;
 
-    before(function() {
+    before(function () {
         tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         mapView = createMockMapView();
         dataSource = new MockDataSource();
         dataSource.attach(mapView);
+        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
+        if (logger) {
+            loggerWasEnabled = logger.enabled;
+            logger.enabled = false;
+        }
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         dataProvider = new MockDataProvider();
     });
 
-    describe("loadAndDecode()", function() {
-        it("should load tiles", function() {
+    after(function () {
+        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
+    });
+
+    describe("loadAndDecode()", function () {
+        it("should load tiles", function () {
             const tileLoader = new TileLoader(
                 dataSource,
                 tileKey,
@@ -130,7 +140,7 @@ describe("TileLoader", function() {
             return expect(loadPromise).to.eventually.be.fulfilled;
         });
 
-        it("should not reload already requested tile", function() {
+        it("should not reload already requested tile", function () {
             const tileLoader = new TileLoader(
                 dataSource,
                 tileKey,
@@ -148,7 +158,7 @@ describe("TileLoader", function() {
             return expect(loadPromise).to.eventually.be.fulfilled;
         });
 
-        it("should handle empty payloads", function() {
+        it("should handle empty payloads", function () {
             const tileDecoder = new MockTileDecoder();
             const decodeTileSpy = sinon.spy(tileDecoder, "decodeTile");
             const tileLoader = new TileLoader(dataSource, tileKey, dataProvider, tileDecoder);
@@ -172,7 +182,7 @@ describe("TileLoader", function() {
             });
         });
 
-        describe("loadAndDecode()", function() {
+        describe("loadAndDecode()", function () {
             let tileLoader: TileLoader;
             this.beforeEach(() => {
                 tileLoader = new TileLoader(
@@ -187,7 +197,7 @@ describe("TileLoader", function() {
                 LoggerManager.instance.update("TileLoader", { enabled: false });
             });
 
-            it("should recover from losing internet connection", function() {
+            it("should recover from losing internet connection", function () {
                 // This test writes an error to the console, so we disable it.
                 LoggerManager.instance.update("TileLoader", { enabled: false });
 
@@ -211,8 +221,8 @@ describe("TileLoader", function() {
         });
     });
 
-    describe("cancel()", function() {
-        it("should cancel running requests", function() {
+    describe("cancel()", function () {
+        it("should cancel running requests", function () {
             const tileLoader = new TileLoader(
                 dataSource,
                 tileKey,
@@ -229,7 +239,7 @@ describe("TileLoader", function() {
             return expect(loadPromise).to.eventually.be.rejected;
         });
 
-        it("should cancel during decoding", function() {
+        it("should cancel during decoding", function () {
             const tileLoader = new TileLoader(
                 dataSource,
                 tileKey,
@@ -251,11 +261,11 @@ describe("TileLoader", function() {
         });
     });
 
-    describe("tile load", function() {
+    describe("tile load", function () {
         // Note, this test can't be in TileTest.ts because the TileLoader is not part of the
         // @here/harp-mapview package, and trying to add package which contains the TileLoader
         // as a dependency causes a loop which isn't allowed.
-        it("tile load sets dependencies from decoded tile", async function() {
+        it("tile load sets dependencies from decoded tile", async function () {
             const dependencies: number[] = [0, 1];
             const decodedTile: DecodedTile = {
                 techniques: [],

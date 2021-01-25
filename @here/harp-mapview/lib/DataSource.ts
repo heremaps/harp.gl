@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Definitions, StyleSet, Theme, ValueMap } from "@here/harp-datasource-protocol";
-import { StyleSetOptions } from "@here/harp-datasource-protocol/index-decoder";
+import { FlatTheme, Theme, ValueMap } from "@here/harp-datasource-protocol";
 import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert, LoggerManager } from "@here/harp-utils";
@@ -27,6 +26,13 @@ export interface DataSourceOptions {
      * The name of the [[StyleSet]] to evaluate for the decoding.
      */
     styleSetName?: string;
+    /**
+     * Used to configure the languages used by the `DataSource` according to priority;
+     * the first language in the array has the highest priority.
+     *
+     *  An array of ISO 639-1 language codes.
+     */
+    languages?: string[];
     /**
      * The minimum zoom level at which data is available or displayed at
      * (depending on {@link DataSource} subclass).
@@ -101,6 +107,12 @@ export interface DataSourceOptions {
      * @default `0`.
      */
     minGeometryHeight?: number;
+
+    /**
+     * Number used to order [DataSource]'s relative to each other, see
+     * {@link DataSource.dataSourceOrder}
+     */
+    dataSourceOrder?: number;
 }
 
 /**
@@ -171,6 +183,18 @@ export abstract class DataSource extends THREE.EventDispatcher {
     enablePicking: boolean = true;
 
     /**
+     * Overrides the default rendering order of this `DataSource`.
+     *
+     * @remarks
+     * When `dataSourceOrder` is defined, all the objects created by this `DataSource`
+     * will be rendered on top of the objects created by other `DataSource`s with
+     * lower `dataSourceOrder` values.
+     *
+     * @defaultValue undefined
+     */
+    dataSourceOrder: number = 0;
+
+    /**
      * @internal
      * @hidden
      */
@@ -204,6 +228,11 @@ export abstract class DataSource extends THREE.EventDispatcher {
     private readonly m_featureStateMap = new Map<number, ValueMap>();
 
     /**
+     *  An array of ISO 639-1 language codes.
+     */
+    protected languages?: string[];
+
+    /**
      * Constructs a new `DataSource`.
      *
      * @param options - The options to create the data source.
@@ -213,6 +242,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
         let { name } = options;
         const {
             styleSetName,
+            languages,
             minZoomLevel,
             maxZoomLevel,
             minDataLevel,
@@ -223,7 +253,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
             allowOverlappingTiles,
             enablePicking,
             minGeometryHeight,
-            maxGeometryHeight
+            maxGeometryHeight,
+            dataSourceOrder
         } = options;
         if (name === undefined || name.length === 0) {
             name = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
@@ -231,6 +262,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
         this.name = name;
 
         this.styleSetName = styleSetName;
+
+        if (languages !== undefined) {
+            this.languages = languages;
+        }
 
         if (minDataLevel !== undefined) {
             this.minDataLevel = minDataLevel;
@@ -266,6 +301,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
         }
         if (maxGeometryHeight !== undefined) {
             this.maxGeometryHeight = maxGeometryHeight;
+        }
+        if (dataSourceOrder) {
+            this.dataSourceOrder = dataSourceOrder;
         }
     }
 
@@ -323,9 +361,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * {@link MapView}s theme.
      */
     set styleSetName(styleSetName: string | undefined) {
-        this.m_styleSetName = styleSetName;
-        if (this.m_mapView !== undefined && styleSetName !== undefined) {
-            this.setTheme(this.m_mapView.theme);
+        if (styleSetName !== this.m_styleSetName) {
+            this.m_styleSetName = styleSetName;
+            this.clearCache();
+            this.requestUpdate();
         }
     }
 
@@ -433,25 +472,14 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * Invoked by {@link MapView} to notify when the
-     * {@link @here/harp-datasource-protocol#Theme} has been changed.
+     * Apply the {@link @here/harp-datasource-protocol#Theme} to this data source.
      *
-     * @remarks
-     * If `DataSource` depends on a `styleSet` or `languages`, it must update its tiles' geometry.
+     * If `DataSource` depends on a `styleSet` defined by this theme or `languages`, it must update
+     * its tiles' geometry.
      *
-     * @deprecated Use [[setTheme]].
-     *
-     * @param options - The Options used for decodeing and/or styling, alternativly a StyleSet
-     * @param definitions - The Definitions used for decoding/styling
-     * @param languages - A prioritized list of  ISO 639-1 language codes
+     * @param theme - The Theme to be applied
      */
-    setStyleSet(
-        options: StyleSetOptions | StyleSet,
-        definitions?: Definitions,
-        languages?: string[]
-    ): void {
-        // to be overwritten by subclasses
-    }
+    async setTheme(theme: Theme | FlatTheme): Promise<void>;
 
     /**
      * Apply the {@link @here/harp-datasource-protocol#Theme} to this data source.
@@ -459,9 +487,12 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * If `DataSource` depends on a `styleSet` defined by this theme or `languages`, it must update
      * its tiles' geometry.
      *
-     * @param languages -
+     * @param theme - The Theme to be applied
+     * @param languages - optional: The languages in priority order to be applied
+     *
+     * @deprecated use setTheme( Theme | FlatTheme) and setLanguages(string[]) instead
      */
-    setTheme(theme: Theme, languages?: string[]): void {
+    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
         // to be overwritten by subclasses
     }
 
@@ -472,6 +503,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @param languages - An array of ISO 639-1 language codes.
      */
     setLanguages(languages?: string[]): void {
+        this.languages = languages;
         // to be overloaded by subclasses
     }
 

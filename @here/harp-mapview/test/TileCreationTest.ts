@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,8 +16,8 @@ import { buildObject, createMaterial, usesObject3D } from "./../lib/DecodedTileH
 import { Tile } from "./../lib/Tile";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
-describe("Tile Creation", function() {
-    it("ShaderTechnique", function() {
+describe("Tile Creation", function () {
+    it("ShaderTechnique", function () {
         const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
         const technique: ShaderTechnique = {
             name: "shader",
@@ -175,7 +175,7 @@ describe("Tile Creation", function() {
                 : test.technique.name;
         const elevation = test.elevation ? "elevation" : "no elevation";
         const testName = `buildObject builds proper obj for ${name} technique with ${elevation}`;
-        it(testName, function() {
+        it(testName, function () {
             const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
             const geometry = new THREE.BufferGeometry();
             const material = new MapMeshStandardMaterial();

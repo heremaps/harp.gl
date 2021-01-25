@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,8 +7,7 @@ import {
     PoiStackMode,
     PoiTableDef,
     PoiTableEntryDef,
-    PoiTableRef,
-    Theme
+    PoiTableRef
 } from "@here/harp-datasource-protocol";
 import { LoggerManager } from "@here/harp-utils";
 
@@ -316,24 +315,24 @@ export class PoiTableManager {
      * Note that duplicate names of {@link PoiTable}s in the
      * {@link @here/harp-datasource-protocol#Theme} will lead to inaccessible {@link PoiTable}s.
      *
-     * @param theme - {@link @here/harp-datasource-protocol#Theme}
+     * @param poiTables - {@link @here/harp-datasource-protocol#PoiTableRef[]}
      *                containing all {@link PoiTable}s to load.
      *
      * @returns Resolved once all the {@link PoiTable}s in
      *          the {@link @here/harp-datasource-protocol#Theme} have been loaded.
      */
-    async loadPoiTables(theme: Theme): Promise<void> {
+    async loadPoiTables(poiTables?: PoiTableRef[]): Promise<void> {
         const finished = new Promise<void>(resolve => {
             this.clear();
 
             // Add the POI tables defined in the theme.
-            if (theme.poiTables !== undefined) {
+            if (poiTables !== undefined) {
                 this.startLoading();
 
                 // Gather promises to signal the success of having loaded them all
                 const loadPromises: Array<Promise<boolean>> = new Array();
 
-                theme.poiTables.forEach((poiTableRef: PoiTableRef) => {
+                poiTables.forEach((poiTableRef: PoiTableRef) => {
                     if (
                         poiTableRef !== undefined &&
                         poiTableRef.name !== undefined &&

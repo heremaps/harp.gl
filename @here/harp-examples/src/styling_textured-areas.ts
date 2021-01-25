@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -51,7 +51,7 @@ export namespace HelloWorldTexturedExample {
     }
 </style>
 <p id="texture-license">Textures by
-<a href="https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480">
+<a href="https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480" target="_blank">
 West</a>.</p>`;
     }
 

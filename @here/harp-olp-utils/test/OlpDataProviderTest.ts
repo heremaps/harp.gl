@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,17 +15,17 @@ import * as sinon from "sinon";
 
 import { OlpDataProvider } from "../lib/OlpDataProvider";
 
-describe("OlpDataProvider", function() {
+describe("OlpDataProvider", function () {
     let sandbox: sinon.SinonSandbox;
 
-    beforeEach(function() {
+    beforeEach(function () {
         sandbox = sinon.createSandbox();
     });
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
     });
 
-    it("#getData doesn't swallow AbortError", async function() {
+    it("#getData doesn't swallow AbortError", async function () {
         // Check that OlpDataProvider doesn't swallow AbortError.
 
         // Setup stub VersionedLayerClient.getData to always throw AbortError
@@ -52,7 +52,7 @@ describe("OlpDataProvider", function() {
         await assertRejected(async () => await dataProvider.getTile(tileKey), /Aborted/);
     });
 
-    it("#getData obeys `abortSignal`", async function() {
+    it("#getData obeys `abortSignal`", async function () {
         // Check that OlpDataProvider obeys abort signal despite fake successfull
         // Response.
 

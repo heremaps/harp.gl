@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementState } from "./TextElementState";
+import { TextElementType } from "./TextElementType";
 
 /**
  * Type of functions used to do early rejection of elements during group state creation or update.
@@ -38,7 +38,7 @@ export class TextElementGroupState {
     ) {
         assert(group.elements.length > 0);
         const length = group.elements.length;
-        this.m_textElementStates = new Array(length);
+        this.m_textElementStates = [];
         this.m_visited = true;
 
         // TODO: HARP-7648. Reduce number of allocations here:
@@ -48,10 +48,20 @@ export class TextElementGroupState {
         //    primitive field in the label state.
         for (let i = 0; i < length; ++i) {
             const textElement = group.elements[i];
-            const state = new TextElementState(textElement);
-            const textDistance = filter(state);
-            state.update(textDistance);
-            this.m_textElementStates[i] = state;
+            if (textElement.type === TextElementType.LineMarker && textElement.path !== undefined) {
+                const numPoints = textElement.path.length;
+                for (let p = 0; p < numPoints; p++) {
+                    const state = new TextElementState(textElement, p);
+                    const textDistance = filter(state);
+                    state.update(textDistance);
+                    this.m_textElementStates.push(state);
+                }
+            } else {
+                const state = new TextElementState(textElement);
+                const textDistance = filter(state);
+                state.update(textDistance);
+                this.m_textElementStates.push(state);
+            }
         }
     }
 

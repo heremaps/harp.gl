@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,6 +12,7 @@ import { FeatureCollection } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 
@@ -47,8 +48,8 @@ class MockDataProvider extends DataProvider {
     }
 }
 
-describe("DataProviders", function() {
-    it("Creates a OmvDataSource with a custom DataProvider", function() {
+describe("DataProviders", function () {
+    it("Creates a OmvDataSource with a custom DataProvider", function () {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
@@ -58,7 +59,7 @@ describe("DataProviders", function() {
         assert.isTrue(omvDataSource.dataProvider() instanceof MockDataProvider);
     });
 
-    it("Creates a OmvDataSource with a REST based DataProvider with proper params", function() {
+    it("Creates a OmvDataSource with a REST based DataProvider with proper params", function () {
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
@@ -82,7 +83,7 @@ describe("DataProviders", function() {
         );
     });
 
-    it("Creates OmvDataSource with custom DataProvider, ignoring other attributes", function() {
+    it("Creates OmvDataSource with custom DataProvider, ignoring other attributes", function () {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
@@ -94,25 +95,26 @@ describe("DataProviders", function() {
         assert.isTrue(omvDataSource.dataProvider() instanceof MockDataProvider);
     });
 
-    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
+    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function () {
         const mockDataProvider = new MockDataProvider();
-        const omvDataSource = new VectorTileDataSource({
-            decoder: new VectorTileDecoder(),
-            baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
-            apiFormat: APIFormat.MapboxV4,
-            authenticationCode: "123",
-            dataProvider: mockDataProvider,
-            minZoomLevel: 3,
-            maxZoomLevel: 17
+        silenceLoggingAroundFunction("DataSource", () => {
+            const omvDataSource = new VectorTileDataSource({
+                decoder: new VectorTileDecoder(),
+                baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
+                apiFormat: APIFormat.MapboxV4,
+                authenticationCode: "123",
+                dataProvider: mockDataProvider,
+                minZoomLevel: 3,
+                maxZoomLevel: 17
+            });
+            assert.equal(omvDataSource.minZoomLevel, 3);
+            assert.equal(omvDataSource.minDataLevel, 3);
+            assert.equal(omvDataSource.maxZoomLevel, 17);
+            assert.equal(omvDataSource.maxDataLevel, 17);
         });
-
-        assert.equal(omvDataSource.minZoomLevel, 3);
-        assert.equal(omvDataSource.minDataLevel, 3);
-        assert.equal(omvDataSource.maxZoomLevel, 17);
-        assert.equal(omvDataSource.maxDataLevel, 17);
     });
 
-    it("supports minDataLevel and maxDataLevel in constructor", function() {
+    it("supports minDataLevel and maxDataLevel in constructor", function () {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
@@ -124,14 +126,16 @@ describe("DataProviders", function() {
             maxDataLevel: 17
         });
 
-        assert.equal(omvDataSource.minZoomLevel, 3);
-        assert.equal(omvDataSource.minDataLevel, 3);
-        assert.equal(omvDataSource.maxZoomLevel, 17);
-        assert.equal(omvDataSource.maxDataLevel, 17);
+        silenceLoggingAroundFunction("DataSource", () => {
+            assert.equal(omvDataSource.minZoomLevel, 3);
+            assert.equal(omvDataSource.minDataLevel, 3);
+            assert.equal(omvDataSource.maxZoomLevel, 17);
+            assert.equal(omvDataSource.maxDataLevel, 17);
+        });
     });
 
-    describe("storageLevelOffset", function() {
-        it("updates storageLevelOffset in decoder options", function() {
+    describe("storageLevelOffset", function () {
+        it("updates storageLevelOffset in decoder options", function () {
             const mapView = {
                 markTilesDirty() {
                     /* noop */
@@ -153,7 +157,7 @@ describe("DataProviders", function() {
         });
     });
 
-    it("DataProvider clears the cache", function() {
+    it("DataProvider clears the cache", function () {
         const geojson: FeatureCollection = {
             type: "FeatureCollection",
             features: []
@@ -183,20 +187,20 @@ describe("DataProviders", function() {
             features: []
         });
 
-        assert.isTrue(clearTileCache.called);
+        assert.isTrue(markTilesDirty.called);
 
-        clearTileCache.resetHistory();
+        markTilesDirty.resetHistory();
 
-        assert.isFalse(clearTileCache.called);
+        assert.isFalse(markTilesDirty.called);
 
         dataProvider.updateInput({
             type: "FeatureCollection",
             features: []
         });
 
-        assert.isTrue(clearTileCache.called);
+        assert.isTrue(markTilesDirty.called);
 
-        clearTileCache.resetHistory();
+        markTilesDirty.resetHistory();
 
         omvDataSource.dispose();
 
@@ -205,6 +209,6 @@ describe("DataProviders", function() {
             features: []
         });
 
-        assert.isFalse(clearTileCache.called);
+        assert.isFalse(markTilesDirty.called);
     });
 });

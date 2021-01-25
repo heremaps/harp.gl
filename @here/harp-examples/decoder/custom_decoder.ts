@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -30,9 +30,8 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "./custom_decoder_defs";
 const MIN_GEOMETRY_HEIGHT = -100;
 
 export // snippet:custom_datasource_example_custom_decoder.ts
-class CustomDecoder extends ThemedTileDecoder
-// end:custom_datasource_example_custom_decoder.ts
-{
+class CustomDecoder extends ThemedTileDecoder {
+    // end:custom_datasource_example_custom_decoder.ts
     /** @override */
     connect() {
         return Promise.resolve();

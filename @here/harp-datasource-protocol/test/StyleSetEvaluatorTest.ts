@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,7 +18,7 @@ import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
 import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { Definitions, Style, StyleSet } from "../lib/Theme";
 
-describe("StyleSetEvaluator", function() {
+describe("StyleSetEvaluator", function () {
     const basicStyleSetAutoOrder: StyleSet = [
         {
             description: "first",
@@ -34,7 +34,7 @@ describe("StyleSetEvaluator", function() {
         }
     ];
 
-    it("doesn't modify input style set", function() {
+    it("doesn't modify input style set", function () {
         const ev = new StyleSetEvaluator({ styleSet: basicStyleSetAutoOrder });
         const parsedStyles = ev.styleSet;
 
@@ -52,7 +52,7 @@ describe("StyleSetEvaluator", function() {
         assert.equal((basicStyleSetAutoOrder[1] as any)._index, undefined);
     });
 
-    it("finds techniques with equality operator", function() {
+    it("finds techniques with equality operator", function () {
         const ev = new StyleSetEvaluator({ styleSet: basicStyleSetAutoOrder });
         const result = ev.getMatchingTechniques(new MapEnv({ kind: "bar" }));
 
@@ -64,7 +64,7 @@ describe("StyleSetEvaluator", function() {
         });
     });
 
-    it("matches multiple techniques style", function() {
+    it("matches multiple techniques style", function () {
         const ev = new StyleSetEvaluator({
             styleSet: [
                 basicStyleSetAutoOrder[0],
@@ -92,7 +92,7 @@ describe("StyleSetEvaluator", function() {
         });
     });
 
-    it("supports final style", function() {
+    it("supports final style", function () {
         const ev = new StyleSetEvaluator({
             styleSet: [
                 basicStyleSetAutoOrder[0],
@@ -157,7 +157,7 @@ describe("StyleSetEvaluator", function() {
         assert.strictEqual(parkTechniques[0].renderOrder, 20);
     });
 
-    it("generates implicit renderOrder", function() {
+    it("generates implicit renderOrder", function () {
         const ev = new StyleSetEvaluator({ styleSet: basicStyleSetAutoOrder });
 
         const parsedStyles = ev.styleSet;
@@ -165,7 +165,7 @@ describe("StyleSetEvaluator", function() {
         assert.equal(parsedStyles[1].renderOrder, 1);
     });
 
-    it("properly mixes auto-generated and explicit renderOrder", function() {
+    it("properly mixes auto-generated and explicit renderOrder", function () {
         const ev = new StyleSetEvaluator({
             styleSet: [
                 {
@@ -187,7 +187,7 @@ describe("StyleSetEvaluator", function() {
         assert.equal(parsedStyles[2].renderOrder, 1);
     });
 
-    describe("dynamic technique atribute support", function() {
+    describe("dynamic technique atribute support", function () {
         const testStyle: StyleSet = [
             {
                 technique: "solid-line",
@@ -201,7 +201,7 @@ describe("StyleSetEvaluator", function() {
                 }
             }
         ];
-        it("instantiates two techniques from one styleset basing on expression result", function() {
+        it("instantiates two techniques from one styleset basing on expression result", function () {
             const ev = new StyleSetEvaluator({ styleSet: testStyle });
             const r1 = ev.getMatchingTechniques(
                 new MapEnv({ kind: "park", area: 2, clipping: true })
@@ -226,7 +226,7 @@ describe("StyleSetEvaluator", function() {
             assert.equal(r2[0].renderOrder, 3);
         });
 
-        it("generates stable technique cache key", function() {
+        it("generates stable technique cache key", function () {
             const techniquesTileA = (() => {
                 const ev = new StyleSetEvaluator({ styleSet: testStyle });
                 ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
@@ -254,9 +254,9 @@ describe("StyleSetEvaluator", function() {
 
             assert.equal(techniquesTileC.length, 2);
 
-            // delete _index from result techniques, because it may differ
+            // reset _index from result techniques, because it may differ
             [...techniquesTileA, ...techniquesTileB, ...techniquesTileC].forEach(t => {
-                delete t._index;
+                t._index = 0;
             });
 
             // Now, respective techniques should have same cache key irrespectively to from
@@ -266,7 +266,7 @@ describe("StyleSetEvaluator", function() {
             assert.deepEqual(techniquesTileA[0], techniquesTileC[1]);
         });
     });
-    describe('definitions / "ref" operator support', function() {
+    describe('definitions / "ref" operator support', function () {
         const sampleStyleDeclaration: Style = {
             technique: "fill",
             when: ["ref", "expr"],
@@ -285,7 +285,7 @@ describe("StyleSetEvaluator", function() {
                 value: interpolator
             }
         };
-        it("resolves references in style declaration attributes", function() {
+        it("resolves references in style declaration attributes", function () {
             const sse = new StyleSetEvaluator({
                 styleSet: [sampleStyleDeclaration],
                 definitions: sampleDefinitions
@@ -307,7 +307,7 @@ describe("StyleSetEvaluator", function() {
                 renderOrder: 0
             });
         });
-        it("reuses very same instances of objects from definition table", function() {
+        it("reuses very same instances of objects from definition table", function () {
             const styleReferencingObject: Style = {
                 technique: "fill",
                 when: ["ref", "expr"],
@@ -326,14 +326,14 @@ describe("StyleSetEvaluator", function() {
         });
     });
 
-    describe("#wantsLayer", function() {
-        it("ignores all layers for empty styleset", function() {
+    describe("#wantsLayer", function () {
+        it("ignores all layers for empty styleset", function () {
             const ss = new StyleSetEvaluator({ styleSet: [] });
             assert.isFalse(ss.wantsLayer("foo"));
             assert.isFalse(ss.wantsLayer("bar"));
         });
 
-        it("wants all layers if layer predicate is missing from at least one style", function() {
+        it("wants all layers if layer predicate is missing from at least one style", function () {
             const ss = new StyleSetEvaluator({
                 styleSet: [
                     {
@@ -346,7 +346,7 @@ describe("StyleSetEvaluator", function() {
             assert.isTrue(ss.wantsLayer("bar"));
         });
 
-        it("supports both layer and layer predicate", function() {
+        it("supports both layer and layer predicate", function () {
             const ss = new StyleSetEvaluator({
                 styleSet: [
                     {
@@ -366,15 +366,15 @@ describe("StyleSetEvaluator", function() {
         });
     });
 
-    describe("#wantsFeature", function() {
-        it("ignores all layers for empty styleset", function() {
+    describe("#wantsFeature", function () {
+        it("ignores all layers for empty styleset", function () {
             const ss = new StyleSetEvaluator({ styleSet: [] });
             assert.isFalse(ss.wantsFeature("foo", "point"));
             assert.isFalse(ss.wantsFeature("bar", "polygon"));
             assert.isFalse(ss.wantsFeature("baz", "line"));
         });
 
-        it("wants all features if predicate is missing from at least one style", function() {
+        it("wants all features if predicate is missing from at least one style", function () {
             const ss = new StyleSetEvaluator({
                 styleSet: [
                     {
@@ -388,7 +388,7 @@ describe("StyleSetEvaluator", function() {
             assert.isTrue(ss.wantsFeature("baz", "line"));
         });
 
-        it("supports ignores all but selected layer/geometry ", function() {
+        it("supports ignores all but selected layer/geometry ", function () {
             const ss = new StyleSetEvaluator({
                 styleSet: [
                     {
@@ -410,7 +410,7 @@ describe("StyleSetEvaluator", function() {
             assert.isFalse(ss.wantsFeature("foo", "polygon"));
         });
 
-        it("works also only with geometryType predicate ", function() {
+        it("works also only with geometryType predicate ", function () {
             const ss = new StyleSetEvaluator({
                 styleSet: [
                     {
@@ -430,7 +430,7 @@ describe("StyleSetEvaluator", function() {
         });
     });
 
-    it("Filter techniques by layer", function() {
+    it("Filter techniques by layer", function () {
         const styleSet: StyleSet = [
             {
                 when: [
@@ -499,7 +499,7 @@ describe("StyleSetEvaluator", function() {
         assert.isTrue(ev.wantsFeature("buildings", "line"));
     });
 
-    it("Filter techniques by layer and geometryType", function() {
+    it("Filter techniques by layer and geometryType", function () {
         const styleSet: StyleSet = [
             {
                 when: [
@@ -569,7 +569,7 @@ describe("StyleSetEvaluator", function() {
         assert.isFalse(styleSetEvaluator.wantsFeature("buildings", "foobar"));
     });
 
-    it("Filter techniques by zoom level", function() {
+    it("Filter techniques by zoom level", function () {
         function getMatchingTechniques(props: ValueMap, styleSet: Style[]) {
             return new StyleSetEvaluator({ styleSet }).getMatchingTechniques(new MapEnv(props));
         }
@@ -588,8 +588,8 @@ describe("StyleSetEvaluator", function() {
             ])
         );
 
-        assert.isNotEmpty(
-            getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
+        assert.isEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 13.9 }, [
                 {
                     when: ["==", ["geometry-type"], "Polygon"],
                     technique: "extruded-polygon",
@@ -600,6 +600,17 @@ describe("StyleSetEvaluator", function() {
         );
 
         assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 14 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: 14,
+                    maxZoomLevel: 15
+                }
+            ])
+        );
+
+        assert.isEmpty(
             getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
                 {
                     when: ["==", ["geometry-type"], "Polygon"],
@@ -631,14 +642,17 @@ describe("StyleSetEvaluator", function() {
         );
 
         assert.isNotEmpty(
-            getMatchingTechniques({ ...defaultProperties, $zoom: 15, minLevel: 14, maxLevel: 15 }, [
-                {
-                    when: ["==", ["geometry-type"], "Polygon"],
-                    technique: "extruded-polygon",
-                    minZoomLevel: ["get", "minLevel"],
-                    maxZoomLevel: ["get", "maxLevel"]
-                }
-            ])
+            getMatchingTechniques(
+                { ...defaultProperties, $zoom: 14.5, minLevel: 14, maxLevel: 15 },
+                [
+                    {
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "extruded-polygon",
+                        minZoomLevel: ["get", "minLevel"],
+                        maxZoomLevel: ["get", "maxLevel"]
+                    }
+                ]
+            )
         );
 
         assert.isEmpty(

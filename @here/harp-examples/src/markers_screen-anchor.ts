@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -58,15 +58,9 @@ export namespace GeoToScreenExample {
 
     function addGuiElements() {
         const gui = new GUI({ width: 300 });
-        gui.add(geoPosition, "lat")
-            .step(0.0001)
-            .onChange(updateAnchors);
-        gui.add(geoPosition, "lng")
-            .step(0.0001)
-            .onChange(updateAnchors);
-        gui.add(geoPosition, "alt")
-            .step(0.0001)
-            .onChange(updateAnchors);
+        gui.add(geoPosition, "lat").step(0.0001).onChange(updateAnchors);
+        gui.add(geoPosition, "lng").step(0.0001).onChange(updateAnchors);
+        gui.add(geoPosition, "alt").step(0.0001).onChange(updateAnchors);
         gui.add(mapView, "tileWrappingEnabled").onChange((value: boolean) => {
             mapView.tileWrappingEnabled = value;
         });

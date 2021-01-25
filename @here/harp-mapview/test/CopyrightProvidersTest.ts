@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,14 +16,14 @@ import * as sinon from "sinon";
 import { CopyrightInfo } from "../lib/copyrights/CopyrightInfo";
 import { UrlCopyrightProvider } from "../lib/copyrights/UrlCopyrightProvider";
 
-describe("CopyrightProviders", function() {
-    describe("#UrlCopyrightProvider", function() {
+describe("CopyrightProviders", function () {
+    describe("#UrlCopyrightProvider", function () {
         async function getCopyrights(geoBox: GeoBox, level: number): Promise<CopyrightInfo[]> {
             const provider = new UrlCopyrightProvider("", "normal");
             return await provider.getCopyrights(geoBox, level);
         }
 
-        describe("#init", function() {
+        describe("#init", function () {
             let provider: UrlCopyrightProvider;
             this.beforeEach(() => {
                 provider = new UrlCopyrightProvider("", "normal");
@@ -32,7 +32,7 @@ describe("CopyrightProviders", function() {
             this.afterEach(() => {
                 LoggerManager.instance.update("CopyrightCoverageProvider", { enabled: true });
             });
-            it("Should return default copyrights if failed to load data", async function() {
+            it("Should return default copyrights if failed to load data", async function () {
                 const fakeJson = sinon.fake.rejects(new Error("error"));
 
                 sinon.replace(TransferManager.prototype, "downloadJson", fakeJson);
@@ -47,7 +47,7 @@ describe("CopyrightProviders", function() {
                 expect(copyrights).to.deep.equal([]);
             });
 
-            it("Should return different copyrights for different inputs", async function() {
+            it("Should return different copyrights for different inputs", async function () {
                 const fakeJson = sinon.fake.rejects(new Error("error"));
                 sinon.replace(TransferManager.prototype, "downloadJson", fakeJson);
 
@@ -61,8 +61,8 @@ describe("CopyrightProviders", function() {
             });
         });
 
-        describe("#intersections", function() {
-            beforeEach(function() {
+        describe("#intersections", function () {
+            beforeEach(function () {
                 const fakeJson = sinon.fake.resolves({
                     normal: [
                         {
@@ -96,11 +96,11 @@ describe("CopyrightProviders", function() {
                 sinon.replace(TransferManager.prototype, "downloadJson", fakeJson);
             });
 
-            afterEach(function() {
+            afterEach(function () {
                 sinon.restore();
             });
 
-            it("Should not return copyrights for bounding box outside coverage", async function() {
+            it("Should not return copyrights for bounding box outside coverage", async function () {
                 const copyrights = await getCopyrights(
                     new GeoBox(new GeoCoordinates(30, 30), new GeoCoordinates(33, 33)),
                     10
@@ -109,7 +109,7 @@ describe("CopyrightProviders", function() {
                 expect(copyrights).to.deep.equal([]);
             });
 
-            it("Should return copyrights for bounding box inside coverage", async function() {
+            it("Should return copyrights for bounding box inside coverage", async function () {
                 const copyrights = await getCopyrights(
                     new GeoBox(new GeoCoordinates(2, 2), new GeoCoordinates(3, 3)),
                     10
@@ -118,7 +118,7 @@ describe("CopyrightProviders", function() {
                 expect(copyrights).to.have.deep.members([{ id: "label 1" }]);
             });
 
-            it("Should return copyrights coverage inside bounding box", async function() {
+            it("Should return copyrights coverage inside bounding box", async function () {
                 const copyrights = await getCopyrights(
                     new GeoBox(new GeoCoordinates(-30, -30), new GeoCoordinates(30, 30)),
                     10
@@ -127,7 +127,7 @@ describe("CopyrightProviders", function() {
                 expect(copyrights).to.have.deep.members([{ id: "label 1" }, { id: "label 2" }]);
             });
 
-            it("Should not return copyrights inside coverage with wrong level", async function() {
+            it("Should not return copyrights inside coverage with wrong level", async function () {
                 const copyrights = await getCopyrights(
                     new GeoBox(new GeoCoordinates(2, 2), new GeoCoordinates(3, 3)),
                     3
@@ -136,7 +136,7 @@ describe("CopyrightProviders", function() {
                 expect(copyrights).to.deep.equal([]);
             });
 
-            it("Should return copyrights without bounding box", async function() {
+            it("Should return copyrights without bounding box", async function () {
                 const copyrights = await getCopyrights(
                     new GeoBox(new GeoCoordinates(2, 2), new GeoCoordinates(3, 3)),
                     1
@@ -146,13 +146,13 @@ describe("CopyrightProviders", function() {
             });
         });
     });
-    describe("#UrlCopyrightProvider test parse vector tile copyright", function() {
+    describe("#UrlCopyrightProvider test parse vector tile copyright", function () {
         const baseCopyrightUrl = getTestResourceUrl(
             "@here/harp-mapview",
             "test/resources/testCopyright.json"
         );
 
-        it("loads and parses copyrights", async function() {
+        it("loads and parses copyrights", async function () {
             const provider = new UrlCopyrightProvider(baseCopyrightUrl, "base");
             const geoBox = new GeoBox(
                 new GeoCoordinates(16.5943, -91.4256),
@@ -162,7 +162,7 @@ describe("CopyrightProviders", function() {
             expect(copyrights).to.have.deep.members([{ id: "Copyright A" }]);
         });
 
-        it("loads and parses copyrights for two layers", async function() {
+        it("loads and parses copyrights for two layers", async function () {
             const provider1 = new UrlCopyrightProvider(baseCopyrightUrl, "base");
             const geoBox = new GeoBox(
                 new GeoCoordinates(16.5943, -91.4256),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -46,10 +46,11 @@ const tmpPointDir = new THREE.Vector3(0, 0, 0);
 const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Math.PI)
 
 /**
- * Checks whether the distance of the text element to the camera plane meets threshold criterias.
+ * Checks whether the distance of the text element to the camera plane meets threshold criteria.
  *
  * @param textElement - The textElement of which the view distance will be checked, with coordinates
  * in world space.
+ * @param poiIndex - If TextElement is a line marker, the index into the line marker positions.
  * @param eyePos - The eye (or camera) position that will be used as reference to calculate
  * the distance.
  * @param eyeLookAt - The eye looking direction - normalized.
@@ -59,12 +60,13 @@ const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Mat
  */
 function checkViewDistance(
     textElement: TextElement,
+    poiIndex: number | undefined,
     eyePos: THREE.Vector3,
     eyeLookAt: THREE.Vector3,
     projectionType: ProjectionType,
     maxViewDistance: number
 ): number | undefined {
-    const textDistance = computeViewDistance(textElement, eyePos, eyeLookAt);
+    const textDistance = computeViewDistance(textElement, poiIndex, eyePos, eyeLookAt);
 
     if (projectionType !== ProjectionType.Spherical) {
         return textDistance <= maxViewDistance ? textDistance : undefined;
@@ -86,7 +88,7 @@ function checkViewDistance(
  * Computes distance of the specified text element to camera plane given with position and normal.
  *
  * The distance is measured as projection of the vector between `eyePosition` and text
- * eonto the `eyeLookAt` vector, so it actually computes the distance to plane that
+ * onto the `eyeLookAt` vector, so it actually computes the distance to plane that
  * contains `eyePosition` and is described with `eyeLookAt` as normal.
  *
  * @note Used for measuring the distances to camera, results in the metric that describes
@@ -96,6 +98,7 @@ function checkViewDistance(
  *
  * @param textElement - The textElement of which the view distance will be checked. It must have
  *                      coordinates in world space.
+ * @param poiIndex - If TextElement is a line marker, the index into the line marker positions.
  * @param eyePosition - The world eye coordinates used a reference position to calculate
  *                      the distance.
  * @param eyeLookAt - The eye looking direction or simply said projection plane normal.
@@ -103,6 +106,7 @@ function checkViewDistance(
  */
 export function computeViewDistance(
     textElement: TextElement,
+    poiIndex: number | undefined,
     eyePosition: THREE.Vector3,
     eyeLookAt: THREE.Vector3
 ): number {
@@ -111,10 +115,18 @@ export function computeViewDistance(
     // Compute the distances as the distance along plane normal.
     const path = textElement.path;
     if (path && path.length > 1) {
-        const viewDistance0 = pointToPlaneDistance(path[0], eyePosition, eyeLookAt);
-        const viewDistance1 = pointToPlaneDistance(path[path.length - 1], eyePosition, eyeLookAt);
+        if (poiIndex !== undefined && path && path.length > poiIndex) {
+            viewDistance = pointToPlaneDistance(path[poiIndex], eyePosition, eyeLookAt);
+        } else {
+            const viewDistance0 = pointToPlaneDistance(path[0], eyePosition, eyeLookAt);
+            const viewDistance1 = pointToPlaneDistance(
+                path[path.length - 1],
+                eyePosition,
+                eyeLookAt
+            );
 
-        viewDistance = Math.min(viewDistance0, viewDistance1);
+            viewDistance = Math.min(viewDistance0, viewDistance1);
+        }
     } else {
         viewDistance = pointToPlaneDistance(textElement.position, eyePosition, eyeLookAt);
     }
@@ -164,14 +176,13 @@ export enum PrePlacementResult {
 }
 
 const tmpPlacementPosition = new THREE.Vector3();
-const tmpPlacementBounds = new THREE.Box2();
 
 /**
  * Applies early rejection tests for a given text element meant to avoid trying to place labels
  * that are not visible, not ready, duplicates etc...
  * @param textElement - The Text element to check.
+ * @param poiIndex - If TextElement is a line marker, the index into the line marker positions
  * @param viewState - The view for which the text element will be placed.
- * @param viewCamera - The view's camera.
  * @param m_poiManager - To prepare pois for rendering.
  * @param maxViewDistance - If specified, text elements farther than this max distance will be
  *                          rejected.
@@ -180,8 +191,8 @@ const tmpPlacementBounds = new THREE.Box2();
  */
 export function checkReadyForPlacement(
     textElement: TextElement,
+    poiIndex: number | undefined,
     viewState: ViewState,
-    viewCamera: THREE.Camera,
     poiManager: PoiManager,
     maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
@@ -204,6 +215,7 @@ export function checkReadyForPlacement(
     // updatePoiFromPoiTable, since that function may change those values.
     if (
         !textElement.visible ||
+        viewState.zoomLevel === textElement.maxZoomLevel ||
         !MathUtils.isClamped(
             viewState.zoomLevel,
             textElement.minZoomLevel,
@@ -215,9 +227,15 @@ export function checkReadyForPlacement(
 
     viewDistance =
         maxViewDistance === undefined
-            ? computeViewDistance(textElement, viewState.worldCenter, viewState.lookAtVector)
+            ? computeViewDistance(
+                  textElement,
+                  poiIndex,
+                  viewState.worldCenter,
+                  viewState.lookAtVector
+              )
             : checkViewDistance(
                   textElement,
+                  poiIndex,
                   viewState.worldCenter,
                   viewState.lookAtVector,
                   viewState.projection.type,
@@ -235,6 +253,7 @@ export function checkReadyForPlacement(
  * Computes the offset for a point text accordingly to text alignment (and icon, if any).
  * @param textElement - The text element of which the offset will computed. It must be a point
  * label with [[layoutStyle]] and [[bounds]] already computed.
+ * @param textBounds - The text screen bounds.
  * @param placement - The relative anchor placement (may be different then original alignment).
  * @param scale - The scaling factor (due to distance, etc.).
  * @param env - The {@link @here/harp-datasource-protocol#Env} used
@@ -243,6 +262,7 @@ export function checkReadyForPlacement(
  */
 function computePointTextOffset(
     textElement: TextElement,
+    textBounds: THREE.Box2,
     placement: TextPlacement,
     scale: number,
     env: Env,
@@ -253,7 +273,6 @@ function computePointTextOffset(
             textElement.type === TextElementType.LineMarker
     );
     assert(textElement.layoutStyle !== undefined);
-    assert(textElement.bounds !== undefined);
 
     offset.x = textElement.xOffset;
     offset.y = textElement.yOffset;
@@ -261,23 +280,23 @@ function computePointTextOffset(
     switch (placement.h) {
         case HorizontalPlacement.Left:
             // Already accounts for any margin that is already applied to the text element bounds.
-            offset.x -= textElement.bounds!.max.x;
+            offset.x -= textBounds.max.x;
             break;
         case HorizontalPlacement.Right:
             // Account for any margin applied as above.
-            offset.x -= textElement.bounds!.min.x;
+            offset.x -= textBounds.min.x;
             break;
     }
     switch (placement.v) {
         case VerticalPlacement.Top:
-            offset.y -= textElement.bounds!.min.y;
+            offset.y -= textBounds.min.y;
             break;
         case VerticalPlacement.Center:
-            offset.y -= 0.5 * (textElement.bounds!.max.y + textElement.bounds!.min.y);
+            offset.y -= 0.5 * (textBounds.max.y + textBounds.min.y);
             break;
         case VerticalPlacement.Bottom:
             // Accounts for vertical margin that may be applied to the text bounds.
-            offset.y -= textElement.bounds!.max.y;
+            offset.y -= textBounds.max.y;
             break;
     }
 
@@ -341,6 +360,7 @@ function computePointTextOffset(
 }
 
 const tmpBox = new THREE.Box2();
+const tmpBounds = new THREE.Box2();
 const tmpBoxes: THREE.Box2[] = [];
 const tmpMeasurementParams: MeasurementParameters = {};
 const tmpCollisionBoxes: CollisionBox[] = [];
@@ -411,9 +431,6 @@ export function placeIcon(
  * @param env - The {@link @here/harp-datasource-protocol#Env} used
  *              to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
- * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
- * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
- * for newly placed (upcoming) label or `PlacementResult.Rejected` if the label was persistent.
  * @param outScreenPosition - The final label screen position after applying any offsets.
  * @param multiAnchor - The parameter decides if multi-anchor placement algorithm should be
  * used, be default [[false]] meaning try to place label using current alignment settings only.
@@ -495,7 +512,6 @@ function placePointLabelChoosingAnchor(
     outScreenPosition: THREE.Vector3
 ): PlacementResult {
     assert(labelState.element.layoutStyle !== undefined);
-
     const label = labelState.element;
 
     // Store label state - persistent or new label.
@@ -512,6 +528,7 @@ function placePointLabelChoosingAnchor(
     assert(matchIdx >= 0);
     // Will be true if all text placements are invisible.
     let allInvisible: boolean = true;
+
     // Iterate all placements starting from current one.
     for (let i = matchIdx; i < placementsNum + matchIdx; ++i) {
         const anchorPlacement = placements[i % placementsNum];
@@ -529,48 +546,27 @@ function placePointLabelChoosingAnchor(
             env,
             screenCollisions,
             !isLastPlacement,
-            outScreenPosition
+            tmpPlacementPosition
         );
 
-        // Store last successful (previous) placement coordinates in temp variables.
+        if (placementResult === PlacementResult.Ok) {
+            outScreenPosition.copy(tmpPlacementPosition);
+            return PlacementResult.Ok;
+        }
+        // Store last successful (previous frame) position even if it's now rejected (to fade out).
         if (isLastPlacement) {
-            assert(label.bounds !== undefined);
-            tmpPlacementPosition.copy(outScreenPosition);
-            tmpPlacementBounds.copy(label.bounds!);
+            outScreenPosition.copy(tmpPlacementPosition);
         }
 
-        // Check the text allocation
-        if (placementResult === PlacementResult.Invisible) {
-            // Persistent label out of screen or the new label that is colliding - next iteration.
-            continue;
-        } else {
-            // This placement is visible, but surely colliding.
-            allInvisible = false;
-        }
-
-        // If text rejected (label collides), proceed to test further placements.
-        if (placementResult === PlacementResult.Rejected) {
-            continue;
-        }
-
-        // Proper placement found.
-        return PlacementResult.Ok;
+        // Invisible = Persistent label out of screen or the new label that is colliding.
+        allInvisible = allInvisible && placementResult === PlacementResult.Invisible;
     }
-    // Revert recent screen position and bounds.
-    outScreenPosition.copy(tmpPlacementPosition);
-    label.bounds!.copy(tmpPlacementBounds);
-    // Revert back text canvas layout of the last placement.
-    // In case of label rejected this allows to fade out text in the last position.
-    applyTextPlacement(textCanvas, lastPlacement);
 
     return allInvisible
         ? // All text's placements out of the screen.
           PlacementResult.Invisible
-        : persistent
-        ? // All placements are either colliding or out of screen for persistent label.
-          PlacementResult.Rejected
-        : // No placement found for the new label.
-          PlacementResult.Invisible;
+        : // All placements are either colliding or out of screen .
+          PlacementResult.Rejected;
 }
 
 /**
@@ -583,9 +579,6 @@ function placePointLabelChoosingAnchor(
  * @param env - The {@link @here/harp-datasource-protocol#Env}
  *              used to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
- * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
- * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
- * or `PlacementResult.Rejected`.
  * @param outScreenPosition - The final label screen position after applying any offsets.
  * @returns `PlacementResult.Ok` if point label can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
@@ -632,9 +625,6 @@ function placePointLabelAtCurrentAnchor(
  * @param env - The {@link @here/harp-datasource-protocol#Env}
  *              used to evaluate technique attributes.
  * @param screenCollisions - Used to check collisions with other labels.
- * @param isRejected - Whether the label is already rejected (e.g. because its icon was rejected).
- * If `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible`
- * or `PlacementResult.Rejected`.
  * @param forceInvalidation - Set to true if text layout or other params has changed such as text
  * re-measurement is required and text buffer need to be invalidated.
  * @param outScreenPosition - The final label screen position after applying any offsets.
@@ -659,38 +649,38 @@ function placePointLabelAtAnchor(
     assert(label.glyphs !== undefined);
     assert(label.layoutStyle !== undefined);
 
-    const measureText = label.bounds === undefined || forceInvalidation;
-    if (label.bounds === undefined) {
-        label.bounds = new THREE.Box2();
-    }
+    const measureText = !label.bounds || forceInvalidation;
 
-    // Override label text layout (on TextCanvas) for measurements and text buffer creation.
-    applyTextPlacement(textCanvas, placement);
-
+    const labelBounds = measureText ? tmpBounds : label.bounds!;
     if (measureText) {
-        // Setup measurements parameters for textCanvas.measureText().
+        // Override text canvas layout style for measurement.
+        applyTextPlacement(textCanvas, placement);
+
         tmpMeasurementParams.outputCharacterBounds = undefined;
         tmpMeasurementParams.path = undefined;
         tmpMeasurementParams.pathOverflow = false;
         tmpMeasurementParams.letterCaseArray = label.glyphCaseArray!;
         // Compute label bounds according to layout settings.
-        textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
+        textCanvas.measureText(label.glyphs!, labelBounds, tmpMeasurementParams);
     }
 
     // Compute text offset from the anchor point
-    const textOffset = computePointTextOffset(label, placement, scale, env, tmpTextOffset);
-    textOffset.add(screenPosition);
+    const textOffset = computePointTextOffset(
+        label,
+        labelBounds,
+        placement,
+        scale,
+        env,
+        tmpTextOffset
+    ).add(screenPosition);
 
     // Update output screen position.
     outScreenPosition.set(textOffset.x, textOffset.y, labelState.renderDistance);
 
-    tmpBox.copy(label.bounds!);
     // Apply additional persistent margin, keep in mind that text bounds just calculated
     // are not (0, 0, w, h) based, so their coords usually are also non-zero.
     // TODO: Make the margin configurable
-    tmpBox.expandByVector(persistentPointLabelTextMargin);
-    tmpBox.translate(textOffset);
-
+    tmpBox.copy(labelBounds).expandByVector(persistentPointLabelTextMargin).translate(textOffset);
     tmpBox.getCenter(tmpCenter);
     tmpBox.getSize(tmpSize);
 
@@ -737,6 +727,10 @@ function placePointLabelAtAnchor(
     // re-created.
     if (measureText) {
         label.textBufferObject = undefined;
+        label.bounds = label.bounds ? label.bounds.copy(labelBounds) : labelBounds.clone();
+    } else {
+        // Override text canvas layout style for placement.
+        applyTextPlacement(textCanvas, placement);
     }
 
     // Save current placement in label state.

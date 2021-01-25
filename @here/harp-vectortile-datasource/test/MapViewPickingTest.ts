@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -29,7 +29,11 @@ import {
     TileLoaderState
 } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/lib/GeoJsonTiler";
-import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils/";
+import {
+    getTestResourceUrl,
+    silenceLoggingAroundFunction,
+    waitForEvent
+} from "@here/harp-test-utils/";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
@@ -44,7 +48,7 @@ import { GEOJSON_DATA, THEME } from "./resources/geoJsonData";
 
 declare const global: any;
 
-describe("MapView Picking", async function() {
+describe("MapView Picking", async function () {
     const inNodeContext = typeof window === "undefined";
     const tileKey = new TileKey(0, 0, 0);
 
@@ -72,7 +76,7 @@ describe("MapView Picking", async function() {
         return decodeTile;
     }
 
-    before(function() {
+    before(function () {
         if (inNodeContext) {
             const g = global as any;
             g.window = {
@@ -83,7 +87,11 @@ describe("MapView Picking", async function() {
             };
             g.navigator = {};
             g.requestAnimationFrame = (cb: (delta: number) => void) => {
-                return setTimeout(() => cb(15), 15);
+                return setTimeout(() => {
+                    silenceLoggingAroundFunction("TextElementsRenderer", () => {
+                        cb(15);
+                    });
+                }, 15);
             };
             g.cancelAnimationFrame = (id: any) => {
                 return clearTimeout(id);
@@ -135,6 +143,7 @@ describe("MapView Picking", async function() {
             getTilingScheme() {
                 return webMercatorTilingScheme;
             },
+            setLanguages() {},
             mapView: undefined
         } as any;
         fakeElevationRangeSource = {
@@ -166,7 +175,7 @@ describe("MapView Picking", async function() {
         } as any;
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         mapView = new MapView({
             canvas,
             decoderCount: 0,
@@ -181,9 +190,10 @@ describe("MapView Picking", async function() {
         });
 
         await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
-        sinon
-            .stub(mapView.textElementsRenderer, "renderText")
-            .callsFake((_camera: THREE.OrthographicCamera) => {});
+        if (mapView.textElementsRenderer.loading) {
+            await mapView.textElementsRenderer.waitLoaded();
+        }
+        sinon.stub(mapView.textElementsRenderer, "renderText").callsFake((_farPlane: number) => {});
 
         const geoJsonDataProvider = new GeoJsonDataProvider("italy_test", GEOJSON_DATA, {
             tiler: new GeoJsonTiler()
@@ -200,7 +210,7 @@ describe("MapView Picking", async function() {
         await mapView.addDataSource(geoJsonDataSource);
     });
 
-    after(function() {
+    after(function () {
         if (inNodeContext) {
             delete global.window;
             delete global.requestAnimationFrame;
@@ -209,7 +219,7 @@ describe("MapView Picking", async function() {
         }
     });
 
-    describe("Decoded tile tests", async function() {
+    describe("Decoded tile tests", async function () {
         it("Decoded tile is created", async () => {
             const decodeTile = await getDecodedTile();
 
@@ -257,7 +267,7 @@ describe("MapView Picking", async function() {
         });
     });
 
-    describe("Picking tests", async function() {
+    describe("Picking tests", async function () {
         const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
         const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
             .coordinates as number[][])[0];

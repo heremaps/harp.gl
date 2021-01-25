@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,8 +14,8 @@ import { MathUtils } from "../lib/math/MathUtils";
 
 const GEOCOORDS_EPSILON = 0.000001;
 
-describe("GeoBox", function() {
-    it("support antimeridian crossing geobox #1", function() {
+describe("GeoBox", function () {
+    it("support antimeridian crossing geobox #1", function () {
         const g = GeoBox.fromCoordinates(
             new GeoCoordinates(-10, 170),
             new GeoCoordinates(10, -160)
@@ -33,7 +33,7 @@ describe("GeoBox", function() {
         assert.approximately(g.latitudeSpan, 20, GEOCOORDS_EPSILON);
     });
 
-    it("support antimeridian crossing geobox #2", function() {
+    it("support antimeridian crossing geobox #2", function () {
         const auckland = new GeoCoordinates(-36.8, 174.7);
         const sanfrancisco = new GeoCoordinates(37.7, -122.6);
 
@@ -66,14 +66,14 @@ describe("GeoBox", function() {
         );
     });
 
-    it("clone is not affected by changes in original", function() {
+    it("clone is not affected by changes in original", function () {
         const original = new GeoBox(new GeoCoordinates(0, 0), new GeoCoordinates(1, 1));
         const clone = original.clone();
         expect(clone.southWest).not.equals(original.southWest);
         expect(clone.northEast).not.equals(original.northEast);
     });
 
-    it("contains works for non normalized coordinates", function() {
+    it("contains works for non normalized coordinates", function () {
         const g = GeoBox.fromCoordinates(
             new GeoCoordinates(-10, 170),
             new GeoCoordinates(10, -160)
@@ -96,8 +96,8 @@ describe("GeoBox", function() {
         assert.isFalse(g.contains(new GeoCoordinates(0, -510)));
     });
 
-    describe("GeoBox.center", function() {
-        it("center of zero-sized GeoBox", function() {
+    describe("GeoBox.center", function () {
+        it("center of zero-sized GeoBox", function () {
             const lat = 52.0;
             const lng = 0;
 
@@ -110,7 +110,7 @@ describe("GeoBox", function() {
             assert.strictEqual(geoBox.longitudeSpan, 0);
         });
 
-        it("center of zero-sized GeoBox created using center and extents", function() {
+        it("center of zero-sized GeoBox created using center and extents", function () {
             const lat = 52.0;
             const lng = 0;
 

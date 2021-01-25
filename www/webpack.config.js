@@ -1,9 +1,8 @@
 const fetch = require("node-fetch");
 const webpack = require("webpack");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 const ScriptExtHtmlWebpackPlugin = require("script-ext-html-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -22,7 +21,16 @@ const commonConfig = {
         rules: [
             {
                 test: /\.css$/,
-                use: [MiniCssExtractPlugin.loader, "css-loader"]
+                use:
+                    [{
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {
+                            publicPath: '..'
+                        }
+                    },
+                    {
+                        loader:"css-loader"
+                    }]
             },
             {
                 test: /\.(png|jpg)$/,
@@ -43,8 +51,11 @@ const commonConfig = {
     plugins: [
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
-            NODE_ENV: process.env.NODE_ENV || "development"
-        })
+            NODE_ENV: "development"
+        }),
+        new webpack.DefinePlugin({
+            'process.platform': JSON.stringify(process.platform)
+            }),
     ],
     externals: [
         {
@@ -54,12 +65,14 @@ const commonConfig = {
     performance: {
         hints: false
     },
-    mode: process.env.NODE_ENV || "development"
+    mode: process.env.NODE_ENV || "development",
+    cache: process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        }
+    }
 };
-
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    commonConfig.plugins.push(new HardSourceWebpackPlugin());
-}
 
 const mainConfig = merge(commonConfig, {
     entry: {

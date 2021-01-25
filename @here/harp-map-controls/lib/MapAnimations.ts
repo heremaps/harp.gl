@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -65,7 +65,7 @@ export abstract class CameraAnimation {
     /**
      * Tweening controller.
      */
-    protected tween?: TWEEN.Tween;
+    protected tween?: TWEEN.Tween<GeoCoordinates | Record<string, number>>;
 
     /**
      * `True` if animation is being played.
@@ -452,7 +452,7 @@ export class CameraPanAnimation extends CameraAnimation {
             })
             .onUpdate(({ latitude, longitude, altitude }) => {
                 this.mapView.geoCenter = new GeoCoordinates(latitude, longitude, altitude);
-                this.mapView.camera.position.z = altitude;
+                this.mapView.camera.position.z = altitude ?? 0;
             });
 
         this.tween.repeat(this.repeat);

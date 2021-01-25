@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -115,10 +115,7 @@ export function triangulateLine(
         if (i + 1 < N) {
             n.set(points[(i + 1) * 3], points[(i + 1) * 3 + 1], points[(i + 1) * 3 + 2]);
 
-            bt.copy(n)
-                .sub(p)
-                .normalize()
-                .cross(UNIT_Z);
+            bt.copy(n).sub(p).normalize().cross(UNIT_Z);
 
             averageBt.copy(bt);
 
@@ -130,26 +127,14 @@ export function triangulateLine(
                 if (useBevel) {
                     const inclineWidth = width / Math.cos(bt.angleTo(prevBt) / 2);
 
-                    p0.copy(bt)
-                        .add(prevBt)
-                        .normalize()
-                        .multiplyScalar(-inclineWidth)
-                        .add(p);
+                    p0.copy(bt).add(prevBt).normalize().multiplyScalar(-inclineWidth).add(p);
 
-                    p1.copy(prevBt)
-                        .multiplyScalar(width)
-                        .add(p);
+                    p1.copy(prevBt).multiplyScalar(width).add(p);
 
                     // p2 is used for "miter" connections
-                    p2.copy(bt)
-                        .add(prevBt)
-                        .normalize()
-                        .multiplyScalar(inclineWidth)
-                        .add(p);
+                    p2.copy(bt).add(prevBt).normalize().multiplyScalar(inclineWidth).add(p);
 
-                    p3.copy(bt)
-                        .multiplyScalar(width)
-                        .add(p);
+                    p3.copy(bt).multiplyScalar(width).add(p);
                 }
             }
 
@@ -169,26 +154,18 @@ export function triangulateLine(
                     p3.z
                 );
             } else {
-                p0.copy(averageBt)
-                    .multiplyScalar(-width)
-                    .add(p);
+                p0.copy(averageBt).multiplyScalar(-width).add(p);
 
-                p1.copy(averageBt)
-                    .multiplyScalar(width)
-                    .add(p);
+                p1.copy(averageBt).multiplyScalar(width).add(p);
 
                 vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
             }
 
             prevBt.copy(bt);
         } else {
-            p0.copy(prevBt)
-                .multiplyScalar(-width)
-                .add(p);
+            p0.copy(prevBt).multiplyScalar(-width).add(p);
 
-            p1.copy(prevBt)
-                .multiplyScalar(width)
-                .add(p);
+            p1.copy(prevBt).multiplyScalar(width).add(p);
 
             vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
         }

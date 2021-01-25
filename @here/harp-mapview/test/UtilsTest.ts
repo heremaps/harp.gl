@@ -1,12 +1,12 @@
-/* eslint-disable simple-import-sort/sort */
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { getProjectionName } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
     GeoBox,
@@ -18,16 +18,13 @@ import {
     sphereProjection,
     TileKey
 } from "@here/harp-geoutils";
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
+import * as THREE from "three";
 
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
-
-import { assert, expect } from "chai";
-import * as sinon from "sinon";
-import * as THREE from "three";
-import { getProjectionName } from "@here/harp-datasource-protocol";
-import { Camera, Vector3 } from "three";
 
 function setCamera(
     camera: THREE.Camera,
@@ -55,9 +52,9 @@ function setCamera(
     camera.updateMatrixWorld(true);
 }
 
-describe("MapViewUtils", function() {
+describe("MapViewUtils", function () {
     const EPS = 1e-8;
-    describe("zoomOnTargetPosition", function() {
+    describe("zoomOnTargetPosition", function () {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
@@ -128,7 +125,7 @@ describe("MapViewUtils", function() {
         });
     });
     [mercatorProjection, sphereProjection].forEach(projection => {
-        describe(`orbitAroundScreenPoint ${getProjectionName(projection)}`, function() {
+        describe(`orbitAroundScreenPoint ${getProjectionName(projection)}`, function () {
             const mapViewMock = {
                 maxZoomLevel: 20,
                 minZoomLevel: 1,
@@ -141,7 +138,7 @@ describe("MapViewUtils", function() {
             const target = new GeoCoordinates(52.5, 13.5);
             const tiltLimit = THREE.MathUtils.degToRad(45);
 
-            it("keeps look at target when orbiting around center", function() {
+            it("keeps look at target when orbiting around center", function () {
                 const target = new GeoCoordinates(52.5, 13.5);
                 setCamera(
                     mapView.camera,
@@ -183,7 +180,7 @@ describe("MapViewUtils", function() {
                 const { roll } = MapViewUtils.extractAttitude(mapView, mapView.camera);
                 expect(roll).to.be.closeTo(0, 1e-15);
             });
-            it("limits tilt when orbiting around center", function() {
+            it("limits tilt when orbiting around center", function () {
                 setCamera(
                     mapView.camera,
                     mapView.projection,
@@ -219,7 +216,7 @@ describe("MapViewUtils", function() {
                         : Number.EPSILON
                 );
             });
-            it("limits tilt when orbiting around screen point", function() {
+            it("limits tilt when orbiting around screen point", function () {
                 for (const startTilt of [0, 20, 45]) {
                     setCamera(
                         mapView.camera,
@@ -264,7 +261,7 @@ describe("MapViewUtils", function() {
                     }
                 }
             });
-            it("keeps rotation target when orbiting around screen point", function() {
+            it("keeps rotation target when orbiting around screen point", function () {
                 const offsetX = 0.2;
                 const offsetY = 0.2;
                 setCamera(
@@ -310,7 +307,7 @@ describe("MapViewUtils", function() {
             });
         });
     });
-    describe("calculateZoomLevelFromDistance", function() {
+    describe("calculateZoomLevelFromDistance", function () {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
@@ -320,7 +317,7 @@ describe("MapViewUtils", function() {
             pixelRatio: 1.0
         };
         const mapView = (mapViewMock as any) as MapView;
-        it("calculates zoom level", function() {
+        it("calculates zoom level", function () {
             let result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 0);
             expect(result).to.be.equal(20);
             result = MapViewUtils.calculateZoomLevelFromDistance(mapView, 1000000000000);
@@ -334,7 +331,7 @@ describe("MapViewUtils", function() {
             expect(result).to.be.closeTo(5.32, 0.05);
         });
 
-        it("snaps zoom level to ceiling integer if close enough to it", function() {
+        it("snaps zoom level to ceiling integer if close enough to it", function () {
             const eps = 1e-10;
             const result = MapViewUtils.calculateZoomLevelFromDistance(
                 mapView,
@@ -344,7 +341,7 @@ describe("MapViewUtils", function() {
         });
     });
 
-    it("converts target coordinates from XYZ to camera coordinates", function() {
+    it("converts target coordinates from XYZ to camera coordinates", function () {
         const xyzView = {
             zoom: 5,
             yaw: 3,
@@ -372,10 +369,10 @@ describe("MapViewUtils", function() {
         expect(cameraCoordinates.longitude).to.equal(-9.842237006382904);
     });
 
-    describe("converts zoom level to distance and distance to zoom level", function() {
+    describe("converts zoom level to distance and distance to zoom level", function () {
         let mapViewMock: any;
 
-        beforeEach(function() {
+        beforeEach(function () {
             mapViewMock = {
                 maxZoomLevel: 20,
                 minZoomLevel: 1,
@@ -388,7 +385,7 @@ describe("MapViewUtils", function() {
             };
         });
 
-        it("ensures that both functions are inverse", function() {
+        it("ensures that both functions are inverse", function () {
             mapViewMock.camera.matrixWorld.makeRotationX(THREE.MathUtils.degToRad(30));
 
             for (let zoomLevel = 1; zoomLevel <= 20; zoomLevel += 0.1) {
@@ -406,9 +403,9 @@ describe("MapViewUtils", function() {
         });
     });
 
-    describe("wrapGeoPointsToScreen", function() {
+    describe("wrapGeoPointsToScreen", function () {
         const epsilon = 1e-10;
-        it("works across antimeridian #1 - west based box", function() {
+        it("works across antimeridian #1 - west based box", function () {
             const fitted = MapViewUtils.wrapGeoPointsToScreen([
                 new GeoCoordinates(10, -170),
                 new GeoCoordinates(10, 170),
@@ -418,7 +415,7 @@ describe("MapViewUtils", function() {
             assert.closeTo(fitted[1].longitude, -190, epsilon);
             assert.closeTo(fitted[2].longitude, -170, epsilon);
         });
-        it("works across antimeridian #2 - east based box", function() {
+        it("works across antimeridian #2 - east based box", function () {
             const fitted = MapViewUtils.wrapGeoPointsToScreen([
                 new GeoCoordinates(10, 170),
                 new GeoCoordinates(10, -170),
@@ -428,7 +425,7 @@ describe("MapViewUtils", function() {
             assert.closeTo(fitted[1].longitude, 190, epsilon);
             assert.closeTo(fitted[2].longitude, 170, epsilon);
         });
-        it("works across antimeridian #3 - east based box v2", function() {
+        it("works across antimeridian #3 - east based box v2", function () {
             const fitted = MapViewUtils.wrapGeoPointsToScreen([
                 new GeoCoordinates(10, 170),
                 new GeoCoordinates(10, -170),
@@ -440,7 +437,7 @@ describe("MapViewUtils", function() {
             assert.closeTo(fitted[2].longitude, 170, epsilon);
             assert.closeTo(fitted[3].longitude, 181, epsilon);
         });
-        it("works across antimeridian #4 - bering sea", function() {
+        it("works across antimeridian #4 - bering sea", function () {
             // sample shape - polygons enclosing bering sea
             // naive GeoBox would have center lon~=0, we need to center around _real_ center
             // which is in bering sea center which has lon ~=180 (or -180)
@@ -460,7 +457,7 @@ describe("MapViewUtils", function() {
         });
     });
 
-    it("calculates horizontal and vertical fov", function() {
+    it("calculates horizontal and vertical fov", function () {
         const vFov = 60;
         const hFov = THREE.MathUtils.radToDeg(
             MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.MathUtils.degToRad(vFov), 0.9)
@@ -471,7 +468,7 @@ describe("MapViewUtils", function() {
         expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
     });
 
-    it("estimate size of world with one cube", async function() {
+    it("estimate size of world with one cube", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -483,7 +480,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(0);
     });
 
-    it("estimate size of world with one cube (BufferGeometry)", async function() {
+    it("estimate size of world with one cube (BufferGeometry)", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
@@ -496,7 +493,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(1584);
     });
 
-    it("estimate size of world with two cubes that share the geometry", async function() {
+    it("estimate size of world with two cubes that share the geometry", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
@@ -511,7 +508,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(1584); // see previous test
     });
 
-    it("estimate size of world with 1000 cubes (BufferGeometry)", async function(this: Mocha.Context) {
+    it("estimate size of world with 1000 cubes (BufferGeometry)", async function (this: Mocha.Context) {
         this.timeout(4000);
         const scene: THREE.Scene = new THREE.Scene();
         for (let i = 0; i < 1000; i++) {
@@ -527,7 +524,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(1584000); // see previous test: 1584 * 1000
     });
 
-    it("estimate size of world with single point", async function() {
+    it("estimate size of world with single point", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray: THREE.Vector3[] = [new THREE.Vector3(0, 1, 0)];
         const geometry = new THREE.Geometry().setFromPoints(vertexArray);
@@ -540,7 +537,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(0);
     });
 
-    it("estimate size of world with 6 points", async function() {
+    it("estimate size of world with 6 points", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray: THREE.Vector3[] = [
             new THREE.Vector3(0, 0, 0),
@@ -560,7 +557,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(0);
     });
 
-    it("estimate size of world with 6 points (BufferedGeometry)", async function() {
+    it("estimate size of world with 6 points (BufferedGeometry)", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray = new Array<THREE.Vector3>(6).fill(new THREE.Vector3());
         const bufferGeometry = new THREE.BufferGeometry().setFromPoints(vertexArray);
@@ -573,7 +570,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(72); // 6*3*4 bytes - buffered data
     });
 
-    it("estimate size of world with 6 points making circle", async function() {
+    it("estimate size of world with 6 points making circle", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.CircleGeometry(1, 6);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -585,7 +582,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(0);
     });
 
-    it("estimate size of world with line between 2 points", async function() {
+    it("estimate size of world with line between 2 points", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray: THREE.Vector3[] = [
             new THREE.Vector3(0, 0, 0),
@@ -601,7 +598,7 @@ describe("MapViewUtils", function() {
         expect(objSize.gpuSize).to.be.equal(0);
     });
 
-    it("estimate size of world with line between 2 points (BufferedGeometry)", async function() {
+    it("estimate size of world with line between 2 points (BufferedGeometry)", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray: THREE.Vector3[] = [
             new THREE.Vector3(0, 0, 0),
@@ -621,8 +618,8 @@ describe("MapViewUtils", function() {
         { projName: "mercator", projection: mercatorProjection },
         { projName: "sphere", projection: sphereProjection }
     ]) {
-        describe(`${projName} projection`, function() {
-            describe("getTargetAndDistance", function() {
+        describe(`${projName} projection`, function () {
+            describe("getTargetAndDistance", function () {
                 const elevationProvider = ({} as any) as ElevationProvider;
                 let sandbox: sinon.SinonSandbox;
                 let camera: THREE.Camera;
@@ -632,13 +629,13 @@ describe("MapViewUtils", function() {
                     setCamera(camera, projection, geoTarget, 0, 0, 1e6);
                 }
 
-                beforeEach(function() {
+                beforeEach(function () {
                     sandbox = sinon.createSandbox();
                     camera = new THREE.PerspectiveCamera();
                     resetCamera();
                 });
 
-                it("camera target and distance are offset by elevation", function() {
+                it("camera target and distance are offset by elevation", function () {
                     elevationProvider.getHeight = sandbox.stub().returns(0);
 
                     const resultNoElevation = MapViewUtils.getTargetAndDistance(
@@ -669,7 +666,7 @@ describe("MapViewUtils", function() {
                     );
                 });
 
-                it("indicates whether the computation was final or not", function() {
+                it("indicates whether the computation was final or not", function () {
                     elevationProvider.getHeight = sandbox.stub().returns(undefined);
 
                     const res1 = MapViewUtils.getTargetAndDistance(
@@ -696,7 +693,7 @@ describe("MapViewUtils", function() {
                 });
             });
 
-            describe("constrainTargetAndDistanceToViewBounds", function() {
+            describe("constrainTargetAndDistanceToViewBounds", function () {
                 const camera: THREE.Camera = new THREE.PerspectiveCamera(undefined, 1);
                 const mapViewMock = {
                     maxZoomLevel: 20,
@@ -713,7 +710,7 @@ describe("MapViewUtils", function() {
                 };
                 const mapView = (mapViewMock as any) as MapView;
 
-                it("target and distance are unchanged when no bounds set", function() {
+                it("target and distance are unchanged when no bounds set", function () {
                     const geoTarget = GeoCoordinates.fromDegrees(0, 0);
                     const worldTarget = mapView.projection.projectPoint(
                         geoTarget,
@@ -731,7 +728,7 @@ describe("MapViewUtils", function() {
                     expect(constrained.distance).equals(distance);
                 });
 
-                it("target and distance are unchanged when view within bounds", function() {
+                it("target and distance are unchanged when view within bounds", function () {
                     const geoTarget = GeoCoordinates.fromDegrees(0, 0);
                     const geoBounds = new GeoBox(
                         GeoCoordinates.fromDegrees(-50, -50),
@@ -760,7 +757,7 @@ describe("MapViewUtils", function() {
                     expect(constrained.distance).equals(distance);
                 });
 
-                it("target and distance are constrained when camera is too far", function() {
+                it("target and distance are constrained when camera is too far", function () {
                     const tilt = 0;
                     const heading = 0;
                     const geoTarget = GeoCoordinates.fromDegrees(0, 0);
@@ -809,7 +806,7 @@ describe("MapViewUtils", function() {
                     expect(THREE.MathUtils.radToDeg(newTilt)).to.be.closeTo(tilt, 1e-3);
                 });
 
-                it("target and distance are constrained if target is out of bounds", function() {
+                it("target and distance are constrained if target is out of bounds", function () {
                     const tilt = 50;
                     const heading = 10;
                     const geoTarget = GeoCoordinates.fromDegrees(10.1, 10);
@@ -854,8 +851,8 @@ describe("MapViewUtils", function() {
     }
 });
 
-describe("tile-offset#Utils", function() {
-    it("test getKeyForTileKeyAndOffset and extractOffsetAndMortonKeyFromKey", async function() {
+describe("tile-offset#Utils", function () {
+    it("test getKeyForTileKeyAndOffset and extractOffsetAndMortonKeyFromKey", async function () {
         // This allows 8 offsets to be stored, -4 -> 3, we test also outside this range
         const bitshift = 3;
         const offsets = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];

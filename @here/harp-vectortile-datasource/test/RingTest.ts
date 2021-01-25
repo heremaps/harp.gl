@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,7 +18,7 @@ import { Ring } from "../lib/Ring";
 
 const DEFAULT_EXTENTS = 4 * 1024;
 
-describe("Ring", function() {
+describe("Ring", function () {
     describe("Empty ring", () => {
         it("Defaults of empty ring", () => {
             const ring = new Ring([]);

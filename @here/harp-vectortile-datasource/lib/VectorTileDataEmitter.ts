@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -264,14 +264,14 @@ export class VectorTileDataEmitter {
      *
      * @param layer - Tile's layer to be processed.
      * @param extents - Tile's layer extents.
-     * @param geometry - The current feature containing the main geometry.
+     * @param geometry - The feature geometry in local webMercator coordinates.
      * @param env - The [[MapEnv]] containing the environment information for the map.
      * @param techniques - The array of [[Technique]] that will be applied to the geometry.
      */
     processPointFeature(
         layer: string,
         extents: number,
-        geometry: THREE.Vector2[],
+        geometry: THREE.Vector3[],
         context: AttrEvaluationContext,
         techniques: IndexedTechnique[]
     ): void {
@@ -808,30 +808,31 @@ export class VectorTileDataEmitter {
                 isFilled ||
                 isStandard ||
                 (isShaderTechnique(technique) && technique.primitive === "mesh");
+
             const computeTexCoords = this.getComputeTexCoordsFunc(technique, objectBounds);
+
+            const shouldClipPolygons = isPolygon && !isExtruded;
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
 
                 for (const outline of polygon.rings) {
                     let coords = outline;
-                    let clippedPointIndices: Set<number> | undefined;
 
                     // disable clipping for the polygon geometries
                     // rendered using the extruded-polygon technique.
                     // We can't clip these polygons for now because
                     // otherwise we could break the current assumptions
                     // used to add oultines around the extruded geometries.
-                    if (isPolygon && !isExtruded) {
-                        const shouldClipPolygon = coords.some(
+                    if (shouldClipPolygons) {
+                        // quick test to avoid clipping if all the coords
+                        // of the current polygon are inside the tile bounds.
+                        const hasCoordsOutsideTileBounds = coords.some(
                             p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
                         );
 
-                        if (shouldClipPolygon) {
+                        if (hasCoordsOutsideTileBounds) {
                             coords = clipPolygon(coords, extents);
-                            clippedPointIndices = Ring.computeClippedPointIndices(coords, outline);
-                        } else {
-                            clippedPointIndices = new Set();
                         }
                     }
 
@@ -845,7 +846,7 @@ export class VectorTileDataEmitter {
                         textureCoords = coords.map(coord => computeTexCoords(coord, extents));
                     }
 
-                    rings.push(new Ring(coords, textureCoords, extents, clippedPointIndices));
+                    rings.push(new Ring(coords, textureCoords, extents, shouldClipPolygons));
                 }
 
                 if (rings.length === 0) {
@@ -1160,10 +1161,10 @@ export class VectorTileDataEmitter {
 
             case TextureCoordinateType.EquirectangularSpace:
                 return (tilePos: THREE.Vector2, extents: number): THREE.Vector2 => {
-                    const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
+                    const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV3r);
                     const uv = normalizedEquirectangularProjection.reprojectPoint(
                         webMercatorProjection,
-                        new THREE.Vector3(worldPos.x, worldPos.y, 0)
+                        worldPos
                     );
                     return new THREE.Vector2(uv.x, uv.y);
                 };
@@ -1173,8 +1174,8 @@ export class VectorTileDataEmitter {
                     return undefined;
                 }
                 return (tilePos: THREE.Vector2, extents: number): THREE.Vector2 => {
-                    const uv = new THREE.Vector2();
-                    tile2world(extents, this.m_decodeInfo, tilePos, false, uv);
+                    const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV3r);
+                    const uv = new THREE.Vector2(worldPos.x, worldPos.y);
                     if (objectBounds) {
                         uv.x -= objectBounds.min.x;
                         uv.y -= objectBounds.min.y;
@@ -1304,9 +1305,17 @@ export class VectorTileDataEmitter {
         // computation and extrusion).
         height = Math.max(floorHeight + ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT, height);
 
-        const styleSetConstantHeight = getOptionValue(
+        const tileLevel = this.m_decodeInfo.tileKey.level;
+
+        const SCALED_EXTRUSION_MIN_STORAGE_LEVEL = 12;
+
+        // Unless explicitly defined do not apply the projection
+        // scale factor to convert meters to world space units
+        // if the tile's level is less than `SCALED_EXTRUSION_MIN_STORAGE_LEVEL`.
+        const styleSetConstantHeight = evaluateTechniqueAttr(
+            context,
             extrudedPolygonTechnique.constantHeight,
-            false
+            tileLevel < SCALED_EXTRUSION_MIN_STORAGE_LEVEL
         );
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
@@ -1446,7 +1455,7 @@ export class VectorTileDataEmitter {
                                 this.m_decodeInfo,
                                 tmpV2.set(vertices[i], vertices[i + 1]),
                                 true,
-                                tmpV2r
+                                tmpV3r
                             );
                             positionArray.push(worldPos.x, worldPos.y, 0);
                             if (texCoordType !== undefined) {
@@ -1508,7 +1517,7 @@ export class VectorTileDataEmitter {
                             const tilePos = world2tile(
                                 extents,
                                 this.m_decodeInfo,
-                                tmpV2.set(posAttr.array[i], posAttr.array[i + 1]),
+                                tmpV3.set(posAttr.array[i], posAttr.array[i + 1], 0),
                                 true,
                                 tmpV2r
                             );

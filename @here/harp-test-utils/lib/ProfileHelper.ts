@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -277,7 +277,7 @@ async function runAndMeasureGc(testFun: () => void): Promise<{ gcTime: number | 
     // For some reason, in order to get `gc` entries, we need to force async flow before
     // disconnecting ...
     // ... and doesn't work with manually created promises, so we need to poll.
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
         const poll = () => {
             if (perfCountersCollected) {
                 resolve();
@@ -586,14 +586,14 @@ export function countCalls(): any {
     if (fun !== undefined) {
         // classic functional composition
         // const foo = countCalls(function foo() { })
-        return function(this: any, ...args: any[]) {
+        return function (this: any, ...args: any[]) {
             countCall(name);
             return fun!.call(this, args);
         };
     }
 
     // typescript member function decorator
-    return function(this: any, target: any, key: string, descriptor: PropertyDescriptor) {
+    return function (this: any, target: any, key: string, descriptor: PropertyDescriptor) {
         if (descriptor === undefined) {
             descriptor = Object.getOwnPropertyDescriptor(target, key)!;
         }

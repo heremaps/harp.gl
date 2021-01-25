@@ -16,9 +16,9 @@
         "test": "exit 0",
         "prebuild": "node scripts/postinstall.js",
         "build": "webpack",
-        "start": "webpack-dev-server",
+        "start": "webpack serve",
         "publish-html": "node scripts/publish-html.js",
-        "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
+        "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true NODE_ENV=production webpack"
     },
     "author": {
         "name": "HERE Europe B.V.",
@@ -42,25 +42,24 @@
         "@here/harp-vectortile-datasource": "^0.21.1",
         "@here/harp-webtile-datasource": "^0.21.1",
         "@types/dat.gui": "^0.7.1",
-        "@types/highlight.js": "^9.12.4",
         "@types/long": "^4.0.1",
-        "copy-webpack-plugin": "^6.0.3",
+        "copy-webpack-plugin": "^7.0.0",
         "cross-env": "^7.0.2",
-        "css-loader": "^3.5.3",
+        "css-loader": "^5.0.1",
         "dat.gui": "^0.7.7",
-        "highlight.js": "^10.0.3",
-        "html-webpack-plugin": "^4.3.0",
+        "highlight.js": "^10.4.1",
+        "html-webpack-plugin": "^5.0.0-alpha.14",
         "ncp": "^2.0.0",
         "stats.js": "^0.17.0",
-        "style-loader": "^1.2.1",
+        "style-loader": "^2.0.0",
         "suncalc": "^1.8.0",
-        "three": "^0.120.1",
-        "ts-loader": "^7.0.5",
-        "typescript": "^3.9.3",
-        "webpack": "^4.43.0",
-        "webpack-cli": "^3.3.11",
+        "three": "^0.124.0",
+        "ts-loader": "^8.0.7",
+        "typescript": "^4.1.2",
+        "webpack-cli": "^4.3.1",
         "webpack-dev-server": "^3.11.0",
-        "webpack-merge": "^4.1.1"
+        "webpack-merge": "^5.7.3",
+        "webpack": "^5.12.3"
     },
     "repository": {
         "type": "git",
@@ -69,5 +68,8 @@
     },
     "publishConfig": {
         "access": "public"
+    },
+    "dependencies": {
+        "@turf/turf": "^5.1.6"
     }
 }

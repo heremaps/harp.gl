@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,14 +13,15 @@
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import { expect } from "chai";
 
+import { ImageItem } from "../lib/image/Image";
 import { MipMapGenerator } from "../lib/image/MipMapGenerator";
 
 const isNode = typeof window === "undefined";
 
-describe("MipMapGenerator", function() {
+describe("MipMapGenerator", function () {
     let imageData: ImageData;
     let imageBitmap: ImageBitmap;
-    before(async function() {
+    before(async function () {
         if (!isNode) {
             const imageUrl = getTestResourceUrl(
                 "@here/harp-mapview",
@@ -50,20 +51,18 @@ describe("MipMapGenerator", function() {
         }
     });
 
-    describe("generateTextureAtlasMipMap", function() {
+    describe("generateTextureAtlasMipMap", function () {
         if (isNode) {
-            it("throws an error in node context", function() {
+            it("throws an error in node context", function () {
                 const mipMapGenerator = new MipMapGenerator();
                 expect(() => mipMapGenerator.generateTextureAtlasMipMap({} as any)).to.throw;
             });
         } else {
-            it("creates mipmaps from ImageData", function() {
+            it("creates mipmaps from ImageData", function () {
                 const mipMapGenerator = new MipMapGenerator();
-                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap({
-                    url: "/test.png",
-                    imageData,
-                    loaded: true
-                });
+                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                    new ImageItem("/test.png", imageData)
+                );
 
                 expect(mipMaps).to.have.length(7);
                 for (let level = 0; level < mipMaps.length; ++level) {
@@ -77,13 +76,11 @@ describe("MipMapGenerator", function() {
                 }
             });
 
-            it("creates mipmaps from ImageBitmap", function() {
+            it("creates mipmaps from ImageBitmap", function () {
                 const mipMapGenerator = new MipMapGenerator();
-                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap({
-                    url: "/test.png",
-                    imageData: imageBitmap,
-                    loaded: true
-                });
+                const mipMaps = mipMapGenerator.generateTextureAtlasMipMap(
+                    new ImageItem("/test.png", imageBitmap)
+                );
                 expect(mipMaps).to.have.length(7);
                 for (let level = 0; level < mipMaps.length; ++level) {
                     const size = Math.pow(2, 6 - level);

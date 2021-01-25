@@ -4,6 +4,11 @@ node_js:
   - "12"
 cache:
   yarn: true
+  directories:
+    - "node_modules/.cache"
+
+git:
+  depth: false
 
 addons:
   chrome: stable

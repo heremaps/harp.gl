@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -31,9 +31,7 @@ export class ImageVectorDecoderConstructor implements ImageDecoderConstructor {
         const fileBuffer: Buffer = await FileSystem.readFile(filePath);
         const resize = this.targetWidth !== 0 && this.targetHeight !== 0;
         const png = resize
-            ? sharp(fileBuffer)
-                  .resize({ width: this.targetWidth, height: this.targetHeight })
-                  .png()
+            ? sharp(fileBuffer).resize({ width: this.targetWidth, height: this.targetHeight }).png()
             : sharp(fileBuffer).png();
         const bitmap: Jimp = await Jimp.read(await png.toBuffer());
         return new ImageVectorDecoder(fileBuffer, bitmap);
@@ -156,7 +154,7 @@ class ImageVectorEncoder implements ImageEncoder {
                         if (err) {
                             reject(new Error("Failed to write and image: " + filePath));
                         } else {
-                            resolve();
+                            resolve(undefined);
                         }
                     });
                 }

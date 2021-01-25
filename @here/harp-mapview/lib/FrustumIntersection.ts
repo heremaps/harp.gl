@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -359,7 +359,15 @@ export class FrustumIntersection {
 
         return {
             area: objectSize * objectSize,
-            distance: projectedPoint.z / projectedPoint.w
+            //Dividing by w means we loose information for whether the point is behind the camera
+            //(i.e. it is in front of the near plane) or beyond the far plane, hence we first clamp
+            //to [-1, 1] range, before doing the division.
+            distance:
+                projectedPoint.z <= -projectedPoint.w
+                    ? -1
+                    : projectedPoint.z >= projectedPoint.w
+                    ? 1
+                    : projectedPoint.z / projectedPoint.w
         };
     }
 

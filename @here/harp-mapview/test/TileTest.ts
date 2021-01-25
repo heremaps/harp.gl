@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,7 @@ import {
     TileKey,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { TaskQueue } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
@@ -60,33 +61,34 @@ function createFakeTextElement(): TextElement {
     const priority = 0;
     return new TextElement("fake", new THREE.Vector3(), {}, {}, priority);
 }
-describe("Tile", function() {
+describe("Tile", function () {
     const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
     let stubDataSource: any;
     let mapView: any;
     let sandbox: any;
 
-    before(function() {
+    before(function () {
         sandbox = sinon.createSandbox();
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         stubDataSource = new TileTestStubDataSource({ name: "test-data-source" });
         mapView = {
             taskQueue: new TaskQueue({
                 groups: [TileTaskGroups.CREATE, TileTaskGroups.FETCH_AND_DECODE]
             }),
             projection: mercatorProjection,
-            frameNumber: 1
+            frameNumber: 1,
+            visibleTileSet: { disposeTile: () => {} } as any
         } as MapView;
         stubDataSource.attach(mapView);
     });
 
-    afterEach(function() {
+    afterEach(function () {
         sandbox.restore();
     });
 
-    it("set empty decoded tile forces hasGeometry to be true", function() {
+    it("set empty decoded tile forces hasGeometry to be true", function () {
         const tile = new Tile(stubDataSource, tileKey);
         const decodedTile: DecodedTile = {
             techniques: [],
@@ -96,7 +98,7 @@ describe("Tile", function() {
         assert(tile.hasGeometry);
         expect(tile.decodedTile).to.be.equal(decodedTile);
     });
-    it("set decoded tile with text only forces hasGeometry to be true", function() {
+    it("set decoded tile with text only forces hasGeometry to be true", function () {
         const tile = new Tile(stubDataSource, tileKey);
         const decodedTile: DecodedTile = {
             techniques: [],
@@ -109,7 +111,8 @@ describe("Tile", function() {
                         type: "float",
                         itemCount: 1000
                     },
-                    texts: new Array<number>(1000)
+                    texts: new Array<number>(1000),
+                    stringCatalog: new Array<undefined>(1000)
                 }
             ]
         };
@@ -118,8 +121,8 @@ describe("Tile", function() {
         expect(tile.decodedTile).to.be.equal(decodedTile);
     });
 
-    describe("Text elements", function() {
-        it("addTextElement to changed tile does not recreate text group", function() {
+    describe("Text elements", function () {
+        it("addTextElement to changed tile does not recreate text group", function () {
             const tile = new Tile(stubDataSource, tileKey);
             tile.addTextElement(createFakeTextElement());
 
@@ -132,7 +135,7 @@ describe("Tile", function() {
             expect(newGroup).to.equal(oldGroup);
         });
 
-        it("addTextElement to unchanged tile recreates text group", function() {
+        it("addTextElement to unchanged tile recreates text group", function () {
             const tile = new Tile(stubDataSource, tileKey);
             tile.addTextElement(createFakeTextElement());
             tile.textElementsChanged = false;
@@ -147,7 +150,7 @@ describe("Tile", function() {
             assert.isTrue(tile.textElementsChanged);
         });
 
-        it("removeTextElement from changed tile does not recreate text group", function() {
+        it("removeTextElement from changed tile does not recreate text group", function () {
             const tile = new Tile(stubDataSource, tileKey);
             tile.addTextElement(createFakeTextElement());
             const textElement = createFakeTextElement();
@@ -164,7 +167,7 @@ describe("Tile", function() {
             expect(newGroup).to.equal(oldGroup);
         });
 
-        it("removeTextElement from unchanged tile recreates text group", function() {
+        it("removeTextElement from unchanged tile recreates text group", function () {
             const tile = new Tile(stubDataSource, tileKey);
             tile.addTextElement(createFakeTextElement());
             const textElement = createFakeTextElement();
@@ -181,7 +184,7 @@ describe("Tile", function() {
             assert.isTrue(tile.textElementsChanged);
         });
 
-        it("clearTextElements from empty tile does nothing", function() {
+        it("clearTextElements from empty tile does nothing", function () {
             const tile = new Tile(stubDataSource, tileKey);
             assert.isFalse(tile.textElementsChanged);
 
@@ -195,7 +198,7 @@ describe("Tile", function() {
             assert.isTrue(tile.textElementsChanged);
         });
 
-        it("clearTextElements from non-empty tile marks it as changed", function() {
+        it("clearTextElements from non-empty tile marks it as changed", function () {
             const tile = new Tile(stubDataSource, tileKey);
             tile.addTextElement(createFakeTextElement());
             expect(tile.textElementGroups.count()).to.equal(1);
@@ -205,9 +208,22 @@ describe("Tile", function() {
             expect(tile.textElementGroups.count()).to.equal(0);
             assert.isTrue(tile.textElementsChanged);
         });
+
+        it("dispose diposes of text elements", function () {
+            const tile = new Tile(stubDataSource, tileKey);
+            const textElement = createFakeTextElement();
+            const disposeStub = sinon.stub(textElement, "dispose");
+            tile.addTextElement(textElement);
+            expect(tile.textElementGroups.count()).to.equal(1);
+
+            tile.dispose();
+
+            disposeStub.called;
+            expect(tile.textElementGroups.count()).to.equal(0);
+        });
     });
 
-    it("setting skipping will cause willRender to return false", function() {
+    it("setting skipping will cause willRender to return false", function () {
         const tile = new Tile(stubDataSource, tileKey);
         tile.skipRendering = true;
         expect(tile.willRender(0)).is.false;
@@ -215,8 +231,8 @@ describe("Tile", function() {
         expect(tile.willRender(0)).is.true;
     });
 
-    describe("Elevation", function() {
-        it("default tile min/max elevation and max geometry height are 0", function() {
+    describe("Elevation", function () {
+        it("default tile min/max elevation and max geometry height are 0", function () {
             const tile = new Tile(stubDataSource, tileKey);
             const oldGeoBox = tile.geoBox.clone();
             const oldBBox = tile.boundingBox.clone();
@@ -227,7 +243,7 @@ describe("Tile", function() {
             expect(tile.boundingBox).deep.equals(oldBBox);
         });
 
-        it("elevationRange setter does not elevate bbox if maxGeometryHeight is not set", function() {
+        it("elevationRange setter does not elevate bbox if maxGeometryHeight is not set", function () {
             const tile = new Tile(stubDataSource, tileKey);
             const oldBBox = tile.boundingBox.clone();
 
@@ -243,7 +259,7 @@ describe("Tile", function() {
             expect(tile.boundingBox).deep.equals(tile.decodedTile.boundingBox);
         });
 
-        it("elevationRange setter elevates bbox if maxGeometryHeight is set", function() {
+        it("elevationRange setter elevates bbox if maxGeometryHeight is set", function () {
             const tile = new Tile(stubDataSource, tileKey);
             const minElevation = 30;
             const maxElevation = 50;
@@ -261,7 +277,7 @@ describe("Tile", function() {
             expect(tile.boundingBox).deep.equals(expectedBBox);
         });
 
-        it("elevationRange setter elevates bbox if minGeometryHeight is set", function() {
+        it("elevationRange setter elevates bbox if minGeometryHeight is set", function () {
             const tile = new Tile(stubDataSource, tileKey);
             const minElevation = 30;
             const maxElevation = 50;
@@ -279,7 +295,7 @@ describe("Tile", function() {
             expect(tile.boundingBox).deep.equals(expectedBBox);
         });
 
-        it("decodedTile setter sets decoded tile bbox if defined but does not elevate it", function() {
+        it("decodedTile setter sets decoded tile bbox if defined but does not elevate it", function () {
             const key = new TileKey(5, 5, 5);
             const tile = new Tile(stubDataSource, key);
             const expectedGeoBox = tile.dataSource.getTilingScheme().getGeoBox(key);
@@ -303,7 +319,7 @@ describe("Tile", function() {
             expect(tile.boundingBox).deep.equals(expectedBBox);
         });
 
-        it("decodedTile setter elevates bbox with decoded maxGeometryHeight if defined", function() {
+        it("decodedTile setter elevates bbox with decoded maxGeometryHeight if defined", function () {
             const tile = new Tile(stubDataSource, tileKey);
             const minElevation = 500;
             const maxElevation = 1000;
@@ -322,19 +338,21 @@ describe("Tile", function() {
         });
     });
 
-    describe("isVisible", function() {
-        it("doesn't throw on isVisible if not attached to a MapView", function() {
+    describe("isVisible", function () {
+        it("doesn't throw on isVisible if not attached to a MapView", function () {
             const tile = new Tile(stubDataSource, tileKey);
             mapView.frameNumber = 2;
             tile.frameNumLastRequested = 2;
             expect(tile.isVisible).not.throw;
             expect(tile.isVisible).is.true;
             stubDataSource.detach(mapView as MapView);
-            expect(tile.isVisible).not.throw;
-            expect(tile.isVisible).is.false;
+            silenceLoggingAroundFunction("Tile", () => {
+                expect(tile.isVisible).not.throw;
+                expect(tile.isVisible).is.false;
+            });
         });
 
-        it("cancels geometry loader if tile is made invisible", function() {
+        it("cancels geometry loader if tile is made invisible", function () {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
             const geometryLoader = (tile as any).m_tileGeometryLoader;
@@ -345,7 +363,7 @@ describe("Tile", function() {
             expect(cancelSpy.called).be.true;
         });
 
-        it("does not cancel geometry loader if tile is made visible", function() {
+        it("does not cancel geometry loader if tile is made visible", function () {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
             const geometryLoader = (tile as any).m_tileGeometryLoader;
@@ -357,14 +375,14 @@ describe("Tile", function() {
         });
     });
 
-    describe("updateGeometry", function() {
-        it("returns false immediately if tile does not use geometry loader", function() {
+    describe("updateGeometry", function () {
+        it("returns false immediately if tile does not use geometry loader", function () {
             stubDataSource.useGeometryLoader = false;
             const tile = stubDataSource.getTile(tileKey);
             expect(tile.updateGeometry()).be.false;
         });
 
-        it("does not update geometry loader if tile loader is not done", function() {
+        it("does not update geometry loader if tile loader is not done", function () {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
             const geometryLoader = (tile as any).m_tileGeometryLoader;
@@ -375,7 +393,7 @@ describe("Tile", function() {
             expect(updateSpy.called).be.false;
         });
 
-        it("finishes geometry loader if decoded tile is empty", function() {
+        it("finishes geometry loader if decoded tile is empty", function () {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
             const geometryLoader: TileGeometryLoader = (tile as any).m_tileGeometryLoader;
@@ -387,7 +405,7 @@ describe("Tile", function() {
             expect(geometryLoader.isFinished).be.true;
         });
 
-        it("does not update geometry loader if it's canceled", function() {
+        it("does not update geometry loader if it's canceled", function () {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
             const geometryLoader: TileGeometryLoader = (tile as any).m_tileGeometryLoader;
@@ -400,7 +418,7 @@ describe("Tile", function() {
             expect(updateSpy.called).be.false;
         });
 
-        it("cancels geometry loader if data source is detached from map view", function() {
+        it("cancels geometry loader if data source is detached from map view", function () {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
             const geometryLoader: TileGeometryLoader = (tile as any).m_tileGeometryLoader;
@@ -415,7 +433,7 @@ describe("Tile", function() {
             expect(cancelSpy.called).be.true;
         });
 
-        it("does not update geometry loader for disposed tile", function() {
+        it("does not update geometry loader for disposed tile", function () {
             stubDataSource.useGeometryLoader = true;
             const tile = stubDataSource.getTile(tileKey);
             const geometryLoader = (tile as any).m_tileGeometryLoader;

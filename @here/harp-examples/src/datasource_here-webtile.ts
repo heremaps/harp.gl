@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -78,8 +78,10 @@ export namespace HereWebTileDataSourceExample {
 
         // Add an UI.
         const ui = new MapControlsUI(controls, { zoomLevel: "input", projectionSwitch: true });
-        ui.projectionSwitchElement?.addEventListener("click", () => {
-            map.theme = map.projection.type === ProjectionType.Spherical ? GLOBE_THEME : FLAT_THEME;
+        ui.projectionSwitchElement?.addEventListener("click", async () => {
+            await map.setTheme(
+                map.projection.type === ProjectionType.Spherical ? GLOBE_THEME : FLAT_THEME
+            );
         });
         canvas.parentElement!.appendChild(ui.domElement);
 

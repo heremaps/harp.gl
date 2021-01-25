@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -20,11 +20,12 @@ import {
     TextRenderParameters,
     TextRenderStyle
 } from "@here/harp-text-canvas";
-import { Math2D, MathUtils } from "@here/harp-utils";
+import { Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";
 import { PickResult } from "../PickHandler";
+import { PoiBuffer } from "../poi/PoiRenderer";
 import { TextElementType } from "./TextElementType";
 
 /**
@@ -37,9 +38,10 @@ export interface PoiInfo {
     technique: PoiTechnique | LineMarkerTechnique;
 
     /**
-     * Name of the {@link @here/harp-datasource-protocol#ImageTexture}.
+     * Name of the {@link @here/harp-datasource-protocol#ImageTexture} or image in
+     * {@link @here/harp-mapview#userImageCache}.
      */
-    imageTextureName: string;
+    imageTextureName?: string;
 
     /**
      * Icon color override
@@ -97,8 +99,8 @@ export interface PoiInfo {
     textIsOptional?: boolean;
 
     /**
-     * If true, the text will appear even if the icon cannot be rendered because of missing icon
-     * graphics. Defaults to `true`.
+     * If true, the text will appear even if the icon is blocked by other labels or if it cannot be
+     * rendered because of missing icon graphics. Defaults to `false`.
      */
     iconIsOptional?: boolean;
 
@@ -158,7 +160,7 @@ export interface PoiInfo {
      * @hidden
      * Internal reference to a render batch, made up of all icons that use the same Material.
      */
-    poiRenderBatch?: number;
+    buffer?: PoiBuffer;
 
     /**
      * @hidden
@@ -193,7 +195,7 @@ export interface PoiInfo {
  * @internal
  */
 export function poiIsRenderable(poiInfo: PoiInfo): boolean {
-    return poiInfo.poiRenderBatch !== undefined;
+    return poiInfo.buffer !== undefined;
 }
 
 export interface TextPickResult extends PickResult {
@@ -285,7 +287,7 @@ export class TextElement {
      * A `TextElement` with a higher `renderOrder` will be rendered after a `TextElement` with a
      * lower `renderOrder`.
      */
-    renderOrder?: number = 0;
+    renderOrder: number = 0;
 
     /**
      * Specified kind of geometry. One kind is set as default in the technique, and can be
@@ -509,24 +511,12 @@ export class TextElement {
     }
 
     /**
-     * Update the minZoomLevel and maxZoomLevel from the values set in {@link PoiInfo}.
-     * Selects the smaller/larger one of the two min/max values for icon and text, because the
-     * TextElement is a container for both.
+     * Disposes of any allocated resources.
      */
-    updateMinMaxZoomLevelsFromPoiInfo() {
-        if (this.poiInfo !== undefined) {
-            if (this.minZoomLevel === undefined) {
-                this.minZoomLevel = MathUtils.min2(
-                    this.poiInfo.iconMinZoomLevel,
-                    this.poiInfo.textMinZoomLevel
-                );
-            }
-            if (this.maxZoomLevel === undefined) {
-                this.maxZoomLevel = MathUtils.max2(
-                    this.poiInfo.iconMaxZoomLevel,
-                    this.poiInfo.textMaxZoomLevel
-                );
-            }
+    dispose() {
+        const poiBuffer = this.poiInfo?.buffer;
+        if (poiBuffer) {
+            poiBuffer.decreaseRefCount();
         }
     }
 }

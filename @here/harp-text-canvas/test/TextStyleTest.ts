@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -33,7 +33,7 @@ import {
 describe("TextRenderStyle", () => {
     let renderParams: TextRenderParameters;
 
-    beforeEach(function() {
+    beforeEach(function () {
         renderParams = {
             fontName: "test",
             fontSize: {
@@ -157,7 +157,7 @@ describe("TextRenderStyle", () => {
 describe("TextLayoutStyle", () => {
     let layoutParams: TextLayoutParameters;
 
-    beforeEach(function() {
+    beforeEach(function () {
         layoutParams = {
             tracking: 1,
             leading: 2,
@@ -365,15 +365,15 @@ describe("TextLayoutStyle", () => {
         }
     ];
 
-    context("Placement attributes override alignment in c-tor.", function() {
-        runs.forEach(function(run) {
+    context("Placement attributes override alignment in c-tor.", function () {
+        runs.forEach(function (run) {
             const hPlacement = run.placements[0].h;
             const vPlacement = run.placements[0].v;
             const hPlacementStr = HorizontalPlacement[hPlacement];
             const vPlacementStr = VerticalPlacement[vPlacement];
             const hAlignStr = HorizontalAlignment[run.hAlignExpected];
             const vAlignStr = VerticalAlignment[run.vAlignExpected];
-            it(`Placement ${hPlacementStr}-${vPlacementStr} overrides alignment to ${hAlignStr}-${vAlignStr}`, function() {
+            it(`Placement ${hPlacementStr}-${vPlacementStr} overrides alignment to ${hAlignStr}-${vAlignStr}`, function () {
                 layoutParams.horizontalAlignment = HorizontalAlignment.Center;
                 layoutParams.verticalAlignment = VerticalAlignment.Center;
                 // Copy run placements to layout params.
@@ -407,15 +407,15 @@ describe("TextLayoutStyle", () => {
         });
     });
 
-    context("Placement attributes override alignment settings via setter.", function() {
-        runs.forEach(function(run) {
+    context("Placement attributes override alignment settings via setter.", function () {
+        runs.forEach(function (run) {
             const hPlacement = run.placements[0].h;
             const vPlacement = run.placements[0].v;
             const hPlacementStr = HorizontalPlacement[hPlacement];
             const vPlacementStr = VerticalPlacement[vPlacement];
             const hAlignStr = HorizontalAlignment[run.hAlignExpected];
             const vAlignStr = VerticalAlignment[run.vAlignExpected];
-            it(`Placement ${hPlacementStr}-${vPlacementStr} overrides alignment to ${hAlignStr}-${vAlignStr}`, function() {
+            it(`Placement ${hPlacementStr}-${vPlacementStr} overrides alignment to ${hAlignStr}-${vAlignStr}`, function () {
                 const ls = new TextLayoutStyle(layoutParams);
                 ls.placements = run.placements;
                 assert.deepEqual(ls.placements, run.placements);

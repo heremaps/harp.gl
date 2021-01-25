@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -336,7 +336,7 @@ class OptimizedSubSetKey {
  *
  * Basically identical as the DecoderOptions but requires styleSet to be set.
  */
-export type StyleSetOptions = DecoderOptions & { styleSet: StyleSet };
+export type StyleSetOptions = Omit<DecoderOptions, "languages"> & { styleSet: StyleSet };
 
 /**
  * Combine data from datasource and apply the rules from a specified theme to show it on the map.
@@ -693,7 +693,7 @@ export class StyleSetEvaluator {
                 }
             }
 
-            if (typeof maxZoomLevel === "number" && zoomLevel > maxZoomLevel) {
+            if (typeof maxZoomLevel === "number" && zoomLevel >= maxZoomLevel) {
                 return false;
             }
         }

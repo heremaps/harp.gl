@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -28,6 +28,7 @@ export interface WebTileRenderingOptions {
     /**
      * RenderOrder for order in which to render WebTileDataSouurces
      * @defaultValue 0
+     * @deprecated Use instead `dataSourceOrder` on {@link DataSource}
      */
     renderOrder?: number;
 }
@@ -106,7 +107,6 @@ export class WebTileDataSource extends DataSource {
         this.m_transparent =
             this.m_options.renderingOptions?.transparent === true || this.m_opacity < 1;
         this.m_renderOrder = this.m_options.renderingOptions?.renderOrder ?? 0;
-
         this.m_resolution = getOptionValue(
             m_options.resolution,
             WebTileDataSource.resolutionValue.resolution512
@@ -142,6 +142,8 @@ export class WebTileDataSource extends DataSource {
 
     /**
      * Gets the renderOrder of the WebTileDataSource.
+     *
+     * @deprecated Use instead the `dataSourceOrder` on {@link DataSource}
      */
     get renderOrder(): number {
         return this.m_renderOrder;

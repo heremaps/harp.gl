@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -38,18 +38,18 @@ const rendererMock: any = {
     }
 };
 
-describe("Outline", function() {
+describe("Outline", function () {
     function createOutlineEffect(): OutlineEffect {
         const outlineEffect = new OutlineEffect(rendererMock as THREE.WebGLRenderer);
         return outlineEffect;
     }
 
-    it("create", function() {
+    it("create", function () {
         const outlineEffect = createOutlineEffect();
         expect(outlineEffect).to.not.be.equal(undefined);
     });
 
-    it("create accessors", function() {
+    it("create accessors", function () {
         const renderer: any = {
             autoClear: false,
             domElement: undefined,
@@ -65,7 +65,7 @@ describe("Outline", function() {
         expect(outlineEffect.shadowMap).to.be.equal(renderer.shadowMap);
     });
 
-    it("render", function() {
+    it("render", function () {
         const outlineEffect = createOutlineEffect();
         const traverseStub = sinon.stub(sceneMock, "traverse");
         const renderStub = sinon.stub(rendererMock, "render");

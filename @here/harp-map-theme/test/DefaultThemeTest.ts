@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -43,7 +43,7 @@ function assertExprValid(
     );
 }
 
-describe("Berlin Theme", function() {
+describe("Berlin Theme", function () {
     let ajv: Ajv.Ajv;
     let schemaValidator: Ajv.ValidateFunction;
     before(async () => {
@@ -68,13 +68,13 @@ describe("Berlin Theme", function() {
 
     themes.forEach(themePath => {
         const baseName = path.basename(themePath);
-        describe(`${baseName}`, function() {
+        describe(`${baseName}`, function () {
             let theme: Theme;
             before(async () => {
                 theme = await loadTestResource("@here/harp-map-theme", themePath, "json");
             });
 
-            it(`complies with JSON schema`, async function() {
+            it(`complies with JSON schema`, async function () {
                 const valid = schemaValidator(theme);
                 if (!valid && schemaValidator.errors) {
                     console.log("validation errors", schemaValidator.errors.length);
@@ -83,14 +83,14 @@ describe("Berlin Theme", function() {
                 assert.isTrue(valid);
             });
 
-            it(`works with StyleSetEvaluator`, async function() {
+            it(`works with StyleSetEvaluator`, async function () {
                 for (const styleSetName in theme.styles) {
                     const styleSet = theme.styles[styleSetName];
                     new StyleSetEvaluator({ styleSet, definitions: theme.definitions });
                 }
             });
 
-            it(`contains proper expressions in StyleSets`, async function() {
+            it(`contains proper expressions in StyleSets`, async function () {
                 for (const styleSetName in theme.styles) {
                     const styleSet = theme.styles[styleSetName];
                     for (let i = 0; i < styleSet.length; ++i) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -37,7 +37,7 @@ class FakeDataSource {
     }
 }
 
-describe("AnimatedExtrusionHandler", function() {
+describe("AnimatedExtrusionHandler", function () {
     const minZoomLevel = 17;
     let mapView: MapView;
     let defaultDataSource: DataSource;
@@ -68,8 +68,8 @@ describe("AnimatedExtrusionHandler", function() {
         clock.restore();
     });
 
-    describe("constructor", function() {
-        it("creates handler with default values", function() {
+    describe("constructor", function () {
+        it("creates handler with default values", function () {
             expect(handler.forceEnabled).to.be.false;
             expect(handler.enabled).to.be.true;
             expect(handler.duration).to.be.greaterThan(0);
@@ -77,14 +77,14 @@ describe("AnimatedExtrusionHandler", function() {
         });
     });
 
-    describe("setAnimationProperties", function() {
-        it("returns false for techniques other than extruded polygon", function() {
+    describe("setAnimationProperties", function () {
+        it("returns false for techniques other than extruded polygon", function () {
             handler.forceEnabled = true;
             const enabled = handler.setAnimationProperties({ name: "fill" }, env);
             expect(enabled).to.be.false;
         });
 
-        it("returns forced enabled if technique does not define animateExtrusion", function() {
+        it("returns forced enabled if technique does not define animateExtrusion", function () {
             {
                 const enabled = handler.setAnimationProperties(
                     { name: "extruded-polygon" } as any,
@@ -103,12 +103,12 @@ describe("AnimatedExtrusionHandler", function() {
             }
         });
 
-        it("gets minZoomLevel from technique", function() {
+        it("gets minZoomLevel from technique", function () {
             handler.setAnimationProperties(technique, env);
             expect(handler.minZoomLevel).equals(minZoomLevel);
         });
 
-        it("gets technique enable and duration if not forced", function() {
+        it("gets technique enable and duration if not forced", function () {
             handler.enabled = false;
             const animateExtrusionDuration = 3000;
 
@@ -137,7 +137,7 @@ describe("AnimatedExtrusionHandler", function() {
             }
         });
 
-        it("ignores technique enable and duration if forced", function() {
+        it("ignores technique enable and duration if forced", function () {
             handler.enabled = false;
             const duration = handler.duration;
             handler.forceEnabled = true;
@@ -156,9 +156,9 @@ describe("AnimatedExtrusionHandler", function() {
         });
     });
 
-    describe("update", function() {
+    describe("update", function () {
         it("starts animation only if at least one tile and zoom level is greater or equal to \
-         minimum", function() {
+         minimum", function () {
             const tile = new FakeTile(new TileKey(1, 2, minZoomLevel));
 
             handler.setAnimationProperties(technique, env);
@@ -174,7 +174,7 @@ describe("AnimatedExtrusionHandler", function() {
             expect(handler.isAnimating).to.be.true;
         });
 
-        it("stops animation if zoom level is less than minimum", function() {
+        it("stops animation if zoom level is less than minimum", function () {
             const tile = new FakeTile(new TileKey(1, 2, minZoomLevel));
             const material = { extrusionRatio: 0 };
 
@@ -194,12 +194,10 @@ describe("AnimatedExtrusionHandler", function() {
             handler.update(minZoomLevel);
             clock.tick(handler.duration / 2);
             handler.update(minZoomLevel);
-            expect(material.extrusionRatio)
-                .to.be.greaterThan(0)
-                .and.lessThan(1);
+            expect(material.extrusionRatio).to.be.greaterThan(0).and.lessThan(1);
         });
 
-        it("updates mapview during animation", function() {
+        it("updates mapview during animation", function () {
             const updateSpy = sinon.spy(mapView, "update");
 
             handler.setAnimationProperties(technique, env);
@@ -208,7 +206,7 @@ describe("AnimatedExtrusionHandler", function() {
             expect(updateSpy.calledOnce);
         });
 
-        it("updates extrusion ratio", function() {
+        it("updates extrusion ratio", function () {
             const material1: ExtrusionFeature = { extrusionRatio: 0 };
             const material2: ExtrusionFeature = { extrusionRatio: 0 };
             const duration = handler.duration;
@@ -226,12 +224,8 @@ describe("AnimatedExtrusionHandler", function() {
 
             clock.tick(duration / 2);
             handler.update(minZoomLevel);
-            expect(material1.extrusionRatio)
-                .to.be.greaterThan(0)
-                .and.lessThan(1);
-            expect(material2.extrusionRatio)
-                .to.be.greaterThan(0)
-                .and.lessThan(1);
+            expect(material1.extrusionRatio).to.be.greaterThan(0).and.lessThan(1);
+            expect(material2.extrusionRatio).to.be.greaterThan(0).and.lessThan(1);
 
             clock.tick(duration / 2);
             handler.update(minZoomLevel);
@@ -241,8 +235,8 @@ describe("AnimatedExtrusionHandler", function() {
         });
     });
 
-    describe("add", function() {
-        it("adds dispose callback to tile", function() {
+    describe("add", function () {
+        it("adds dispose callback to tile", function () {
             const material: ExtrusionFeature = { extrusionRatio: 0 };
             const duration = handler.duration;
             const tile = new FakeTile(new TileKey(1, 2, minZoomLevel));
@@ -258,7 +252,7 @@ describe("AnimatedExtrusionHandler", function() {
             expect(material.extrusionRatio).to.equal(0);
         });
 
-        it("sets extrusion ratio to 1 for tiles with already animated ancestors", function() {
+        it("sets extrusion ratio to 1 for tiles with already animated ancestors", function () {
             const duration = handler.duration;
             const material = { extrusionRatio: 0 };
             const firstTile = new FakeTile(new TileKey(1, 2, minZoomLevel));
@@ -276,7 +270,7 @@ describe("AnimatedExtrusionHandler", function() {
             expect(material.extrusionRatio).to.equal(1);
         });
 
-        it("sets extrusion ratio to 1 for tiles with already animated descendants", function() {
+        it("sets extrusion ratio to 1 for tiles with already animated descendants", function () {
             const duration = handler.duration;
             const material = { extrusionRatio: 0 };
             const firstTile = new FakeTile(
@@ -298,7 +292,7 @@ describe("AnimatedExtrusionHandler", function() {
             expect(material.extrusionRatio).to.equal(1);
         });
 
-        it("restarts animation if tile does not belong to an already animated tree", function() {
+        it("restarts animation if tile does not belong to an already animated tree", function () {
             const duration = handler.duration;
             const firstMaterial = { extrusionRatio: 0 };
             const firstTile = new FakeTile(new TileKey(1, 2, minZoomLevel));

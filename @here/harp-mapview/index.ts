@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -44,7 +44,6 @@ export * from "./lib/MapViewAtmosphere";
 export * from "./lib/MapViewFog";
 export * from "./lib/MapViewPoints";
 export * from "./lib/PickHandler";
-export * from "./lib/poi/Poi";
 export * from "./lib/poi/PoiManager";
 export * from "./lib/poi/PoiTableManager";
 export * from "./lib/Statistics";

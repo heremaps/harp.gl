@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -188,10 +188,7 @@ export class SkyGradientTexture {
                     const offsetY = up
                         .copy(cameraUp[faceIdx])
                         .multiplyScalar(((i + 0.5) / this.m_height) * 2.0 - 1.0);
-                    dir.copy(cameraDir[faceIdx])
-                        .add(offsetX)
-                        .add(offsetY)
-                        .normalize();
+                    dir.copy(cameraDir[faceIdx]).add(offsetX).add(offsetY).normalize();
                     const t = Math.max(upDir.dot(dir), 0);
 
                     color

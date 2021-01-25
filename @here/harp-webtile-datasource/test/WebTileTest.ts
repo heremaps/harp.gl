@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { GeometryKind } from "@here/harp-datasource-protocol";
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { CopyrightInfo, MapView, Tile } from "@here/harp-mapview";
-import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
+import { LoggerManager } from "@here/harp-utils";
 import { expect } from "chai";
 import * as sinon from "sinon";
+import * as THREE from "three";
 
 import { WebTileDataSource } from "../index";
 
-describe("WebTileDataSource", function() {
+describe("WebTileDataSource", function () {
     const fakeWebTileProvider = {
         getTexture: sinon.spy((tile: Tile) => {
             return Promise.resolve(([{}, []] as unknown) as [THREE.Texture, CopyrightInfo[]]);
@@ -22,7 +24,7 @@ describe("WebTileDataSource", function() {
         projection: mercatorProjection
     } as MapView;
 
-    it("#createWebTileDataSource has default values", async function() {
+    it("#createWebTileDataSource has default values", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider
         });
@@ -36,7 +38,7 @@ describe("WebTileDataSource", function() {
         );
     });
 
-    it("#createWebTileDataSource with 256px resolution", async function() {
+    it("#createWebTileDataSource with 256px resolution", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider,
             resolution: WebTileDataSource.resolutionValue.resolution256
@@ -46,7 +48,7 @@ describe("WebTileDataSource", function() {
         );
     });
 
-    it("#gets Texture for requested Tile", async function() {
+    it("#gets Texture for requested Tile", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider
         });
@@ -61,7 +63,7 @@ describe("WebTileDataSource", function() {
         expect(tile.hasGeometry).to.be.true;
     });
 
-    it("# creates Tile with geometry for resolve with undefined", async function() {
+    it("# creates Tile with geometry for resolve with undefined", async function () {
         const undefinedProvider = {
             getTexture: sinon.spy((tile: Tile) => {
                 return Promise.resolve(undefined);
@@ -81,7 +83,15 @@ describe("WebTileDataSource", function() {
         expect(tile.hasGeometry).to.be.true;
     });
 
-    it("# disposed tile for rejected Promise", async function() {
+    it("# disposed tile for rejected Promise", async function () {
+        const logger = LoggerManager.instance.getLogger("BaseTileLoader");
+        let loggerWasEnabled = false;
+
+        if (logger) {
+            loggerWasEnabled = logger.enabled;
+            logger.enabled = false;
+        }
+
         const noTextureProvider = {
             getTexture: sinon.spy((tile: Tile) => {
                 return Promise.reject();
@@ -99,9 +109,11 @@ describe("WebTileDataSource", function() {
         await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
         expect(tile.disposed).to.be.true;
+
+        LoggerManager.instance.enable("BaseTileLoader", loggerWasEnabled);
     });
 
-    it("#createWebTileDataSource with renderingOptions opacity", async function() {
+    it("#createWebTileDataSource with renderingOptions opacity", async function () {
         const webTileDataSource = new WebTileDataSource({
             dataProvider: fakeWebTileProvider,
             renderingOptions: { opacity: 0.5 }
@@ -110,13 +122,14 @@ describe("WebTileDataSource", function() {
             return fakeMapView;
         });
 
-        const creatorSpy = sinon.spy(TileGeometryCreator.instance, "createGroundPlane");
-
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         const tile = webTileDataSource.getTile(tileKey);
         await tile.load();
         expect(fakeWebTileProvider.getTexture.calledOnceWith(tile));
-        expect(creatorSpy.called).to.be.true;
-        expect((creatorSpy.args[0][1] as THREE.MeshBasicMaterial).opacity).to.equal(0.5);
+        expect(tile.objects).to.have.lengthOf(1);
+        const obj = tile.objects[0];
+        expect(obj).to.be.instanceOf(THREE.Mesh);
+        expect(obj.userData).to.haveOwnProperty("kind");
+        expect(obj.userData.kind).contains(GeometryKind.Background);
     });
 });

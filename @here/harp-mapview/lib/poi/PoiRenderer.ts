@@ -1,26 +1,23 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 import { Env, getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
 import { IconMaterial } from "@here/harp-materials";
-import { MemoryUsage, TextCanvas } from "@here/harp-text-canvas";
+import { MemoryUsage } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";
 import { MapViewImageCache } from "../image/MapViewImageCache";
 import { MipMapGenerator } from "../image/MipMapGenerator";
-import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
 import { PoiInfo, TextElement } from "../text/TextElement";
 import { BoxBuffer } from "./BoxBuffer";
+import { PoiManager } from "./PoiManager";
 
 const logger = LoggerManager.instance.create("PoiRenderer");
-
-const INVALID_RENDER_BATCH = -1;
-const tempPos = new THREE.Vector3(0);
 
 /**
  * Neutral color used as `vColor` attribute of [[IconMaterial]] if no `iconColor` color was
@@ -33,105 +30,104 @@ const neutralColor = new THREE.Color(1, 1, 1);
  */
 const tmpIconColor = new THREE.Color();
 
+export interface PoiLayer {
+    id: number;
+    scene: THREE.Scene;
+}
+
 /**
- * The `PoiRenderBufferBatch` contains the geometry and the material for all POIs that share the
- * same icon image ({@link @here/harp-datasource-protocol#ImageTexture}).
- *
- * @remarks
- * If the image is the same, all the objects in this batch can
- * share the same material, which makes them renderable in the same draw call, whatever the number
- * of actual objects (WebGL limits apply!).
- *
- * There is a `PoiRenderBufferBatch` for every icon in a texture atlas, since the size of the icon
- * in the atlas as well as the texture coordinates are specified in the `PoiRenderBufferBatch`.
+ * @internal
+ * Buffer for POIs sharing same material and render order, renderable in a single draw call
+ * (WebGL limits apply, see {@link BoxBuffer}).
  */
-class PoiRenderBufferBatch {
-    // Enable trilinear filtering to reduce flickering due to distance scaling
-    static trilinear: boolean = true;
-
-    boxBuffer: BoxBuffer | undefined;
-
-    private m_material?: THREE.Material | THREE.Material[];
+export class PoiBuffer {
+    private m_refCount: number = 0;
 
     /**
-     * Create the `PoiRenderBufferBatch`.
-     *
-     * @param mapView - The {@link MapView} instance.
-     * @param scene - The three.js scene to add the POIs to.
-     * @param imageItem - The icon that will have his material shared.
-     * @param renderOrder - RenderOrder of the batch geometry's [[Mesh]].
+     * Creates a `PoiBuffer`
+     * @param buffer -
+     * @param layer - The {@link TextCanvas} layer used to render the POIs.
      */
     constructor(
-        readonly mapView: MapView,
-        readonly scene: THREE.Scene,
-        readonly imageItem: ImageItem,
-        readonly renderOrder: number
+        readonly buffer: BoxBuffer,
+        readonly layer: PoiLayer,
+        private readonly m_onDispose: () => void
     ) {}
 
     /**
-     * Initialize with the {@link @here/harp-datasource-protocol#ImageTexture}.
+     * Increases this `PoiBuffer`'s reference count.
+     * @returns this `PoiBuffer`.
+     */
+    increaseRefCount(): PoiBuffer {
+        ++this.m_refCount;
+        return this;
+    }
+
+    /**
+     * Decreases this `PoiBuffer`'s reference count. All resources will be disposed when the
+     * reference count reaches 0.
+     * @returns this `PoiBuffer`.
+     */
+    decreaseRefCount(): PoiBuffer {
+        assert(this.m_refCount > 0);
+
+        if (--this.m_refCount === 0) {
+            this.dispose();
+        }
+        return this;
+    }
+
+    private dispose() {
+        this.layer.scene.remove(this.buffer.mesh);
+        this.buffer.dispose();
+        this.m_onDispose();
+    }
+}
+
+/**
+ * @internal
+ *
+ * The `PoiBatch` contains the geometry and the material for all POIs that share the same icon image
+ * ({@link @here/harp-datasource-protocol#ImageTexture}).
+ *
+ * There is a `PoiBatch` for every icon in a texture atlas, since the size of the icon in the atlas
+ * as well as the texture coordinates are specified in the `PoiBatch`.
+ */
+class PoiBatch {
+    // Enable trilinear filtering to reduce flickering due to distance scaling
+    static readonly trilinear: boolean = true;
+
+    // Map of buffers and their corresponding canvas layers, with render order as key.
+    private readonly m_poiBuffers: Map<number, PoiBuffer>;
+
+    private readonly m_material: IconMaterial;
+
+    /**
+     * Create the `PoiBatch`.
      *
-     * @remarks
-     * Loads the image and sets up the icon size, the texture
-     * coordinates and material of the batch. Since image loading is done asynchronously, this
-     * batch cannot be rendered right away. MapView#update is being triggered if it loaded
-     * successfully.
+     * @param m_rendererCapabilities - The {@link THREE.WebGLCapabilities} used for material
+     * creation.
+     * @param imageItem - The icon that will have his material shared.
+     * @param m_onDispose - Callback executed when the `PoiBatch` is disposed.
      */
-    init() {
-        if (this.boxBuffer === undefined) {
-            this.setup();
-        }
-    }
-
-    /**
-     * Clean the `PoiRenderBufferBatch`, remove all icon boxes. Called before starting a new frame.
-     */
-    reset(): void {
-        if (this.boxBuffer === undefined) {
-            this.init();
-        }
-        this.boxBuffer!.reset();
-    }
-
-    /**
-     * Update the geometry with all the added boxes during the frame.
-     */
-    update(): void {
-        if (this.boxBuffer === undefined) {
-            this.init();
-        }
-        this.boxBuffer!.updateBufferGeometry();
-    }
-
-    /**
-     * Update the info with the memory footprint caused by objects owned by the
-     * `PoiRenderBufferBatch`.
-     *
-     * @param info - The info object to increment with the values from this `PoiRenderBufferBatch`.
-     */
-    updateMemoryUsage(info: MemoryUsage) {
-        if (this.boxBuffer !== undefined) {
-            this.boxBuffer.updateMemoryUsage(info);
-        }
-    }
-
-    /**
-     * Setup texture and material for the batch.
-     */
-    private setup() {
+    constructor(
+        private readonly m_rendererCapabilities: THREE.WebGLCapabilities,
+        readonly imageItem: ImageItem,
+        private readonly m_onDispose: () => void
+    ) {
         // Texture images should be generated with premultiplied alpha
         const premultipliedAlpha = true;
 
         const texture = new THREE.Texture(
-            this.imageItem.imageData as any,
+            this.imageItem.image as any,
             THREE.UVMapping,
             undefined,
             undefined,
-            PoiRenderBufferBatch.trilinear ? THREE.LinearFilter : THREE.LinearFilter,
-            PoiRenderBufferBatch.trilinear ? THREE.LinearMipMapLinearFilter : THREE.LinearFilter,
+            PoiBatch.trilinear ? THREE.LinearFilter : THREE.LinearFilter,
+            PoiBatch.trilinear ? THREE.LinearMipMapLinearFilter : THREE.LinearFilter,
             THREE.RGBAFormat
         );
-        if (PoiRenderBufferBatch.trilinear && this.imageItem.mipMaps) {
+        if (PoiBatch.trilinear && this.imageItem.mipMaps) {
             // Generate mipmaps for distance scaling of icon
             texture.mipmaps = this.imageItem.mipMaps;
             texture.image = texture.mipmaps[0];
@@ -141,92 +137,150 @@ class PoiRenderBufferBatch {
         texture.needsUpdate = true;
 
         this.m_material = new IconMaterial({
-            rendererCapabilities: this.mapView.renderer.capabilities,
+            rendererCapabilities: this.m_rendererCapabilities,
             map: texture
         });
 
-        this.boxBuffer = new BoxBuffer(this.m_material, this.renderOrder);
+        this.m_poiBuffers = new Map();
+    }
 
-        const mesh = this.boxBuffer.mesh;
-
+    /**
+     * Gets the {@link PoiBuffer} for a given layer, creating it if necessary.
+     * @param layer - The {@link PoiLayer} to be used.
+     * @returns The {@link PoiBuffer}.
+     */
+    getBuffer(layer: PoiLayer): PoiBuffer {
+        let poiBuffer = this.m_poiBuffers.get(layer.id);
+        if (poiBuffer) {
+            return poiBuffer.increaseRefCount();
+        }
+        const boxBuffer = new BoxBuffer(this.m_material, layer.id);
+        const mesh = boxBuffer.mesh;
         mesh.frustumCulled = false;
 
-        this.scene.add(mesh);
+        layer.scene.add(mesh);
 
-        this.mapView.update();
+        poiBuffer = new PoiBuffer(boxBuffer, layer, () => {
+            this.disposeBuffer(layer.id);
+        });
+        this.m_poiBuffers.set(layer.id, poiBuffer);
+
+        return poiBuffer.increaseRefCount();
+    }
+
+    /**
+     * Clean the `PoiBatch`, remove all icon boxes. Called before starting a new frame.
+     */
+    reset(): void {
+        for (const poiBuffer of this.m_poiBuffers.values()) {
+            poiBuffer.buffer.reset();
+        }
+    }
+
+    /**
+     * Update the geometry with all the added boxes during the frame.
+     */
+    update(): void {
+        for (const poiBuffer of this.m_poiBuffers.values()) {
+            poiBuffer.buffer.updateBufferGeometry();
+        }
+    }
+
+    /**
+     * Fill the picking results for the pixel with the given screen coordinate. If multiple
+     * boxes are found, the order of the results is unspecified.
+     *
+     * @param screenPosition - Screen coordinate of picking position.
+     * @param pickCallback - Callback to be called for every picked element.
+     * @param image - Image to test if the pixel is transparent
+     */
+    pickBoxes(
+        screenPosition: THREE.Vector2,
+        pickCallback: (pickData: any | undefined) => void,
+        image?: CanvasImageSource | ImageData
+    ) {
+        for (const poiBuffer of this.m_poiBuffers.values()) {
+            poiBuffer.buffer.pickBoxes(screenPosition, pickCallback, image);
+        }
+    }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the `PoiBatch`.
+     *
+     * @param info - The info object to increment with the values from this `PoiBatch`.
+     */
+    updateMemoryUsage(info: MemoryUsage) {
+        if (this.imageItem.image !== undefined) {
+            const imageBytes = this.imageItem.image.width * this.imageItem.image.height * 4;
+            info.heapSize += imageBytes;
+            info.gpuSize += imageBytes;
+        }
+        for (const poiBuffer of this.m_poiBuffers.values()) {
+            poiBuffer.buffer.updateMemoryUsage(info);
+        }
+    }
+
+    private dispose() {
+        this.m_poiBuffers.clear();
+        this.m_material.map.dispose();
+        this.m_material.dispose();
+        this.m_onDispose();
+    }
+
+    private disposeBuffer(renderOrder: number) {
+        assert(this.m_poiBuffers.size > 0);
+
+        this.m_poiBuffers.delete(renderOrder);
+        if (this.m_poiBuffers.size === 0) {
+            this.dispose();
+        }
     }
 }
 
 /**
- * Contains all [[PoiRenderBufferBatch]]es. Selects (and initializes) the correct batch for a POI.
+ * @internal
+ * Contains all [[PoiBatch]]es. Selects (and initializes) the correct batch for a POI.
  */
-class PoiRenderBuffer {
-    readonly batches: PoiRenderBufferBatch[] = [];
-    private readonly m_batchMap: Map<string, Map<number, number>> = new Map();
+export class PoiBatchRegistry {
+    private readonly m_batchMap: Map<string, PoiBatch> = new Map();
 
     /**
-     * Create the `PoiRenderBuffer`.
+     * Create the `PoiBatchRegistry`.
      *
-     * @param mapView - The {@link MapView} to be rendered to.
-     * @param textCanvas - The [[TextCanvas]] to which scenes this `PoiRenderBuffer`
-     *                     adds geometry to.
-     * The actual scene a {@link TextElement} is added to is specified by the renderOrder of the
-     * {@link TextElement}.
+     * @param m_rendererCapabilities - The {@link THREE.WebGLCapabilities} to be used.
      */
-    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {}
+    constructor(private readonly m_rendererCapabilities: THREE.WebGLCapabilities) {}
 
     /**
-     * Register the POI and prepare the [[PoiRenderBufferBatch]] for the POI at first usage.
+     * Register the POI and prepare the [[PoiBatch]] for the POI at first usage.
      *
      * @param poiInfo - Describes the POI icon.
+     * @param layer - The {@link PoiLayer} to render to.
      */
-    registerPoi(poiInfo: PoiInfo): number {
-        const { imageItem, imageTexture, imageTextureName } = poiInfo;
+    registerPoi(poiInfo: PoiInfo, layer: PoiLayer): PoiBuffer | undefined {
+        const { imageItem, imageTexture } = poiInfo;
 
-        if (
-            imageItem === undefined ||
-            imageTextureName === undefined ||
-            imageTexture === undefined
-        ) {
+        if (!imageItem) {
             // No image -> invisible -> ignore
-            return INVALID_RENDER_BATCH;
+            poiInfo.isValid = false;
+            return undefined;
         }
-
-        const renderOrder = poiInfo.renderOrder!;
 
         // There is a batch for every ImageDefinition, which could be a texture atlas with many
-        // ImageTextures in it.
-        const batchKey = imageTexture.image;
-        let batchSet = this.m_batchMap.get(batchKey);
-        let mappedIndex: number | undefined;
+        // ImageTextures in it. If the imageTexture is not set, imageTextureName has the actual
+        // image name.
+        assert(poiInfo.imageTextureName !== undefined);
+        const batchKey = imageTexture?.image ?? poiInfo.imageTextureName!;
+        let batch = this.m_batchMap.get(batchKey);
 
-        if (batchSet === undefined) {
-            batchSet = new Map<number, number>();
-            this.m_batchMap.set(batchKey, batchSet);
+        if (batch === undefined) {
+            batch = new PoiBatch(this.m_rendererCapabilities, imageItem, () => {
+                this.deleteBatch(batchKey);
+            });
+            this.m_batchMap.set(batchKey, batch);
         }
 
-        mappedIndex = batchSet.get(renderOrder);
-        if (mappedIndex !== undefined) {
-            return mappedIndex;
-        }
-        mappedIndex = this.batches.length;
-
-        let layer = this.textCanvas.getLayer(renderOrder);
-        if (layer === undefined) {
-            this.textCanvas.addText("", tempPos, { layer: renderOrder });
-            layer = this.textCanvas.getLayer(renderOrder);
-        }
-
-        const bufferBatch = new PoiRenderBufferBatch(
-            this.mapView,
-            layer!.storage.scene,
-            imageItem,
-            renderOrder
-        );
-        bufferBatch.init();
-        batchSet.set(renderOrder, mappedIndex);
-        this.batches.push(bufferBatch);
-        return mappedIndex;
+        return batch.getBuffer(layer);
     }
 
     /**
@@ -237,20 +291,15 @@ class PoiRenderBuffer {
      * @param viewDistance - Box's distance to camera.
      * @param opacity - Opacity of icon to allow fade in/out.
      */
-    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number): number {
-        const poiRegistered =
-            poiInfo.poiRenderBatch !== undefined && poiInfo.poiRenderBatch !== INVALID_RENDER_BATCH;
-        const batchIndex = poiRegistered ? poiInfo.poiRenderBatch! : this.registerPoi(poiInfo);
-        if (batchIndex === INVALID_RENDER_BATCH) {
-            return INVALID_RENDER_BATCH;
+    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number) {
+        if (poiInfo.isValid === false || !poiInfo.buffer) {
+            logger.warn(
+                "PoiBatchRegistry: trying to add poiInfo without buffer prepared: ",
+                poiInfo.poiName
+            );
+            return;
         }
-        assert(batchIndex >= 0);
-        assert(batchIndex < this.batches.length);
         assert(poiInfo.uvBox !== undefined);
-
-        if (this.batches[batchIndex].boxBuffer === undefined) {
-            this.batches[batchIndex].init();
-        }
 
         let color: THREE.Color;
         if (poiInfo.iconBrightness !== undefined) {
@@ -263,7 +312,7 @@ class PoiRenderBuffer {
         } else {
             color = neutralColor;
         }
-        this.batches[batchIndex].boxBuffer!.addBox(
+        poiInfo.buffer.buffer.addBox(
             screenBox,
             poiInfo.uvBox!,
             color,
@@ -271,40 +320,23 @@ class PoiRenderBuffer {
             viewDistance,
             poiInfo.textElement
         );
-
-        return batchIndex;
     }
 
     /**
-     * Retrieve the [[PoiRenderBufferBatch]] from the array at the specified index. May be invalid
-     * if the imageTexture could not be found
-     *
-     * @param index - Index into batch array.
-     */
-    getBatch(index: number): PoiRenderBufferBatch | undefined {
-        if (index >= 0) {
-            assert(index < this.batches.length);
-            return this.batches[index];
-        }
-        // may be invalid if the imageTexture could not be found
-        return undefined;
-    }
-
-    /**
-     * Reset all batches, removing all content from the [[PoiRenderBufferBatch]]es. Called at the
+     * Reset all batches, removing all content from the [[PoiBatch]]es. Called at the
      * beginning of a frame before the POIs are placed.
      */
     reset(): void {
-        for (const batch of this.batches) {
+        for (const batch of this.m_batchMap.values()) {
             batch.reset();
         }
     }
 
     /**
-     * Update the geometry of all [[PoiRenderBufferBatch]]es. Called before rendering.
+     * Update the geometry of all [[PoiBatch]]es. Called before rendering.
      */
     update(): void {
-        for (const batch of this.batches) {
+        for (const batch of this.m_batchMap.values()) {
             batch.update();
         }
     }
@@ -320,36 +352,63 @@ class PoiRenderBuffer {
         screenPosition: THREE.Vector2,
         pickCallback: (pickData: any | undefined) => void
     ) {
-        for (const batch of this.batches) {
-            if (batch.boxBuffer === undefined) {
-                batch.init();
-            }
-            batch.boxBuffer!.pickBoxes(screenPosition, pickCallback, batch.imageItem.imageData);
+        for (const batch of this.m_batchMap.values()) {
+            batch.pickBoxes(screenPosition, pickCallback, batch.imageItem.image);
         }
     }
 
     /**
-     * Update the info with the memory footprint caused by objects owned by the `PoiRenderBuffer`.
+     * Update the info with the memory footprint caused by objects owned by the `PoiBatchRegistry`.
      *
-     * @param info - The info object to increment with the values from this `PoiRenderBuffer`.
+     * @param info - The info object to increment with the values from this `PoiBatchRegistry`.
      */
     updateMemoryUsage(info: MemoryUsage) {
-        for (const batch of this.batches) {
-            if (batch.imageItem.imageData !== undefined) {
-                const imageBytes =
-                    batch.imageItem.imageData.width * batch.imageItem.imageData.height * 4;
-                info.heapSize += imageBytes;
-                info.gpuSize += imageBytes;
-            }
-            if (batch.boxBuffer !== undefined) {
-                batch.boxBuffer.updateMemoryUsage(info);
-            }
+        for (const batch of this.m_batchMap.values()) {
+            batch.updateMemoryUsage(info);
         }
+    }
+
+    private deleteBatch(batchKey: string) {
+        this.m_batchMap.delete(batchKey);
     }
 }
 
+// keep track of the missing textures, but only warn once
+const missingTextureName: Map<string, boolean> = new Map();
+
+function findImageItem(
+    poiInfo: PoiInfo,
+    imageCaches: MapViewImageCache[],
+    imageTexture?: ImageTexture
+): ImageItem | undefined {
+    assert(poiInfo.imageTextureName !== undefined);
+    const imageTextureName = poiInfo.imageTextureName!;
+
+    let imageItem: ImageItem | undefined;
+    for (const imageCache of imageCaches) {
+        imageItem = imageTexture
+            ? imageCache.findImageByName(imageTexture.image)
+            : imageCache.findImageByName(imageTextureName);
+        if (imageItem) {
+            break;
+        }
+    }
+
+    if (!imageItem) {
+        logger.error(`init: No imageItem found with name
+            '${imageTexture?.image ?? imageTextureName}'`);
+        poiInfo.isValid = false;
+        if (missingTextureName.get(imageTextureName) === undefined) {
+            missingTextureName.set(imageTextureName, true);
+            logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
+        }
+    }
+    return imageItem;
+}
+
 /**
- * Manage POI rendering. Uses a [[PoiRenderBuffer]] to actually create the geometry that is being
+ * @internal
+ * Manage POI rendering. Uses a [[PoiBatchRegistry]] to actually create the geometry that is being
  * rendered.
  */
 export class PoiRenderer {
@@ -371,8 +430,7 @@ export class PoiRenderer {
         env: Env,
         /* out */ screenBox: Math2D.Box = new Math2D.Box()
     ): Math2D.Box {
-        assert(poiInfo.poiRenderBatch !== undefined);
-        assert(poiInfo.poiRenderBatch !== INVALID_RENDER_BATCH);
+        assert(poiInfo.buffer !== undefined);
 
         const width = poiInfo.computedWidth! * scale;
         const height = poiInfo.computedHeight! * scale;
@@ -393,29 +451,36 @@ export class PoiRenderer {
         return screenBox;
     }
 
-    // keep track of the missing textures, but only warn once
-    private static readonly m_missingTextureName: Map<string, boolean> = new Map();
-
     // the render buffer containing all batches, one batch per texture/material.
-    private readonly m_renderBuffer: PoiRenderBuffer;
+    private readonly m_poiBatchRegistry: PoiBatchRegistry;
 
     // temporary variable to save allocations
     private readonly m_tempScreenBox = new Math2D.Box();
 
+    private readonly m_layers: PoiLayer[] = [];
+
     /**
      * Create the `PoiRenderer` for the specified {@link MapView}.
      *
-     * @param mapView - The MapView to be rendered to.
-     * @param textCanvas - The [[TextCanvas]] this `PoiRenderer` is associated to. POIs are added to
-     * the different layers of this [[TextCanvas]] based on renderOrder.
+     * @param m_renderer - The {@link THREE.WebGLRenderer} to be rendered to.
+     * @param m_poiManager - The {@link PoiManager} to be used.
+     * @param m_imageCaches - The {@link ImageCache}s to look for loaded images.
      */
-    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {
-        this.m_renderBuffer = new PoiRenderBuffer(mapView, textCanvas);
+    constructor(
+        private readonly m_renderer: THREE.WebGLRenderer,
+        private readonly m_poiManager: PoiManager,
+        private readonly m_imageCaches: MapViewImageCache[]
+    ) {
+        this.m_poiBatchRegistry = new PoiBatchRegistry(this.renderer.capabilities);
+    }
+
+    get renderer(): THREE.WebGLRenderer {
+        return this.m_renderer;
     }
 
     /**
-     * Prepare the POI for rendering, and determine which `poiRenderBatch` should be used. If a
-     * `poiRenderBatch` is assigned, the POI is ready to be rendered.
+     * Prepare the POI for rendering, and determine which {@link PoiBuffer} should be used. If a
+     * {@link PoiBuffer} is assigned, the POI is ready to be rendered.
      *
      * @param pointLabel - TextElement with PoiInfo for rendering the POI icon.
      * @param env - TODO! The current zoomLevel level of {@link MapView}
@@ -427,22 +492,22 @@ export class PoiRenderer {
         if (poiInfo === undefined) {
             return false;
         }
-        if (poiInfo.poiRenderBatch === undefined) {
+        if (poiInfo.buffer === undefined) {
             this.preparePoi(pointLabel, env);
         }
-        return poiInfo.poiRenderBatch !== undefined;
+        return poiInfo.buffer !== undefined;
     }
 
     /**
-     * Reset all batches, removing all content from the [[PoiRenderBuffer]]es. Called at the
+     * Reset all batches, removing all content from the [[PoiBatchRegistry]]. Called at the
      * beginning of a frame before the POIs are placed.
      */
     reset(): void {
-        this.m_renderBuffer.reset();
+        this.m_poiBatchRegistry.reset();
     }
 
     /**
-     * Render the icon. Icon will only be rendered if opacity > 0, otherwise only its space will be
+     * Add the icon. Icon will only be added if opacity > 0, otherwise only its space will be
      * allocated.
      *
      * @param poiInfo - PoiInfo containing information for rendering the POI icon.
@@ -454,7 +519,7 @@ export class PoiRenderer {
      * @param opacity - Opacity of icon to allow fade in/out.
      * @returns - `true` if icon has been actually rendered, `false` otherwise.
      */
-    renderPoi(
+    addPoi(
         poiInfo: PoiInfo,
         screenPosition: THREE.Vector2,
         screenCollisions: ScreenCollisions,
@@ -463,8 +528,8 @@ export class PoiRenderer {
         allocateScreenSpace: boolean,
         opacity: number,
         env: Env
-    ): boolean {
-        assert(poiInfo.poiRenderBatch !== undefined);
+    ): void {
+        assert(poiInfo.buffer !== undefined);
 
         PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scale, env, this.m_tempScreenBox);
 
@@ -473,17 +538,70 @@ export class PoiRenderer {
         }
 
         if (opacity > 0) {
-            this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
-            return true;
+            if (!poiInfo.buffer) {
+                this.preparePoi(poiInfo.textElement, env);
+            }
+            this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
         }
-        return false;
     }
 
     /**
-     * Update the geometry of all [[PoiRenderBuffer]]es. Called before rendering.
+     * Update the geometry of all [[PoiBatch]]es. Called before rendering.
      */
     update(): void {
-        this.m_renderBuffer.update();
+        this.m_poiBatchRegistry.update();
+    }
+
+    /**
+     * @internal
+     *
+     * Adds a layer to the PoiRenderer
+     * @param layerId
+     */
+    addLayer(layerId: number): PoiLayer {
+        let result = this.getLayer(layerId);
+        if (result === undefined) {
+            result = {
+                id: layerId,
+                scene: new THREE.Scene()
+            };
+
+            this.m_layers.push(result);
+            this.m_layers.sort((a: PoiLayer, b: PoiLayer) => {
+                return a.id - b.id;
+            });
+        }
+        return result;
+    }
+
+    /**
+     * Retrieves a specific `Poi` rendering layer.
+     *
+     * @param layerId - Desired layer identifier.
+     *
+     * @returns Selected {@link PoiLayer}
+     */
+    private getLayer(layerId: number): PoiLayer | undefined {
+        return this.m_layers.find(layer => layer.id === layerId);
+    }
+
+    /**
+     * @internal
+     *
+     * Returns all {@link PoiLayer}s of this {@link PoiRenderer}
+     */
+    get layers(): PoiLayer[] {
+        return this.m_layers;
+    }
+
+    /**
+     * Renders the content of this `PoiRenderer`.
+     *
+     * @param camera - Orthographic camera.
+     * @param layer - The Layer to be rendered.
+     */
+    render(camera: THREE.OrthographicCamera, layer: PoiLayer) {
+        this.m_renderer.render(layer.scene, camera);
     }
 
     /**
@@ -497,7 +615,7 @@ export class PoiRenderer {
         screenPosition: THREE.Vector2,
         pickCallback: (pickData: any | undefined) => void
     ) {
-        this.m_renderBuffer.pickTextElements(screenPosition, pickCallback);
+        this.m_poiBatchRegistry.pickTextElements(screenPosition, pickCallback);
     }
 
     /**
@@ -506,26 +624,26 @@ export class PoiRenderer {
      * @param info - The info object to increment with the values from this `PoiRenderer`.
      */
     getMemoryUsage(info: MemoryUsage) {
-        this.m_renderBuffer.updateMemoryUsage(info);
+        this.m_poiBatchRegistry.updateMemoryUsage(info);
     }
 
     /**
-     * Register the POI at the [[PoiRenderBuffer]] which may require some setup, for example loading
-     * of the actual image.
+     * Register the POI at the [[PoiBatchRegistry]] which may require some setup, for example
+     * loading of the actual image.
      */
     private preparePoi(pointLabel: TextElement, env: Env): void {
         const poiInfo = pointLabel.poiInfo;
-        if (poiInfo === undefined || !pointLabel.visible) {
+        if (!poiInfo || !pointLabel.visible) {
             return;
         }
 
-        if (poiInfo.poiRenderBatch !== undefined || poiInfo.isValid === false) {
+        if (poiInfo.buffer !== undefined || poiInfo.isValid === false) {
             // Already set up, nothing to be done here.
             return;
         }
 
         if (poiInfo.poiTableName !== undefined) {
-            if (this.mapView.poiManager.updatePoiFromPoiTable(pointLabel)) {
+            if (this.m_poiManager.updatePoiFromPoiTable(pointLabel)) {
                 if (!pointLabel.visible) {
                     // PoiTable set this POI to not visible.
                     return;
@@ -537,64 +655,39 @@ export class PoiRenderer {
         }
 
         const imageTextureName = poiInfo.imageTextureName;
-
-        const imageTexture = this.mapView.poiManager.getImageTexture(imageTextureName);
-        if (imageTexture === undefined) {
-            // Warn about a missing texture, but only once.
-            if (PoiRenderer.m_missingTextureName.get(imageTextureName) === undefined) {
-                PoiRenderer.m_missingTextureName.set(imageTextureName, true);
-                logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
-            }
+        if (imageTextureName === undefined) {
             poiInfo.isValid = false;
             return;
         }
 
-        const imageDefinition = imageTexture.image;
+        const imageTexture = this.m_poiManager.getImageTexture(imageTextureName);
+        const imageItem = findImageItem(poiInfo, this.m_imageCaches, imageTexture);
+        if (!imageItem) {
+            return;
+        }
 
-        // Check user image cache first.
-        let imageItem = this.mapView.userImageCache.findImageByName(imageDefinition);
-        let imageCache: MapViewImageCache | undefined;
-        if (imageItem === undefined) {
-            // Then check default image cache.
-            imageItem = this.mapView.imageCache.findImageByName(imageDefinition);
-            if (imageItem === undefined) {
-                logger.error(`init: No imageItem found with name '${imageDefinition}'`);
+        if (imageItem.loaded) {
+            this.setupPoiInfo(poiInfo, imageItem, env, imageTexture);
+            return;
+        }
+
+        if (imageItem.loading) {
+            // already being loaded, will be rendered once available
+            return;
+        }
+
+        imageItem
+            .loadImage()
+            .then(loadedImageItem => {
+                // Skip setup if image was not loaded (cancelled).
+                if (loadedImageItem?.image) {
+                    this.setupPoiInfo(poiInfo, loadedImageItem, env, imageTexture);
+                }
+            })
+            .catch(error => {
+                logger.error(`preparePoi: Failed to load imageItem: '${imageItem.url}`, error);
                 poiInfo.isValid = false;
-                return;
-            } else {
-                imageCache = this.mapView.imageCache;
-            }
-        } else {
-            imageCache = this.mapView.userImageCache;
-        }
-
-        if (!imageItem.loaded) {
-            if (imageItem.loadingPromise !== undefined) {
-                // already being loaded, will be rendered once available
-                return;
-            }
-            const imageUrl = imageItem.url;
-            const loading = imageCache.loadImage(imageItem);
-            if (loading instanceof Promise) {
-                loading
-                    .then(loadedImageItem => {
-                        if (loadedImageItem === undefined) {
-                            logger.error(`preparePoi: Failed to load imageItem: '${imageUrl}`);
-                            return;
-                        }
-                        this.setupPoiInfo(poiInfo, imageTexture, loadedImageItem, env);
-                    })
-                    .catch(error => {
-                        logger.error(`preparePoi: Failed to load imageItem: '${imageUrl}`, error);
-                        poiInfo.isValid = false;
-                    });
-                return;
-            } else {
-                imageItem = loading;
-            }
-        }
-
-        this.setupPoiInfo(poiInfo, imageTexture, imageItem, env);
+            });
     }
 
     /**
@@ -608,61 +701,42 @@ export class PoiRenderer {
      */
     private setupPoiInfo(
         poiInfo: PoiInfo,
-        imageTexture: ImageTexture,
         imageItem: ImageItem,
-        env: Env
+        env: Env,
+        imageTexture?: ImageTexture
     ) {
         assert(poiInfo.uvBox === undefined);
 
-        if (imageItem === undefined || imageItem.imageData === undefined) {
+        if (!imageItem.image) {
             logger.error("setupPoiInfo: No imageItem/imageData found");
-            // invalid render batch number
-            poiInfo.poiRenderBatch = INVALID_RENDER_BATCH;
             poiInfo.isValid = false;
             return;
         }
 
         const technique = poiInfo.technique;
 
-        const imageWidth = imageItem.imageData.width;
-        const imageHeight = imageItem.imageData.height;
+        const imageWidth = imageItem.image.width;
+        const imageHeight = imageItem.image.height;
         const paddedSize = MipMapGenerator.getPaddedSize(imageWidth, imageHeight);
-        const trilinearFiltering = PoiRenderBufferBatch.trilinear && imageItem.mipMaps;
+        const trilinearFiltering = PoiBatch.trilinear && imageItem.mipMaps;
         const paddedImageWidth = trilinearFiltering ? paddedSize.width : imageWidth;
         const paddedImageHeight = trilinearFiltering ? paddedSize.height : imageHeight;
 
-        const iconWidth = imageTexture.width !== undefined ? imageTexture.width : imageWidth;
-        const iconHeight = imageTexture.height !== undefined ? imageTexture.height : imageHeight;
+        const iconWidth = imageTexture?.width !== undefined ? imageTexture.width : imageWidth;
+        const iconHeight = imageTexture?.height !== undefined ? imageTexture.height : imageHeight;
 
-        let minS = 0;
-        let maxS = 1;
-        let minT = 0;
-        let maxT = 1;
+        const width = imageTexture?.width !== undefined ? imageTexture.width : imageWidth;
+        const height = imageTexture?.height !== undefined ? imageTexture.height : imageHeight;
+        const xOffset = imageTexture?.xOffset !== undefined ? imageTexture.xOffset : 0;
+        const yOffset = imageTexture?.yOffset !== undefined ? imageTexture.yOffset : 0;
+
+        const minS = xOffset / paddedImageWidth;
+        const maxS = (xOffset + width) / paddedImageWidth;
+        const minT = yOffset / paddedImageHeight;
+        const maxT = (yOffset + height) / paddedImageHeight;
 
         let iconScaleH = technique.iconScale !== undefined ? technique.iconScale : 1;
         let iconScaleV = technique.iconScale !== undefined ? technique.iconScale : 1;
-
-        const width = imageTexture.width !== undefined ? imageTexture.width : imageWidth;
-        const height = imageTexture.height !== undefined ? imageTexture.height : imageHeight;
-        const xOffset = imageTexture.xOffset !== undefined ? imageTexture.xOffset : 0;
-        const yOffset = imageTexture.yOffset !== undefined ? imageTexture.yOffset : 0;
-
-        minS = xOffset / paddedImageWidth;
-        maxS = (xOffset + width) / paddedImageWidth;
-
-        const flipY = false;
-        if (flipY) {
-            minT = (imageHeight - yOffset) / paddedImageHeight;
-            maxT = (imageHeight - yOffset - height) / paddedImageHeight;
-        } else {
-            minT = yOffset / paddedImageHeight;
-            maxT = (yOffset + height) / paddedImageHeight;
-        }
-
-        // minS += 0.5 / imageWidth;
-        // maxS += 0.5 / imageWidth;
-        // minT += 0.5 / imageHeight;
-        // maxT += 0.5 / imageHeight;
 
         // By default, iconScaleV should be equal to iconScaleH, whatever is set in the style.
         const screenWidth = getPropertyValue(technique.screenWidth, env);
@@ -689,9 +763,10 @@ export class PoiRenderer {
         };
         poiInfo.imageItem = imageItem;
         poiInfo.imageTexture = imageTexture;
-        poiInfo.poiRenderBatch = this.m_renderBuffer.registerPoi(poiInfo);
+        poiInfo.buffer = this.m_poiBatchRegistry.registerPoi(
+            poiInfo,
+            this.addLayer(poiInfo.renderOrder!)
+        );
         poiInfo.isValid = true;
-
-        assert(poiInfo.poiRenderBatch !== undefined);
     }
 }

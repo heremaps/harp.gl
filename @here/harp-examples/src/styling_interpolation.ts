@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -474,7 +474,7 @@ export namespace TiledGeoJsonTechniquesExample {
         });
 
         mapView.addDataSource(baseMapDataSource).then(() => {
-            baseMapDataSource.setStyleSet({ styleSet: theme.styles!.tilezen });
+            baseMapDataSource.setTheme(theme);
         });
 
         mapView.update();

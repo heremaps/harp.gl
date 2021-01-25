@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -19,8 +19,8 @@ function delay(timeout: number) {
     });
 }
 
-describe("DeferredPromise", function() {
-    it("does not settle Promise unless exec() was called.", async function() {
+describe("DeferredPromise", function () {
+    it("does not settle Promise unless exec() was called.", async function () {
         let isSettled = false;
         const deferred = new DeferredPromise(() => {
             isSettled = true;
@@ -34,7 +34,7 @@ describe("DeferredPromise", function() {
         expect(isSettled).to.be.false;
     });
 
-    it("settles a Promise when exec() is called.", async function() {
+    it("settles a Promise when exec() is called.", async function () {
         let isSettled = false;
         const deferred = new DeferredPromise(() => {
             isSettled = true;
@@ -47,7 +47,7 @@ describe("DeferredPromise", function() {
         expect(isSettled).to.be.true;
     });
 
-    it("handles a rejected Promise.", async function() {
+    it("handles a rejected Promise.", async function () {
         let isSettled = false;
         const deferred = new DeferredPromise(() => {
             isSettled = true;

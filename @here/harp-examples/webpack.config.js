@@ -7,10 +7,9 @@
 //@ts-check
 
 const webpack = require("webpack");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 const path = require("path");
 const glob = require("glob");
-const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
@@ -32,6 +31,17 @@ const themeList = {
     berlinOutlines: "resources/berlin_tilezen_effects_outlines.json"
 };
 
+function getCacheConfig(name) {
+    // Use a separate cache for each configuration, otherwise cache writing fails.
+    return process.env.HARP_NO_HARD_SOURCE_CACHE ? false :{
+        type: "filesystem",
+        buildDependencies: {
+            config: [ __filename ]
+        },
+        name: "harp-examples_" + name
+    }
+}
+
 function resolveOptional(path, message) {
     try {
         return require.resolve(path);
@@ -50,19 +60,21 @@ const commonConfig = {
     devtool: prepareOnly ? undefined : "source-map",
     externals: [
         {
-            three: "THREE",
-            fs: "undefined"
+            three: "THREE"
         },
-        function(context, request, callback) {
+        ({ context, request }, cb) => {
             return /three\.module\.js$/.test(request)
-                ? callback(null, "THREE")
-                : callback(undefined, undefined);
+                ? cb(null, "THREE")
+                : cb(undefined, undefined);
         }
     ],
     resolve: {
         extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         alias: {
             "react-native": "react-native-web"
+        },
+        fallback: {
+            fs: false
         }
     },
     module: {
@@ -108,15 +120,13 @@ const commonConfig = {
     ]
 };
 
-if (!process.env.HARP_NO_HARD_SOURCE_CACHE) {
-    commonConfig.plugins.push(new HardSourceWebpackPlugin());
-}
-
 const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
         decoder: "./decoder/decoder.ts"
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("decoder")
 });
 
 const webpackEntries = glob
@@ -165,19 +175,25 @@ const browserConfig = merge(commonConfig, {
             minSize: 1000,
             name: "common"
         }
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("browser")
 });
 
 const exampleBrowserConfig = merge(commonConfig, {
     entry: {
         "example-browser": "./example-browser.ts"
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("example_browser")
 });
 
 const codeBrowserConfig = merge(commonConfig, {
     entry: {
         codebrowser: "./codebrowser.ts"
-    }
+    },
+    // @ts-ignore
+    cache: getCacheConfig("code_browser")
 });
 
 browserConfig.plugins.push(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -41,6 +41,7 @@ export * from "./lib/tiling/HereTilingScheme";
 export * from "./lib/tiling/WebMercatorTilingScheme";
 export * from "./lib/tiling/MercatorTilingScheme";
 export * from "./lib/tiling/PolarTilingScheme";
+export * from "./lib/math/Vector2Like";
 export * from "./lib/math/Vector3Like";
 export * from "./lib/math/Box3Like";
 export * from "./lib/math/OrientedBox3Like";

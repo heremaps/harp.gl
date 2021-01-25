@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -128,9 +128,7 @@ export async function getIbctReport(req: express.Request, res: express.Response)
     try {
         const [failed, report] = await genHtmlReport(currentResults, {}, outputBasePath);
         logger.log("Tests failed: ", failed);
-        res.status(200)
-            .contentType("text/html")
-            .send(report);
+        res.status(200).contentType("text/html").send(report);
     } catch (error) {
         logger.error("error", error);
         res.status(500).send(`error: ${error}\n${error.stack}`);

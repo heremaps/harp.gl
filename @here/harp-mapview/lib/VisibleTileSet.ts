@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -1313,9 +1313,6 @@ export class VisibleTileSet {
             const tileKey = DataSourceCache.getKeyForTile(tile);
             if (!retainedTiles.has(tileKey)) {
                 retainedTiles.add(tileKey);
-                // Prevent label rendering issues when the style set is changing. Prevent Text
-                // element rendering that depends on cleaned font catalog data.
-                tile.clearTextElements();
                 this.addToTaskQueue(tile);
             }
         };
