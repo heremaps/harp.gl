@@ -869,7 +869,8 @@ export class MapView extends EventDispatcher {
     private readonly m_enablePolarDataSource: boolean = true;
 
     // gestures
-    private readonly m_raycaster: PickingRaycaster;
+    private readonly m_raycaster = new THREE.Raycaster();
+    private readonly m_pickingRaycaster: PickingRaycaster;
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
     private readonly m_sphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 
@@ -1087,7 +1088,7 @@ export class MapView extends EventDispatcher {
         // setup camera with initial position
         this.setupCamera();
 
-        this.m_raycaster = new PickingRaycaster(width, height, this.m_env);
+        this.m_pickingRaycaster = new PickingRaycaster(width, height, this.m_env);
 
         this.m_movementDetector = new CameraMovementDetector(
             this.m_options.movementThrottleTimeout,
@@ -2581,8 +2582,11 @@ export class MapView extends EventDispatcher {
      * points.
      */
     raycasterFromScreenPoint(x: number, y: number): THREE.Raycaster {
-        this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_rteCamera);
-        return this.m_raycaster;
+        this.m_pickingRaycaster.setFromCamera(
+            this.getNormalizedScreenCoordinates(x, y),
+            this.m_rteCamera
+        );
+        return this.m_pickingRaycaster;
     }
 
     getWorldPositionAt(x: number, y: number, fallback: true): THREE.Vector3;

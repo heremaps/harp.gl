@@ -802,13 +802,16 @@ export class TileGeometryCreator {
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
 
+                const techniquePickability = transientToPickability(
+                    getPropertyValue(technique.transient, mapView.env)
+                );
                 // register all objects as pickable except solid lines with outlines, in that case
                 // it's enough to make outlines pickable.
                 registerTileObject(tile, object, techniqueKind, {
                     technique,
                     pickability: hasSolidLinesOutlines
                         ? Pickability.transient
-                        : transientToPickability(getPropertyValue(technique.transient, mapView.env))
+                        : techniquePickability
                 });
                 objects.push(object);
 
@@ -975,7 +978,7 @@ export class TileGeometryCreator {
 
                     registerTileObject(tile, outlineObj, techniqueKind, {
                         technique,
-                        pickability: Pickability.transient
+                        pickability: techniquePickability
                     });
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,

@@ -291,7 +291,7 @@ describe("TileGeometryCreator", () => {
             });
         });
 
-        it("fill outline geometry is registered as non-pickable", () => {
+        it("fill outline geometry is registered as pickable", () => {
             const decodedTile: DecodedTile = getFillTile();
             tgc.createObjects(newTile, decodedTile);
             assert.equal(newTile.objects.length, 2);
@@ -301,7 +301,7 @@ describe("TileGeometryCreator", () => {
 
             const adapter1 = MapObjectAdapter.get(newTile.objects[1]);
             expect(adapter1).not.equals(undefined);
-            expect(adapter1!.isPickable(new MapEnv({}))).to.equal(false);
+            expect(adapter1!.isPickable(new MapEnv({}))).to.equal(true);
         });
 
         it("solid line without outline is registered as pickable", () => {

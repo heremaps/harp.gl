@@ -13,6 +13,7 @@ import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
 import { PickListener } from "./PickListener";
 import { Tile, TileFeatureData } from "./Tile";
+import { MapViewUtils } from "./Utils";
 
 /**
  * Describes the general type of a picked object.
@@ -108,6 +109,7 @@ export interface PickResult {
     userData?: any;
 }
 
+const tmpV3 = new THREE.Vector3();
 const tmpOBB = new OrientedBox3();
 
 // Intersects the dependent tile objects using the supplied raycaster. Note, because multiple
@@ -150,9 +152,7 @@ export class PickHandler {
     ) {}
 
     /**
-     * Does a raycast on all objects in the scene; useful for picking. This function is Limited to
-     * objects that THREE.js can raycast. However, any solid lines that have their geometry in the
-     * shader cannot be tested for intersection.
+     * Does a raycast on all objects in the scene; useful for picking.
      *
      * @param x - The X position in CSS/client coordinates, without the applied display ratio.
      * @param y - The Y position in CSS/client coordinates, without the applied display ratio.
@@ -161,15 +161,14 @@ export class PickHandler {
      * @returns the list of intersection results.
      */
     intersectMapObjects(x: number, y: number, parameters?: IntersectParams): PickResult[] {
-        const worldPos = this.mapView.getNormalizedScreenCoordinates(x, y);
-        const rayCaster = this.mapView.raycasterFromScreenPoint(x, y);
-
+        const ndc = this.mapView.getNormalizedScreenCoordinates(x, y);
+        const rayCaster = this.createRaycaster(x, y);
         const pickListener = new PickListener(parameters);
 
         if (this.mapView.textElementsRenderer !== undefined) {
             const { clientWidth, clientHeight } = this.mapView.canvas;
-            const screenX = worldPos.x * clientWidth * 0.5;
-            const screenY = worldPos.y * clientHeight * 0.5;
+            const screenX = ndc.x * clientWidth * 0.5;
+            const screenY = ndc.y * clientHeight * 0.5;
             const scenePosition = new THREE.Vector2(screenX, screenY);
             this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickListener);
         }
@@ -349,5 +348,25 @@ export class PickHandler {
             objInfosIndex++;
         }
         pickResult.userData = featureData.objInfos[objInfosIndex - 1];
+    }
+
+    private createRaycaster(x: number, y: number): THREE.Raycaster {
+        const camera = this.mapView.camera;
+        const rayCaster = this.mapView.raycasterFromScreenPoint(x, y);
+
+        // A threshold must be set for picking of line and line segments, indicating the maximum
+        // distance in world units from the ray to a line to consider it as picked. Use the world
+        // units equivalent to one pixel at the furthest intersection (i.e. intersection with ground
+        // or far plane).
+        const furthestIntersection = this.mapView.getWorldPositionAt(x, y, true);
+        const furthestDistance =
+            camera.position.distanceTo(furthestIntersection) /
+            this.mapView.camera.getWorldDirection(tmpV3).dot(rayCaster.ray.direction);
+        rayCaster.params.Line!.threshold = MapViewUtils.calculateWorldSizeByFocalLength(
+            this.mapView.focalLength,
+            furthestDistance,
+            1
+        );
+        return rayCaster;
     }
 }
