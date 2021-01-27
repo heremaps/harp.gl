@@ -22,7 +22,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v2
               with:
-                 fetch-depth: 0
+                  fetch-depth: 0
 
             - name: Install
               run: yarn --frozen-lockfile
@@ -48,3 +48,13 @@ jobs:
                   ./scripts/git-check-clean-workspace.sh
               shell: bash
 
+            - name: Deploy
+              if: github.ref == 'refs/heads/release'
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14
+                  registry-url: https://registry.npmjs.org/
+              run: yarn
+                  npx lerna publish -y from-git --pre-dist-tag alpha
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
