@@ -40,9 +40,9 @@ jobs:
 
             - name: Build
               run: |
-                  cross-env NODE_ENV=production yarn run build
+                  npx cross-env NODE_ENV=production yarn run build
                   yarn run typedoc
-                  cross-env NODE_ENV=production yarn run build-www
+                  npx cross-env NODE_ENV=production yarn run build-www
                   yarn prepare-doc-deploy
                   # debug: lerna publish expects clean workspace
                   ./scripts/git-check-clean-workspace.sh
