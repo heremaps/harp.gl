@@ -1,0 +1,47 @@
+name: Publish Packages
+
+on:
+    push:
+        branches:
+            - release
+
+env:
+    nodeTestTimeout: 4000
+    browserTestTimeout: 8000
+    DETECT_CHROMEDRIVER_VERSION: true
+    HARP_NO_HARD_SOURCE_CACHE: true
+
+jobs:
+    deploy:
+        name: Deploy coresdk packages to npm
+        runs-on: ubuntu-latest
+
+        steps:
+            # Checks out a copy of your repository on the ubuntu-latest machine
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Test
+          run: |
+            yarn pre-test
+            yarn cov-test --forbid-only
+            yarn build-tests
+            yarn test-browser --headless-firefox
+            yarn test-browser --headless-chrome
+             ./scripts/test-npm-packages.sh
+          shell: bash
+
+        - name: Build
+          run: |
+              cross-env NODE_ENV=production yarn run build
+              yarn run typedoc
+              cross-env NODE_ENV=production yarn run build-www
+              yarn prepare-doc-deploy
+              # debug: lerna publish expects clean workspace
+               ./scripts/git-check-clean-workspace.sh
+          shell: bash
+
+        # TODO: Enable.. check first that the former works
+        #- name: Deploy
+        #  run: ./scripts/publish-packages.sh
+        #  shell: bash
