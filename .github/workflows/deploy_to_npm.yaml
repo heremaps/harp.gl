@@ -21,6 +21,8 @@ jobs:
             # Checks out a copy of your repository on the ubuntu-latest machine
             - name: Checkout code
               uses: actions/checkout@v2
+              with:
+                 fetch-depth: 0
 
             - name: Install
               run: yarn --frozen-lockfile
@@ -46,11 +48,3 @@ jobs:
                   ./scripts/git-check-clean-workspace.sh
               shell: bash
 
-        # TODO: Enable.. check first that the former works
-        #- name: Deploy
-        #  if: github.ref == 'refs/heads/release'
-        #  run: ./scripts/publish-packages.sh
-        #  shell: bash
-        #  env:
-        #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        #      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
