@@ -1,6 +1,7 @@
 name: Publish Packages
 
 on:
+    workflow_dispatch:
     push:
         branches:
             - release
@@ -18,30 +19,38 @@ jobs:
 
         steps:
             # Checks out a copy of your repository on the ubuntu-latest machine
-        - name: Checkout code
-          uses: actions/checkout@v2
+            - name: Checkout code
+              uses: actions/checkout@v2
 
-        - name: Test
-          run: |
-            yarn pre-test
-            yarn cov-test --forbid-only
-            yarn build-tests
-            yarn test-browser --headless-firefox
-            yarn test-browser --headless-chrome
-             ./scripts/test-npm-packages.sh
-          shell: bash
+            - name: Install
+              run: yarn --frozen-lockfile
+              shell: bash
 
-        - name: Build
-          run: |
-              cross-env NODE_ENV=production yarn run build
-              yarn run typedoc
-              cross-env NODE_ENV=production yarn run build-www
-              yarn prepare-doc-deploy
-              # debug: lerna publish expects clean workspace
-               ./scripts/git-check-clean-workspace.sh
-          shell: bash
+            - name: Test
+              run: |
+                  yarn pre-test
+                  yarn cov-test --forbid-only
+                  yarn build-tests
+                  yarn karma-headless
+                  yarn karma-headless-firefox
+                  ./scripts/test-npm-packages.sh
+              shell: bash
+
+            - name: Build
+              run: |
+                  cross-env NODE_ENV=production yarn run build
+                  yarn run typedoc
+                  cross-env NODE_ENV=production yarn run build-www
+                  yarn prepare-doc-deploy
+                  # debug: lerna publish expects clean workspace
+                  ./scripts/git-check-clean-workspace.sh
+              shell: bash
 
         # TODO: Enable.. check first that the former works
         #- name: Deploy
+        #  if: github.ref == 'refs/heads/release'
         #  run: ./scripts/publish-packages.sh
         #  shell: bash
+        #  env:
+        #      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
