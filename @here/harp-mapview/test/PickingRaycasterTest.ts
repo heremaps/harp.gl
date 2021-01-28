@@ -7,7 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 //    Chai uses properties instead of functions for some expect checks.
 
-import { MapEnv } from "@here/harp-datasource-protocol";
+import { MapEnv, Pickability } from "@here/harp-datasource-protocol";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -60,7 +60,7 @@ describe("PickingRaycaster", function () {
 
         it("skips non-pickable objects", function () {
             const object = createFakeObject(THREE.Object3D);
-            MapObjectAdapter.create(object, { pickable: false });
+            MapObjectAdapter.create(object, { pickability: Pickability.transient });
             {
                 const intersections = raycaster.intersectObject(object);
                 expect(intersections).to.be.empty;
@@ -71,12 +71,27 @@ describe("PickingRaycaster", function () {
             }
         });
 
+        it("picks invisible but force-pickable objects", function () {
+            const object = createFakeObject(THREE.Mesh);
+            object.material = new THREE.Material();
+            object.material.opacity = 0;
+            MapObjectAdapter.create(object, { pickability: Pickability.all });
+            {
+                const intersections = raycaster.intersectObject(object);
+                expect(intersections).to.have.length(1);
+            }
+            {
+                const intersections = raycaster.intersectObjects([object, object]);
+                expect(intersections).to.have.length(2);
+            }
+        });
+
         it("tests pickable objects", function () {
             const object = createFakeObject(THREE.Object3D);
             const mesh = createFakeObject(THREE.Mesh);
             mesh.material = new THREE.Material();
             mesh.material.opacity = 1;
-            MapObjectAdapter.create(mesh, { pickable: true });
+            MapObjectAdapter.create(mesh, { pickability: Pickability.onlyVisible });
 
             {
                 const intersections = raycaster.intersectObject(object);

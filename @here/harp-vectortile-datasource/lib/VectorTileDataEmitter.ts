@@ -858,14 +858,7 @@ export class VectorTileDataEmitter {
 
             const isLine = isSolidLineTechnique(technique) || isLineTechnique(technique);
             if (isPolygon) {
-                this.applyPolygonTechnique(
-                    polygons,
-                    technique,
-                    techniqueIndex,
-                    featureId,
-                    context,
-                    extents
-                );
+                this.applyPolygonTechnique(polygons, technique, techniqueIndex, context, extents);
             } else if (isLine) {
                 const lineGeometry =
                     technique.name === "line" ? this.m_simpleLines : this.m_solidLines;
@@ -1250,7 +1243,6 @@ export class VectorTileDataEmitter {
         polygons: Ring[][],
         technique: Technique,
         techniqueIndex: number,
-        featureId: number | undefined,
         context: AttrEvaluationContext,
         extents: number
     ): void {

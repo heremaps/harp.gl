@@ -8,7 +8,8 @@ import {
     getFeatureId,
     getPropertyValue,
     IndexedTechnique,
-    MapEnv
+    MapEnv,
+    Pickability
 } from "@here/harp-datasource-protocol";
 import { Object3D, Vector3 } from "three";
 
@@ -207,7 +208,10 @@ export class TileObjectRenderer {
 
         if (mapObjectAdapter) {
             mapObjectAdapter.ensureUpdated(tile.mapView);
-            if (!mapObjectAdapter.isVisible()) {
+            if (
+                !mapObjectAdapter.isVisible() &&
+                !(mapObjectAdapter.pickability === Pickability.all)
+            ) {
                 return false;
             }
         }

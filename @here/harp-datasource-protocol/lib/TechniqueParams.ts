@@ -209,9 +209,17 @@ export interface BaseTechniqueParams {
     category?: DynamicProperty<string>;
 
     /**
-     * Optional. If `true`, no IDs will be saved for the geometry this technique creates.
+     * Optional. If `true` or `Pickability.transient`, no IDs will be saved for the geometry
+     * this style creates. Default is `Pickability.onlyVisible`, which allows all pickable and
+     * visible objects to be picked, Pickability.all, will also allow invisible objects to be
+     * picked.
+     * @defaultValue `Pickability.onlyVisible`
+     * The boolean option is for backwardscompatibilty, please use the Pickability.
+     *
+     *
+     * TODO: deprecate and rename to something that makes more sense
      */
-    transient?: boolean;
+    transient?: boolean | Pickability;
 
     /**
      * Distance to the camera `(0.0 = camera position, 1.0 = farPlane) at which the object start
@@ -482,6 +490,42 @@ export enum PoiStackMode {
      * Show category parent in the stack.
      */
     ShowParent = "show-parent"
+}
+
+/**
+ * Define the pickability of an object.
+ */
+export enum Pickability {
+    /**
+     * Pickable if visible.
+     */
+    onlyVisible = "only-visible",
+    /**
+     * Not Pickable at all.
+     */
+    transient = "transient",
+    /**
+     * All objects of this type pickable.
+     */
+    all = "all"
+}
+
+/**
+ * Converts backwards compatible transient property to pure {@type Pickabilty} object
+ *
+ * @param transient The transient property from the style
+ */
+export function transientToPickability(transient?: boolean | Pickability): Pickability {
+    let pickability: Pickability = Pickability.onlyVisible;
+    if (transient !== undefined && transient !== null) {
+        pickability =
+            typeof transient === "string"
+                ? transient
+                : transient === true
+                ? Pickability.transient
+                : Pickability.onlyVisible;
+    }
+    return pickability;
 }
 
 /**

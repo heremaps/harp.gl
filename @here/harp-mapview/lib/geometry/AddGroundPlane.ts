@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeometryKind } from "@here/harp-datasource-protocol";
+import { GeometryKind, Pickability } from "@here/harp-datasource-protocol";
 import {
     EdgeLengthGeometrySubdivisionModifier,
     SubdivisionMode
@@ -48,7 +48,7 @@ export function addGroundPlane(
     );
     mesh.receiveShadow = receiveShadow;
     mesh.renderOrder = renderOrder;
-    registerTileObject(tile, mesh, GeometryKind.Background, { pickable: false });
+    registerTileObject(tile, mesh, GeometryKind.Background, { pickability: Pickability.transient });
     tile.objects.push(mesh);
 }
 

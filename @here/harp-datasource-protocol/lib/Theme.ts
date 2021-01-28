@@ -14,6 +14,7 @@ import {
     FillTechniqueParams,
     LineTechniqueParams,
     MarkerTechniqueParams,
+    Pickability,
     PointTechniqueParams,
     SegmentsTechniqueParams,
     ShaderTechniqueParams,
@@ -350,10 +351,17 @@ export interface StyleAttributes<Technique, Params> {
     maxZoomLevel?: number | JsonExpr;
 
     /**
-     * Optional. If `true`, no IDs will be saved for the geometry this style creates. Default is
-     * `false`.
+     * Optional. If `true` or `Pickability.transient`, no IDs will be saved for the geometry
+     * this style creates. Default is `Pickability.onlyVisible`, which allows all pickable and visible
+     * objects to be picked, Pickability.all, will also allow invisible objects to be
+     * picked.
+     * @defaultValue `Pickability.onlyVisible`
+     * The boolean option is for backwardscompatibilty, please use the Pickability.
+     *
+     *
+     * TODO: deprecate and rename to something that makes more sense
      */
-    transient?: boolean;
+    transient?: boolean | Pickability;
 
     /**
      * Optional: If `true`, the objects with matching `when` statement will be printed to the

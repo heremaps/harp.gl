@@ -36,11 +36,13 @@ import {
     MakeTechniqueAttrs,
     MapEnv,
     needsVertexNormals,
+    Pickability,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
     TerrainTechnique,
     TextPathGeometry,
+    transientToPickability,
     Value
 } from "@here/harp-datasource-protocol";
 import {
@@ -789,7 +791,7 @@ export class TileGeometryCreator {
                     // for elevation overlay.
                     registerTileObject(tile, depthPassMesh, techniqueKind, {
                         technique,
-                        pickable: false
+                        pickability: Pickability.transient
                     });
                     objects.push(depthPassMesh);
 
@@ -804,7 +806,9 @@ export class TileGeometryCreator {
                 // it's enough to make outlines pickable.
                 registerTileObject(tile, object, techniqueKind, {
                     technique,
-                    pickable: !hasSolidLinesOutlines
+                    pickability: hasSolidLinesOutlines
+                        ? Pickability.transient
+                        : transientToPickability(getPropertyValue(technique.transient, mapView.env))
                 });
                 objects.push(object);
 
@@ -891,8 +895,9 @@ export class TileGeometryCreator {
 
                     registerTileObject(tile, edgeObj, techniqueKind, {
                         technique,
-                        pickable: false
+                        pickability: Pickability.transient
                     });
+
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
                         objectColor: buildingTechnique.color,
@@ -970,7 +975,7 @@ export class TileGeometryCreator {
 
                     registerTileObject(tile, outlineObj, techniqueKind, {
                         technique,
-                        pickable: false
+                        pickability: Pickability.transient
                     });
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,
