@@ -562,7 +562,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                     {
                         type: "Feature",
                         properties: { text: "Marker" },
-                        geometry: { type: "Point", coordinates: [14.6, 53.3, 25] }
+                        geometry: { type: "Point", coordinates: [14.6, 53.3, 15] }
                     }
                 ]
             },

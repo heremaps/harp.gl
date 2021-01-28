@@ -277,6 +277,16 @@ export interface BaseTechniqueParams {
      * Maximum zoom level. If the current zoom level is equal to or greater, the technique will not be used.
      */
     maxZoomLevel?: DynamicProperty<number>;
+
+    /**
+     * If `true`, geometry height won't be scaled on projection. Enable it for projections with
+     * variable scale factor (e.g. mercator) to avoid distortions in geometry with great heights and
+     * latitude spans. E.g. a large object with even height would look oblique to the ground plane
+     * on mercator unless this property is set to `true`.
+     *
+     * @defaultValue `true` for geometries stored at level less than `12`.
+     */
+    constantHeight?: boolean;
 }
 
 export enum TextureCoordinateType {
@@ -1255,14 +1265,6 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * @format color-hex
      */
     defaultColor?: DynamicProperty<StyleColor>;
-
-    /**
-     * If `true`, the height of the extruded buildings will not be modified by the mercator
-     * projection distortion that happens around the poles.
-     *
-     * @defaultValue `true` for geometries stored at level less than `12`.
-     */
-    constantHeight?: boolean;
 
     /**
      * If `true`, wall geometry will is added along the tile boundaries.

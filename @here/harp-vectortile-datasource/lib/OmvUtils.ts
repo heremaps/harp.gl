@@ -130,10 +130,14 @@ export function webMercatorTile2TargetWorld(
     decodeInfo: DecodeInfo,
     position: THREE.Vector2 | THREE.Vector3,
     target: THREE.Vector3,
+    scaleHeight: boolean,
     flipY: boolean = false
 ) {
     tile2world(extents, decodeInfo, position, flipY, target);
     decodeInfo.targetProjection.reprojectPoint(webMercatorProjection, target, target);
+    if (position instanceof THREE.Vector3 && scaleHeight) {
+        target.z *= decodeInfo.targetProjection.getScaleFactor(target);
+    }
 }
 
 export function webMercatorTile2TargetTile(
@@ -141,8 +145,9 @@ export function webMercatorTile2TargetTile(
     decodeInfo: DecodeInfo,
     position: THREE.Vector2 | THREE.Vector3,
     target: THREE.Vector3,
+    scaleHeight: boolean,
     flipY: boolean = false
 ) {
-    webMercatorTile2TargetWorld(extents, decodeInfo, position, target, flipY);
+    webMercatorTile2TargetWorld(extents, decodeInfo, position, target, scaleHeight, flipY);
     target.sub(decodeInfo.center);
 }

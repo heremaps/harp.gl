@@ -33,6 +33,7 @@ import {
     PathGeometry,
     PoiGeometry,
     PoiTechnique,
+    scaleHeight,
     StyleColor,
     Technique,
     TextGeometry,
@@ -85,7 +86,6 @@ import { Ring } from "./Ring";
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
 const tempTileOrigin = new THREE.Vector3();
-const tempVertOrigin = new THREE.Vector3();
 const tempVertNormal = new THREE.Vector3();
 const tempFootDisp = new THREE.Vector3();
 const tempRoofDisp = new THREE.Vector3();
@@ -331,6 +331,7 @@ export class VectorTileDataEmitter {
                 }
             }
 
+            const scaleHeights = scaleHeight(context, technique, this.m_decodeInfo.tileKey.level);
             const featureId = getFeatureId(env.entries);
             for (const pos of tilePositions) {
                 if (shouldCreateTextGeometries) {
@@ -347,9 +348,21 @@ export class VectorTileDataEmitter {
                 // Always store the position, otherwise the following POIs will be
                 // misplaced.
                 if (shouldCreateTextGeometries) {
-                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+                    webMercatorTile2TargetWorld(
+                        extents,
+                        this.m_decodeInfo,
+                        pos,
+                        tmpV3,
+                        scaleHeights
+                    );
                 } else {
-                    webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV3);
+                    webMercatorTile2TargetTile(
+                        extents,
+                        this.m_decodeInfo,
+                        pos,
+                        tmpV3,
+                        scaleHeights
+                    );
                 }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
                 objInfos.push(this.m_gatherFeatureAttributes ? env.entries : featureId);
@@ -404,6 +417,7 @@ export class VectorTileDataEmitter {
         let texCoordinateType: TextureCoordinateType | undefined;
 
         const hasUntiledLines = geometry[0].untiledPositions !== undefined;
+        const scaleHeights = false; // No need to scale height, source data is 2D.
 
         // If true, special handling for dashes is required (round and diamond shaped dashes).
         let hasIndividualLineSegments = false;
@@ -471,9 +485,21 @@ export class VectorTileDataEmitter {
 
                         const pos1 = polyline.positions[i];
                         const pos2 = polyline.positions[i + 1];
-                        webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos1, tmpV3);
+                        webMercatorTile2TargetWorld(
+                            extents,
+                            this.m_decodeInfo,
+                            pos1,
+                            tmpV3,
+                            scaleHeights
+                        );
                         worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
-                        webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos2, tmpV4);
+                        webMercatorTile2TargetWorld(
+                            extents,
+                            this.m_decodeInfo,
+                            pos2,
+                            tmpV4,
+                            scaleHeights
+                        );
                         worldLine.push(tmpV4.x, tmpV4.y, tmpV4.z);
 
                         if (computeTexCoords) {
@@ -527,7 +553,13 @@ export class VectorTileDataEmitter {
                 const lineUvs: number[] = [];
                 const lineOffsets: number[] = [];
                 polyline.positions.forEach(pos => {
-                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+                    webMercatorTile2TargetWorld(
+                        extents,
+                        this.m_decodeInfo,
+                        pos,
+                        tmpV3,
+                        scaleHeights
+                    );
                     worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
 
                     if (computeTexCoords) {
@@ -770,6 +802,8 @@ export class VectorTileDataEmitter {
         const env = context.env;
         this.processFeatureCommon(env);
 
+        const scaleHeights = false; // No need to scale height, source data is 2D.
+
         techniques.forEach(technique => {
             if (technique === undefined) {
                 return;
@@ -906,7 +940,8 @@ export class VectorTileDataEmitter {
                                     extents,
                                     this.m_decodeInfo,
                                     tmpV2.copy(curr),
-                                    tmpV3
+                                    tmpV3,
+                                    scaleHeights
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
 
@@ -916,7 +951,8 @@ export class VectorTileDataEmitter {
                                         extents,
                                         this.m_decodeInfo,
                                         tmpV2.copy(next),
-                                        tmpV4
+                                        tmpV4,
+                                        scaleHeights
                                     );
                                     line.push(tmpV4.x, tmpV4.y, tmpV4.z);
 
@@ -934,7 +970,8 @@ export class VectorTileDataEmitter {
                                     extents,
                                     this.m_decodeInfo,
                                     tmpV2.copy(next),
-                                    tmpV3
+                                    tmpV3,
+                                    scaleHeights
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
                             }
@@ -1299,16 +1336,8 @@ export class VectorTileDataEmitter {
 
         const tileLevel = this.m_decodeInfo.tileKey.level;
 
-        const SCALED_EXTRUSION_MIN_STORAGE_LEVEL = 12;
-
-        // Unless explicitly defined do not apply the projection
-        // scale factor to convert meters to world space units
-        // if the tile's level is less than `SCALED_EXTRUSION_MIN_STORAGE_LEVEL`.
-        const styleSetConstantHeight = evaluateTechniqueAttr(
-            context,
-            extrudedPolygonTechnique.constantHeight,
-            tileLevel < SCALED_EXTRUSION_MIN_STORAGE_LEVEL
-        );
+        const scaleHeights =
+            isExtruded && scaleHeight(context, extrudedPolygonTechnique, tileLevel);
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
 
@@ -1533,25 +1562,18 @@ export class VectorTileDataEmitter {
 
                     // Assemble the vertex buffer.
                     for (let i = 0; i < vertices.length; i += vertexStride) {
-                        webMercatorTile2TargetTile(
+                        webMercatorTile2TargetWorld(
                             extents,
                             this.m_decodeInfo,
                             tmpV2.set(vertices[i], vertices[i + 1]),
                             tmpV3,
+                            false, // no need to scale height (source data is 2D).
                             true
                         );
 
-                        let scaleFactor = 1.0;
-                        if (isExtruded && styleSetConstantHeight !== true) {
-                            tempVertOrigin.set(
-                                tempTileOrigin.x + tmpV3.x,
-                                tempTileOrigin.y + tmpV3.y,
-                                tempTileOrigin.z + tmpV3.z
-                            );
-                            scaleFactor = this.m_decodeInfo.targetProjection.getScaleFactor(
-                                tempVertOrigin
-                            );
-                        }
+                        const scaleFactor = scaleHeights
+                            ? this.m_decodeInfo.targetProjection.getScaleFactor(tmpV3)
+                            : 1.0;
                         this.m_maxGeometryHeight = Math.max(
                             this.m_maxGeometryHeight,
                             scaleFactor * height
@@ -1562,11 +1584,9 @@ export class VectorTileDataEmitter {
                         );
 
                         if (isSpherical) {
-                            tempVertNormal
-                                .set(tmpV3.x, tmpV3.y, tmpV3.z)
-                                .add(this.center)
-                                .normalize();
+                            tempVertNormal.set(tmpV3.x, tmpV3.y, tmpV3.z).normalize();
                         }
+                        tmpV3.sub(this.center);
 
                         tempFootDisp.copy(tempVertNormal).multiplyScalar(floorHeight * scaleFactor);
                         positions.push(
