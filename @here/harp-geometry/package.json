@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-geometry",
-    "version": "0.21.0",
+    "version": "0.22.0",
     "description": "Algorithms and data structures for processing geometries",
     "main": "index.js",
     "typings": "index",
@@ -41,8 +41,8 @@
         "three": "^0.124.0"
     },
     "dependencies": {
-        "@here/harp-geoutils": "^0.21.0",
-        "@here/harp-utils": "^0.21.0"
+        "@here/harp-geoutils": "^0.22.0",
+        "@here/harp-utils": "^0.22.0"
     },
     "publishConfig": {
         "access": "public"
