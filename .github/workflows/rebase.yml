@@ -2,10 +2,11 @@ name: Automatic Rebase
 on:
   issue_comment:
     types: [created]
+  workflow_dispatch:
 jobs:
   rebase:
     name: Rebase
-    if: ggithub.event.issue.pull_request != '' &&
+    if: github.event.issue.pull_request != '' &&
       contains(github.event.comment.body, 'rebase please') &&
       (github.event.comment.author_association == 'MEMBER' ||
       github.event.comment.author_association == 'OWNER')
