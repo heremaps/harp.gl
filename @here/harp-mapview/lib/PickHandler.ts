@@ -153,8 +153,9 @@ export class PickHandler {
         readonly camera: THREE.Camera,
         public enablePickTechnique = false
     ) {
-        const { width, height } = mapView.renderer.getSize(new THREE.Vector2());
-        this.m_pickingRaycaster = new PickingRaycaster(width, height);
+        this.m_pickingRaycaster = new PickingRaycaster(
+            mapView.renderer.getSize(new THREE.Vector2())
+        );
     }
 
     /**
@@ -168,7 +169,7 @@ export class PickHandler {
      */
     intersectMapObjects(x: number, y: number, parameters?: IntersectParams): PickResult[] {
         const ndc = this.mapView.getNormalizedScreenCoordinates(x, y);
-        const rayCaster = this.createRaycaster(x, y);
+        const rayCaster = this.setupRaycaster(x, y);
         const pickListener = new PickListener(parameters);
 
         if (this.mapView.textElementsRenderer !== undefined) {
@@ -238,6 +239,8 @@ export class PickHandler {
             this.mapView.getNormalizedScreenCoordinates(x, y),
             this.camera
         );
+
+        this.mapView.renderer.getSize(this.m_pickingRaycaster.canvasSize);
         return this.m_pickingRaycaster;
     }
 
@@ -375,7 +378,7 @@ export class PickHandler {
         pickResult.userData = featureData.objInfos[objInfosIndex - 1];
     }
 
-    private createRaycaster(x: number, y: number): THREE.Raycaster {
+    private setupRaycaster(x: number, y: number): THREE.Raycaster {
         const camera = this.mapView.camera;
         const rayCaster = this.raycasterFromScreenPoint(x, y);
 
