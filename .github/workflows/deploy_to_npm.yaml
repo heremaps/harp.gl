@@ -1,4 +1,4 @@
-name: Build & Deploy
+name: Publish Packages
 
 on:
     workflow_dispatch:
@@ -50,7 +50,7 @@ jobs:
               shell: bash
 
             - name: Deploy To NPM
-              if: github.ref =~ ^refs/heads/master|release$
+              if: github.ref == refs/heads/release
               uses: actions/setup-node@v1
               with:
                   node-version: 14
