@@ -11,6 +11,7 @@ import * as THREE from "three";
 import { IntersectParams } from "./IntersectParams";
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
+import { PickingRaycaster } from "./PickingRaycaster";
 import { PickListener } from "./PickListener";
 import { Tile, TileFeatureData } from "./Tile";
 import { MapViewUtils } from "./Utils";
@@ -145,11 +146,16 @@ function intersectDependentObjects(
  * @internal
  */
 export class PickHandler {
+    private readonly m_pickingRaycaster: PickingRaycaster;
+
     constructor(
         readonly mapView: MapView,
         readonly camera: THREE.Camera,
         public enablePickTechnique = false
-    ) {}
+    ) {
+        const { width, height } = mapView.renderer.getSize(new THREE.Vector2());
+        this.m_pickingRaycaster = new PickingRaycaster(width, height);
+    }
 
     /**
      * Does a raycast on all objects in the scene; useful for picking.
@@ -214,6 +220,25 @@ export class PickHandler {
 
         pickListener.finish();
         return pickListener.results;
+    }
+
+    /**
+     * Returns a ray caster using the supplied screen positions.
+     *
+     * @param x - The X position in css/client coordinates (without applied display ratio).
+     * @param y - The Y position in css/client coordinates (without applied display ratio).
+     *
+     * @alpha
+     *
+     * @return Raycaster with origin at the camera and direction based on the supplied x / y screen
+     * points.
+     */
+    raycasterFromScreenPoint(x: number, y: number): THREE.Raycaster {
+        this.m_pickingRaycaster.setFromCamera(
+            this.mapView.getNormalizedScreenCoordinates(x, y),
+            this.camera
+        );
+        return this.m_pickingRaycaster;
     }
 
     private createResult(intersection: THREE.Intersection): PickResult {
@@ -352,7 +377,7 @@ export class PickHandler {
 
     private createRaycaster(x: number, y: number): THREE.Raycaster {
         const camera = this.mapView.camera;
-        const rayCaster = this.mapView.raycasterFromScreenPoint(x, y);
+        const rayCaster = this.raycasterFromScreenPoint(x, y);
 
         // A threshold must be set for picking of line and line segments, indicating the maximum
         // distance in world units from the ray to a line to consider it as picked. Use the world

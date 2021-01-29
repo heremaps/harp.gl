@@ -285,7 +285,7 @@ describe("TileGeometryCreator", () => {
             newTile.objects.forEach(object => {
                 const adapter = MapObjectAdapter.get(object);
                 expect(adapter).not.equals(undefined);
-                expect(adapter!.isPickable(new MapEnv({}))).to.equal(
+                expect(adapter!.isPickable()).to.equal(
                     !isDepthPrePassMesh(object) && !(object as any).isLine
                 );
             });
@@ -297,11 +297,11 @@ describe("TileGeometryCreator", () => {
             assert.equal(newTile.objects.length, 2);
             const adapter0 = MapObjectAdapter.get(newTile.objects[0]);
             expect(adapter0).not.equals(undefined);
-            expect(adapter0!.isPickable(new MapEnv({}))).to.equal(true);
+            expect(adapter0!.isPickable()).to.equal(true);
 
             const adapter1 = MapObjectAdapter.get(newTile.objects[1]);
             expect(adapter1).not.equals(undefined);
-            expect(adapter1!.isPickable(new MapEnv({}))).to.equal(true);
+            expect(adapter1!.isPickable()).to.equal(true);
         });
 
         it("solid line without outline is registered as pickable", () => {
@@ -310,7 +310,7 @@ describe("TileGeometryCreator", () => {
             assert.equal(newTile.objects.length, 1);
             const adapter = MapObjectAdapter.get(newTile.objects[0]);
             expect(adapter).not.equals(undefined);
-            expect(adapter!.isPickable(new MapEnv({}))).to.equal(true);
+            expect(adapter!.isPickable()).to.equal(true);
         });
 
         it("only outline geometry from solid line with outline is registered as pickable", () => {
@@ -338,11 +338,11 @@ describe("TileGeometryCreator", () => {
             assert.equal(newTile.objects.length, 2);
             const adapter0 = MapObjectAdapter.get(newTile.objects[0]);
             expect(adapter0).not.equals(undefined);
-            expect(adapter0!.isPickable(new MapEnv({}))).to.equal(false);
+            expect(adapter0!.isPickable()).to.equal(false);
 
             const adapter1 = MapObjectAdapter.get(newTile.objects[1]);
             expect(adapter1).not.equals(undefined);
-            expect(adapter1!.isPickable(new MapEnv({}))).to.equal(true);
+            expect(adapter1!.isPickable()).to.equal(true);
         });
     });
 
