@@ -26,7 +26,7 @@ describe("PickingRaycaster", function () {
     let raycaster: PickingRaycaster;
 
     beforeEach(function () {
-        raycaster = new PickingRaycaster(0, 0);
+        raycaster = new PickingRaycaster(new THREE.Vector2());
     });
 
     describe("intersectObject(s)", function () {
