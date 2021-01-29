@@ -229,8 +229,6 @@ export class PickHandler {
      * @param x - The X position in css/client coordinates (without applied display ratio).
      * @param y - The Y position in css/client coordinates (without applied display ratio).
      *
-     * @alpha
-     *
      * @return Raycaster with origin at the camera and direction based on the supplied x / y screen
      * points.
      */
