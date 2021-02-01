@@ -7,22 +7,29 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
-import { MapView, MapViewUtils } from "@here/harp-mapview";
-import { expect } from "chai";
+import { MapView, MapViewEventNames, MapViewOptions, MapViewUtils } from "@here/harp-mapview";
+import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
+import * as chai from "chai";
+import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
+chai.use(chaiAsPromised);
+// Needed for using expect(...).true for example
+const { expect } = chai;
 
 import { MapControls } from "../lib/MapControls";
 
 declare const global: any;
-
-const inNodeContext = typeof window === "undefined";
 
 describe("MapControls", function () {
     const DEFAULT_CANVAS_WIDTH = 800;
     const DEFAULT_CANVAS_HEIGHT = 600;
     let sandbox: sinon.SinonSandbox;
     let domElement: any;
+    const inNodeContext = typeof window === "undefined";
+    let canvas: HTMLCanvasElement;
+    let mapViewOptions: MapViewOptions;
     let mapView: MapView;
     let mapControls: MapControls;
     let camera: THREE.Camera;
@@ -157,9 +164,15 @@ describe("MapControls", function () {
     before(function () {
         if (inNodeContext) {
             const theGlobal: any = global;
-            theGlobal.requestAnimationFrame = () => {};
+            theGlobal.requestAnimationFrame = (callback: (time: DOMHighResTimeStamp) => void) => {
+                setTimeout(callback, 0, 1);
+            };
+            let time = 0;
             theGlobal.performance = {
-                now: () => {}
+                now: () => {
+                    // Time in ms, i.e. 20ms gives us a FPS of 50.
+                    return (time += 20);
+                }
             };
             (global as any).window = {
                 addEventListener: (eventName: string, func: EventListener) => {
@@ -529,5 +542,69 @@ describe("MapControls", function () {
                 expect(orbitAroundScreenPointSpy.called).to.equal(isEnabled);
             });
         }
+    });
+
+    describe("toggletilt with inertia", () => {
+        beforeEach(function () {
+            // This tests runs a non mocked version of MapView, hence we need to mock some other
+            // methods to get it working correctl.
+            const clearColorStub: sinon.SinonStub = sandbox.stub();
+            sandbox
+                .stub(THREE, "WebGLRenderer")
+                .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
+            sandbox
+                .stub(THREE, "WebGL1Renderer")
+                .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
+            canvas = ({
+                clientWidth: 1,
+                clientHeight: 1,
+                addEventListener: sinon.stub(),
+                removeEventListener: sinon.stub()
+            } as unknown) as HTMLCanvasElement;
+            mapViewOptions = {
+                canvas,
+                // Both options cause the `addDataSource` method to be called, which we can't
+                // `await` on because it is called in the constructor, but we can disable them being
+                // added.
+                addBackgroundDatasource: false,
+                enablePolarDataSource: false
+            };
+            mapView = new MapView(mapViewOptions);
+            mapControls = new MapControls(mapView);
+        });
+
+        afterEach(() => {
+            // Needed to clear any `setTimeout` calls which might rely on our global stubs.
+            mapView.dispose();
+        });
+
+        it("toggle tilt reaches configured tilt angle and 0", async () => {
+            mapControls.inertiaEnabled = true;
+
+            let resolvePromise: (value: unknown) => void;
+
+            const checkReachedTarget = () => {
+                const mapViewTiltRad = THREE.MathUtils.degToRad(mapView.tilt);
+                resolvePromise(mapViewTiltRad);
+            };
+            mapView.addEventListener(MapViewEventNames.MovementFinished, checkReachedTarget);
+
+            const tiltCamera = new Promise(resolve => {
+                resolvePromise = resolve;
+            });
+            // Tilt to `mapControls.tiltAngle`
+            mapControls.toggleTilt();
+            await expect(tiltCamera).to.eventually.be.closeTo(
+                mapControls.tiltAngle,
+                Number.EPSILON
+            );
+
+            const tiltBackToZero = new Promise(resolve => {
+                resolvePromise = resolve;
+            });
+            // Tilt back to 0
+            mapControls.toggleTilt();
+            await expect(tiltBackToZero).to.eventually.be.closeTo(0, Number.EPSILON);
+        });
     });
 });
