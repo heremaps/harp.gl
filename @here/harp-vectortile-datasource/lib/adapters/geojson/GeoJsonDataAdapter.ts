@@ -145,13 +145,11 @@ function signedPolygonArea(contour: GeoPointLike[]): number {
 }
 
 function convertRings(coordinates: GeoPointLike[][], decodeInfo: DecodeInfo): IPolygonGeometry {
-    let outerWinding: boolean | undefined;
     const rings = coordinates.map((ring, i) => {
+        const isOuterRing = i === 0;
+        const isClockWise = signedPolygonArea(ring) < 0;
         const { positions } = convertLineStringGeometry(ring, decodeInfo);
-        const winding = signedPolygonArea(ring) < 0;
-        if (i === 0) {
-            outerWinding = winding;
-        } else if (winding === outerWinding) {
+        if ((isOuterRing && !isClockWise) || (!isOuterRing && isClockWise)) {
             positions.reverse();
         }
         return positions;
