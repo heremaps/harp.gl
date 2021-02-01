@@ -50,7 +50,7 @@ jobs:
               shell: bash
 
             - name: Deploy To NPM
-              if: github.ref == refs/heads/release
+              if: github.ref == refs/heads/test-release
               uses: actions/setup-node@v1
               with:
                   node-version: 14
