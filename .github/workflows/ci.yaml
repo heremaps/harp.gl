@@ -99,9 +99,14 @@ jobs:
         yarn karma-headless-firefox
       shell: bash
       if: matrix.os == 'ubuntu-latest'
+    - name: Test Packages
+      run: |
+        ./scripts/test-npm-packages.sh
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
     - name: Build bundle
       run: yarn run build-bundle
-      shell: bash  
+      shell: bash
     - name: Build examples
       run: yarn run build-examples
       shell: bash
