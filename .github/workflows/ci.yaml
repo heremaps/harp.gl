@@ -103,6 +103,7 @@ jobs:
       run: |
         ./scripts/test-npm-packages.sh
       shell: bash
+      if: matrix.os == 'ubuntu-latest'
     - name: Build bundle
       run: yarn run build-bundle
       shell: bash
