@@ -15,6 +15,7 @@ import {
 import { GeoPointLike } from "@here/harp-geoutils";
 import * as turf from "@turf/turf";
 
+import { GeoJsonStore } from "./utils/GeoJsonStore";
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
 
@@ -152,6 +153,62 @@ describe("GeoJson features", function () {
                         styles: [strokePolygonLayer({ caps })]
                     }
                 });
+            });
+        });
+    });
+
+    describe("extruded-polygon technique", async function () {
+        it("Polygon touching tile border", async function () {
+            const polygon: turf.Feature = {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                    type: "Polygon",
+                    coordinates: [
+                        [
+                            [0.00671649362467299, 51.49353450058163, 0],
+                            [0.006598810705050831, 51.48737650885326, 0],
+                            [0.015169103358567556, 51.48731300784492, 0],
+                            [0.015286786278189713, 51.49347100814989, 0],
+                            [0.006716493624672999, 51.49353450058163, 0],
+                            [0.00671649362467299, 51.49353450058163, 0]
+                        ]
+                    ]
+                }
+            };
+
+            const dataProvider = new GeoJsonStore();
+
+            dataProvider.features.insert(polygon);
+
+            const geoJson = turf.featureCollection([polygon]);
+
+            const [longitude, latitude] = turf.center(geoJson).geometry!.coordinates;
+
+            await geoJsonTest.run({
+                mochaTest: this,
+                dataProvider,
+                testImageName: `geojson-extruded-polygon-touching-tile-bounds`,
+                lookAt: {
+                    target: [longitude, latitude],
+                    zoomLevel: 15,
+                    tilt: 55,
+                    heading: 45
+                },
+                theme: {
+                    lights,
+                    styles: [
+                        {
+                            styleSet: "geojson",
+                            technique: "extruded-polygon",
+                            color: "#0335a2",
+                            lineWidth: 1,
+                            lineColor: "red",
+                            constantHeight: true,
+                            height: 300
+                        }
+                    ]
+                }
             });
         });
     });
