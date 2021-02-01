@@ -49,12 +49,17 @@ jobs:
                   ./scripts/git-check-clean-workspace.sh
               shell: bash
 
-            - name: Deploy To NPM
+            - name: Setup Node
               if: github.ref == refs/heads/test-release
               uses: actions/setup-node@v1
               with:
                   node-version: 14
                   registry-url: https://registry.npmjs.org/
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+            - name: Deploy To NPM
+              if: github.ref == refs/heads/test-release
               run: yarn
                   npx lerna publish -y from-git --pre-dist-tag alpha --no-git-tag-version --no-push
               env:
