@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { GeometryKind, MapEnv, Pickability, Technique } from "@here/harp-datasource-protocol";
+import { GeometryKind, Pickability, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
 import { DataSource } from "./DataSource";
@@ -135,9 +135,8 @@ export class MapObjectAdapter {
 
     /**
      * Whether underlying `THREE.Object3D` should be pickable by {@link PickHandler}.
-     * @param env - Property lookup environment.
      */
-    isPickable(env: MapEnv) {
+    isPickable() {
         // An object is pickable only if it's visible and Pickabilty.onlyVisible or
         //  Pickabililty.all set.
         return (

@@ -7,7 +7,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 //    Chai uses properties instead of functions for some expect checks.
 
-import { MapEnv, Pickability } from "@here/harp-datasource-protocol";
+import { Pickability } from "@here/harp-datasource-protocol";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -26,7 +26,7 @@ describe("PickingRaycaster", function () {
     let raycaster: PickingRaycaster;
 
     beforeEach(function () {
-        raycaster = new PickingRaycaster(0, 0, new MapEnv({}));
+        raycaster = new PickingRaycaster(new THREE.Vector2());
     });
 
     describe("intersectObject(s)", function () {

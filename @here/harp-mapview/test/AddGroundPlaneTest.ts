@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv } from "@here/harp-datasource-protocol";
 import {
     mercatorProjection,
     sphereProjection,
@@ -74,7 +73,7 @@ describe("addGroundPlaneTest", function () {
             addGroundPlane(tile, 0);
             const adapter = MapObjectAdapter.get(getPlaneMesh(tile));
             expect(adapter).not.equals(undefined);
-            expect(adapter!.isPickable(new MapEnv({}))).to.equal(false);
+            expect(adapter!.isPickable()).to.equal(false);
         });
 
         it("plane mesh properties are correctly set", () => {

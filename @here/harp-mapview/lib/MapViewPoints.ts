@@ -68,14 +68,25 @@ export abstract class MapViewPoints extends THREE.Points {
 
         const geometry = this.geometry;
         const matrixWorld = this.matrixWorld;
-        const screenCoords = raycaster.ray.origin
+        const ndc = raycaster.ray.origin
             .clone()
             .add(raycaster.ray.direction)
             .project(raycaster.camera);
-        const mouseCoords = new THREE.Vector2(
-            Math.ceil(((screenCoords.x + 1) / 2) * raycaster.width),
-            Math.ceil(((1 - screenCoords.y) / 2) * raycaster.height)
-        );
+        const mouseCoords = ndcToScreen(ndc, raycaster);
+
+        const testPoint = (point: THREE.Vector3, index: number) => {
+            const pointInfo = getPointInfo(point, matrixWorld, raycaster);
+            if (pointInfo.pointIsOnScreen) {
+                this.testPoint(
+                    point,
+                    pointInfo.absoluteScreenPosition!,
+                    mouseCoords,
+                    index,
+                    pointInfo.distance!,
+                    intersects
+                );
+            }
+        };
 
         if (geometry instanceof THREE.BufferGeometry) {
             const point = new THREE.Vector3();
@@ -85,54 +96,27 @@ export abstract class MapViewPoints extends THREE.Points {
             if (index !== null) {
                 const indices = index.array;
                 for (let i = 0, il = indices.length; i < il; i++) {
-                    const a = indices[i];
-                    point.fromArray(positions as number[], a * 3);
-                    const pointInfo = getPointInfo(point, matrixWorld, raycaster);
-                    if (pointInfo.pointIsOnScreen) {
-                        this.testPoint(
-                            point,
-                            pointInfo.absoluteScreenPosition!,
-                            mouseCoords,
-                            i,
-                            pointInfo.distance!,
-                            intersects
-                        );
-                    }
+                    testPoint(point.fromArray(positions as number[], indices[i] * 3), i);
                 }
             } else {
                 for (let i = 0, l = positions.length / 3; i < l; i++) {
-                    point.fromArray(positions as number[], i * 3);
-                    const pointInfo = getPointInfo(point, matrixWorld, raycaster);
-                    if (pointInfo.pointIsOnScreen) {
-                        this.testPoint(
-                            point,
-                            pointInfo.absoluteScreenPosition!,
-                            mouseCoords,
-                            i,
-                            pointInfo.distance!,
-                            intersects
-                        );
-                    }
+                    testPoint(point.fromArray(positions as number[], i * 3), i);
                 }
             }
         } else {
             const vertices = geometry.vertices;
             for (let index = 0; index < vertices.length; index++) {
-                const point = vertices[index];
-                const pointInfo = getPointInfo(point, matrixWorld, raycaster);
-                if (pointInfo.pointIsOnScreen) {
-                    this.testPoint(
-                        point,
-                        pointInfo.absoluteScreenPosition!,
-                        mouseCoords,
-                        index,
-                        pointInfo.distance!,
-                        intersects
-                    );
-                }
+                testPoint(vertices[index], index);
             }
         }
     }
+}
+
+function ndcToScreen(ndc: THREE.Vector3, raycaster: PickingRaycaster): THREE.Vector2 {
+    return new THREE.Vector2(ndc.x + 1, 1 - ndc.y)
+        .divideScalar(2)
+        .multiply(raycaster.canvasSize)
+        .ceil();
 }
 
 function getPointInfo(
@@ -144,20 +128,12 @@ function getPointInfo(
     absoluteScreenPosition?: THREE.Vector2;
     distance?: number;
 } {
-    const worldPosition = point.clone();
-    worldPosition.applyMatrix4(matrixWorld);
+    const worldPosition = point.clone().applyMatrix4(matrixWorld);
     const distance = worldPosition.distanceTo(raycaster.ray.origin);
-    worldPosition.project(raycaster.camera);
-    const relativeScreenPosition = new THREE.Vector2(worldPosition.x, worldPosition.y);
-    const pointIsOnScreen =
-        relativeScreenPosition.x < 1 &&
-        relativeScreenPosition.x > -1 &&
-        relativeScreenPosition.y < 1 &&
-        relativeScreenPosition.y > -1;
+    const ndc = worldPosition.project(raycaster.camera);
+    const pointIsOnScreen = ndc.x < 1 && ndc.x > -1 && ndc.y < 1 && ndc.y > -1;
     if (pointIsOnScreen) {
-        worldPosition.x = ((worldPosition.x + 1) / 2) * raycaster.width;
-        worldPosition.y = ((1 - worldPosition.y) / 2) * raycaster.height;
-        const absoluteScreenPosition = new THREE.Vector2(worldPosition.x, worldPosition.y);
+        const absoluteScreenPosition = ndcToScreen(ndc, raycaster);
         return {
             absoluteScreenPosition,
             pointIsOnScreen,
