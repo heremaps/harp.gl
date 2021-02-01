@@ -56,7 +56,7 @@ jobs:
                   node-version: 14
                   registry-url: https://registry.npmjs.org/
               run: yarn
-                  npx lerna publish -y from-git --pre-dist-tag alpha
+                  npx lerna publish -y from-git --pre-dist-tag alpha --no-git-tag-version --no-push
               env:
                   NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
@@ -71,3 +71,4 @@ jobs:
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   AWS_REGION: us-east-1
                   SOURCE_DIR: 'dist/s3_deploy'
+                  DEST_DIR: 'test-dir'
