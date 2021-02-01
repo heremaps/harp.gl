@@ -29,15 +29,15 @@ jobs:
               run: yarn --frozen-lockfile
               shell: bash
 
-            - name: Test
-              run: |
-                  yarn pre-test
-                  yarn cov-test --forbid-only
-                  yarn build-tests
-                  yarn karma-headless
-                  yarn karma-headless-firefox
-                  ./scripts/test-npm-packages.sh
-              shell: bash
+            #- name: Test
+            #  run: |
+            #      yarn pre-test
+            #      yarn cov-test --forbid-only
+            #      yarn build-tests
+            #      yarn karma-headless
+            #      yarn karma-headless-firefox
+            #      ./scripts/test-npm-packages.sh
+            #  shell: bash
 
             - name: Build
               run: |
@@ -50,7 +50,7 @@ jobs:
               shell: bash
 
             - name: Setup Node
-              if: github.ref == 'refs/heads/test-release'
+              if: github.ref == 'refs/heads/publishWithGithubActions'
               uses: actions/setup-node@v1
               with:
                   node-version: 14
@@ -59,8 +59,8 @@ jobs:
                   NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
             - name: Deploy To NPM
-              if: github.ref == 'refs/heads/test-release'
-              run: yarn
-                  npx lerna publish -y from-git --pre-dist-tag alpha --no-git-tag-version --no-push
+              if: github.ref == 'refs/heads/publishWithGithubActions'
+              run: npx lerna publish -y from-git --pre-dist-tag alpha --no-git-tag-version --no-push
+              shell: bash
               env:
                   NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
