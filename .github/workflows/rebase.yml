@@ -7,9 +7,7 @@ jobs:
   rebase:
     name: Rebase
     if: github.event.issue.pull_request != '' &&
-      contains(github.event.comment.body, 'rebase please') &&
-      (github.event.comment.author_association == 'MEMBER' ||
-      github.event.comment.author_association == 'OWNER')
+      contains(github.event.comment.body, 'rebase please')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the latest code
@@ -20,6 +18,17 @@ jobs:
         uses: cirrus-actions/rebase@1.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Test comment
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: | 
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Debug info: ' + github.event.comment.author_association
+            })
       - name: Comment PR on failure.
         uses: actions/github-script@v3
         if: failure()
