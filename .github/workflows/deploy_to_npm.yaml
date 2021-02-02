@@ -29,15 +29,15 @@ jobs:
               run: yarn --frozen-lockfile
               shell: bash
 
-            #- name: Test
-            #  run: |
-            #      yarn pre-test
-            #      yarn cov-test --forbid-only
-            #      yarn build-tests
-            #      yarn karma-headless
-            #      yarn karma-headless-firefox
-            #      ./scripts/test-npm-packages.sh
-            #  shell: bash
+            - name: Test
+              run: |
+                  yarn pre-test
+                  yarn cov-test --forbid-only
+                  yarn build-tests
+                  yarn karma-headless
+                  yarn karma-headless-firefox
+                  ./scripts/test-npm-packages.sh
+              shell: bash
 
             - name: Build
               run: |
@@ -49,33 +49,31 @@ jobs:
                   ./scripts/git-check-clean-workspace.sh
               shell: bash
 
-            #- name: Setup Node
-            #  if: github.ref == 'refs/heads/publishWithGithubActions'
-            #  uses: actions/setup-node@v1
-            #  with:
-            #      node-version: 14
-            #      registry-url: https://registry.npmjs.org/
-            #  env:
-            #      NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+            - name: Setup Node
+              if: github.ref == 'refs/heads/release'
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14
+                  registry-url: https://registry.npmjs.org/
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
-            #- name: Deploy To NPM
-            #  if: github.ref == 'refs/heads/publishWithGithubActions'
-            #  run: npx lerna publish -y from-git --pre-dist-tag alpha --no-git-tag-version --no-push
-            #  shell: bash
-            #  env:
-            #      NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+            - name: Deploy To NPM
+              if: github.ref == 'refs/heads/release'
+              run: npx lerna publish -y from-git --pre-dist-tag alpha
+              shell: bash
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
             - name: Deploy To S3
-              #if: contains(github.ref, ['refs/heads/release', 'refs/heads/master'])
-              if: github.ref == 'refs/heads/publishWithGithubActions'
+              if: contains(github.ref, ['refs/heads/release', 'refs/heads/master'])
               uses: jakejarvis/s3-sync-action@master
               with:
-                  args: --acl public-read --follow-symlinks # --delete
+                  args: --acl public-read --follow-symlinks
               env:
                   AWS_S3_BUCKET: 'harp.gl'
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   AWS_REGION: us-east-1
                   SOURCE_DIR: 'dist/s3_deploy'
-                  DEST_DIR: 'test-dir'
 
