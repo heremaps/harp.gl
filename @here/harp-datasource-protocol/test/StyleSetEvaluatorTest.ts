@@ -664,6 +664,27 @@ describe("StyleSetEvaluator", function () {
                 }
             ])
         );
+
+        // Techniques are not filtered if min/maxZoomLevel are dynamic expressions.
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 14, minLevel: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: ["get", "minLevel", ["dynamic-properties"]]
+                }
+            ])
+        );
+
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15, maxLevel: 14 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    maxZoomLevel: ["case", true, ["get", "maxLevel"], ["zoom"]]
+                }
+            ])
+        );
     });
 
     it("serialization of vector properties", () => {

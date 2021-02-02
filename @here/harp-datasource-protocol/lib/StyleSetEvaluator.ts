@@ -651,9 +651,8 @@ export class StyleSetEvaluator {
         if (style.minZoomLevel !== undefined) {
             let minZoomLevel: Value = style.minZoomLevel;
 
-            if (style._minZoomLevelExpr) {
-                // the constraint is defined as expression, evaluate it and
-                // use its value
+            if (style._minZoomLevelExpr?.isDynamic() === false) {
+                // Only filter by zoom level if the expression is not dynamic.
                 try {
                     minZoomLevel = style._minZoomLevelExpr.evaluate(
                         env,
@@ -677,7 +676,8 @@ export class StyleSetEvaluator {
         if (style.maxZoomLevel !== undefined) {
             let maxZoomLevel: Value = style.maxZoomLevel;
 
-            if (style._maxZoomLevelExpr) {
+            if (style._maxZoomLevelExpr?.isDynamic() === false) {
+                // Only filter by zoom level if the expression is not dynamic.
                 try {
                     maxZoomLevel = style._maxZoomLevelExpr.evaluate(
                         env,
