@@ -37,32 +37,32 @@ jobs:
         - yarn test-browser --headless-chrome
         - ./scripts/test-npm-packages.sh
 
-    - name: "Build & Deploy"
-      script:
-        - cross-env NODE_ENV=production yarn run build
-        - yarn run typedoc
-        - cross-env NODE_ENV=production yarn run build-www
-        - yarn prepare-doc-deploy
-        # debug: lerna publish expects clean workspace
-        - ./scripts/git-check-clean-workspace.sh
-      deploy:
-        - provider: script
-          script: ./scripts/publish-packages.sh
-          skip_cleanup: true
-          on:
-            branch: release
-        - provider: s3
-          access_key_id: $AWS_ACCESS_KEY_ID
-          secret_access_key: $AWS_SECRET_ACCESS_KEY
-          bucket: "harp.gl"
-          skip_cleanup: true
-          local_dir: dist/s3_deploy
-          region: us-east-1
-          acl: public_read
-          cache_control: no-cache
-          on:
-            all_branches: true
-            condition: $TRAVIS_BRANCH =~ ^master|release$
+    #- name: "Build & Deploy"
+    #  script:
+    #    - cross-env NODE_ENV=production yarn run build
+    #    - yarn run typedoc
+    #    - cross-env NODE_ENV=production yarn run build-www
+    #    - yarn prepare-doc-deploy
+    #    # debug: lerna publish expects clean workspace
+    #    - ./scripts/git-check-clean-workspace.sh
+    #  deploy:
+    #    - provider: script
+    #      script: ./scripts/publish-packages.sh
+    #      skip_cleanup: true
+    #      on:
+    #        branch: release
+    #    - provider: s3
+    #      access_key_id: $AWS_ACCESS_KEY_ID
+    #      secret_access_key: $AWS_SECRET_ACCESS_KEY
+    #      bucket: "harp.gl"
+    #      skip_cleanup: true
+    #      local_dir: dist/s3_deploy
+    #      region: us-east-1
+    #      acl: public_read
+    #      cache_control: no-cache
+    #      on:
+    #        all_branches: true
+    #        condition: $TRAVIS_BRANCH =~ ^master|release$
 
 after_success:
  - codecov -f coverage/*.json
