@@ -8,10 +8,11 @@
 
 const { options } = require("./karma.options");
 
+
 /**
  * @param {import("karma").Config} config
  */
-module.exports = function(config) {
+module.exports = function (config) {
     config.set({
         ...options,
 
