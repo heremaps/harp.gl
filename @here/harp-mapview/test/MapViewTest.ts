@@ -956,6 +956,7 @@ describe("MapView", function () {
                 assert.closeTo(center!.longitude, target.longitude, eps);
                 assert.isDefined(center!.altitude);
                 assert.closeTo(center!.altitude!, 0, eps);
+                assert(false);
 
                 const left = mapView.getGeoCoordinatesAt(0, canvas.clientHeight / 2);
                 assert.isNotNull(left);
@@ -1511,21 +1512,21 @@ describe("MapView", function () {
                 attach(mapView: MapView) {
                     this.mapView = mapView;
                 },
-                clearCache() {},
+                clearCache() { },
                 detach() {
                     this.mapView = undefined;
                 },
-                dispose() {},
+                dispose() { },
                 connect() {
                     return Promise.resolve();
                 },
-                setEnableElevationOverlay() {},
-                setTheme() {},
-                addEventListener() {},
+                setEnableElevationOverlay() { },
+                setTheme() { },
+                addEventListener() { },
                 getTilingScheme() {
                     return webMercatorTilingScheme;
                 },
-                setLanguages() {},
+                setLanguages() { },
                 mapView: undefined
             } as any;
             fakeElevationRangeSource = {
@@ -1539,7 +1540,7 @@ describe("MapView", function () {
                 })
             } as any;
             fakeElevationProvider = {
-                clearCache() {},
+                clearCache() { },
                 getHeight: () => 0
             } as any;
         });
