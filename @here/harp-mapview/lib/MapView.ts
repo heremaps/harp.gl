@@ -1206,6 +1206,7 @@ export class MapView extends EventDispatcher {
     /**
      * The [[TileGeometryManager]] manages geometry during loading and handles hiding geometry of
      * specified [[GeometryKind]]s.
+     * @deprecated
      */
     get tileGeometryManager(): TileGeometryManager | undefined {
         return this.m_tileGeometryManager;
