@@ -14,15 +14,20 @@ type TileUpdateCallback = (tile: Tile) => void;
 
 /**
  * Manages the content (the geometries) of a tile.
+ * @internal
  */
 export class TileGeometryManager {
     /**
      * The set of geometry kinds that is enabled. Their geometry will be created after decoding.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     get enabledGeometryKinds(): GeometryKindSet {
         return this.enabledKinds;
     }
 
+    /**
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
+     */
     set enabledGeometryKinds(kinds: GeometryKindSet) {
         this.enabledKinds = kinds;
     }
@@ -30,11 +35,15 @@ export class TileGeometryManager {
     /**
      * The set of geometry kinds that is disabled. Their geometry will not be created after
      * decoding.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     get disabledGeometryKinds(): GeometryKindSet {
         return this.disabledKinds;
     }
 
+    /**
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
+     */
     set disabledGeometryKinds(kinds: GeometryKindSet) {
         this.disabledKinds = kinds;
     }
@@ -42,11 +51,15 @@ export class TileGeometryManager {
     /**
      * The set of geometry kinds that is hidden. Their geometry may be created, but it is hidden
      * until the method `hideKind` with an argument of `addOrRemoveToHiddenSet:false` is called.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     get hiddenGeometryKinds(): GeometryKindSet {
         return this.hiddenKinds;
     }
 
+    /**
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
+     */
     set hiddenGeometryKinds(kinds: GeometryKindSet) {
         this.hiddenKinds = kinds;
         this.incrementVisibilityCounter();
@@ -55,6 +68,7 @@ export class TileGeometryManager {
     /**
      * If set to `true`, the filters of enabled/disabledGeometryKinds are applied, otherwise they
      * are ignored.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     enableFilterByKind: boolean = true;
 
@@ -121,6 +135,7 @@ export class TileGeometryManager {
      *      from the enabled set.
      * @param {boolean} addOrRemoveToEnabledSet Pass in `true` to add the kind to the set, pass in
      *      `false` to remove from that set.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     enableKind(
         kind: GeometryKind | GeometryKind[] | GeometryKindSet,
@@ -136,6 +151,7 @@ export class TileGeometryManager {
      *      from the disabled set.
      * @param {boolean} addOrRemoveToHiddenSet Pass in `true` to add the kind to the set, pass in
      *      `false` to remove from that set.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     disableKind(
         kind: GeometryKind | GeometryKind[] | GeometryKindSet,
@@ -151,6 +167,7 @@ export class TileGeometryManager {
      *      from the hidden set.
      * @param {boolean} addOrRemoveToHiddenSet Pass in `true` to hide the kind(s), `false` to show
      *      it again.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     hideKind(
         kind: GeometryKind | GeometryKind[] | GeometryKindSet,
@@ -182,6 +199,7 @@ export class TileGeometryManager {
      *
      * @param {IterableIterator<Tile>} tiles The
      * @returns {GeometryKindSet}
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     getAvailableKinds(tiles: IterableIterator<Tile>): GeometryKindSet {
         const visibleKinds: GeometryKindSet = new GeometryKindSet();

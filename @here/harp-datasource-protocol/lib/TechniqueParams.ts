@@ -24,6 +24,7 @@ export type MetricUnit = "Meter" | "Pixel";
 
 /**
  * Standard kinds of geometry.
+ * @deprecated See {@link BaseTechniqueParams.kind}.
  */
 export enum StandardGeometryKind {
     /**
@@ -99,6 +100,7 @@ export enum StandardGeometryKind {
  *```
  * If specified in this way, specific types of data (here: highway roads) can be enabled and/or
  * disabled.
+ * @deprecated See {@link BaseTechniqueParams.kind}.
  */
 export type GeometryKind = string | StandardGeometryKind;
 
@@ -240,6 +242,7 @@ export interface BaseTechniqueParams {
      * One kind is set as default in the technique, and can be overridden in the style.
      *
      * @deprecated Use {@link enabled} with expressions based on `['dynamic-properties']` operator.
+     * See "object picking" example.
      */
     kind?: GeometryKind | GeometryKindSet;
 
