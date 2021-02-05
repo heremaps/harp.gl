@@ -26,7 +26,7 @@ import { Vector2, Vector3 } from "three";
 
 import { DecodeInfo } from "../lib/DecodeInfo";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
-import { world2tile } from "../lib/OmvUtils";
+import { tile2world, world2tile } from "../lib/OmvUtils";
 import { VectorTileDataEmitter } from "../lib/VectorTileDataEmitter";
 
 class OmvDecodedTileEmitterTest extends VectorTileDataEmitter {
@@ -140,7 +140,9 @@ describe("OmvDecodedTileEmitter", function () {
                 false,
                 new Vector3()
             );
-            const worldCoords = decodeInfo.targetProjection.projectPoint(geoCoords);
+
+            const worldCoords = new Vector3();
+            tile2world(extents, decodeInfo, tileLocalCoords, false, worldCoords);
 
             const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo, [
                 {
@@ -172,7 +174,11 @@ describe("OmvDecodedTileEmitter", function () {
             assert.equal(buffer.length, 3, "one position (3 coordinates)");
 
             const actualHeight = buffer[2];
-            assert.equal(actualHeight, getExpectedHeight(geoCoords.altitude, worldCoords));
+            assert.approximately(
+                actualHeight,
+                getExpectedHeight(geoCoords.altitude, worldCoords),
+                1e-6
+            );
         });
 
         it(`Extruded polygon height at level ${level} with constantHeight ${constantHeight} is ${result}`, function () {
@@ -278,7 +284,7 @@ describe("OmvDecodedTileEmitter", function () {
         );
 
         const firstGeometry = geometries[0];
-        const vertexCount = 5;
+        const vertexCount = 4;
         checkVertexAttribute(firstGeometry, 0, "position", vertexCount);
         const texCoords = checkVertexAttribute(firstGeometry, 1, "uv", vertexCount);
 
