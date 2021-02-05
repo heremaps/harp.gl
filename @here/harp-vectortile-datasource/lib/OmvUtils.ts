@@ -117,8 +117,8 @@ export function world2tile<VectorType extends Vector2Like>(
     const { top, left, scale } = decodeInfo.worldTileProjectionCookie;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
-    target.x = (position.x / R) * scale - left;
-    target.y = (flipY ? -1 : 1) * ((position.y / R) * scale - top);
+    target.x = Math.round((position.x / R) * scale - left);
+    target.y = Math.round((flipY ? -1 : 1) * ((position.y / R) * scale - top));
     if (isVector3Like(target)) {
         target.z = position.z;
     }
