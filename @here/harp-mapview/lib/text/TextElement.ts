@@ -30,6 +30,7 @@ import { TextElementType } from "./TextElementType";
 
 /**
  * Additional information for an icon that is to be rendered along with a {@link TextElement}.
+ * @internal
  */
 export interface PoiInfo {
     /**
@@ -122,11 +123,6 @@ export interface PoiInfo {
     isValid?: boolean;
 
     /**
-     * ID to identify the (POI) icon.
-     */
-    featureId?: number;
-
-    /**
      * Reference back to owning {@link TextElement}.
      */
     textElement: TextElement;
@@ -216,6 +212,7 @@ export enum LoadingState {
 
 /**
  * `TextElement` is used to create 2D text elements (for example, labels).
+ * @internal
  */
 export class TextElement {
     /**
@@ -375,7 +372,8 @@ export class TextElement {
      *              negative value are always rendered, ignoring priorities and allowing overrides.
      * @param xOffset - Optional X offset of this `TextElement` in screen coordinates.
      * @param yOffset - Optional Y offset of this `TextElement` in screen coordinates.
-     * @param featureId - Optional number to identify feature (originated from `OmvDataSource`).
+     * @param featureId - Optional string to identify feature (originated from {@link DataSource}).
+     *                  Number ids are deprecated in favor of strings.
      * @param fadeNear - Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label starts fading out (opacity decreases).
      * @param fadeFar - Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
@@ -391,7 +389,7 @@ export class TextElement {
         public priority = 0,
         public xOffset: number = 0,
         public yOffset: number = 0,
-        public featureId?: number,
+        public featureId?: string | number,
         public style?: string,
         public fadeNear?: number,
         public fadeFar?: number,
@@ -506,8 +504,19 @@ export class TextElement {
         this.m_layoutStyle = style;
     }
 
+    /**
+     * @returns Whether this text element has a valid feature id.
+     */
     hasFeatureId(): boolean {
-        return this.featureId !== undefined && this.featureId !== 0;
+        if (this.featureId === undefined) {
+            return false;
+        }
+
+        if (typeof this.featureId === "number") {
+            return this.featureId !== 0;
+        }
+
+        return this.featureId.length > 0;
     }
 
     /**

@@ -201,8 +201,7 @@ describe("OmvDecodedTileEmitter", function () {
                 extents,
                 polygons,
                 mockContext,
-                styleSetEvaluator.getMatchingTechniques(mockContext.env),
-                undefined
+                styleSetEvaluator.getMatchingTechniques(mockContext.env)
             );
 
             const decodedTile = tileEmitter.getDecodedTile();
@@ -255,8 +254,7 @@ describe("OmvDecodedTileEmitter", function () {
             4096,
             polygons,
             mockContext,
-            matchedTechniques,
-            undefined
+            matchedTechniques
         );
 
         const decodedTile = tileEmitter.getDecodedTile();
