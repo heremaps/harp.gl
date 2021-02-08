@@ -209,9 +209,9 @@ export class GeoJsonDataAdapter implements DataAdapter {
 
         for (const feature of featureCollection.features) {
             const $geometryType = convertGeometryType(feature.geometry.type);
-
             const env = new MapEnv({
                 ...feature.properties,
+                $id: feature.id ?? null,
                 $layer,
                 $level,
                 $zoom,

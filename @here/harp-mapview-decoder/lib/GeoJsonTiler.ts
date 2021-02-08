@@ -69,7 +69,7 @@ export class GeoJsonTiler implements ITiler {
             buffer: BUFFER, // tile buffer on each side
             lineMetrics: false, // whether to calculate line metrics
             promoteId: null, // name of a feature property to be promoted to feature.id
-            generateId: true, // whether to generate feature ids. Cannot be used with promoteId
+            generateId: false, // whether to generate feature ids. Cannot be used with promoteId
             debug: 0 // logging level (0, 1 or 2)
         });
         index.geojson = input;
@@ -85,27 +85,7 @@ export class GeoJsonTiler implements ITiler {
         const tile = index.getTile(tileKey.level, tileKey.column, tileKey.row);
         if (tile !== null) {
             tile.layer = indexId;
-            for (const feature of tile.features) {
-                feature.originalGeometry = this.getOriginalGeometry(feature, index.geojson);
-            }
         }
         return tile || {};
-    }
-
-    private getOriginalGeometry(feature: any, geojson: GeoJson): any {
-        switch (geojson.type) {
-            case "Point":
-            case "MultiPoint":
-            case "LineString":
-            case "MultiLineString":
-            case "Polygon":
-            case "MultiPolygon":
-            case "GeometryCollection":
-                return geojson;
-            case "Feature":
-                return geojson.geometry;
-            case "FeatureCollection":
-                return geojson.features[feature.id].geometry;
-        }
     }
 }
