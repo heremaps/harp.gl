@@ -23,7 +23,8 @@
         "@here/harp-mapview": "^0.22.0",
         "@here/harp-mapview-decoder": "^0.22.0",
         "@here/harp-utils": "^0.22.0",
-        "@here/olp-sdk-dataservice-read": "^1.8.0"
+        "@here/olp-sdk-dataservice-read": "^1.8.0",
+        "@here/olp-sdk-core": "1.3.0"
     },
     "devDependencies": {
         "@here/harp-fetch": "^0.22.0",

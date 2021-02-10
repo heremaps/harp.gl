@@ -7,12 +7,11 @@
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { LoggerManager } from "@here/harp-utils";
+import { HRN, OlpClientSettings } from "@here/olp-sdk-core";
 import {
     CatalogClient,
     CatalogVersionRequest,
     DataRequest,
-    HRN,
-    OlpClientSettings,
     VersionedLayerClient
 } from "@here/olp-sdk-dataservice-read";
 
