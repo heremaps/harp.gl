@@ -33,6 +33,7 @@ trigger_internal_ci:
       - generated-config.yml
 
 
+
 bridge_for_bridge:
   stage: trigger
   trigger:
