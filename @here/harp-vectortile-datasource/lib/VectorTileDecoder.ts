@@ -217,16 +217,13 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
             cachedExprResults: new Map()
         };
 
-        const featureId = env.lookup("$id") as number | undefined;
-
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processLineFeature(
                 layer,
                 extents,
                 geometry,
                 context,
-                techniques,
-                featureId
+                techniques
             );
         }
     }
@@ -269,16 +266,13 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
             cachedExprResults: new Map()
         };
 
-        const featureId = env.lookup("$id") as number | undefined;
-
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPolygonFeature(
                 layer,
                 extents,
                 geometry,
                 context,
-                techniques,
-                featureId
+                techniques
             );
         }
     }

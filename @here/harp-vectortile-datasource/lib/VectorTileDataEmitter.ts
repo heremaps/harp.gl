@@ -388,15 +388,13 @@ export class VectorTileDataEmitter {
      * @param geometry - The current feature containing the main geometry.
      * @param env - The [[MapEnv]] containing the environment information for the map.
      * @param techniques - The array of [[Technique]] that will be applied to the geometry.
-     * @param featureId - The id of the feature.
      */
     processLineFeature(
         layer: string,
         extents: number,
         geometry: ILineGeometry[],
         context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
+        techniques: IndexedTechnique[]
     ): void {
         const env = context.env;
         this.processFeatureCommon(env);
@@ -789,15 +787,13 @@ export class VectorTileDataEmitter {
      * @param geometry - The current feature containing the main geometry.
      * @param feature - The [[MapEnv]] containing the environment information for the map.
      * @param techniques - The array of [[Technique]] that will be applied to the geometry.
-     * @param featureId - The id of the feature.
      */
     processPolygonFeature(
         layer: string,
         extents: number,
         geometry: IPolygonGeometry[],
         context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
+        techniques: IndexedTechnique[]
     ): void {
         const env = context.env;
         this.processFeatureCommon(env);

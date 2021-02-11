@@ -87,9 +87,10 @@ export interface PathGeometry {
 
 /**
  * Attributes corresponding to some decoded geometry. It may be either a map
- * of multiple attributes or just a number with the geometry's feature id.
+ * of multiple attributes or just a string with the geometry's feature id (id numbers are
+ * deprecated).
  */
-export type AttributeMap = {} | number;
+export type AttributeMap = {} | string | number;
 
 /**
  * This object keeps textual data together with metadata to place it on the map.
@@ -339,18 +340,21 @@ export function getProjectionName(projection: Projection): string | never {
 
 /**
  * @returns Feature id from the provided attribute map.
+ * @internal
  */
-export function getFeatureId(attributeMap: AttributeMap | undefined): number {
+export function getFeatureId(attributeMap: AttributeMap | undefined): string | number {
     if (attributeMap === undefined) {
         return 0;
     }
 
-    if (typeof attributeMap === "number") {
+    if (typeof attributeMap === "string" || typeof attributeMap === "number") {
         return attributeMap;
-    }
+    } else if (attributeMap.hasOwnProperty("$id")) {
+        const id = (attributeMap as any).$id;
 
-    if (attributeMap.hasOwnProperty("$id")) {
-        return (attributeMap as any).$id as number;
+        if (typeof id === "string" || typeof id === "number") {
+            return id;
+        }
     }
 
     return 0;

@@ -146,7 +146,6 @@ export class PoiBuilder {
             renderTextDuringMovements,
             mayOverlap: iconMayOverlap,
             reserveSpace: iconReserveSpace,
-            featureId: textElement.featureId,
             iconBrightness: technique.iconBrightness,
             iconColor,
             iconMinZoomLevel: this.m_iconMinZoomLevel,

@@ -83,10 +83,11 @@ export interface PickResult {
     renderOrder?: number;
 
     /**
-     * An optional feature ID of the picked object; typically applies to the Optimized Map
-     * Vector (OMV) format.
+     * An optional feature ID of the picked object.
+     * @remarks The ID may be assigned by the object's {@link DataSource}, for example in case of
+     * Optimized Map Vector (OMV) and GeoJSON datata sources.
      */
-    featureId?: number;
+    featureId?: number | string;
 
     /**
      * Defined for geometry only.

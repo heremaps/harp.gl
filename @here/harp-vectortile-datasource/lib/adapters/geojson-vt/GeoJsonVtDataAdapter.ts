@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-    FeatureGeometry,
-    GeometryCollection,
-    MapEnv,
-    ValueMap
-} from "@here/harp-datasource-protocol/index-decoder";
+import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2, Vector3 } from "three";
@@ -33,7 +28,6 @@ enum VTJsonGeometryType {
 
 interface VTJsonFeatureInterface {
     geometry: VTJsonPosition[] | VTJsonPosition[][];
-    originalGeometry: FeatureGeometry | GeometryCollection;
     id: string;
     tags: ValueMap;
     type: VTJsonGeometryType;
