@@ -289,7 +289,7 @@ export interface BaseTechniqueParams {
      *
      * @defaultValue `true` for geometries stored at level less than `12`.
      */
-    constantHeight?: boolean;
+    constantHeight?: DynamicProperty<boolean>;
 }
 
 export enum TextureCoordinateType {
