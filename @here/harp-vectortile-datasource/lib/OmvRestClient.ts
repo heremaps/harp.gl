@@ -310,8 +310,8 @@ export class OmvRestClient extends DataProvider {
      * Asynchronously fetches a tile from this restful server.
      *
      * @remarks
-     * **Note:** If the tile doesn't exist, a successful response with a `404` status code is
-     * returned.
+     * **Note:** In case of an HTTP Error, rejected promise is returned
+     * with an error.
      *
      * @example
      * ```typescript
@@ -319,10 +319,6 @@ export class OmvRestClient extends DataProvider {
      * if (!response.ok) {
      *     // a network error happened
      *     console.error("Unable to download tile", response.statusText);
-     *     return;
-     * }
-     * if (response.status === 404) {
-     *     // 404 -, no data exists at the given tile. Do nothing.
      *     return;
      * }
      *
