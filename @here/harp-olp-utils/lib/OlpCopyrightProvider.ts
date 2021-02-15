@@ -5,13 +5,8 @@
  */
 
 import { AreaCopyrightInfo, CopyrightCoverageProvider } from "@here/harp-mapview";
-import {
-    DataRequest,
-    EnvironmentName,
-    HRN,
-    OlpClientSettings,
-    VersionedLayerClient
-} from "@here/olp-sdk-dataservice-read";
+import { HRN, OlpClientSettings } from "@here/olp-sdk-core";
+import { DataRequest, EnvironmentName, VersionedLayerClient } from "@here/olp-sdk-dataservice-read";
 
 /**
  * [[OlpCopyrightProvider]] initialization parameters.
