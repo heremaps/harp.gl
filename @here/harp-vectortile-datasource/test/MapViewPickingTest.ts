@@ -268,6 +268,8 @@ describe("MapView Picking", async function () {
     });
 
     describe("Picking tests", async function () {
+        this.timeout(5000);
+
         const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
         const pickPolyOutlineAt: number[] = [-1.0, 29.0];
         const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
