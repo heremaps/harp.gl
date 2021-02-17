@@ -116,7 +116,9 @@ describe("OmvDecodedTileEmitter", function () {
         { level: 12, constantHeight: undefined, expectScaledHeight: true },
         { level: 10, constantHeight: undefined, expectScaledHeight: false },
         { level: 12, constantHeight: true, expectScaledHeight: false },
-        { level: 10, constantHeight: false, expectScaledHeight: true }
+        { level: 10, constantHeight: false, expectScaledHeight: true },
+        { level: 12, constantHeight: ["get", "constantHeight"], expectScaledHeight: false },
+        { level: 10, constantHeight: ["get", "constantHeight"], expectScaledHeight: true }
     ]) {
         const result = expectScaledHeight ? "scaled" : "not scaled";
         const tileKey = TileKey.fromRowColumnLevel(0, 0, level);
@@ -130,7 +132,9 @@ describe("OmvDecodedTileEmitter", function () {
             return new Float32Array([geoAltitude * scaleFactor])[0];
         }
 
-        it(`Point Height at level ${level} with constantHeight ${constantHeight} is ${result}`, function () {
+        it(`Point Height at level ${level} with constantHeight ${
+            Array.isArray(constantHeight) ? "true object property" : constantHeight
+        } is ${result}`, function () {
             const geoCoords = decodeInfo.geoBox.center.clone();
             geoCoords.altitude = 100;
             const tileLocalCoords = world2tile(
@@ -153,7 +157,7 @@ describe("OmvDecodedTileEmitter", function () {
             ]);
 
             const mockContext = {
-                env: new MapEnv({ layer }),
+                env: new MapEnv({ layer, constantHeight: !expectScaledHeight }),
                 storageLevel: tileKey.level,
                 zoomLevel: tileKey.level
             };
@@ -181,7 +185,9 @@ describe("OmvDecodedTileEmitter", function () {
             );
         });
 
-        it(`Extruded polygon height at level ${level} with constantHeight ${constantHeight} is ${result}`, function () {
+        it(`Extruded polygon height at level ${level} with constantHeight ${
+            Array.isArray(constantHeight) ? "true object property" : constantHeight
+        } is ${result}`, function () {
             const polygons = tileGeoBoxToPolygonGeometry(decodeInfo);
             const height = 100;
             const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo, [
@@ -197,7 +203,7 @@ describe("OmvDecodedTileEmitter", function () {
             ]);
 
             const mockContext = {
-                env: new MapEnv({ layer }),
+                env: new MapEnv({ layer, constantHeight: !expectScaledHeight }),
                 storageLevel: level,
                 zoomLevel: level
             };
