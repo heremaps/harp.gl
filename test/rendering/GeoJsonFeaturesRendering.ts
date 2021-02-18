@@ -310,4 +310,62 @@ describe("GeoJson features", function () {
             });
         });
     });
+
+    describe("fill technqiue", async function () {
+        it("Stroked enclosed polygons", async function () {
+            const box1 = turf.bboxPolygon([-0.1, -0.1, 0.1, 0.1]);
+
+            box1.properties = {
+                "fill-color": "rgba(0, 255, 0, 0.5)",
+                "render-order": 2,
+                "stroke-color": "rgba(0, 255, 255, 0.5)",
+                "stroke-size": 40,
+                "stroke-render-order": 2.5
+            };
+
+            const box2 = turf.bboxPolygon([-0.4, -0.4, 0.4, 0.4]);
+
+            box2.properties = {
+                "fill-color": "rgba(255, 0, 0, 0.5)",
+                "render-order": 1,
+                "stroke-color": "rgba(0, 0, 255, 0.5)",
+                "stroke-size": 40,
+                "stroke-render-order": 1.5
+            };
+
+            const dataProvider = new GeoJsonStore();
+
+            dataProvider.features.insert(box1);
+            dataProvider.features.insert(box2);
+
+            await geoJsonTest.run({
+                mochaTest: this,
+                dataProvider,
+                testImageName: `geojson-stroked-enclosed-polygons`,
+                lookAt: {
+                    target: [0, 0],
+                    zoomLevel: 8.8
+                },
+                theme: {
+                    lights: ThemeBuilder.lights,
+                    styles: [
+                        {
+                            styleSet: "geojson",
+                            technique: "fill",
+                            color: ["get", "fill-color"],
+                            renderOrder: ["get", "render-order"]
+                        },
+                        {
+                            styleSet: "geojson",
+                            technique: "solid-line",
+                            color: ["get", "stroke-color"],
+                            lineWidth: ["world-ppi-scale", ["get", "stroke-size"]],
+                            renderOrder: ["get", "stroke-render-order"],
+                            clipping: true
+                        }
+                    ]
+                }
+            });
+        });
+    });
 });
