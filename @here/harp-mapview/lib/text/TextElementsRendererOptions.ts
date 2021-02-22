@@ -5,18 +5,6 @@
  */
 
 /**
- * Default number of labels/POIs rendered in the scene
- */
-const DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS = 500;
-
-/**
- * Number of elements that are put into second queue. This second chance queue is used to render
- * TextElements that have not been on screen before. This is a quick source for elements that can
- * appear when the camera moves a bit, before new elements are placed.
- */
-const DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS = 300;
-
-/**
  * Maximum distance for text labels expressed as a ratio of distance to from the camera (0) to the
  * far plane (1.0). May be synchronized with fog value ?
  */
@@ -65,16 +53,9 @@ export interface TextElementsRendererOptions {
     /**
      * Limits the number of {@link DataSource} labels visible, such as road names and POIs.
      * On small devices, you can reduce this number to to increase performance.
-     * @default [[DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS]].
+     * @default `undefined` (no limit).
      */
     maxNumVisibleLabels?: number;
-    /**
-     * The number of {@link TextElement}s that the {@link TextElementsRenderer} tries to render even
-     * if they were not visible during placement. This property only applies to {@link TextElement}s
-     * that were culled by the frustum; useful for map movements and animations.
-     * @default [[DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS]].
-     */
-    numSecondChanceLabels?: number;
     /**
      * The maximum distance for {@link TextElement} to be rendered, expressed as a fraction of
      * the distance between the near and far plane [0, 1.0].
@@ -141,13 +122,6 @@ export function initializeDefaultOptions(options: TextElementsRendererOptions) {
     }
     if (options.maxNumGlyphs === undefined) {
         options.maxNumGlyphs = MAX_GLYPH_COUNT;
-    }
-    if (options.maxNumVisibleLabels === undefined) {
-        options.maxNumVisibleLabels = DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS;
-    }
-    // TODO: Unused so far.
-    if (options.numSecondChanceLabels === undefined) {
-        options.numSecondChanceLabels = DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS;
     }
     if (options.labelDistanceScaleMin === undefined) {
         options.labelDistanceScaleMin = DEFAULT_LABEL_DISTANCE_SCALE_MIN;

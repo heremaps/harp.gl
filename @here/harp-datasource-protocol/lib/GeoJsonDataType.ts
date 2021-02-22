@@ -72,6 +72,18 @@ export type FeatureGeometry =
     | Polygon
     | MultiPolygon;
 
+export function isFeatureGeometry(object: any): object is FeatureGeometry {
+    const t = object.type;
+    return (
+        t === "Point" ||
+        t === "MultiPoint" ||
+        t === "LineString" ||
+        t === "MultiLineString" ||
+        t === "Polygon" ||
+        t === "MultiPolygon"
+    );
+}
+
 /**
  * Represents "GeometryCollection" GeoJSON geometry object.
  */

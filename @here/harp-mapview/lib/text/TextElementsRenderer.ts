@@ -838,7 +838,7 @@ export class TextElementsRenderer {
     private placeTextElementGroup(
         groupState: TextElementGroupState,
         renderParams: RenderParams,
-        maxNumPlacedLabels: number,
+        maxNumPlacedLabels: number | undefined,
         pass: Pass
     ): boolean {
         // Unvisited text elements are never placed.
@@ -858,7 +858,7 @@ export class TextElementsRenderer {
             }
             // Limit labels only in new labels pass (Pass.NewLabels).
             else if (
-                maxNumPlacedLabels >= 0 &&
+                maxNumPlacedLabels !== undefined &&
                 renderParams.numRenderedTextElements >= maxNumPlacedLabels
             ) {
                 logger.debug("Placement label limit exceeded.");
@@ -1455,7 +1455,7 @@ export class TextElementsRenderer {
         if (this.m_forceNewLabelsPass) {
             this.m_forceNewLabelsPass = false;
         }
-        const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels!;
+        const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels;
 
         // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
         // candidates from previous frame if there's been no placement in this one.
@@ -1522,7 +1522,7 @@ export class TextElementsRenderer {
                 !this.placeTextElementGroup(
                     groupStates[i],
                     renderParams,
-                    this.m_options.maxNumVisibleLabels!,
+                    this.m_options.maxNumVisibleLabels,
                     Pass.NewLabels
                 )
             ) {

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoJson, ITiler } from "@here/harp-datasource-protocol";
+import { GeoJson, isFeatureGeometry, ITiler } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 // @ts-ignore
 import * as geojsonvtExport from "geojson-vt";
@@ -55,11 +55,19 @@ export class GeoJsonTiler implements ITiler {
                     `GeoJsonTiler: Unable to fetch ${input.href}: ${response.statusText}`
                 );
             }
-            input = await response.json();
+            input = (await response.json()) as GeoJson;
         } else {
             input = input as GeoJson;
         }
 
+        // Generate ids only if input doesn't have them.
+        const generateId =
+            isFeatureGeometry(input) ||
+            input.type === "GeometryCollection" ||
+            (input.type === "Feature" && input.id === undefined) ||
+            (input.type === "FeatureCollection" &&
+                input.features.length > 0 &&
+                input.features[0].id === undefined);
         const index = geojsonvt(input, {
             maxZoom: 20, // max zoom to preserve detail on
             indexMaxZoom: 5, // max zoom in the tile index
@@ -69,7 +77,7 @@ export class GeoJsonTiler implements ITiler {
             buffer: BUFFER, // tile buffer on each side
             lineMetrics: false, // whether to calculate line metrics
             promoteId: null, // name of a feature property to be promoted to feature.id
-            generateId: false, // whether to generate feature ids. Cannot be used with promoteId
+            generateId, // whether to generate feature ids. Cannot be used with promoteId
             debug: 0 // logging level (0, 1 or 2)
         });
         index.geojson = input;
