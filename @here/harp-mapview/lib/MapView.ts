@@ -2148,7 +2148,10 @@ export class MapView extends EventDispatcher {
 
             this.update();
         } catch (error) {
-            logger.error(`Failed to connect to datasource ${dataSource.name}: ${error.message}`);
+            // error is a string if a promise was rejected.
+            logger.error(
+                `Failed to connect to datasource ${dataSource.name}: ${error.message ?? error}`
+            );
 
             this.m_failedDataSources.add(dataSource.name);
             this.dispatchEvent({

@@ -331,7 +331,9 @@ export class VectorTileDataSource extends TileDataSource {
         try {
             await super.connect();
         } catch (error) {
+            // error is a string if the promise was rejected.
             if (
+                error.message &&
                 WorkerServiceProtocol.isUnknownServiceError(error) &&
                 !missingOmvDecoderServiceInfoEmitted
             ) {
@@ -341,7 +343,7 @@ export class VectorTileDataSource extends TileDataSource {
                 );
                 missingOmvDecoderServiceInfoEmitted = true;
             }
-            throw error;
+            throw typeof error === "string" ? new Error(error) : error;
         }
         this.configureDecoder(undefined, this.m_decoderOptions);
     }
