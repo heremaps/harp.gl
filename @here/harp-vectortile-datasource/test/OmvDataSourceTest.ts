@@ -13,7 +13,12 @@ import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
-import { assert } from "chai";
+import * as chai from "chai";
+const { expect, assert } = chai;
+// Install chai-as-promised plugin to support promise assertions like:
+// expect(promise).to.eventually.be.rejectedWith()
+import * as chai_as_promised from "chai-as-promised";
+chai.use(chai_as_promised);
 import * as sinon from "sinon";
 
 import {
@@ -210,5 +215,19 @@ describe("DataProviders", function () {
         });
 
         assert.isFalse(markTilesDirty.called);
+    });
+
+    it("connect returns promise rejection as error", function () {
+        const rejectMsg = "connection failed";
+        const mockDataProvider = new MockDataProvider();
+
+        sinon.stub(mockDataProvider, "connect").callsFake(() => {
+            return Promise.reject(rejectMsg);
+        });
+        const omvDataSource = new VectorTileDataSource({
+            decoder: new VectorTileDecoder(),
+            dataProvider: mockDataProvider
+        });
+        expect(omvDataSource.connect()).to.eventually.throw("Error", rejectMsg);
     });
 });
