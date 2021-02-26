@@ -15,6 +15,8 @@ import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import * as chai from "chai";
 const { expect, assert } = chai;
+// Install chai-as-promised plugin to support promise assertions like:
+// expect(promise).to.eventually.be.rejectedWith()
 import * as chai_as_promised from "chai-as-promised";
 chai.use(chai_as_promised);
 import * as sinon from "sinon";
