@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { BaseTileLoader, Tile, TileLoaderState } from "@here/harp-mapview";
 import { addGroundPlane } from "@here/harp-mapview/lib/geometry/AddGroundPlane";
 import { enableBlending } from "@here/harp-materials";
@@ -56,23 +55,18 @@ export class WebTileLoader extends BaseTileLoader {
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
                 this.tile.addOwnedTexture(texture);
-
-                const material = new THREE.MeshBasicMaterial({
-                    map: texture,
-                    opacity: this.dataSource.opacity,
-                    depthTest: false,
-                    depthWrite: false
-                });
-                if (this.dataSource.transparent) {
-                    enableBlending(material);
-                }
-                addGroundPlane(
+                const planeMesh = addGroundPlane(
                     this.tile,
-                    this.dataSource.renderOrder, // Remove, as `renderOrder` will be deprecated.
-                    material,
-                    true,
-                    false
+                    this.dataSource.dataSourceOrder,
+                    undefined,
+                    this.dataSource.opacity,
+                    true
                 );
+                const planeMaterial = planeMesh.material as THREE.MeshBasicMaterial;
+                planeMaterial.map = texture;
+                if (this.dataSource.transparent) {
+                    enableBlending(planeMaterial);
+                }
 
                 this.tile.invalidateResourceInfo();
                 this.dataSource.requestUpdate();

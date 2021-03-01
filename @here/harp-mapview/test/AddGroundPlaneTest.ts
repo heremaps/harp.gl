@@ -79,7 +79,7 @@ describe("addGroundPlaneTest", function () {
         it("plane mesh properties are correctly set", () => {
             const renderOrder = 42;
             const receiveShadow = true;
-            addGroundPlane(tile, renderOrder, 0, false, receiveShadow);
+            addGroundPlane(tile, renderOrder, 0, 1, false, receiveShadow);
 
             const mesh = getPlaneMesh(tile);
             expect(mesh.receiveShadow).equals(receiveShadow);
@@ -96,7 +96,7 @@ describe("addGroundPlaneTest", function () {
         });
 
         it("creates uv coordinates if requested", () => {
-            addGroundPlane(tile, 0, 0, true);
+            addGroundPlane(tile, 0, 0, 1, true);
 
             const mesh = getPlaneMesh(tile);
             expect(mesh.geometry).exist.and.is.instanceOf(THREE.BufferGeometry);
@@ -105,7 +105,7 @@ describe("addGroundPlaneTest", function () {
         });
 
         it("creates normals if plane must receive shadow", () => {
-            addGroundPlane(tile, 0, 0, false, true);
+            addGroundPlane(tile, 0, 0, 1, false, true);
 
             const mesh = getPlaneMesh(tile);
             expect(mesh.geometry).exist.and.is.instanceOf(THREE.BufferGeometry);
@@ -120,7 +120,7 @@ describe("addGroundPlaneTest", function () {
         });
 
         it("subdivides geometry", () => {
-            addGroundPlane(tile, 0, 0, false, false, false);
+            addGroundPlane(tile, 0, 0, 1, false, false, false);
 
             const mesh = getPlaneMesh(tile);
             expect(mesh.geometry).exist.and.is.instanceOf(THREE.BufferGeometry);
@@ -132,7 +132,7 @@ describe("addGroundPlaneTest", function () {
         });
 
         it("creates mesh with mutiple LOD if requested", () => {
-            addGroundPlane(tile, 0, 0, false, false, true);
+            addGroundPlane(tile, 0, 0, 1, false, false, true);
 
             const mesh = getPlaneMesh(tile);
             expect(mesh).to.be.instanceOf(LodMesh);

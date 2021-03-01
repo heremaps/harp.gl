@@ -26,6 +26,7 @@ const tmpV = new THREE.Vector3();
  * @param tile - The tile to which the ground plane belongs.
  * @param renderOrder - The plane render order.
  * @param materialOrColor - The plane material or a color for a default material.
+ * @param opacity - The plane opacity.
  * @param createTexCoords - Whether to create texture coordinates.
  * @param receiveShadow - Whether the plane should receive shadows.
  * @param createMultiLod - Whether to generate multiple LODs for sphere projection.
@@ -35,21 +36,24 @@ export function addGroundPlane(
     tile: Tile,
     renderOrder: number,
     materialOrColor: THREE.Material | THREE.Material[] | number = tile.mapView.clearColor,
+    opacity: number = 1,
     createTexCoords: boolean = false,
     receiveShadow: boolean = tile.mapView.shadowsEnabled,
     createMultiLod: boolean = tile.mapView.enableMixedLod !== false
-) {
+): THREE.Mesh {
     const mesh = createGroundPlane(
         tile,
         createTexCoords,
         receiveShadow,
         materialOrColor,
-        createMultiLod
+        createMultiLod,
+        opacity
     );
     mesh.receiveShadow = receiveShadow;
     mesh.renderOrder = renderOrder;
     registerTileObject(tile, mesh, GeometryKind.Background, { pickability: Pickability.transient });
     tile.objects.push(mesh);
+    return mesh;
 }
 
 function createGroundPlane(
@@ -57,7 +61,8 @@ function createGroundPlane(
     createTexCoords: boolean,
     receiveShadow: boolean,
     materialOrColor: THREE.Material | THREE.Material[] | number,
-    createMultiLod: boolean
+    createMultiLod: boolean,
+    opacity: number
 ): THREE.Mesh {
     const { dataSource, projection } = tile;
     const sourceProjection = dataSource.getTilingScheme().projection;
@@ -69,7 +74,8 @@ function createGroundPlane(
             ? createGroundPlaneMaterial(
                   new THREE.Color(materialOrColor),
                   receiveShadow,
-                  projection.type === ProjectionType.Spherical
+                  projection.type === ProjectionType.Spherical,
+                  opacity
               )
             : materialOrColor;
 
@@ -177,20 +183,23 @@ function createGroundPlaneGeometry(
 function createGroundPlaneMaterial(
     color: THREE.Color,
     receiveShadow: boolean,
-    depthWrite: boolean
+    depthWrite: boolean,
+    opacity: number
 ): THREE.Material {
     if (receiveShadow) {
         return new MapMeshStandardMaterial({
             color,
             visible: true,
             depthWrite,
-            removeDiffuseLight: true
+            removeDiffuseLight: true,
+            opacity
         });
     } else {
         return new MapMeshBasicMaterial({
             color,
             visible: true,
-            depthWrite
+            depthWrite,
+            opacity
         });
     }
 }
