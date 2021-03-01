@@ -17,7 +17,7 @@ const fetch = require("node-fetch");
 // Precondition: documentation ready on /dist folder
 // including docs and examples (e.g. after yarn run build && yarn run typedoc)
 
-const branch = process.env.TRAVIS_BRANCH;
+const branch = process.env.HEAD_BRANCH;
 const commitHash = execSync("git rev-parse --short HEAD").toString().trimRight();
 const refName = branch !== "master" ? commitHash : "master";
 
@@ -55,7 +55,7 @@ interface Release {
     version: string;
 }
 
-if (branch !== "master") {
+if (branch === "release") {
     const now = new Date();
     // WARNING, dates are 0 indexed, hence +1
     const dateString = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;

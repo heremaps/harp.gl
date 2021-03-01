@@ -48,6 +48,8 @@ jobs:
                   # debug: lerna publish expects clean workspace
                   ./scripts/git-check-clean-workspace.sh
               shell: bash
+              env:
+                HEAD_BRANCH: ${{ github.head_ref }}
 
             - name: Setup Node
               if: github.ref == 'refs/heads/release'
@@ -76,4 +78,3 @@ jobs:
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   AWS_REGION: us-east-1
                   SOURCE_DIR: 'dist/s3_deploy'
-
