@@ -84,6 +84,7 @@
         "eslint:fix": "eslint --fix --ext .ts ./@here test scripts",
         "postinstall": "yarn workspace @here/harp-datasource-protocol generate-json-schema",
         "prepare-doc-deploy": "ts-node ./scripts/prepare_doc_deploy.ts",
+        "update-release-json": "ts-node ./scripts/update-release-json.ts",
         "karma-headless": "karma start --browsers ChromeHeadless",
         "karma-headless-firefox": "karma start --browsers FirefoxHeadless",
         "karma-browser": "karma start --browsers Chrome --no-single-run"

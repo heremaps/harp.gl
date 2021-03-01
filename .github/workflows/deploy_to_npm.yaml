@@ -60,7 +60,9 @@ jobs:
 
             - name: Deploy To NPM
               if: github.ref == 'refs/heads/release'
-              run: npx lerna publish -y from-git --pre-dist-tag alpha
+              run: |
+                  npx lerna publish -y from-git --pre-dist-tag alpha
+                  yarn update-release-json
               shell: bash
               env:
                   NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
@@ -76,4 +78,3 @@ jobs:
                   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   AWS_REGION: us-east-1
                   SOURCE_DIR: 'dist/s3_deploy'
-
