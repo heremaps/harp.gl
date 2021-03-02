@@ -17,9 +17,12 @@ const fetch = require("node-fetch");
 // Precondition: documentation ready on /dist folder
 // including docs and examples (e.g. after yarn run build && yarn run typedoc)
 
-const branch = process.env.HEAD_BRANCH;
+// See: https://docs.github.com/en/actions/reference/environment-variables
+const branch = process.env.GITHUB_REF;
 const commitHash = execSync("git rev-parse --short HEAD").toString().trimRight();
-const refName = branch !== "master" ? commitHash : "master";
+// We store releases using the short commit hash
+const isReleaseBranch = branch?.includes("release");
+const refName = isReleaseBranch ? commitHash : "master";
 
 // create the following directory structure
 // dist
@@ -55,7 +58,7 @@ interface Release {
     version: string;
 }
 
-if (branch === "release") {
+if (isReleaseBranch) {
     const now = new Date();
     // WARNING, dates are 0 indexed, hence +1
     const dateString = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
