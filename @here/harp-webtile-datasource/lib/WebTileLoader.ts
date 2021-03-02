@@ -57,7 +57,7 @@ export class WebTileLoader extends BaseTileLoader {
                 this.tile.addOwnedTexture(texture);
                 const planeMesh = addGroundPlane(
                     this.tile,
-                    this.dataSource.dataSourceOrder,
+                    this.dataSource.renderOrder,
                     undefined,
                     this.dataSource.opacity,
                     true
