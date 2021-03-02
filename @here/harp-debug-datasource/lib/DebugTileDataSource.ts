@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { GeoCoordinates, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { DataSource, TextElement, Tile } from "@here/harp-mapview";
 import {
@@ -83,9 +82,10 @@ export class DebugTile extends Tile {
         if (this.projection.type === ProjectionType.Planar) {
             // place the text position at north/west for planar projections.
             textPosition.set(
-                    this.geometry.getAttribute("position").getX(3),
-                    this.geometry.getAttribute("position").getY(3),
-                    this.geometry.getAttribute("position").getZ(3));
+                this.geometry.getAttribute("position").getX(3),
+                this.geometry.getAttribute("position").getY(3),
+                this.geometry.getAttribute("position").getZ(3)
+            );
             textPosition.multiplyScalar(0.95);
 
             this.m_textLayoutStyle = new TextLayoutStyle({

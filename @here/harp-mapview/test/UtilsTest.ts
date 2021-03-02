@@ -3,9 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
 import { getProjectionName } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
@@ -25,6 +22,8 @@ import * as THREE from "three";
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
+
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 function setCamera(
     camera: THREE.Camera,
@@ -467,7 +466,6 @@ describe("MapViewUtils", function () {
         );
         expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
     });
-
 
     it("estimate size of world with one cube", async function () {
         const scene: THREE.Scene = new THREE.Scene();
