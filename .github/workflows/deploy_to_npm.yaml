@@ -48,8 +48,6 @@ jobs:
                   # debug: lerna publish expects clean workspace
                   ./scripts/git-check-clean-workspace.sh
               shell: bash
-              env:
-                HEAD_BRANCH: ${{ github.head_ref }}
 
             - name: Setup Node
               if: github.ref == 'refs/heads/release'
