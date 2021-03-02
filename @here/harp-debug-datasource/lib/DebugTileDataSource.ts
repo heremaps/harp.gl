@@ -82,13 +82,10 @@ export class DebugTile extends Tile {
 
         if (this.projection.type === ProjectionType.Planar) {
             // place the text position at north/west for planar projections.
-            textPosition.copy(
-                new THREE.Vector3(
+            textPosition.set(
                     this.geometry.getAttribute("position").getX(3),
                     this.geometry.getAttribute("position").getY(3),
-                    this.geometry.getAttribute("position").getZ(3)
-                )
-            );
+                    this.geometry.getAttribute("position").getZ(3));
             textPosition.multiplyScalar(0.95);
 
             this.m_textLayoutStyle = new TextLayoutStyle({
