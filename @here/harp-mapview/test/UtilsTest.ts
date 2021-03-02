@@ -483,9 +483,8 @@ describe("MapViewUtils", function () {
     it("estimate size of world with one cube (BufferGeometry)", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(bufferGeometry, material);
+        const cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
 
         const objSize = MapViewUtils.estimateObject3dSize(scene);
@@ -496,11 +495,10 @@ describe("MapViewUtils", function () {
     it("estimate size of world with two cubes that share the geometry", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube0 = new THREE.Mesh(bufferGeometry, material);
+        const cube0 = new THREE.Mesh(geometry, material);
         scene.add(cube0);
-        const cube1 = new THREE.Mesh(bufferGeometry, material);
+        const cube1 = new THREE.Mesh(geometry, material);
         scene.add(cube1);
 
         const objSize = MapViewUtils.estimateObject3dSize(scene);
@@ -513,9 +511,8 @@ describe("MapViewUtils", function () {
         const scene: THREE.Scene = new THREE.Scene();
         for (let i = 0; i < 1000; i++) {
             const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
             const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            const cube = new THREE.Mesh(bufferGeometry, material);
+            const cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
         }
 
@@ -527,7 +524,7 @@ describe("MapViewUtils", function () {
     it("estimate size of world with single point", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray: THREE.Vector3[] = [new THREE.Vector3(0, 1, 0)];
-        const geometry = new THREE.Geometry().setFromPoints(vertexArray);
+        const geometry = new THREE.BufferGeometry().setFromPoints(vertexArray);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const points = new THREE.Points(geometry, material);
         scene.add(points);
@@ -547,7 +544,7 @@ describe("MapViewUtils", function () {
             new THREE.Vector3(1, 1, 0),
             new THREE.Vector3(0, 1, 0)
         ];
-        const geometry = new THREE.Geometry().setFromPoints(vertexArray);
+        const geometry = new THREE.BufferGeometry().setFromPoints(vertexArray);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const points = new THREE.Points(geometry, material);
         scene.add(points);
@@ -588,7 +585,7 @@ describe("MapViewUtils", function () {
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 5, 0)
         ];
-        const geometry = new THREE.Geometry().setFromPoints(vertexArray);
+        const geometry = new THREE.BufferGeometry().setFromPoints(vertexArray);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const line = new THREE.Line(geometry, material);
         scene.add(line);

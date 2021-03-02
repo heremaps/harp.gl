@@ -85,7 +85,7 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
             camera: THREE.Camera,
-            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _geometry: THREE.BufferGeometry,
             _material: THREE.Material,
             _group: THREE.Group
         ) => {
@@ -148,7 +148,7 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
             camera: THREE.Camera,
-            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _geometry: THREE.BufferGeometry,
             _material: THREE.Material,
             _group: THREE.Group
         ) => {

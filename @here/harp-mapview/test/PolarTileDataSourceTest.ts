@@ -204,12 +204,13 @@ describe("PolarTileDataSource", function () {
             for (const tileObject of tile.objects) {
                 const mesh = tileObject as THREE.Mesh;
 
-                let geometry = mesh.geometry;
-                if (geometry instanceof THREE.BufferGeometry) {
-                    geometry = new THREE.Geometry().fromBufferGeometry(geometry);
-                }
-
-                for (const point of geometry.vertices) {
+                const positionBufferAttribute = mesh.geometry.getAttribute("position");
+                for (let i = 0; i < positionBufferAttribute.itemSize; i++) {
+                    const point = new THREE.Vector3(
+                        positionBufferAttribute.getX(i),
+                        positionBufferAttribute.getY(i),
+                        positionBufferAttribute.getZ(i)
+                    );
                     points.push(v1.addVectors(point, tile.center).clone());
                 }
             }

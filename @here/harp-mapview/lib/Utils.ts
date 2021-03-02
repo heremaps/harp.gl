@@ -994,7 +994,7 @@ export namespace MapViewUtils {
     ) {
         const { tilt, heading, projection } = params;
         const startDistance = params.minDistance;
-        const tmpCamera = params.camera.clone();
+        const tmpCamera = params.camera.clone() as THREE.PerspectiveCamera;
 
         getCameraRotationAtTarget(projection, geoTarget, -heading, tilt, tmpCamera.quaternion);
         getCameraPositionFromTargetCoordinates(
@@ -1891,7 +1891,7 @@ export namespace MapViewUtils {
     }
 
     function estimateGeometrySize(
-        geometry: THREE.Geometry | THREE.BufferGeometry,
+        geometry: THREE.BufferGeometry,
         objectSize: MemoryUsage,
         visitedObjects: Map<string, boolean>
     ): void {
@@ -1903,26 +1903,12 @@ export namespace MapViewUtils {
         }
         visitedObjects.set(geometry.uuid, true);
 
-        let bufferGeometry: THREE.BufferGeometry | undefined;
-
-        if (geometry instanceof THREE.Geometry) {
-            // Each vertex is represented as 3 floats vector (24 bytes).
-            objectSize.heapSize += geometry.vertices.length * 24;
-            // Face: 3 indices (24 byte), 1 normal (3 floats = 24). Vertex normals and
-            // colors are not counted here.
-            objectSize.heapSize += geometry.faces.length * (24 + 24);
-            // Additionally, the internal _bufferGeometry is also counted:
-            bufferGeometry = (geometry as any)._bufferGeometry;
-        } else if (geometry instanceof THREE.BufferGeometry) {
-            bufferGeometry = geometry;
-        }
-
-        if (bufferGeometry === undefined) {
+        if (geometry === undefined) {
             // Nothing more to calculate.
             return;
         }
 
-        const attributes = bufferGeometry.attributes;
+        const attributes = geometry.attributes;
         if (attributes === undefined) {
             logger.warn("estimateGeometrySize: unidentified geometry: ", geometry);
             return;
@@ -1933,8 +1919,8 @@ export namespace MapViewUtils {
                 estimateAttributeSize(attributes[property], property, objectSize, visitedObjects);
             }
         }
-        if (bufferGeometry.index !== null) {
-            estimateAttributeSize(bufferGeometry.index, "index", objectSize, visitedObjects);
+        if (geometry.index !== null) {
+            estimateAttributeSize(geometry.index, "index", objectSize, visitedObjects);
         }
     }
 

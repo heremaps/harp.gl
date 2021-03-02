@@ -28,7 +28,7 @@ const PRIORITY_ALWAYS = Number.MAX_SAFE_INTEGER;
 const TEXT_SCALE = 0.8;
 
 export class DebugTile extends Tile {
-    private readonly geometry = new THREE.Geometry();
+    private readonly geometry = new THREE.BufferGeometry();
     private readonly m_labelPositions = new THREE.BufferAttribute(new Float32Array(3), 3);
 
     private readonly m_textRenderStyle = new TextRenderStyle({
@@ -57,13 +57,18 @@ export class DebugTile extends Tile {
 
         const middlePoint = new THREE.Vector3();
 
+        const vertices: number[] = [];
         geoCoordinates.forEach(geoPoint => {
             const pt = new THREE.Vector3();
             this.projection.projectPoint(geoPoint, pt);
             pt.sub(this.center);
-            this.geometry.vertices.push(pt);
+            vertices.push(...pt.toArray());
             middlePoint.add(pt);
         });
+        this.geometry.setAttribute(
+            "position",
+            new THREE.BufferAttribute(new Float32Array(vertices), 3)
+        );
 
         middlePoint.divideScalar(geoCoordinates.length);
 
@@ -77,7 +82,13 @@ export class DebugTile extends Tile {
 
         if (this.projection.type === ProjectionType.Planar) {
             // place the text position at north/west for planar projections.
-            textPosition.copy(this.geometry.vertices[3]);
+            textPosition.copy(
+                new THREE.Vector3(
+                    this.geometry.getAttribute("position").getX(3),
+                    this.geometry.getAttribute("position").getY(3),
+                    this.geometry.getAttribute("position").getZ(3)
+                )
+            );
             textPosition.multiplyScalar(0.95);
 
             this.m_textLayoutStyle = new TextLayoutStyle({

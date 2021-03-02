@@ -84,7 +84,7 @@ export class HighPrecisionPoints extends THREE.Points implements HighPrecisionOb
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
             camera: THREE.Camera,
-            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _geometry: THREE.BufferGeometry,
             _material: THREE.Material,
             _group: THREE.Group
         ) => {
