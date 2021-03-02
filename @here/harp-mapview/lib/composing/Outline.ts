@@ -444,7 +444,7 @@ export class OutlineEffect {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.Camera,
-        geometry: THREE.Geometry | THREE.BufferGeometry,
+        geometry: THREE.BufferGeometry,
         material: THREE.Material,
         group: THREE.Group
     ) {

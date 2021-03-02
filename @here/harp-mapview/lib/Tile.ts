@@ -38,8 +38,8 @@ export type TileObject = THREE.Object3D & {
 };
 
 interface DisposableObject {
-    geometry?: THREE.BufferGeometry | THREE.Geometry;
-    geometries?: Array<THREE.BufferGeometry | THREE.Geometry>;
+    geometry?: THREE.BufferGeometry;
+    geometries?: THREE.BufferGeometry[];
     material?: THREE.Material[] | THREE.Material;
 }
 

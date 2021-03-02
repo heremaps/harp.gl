@@ -40,7 +40,7 @@ export abstract class MapViewPoints extends THREE.Points {
      * @param point - The point to test.
      * @param screenPosition - The point position on screen.
      * @param pickCoordinates - The picking position on screen.
-     * @param index - The index of the point in the [[THREE.Geometry]].
+     * @param index - The index of the point in the [[THREE.BufferGeometry]].
      * @param distance - The distance between the point and the ray origin.
      * @param intersects - The results array.
      */
@@ -88,25 +88,18 @@ export abstract class MapViewPoints extends THREE.Points {
             }
         };
 
-        if (geometry instanceof THREE.BufferGeometry) {
-            const point = new THREE.Vector3();
-            const index = geometry.index;
-            const attributes = geometry.attributes;
-            const positions = attributes.position.array;
-            if (index !== null) {
-                const indices = index.array;
-                for (let i = 0, il = indices.length; i < il; i++) {
-                    testPoint(point.fromArray(positions as number[], indices[i] * 3), i);
-                }
-            } else {
-                for (let i = 0, l = positions.length / 3; i < l; i++) {
-                    testPoint(point.fromArray(positions as number[], i * 3), i);
-                }
+        const point = new THREE.Vector3();
+        const index = geometry.index;
+        const attributes = geometry.attributes;
+        const positions = attributes.position.array;
+        if (index !== null) {
+            const indices = index.array;
+            for (let i = 0, il = indices.length; i < il; i++) {
+                testPoint(point.fromArray(positions as number[], indices[i] * 3), i);
             }
         } else {
-            const vertices = geometry.vertices;
-            for (let index = 0; index < vertices.length; index++) {
-                testPoint(vertices[index], index);
+            for (let i = 0, l = positions.length / 3; i < l; i++) {
+                testPoint(point.fromArray(positions as number[], i * 3), i);
             }
         }
     }

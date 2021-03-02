@@ -13,7 +13,7 @@ import * as THREE from "three";
  * @hidden
  */
 export class LodMesh extends THREE.Mesh {
-    private m_geometries: Array<THREE.Geometry | THREE.BufferGeometry> | undefined;
+    private m_geometries: THREE.BufferGeometry[] | undefined;
 
     /**
      * Creates a [[LodMesh]] with given geometries and materials
@@ -21,7 +21,7 @@ export class LodMesh extends THREE.Mesh {
      * @param material - Material for the mesh
      */
     constructor(
-        geometries?: Array<THREE.Geometry | THREE.BufferGeometry>,
+        geometries?: THREE.BufferGeometry[],
         material?: THREE.Material | THREE.Material[] | undefined
     ) {
         super(undefined, material);
@@ -32,7 +32,7 @@ export class LodMesh extends THREE.Mesh {
     /**
      * Update geometries of mesh
      */
-    set geometries(geometries: Array<THREE.Geometry | THREE.BufferGeometry> | undefined) {
+    set geometries(geometries: THREE.BufferGeometry[] | undefined) {
         // dispose previous geometries
         if (this.m_geometries !== geometries) {
             this.disposeGeometries();
