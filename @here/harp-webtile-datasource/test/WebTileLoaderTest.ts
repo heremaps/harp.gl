@@ -27,7 +27,7 @@ describe("WebTileLoader", function () {
     } as any) as MapView;
     const texture = new THREE.Texture();
     const copyRightInfo: CopyrightInfo[] = [];
-    const dataSourceOrder: number = 42;
+    const renderOrder: number = 42;
     const opacity: number = 1;
     const getTextureStub = sinon.stub();
     const dataProvider: WebTileDataProvider = { getTexture: getTextureStub } as any;
@@ -46,8 +46,10 @@ describe("WebTileLoader", function () {
     beforeEach(function () {
         dataSource = new WebTileDataSource({
             dataProvider,
-            renderingOptions: { opacity },
-            dataSourceOrder
+            renderingOptions: {
+                opacity,
+                renderOrder
+            }
         });
         dataSource.attach(mapView);
         tile = new Tile(dataSource, tileKey);
@@ -72,7 +74,7 @@ describe("WebTileLoader", function () {
                 expect(tile.objects).has.lengthOf(1);
                 expect(tile.objects[0]).instanceOf(THREE.Mesh);
                 const mesh = tile.objects[0] as THREE.Mesh;
-                expect(mesh.renderOrder).equal(dataSourceOrder);
+                expect(mesh.renderOrder).equal(renderOrder);
                 expect(mesh.material).has.property("map").equal(texture);
                 expect(mesh.material).has.property("opacity").equal(opacity);
                 expect(tile.copyrightInfo).to.equal(copyRightInfo);
