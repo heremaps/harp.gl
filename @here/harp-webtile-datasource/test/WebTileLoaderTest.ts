@@ -46,7 +46,10 @@ describe("WebTileLoader", function () {
     beforeEach(function () {
         dataSource = new WebTileDataSource({
             dataProvider,
-            renderingOptions: { renderOrder, opacity }
+            renderingOptions: {
+                opacity,
+                renderOrder
+            }
         });
         dataSource.attach(mapView);
         tile = new Tile(dataSource, tileKey);
