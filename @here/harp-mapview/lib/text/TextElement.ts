@@ -394,7 +394,8 @@ export class TextElement {
         public fadeNear?: number,
         public fadeFar?: number,
         readonly tileOffset?: number,
-        readonly offsetDirection?: number
+        readonly offsetDirection?: number,
+        readonly dataSourceName?: string
     ) {
         if (renderParams instanceof TextRenderStyle) {
             this.renderStyle = renderParams;

@@ -78,6 +78,11 @@ export interface PickResult {
     distance: number;
 
     /**
+     * Uniquely identifies the data source which provided the picked object.
+     */
+    dataSourceName: string | undefined;
+
+    /**
      * Render order of the intersected object.
      */
     renderOrder?: number;
@@ -248,6 +253,7 @@ export class PickHandler {
             type: PickObjectType.Unspecified,
             point: intersection.point,
             distance: intersection.distance,
+            dataSourceName: intersection.object.userData?.dataSource,
             intersection
         };
 

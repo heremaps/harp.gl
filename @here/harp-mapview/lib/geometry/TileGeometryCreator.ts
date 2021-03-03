@@ -464,6 +464,7 @@ export class TileGeometryCreator {
                         textPath.text,
                         path,
                         tile.offset,
+                        tile.dataSource.name,
                         textPath.objInfos,
                         textPath.pathLengthSqr
                     );
@@ -516,6 +517,7 @@ export class TileGeometryCreator {
                         label!,
                         point,
                         tile.offset,
+                        tile.dataSource.name,
                         attributes
                     );
                     tile.addTextElement(textElement);
