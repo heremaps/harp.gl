@@ -354,6 +354,11 @@ export class TextElement {
 
     type: TextElementType;
 
+    /**
+     * DataSource name
+     */
+    dataSourceName: string | undefined;
+
     private m_poiInfo?: PoiInfo;
 
     private m_renderStyle?: TextRenderStyle;

@@ -377,7 +377,13 @@ export class PoiManager {
         }
         const textElement = poiBuilder
             .withIcon(imageTextureName, shieldGroupIndex)
-            .build(text, positionArray, tile.offset, getAttributes(poiGeometry));
+            .build(
+                text,
+                positionArray,
+                tile.offset,
+                tile.dataSource.name,
+                getAttributes(poiGeometry)
+            );
 
         tile.addTextElement(textElement);
     }
@@ -401,6 +407,7 @@ export class PoiManager {
                     getText(poiGeometry, i),
                     getPosition(positions, worldOffsetX, i),
                     tile.offset,
+                    tile.dataSource.name,
                     getAttributes(poiGeometry, i),
                     undefined,
                     offsetDirection
