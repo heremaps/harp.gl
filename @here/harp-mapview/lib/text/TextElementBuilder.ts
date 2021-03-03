@@ -231,9 +231,9 @@ export class TextElementBuilder {
             this.m_fadeNear,
             this.m_fadeFar,
             tileOffset,
-            offsetDirection
+            offsetDirection,
+            dataSourceName
         );
-        textElement.dataSourceName = dataSourceName;
         textElement.minZoomLevel = this.m_minZoomLevel;
         textElement.maxZoomLevel = this.m_maxZoomLevel;
         textElement.distanceScale = this.m_distanceScale;
