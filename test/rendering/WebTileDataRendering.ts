@@ -103,12 +103,45 @@ describe("MapView + WebTileData rendering test", function () {
         });
     });
 
+    it("renders webtile from loaded texture png on sphere", async function () {
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-clover-sphere",
+            projection: sphereProjection,
+            getTexture: (tile: Tile) => {
+                return Promise.all([
+                    new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
+                    []
+                ]);
+            }
+        });
+    });
+
     it("renders webtile from loaded texture with opacity", async function () {
         this.timeout(5000);
 
         await webTileTest({
             mochaTest: this,
             testImageName: "webtile-opacity",
+            getTexture: (tile: Tile) => {
+                return Promise.all([
+                    new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
+                    []
+                ]);
+            },
+            webTileOptions: { renderingOptions: { opacity: 0.5 } }
+        });
+    });
+
+    it("renders webtile from loaded texture with opacity on sphere", async function () {
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-opacity-sphere",
+            projection: sphereProjection,
             getTexture: (tile: Tile) => {
                 return Promise.all([
                     new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
