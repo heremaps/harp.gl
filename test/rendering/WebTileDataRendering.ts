@@ -34,6 +34,7 @@ describe("MapView + WebTileData rendering test", function () {
         lookAt?: Partial<LookAtParams>;
         webTileOptions?: Partial<WebTileDataSourceOptions>;
         runBeforeFinish?: () => void;
+        clearColor?: string;
     }
 
     async function webTileTest(options: WebTileTestOptions) {
@@ -44,7 +45,7 @@ describe("MapView + WebTileData rendering test", function () {
 
         mapView = new MapView({
             canvas,
-            theme: {},
+            theme: { clearColor: options.clearColor },
             preserveDrawingBuffer: true,
             pixelRatio: 1,
             projection: options.projection
@@ -110,6 +111,7 @@ describe("MapView + WebTileData rendering test", function () {
             mochaTest: this,
             testImageName: "webtile-clover-sphere",
             projection: sphereProjection,
+            clearColor: "#ff0000",
             getTexture: (tile: Tile) => {
                 return Promise.all([
                     new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
