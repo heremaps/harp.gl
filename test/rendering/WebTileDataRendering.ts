@@ -164,6 +164,21 @@ describe("MapView + WebTileData rendering test", function () {
         });
     });
 
+    it("renders webtile from loaded texture png with alpha, TEST3", async function () {
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-test-3",
+            getTexture: (tile: Tile) => {
+                return Promise.all([
+                    new TextureLoader().load("../dist/resources/replacementCharacter.png"),
+                    []
+                ]);
+            }
+        });
+    });
+
     it("renders webtile from loaded texture png with alpha, with minDataLevel", async function () {
         this.timeout(5000);
 
