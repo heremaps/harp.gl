@@ -58,7 +58,7 @@ export class WebTileLoader extends BaseTileLoader {
                 const planeMesh = addGroundPlane(
                     this.tile,
                     this.dataSource.renderOrder,
-                    undefined,
+                    0xffffff,
                     this.dataSource.opacity,
                     true
                 );
