@@ -115,7 +115,7 @@ describe("MapView + WebTileData rendering test", function () {
                     []
                 ]);
             },
-            webTileOptions: { renderingOptions: { opacity: 0.5 } }
+            webTileOptions: { renderingOptions: { opacity: 0.9 } }
         });
     });
 
