@@ -354,4 +354,22 @@ describe("MapView + WebTileData rendering test", function () {
             projection: sphereProjection
         });
     });
+
+    it("TEST 1", async function () {
+        // To be fixed.
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-test1",
+            getTexture: (tile: Tile) => {
+                return Promise.all([new TextureLoader().load("../dist/resources/sea.png"), []]);
+            },
+            lookAt: {
+                target: { lat: 64, lng: 180 },
+                zoomLevel: 20
+            },
+            projection: sphereProjection
+        });
+    });
 });
