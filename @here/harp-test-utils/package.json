@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-test-utils",
-    "version": "0.22.0",
+    "version": "0.23.0",
     "description": "Provides utilities for tests",
     "main": "index.js",
     "browser": "index.web.js",
@@ -33,8 +33,8 @@
         "xml2js": "^0.4.23"
     },
     "devDependencies": {
-        "@here/harp-fetch": "^0.22.0",
-        "@here/harp-utils": "^0.22.0",
+        "@here/harp-fetch": "^0.23.0",
+        "@here/harp-utils": "^0.23.0",
         "@types/body-parser": "^1.19.0",
         "@types/chai": "^4.2.14",
         "@types/express": "^4.17.6",

@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-materials",
-    "version": "0.22.0",
+    "version": "0.23.0",
     "description": "harp.gl Materials defining the appearance of objects",
     "main": "index.js",
     "typings": "index",
@@ -20,8 +20,8 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-datasource-protocol": "^0.22.0",
-        "@here/harp-utils": "^0.22.0"
+        "@here/harp-datasource-protocol": "^0.23.0",
+        "@here/harp-utils": "^0.23.0"
     },
     "devDependencies": {
         "@types/chai": "^4.2.14",
