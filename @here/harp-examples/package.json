@@ -71,5 +71,6 @@
     },
     "dependencies": {
         "@turf/turf": "^5.1.6"
-    }
+    },
+    "private": true
 }
