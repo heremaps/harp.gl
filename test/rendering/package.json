@@ -18,8 +18,9 @@
         "@here/harp-utils": "^0.23.0",
         "@here/harp-vectortile-datasource": "^0.23.0",
         "@types/chai": "^4.2.14",
+        "@types/three": "^0.126.0",
         "chai": "^4.2.0",
-        "three": "^0.125.0"
+        "three": "^0.126.0"
     },
     "license": "Apache-2.0"
 }
