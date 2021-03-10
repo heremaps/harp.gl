@@ -76,7 +76,7 @@ export namespace HelloCustomThemeExample {
     </style>
     <p id=info>This example shows the theme extension mechanism: the styles for the parks ` +
         `and the buildings are overwritten from an original theme to make them respectively green` +
-        ` and brown.< /p>
+        ` and brown.</p>
 `;
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {
