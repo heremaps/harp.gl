@@ -81,6 +81,8 @@ if (isReleaseBranch) {
         })
         .then((releases: Release[]) => {
             const newReleases = [newRelease, ...releases];
+            console.log(`${targetFolder}/releases.json`);
+            console.log(newReleases);
             writeFileSync(
                 `${targetFolder}/releases.json`,
                 JSON.stringify(newReleases, undefined, 2)
