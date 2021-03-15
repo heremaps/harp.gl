@@ -30,18 +30,10 @@ export class DebugTile extends Tile {
     private readonly geometry = new THREE.BufferGeometry();
     private readonly m_labelPositions = new THREE.BufferAttribute(new Float32Array(3), 3);
 
-    private readonly m_textRenderStyle = new TextRenderStyle({
-        fontSize: {
-            unit: FontUnit.Pixel,
-            size: 16,
-            backgroundSize: 0
-        },
-        color: new THREE.Color("#ff0000")
-    });
-
+    private readonly m_textRenderStyle: TextRenderStyle;
     private readonly m_textLayoutStyle: TextLayoutStyle;
 
-    constructor(dataSource: DataSource, tileKey: TileKey) {
+    constructor(dataSource: DataSource, tileKey: TileKey, gridColor = "#ff0000") {
         super(dataSource, tileKey);
 
         const tilingScheme = dataSource.getTilingScheme();
@@ -100,6 +92,15 @@ export class DebugTile extends Tile {
                 horizontalAlignment: HorizontalAlignment.Center
             });
         }
+
+        this.m_textRenderStyle = new TextRenderStyle({
+            fontSize: {
+                unit: FontUnit.Pixel,
+                size: 16,
+                backgroundSize: 0
+            },
+            color: new THREE.Color(gridColor)
+        });
 
         const text = `${tileKey.mortonCode()} (${tileKey.row}, ${tileKey.column}, ${
             tileKey.level
