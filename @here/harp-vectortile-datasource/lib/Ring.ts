@@ -4,13 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ClippedVertex } from "@here/harp-geometry/lib/ClipPolygon";
 import { ShapeUtils, Vector2 } from "three";
 
 /**
  * A class representing a ring of a polygon geometry.
  */
 export class Ring {
+    /**
+     * Returns a `Set` containing the indices of the elements
+     * of `clippedPoints` that are clipped (not included in `originalPoints`).
+     *
+     * @param clippedPoints `Array` of clipped positions.
+     * @param originalPoints `Array` of unclipped positions.
+     */
+    static computeClippedPointIndices(
+        clippedPoints: Vector2[],
+        originalPoints: Vector2[]
+    ): Set<number> {
+        const isClipped = (p: THREE.Vector2) => originalPoints.find(q => q.equals(p)) === undefined;
+        return new Set(clippedPoints.map((p, i) => (isClipped(p) ? i : -1)).filter(i => i !== -1));
+    }
+
     /**
      * The signed area of this `Ring`.
      *
@@ -39,13 +53,13 @@ export class Ring {
      * @param points The coordinates of the rings.
      * @param textureCoords The optional `Array` of texture coordinates.
      * @param extents The extents of the tile bounds.
-     * @param hasClipInfo A flag indicating that vertices of this `Ring` may be clipped.
+     * @param clippedPointIndices Optional `Set` containing the indices of the clipped points.
      */
     constructor(
         readonly points: Vector2[],
         readonly textureCoords?: Vector2[],
         readonly extents: number = 4 * 1024,
-        readonly hasClipInfo: boolean = false
+        readonly clippedPointIndices?: Set<number>
     ) {
         if (textureCoords !== undefined && textureCoords.length !== points.length) {
             throw new Error(
@@ -85,10 +99,10 @@ export class Ring {
     isProperEdge(index: number): boolean {
         const extents = this.extents;
         const nextIdx = (index + 1) % this.points.length;
-        const curr: ClippedVertex = this.points[index];
-        const next: ClippedVertex = this.points[nextIdx];
+        const curr = this.points[index];
+        const next = this.points[nextIdx];
 
-        if (this.hasClipInfo) {
+        if (this.clippedPointIndices !== undefined) {
             if (curr.x !== next.x && curr.y !== next.y) {
                 // `curr` and `next` must be connected with a line
                 // because they don't form a vertical or horizontal lines.
@@ -113,8 +127,8 @@ export class Ring {
                 return true;
             }
 
-            const currWasClipped = curr.isClipped === true;
-            const nextWasClipped = next.isClipped === true;
+            const currWasClipped = this.clippedPointIndices.has(index);
+            const nextWasClipped = this.clippedPointIndices.has(nextIdx);
 
             return !currWasClipped && !nextWasClipped;
         }

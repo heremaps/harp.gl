@@ -155,7 +155,7 @@ describe("OmvDecodedTileEmitter", function () {
         );
 
         const firstGeometry = geometries[0];
-        const vertexCount = 5;
+        const vertexCount = 4;
         checkVertexAttribute(firstGeometry, 0, "position", vertexCount);
         const texCoords = checkVertexAttribute(firstGeometry, 1, "uv", vertexCount);
 

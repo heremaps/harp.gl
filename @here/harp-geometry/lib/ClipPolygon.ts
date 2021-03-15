@@ -6,15 +6,6 @@
 
 import { Vector2 } from "three";
 
-interface ClipInfo {
-    /**
-     * `true` if this vertex was clipped.
-     */
-    isClipped?: boolean;
-}
-
-export type ClippedVertex = Vector2 & ClipInfo;
-
 /**
  * Abstract helper class used to implement the Sutherland-Hodgman clipping algorithm.
  *
@@ -44,7 +35,7 @@ export abstract class ClippingEdge {
      * @param b A point of the segment to clip.
      * @param extent The extent of the bounding box.
      */
-    abstract computeIntersection(a: Vector2, b: Vector2, extent: number): ClippedVertex;
+    abstract computeIntersection(a: Vector2, b: Vector2, extent: number): Vector2;
 
     /**
      * Clip the polygon against this clipping edge.
@@ -57,14 +48,8 @@ export abstract class ClippingEdge {
 
         polygon = [];
 
-        const pushPoint = (point: ClippedVertex) => {
-            const lastAddedPoint: ClippedVertex = polygon[polygon.length - 1];
-
-            if (
-                !lastAddedPoint?.equals(point) ||
-                (point.isClipped === true && !lastAddedPoint?.isClipped) ||
-                (!point.isClipped && lastAddedPoint?.isClipped === true)
-            ) {
+        const pushPoint = (point: Vector2) => {
+            if (polygon.length === 0 || !polygon[polygon.length - 1].equals(point)) {
                 polygon.push(point);
             }
         };
@@ -74,15 +59,11 @@ export abstract class ClippingEdge {
             const prevPoint = inputList[(i + inputList.length - 1) % inputList.length];
             if (this.inside(currentPoint, extent)) {
                 if (!this.inside(prevPoint, extent)) {
-                    const p = this.computeIntersection(prevPoint, currentPoint, extent);
-                    p.isClipped = true;
-                    pushPoint(p);
+                    pushPoint(this.computeIntersection(prevPoint, currentPoint, extent));
                 }
                 pushPoint(currentPoint);
             } else if (this.inside(prevPoint, extent)) {
-                const p = this.computeIntersection(prevPoint, currentPoint, extent);
-                p.isClipped = true;
-                pushPoint(p);
+                pushPoint(this.computeIntersection(prevPoint, currentPoint, extent));
             }
         }
 
@@ -93,7 +74,7 @@ export abstract class ClippingEdge {
 class TopClippingEdge extends ClippingEdge {
     /** @override */
     inside(point: Vector2): boolean {
-        return point.y >= 0;
+        return point.y > 0;
     }
 
     /**
@@ -109,15 +90,14 @@ class TopClippingEdge extends ClippingEdge {
     computeIntersection(a: Vector2, b: Vector2): Vector2 {
         const { x: x1, y: y1 } = a;
         const { x: x2, y: y2 } = b;
-        const v: Vector2 = new Vector2((x1 * y2 - y1 * x2) / -(y1 - y2), 0).round();
-        return v;
+        return new Vector2((x1 * y2 - y1 * x2) / -(y1 - y2), 0).round();
     }
 }
 
 class RightClippingEdge extends ClippingEdge {
     /** @override */
     inside(point: Vector2, extent: number): boolean {
-        return point.x <= extent;
+        return point.x < extent;
     }
 
     /**
@@ -133,18 +113,14 @@ class RightClippingEdge extends ClippingEdge {
     computeIntersection(a: Vector2, b: Vector2, extent: number): Vector2 {
         const { x: x1, y: y1 } = a;
         const { x: x2, y: y2 } = b;
-        const v: Vector2 = new Vector2(
-            extent,
-            (x1 * y2 - y1 * x2 - (y1 - y2) * -extent) / (x1 - x2)
-        ).round();
-        return v;
+        return new Vector2(extent, (x1 * y2 - y1 * x2 - (y1 - y2) * -extent) / (x1 - x2)).round();
     }
 }
 
 class BottomClipEdge extends ClippingEdge {
     /** @override */
     inside(point: Vector2, extent: number): boolean {
-        return point.y <= extent;
+        return point.y < extent;
     }
 
     /**
@@ -160,18 +136,14 @@ class BottomClipEdge extends ClippingEdge {
     computeIntersection(a: Vector2, b: Vector2, extent: number): Vector2 {
         const { x: x1, y: y1 } = a;
         const { x: x2, y: y2 } = b;
-        const v: Vector2 = new Vector2(
-            (x1 * y2 - y1 * x2 - (x1 - x2) * extent) / -(y1 - y2),
-            extent
-        ).round();
-        return v;
+        return new Vector2((x1 * y2 - y1 * x2 - (x1 - x2) * extent) / -(y1 - y2), extent).round();
     }
 }
 
 class LeftClippingEdge extends ClippingEdge {
     /** @override */
     inside(point: Vector2) {
-        return point.x >= 0;
+        return point.x > 0;
     }
 
     /**
@@ -187,8 +159,7 @@ class LeftClippingEdge extends ClippingEdge {
     computeIntersection(a: Vector2, b: Vector2): Vector2 {
         const { x: x1, y: y1 } = a;
         const { x: x2, y: y2 } = b;
-        const v: Vector2 = new Vector2(0, (x1 * y2 - y1 * x2) / (x1 - x2)).round();
-        return v;
+        return new Vector2(0, (x1 * y2 - y1 * x2) / (x1 - x2)).round();
     }
 }
 
@@ -220,10 +191,6 @@ export function clipPolygon(polygon: Vector2[], extent: number): Vector2[] {
 
     for (const clip of clipEdges) {
         polygon = clip.clipPolygon(polygon, extent);
-    }
-
-    if (polygon.length < 3) {
-        return [];
     }
 
     return polygon;
