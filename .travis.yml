@@ -17,7 +17,7 @@ addons:
 branches:
   only:
     - master
-    - release
+    - release_v_0_22_1
 
 env:
   - DETECT_CHROMEDRIVER_VERSION=true
@@ -50,7 +50,7 @@ jobs:
           script: ./scripts/publish-packages.sh
           skip_cleanup: true
           on:
-            branch: release
+            branch: release_v_0_22_1
         - provider: s3
           access_key_id: $AWS_ACCESS_KEY_ID
           secret_access_key: $AWS_SECRET_ACCESS_KEY
