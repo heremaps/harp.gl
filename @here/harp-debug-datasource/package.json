@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-debug-datasource",
-    "version": "0.22.0",
+    "version": "0.22.1",
     "description": "Overlay useful for debugging map data",
     "main": "index.js",
     "typings": "index",
@@ -26,7 +26,7 @@
     "dependencies": {
         "@here/harp-geoutils": "^0.22.0",
         "@here/harp-lrucache": "^0.22.0",
-        "@here/harp-mapview": "^0.22.0",
+        "@here/harp-mapview": "^0.22.1",
         "@here/harp-text-canvas": "^0.22.0"
     },
     "devDependencies": {

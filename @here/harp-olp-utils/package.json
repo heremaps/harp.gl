@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-olp-utils",
-    "version": "0.22.0",
+    "version": "0.22.1",
     "description": "HERE OLP utilities",
     "main": "index.js",
     "scripts": {
@@ -20,8 +20,8 @@
     "license": "Apache-2.0",
     "dependencies": {
         "@here/harp-geoutils": "^0.22.0",
-        "@here/harp-mapview": "^0.22.0",
-        "@here/harp-mapview-decoder": "^0.22.0",
+        "@here/harp-mapview": "^0.22.1",
+        "@here/harp-mapview-decoder": "^0.22.1",
         "@here/harp-utils": "^0.22.0",
         "@here/olp-sdk-dataservice-read": "^1.8.0"
     },
