@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-mapview",
-    "version": "0.23.0",
+    "version": "0.23.1",
     "description": "Functionality needed to render a map.",
     "keywords": [
         "map",
@@ -32,13 +32,13 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-datasource-protocol": "^0.23.0",
+        "@here/harp-datasource-protocol": "^0.23.1",
         "@here/harp-fetch": "^0.23.0",
-        "@here/harp-geometry": "^0.23.0",
+        "@here/harp-geometry": "^0.23.1",
         "@here/harp-geoutils": "^0.23.0",
-        "@here/harp-lines": "^0.23.0",
+        "@here/harp-lines": "^0.23.1",
         "@here/harp-lrucache": "^0.23.0",
-        "@here/harp-materials": "^0.23.0",
+        "@here/harp-materials": "^0.23.1",
         "@here/harp-text-canvas": "^0.23.0",
         "@here/harp-transfer-manager": "^0.23.0",
         "@here/harp-utils": "^0.23.0",
