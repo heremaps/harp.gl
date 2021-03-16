@@ -104,7 +104,6 @@ class TopClippingEdge extends ClippingEdge {
      * and the edge defined by the points `(0, 0)` and `(0, extent)`.
      *
      * @override
-     *
      */
     computeIntersection(a: Vector2, b: Vector2): Vector2 {
         const { x: x1, y: y1 } = a;
@@ -155,7 +154,6 @@ class BottomClipEdge extends ClippingEdge {
      * and the edge defined by the points `(extent, extent)` and `(0, extent)`.
      *
      * @override
-     *
      */
     computeIntersection(a: Vector2, b: Vector2, extent: number): Vector2 {
         const { x: x1, y: y1 } = a;
@@ -182,7 +180,6 @@ class LeftClippingEdge extends ClippingEdge {
      * and the edge defined by the points `(0, extent)` and `(0, 0)`.
      *
      * @override
-     *
      */
     computeIntersection(a: Vector2, b: Vector2): Vector2 {
         const { x: x1, y: y1 } = a;
