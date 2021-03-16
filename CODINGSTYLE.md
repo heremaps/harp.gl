@@ -305,7 +305,7 @@ Example:
 
 If an API should not be used anymore it needs to be marked as deprecated. Therefore the `@deprecated` [tag](https://api-extractor.com/pages/tsdoc/tag_deprecated/) should be added to the documentation of the entity.
 
-The deperaction description needs to contain an alternative to the old API (if it exists) and a release version when the API will be removed.
+The deprecation description needs to contain an alternative to the old API (if it exists) and a release version when the API will be removed.
 
 [harp.gl](https://harp.gl) has a deprecation period of at least one minor release cycle.
 If for example harp `0.x.0` is the latest release and you add the deprecation to master, you can only remove the API for `harp 0.x+2.0`, i.e. after `harp 0.x+1.0` was released.
