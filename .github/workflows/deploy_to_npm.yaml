@@ -4,7 +4,7 @@ on:
     workflow_dispatch:
     push:
         branches:
-            - release
+            - release_fix_23_1
             - master
 
 env:
@@ -50,7 +50,7 @@ jobs:
               shell: bash
 
             - name: Setup Node
-              if: github.ref == 'refs/heads/release'
+              if: github.ref == 'refs/heads/release_fix_23_1'
               uses: actions/setup-node@v1
               with:
                   node-version: 14
@@ -59,14 +59,14 @@ jobs:
                   NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
             - name: Deploy To NPM
-              if: github.ref == 'refs/heads/release'
-              run: npx lerna publish -y from-git --pre-dist-tag alpha
+              if: github.ref == 'refs/heads/release_fix_23_1'
+              run: npx lerna publish -y from-package --pre-dist-tag alpha
               shell: bash
               env:
                   NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
             - name: Deploy To S3
-              if: github.ref == 'refs/heads/release' ||  github.ref == 'refs/heads/master'
+              if: github.ref == 'refs/heads/release_fix_23_1' ||  github.ref == 'refs/heads/master'
               uses: jakejarvis/s3-sync-action@master
               with:
                   args: --acl public-read --follow-symlinks
