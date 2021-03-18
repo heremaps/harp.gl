@@ -124,12 +124,17 @@ describe("OmvDecodedTileEmitter", function () {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, level);
         const decodeInfo = new DecodeInfo("test", mercatorProjection, tileKey);
 
-        function getExpectedHeight(geoAltitude: number, worldCoords: Vector3Like) {
+        function getExpectedHeight(
+            geoAltitude: number,
+            worldCoords: Vector3Like,
+            toSinglePrecision = true
+        ) {
             const scaleFactor = expectScaledHeight
                 ? decodeInfo.targetProjection.getScaleFactor(worldCoords)
                 : 1.0;
+            const expectedHeight = geoAltitude * scaleFactor;
             // Force conversion to single precision as in decoder so that results match.
-            return new Float32Array([geoAltitude * scaleFactor])[0];
+            return toSinglePrecision ? new Float32Array([expectedHeight])[0] : expectedHeight;
         }
 
         it(`Point Height at level ${level} with constantHeight ${
@@ -174,13 +179,13 @@ describe("OmvDecodedTileEmitter", function () {
 
             assert.equal(textGeometries?.length, 1, "only one geometry created");
 
-            const buffer = new Float32Array(textGeometries![0].positions.buffer);
+            const buffer = new Float64Array(textGeometries![0].positions.buffer);
             assert.equal(buffer.length, 3, "one position (3 coordinates)");
 
             const actualHeight = buffer[2];
             assert.approximately(
                 actualHeight,
-                getExpectedHeight(geoCoords.altitude, worldCoords),
+                getExpectedHeight(geoCoords.altitude, worldCoords, false),
                 1e-6
             );
         });

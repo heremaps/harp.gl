@@ -177,7 +177,7 @@ export class PoiManager {
             }
 
             const positions = new THREE.BufferAttribute(
-                new Float32Array(poiGeometry.positions.buffer),
+                new Float64Array(poiGeometry.positions.buffer),
                 poiGeometry.positions.itemCount
             );
 

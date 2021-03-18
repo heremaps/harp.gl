@@ -713,7 +713,7 @@ export class VectorTileDataEmitter {
                             positions: {
                                 name: "position",
                                 type: "float",
-                                buffer: new Float32Array(aLine).buffer,
+                                buffer: new Float64Array(aLine).buffer,
                                 itemCount: 3
                             },
                             texts: [0],
@@ -1706,42 +1706,33 @@ export class VectorTileDataEmitter {
             if (technique === undefined) {
                 return;
             }
-
-            const positionElements = new Float32Array(meshBuffers.positions);
-
-            if (meshBuffers.texts.length > 0 && isTextTechnique(technique)) {
-                this.m_textGeometries.push({
+            if (meshBuffers.texts.length > 0) {
+                const geometry: TextGeometry = {
                     positions: {
                         name: "position",
                         type: "float",
-                        buffer: positionElements.buffer as ArrayBuffer,
+                        buffer: new Float64Array(meshBuffers.positions).buffer,
                         itemCount: 3
                     },
                     texts: meshBuffers.texts,
                     technique: techniqueIdx,
                     stringCatalog: meshBuffers.stringCatalog,
                     objInfos: meshBuffers.objInfos
-                });
+                };
+
+                if (isTextTechnique(technique)) {
+                    this.m_textGeometries.push(geometry);
+                } else {
+                    assert(isPoiTechnique(technique));
+                    const poiGeometry = geometry as PoiGeometry;
+                    poiGeometry.imageTextures = meshBuffers.imageTextures;
+                    poiGeometry.offsetDirections = meshBuffers.offsetDirections;
+                    this.m_poiGeometries.push(poiGeometry);
+                }
                 return;
             }
 
-            if (meshBuffers.texts.length > 0 && isPoiTechnique(technique)) {
-                this.m_poiGeometries.push({
-                    positions: {
-                        name: "position",
-                        type: "float",
-                        buffer: positionElements.buffer as ArrayBuffer,
-                        itemCount: 3
-                    },
-                    texts: meshBuffers.texts,
-                    technique: techniqueIdx,
-                    stringCatalog: meshBuffers.stringCatalog,
-                    imageTextures: meshBuffers.imageTextures,
-                    objInfos: meshBuffers.objInfos,
-                    offsetDirections: meshBuffers.offsetDirections
-                });
-                return;
-            }
+            const positionElements = new Float32Array(meshBuffers.positions);
 
             if (meshBuffers.groups.length === 0) {
                 // create a default group containing all the vertices in the position attribute.

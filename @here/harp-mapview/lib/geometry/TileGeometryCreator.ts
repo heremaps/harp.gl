@@ -490,7 +490,7 @@ export class TileGeometryCreator {
                 }
 
                 const positions = new THREE.BufferAttribute(
-                    new Float32Array(text.positions.buffer),
+                    new Float64Array(text.positions.buffer),
                     text.positions.itemCount
                 );
 

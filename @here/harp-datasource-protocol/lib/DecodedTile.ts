@@ -267,16 +267,11 @@ export interface TextGeometry {
  * Structured clone compliant version of a `three.js` geometry object with points of interest (POIs)
  * to be rendered. It is composed of buffers with metadata for POI objects.
  */
-export interface PoiGeometry {
-    positions: BufferAttribute;
-    texts: number[];
+export interface PoiGeometry extends TextGeometry {
     /**
      * Names of the image texture or the name of the POI as indices into the array `stringCatalog`.
      */
     imageTextures?: number[];
-    technique?: number;
-    stringCatalog: Array<string | undefined>;
-    objInfos?: AttributeMap[];
     // Angle in degrees from north clockwise specifying the directions the icons can be shifted.
     offsetDirections?: number[];
 }
