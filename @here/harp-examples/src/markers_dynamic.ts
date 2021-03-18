@@ -14,6 +14,7 @@ import {
     GeoJsonDataProvider,
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
+import { GUI } from "dat.gui";
 
 import { apikey, copyrightInfo } from "../config";
 
@@ -70,7 +71,8 @@ export namespace DynamicMarkersExample {
                 }
             },
             target: new GeoCoordinates(52.52, 13.4),
-            zoomLevel: 12
+            zoomLevel: 12,
+            delayLabelsUntilMovementFinished: false
         });
 
         CopyrightElementHandler.install("copyrightNotice").attach(map);
@@ -84,18 +86,30 @@ export namespace DynamicMarkersExample {
         window.addEventListener("resize", () => {
             map.resize(window.innerWidth, window.innerHeight);
         });
+        const omvDataSource = new VectorTileDataSource({
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+            apiFormat: APIFormat.XYZOMV,
+            styleSetName: "tilezen",
+            maxDataLevel: 17,
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
+            copyrightInfo
+        });
+        map.addDataSource(omvDataSource);
 
+        // Register the icon image referenced in the style.
+        for (const { name, url } of icons) {
+            map.userImageCache.addImage(name, url);
+        }
         map.update();
 
         return map;
     }
 
-    function handlePick(
-        mapView: MapView,
-        markersDataSource: FeaturesDataSource,
-        x: number,
-        y: number
-    ): void {
+    function removeMarkerAt(x: number, y: number): void {
         // Intersection test filtering the results by layer name to get only markers.
         const layerName = (markersDataSource.dataProvider() as GeoJsonDataProvider).name;
         const results = mapView.intersectMapObjects(x, y).filter(result => {
@@ -115,78 +129,120 @@ export namespace DynamicMarkersExample {
     }
 
     let markerId = 0;
-    function attachClickEvents(mapView: MapView, markersDataSource: FeaturesDataSource) {
-        mapView.canvas.addEventListener("click", event => {
-            if (event.shiftKey) {
-                const geo = mapView.getGeoCoordinatesAt(event.clientX, event.clientY);
-                if (geo) {
-                    // Add a new marker to the data source at the click coordinates.
-                    markersDataSource.add(
-                        new MapViewPointFeature(geo.toGeoPoint() as number[], {
-                            text: markerId.toString(),
-                            id: markerId,
-                            icon: icons[markerId % icons.length].name,
-                            renderOrder: markerId
-                        })
-                    );
-                    markerId++;
-                }
-            } else if (event.ctrlKey) {
-                handlePick(mapView, markersDataSource, event.pageX, event.pageY);
+    let longTapTimer: number | undefined;
+    let isLongTap = false;
+    const longTapTimeMs = 500;
+    let lastCanvasPosition: { x: number; y: number } | undefined;
+
+    function cancelLongTapTimer() {
+        clearTimeout(longTapTimer);
+        longTapTimer = undefined;
+    }
+    function handleLongTap() {
+        cancelLongTapTimer();
+        isLongTap = true;
+    }
+    function addMarker(x: number, y: number) {
+        const geo = mapView.getGeoCoordinatesAt(x, y);
+        if (geo) {
+            // Add a new marker to the data source at the click coordinates.
+            markersDataSource.add(
+                new MapViewPointFeature(geo.toGeoPoint() as number[], {
+                    text: markerId.toString(),
+                    id: markerId,
+                    icon: icons[markerId % icons.length].name,
+                    renderOrder: markerId
+                })
+            );
+            markerId++;
+        }
+    }
+
+    function clearMarkers() {
+        markersDataSource.clear();
+        markerId = 0;
+    }
+    function getCanvasPosition(
+        event: MouseEvent | TouchEvent,
+        canvas: HTMLCanvasElement
+    ): { x: number; y: number } {
+        const ev = event instanceof MouseEvent ? event : event.changedTouches[0];
+        const { left, top } = canvas.getBoundingClientRect();
+        return { x: ev.clientX - Math.floor(left), y: ev.clientY - Math.floor(top) };
+    }
+
+    function handleTapStart(event: MouseEvent | TouchEvent) {
+        lastCanvasPosition = getCanvasPosition(event, mapView.canvas);
+        longTapTimer = setTimeout(handleLongTap, longTapTimeMs) as any;
+    }
+
+    function handleTapEnd(event: MouseEvent | TouchEvent) {
+        cancelLongTapTimer();
+        const canvasPos = getCanvasPosition(event, mapView.canvas);
+        // It's a tap only if there's (almost) no dragging.
+        const MAX_MOVE = 10;
+        const wasDragged =
+            lastCanvasPosition &&
+            (Math.abs(lastCanvasPosition.x - canvasPos.x) > MAX_MOVE ||
+                Math.abs(lastCanvasPosition.y - canvasPos.y) > MAX_MOVE);
+        if (wasDragged) {
+            return;
+        }
+        if (isLongTap) {
+            removeMarkerAt(canvasPos.x, canvasPos.y);
+            isLongTap = false;
+        } else {
+            addMarker(canvasPos.x, canvasPos.y);
+        }
+    }
+
+    function attachInputEvents() {
+        const canvas = mapView.canvas;
+        canvas.addEventListener("mousedown", handleTapStart);
+        canvas.addEventListener("touchstart", event => {
+            if (event.changedTouches.length === 1) {
+                handleTapStart(event);
             }
         });
+
+        canvas.addEventListener("mouseup", handleTapEnd);
+        canvas.addEventListener("touchend", handleTapEnd);
 
         window.addEventListener("keypress", event => {
             if (event.key === "c") {
-                markersDataSource.clear();
-                markerId = 0;
+                clearMarkers();
             }
         });
-
-        const instructions = `
-Shift+Left Click to add a marker<br/>Ctrl+Left Click to remove it<br/>
-Press 'c' to clear the map.<br/>`;
-        const message = document.createElement("div");
-        message.style.position = "absolute";
-        message.style.cssFloat = "right";
-        message.style.top = "10px";
-        message.style.right = "10px";
-        message.style.backgroundColor = "grey";
-        message.innerHTML = instructions;
-        document.body.appendChild(message);
     }
 
-    function attachDataSources(mapView: MapView) {
-        const omvDataSource = new VectorTileDataSource({
-            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            maxDataLevel: 17,
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
-        });
-        mapView.addDataSource(omvDataSource);
-
-        // Register the icon image referenced in the style.
-        for (const { name, url } of icons) {
-            mapView.userImageCache.addImage(name, url);
-        }
-
-        // Create a [[FeaturesDataSource]] for the markers.
-        const markersDataSource = new FeaturesDataSource({
-            name: "geojson",
-            styleSetName: "geojson",
-            gatherFeatureAttributes: true
-        });
-        mapView.addDataSource(markersDataSource);
-
-        attachClickEvents(mapView, markersDataSource);
+    function addUI() {
+        const gui = new GUI();
+        gui.width = 300;
+        const instructions = "Short/long tap to add/remove a marker";
+        const options = {
+            instructions,
+            clear: clearMarkers
+        };
+        const instrField = gui
+            .add(options, "instructions")
+            .name("")
+            .onChange(() => {
+                options.instructions = instructions;
+            });
+        (instrField.domElement.style as any) = "width:90%";
+        gui.add(options, "clear").name("(C)lear markers");
     }
 
     const mapView = initializeMapView("mapCanvas");
-    attachDataSources(mapView);
+
+    // Create a [[FeaturesDataSource]] for the markers.
+    const markersDataSource = new FeaturesDataSource({
+        name: "geojson",
+        styleSetName: "geojson",
+        gatherFeatureAttributes: true
+    });
+    mapView.addDataSource(markersDataSource);
+
+    attachInputEvents();
+    addUI();
 }
