@@ -17,6 +17,7 @@ export class Ring {
      * @remarks
      * The sign of the area depends on the projection and the axis orientation
      * of the ring coordinates.
+     * For example, given a ring with `CW winding`: `area > 0` with Y-axis that grows downwards and `area < 0` otherwise.
      */
     readonly area: number;
 
