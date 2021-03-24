@@ -6,7 +6,7 @@
 
 import { FeaturesDataSource, MapViewPointFeature } from "@here/harp-features-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls, MapControlsUI } from "@here/harp-map-controls";
+import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import {
     APIFormat,
@@ -109,7 +109,7 @@ export namespace DynamicMarkersExample {
         return map;
     }
 
-    function removeMarkerAt(x: number, y: number): void {
+    function removeMarker(x: number, y: number): void {
         // Intersection test filtering the results by layer name to get only markers.
         const layerName = (markersDataSource.dataProvider() as GeoJsonDataProvider).name;
         const results = mapView.intersectMapObjects(x, y).filter(result => {
@@ -129,19 +129,7 @@ export namespace DynamicMarkersExample {
     }
 
     let markerId = 0;
-    let longTapTimer: number | undefined;
-    let isLongTap = false;
-    const longTapTimeMs = 500;
-    let lastCanvasPosition: { x: number; y: number } | undefined;
 
-    function cancelLongTapTimer() {
-        clearTimeout(longTapTimer);
-        longTapTimer = undefined;
-    }
-    function handleLongTap() {
-        cancelLongTapTimer();
-        isLongTap = true;
-    }
     function addMarker(x: number, y: number) {
         const geo = mapView.getGeoCoordinatesAt(x, y);
         if (geo) {
@@ -162,52 +150,24 @@ export namespace DynamicMarkersExample {
         markersDataSource.clear();
         markerId = 0;
     }
-    function getCanvasPosition(
-        event: MouseEvent | TouchEvent,
-        canvas: HTMLCanvasElement
-    ): { x: number; y: number } {
-        const ev = event instanceof MouseEvent ? event : event.changedTouches[0];
-        const { left, top } = canvas.getBoundingClientRect();
-        return { x: ev.clientX - Math.floor(left), y: ev.clientY - Math.floor(top) };
-    }
-
-    function handleTapStart(event: MouseEvent | TouchEvent) {
-        lastCanvasPosition = getCanvasPosition(event, mapView.canvas);
-        longTapTimer = setTimeout(handleLongTap, longTapTimeMs) as any;
-    }
-
-    function handleTapEnd(event: MouseEvent | TouchEvent) {
-        cancelLongTapTimer();
-        const canvasPos = getCanvasPosition(event, mapView.canvas);
-        // It's a tap only if there's (almost) no dragging.
-        const MAX_MOVE = 10;
-        const wasDragged =
-            lastCanvasPosition &&
-            (Math.abs(lastCanvasPosition.x - canvasPos.x) > MAX_MOVE ||
-                Math.abs(lastCanvasPosition.y - canvasPos.y) > MAX_MOVE);
-        if (wasDragged) {
-            return;
-        }
-        if (isLongTap) {
-            removeMarkerAt(canvasPos.x, canvasPos.y);
-            isLongTap = false;
-        } else {
-            addMarker(canvasPos.x, canvasPos.y);
-        }
+    function getCanvasPosition(event: MouseEvent | Touch): { x: number; y: number } {
+        const { left, top } = mapView.canvas.getBoundingClientRect();
+        return { x: event.clientX - Math.floor(left), y: event.clientY - Math.floor(top) };
     }
 
     function attachInputEvents() {
         const canvas = mapView.canvas;
-        canvas.addEventListener("mousedown", handleTapStart);
-        canvas.addEventListener("touchstart", event => {
-            if (event.changedTouches.length === 1) {
-                handleTapStart(event);
+        new LongPressHandler(
+            canvas,
+            event => {
+                const canvasPos = getCanvasPosition(event);
+                removeMarker(canvasPos.x, canvasPos.y);
+            },
+            event => {
+                const canvasPos = getCanvasPosition(event);
+                addMarker(canvasPos.x, canvasPos.y);
             }
-        });
-
-        canvas.addEventListener("mouseup", handleTapEnd);
-        canvas.addEventListener("touchend", handleTapEnd);
-
+        );
         window.addEventListener("keypress", event => {
             if (event.key === "c") {
                 clearMarkers();
@@ -217,19 +177,28 @@ export namespace DynamicMarkersExample {
 
     function addUI() {
         const gui = new GUI();
-        gui.width = 300;
-        const instructions = "Short/long tap to add/remove a marker";
+        gui.width = 250;
+        const instructions1 = "Tap map to add a marker";
+        const instructions2 = "Long press on marker to remove it";
         const options = {
-            instructions,
+            instructions1,
+            instructions2,
             clear: clearMarkers
         };
-        const instrField = gui
-            .add(options, "instructions")
+        const instrField1 = gui
+            .add(options, "instructions1")
             .name("")
             .onChange(() => {
-                options.instructions = instructions;
+                options.instructions1 = instructions1;
             });
-        (instrField.domElement.style as any) = "width:90%";
+        (instrField1.domElement.style as any) = "width:90%";
+        const instrField2 = gui
+            .add(options, "instructions2")
+            .name("")
+            .onChange(() => {
+                options.instructions2 = instructions2;
+            });
+        (instrField2.domElement.style as any) = "width:90%";
         gui.add(options, "clear").name("(C)lear markers");
     }
 

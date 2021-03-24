@@ -6,7 +6,7 @@
 
 /**
  * Class that can be used to track long presses on an HTML Element. A long press is a press that
- * lasts a minimum duration (see the [[timeout]] member) while the mouse is not moved more than a
+ * lasts a minimum duration (see the [[timeout]] member) while the pointer is not moved more than a
  * certain threshold (see the [[moveThreshold]] member).
  */
 export class LongPressHandler {
@@ -21,31 +21,41 @@ export class LongPressHandler {
     moveThreshold: number = 5;
 
     /**
-     * Button id that should be handled by this event.
+     * Mouse button id that should be handled by this event.
      */
     buttonId: number = 0;
 
-    private m_mouseDownEvent?: MouseEvent = undefined;
+    private m_pressEvent?: MouseEvent | Touch = undefined;
     private m_timerId?: number = undefined;
     private m_moveHandlerRegistered: boolean = false;
-    private readonly m_boundMouseMoveHandler: any;
+    private readonly m_boundPointerMoveHandler: any;
     private readonly m_boundMouseDownHandler: any;
+    private readonly m_boundTouchStartHandler: any;
     private readonly m_boundMouseUpHandler: any;
+    private readonly m_boundTouchEndHandler: any;
 
     /**
      * Default constructor.
      *
      * @param element - The HTML element to track.
      * @param onLongPress - The callback to call when a long press occurred.
+     * @param onTap - Optional callback to call on a tap, i.e. when the press ends before the
+     * specified timeout.
      */
-    constructor(readonly element: HTMLElement, public onLongPress: (event: MouseEvent) => void) {
-        // workaround - need to bind 'this' for our dynamic mouse move handler
-        this.m_boundMouseMoveHandler = this.onMouseMove.bind(this);
-        this.m_boundMouseDownHandler = this.onMousedown.bind(this);
-        this.m_boundMouseUpHandler = this.onMouseup.bind(this);
-
+    constructor(
+        readonly element: HTMLElement,
+        public onLongPress: (event: MouseEvent | Touch) => void,
+        public onTap?: (event: MouseEvent | Touch) => void
+    ) {
+        this.m_boundPointerMoveHandler = this.onPointerMove.bind(this);
+        this.m_boundMouseDownHandler = this.onMouseDown.bind(this);
+        this.m_boundTouchStartHandler = this.onTouchStart.bind(this);
+        this.m_boundMouseUpHandler = this.onMouseUp.bind(this);
+        this.m_boundTouchEndHandler = this.onTouchEnd.bind(this);
         this.element.addEventListener("mousedown", this.m_boundMouseDownHandler);
+        this.element.addEventListener("touchstart", this.m_boundTouchStartHandler);
         this.element.addEventListener("mouseup", this.m_boundMouseUpHandler);
+        this.element.addEventListener("touchend", this.m_boundTouchEndHandler);
     }
 
     /**
@@ -54,45 +64,72 @@ export class LongPressHandler {
     dispose() {
         this.cancel();
         this.element.removeEventListener("mousedown", this.m_boundMouseDownHandler);
+        this.element.removeEventListener("touchstart", this.m_boundTouchStartHandler);
         this.element.removeEventListener("mouseup", this.m_boundMouseUpHandler);
+        this.element.removeEventListener("touchend", this.m_boundTouchEndHandler);
     }
 
-    private onMousedown(event: MouseEvent) {
-        if (event.button !== this.buttonId) {
-            return;
-        }
+    private startPress(event: MouseEvent | TouchEvent) {
         this.cancelTimer();
 
-        this.m_mouseDownEvent = event;
+        this.m_pressEvent = (event as any).changedTouches?.[0] ?? event;
         this.m_timerId = setTimeout(() => this.onTimeout(), this.timeout) as any;
-        this.addMouseMoveHandler();
+        this.addPointerMoveHandler();
     }
 
-    private onMouseup(event: MouseEvent) {
-        if (event.button !== this.buttonId) {
+    private onMouseDown(event: MouseEvent) {
+        if (event.button === this.buttonId) {
+            this.startPress(event);
+        }
+    }
+
+    private onTouchStart(event: TouchEvent) {
+        if (this.m_pressEvent) {
+            // Cancel long press if a second touch starts while holding the first one.
+            this.cancel();
             return;
         }
-        this.cancel();
+
+        if (event.changedTouches.length === 1) {
+            this.startPress(event);
+        }
     }
 
-    private onMouseMove(event: MouseEvent) {
-        if (this.m_mouseDownEvent === undefined) {
+    private onMouseUp(event: MouseEvent) {
+        if (this.m_pressEvent && event.button === this.buttonId) {
+            this.cancel();
+            this.onTap?.(event);
+        }
+    }
+
+    private onTouchEnd(event: TouchEvent) {
+        if (
+            event.changedTouches.length === 1 &&
+            event.changedTouches[0].identifier === (this.m_pressEvent as any).identifier
+        ) {
+            this.cancel();
+            this.onTap?.(event.changedTouches[0]);
+        }
+    }
+
+    private onPointerMove(event: MouseEvent | TouchEvent) {
+        if (this.m_pressEvent === undefined) {
             return; // Must not happen
         }
-
+        const { clientX, clientY } = (event as any).changedTouches?.[0] ?? event;
         const manhattanLength =
-            Math.abs(event.clientX - this.m_mouseDownEvent.clientX) +
-            Math.abs(event.clientY - this.m_mouseDownEvent.clientY);
+            Math.abs(clientX - this.m_pressEvent.clientX) +
+            Math.abs(clientY - this.m_pressEvent.clientY);
 
-        if (manhattanLength >= this.moveThreshold) {
+        if (manhattanLength > this.moveThreshold) {
             this.cancel();
         }
     }
 
     private cancel() {
-        this.m_mouseDownEvent = undefined;
+        this.m_pressEvent = undefined;
         this.cancelTimer();
-        this.removeMouseMoveHandler();
+        this.removePointerMoveHandler();
     }
 
     private cancelTimer() {
@@ -104,26 +141,28 @@ export class LongPressHandler {
         this.m_timerId = undefined;
     }
 
-    private addMouseMoveHandler() {
+    private addPointerMoveHandler() {
         if (this.m_moveHandlerRegistered) {
             return;
         }
 
-        this.element.addEventListener("mousemove", this.m_boundMouseMoveHandler);
+        this.element.addEventListener("mousemove", this.m_boundPointerMoveHandler);
+        this.element.addEventListener("touchmove", this.m_boundPointerMoveHandler);
         this.m_moveHandlerRegistered = true;
     }
 
-    private removeMouseMoveHandler() {
+    private removePointerMoveHandler() {
         if (!this.m_moveHandlerRegistered) {
             return;
         }
 
-        this.element.removeEventListener("mousemove", this.m_boundMouseMoveHandler);
+        this.element.removeEventListener("mousemove", this.m_boundPointerMoveHandler);
+        this.element.removeEventListener("touchmove", this.m_boundPointerMoveHandler);
         this.m_moveHandlerRegistered = false;
     }
 
     private onTimeout() {
-        const event = this.m_mouseDownEvent;
+        const event = this.m_pressEvent;
 
         this.m_timerId = undefined;
         this.cancel();
