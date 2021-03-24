@@ -7,7 +7,7 @@
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { webMercatorProjection } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
-import { Vector2, Vector3 } from "three";
+import { ShapeUtils, Vector2, Vector3 } from "three";
 
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
@@ -181,20 +181,29 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
                     break;
                 }
                 case VTJsonGeometryType.Polygon: {
-                    const polygon: IPolygonGeometry = { rings: [] };
+                    const polygons: IPolygonGeometry[] = [];
+                    let polygon: IPolygonGeometry = { rings: [] };
                     for (const outline of feature.geometry as VTJsonPosition[][]) {
                         const ring: Vector2[] = [];
                         for (const [currX, currY] of outline) {
                             const position = new Vector2(currX, currY);
                             ring.push(position);
                         }
+                        // MVT spec defines that each exterior ring signals the beginning of a new polygon.
+                        // See https://github.com/mapbox/vector-tile-spec/tree/master/2.1
+                        if (ShapeUtils.area(ring) > 0) {
+                            // Create a new polygon and push it into the collection of polygons
+                            polygon = { rings: [] };
+                            polygons.push(polygon);
+                        }
+                        // Push the ring into the current polygon
                         polygon.rings.push(ring);
                     }
 
                     this.m_processor.processPolygonFeature(
                         tile.layer,
                         VT_JSON_EXTENTS,
-                        [polygon],
+                        polygons,
                         env,
                         tileKey.level
                     );

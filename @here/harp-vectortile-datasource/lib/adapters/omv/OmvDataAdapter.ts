@@ -153,26 +153,38 @@ export function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined)
 
 // Ensures ring winding follows Mapbox Vector Tile specification: outer rings must be clockwise,
 // inner rings counter-clockwise.
+// See https://docs.mapbox.com/vector-tiles/specification/
 function checkWinding(multipolygon: IPolygonGeometry[]) {
-    if (multipolygon.length === 0) {
-        return;
-    }
-
     const firstPolygon = multipolygon[0];
 
-    if (firstPolygon.rings.length === 0) {
+    if (!firstPolygon || !firstPolygon.rings.length) {
         return;
     }
 
     // Opposite sign to ShapeUtils.isClockWise, since webMercator tile space has top-left origin.
+    // For example:
+    // Given the ring = [(1,2), (2,2), (2,1), (1,1)]
+    // ShapeUtils.area(ring) > 0    -> false
+    // ShapeUtils.isClockWise(ring) -> true
+    // ^
+    // |  1,2 -> 2,2
+    // |          |
+    // |  1,1 <- 2,1
+    // |_______________>
+    //
+    // Tile space axis
+    //  ______________>
+    // |  1,1 <- 2,1
+    // |          |
+    // |  1,2 ->  2,2
+    // V
     const isOuterRingClockWise = ShapeUtils.area(firstPolygon.rings[0]) > 0;
-    if (isOuterRingClockWise) {
-        return;
-    }
 
-    for (const polygon of multipolygon) {
-        for (const ring of polygon.rings) {
-            ring.reverse();
+    if (!isOuterRingClockWise) {
+        for (const polygon of multipolygon) {
+            for (const ring of polygon.rings) {
+                ring.reverse();
+            }
         }
     }
 }
@@ -406,7 +418,7 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
         }
 
         const geometry: IPolygonGeometry[] = [];
-        const currentPolygon: IPolygonGeometry = { rings: [] };
+        let currentPolygon: IPolygonGeometry = { rings: [] };
         let currentRing: Vector2[];
         this.m_geometryCommands.accept(feature.geometry, {
             type: "Polygon",
@@ -417,6 +429,14 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
                     currentRing.push(command.position);
                 } else if (isClosePathCommand(command)) {
                     if (currentRing !== undefined && currentRing.length > 0) {
+                        // MVT spec defines that each exterior ring signals the beginning of a new polygon.
+                        // see https://github.com/mapbox/vector-tile-spec/tree/master/2.1
+                        if (ShapeUtils.area(currentRing) > 0) {
+                            // Create a new polygon and push it into the collection of polygons
+                            currentPolygon = { rings: [] };
+                            geometry.push(currentPolygon);
+                        }
+                        // Push the ring into the current polygon
                         currentRing.push(currentRing[0].clone());
                         currentPolygon.rings.push(currentRing);
                     }
