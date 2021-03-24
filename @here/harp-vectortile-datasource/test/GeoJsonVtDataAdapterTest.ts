@@ -20,6 +20,44 @@ enum VTJsonGeometryType {
     Polygon
 }
 
+// A multipolygon composed by 2 polygons:
+// Polygon#1: [exterior, interior]
+// Polygon#2: [exterior, interior, interior]
+const multipolygon = [
+    // START polygon with 1 exterior ring, 1 interior.
+    [
+        [1, 1],
+        [10, 1],
+        [10, 10],
+        [1, 10]
+    ], // exterior CW
+    [
+        [2, 8],
+        [8, 8],
+        [8, 2],
+        [2, 2]
+    ], // interior CCW
+    // END
+    // START polygon with 1 exterior ring, 2 interiors - note: whether they overlap it's not relevant
+    [
+        [1, 1],
+        [10, 1],
+        [10, 10],
+        [1, 10]
+    ], // exterior CW
+    [
+        [2, 8],
+        [8, 8],
+        [8, 2],
+        [2, 2]
+    ], // interior CCW
+    [
+        [2, 8],
+        [8, 8],
+        [8, 2],
+        [2, 2]
+    ] // interior CCW
+];
 const geojsonVtTile = {
     features: [
         {
@@ -45,13 +83,7 @@ const geojsonVtTile = {
             type: VTJsonGeometryType.Polygon,
             id: "polygon id",
             tags: {},
-            geometry: [
-                [
-                    [1, 2],
-                    [3, 4],
-                    [5, 6]
-                ]
-            ]
+            geometry: multipolygon
         }
     ],
     maxX: 0,
@@ -101,5 +133,14 @@ describe("GeoJsonVtDataAdapter", function () {
         expect(polygonSpy.calledOnce);
         const polygonEnv = polygonSpy.getCalls()[0].args[3];
         expect(polygonEnv.lookup("$id")).equals(geojsonVtTile.features[2].id);
+    });
+
+    it("process tile's polygon geometries and create a single polygon from nested rings", function () {
+        const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
+        adapter.process(geojsonVtTile as any, decodeInfo);
+
+        expect(polygonSpy.calledOnce);
+        const polygons = polygonSpy.getCalls()[0].args[2];
+        expect(polygons.length).equals(2);
     });
 });
