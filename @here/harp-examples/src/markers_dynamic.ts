@@ -178,29 +178,23 @@ export namespace DynamicMarkersExample {
     function addUI() {
         const gui = new GUI();
         gui.width = 250;
-        const instructions1 = "Tap map to add a marker";
-        const instructions2 = "Long press on marker to remove it";
-        const options = {
-            instructions1,
-            instructions2,
-            clear: clearMarkers
-        };
-        const instrField1 = gui
-            .add(options, "instructions1")
-            .name("")
-            .onChange(() => {
-                options.instructions1 = instructions1;
-            });
-        (instrField1.domElement.style as any) = "width:90%";
-        const instrField2 = gui
-            .add(options, "instructions2")
-            .name("")
-            .onChange(() => {
-                options.instructions2 = instructions2;
-            });
-        (instrField2.domElement.style as any) = "width:90%";
-        gui.add(options, "clear").name("(C)lear markers");
+        gui.add(
+            {
+                clear: clearMarkers
+            },
+            "clear"
+        ).name("(C)lear markers");
     }
+
+    function addInstructions() {
+        const message = document.createElement("div");
+        message.innerHTML = `Tap map to add a marker, long press on a marker to remove it`;
+        message.style.position = "relative";
+        message.style.top = "60px";
+        document.body.appendChild(message);
+    }
+
+    addInstructions();
 
     const mapView = initializeMapView("mapCanvas");
 
