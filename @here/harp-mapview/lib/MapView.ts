@@ -2693,7 +2693,7 @@ export class MapView extends EventDispatcher {
      * @param width - The new width.
      * @param height - The new height.
      */
-    resize(width: number, height: number) {
+    resizwidth: number, height: number) {
         this.m_renderer.setSize(width, height, false);
         if (this.m_renderer.getPixelRatio() !== this.pixelRatio) {
             this.m_renderer.setPixelRatio(this.pixelRatio);
