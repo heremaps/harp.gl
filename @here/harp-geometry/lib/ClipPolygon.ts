@@ -115,7 +115,12 @@ class TopClippingEdge extends ClippingEdge {
 }
 
 class RightClippingEdge extends ClippingEdge {
-    /** @override */
+    /**
+     * @override
+     *
+     * See: HARP-14633, this should potentially be changed to < as it was previously.
+     * However further investigation is needed to confirm this.
+     */
     inside(point: Vector2, extent: number): boolean {
         return point.x <= extent;
     }
