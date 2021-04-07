@@ -60,7 +60,7 @@ export namespace ThreejsCameraAnimation {
     message.innerHTML = `Example showing camera animations using
 <a href="${threejsLink}">three.js</a>
 <br>
-Tap our use left/right keys to change location`;
+Tap or use left/right keys to change location`;
 
     message.style.cssText = `
     color: #000;

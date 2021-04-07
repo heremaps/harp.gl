@@ -52,17 +52,11 @@ const controls = new harp.MapControls(map);
 
 window.onresize = () => map.resize(window.innerWidth, window.innerHeight);
 
-const omvDataSource = new harp.OmvDataSource({
+const vectorDataSource = new harp.VectorTileDataSource({
     baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-    apiFormat: harp.APIFormat.XYZOMV,
-    styleSetName: "tilezen",
-    authenticationCode: "YOUR-APIKEY",
-    authenticationMethod: {
-        method: harp.AuthenticationMethod.QueryString,
-        name: "apikey"
-    }
+    authenticationCode: "YOUR-APIKEY"
 });
-map.addDataSource(omvDataSource);
+map.addDataSource(vectorDataSource);
 ```
 
 You need to [obtain an apikey](#credentials) to replace `YOUR-APIKEY` and use the service to download vector tiles.
@@ -117,9 +111,9 @@ decoding.
 Create a file named `./harp-gl-decoders.js` to initialize the decoding service:
 
 ```javascript
-import { OmvTileDecoderService } from "@here/harp-vectortile-datasource/index-worker";
+import { VectorTileDecoderService } from "@here/harp-vectortile-datasource/index-worker";
 
-OmvTileDecoderService.start();
+VectorTileDecoderService.start();
 ```
 
 ### Create DOM container
@@ -200,25 +194,19 @@ mapView.resize(mapCanvas.clientWidth, mapCanvas.clientHeight);
 ### Attach data source
 
 Last step is adding some
-[`OmvDataSource`](https://www.harp.gl/docs/master/doc/classes/_here_harp_omv_datasource.omvdatasource.html)
+[`VectorDataSource`](https://www.harp.gl/docs/master/doc/classes/harp_vectortile_datasource.vectortiledatasource-1.html)
 to our `MapView` instance:
 
 ```javascript
 import {
     APIFormat,
     AuthenticationTypeMapboxV4,
-    OmvDataSource
+    VectorDataSource
 } from "@here/harp-vectortile-datasource";
 
-const dataSource = new OmvDataSource({
+const dataSource = new VectorDataSource({
     baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-    apiFormat: harp.APIFormat.XYZOMV,
-    styleSetName: "tilezen",
-    authenticationCode: "YOUR-APIKEY",
-    authenticationMethod: {
-        method: harp.AuthenticationMethod.QueryString,
-        name: "apikey"
-    }
+    authenticationCode: "YOUR-APIKEY"
 });
 mapView.addDataSource(dataSource);
 ```

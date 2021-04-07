@@ -12,8 +12,7 @@ import { gt } from "semver";
 
 const fetch = require("node-fetch");
 
-//This script prepares the documentation and harp.gl website to be deployed
-// by Travis to S3
+//This script prepares the documentation and harp.gl website to be deployed to S3
 // Precondition: documentation ready on /dist folder
 // including docs and examples (e.g. after yarn run build && yarn run typedoc)
 
