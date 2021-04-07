@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -18,6 +18,7 @@ import {
     GeoCoordinates,
     mercatorProjection,
     TileKey,
+    Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
 import { assert } from "chai";
@@ -25,7 +26,7 @@ import { Vector2, Vector3 } from "three";
 
 import { DecodeInfo } from "../lib/DecodeInfo";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
-import { world2tile } from "../lib/OmvUtils";
+import { tile2world, world2tile } from "../lib/OmvUtils";
 import { VectorTileDataEmitter } from "../lib/VectorTileDataEmitter";
 
 class OmvDecodedTileEmitterTest extends VectorTileDataEmitter {
@@ -38,26 +39,29 @@ class OmvDecodedTileEmitterTest extends VectorTileDataEmitter {
     }
 }
 
+const extents = 4096;
+const layer = "dummy";
+
 describe("OmvDecodedTileEmitter", function () {
-    function createTileEmitter(): {
-        tileEmitter: OmvDecodedTileEmitterTest;
-        styleSetEvaluator: StyleSetEvaluator;
-    } {
-        const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
-        const projection = mercatorProjection;
-
-        const decodeInfo = new DecodeInfo("test", projection, tileKey);
-
-        const styleSet: StyleSet = [
+    function createTileEmitter(
+        decodeInfo: DecodeInfo = new DecodeInfo(
+            "test",
+            mercatorProjection,
+            TileKey.fromRowColumnLevel(0, 0, 1)
+        ),
+        styleSet: StyleSet = [
             {
-                when: "1",
+                when: "layer == 'mock-layer'",
                 technique: "standard",
                 attr: {
                     textureCoordinateType: TextureCoordinateType.TileSpace
                 }
             }
-        ];
-
+        ]
+    ): {
+        tileEmitter: OmvDecodedTileEmitterTest;
+        styleSetEvaluator: StyleSetEvaluator;
+    } {
         const styleSetEvaluator = new StyleSetEvaluator({ styleSet });
 
         const tileEmitter = new OmvDecodedTileEmitterTest(
@@ -89,14 +93,8 @@ describe("OmvDecodedTileEmitter", function () {
         return buffer;
     }
 
-    it("Ring data conversion to polygon data: whole tile square shape", function () {
-        const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
-        const projection = mercatorProjection;
-
-        const decodeInfo = new DecodeInfo("test", projection, tileKey);
-
+    function tileGeoBoxToPolygonGeometry(decodeInfo: DecodeInfo): IPolygonGeometry[] {
         const geoBox = decodeInfo.geoBox;
-
         const coordinates: GeoCoordinates[] = [
             new GeoCoordinates(geoBox.south, geoBox.west),
             new GeoCoordinates(geoBox.south, geoBox.east),
@@ -107,17 +105,158 @@ describe("OmvDecodedTileEmitter", function () {
         const tileLocalCoords = coordinates.map(p => {
             const projected = webMercatorProjection.projectPoint(p, new Vector3());
             const result = new Vector2();
-            const tileCoords = world2tile(4096, decodeInfo, projected, false, result);
+            const tileCoords = world2tile(extents, decodeInfo, projected, false, result);
             return tileCoords;
         });
 
-        const polygons: IPolygonGeometry[] = [
-            {
-                rings: [tileLocalCoords]
-            }
-        ];
+        return [{ rings: [tileLocalCoords] }];
+    }
 
-        const { tileEmitter, styleSetEvaluator } = createTileEmitter();
+    for (const { level, constantHeight, expectScaledHeight } of [
+        { level: 12, constantHeight: undefined, expectScaledHeight: true },
+        { level: 10, constantHeight: undefined, expectScaledHeight: false },
+        { level: 12, constantHeight: true, expectScaledHeight: false },
+        { level: 10, constantHeight: false, expectScaledHeight: true },
+        { level: 12, constantHeight: ["get", "constantHeight"], expectScaledHeight: false },
+        { level: 10, constantHeight: ["get", "constantHeight"], expectScaledHeight: true }
+    ]) {
+        const result = expectScaledHeight ? "scaled" : "not scaled";
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, level);
+        const decodeInfo = new DecodeInfo("test", mercatorProjection, tileKey);
+
+        function getExpectedHeight(
+            geoAltitude: number,
+            worldCoords: Vector3Like,
+            toSinglePrecision = true
+        ) {
+            const scaleFactor = expectScaledHeight
+                ? decodeInfo.targetProjection.getScaleFactor(worldCoords)
+                : 1.0;
+            const expectedHeight = geoAltitude * scaleFactor;
+            // Force conversion to single precision as in decoder so that results match.
+            return toSinglePrecision ? new Float32Array([expectedHeight])[0] : expectedHeight;
+        }
+
+        it(`Point Height at level ${level} with constantHeight ${
+            Array.isArray(constantHeight) ? "true object property" : constantHeight
+        } is ${result}`, function () {
+            const geoCoords = decodeInfo.geoBox.center.clone();
+            geoCoords.altitude = 100;
+            const tileLocalCoords = world2tile(
+                extents,
+                decodeInfo,
+                webMercatorProjection.projectPoint(geoCoords),
+                false,
+                new Vector3()
+            );
+
+            const worldCoords = new Vector3();
+            tile2world(extents, decodeInfo, tileLocalCoords, false, worldCoords);
+
+            const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo, [
+                {
+                    when: "1",
+                    technique: "text",
+                    attr: { text: "Test", constantHeight }
+                }
+            ]);
+
+            const mockContext = {
+                env: new MapEnv({ layer, constantHeight: !expectScaledHeight }),
+                storageLevel: tileKey.level,
+                zoomLevel: tileKey.level
+            };
+
+            tileEmitter.processPointFeature(
+                layer,
+                extents,
+                [tileLocalCoords],
+                mockContext,
+                styleSetEvaluator.getMatchingTechniques(mockContext.env)
+            );
+
+            const { textGeometries } = tileEmitter.getDecodedTile();
+
+            assert.equal(textGeometries?.length, 1, "only one geometry created");
+
+            const buffer = new Float64Array(textGeometries![0].positions.buffer);
+            assert.equal(buffer.length, 3, "one position (3 coordinates)");
+
+            const actualHeight = buffer[2];
+            assert.approximately(
+                actualHeight,
+                getExpectedHeight(geoCoords.altitude, worldCoords, false),
+                1e-6
+            );
+        });
+
+        it(`Extruded polygon height at level ${level} with constantHeight ${
+            Array.isArray(constantHeight) ? "true object property" : constantHeight
+        } is ${result}`, function () {
+            const polygons = tileGeoBoxToPolygonGeometry(decodeInfo);
+            const height = 100;
+            const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo, [
+                {
+                    when: "1",
+                    technique: "extruded-polygon",
+                    attr: {
+                        textureCoordinateType: TextureCoordinateType.TileSpace,
+                        height,
+                        constantHeight
+                    }
+                }
+            ]);
+
+            const mockContext = {
+                env: new MapEnv({ layer, constantHeight: !expectScaledHeight }),
+                storageLevel: level,
+                zoomLevel: level
+            };
+
+            tileEmitter.processPolygonFeature(
+                layer,
+                extents,
+                polygons,
+                mockContext,
+                styleSetEvaluator.getMatchingTechniques(mockContext.env)
+            );
+
+            const decodedTile = tileEmitter.getDecodedTile();
+
+            const { geometries } = decodedTile;
+
+            assert.equal(geometries.length, 1, "only one geometry created");
+            assert.equal(geometries[0].type, GeometryType.ExtrudedPolygon, "geometry is a polygon");
+            const geometry = geometries[0];
+            const posAttr = geometry.vertexAttributes![0];
+            const array = new Float32Array(posAttr.buffer);
+
+            const vertexCount = 8;
+            assert.equal(array.length / posAttr.itemCount, vertexCount);
+
+            const worldVertices = [];
+            for (let i = 0; i < array.length; i += posAttr.itemCount) {
+                worldVertices.push(new Vector3().fromArray(array, i).add(decodeInfo.center));
+            }
+            worldVertices.sort((vl, vr) => vl.z - vr.z); // sort by height.
+            // First half must have 0 height
+            worldVertices.slice(0, vertexCount / 2).forEach(v => assert.equal(v.z, 0));
+
+            // Second half must have expected height
+            worldVertices
+                .slice(vertexCount / 2)
+                .forEach(v => assert.equal(v.z, getExpectedHeight(height, v)));
+        });
+    }
+
+    it("Ring data conversion to polygon data: whole tile square shape", function () {
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
+        const projection = mercatorProjection;
+
+        const decodeInfo = new DecodeInfo("test", projection, tileKey);
+        const polygons = tileGeoBoxToPolygonGeometry(decodeInfo);
+
+        const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo);
 
         const storageLevel = 10;
         const mockContext = {
@@ -132,8 +271,7 @@ describe("OmvDecodedTileEmitter", function () {
             4096,
             polygons,
             mockContext,
-            matchedTechniques,
-            undefined
+            matchedTechniques
         );
 
         const decodedTile = tileEmitter.getDecodedTile();

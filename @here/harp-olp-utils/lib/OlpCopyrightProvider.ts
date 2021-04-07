@@ -1,17 +1,12 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { AreaCopyrightInfo, CopyrightCoverageProvider } from "@here/harp-mapview";
-import {
-    DataRequest,
-    EnvironmentName,
-    HRN,
-    OlpClientSettings,
-    VersionedLayerClient
-} from "@here/olp-sdk-dataservice-read";
+import { HRN, OlpClientSettings } from "@here/olp-sdk-core";
+import { DataRequest, EnvironmentName, VersionedLayerClient } from "@here/olp-sdk-dataservice-read";
 
 /**
  * [[OlpCopyrightProvider]] initialization parameters.

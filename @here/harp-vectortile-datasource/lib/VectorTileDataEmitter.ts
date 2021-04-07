@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -33,6 +33,7 @@ import {
     PathGeometry,
     PoiGeometry,
     PoiTechnique,
+    scaleHeight,
     StyleColor,
     Technique,
     TextGeometry,
@@ -85,7 +86,6 @@ import { Ring } from "./Ring";
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
 const tempTileOrigin = new THREE.Vector3();
-const tempVertOrigin = new THREE.Vector3();
 const tempVertNormal = new THREE.Vector3();
 const tempFootDisp = new THREE.Vector3();
 const tempRoofDisp = new THREE.Vector3();
@@ -331,6 +331,7 @@ export class VectorTileDataEmitter {
                 }
             }
 
+            const scaleHeights = scaleHeight(context, technique, this.m_decodeInfo.tileKey.level);
             const featureId = getFeatureId(env.entries);
             for (const pos of tilePositions) {
                 if (shouldCreateTextGeometries) {
@@ -347,9 +348,21 @@ export class VectorTileDataEmitter {
                 // Always store the position, otherwise the following POIs will be
                 // misplaced.
                 if (shouldCreateTextGeometries) {
-                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+                    webMercatorTile2TargetWorld(
+                        extents,
+                        this.m_decodeInfo,
+                        pos,
+                        tmpV3,
+                        scaleHeights
+                    );
                 } else {
-                    webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV3);
+                    webMercatorTile2TargetTile(
+                        extents,
+                        this.m_decodeInfo,
+                        pos,
+                        tmpV3,
+                        scaleHeights
+                    );
                 }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
                 objInfos.push(this.m_gatherFeatureAttributes ? env.entries : featureId);
@@ -375,15 +388,13 @@ export class VectorTileDataEmitter {
      * @param geometry - The current feature containing the main geometry.
      * @param env - The [[MapEnv]] containing the environment information for the map.
      * @param techniques - The array of [[Technique]] that will be applied to the geometry.
-     * @param featureId - The id of the feature.
      */
     processLineFeature(
         layer: string,
         extents: number,
         geometry: ILineGeometry[],
         context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
+        techniques: IndexedTechnique[]
     ): void {
         const env = context.env;
         this.processFeatureCommon(env);
@@ -404,6 +415,7 @@ export class VectorTileDataEmitter {
         let texCoordinateType: TextureCoordinateType | undefined;
 
         const hasUntiledLines = geometry[0].untiledPositions !== undefined;
+        const scaleHeights = false; // No need to scale height, source data is 2D.
 
         // If true, special handling for dashes is required (round and diamond shaped dashes).
         let hasIndividualLineSegments = false;
@@ -471,9 +483,21 @@ export class VectorTileDataEmitter {
 
                         const pos1 = polyline.positions[i];
                         const pos2 = polyline.positions[i + 1];
-                        webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos1, tmpV3);
+                        webMercatorTile2TargetWorld(
+                            extents,
+                            this.m_decodeInfo,
+                            pos1,
+                            tmpV3,
+                            scaleHeights
+                        );
                         worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
-                        webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos2, tmpV4);
+                        webMercatorTile2TargetWorld(
+                            extents,
+                            this.m_decodeInfo,
+                            pos2,
+                            tmpV4,
+                            scaleHeights
+                        );
                         worldLine.push(tmpV4.x, tmpV4.y, tmpV4.z);
 
                         if (computeTexCoords) {
@@ -527,7 +551,13 @@ export class VectorTileDataEmitter {
                 const lineUvs: number[] = [];
                 const lineOffsets: number[] = [];
                 polyline.positions.forEach(pos => {
-                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+                    webMercatorTile2TargetWorld(
+                        extents,
+                        this.m_decodeInfo,
+                        pos,
+                        tmpV3,
+                        scaleHeights
+                    );
                     worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
 
                     if (computeTexCoords) {
@@ -683,7 +713,7 @@ export class VectorTileDataEmitter {
                             positions: {
                                 name: "position",
                                 type: "float",
-                                buffer: new Float32Array(aLine).buffer,
+                                buffer: new Float64Array(aLine).buffer,
                                 itemCount: 3
                             },
                             texts: [0],
@@ -757,18 +787,18 @@ export class VectorTileDataEmitter {
      * @param geometry - The current feature containing the main geometry.
      * @param feature - The [[MapEnv]] containing the environment information for the map.
      * @param techniques - The array of [[Technique]] that will be applied to the geometry.
-     * @param featureId - The id of the feature.
      */
     processPolygonFeature(
         layer: string,
         extents: number,
         geometry: IPolygonGeometry[],
         context: AttrEvaluationContext,
-        techniques: IndexedTechnique[],
-        featureId: number | undefined
+        techniques: IndexedTechnique[]
     ): void {
         const env = context.env;
         this.processFeatureCommon(env);
+
+        const scaleHeights = false; // No need to scale height, source data is 2D.
 
         techniques.forEach(technique => {
             if (technique === undefined) {
@@ -808,30 +838,31 @@ export class VectorTileDataEmitter {
                 isFilled ||
                 isStandard ||
                 (isShaderTechnique(technique) && technique.primitive === "mesh");
+
             const computeTexCoords = this.getComputeTexCoordsFunc(technique, objectBounds);
+
+            const shouldClipPolygons = isPolygon && !isExtruded;
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
 
                 for (const outline of polygon.rings) {
                     let coords = outline;
-                    let clippedPointIndices: Set<number> | undefined;
 
                     // disable clipping for the polygon geometries
                     // rendered using the extruded-polygon technique.
                     // We can't clip these polygons for now because
                     // otherwise we could break the current assumptions
                     // used to add oultines around the extruded geometries.
-                    if (isPolygon && !isExtruded) {
-                        const shouldClipPolygon = coords.some(
+                    if (shouldClipPolygons) {
+                        // quick test to avoid clipping if all the coords
+                        // of the current polygon are inside the tile bounds.
+                        const hasCoordsOutsideTileBounds = coords.some(
                             p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
                         );
 
-                        if (shouldClipPolygon) {
+                        if (hasCoordsOutsideTileBounds) {
                             coords = clipPolygon(coords, extents);
-                            clippedPointIndices = Ring.computeClippedPointIndices(coords, outline);
-                        } else {
-                            clippedPointIndices = new Set();
                         }
                     }
 
@@ -845,7 +876,7 @@ export class VectorTileDataEmitter {
                         textureCoords = coords.map(coord => computeTexCoords(coord, extents));
                     }
 
-                    rings.push(new Ring(coords, textureCoords, extents, clippedPointIndices));
+                    rings.push(new Ring(coords, textureCoords, extents, shouldClipPolygons));
                 }
 
                 if (rings.length === 0) {
@@ -857,14 +888,7 @@ export class VectorTileDataEmitter {
 
             const isLine = isSolidLineTechnique(technique) || isLineTechnique(technique);
             if (isPolygon) {
-                this.applyPolygonTechnique(
-                    polygons,
-                    technique,
-                    techniqueIndex,
-                    featureId,
-                    context,
-                    extents
-                );
+                this.applyPolygonTechnique(polygons, technique, techniqueIndex, context, extents);
             } else if (isLine) {
                 const lineGeometry =
                     technique.name === "line" ? this.m_simpleLines : this.m_solidLines;
@@ -912,7 +936,8 @@ export class VectorTileDataEmitter {
                                     extents,
                                     this.m_decodeInfo,
                                     tmpV2.copy(curr),
-                                    tmpV3
+                                    tmpV3,
+                                    scaleHeights
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
 
@@ -922,7 +947,8 @@ export class VectorTileDataEmitter {
                                         extents,
                                         this.m_decodeInfo,
                                         tmpV2.copy(next),
-                                        tmpV4
+                                        tmpV4,
+                                        scaleHeights
                                     );
                                     line.push(tmpV4.x, tmpV4.y, tmpV4.z);
 
@@ -940,7 +966,8 @@ export class VectorTileDataEmitter {
                                     extents,
                                     this.m_decodeInfo,
                                     tmpV2.copy(next),
-                                    tmpV3
+                                    tmpV3,
+                                    scaleHeights
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
                             }
@@ -1249,7 +1276,6 @@ export class VectorTileDataEmitter {
         polygons: Ring[][],
         technique: Technique,
         techniqueIndex: number,
-        featureId: number | undefined,
         context: AttrEvaluationContext,
         extents: number
     ): void {
@@ -1304,10 +1330,10 @@ export class VectorTileDataEmitter {
         // computation and extrusion).
         height = Math.max(floorHeight + ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT, height);
 
-        const styleSetConstantHeight = getOptionValue(
-            extrudedPolygonTechnique.constantHeight,
-            false
-        );
+        const tileLevel = this.m_decodeInfo.tileKey.level;
+
+        const scaleHeights =
+            isExtruded && scaleHeight(context, extrudedPolygonTechnique, tileLevel);
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
 
@@ -1532,25 +1558,18 @@ export class VectorTileDataEmitter {
 
                     // Assemble the vertex buffer.
                     for (let i = 0; i < vertices.length; i += vertexStride) {
-                        webMercatorTile2TargetTile(
+                        webMercatorTile2TargetWorld(
                             extents,
                             this.m_decodeInfo,
                             tmpV2.set(vertices[i], vertices[i + 1]),
                             tmpV3,
+                            false, // no need to scale height (source data is 2D).
                             true
                         );
 
-                        let scaleFactor = 1.0;
-                        if (isExtruded && styleSetConstantHeight !== true) {
-                            tempVertOrigin.set(
-                                tempTileOrigin.x + tmpV3.x,
-                                tempTileOrigin.y + tmpV3.y,
-                                tempTileOrigin.z + tmpV3.z
-                            );
-                            scaleFactor = this.m_decodeInfo.targetProjection.getScaleFactor(
-                                tempVertOrigin
-                            );
-                        }
+                        const scaleFactor = scaleHeights
+                            ? this.m_decodeInfo.targetProjection.getScaleFactor(tmpV3)
+                            : 1.0;
                         this.m_maxGeometryHeight = Math.max(
                             this.m_maxGeometryHeight,
                             scaleFactor * height
@@ -1561,11 +1580,9 @@ export class VectorTileDataEmitter {
                         );
 
                         if (isSpherical) {
-                            tempVertNormal
-                                .set(tmpV3.x, tmpV3.y, tmpV3.z)
-                                .add(this.center)
-                                .normalize();
+                            tempVertNormal.set(tmpV3.x, tmpV3.y, tmpV3.z).normalize();
                         }
+                        tmpV3.sub(this.center);
 
                         tempFootDisp.copy(tempVertNormal).multiplyScalar(floorHeight * scaleFactor);
                         positions.push(
@@ -1689,42 +1706,33 @@ export class VectorTileDataEmitter {
             if (technique === undefined) {
                 return;
             }
-
-            const positionElements = new Float32Array(meshBuffers.positions);
-
-            if (meshBuffers.texts.length > 0 && isTextTechnique(technique)) {
-                this.m_textGeometries.push({
+            if (meshBuffers.texts.length > 0) {
+                const geometry: TextGeometry = {
                     positions: {
                         name: "position",
                         type: "float",
-                        buffer: positionElements.buffer as ArrayBuffer,
+                        buffer: new Float64Array(meshBuffers.positions).buffer,
                         itemCount: 3
                     },
                     texts: meshBuffers.texts,
                     technique: techniqueIdx,
                     stringCatalog: meshBuffers.stringCatalog,
                     objInfos: meshBuffers.objInfos
-                });
+                };
+
+                if (isTextTechnique(technique)) {
+                    this.m_textGeometries.push(geometry);
+                } else {
+                    assert(isPoiTechnique(technique));
+                    const poiGeometry = geometry as PoiGeometry;
+                    poiGeometry.imageTextures = meshBuffers.imageTextures;
+                    poiGeometry.offsetDirections = meshBuffers.offsetDirections;
+                    this.m_poiGeometries.push(poiGeometry);
+                }
                 return;
             }
 
-            if (meshBuffers.texts.length > 0 && isPoiTechnique(technique)) {
-                this.m_poiGeometries.push({
-                    positions: {
-                        name: "position",
-                        type: "float",
-                        buffer: positionElements.buffer as ArrayBuffer,
-                        itemCount: 3
-                    },
-                    texts: meshBuffers.texts,
-                    technique: techniqueIdx,
-                    stringCatalog: meshBuffers.stringCatalog,
-                    imageTextures: meshBuffers.imageTextures,
-                    objInfos: meshBuffers.objInfos,
-                    offsetDirections: meshBuffers.offsetDirections
-                });
-                return;
-            }
+            const positionElements = new Float32Array(meshBuffers.positions);
 
             if (meshBuffers.groups.length === 0) {
                 // create a default group containing all the vertices in the position attribute.

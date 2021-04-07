@@ -1,11 +1,8 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
 import { getProjectionName } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
@@ -25,6 +22,8 @@ import * as THREE from "three";
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils, TileOffsetUtils } from "../lib/Utils";
+
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 function setCamera(
     camera: THREE.Camera,
@@ -476,88 +475,53 @@ describe("MapViewUtils", function () {
         scene.add(cube);
 
         const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(1768);
-        expect(objSize.gpuSize).to.be.equal(0);
-    });
-
-    it("estimate size of world with one cube (BufferGeometry)", async function () {
-        const scene: THREE.Scene = new THREE.Scene();
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(bufferGeometry, material);
-        scene.add(cube);
-
-        const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(2808); // see previous test
-        expect(objSize.gpuSize).to.be.equal(1584);
+        expect(objSize.heapSize).to.be.equal(2064);
+        expect(objSize.gpuSize).to.be.equal(840);
     });
 
     it("estimate size of world with two cubes that share the geometry", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube0 = new THREE.Mesh(bufferGeometry, material);
+        const cube0 = new THREE.Mesh(geometry, material);
         scene.add(cube0);
-        const cube1 = new THREE.Mesh(bufferGeometry, material);
+        const cube1 = new THREE.Mesh(geometry, material);
         scene.add(cube1);
 
         const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(3808); // see previous test: 2808 + 1000 = 3808
-        expect(objSize.gpuSize).to.be.equal(1584); // see previous test
+        expect(objSize.heapSize).to.be.equal(3064); // see previous test: 2064 + 1000 = 3808
+        expect(objSize.gpuSize).to.be.equal(840); // see previous test
     });
 
-    it("estimate size of world with 1000 cubes (BufferGeometry)", async function (this: Mocha.Context) {
+    it("estimate size of world with 1000 cubes", async function (this: Mocha.Context) {
         this.timeout(4000);
         const scene: THREE.Scene = new THREE.Scene();
         for (let i = 0; i < 1000; i++) {
             const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
             const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            const cube = new THREE.Mesh(bufferGeometry, material);
+            const cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
         }
 
         const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(2808000); // see previous test: 2808 * 1000
-        expect(objSize.gpuSize).to.be.equal(1584000); // see previous test: 1584 * 1000
+        expect(objSize.heapSize).to.be.equal(2064000); // see previous test: 2064 * 1000
+        expect(objSize.gpuSize).to.be.equal(840000); // see previous test: 1584 * 1000
     });
 
     it("estimate size of world with single point", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray: THREE.Vector3[] = [new THREE.Vector3(0, 1, 0)];
-        const geometry = new THREE.Geometry().setFromPoints(vertexArray);
+        const geometry = new THREE.BufferGeometry().setFromPoints(vertexArray);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const points = new THREE.Points(geometry, material);
         scene.add(points);
 
         const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(1024); // 1*vector3 + object3d overhead
-        expect(objSize.gpuSize).to.be.equal(0);
+        expect(objSize.heapSize).to.be.equal(1068); // 1*vector3 + object3d overhead
+        expect(objSize.gpuSize).to.be.equal(12);
     });
 
     it("estimate size of world with 6 points", async function () {
-        const scene: THREE.Scene = new THREE.Scene();
-        const vertexArray: THREE.Vector3[] = [
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(1, 0, 0),
-            new THREE.Vector3(2, 0, 0),
-            new THREE.Vector3(2, 1, 0),
-            new THREE.Vector3(1, 1, 0),
-            new THREE.Vector3(0, 1, 0)
-        ];
-        const geometry = new THREE.Geometry().setFromPoints(vertexArray);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const points = new THREE.Points(geometry, material);
-        scene.add(points);
-
-        const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(1144); // 6*vector3 + object3d overhead
-        expect(objSize.gpuSize).to.be.equal(0);
-    });
-
-    it("estimate size of world with 6 points (BufferedGeometry)", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray = new Array<THREE.Vector3>(6).fill(new THREE.Vector3());
         const bufferGeometry = new THREE.BufferGeometry().setFromPoints(vertexArray);
@@ -578,27 +542,11 @@ describe("MapViewUtils", function () {
         scene.add(points);
 
         const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(1456); // 7*vector3 + 6*face + object3d overhead
-        expect(objSize.gpuSize).to.be.equal(0);
+        expect(objSize.heapSize).to.be.equal(1516); // 7*vector3 + 6*face + object3d overhead
+        expect(objSize.gpuSize).to.be.equal(292);
     });
 
     it("estimate size of world with line between 2 points", async function () {
-        const scene: THREE.Scene = new THREE.Scene();
-        const vertexArray: THREE.Vector3[] = [
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 5, 0)
-        ];
-        const geometry = new THREE.Geometry().setFromPoints(vertexArray);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const line = new THREE.Line(geometry, material);
-        scene.add(line);
-
-        const objSize = MapViewUtils.estimateObject3dSize(scene);
-        expect(objSize.heapSize).to.be.equal(1048); // 2*vector3 + object3d overhead
-        expect(objSize.gpuSize).to.be.equal(0);
-    });
-
-    it("estimate size of world with line between 2 points (BufferedGeometry)", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const vertexArray: THREE.Vector3[] = [
             new THREE.Vector3(0, 0, 0),

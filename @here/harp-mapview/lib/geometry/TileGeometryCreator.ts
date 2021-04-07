@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -36,11 +36,13 @@ import {
     MakeTechniqueAttrs,
     MapEnv,
     needsVertexNormals,
+    Pickability,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
     TerrainTechnique,
     TextPathGeometry,
+    transientToPickability,
     Value
 } from "@here/harp-datasource-protocol";
 import {
@@ -462,6 +464,7 @@ export class TileGeometryCreator {
                         textPath.text,
                         path,
                         tile.offset,
+                        tile.dataSource.name,
                         textPath.objInfos,
                         textPath.pathLengthSqr
                     );
@@ -487,7 +490,7 @@ export class TileGeometryCreator {
                 }
 
                 const positions = new THREE.BufferAttribute(
-                    new Float32Array(text.positions.buffer),
+                    new Float64Array(text.positions.buffer),
                     text.positions.itemCount
                 );
 
@@ -514,6 +517,7 @@ export class TileGeometryCreator {
                         label!,
                         point,
                         tile.offset,
+                        tile.dataSource.name,
                         attributes
                     );
                     tile.addTextElement(textElement);
@@ -789,7 +793,7 @@ export class TileGeometryCreator {
                     // for elevation overlay.
                     registerTileObject(tile, depthPassMesh, techniqueKind, {
                         technique,
-                        pickable: false
+                        pickability: Pickability.transient
                     });
                     objects.push(depthPassMesh);
 
@@ -800,11 +804,16 @@ export class TileGeometryCreator {
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
 
+                const techniquePickability = transientToPickability(
+                    getPropertyValue(technique.transient, mapView.env)
+                );
                 // register all objects as pickable except solid lines with outlines, in that case
                 // it's enough to make outlines pickable.
                 registerTileObject(tile, object, techniqueKind, {
                     technique,
-                    pickable: !hasSolidLinesOutlines
+                    pickability: hasSolidLinesOutlines
+                        ? Pickability.transient
+                        : techniquePickability
                 });
                 objects.push(object);
 
@@ -891,8 +900,9 @@ export class TileGeometryCreator {
 
                     registerTileObject(tile, edgeObj, techniqueKind, {
                         technique,
-                        pickable: false
+                        pickability: Pickability.transient
                     });
+
                     MapMaterialAdapter.create(edgeMaterial, {
                         color: buildingTechnique.lineColor,
                         objectColor: buildingTechnique.color,
@@ -970,7 +980,7 @@ export class TileGeometryCreator {
 
                     registerTileObject(tile, outlineObj, techniqueKind, {
                         technique,
-                        pickable: false
+                        pickability: techniquePickability
                     });
                     MapMaterialAdapter.create(outlineMaterial, {
                         color: fillTechnique.lineColor,

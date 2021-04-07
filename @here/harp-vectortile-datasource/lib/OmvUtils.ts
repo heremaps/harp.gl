@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -117,8 +117,8 @@ export function world2tile<VectorType extends Vector2Like>(
     const { top, left, scale } = decodeInfo.worldTileProjectionCookie;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
-    target.x = (position.x / R) * scale - left;
-    target.y = (flipY ? -1 : 1) * ((position.y / R) * scale - top);
+    target.x = Math.round((position.x / R) * scale - left);
+    target.y = Math.round((flipY ? -1 : 1) * ((position.y / R) * scale - top));
     if (isVector3Like(target)) {
         target.z = position.z;
     }
@@ -130,10 +130,14 @@ export function webMercatorTile2TargetWorld(
     decodeInfo: DecodeInfo,
     position: THREE.Vector2 | THREE.Vector3,
     target: THREE.Vector3,
+    scaleHeight: boolean,
     flipY: boolean = false
 ) {
     tile2world(extents, decodeInfo, position, flipY, target);
     decodeInfo.targetProjection.reprojectPoint(webMercatorProjection, target, target);
+    if (position instanceof THREE.Vector3 && scaleHeight) {
+        target.z *= decodeInfo.targetProjection.getScaleFactor(target);
+    }
 }
 
 export function webMercatorTile2TargetTile(
@@ -141,8 +145,9 @@ export function webMercatorTile2TargetTile(
     decodeInfo: DecodeInfo,
     position: THREE.Vector2 | THREE.Vector3,
     target: THREE.Vector3,
+    scaleHeight: boolean,
     flipY: boolean = false
 ) {
-    webMercatorTile2TargetWorld(extents, decodeInfo, position, target, flipY);
+    webMercatorTile2TargetWorld(extents, decodeInfo, position, target, scaleHeight, flipY);
     target.sub(decodeInfo.center);
 }

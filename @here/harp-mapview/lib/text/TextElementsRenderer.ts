@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -290,8 +290,8 @@ function shouldRenderPointText(
         return false;
     }
 
-    // Do not render text if POI cannot be rendered and is not optional.
-    return poiInfo === undefined || poiInfo.isValid === true || poiInfo.iconIsOptional !== false;
+    // If there's an icon, render text only if icon is valid or optional.
+    return !poiInfo || poiInfo.isValid === true || poiInfo.iconIsOptional === true;
 }
 
 function shouldRenderPoiText(labelState: TextElementState, viewState: ViewState) {
@@ -702,6 +702,7 @@ export class TextElementsRenderer {
                 renderOrder: textElement.renderOrder,
                 featureId: textElement.featureId,
                 userData: textElement.userData,
+                dataSourceName: textElement.dataSourceName,
                 text: textElement.text
             };
 
@@ -838,7 +839,7 @@ export class TextElementsRenderer {
     private placeTextElementGroup(
         groupState: TextElementGroupState,
         renderParams: RenderParams,
-        maxNumPlacedLabels: number,
+        maxNumPlacedLabels: number | undefined,
         pass: Pass
     ): boolean {
         // Unvisited text elements are never placed.
@@ -858,7 +859,7 @@ export class TextElementsRenderer {
             }
             // Limit labels only in new labels pass (Pass.NewLabels).
             else if (
-                maxNumPlacedLabels >= 0 &&
+                maxNumPlacedLabels !== undefined &&
                 renderParams.numRenderedTextElements >= maxNumPlacedLabels
             ) {
                 logger.debug("Placement label limit exceeded.");
@@ -1455,7 +1456,7 @@ export class TextElementsRenderer {
         if (this.m_forceNewLabelsPass) {
             this.m_forceNewLabelsPass = false;
         }
-        const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels!;
+        const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels;
 
         // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
         // candidates from previous frame if there's been no placement in this one.
@@ -1522,7 +1523,7 @@ export class TextElementsRenderer {
                 !this.placeTextElementGroup(
                     groupStates[i],
                     renderParams,
-                    this.m_options.maxNumVisibleLabels!,
+                    this.m_options.maxNumVisibleLabels,
                     Pass.NewLabels
                 )
             ) {
@@ -1783,16 +1784,13 @@ export class TextElementsRenderer {
                 textRenderState!.reset();
             }
 
-            const iconIsOptional = poiInfo?.iconIsOptional !== false;
+            const iconIsOptional = poiInfo?.iconIsOptional === true;
             // Rejected icons are only considered to hide the text if they are valid, so a missing
             // icon image will not keep the text from showing up.
-            const requiredIconRejected: boolean =
-                iconRejected && iconReady === true && !iconIsOptional;
-
+            const requiredIconRejected = iconRejected && iconReady && !iconIsOptional;
             const textRejected = requiredIconRejected || placeResult === PlacementResult.Rejected;
             if (!iconRejected && !iconInvisible) {
-                const textIsOptional: boolean =
-                    pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
+                const textIsOptional = pointLabel.poiInfo?.textIsOptional === true;
                 iconRejected = textRejected && !textIsOptional;
             }
 

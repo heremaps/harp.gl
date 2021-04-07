@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -71,6 +71,18 @@ export type FeatureGeometry =
     | MultiLineString
     | Polygon
     | MultiPolygon;
+
+export function isFeatureGeometry(object: any): object is FeatureGeometry {
+    const t = object.type;
+    return (
+        t === "Point" ||
+        t === "MultiPoint" ||
+        t === "LineString" ||
+        t === "MultiLineString" ||
+        t === "Polygon" ||
+        t === "MultiPolygon"
+    );
+}
 
 /**
  * Represents "GeometryCollection" GeoJSON geometry object.

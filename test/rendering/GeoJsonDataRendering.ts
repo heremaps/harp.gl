@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Feature, FeatureCollection, StyleSet } from "@here/harp-datasource-protocol";
+import { Feature, FeatureCollection, FlatTheme, StyleSet } from "@here/harp-datasource-protocol";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { wrapLineString } from "@here/harp-geometry/lib/WrapLineString";
 import { wrapPolygon } from "@here/harp-geometry/lib/WrapPolygon";
@@ -22,6 +22,7 @@ import * as turf from "@turf/turf";
 import { Vector2, Vector3 } from "three";
 
 import * as polygon_crossing_antimeridian from "../resources/polygon_crossing_antimeridian.json";
+import { GeoJsonStore } from "./utils/GeoJsonStore";
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
 
@@ -562,7 +563,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                     {
                         type: "Feature",
                         properties: { text: "Marker" },
-                        geometry: { type: "Point", coordinates: [14.6, 53.3, 25] }
+                        geometry: { type: "Point", coordinates: [14.6, 53.3, 15] }
                     }
                 ]
             },
@@ -1165,6 +1166,55 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                             13
                         )!
                     ).center
+                }
+            });
+        });
+    });
+
+    describe("Polygons", async function () {
+        it("Triangle with a hole rendered at zoom level 2", async function () {
+            const theme: FlatTheme = {
+                lights,
+                styles: [
+                    {
+                        styleSet: "geojson",
+                        when: ["==", ["geometry-type"], "Polygon"],
+                        technique: "fill",
+                        color: "rgba(100,100,100,0.5)",
+                        lineWidth: 2
+                    }
+                ]
+            };
+
+            const polygon = turf.polygon([
+                [
+                    [0, 0, 0],
+                    [170, 35, 0],
+                    [170, -35, 0],
+                    [0, 0, 0]
+                ],
+                [
+                    [0, 0, 0],
+                    [170, 15, 0],
+                    [170, -15, 0],
+                    [0, 0, 0]
+                ]
+            ]);
+
+            const [lng, lat] = turf.center(polygon).geometry!.coordinates;
+
+            const geoJsonStore = new GeoJsonStore();
+
+            geoJsonStore.features.insert(polygon);
+
+            await geoJsonTest.run({
+                mochaTest: this,
+                testImageName: "geojson-triangle-with-hole-at-zoom-level-2",
+                dataProvider: geoJsonStore,
+                theme,
+                lookAt: {
+                    zoomLevel: 2,
+                    target: [lng, lat]
                 }
             });
         });

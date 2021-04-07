@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -76,7 +76,7 @@ export namespace HelloCustomThemeExample {
     </style>
     <p id=info>This example shows the theme extension mechanism: the styles for the parks ` +
         `and the buildings are overwritten from an original theme to make them respectively green` +
-        ` and brown.< /p>
+        ` and brown.</p>
 `;
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {

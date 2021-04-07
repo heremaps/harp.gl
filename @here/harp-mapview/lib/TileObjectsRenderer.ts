@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,9 +8,9 @@ import {
     getFeatureId,
     getPropertyValue,
     IndexedTechnique,
-    MapEnv
+    MapEnv,
+    Pickability
 } from "@here/harp-datasource-protocol";
-import { Object3D, Vector3 } from "three";
 
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { SolidLineMesh } from "./geometry/SolidLineMesh";
@@ -43,8 +43,8 @@ export class TileObjectRenderer {
         tile: Tile,
         storageLevel: number,
         zoomLevel: number,
-        cameraPosition: Vector3,
-        rootNode: Object3D
+        cameraPosition: THREE.Vector3,
+        rootNode: THREE.Object3D
     ) {
         const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(storageLevel)) {
@@ -156,7 +156,9 @@ export class TileObjectRenderer {
             return stableSort(a, b);
         };
 
-        this.m_renderer.setOpaqueSort(painterSortStable);
+        // Temporary workaround due to incorrect comparator type definition:
+        // https://github.com/three-types/three-ts-types/issues/41
+        this.m_renderer.setOpaqueSort((painterSortStable as any) as () => void);
     }
 
     private updateStencilRef(object: TileObject) {
@@ -207,7 +209,10 @@ export class TileObjectRenderer {
 
         if (mapObjectAdapter) {
             mapObjectAdapter.ensureUpdated(tile.mapView);
-            if (!mapObjectAdapter.isVisible()) {
+            if (
+                !mapObjectAdapter.isVisible() &&
+                !(mapObjectAdapter.pickability === Pickability.all)
+            ) {
                 return false;
             }
         }

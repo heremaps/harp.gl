@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -34,6 +34,7 @@ describe("MapView + WebTileData rendering test", function () {
         lookAt?: Partial<LookAtParams>;
         webTileOptions?: Partial<WebTileDataSourceOptions>;
         runBeforeFinish?: () => void;
+        clearColor?: string;
     }
 
     async function webTileTest(options: WebTileTestOptions) {
@@ -44,7 +45,7 @@ describe("MapView + WebTileData rendering test", function () {
 
         mapView = new MapView({
             canvas,
-            theme: {},
+            theme: { clearColor: options.clearColor },
             preserveDrawingBuffer: true,
             pixelRatio: 1,
             projection: options.projection
@@ -103,12 +104,46 @@ describe("MapView + WebTileData rendering test", function () {
         });
     });
 
+    it("renders webtile from loaded texture png on sphere", async function () {
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-clover-sphere",
+            projection: sphereProjection,
+            clearColor: "#ff0000",
+            getTexture: (tile: Tile) => {
+                return Promise.all([
+                    new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
+                    []
+                ]);
+            }
+        });
+    });
+
     it("renders webtile from loaded texture with opacity", async function () {
         this.timeout(5000);
 
         await webTileTest({
             mochaTest: this,
             testImageName: "webtile-opacity",
+            getTexture: (tile: Tile) => {
+                return Promise.all([
+                    new TextureLoader().load("../dist/resources/wests_textures/clover.png"),
+                    []
+                ]);
+            },
+            webTileOptions: { renderingOptions: { opacity: 0.5 } }
+        });
+    });
+
+    it("renders webtile from loaded texture with opacity on sphere", async function () {
+        this.timeout(5000);
+
+        await webTileTest({
+            mochaTest: this,
+            testImageName: "webtile-opacity-sphere",
+            projection: sphereProjection,
             getTexture: (tile: Tile) => {
                 return Promise.all([
                     new TextureLoader().load("../dist/resources/wests_textures/clover.png"),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -331,7 +331,9 @@ export class VectorTileDataSource extends TileDataSource {
         try {
             await super.connect();
         } catch (error) {
+            // error is a string if the promise was rejected.
             if (
+                error.message &&
                 WorkerServiceProtocol.isUnknownServiceError(error) &&
                 !missingOmvDecoderServiceInfoEmitted
             ) {
@@ -341,7 +343,7 @@ export class VectorTileDataSource extends TileDataSource {
                 );
                 missingOmvDecoderServiceInfoEmitted = true;
             }
-            throw error;
+            throw typeof error === "string" ? new Error(error) : error;
         }
         this.configureDecoder(undefined, this.m_decoderOptions);
     }

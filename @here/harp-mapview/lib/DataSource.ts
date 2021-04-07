@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -225,7 +225,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      */
     private m_storageLevelOffset: number = 0;
 
-    private readonly m_featureStateMap = new Map<number, ValueMap>();
+    private readonly m_featureStateMap = new Map<number | string, ValueMap>();
 
     /**
      *  An array of ISO 639-1 language codes.
@@ -310,9 +310,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Gets the state of the given feature id.
      *
-     * @param featureId - The id of the feature.
+     * @param featureId - The id of the feature. Id numbers are deprecated in favor of strings.
      */
-    getFeatureState(featureId: number): ValueMap | undefined {
+    getFeatureState(featureId: number | string): ValueMap | undefined {
         return this.m_featureStateMap.get(featureId);
     }
 
@@ -330,19 +330,19 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * dataSource.setFeatureState(featureId, { enabled: true });
      * ```
      *
-     * @param featureId - The id of the feature.
+     * @param featureId - The id of the feature. Id numbers are deprecated in favor of strings.
      * @param state - The new state of the feature.
      */
-    setFeatureState(featureId: number, state: ValueMap) {
+    setFeatureState(featureId: number | string, state: ValueMap) {
         this.m_featureStateMap.set(featureId, state);
     }
 
     /**
      * Removes the state associated to the given feature.
      *
-     * @param featureId - The id of the feature.
+     * @param featureId - The id of the feature. Id numbers are deprecated in favor of strings.
      */
-    removeFeatureState(featureId: number) {
+    removeFeatureState(featureId: number | string) {
         this.m_featureStateMap.delete(featureId);
     }
 

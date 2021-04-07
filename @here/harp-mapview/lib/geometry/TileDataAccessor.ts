@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -31,56 +31,68 @@ export interface ITileDataVisitor {
     /**
      * Should return `true` if the visitor wants to visit the object with the specified
      * `featureId`. This function is called before the type of the object is even known.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    wantsFeature(featureId: number | undefined): boolean;
+    wantsFeature(featureId: number | string | undefined): boolean;
 
     /**
      * Should return `true` if the visitor wants to visit the point with the specified
      * `featureId`.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    wantsPoint(featureId: number | undefined): boolean;
+    wantsPoint(featureId: number | string | undefined): boolean;
 
     /**
      * Should return `true` if the visitor wants to visit the line with the specified
      * `featureId`.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    wantsLine(featureId: number | undefined): boolean;
+    wantsLine(featureId: number | string | undefined): boolean;
 
     /**
      * Should return `true` if the visitor wants to visit the area object with the specified
      * `featureId`.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    wantsArea(featureId: number | undefined): boolean;
+    wantsArea(featureId: number | string | undefined): boolean;
 
     /**
      * Should return `true` if the visitor wants to visit the object with the specified
      * `featureId`.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    wantsObject3D(featureId: number | undefined): boolean;
+    wantsObject3D(featureId: number | string | undefined): boolean;
 
     /**
      * Visits a point object with the specified `featureId`; use `pointAccessor` to get the
      * object's properties.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    visitPoint(featureId: number | undefined): void;
+    visitPoint(featureId: number | string | undefined): void;
 
     /**
      * Visits a line object with the specified `featureId`; use `pointAccessor` to get the
      * object's properties.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    visitLine(featureId: number | undefined, lineAccessor: ILineAccessor): void;
+    visitLine(featureId: number | string | undefined, lineAccessor: ILineAccessor): void;
 
     /**
      * Visit an area object with the specified `featureId`; use `pointAccessor` to get the
      * object's properties.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    visitArea(featureId: number | undefined): void;
+    visitArea(featureId: number | string | undefined): void;
 
     /**
      * Visits a 3D object with the specified `featureId`; use `pointAccessor` to get the
      * object's properties.
+     * @remarks Number ids are deprecated in favor of strings.
      */
-    visitObject3D(featureId: number | undefined, object3dAccessor: IObject3dAccessor): void;
+    visitObject3D(
+        featureId: number | string | undefined,
+        object3dAccessor: IObject3dAccessor
+    ): void;
 }
 
 /**

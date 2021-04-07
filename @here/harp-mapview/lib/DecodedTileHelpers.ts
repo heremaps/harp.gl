@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2018-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -128,7 +128,7 @@ export function createMaterial(
     }
 
     if (isExtrudedPolygonTechnique(technique)) {
-        material.flatShading = true;
+        (material as MapMeshStandardMaterial).flatShading = true;
     }
 
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
@@ -838,7 +838,7 @@ function getBaseColorPropName(technique: Technique): string | undefined {
 function getTextureBuffer(
     buffer: ArrayBuffer,
     textureDataType: THREE.TextureDataType | undefined
-): THREE.TypedArray {
+): BufferSource {
     if (textureDataType === undefined) {
         return new Uint8Array(buffer);
     }

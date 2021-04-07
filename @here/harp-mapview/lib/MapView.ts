@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -64,7 +64,6 @@ import { MapViewFog } from "./MapViewFog";
 import { MapViewTaskScheduler } from "./MapViewTaskScheduler";
 import { MapViewThemeManager } from "./MapViewThemeManager";
 import { PickHandler, PickResult } from "./PickHandler";
-import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
@@ -869,7 +868,7 @@ export class MapView extends EventDispatcher {
     private readonly m_enablePolarDataSource: boolean = true;
 
     // gestures
-    private readonly m_raycaster: PickingRaycaster;
+    private readonly m_raycaster = new THREE.Raycaster();
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
     private readonly m_sphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 
@@ -1007,11 +1006,6 @@ export class MapView extends EventDispatcher {
         this.m_politicalView = this.m_options.politicalView;
 
         this.handleRequestAnimationFrame = this.renderLoop.bind(this);
-        this.m_pickHandler = new PickHandler(
-            this,
-            this.m_rteCamera,
-            this.m_options.enablePickTechnique === true
-        );
 
         if (this.m_options.tileWrappingEnabled !== undefined) {
             this.m_tileWrappingEnabled = this.m_options.tileWrappingEnabled;
@@ -1087,7 +1081,11 @@ export class MapView extends EventDispatcher {
         // setup camera with initial position
         this.setupCamera();
 
-        this.m_raycaster = new PickingRaycaster(width, height, this.m_env);
+        this.m_pickHandler = new PickHandler(
+            this,
+            this.m_rteCamera,
+            this.m_options.enablePickTechnique === true
+        );
 
         this.m_movementDetector = new CameraMovementDetector(
             this.m_options.movementThrottleTimeout,
@@ -1208,6 +1206,7 @@ export class MapView extends EventDispatcher {
     /**
      * The [[TileGeometryManager]] manages geometry during loading and handles hiding geometry of
      * specified [[GeometryKind]]s.
+     * @deprecated
      */
     get tileGeometryManager(): TileGeometryManager | undefined {
         return this.m_tileGeometryManager;
@@ -2149,7 +2148,10 @@ export class MapView extends EventDispatcher {
 
             this.update();
         } catch (error) {
-            logger.error(`Failed to connect to datasource ${dataSource.name}: ${error.message}`);
+            // error is a string if a promise was rejected.
+            logger.error(
+                `Failed to connect to datasource ${dataSource.name}: ${error.message ?? error}`
+            );
 
             this.m_failedDataSources.add(dataSource.name);
             this.dispatchEvent({
@@ -2567,22 +2569,6 @@ export class MapView extends EventDispatcher {
             p.y = height - (p.y + height / 2);
         }
         return p;
-    }
-
-    /**
-     * Returns a ray caster using the supplied screen positions.
-     *
-     * @param x - The X position in css/client coordinates (without applied display ratio).
-     * @param y - The Y position in css/client coordinates (without applied display ratio).
-     *
-     * @alpha
-     *
-     * @return Raycaster with origin at the camera and direction based on the supplied x / y screen
-     * points.
-     */
-    raycasterFromScreenPoint(x: number, y: number): THREE.Raycaster {
-        this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_rteCamera);
-        return this.m_raycaster;
     }
 
     getWorldPositionAt(x: number, y: number, fallback: true): THREE.Vector3;

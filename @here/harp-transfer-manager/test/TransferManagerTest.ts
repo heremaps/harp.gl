@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -51,26 +51,20 @@ describe("TransferManager", function () {
         const mock = createMockDownloadResponse();
         mock.status = 404;
         mock.ok = false;
-        mock.json.resolves({ version: "4" });
+        mock.text.resolves("Dummy error");
         const fetchStub = sinon.stub().resolves(mock);
         const downloadMgr = new TransferManager(fetchStub, 5);
 
         // Act
-        const downloadResponse = downloadMgr.download(fakeDataUrl);
-
-        const resp = await downloadResponse.then(response => {
-            return response;
-        });
-
-        const data = await resp.json();
-
-        // Assert
-        assert(fetchStub.called);
-        assert(fetchStub.callCount === 1);
-        assert(fetchStub.getCall(0).args[0] === fakeDataUrl);
-        assert.isFalse(resp.ok);
-        assert.equal(resp.status, 404);
-        assert.deepEqual(data, { version: "4" });
+        try {
+            await downloadMgr.download(fakeDataUrl);
+        } catch (err) {
+            // Assert
+            assert(fetchStub.called);
+            assert(fetchStub.callCount === 1);
+            assert(fetchStub.getCall(0).args[0] === fakeDataUrl);
+            assert.equal(err.message, "Dummy error");
+        }
     });
 
     it("#downloadJson handles HTTP 503 status response with max retries", async function () {
@@ -100,6 +94,28 @@ describe("TransferManager", function () {
         assert(fetchStub.called);
         assert(fetchStub.callCount === maxRetries);
         assert(fetchStub.getCall(0).args[0] === fakeDataUrl);
+    });
+
+    it("#downloadJson handles HTTP client codes like 400, 401 without retry", async function () {
+        // Arrange
+        const mock = createMockDownloadResponse();
+        mock.status = 401;
+        mock.ok = false;
+        mock.text.resolves("Dummy error");
+        const fetchStub = sinon.stub().resolves(mock);
+        const downloadMgr = new TransferManager(fetchStub, 5);
+
+        // Act
+        try {
+            await downloadMgr.download(fakeDataUrl);
+        } catch (err) {
+            // Assert
+            assert(fetchStub.called);
+            assert(fetchStub.callCount === 1);
+            assert(fetchStub.getCall(0).args[0] === fakeDataUrl);
+            assert.isDefined(err);
+            assert.equal(err.message, "Dummy error");
+        }
     });
 
     it("#instance handles returning same single static instance correctly", async function () {

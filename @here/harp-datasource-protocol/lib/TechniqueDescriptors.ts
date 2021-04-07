@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -127,6 +127,7 @@ const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = 
     // For now we chosen all, but it maybe not suitable for text or line marker techniques.
     attrTransparencyColor: "color",
     attrDescriptors: {
+        constantHeight: AttrScope.FeatureGeometry,
         enabled: AttrScope.FeatureGeometry,
         fadeFar: AttrScope.TechniqueRendering,
         fadeNear: AttrScope.TechniqueRendering,
@@ -270,7 +271,6 @@ const extrudedPolygonTechniqueDescriptor = mergeTechniqueDescriptor<ExtrudedPoly
             color: AttrScope.FeatureGeometry,
             defaultColor: AttrScope.FeatureGeometry,
             defaultHeight: AttrScope.FeatureGeometry,
-            constantHeight: AttrScope.FeatureGeometry,
             boundaryWalls: AttrScope.FeatureGeometry,
             footprint: AttrScope.FeatureGeometry,
             maxSlope: AttrScope.FeatureGeometry,

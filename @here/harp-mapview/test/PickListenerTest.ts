@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -20,6 +20,7 @@ function createIntersection(dataSource: string | undefined): THREE.Intersection 
 }
 describe("PickListener", function () {
     const point = new THREE.Vector3();
+    const dataSourceName = "anonymous";
 
     describe("addResult", function () {
         it("adds all results for new features", function () {
@@ -32,7 +33,8 @@ describe("PickListener", function () {
                 distance: 1,
                 featureId: 1,
                 userData,
-                intersection
+                intersection,
+                dataSourceName
             });
 
             // different type
@@ -42,7 +44,8 @@ describe("PickListener", function () {
                 distance: 1,
                 featureId: 1,
                 userData,
-                intersection
+                intersection,
+                dataSourceName
             });
 
             // different data source.
@@ -52,7 +55,8 @@ describe("PickListener", function () {
                 distance: 1,
                 featureId: 1,
                 userData,
-                intersection: createIntersection("ds2")
+                intersection: createIntersection("ds2"),
+                dataSourceName
             });
 
             // different feature id
@@ -62,7 +66,8 @@ describe("PickListener", function () {
                 distance: 1,
                 featureId: 2,
                 userData,
-                intersection
+                intersection,
+                dataSourceName
             });
 
             // no feature id and different user data.
@@ -71,7 +76,8 @@ describe("PickListener", function () {
                 point,
                 distance: 1,
                 userData: {},
-                intersection
+                intersection,
+                dataSourceName
             });
             listener.finish();
             expect(listener.results).to.have.lengthOf(5);
@@ -90,7 +96,8 @@ describe("PickListener", function () {
                     distance: 1,
                     featureId: 1,
                     userData,
-                    intersection
+                    intersection,
+                    dataSourceName
                 };
                 listener.addResult(firstResult);
 
@@ -99,7 +106,8 @@ describe("PickListener", function () {
                     point,
                     distance: 2,
                     featureId: 1,
-                    intersection
+                    intersection,
+                    dataSourceName
                 });
                 listener.finish();
 
@@ -115,7 +123,8 @@ describe("PickListener", function () {
                     point,
                     distance: 1,
                     userData,
-                    intersection
+                    intersection,
+                    dataSourceName
                 };
                 listener.addResult(firstResult);
 
@@ -124,7 +133,8 @@ describe("PickListener", function () {
                     point,
                     distance: 2,
                     userData,
-                    intersection
+                    intersection,
+                    dataSourceName
                 });
                 listener.finish();
 
@@ -143,7 +153,8 @@ describe("PickListener", function () {
                 distance: 2,
                 featureId: 1,
                 userData,
-                intersection
+                intersection,
+                dataSourceName
             });
 
             const closerResult: PickResult = {
@@ -151,7 +162,8 @@ describe("PickListener", function () {
                 point,
                 distance: 1,
                 featureId: 1,
-                intersection
+                intersection,
+                dataSourceName
             };
             listener.addResult(closerResult);
             listener.finish();
@@ -169,19 +181,22 @@ describe("PickListener", function () {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: 1,
+                    dataSourceName
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: 3,
+                    dataSourceName
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 2
+                    renderOrder: 2,
+                    dataSourceName
                 }
             ];
             listener.addResult(expectedResults[2]);
@@ -200,13 +215,15 @@ describe("PickListener", function () {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: 1,
+                    dataSourceName
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: 3,
+                    dataSourceName
                 }
             ];
             listener.addResult(results[1]);
@@ -231,13 +248,15 @@ describe("PickListener", function () {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: 1,
+                    dataSourceName
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: 3,
+                    dataSourceName
                 }
             ];
             listener.addResult(results[1]);
@@ -261,13 +280,15 @@ describe("PickListener", function () {
                     type: PickObjectType.Point,
                     point,
                     distance: 0,
-                    renderOrder: 1
+                    renderOrder: 1,
+                    dataSourceName
                 },
                 {
                     type: PickObjectType.Point,
                     point,
                     distance: 1,
-                    renderOrder: 3
+                    renderOrder: 3,
+                    dataSourceName
                 }
             ];
             listener.addResult(results[1]);

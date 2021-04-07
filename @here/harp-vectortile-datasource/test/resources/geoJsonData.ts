@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -51,12 +51,30 @@ export const GEOJSON_DATA: FeatureCollection = {
                 type: "Point",
                 coordinates: [-2.900390625, 26.115985925333536]
             }
+        },
+        {
+            type: "Feature",
+            properties: {
+                name: "Polygon Outline"
+            },
+            geometry: {
+                type: "Polygon",
+                coordinates: [
+                    [
+                        [-1.0, 14.86],
+                        [0.57, 14.86],
+                        [0.57, 29.46],
+                        [-1.0, 29.46],
+                        [-1.0, 14.86]
+                    ]
+                ]
+            }
         }
     ]
 };
 
 export const THEME: Theme = {
-    // INFO: Commented out until text renderer refactor (Travis ci build fails).
+    // INFO: Commented out until text renderer refactor (CI build fails).
     // defaultTextStyle: {
     //     name: "defaultTextStyle",
     //     color: "#6D7477",
@@ -79,6 +97,18 @@ export const THEME: Theme = {
                     color: "#000000"
                 },
                 renderOrder: 10.3
+            },
+            {
+                styleSet: "geojson",
+                when: ["==", ["get", "name"], "Polygon Outline"],
+                technique: "fill",
+                renderOrder: 10000,
+                attr: {
+                    color: "yellow",
+                    lineWidth: 2,
+                    lineColor: "#00ff00",
+                    opacity: 0
+                }
             },
             {
                 description: "line",

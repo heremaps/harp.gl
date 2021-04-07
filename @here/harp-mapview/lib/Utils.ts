@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -994,7 +994,7 @@ export namespace MapViewUtils {
     ) {
         const { tilt, heading, projection } = params;
         const startDistance = params.minDistance;
-        const tmpCamera = params.camera.clone();
+        const tmpCamera = params.camera.clone() as THREE.PerspectiveCamera;
 
         getCameraRotationAtTarget(projection, geoTarget, -heading, tilt, tmpCamera.quaternion);
         getCameraPositionFromTargetCoordinates(
@@ -1329,8 +1329,8 @@ export namespace MapViewUtils {
 
         // Decompose rotation matrix into Z0 X Z1 Euler angles.
         const d = space.z.dot(cache.vector3[1].set(0, 0, 1));
-        if (d < 1.0 - epsilon) {
-            if (d > -1.0 + epsilon) {
+        if (d < 1.0 - Number.EPSILON) {
+            if (d > -1.0 + Number.EPSILON) {
                 yaw = Math.atan2(space.z.x, -space.z.y);
                 pitch = Math.acos(space.z.z);
                 roll = Math.atan2(space.x.z, space.y.z);
@@ -1387,7 +1387,7 @@ export namespace MapViewUtils {
         // Get point to object vector in `cache.vector3[1]` and deduce `tilt` from the angle with
         // tangent Z.
         cache.vector3[1].copy(object.position).sub(cache.vector3[0]).normalize();
-        if (cache.vector3[1].dot(tangentSpace.z) > 1 - epsilon) {
+        if (cache.vector3[1].dot(tangentSpace.z) > 1 - Number.EPSILON) {
             // Top down view: the azimuth of the object would be opposite the yaw, and clockwise.
             azimuth = Math.PI - extractAttitude(mapView, object).yaw;
             // Wrap between -PI and PI.
@@ -1450,7 +1450,7 @@ export namespace MapViewUtils {
         dirVec.divideScalar(dirLen);
 
         const cosTheta = dirVec.dot(tangentSpace.z);
-        if (cosTheta > 1 - epsilon) {
+        if (cosTheta >= 1 - Number.EPSILON) {
             // Top down view.
             return 0;
         }
@@ -1891,7 +1891,7 @@ export namespace MapViewUtils {
     }
 
     function estimateGeometrySize(
-        geometry: THREE.Geometry | THREE.BufferGeometry,
+        geometry: THREE.BufferGeometry,
         objectSize: MemoryUsage,
         visitedObjects: Map<string, boolean>
     ): void {
@@ -1903,26 +1903,12 @@ export namespace MapViewUtils {
         }
         visitedObjects.set(geometry.uuid, true);
 
-        let bufferGeometry: THREE.BufferGeometry | undefined;
-
-        if (geometry instanceof THREE.Geometry) {
-            // Each vertex is represented as 3 floats vector (24 bytes).
-            objectSize.heapSize += geometry.vertices.length * 24;
-            // Face: 3 indices (24 byte), 1 normal (3 floats = 24). Vertex normals and
-            // colors are not counted here.
-            objectSize.heapSize += geometry.faces.length * (24 + 24);
-            // Additionally, the internal _bufferGeometry is also counted:
-            bufferGeometry = (geometry as any)._bufferGeometry;
-        } else if (geometry instanceof THREE.BufferGeometry) {
-            bufferGeometry = geometry;
-        }
-
-        if (bufferGeometry === undefined) {
+        if (geometry === undefined) {
             // Nothing more to calculate.
             return;
         }
 
-        const attributes = bufferGeometry.attributes;
+        const attributes = geometry.attributes;
         if (attributes === undefined) {
             logger.warn("estimateGeometrySize: unidentified geometry: ", geometry);
             return;
@@ -1933,8 +1919,8 @@ export namespace MapViewUtils {
                 estimateAttributeSize(attributes[property], property, objectSize, visitedObjects);
             }
         }
-        if (bufferGeometry.index !== null) {
-            estimateAttributeSize(bufferGeometry.index, "index", objectSize, visitedObjects);
+        if (geometry.index !== null) {
+            estimateAttributeSize(geometry.index, "index", objectSize, visitedObjects);
         }
     }
 

@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-webtile-datasource",
-    "version": "0.21.1",
+    "version": "0.23.0",
     "description": "WebTile Data source",
     "main": "index.js",
     "typings": "index",
@@ -23,16 +23,17 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-datasource-protocol": "^0.21.1",
-        "@here/harp-geometry": "^0.21.0",
-        "@here/harp-geoutils": "^0.21.0",
-        "@here/harp-lrucache": "^0.21.0",
-        "@here/harp-mapview": "^0.21.1",
-        "@here/harp-utils": "^0.21.0"
+        "@here/harp-datasource-protocol": "^0.23.0",
+        "@here/harp-geometry": "^0.23.0",
+        "@here/harp-geoutils": "^0.23.0",
+        "@here/harp-lrucache": "^0.23.0",
+        "@here/harp-mapview": "^0.23.0",
+        "@here/harp-utils": "^0.23.0"
     },
     "devDependencies": {
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.2.0",
+        "@types/three": "^0.126.0",
         "chai": "^4.0.2",
         "copyfiles": "^2.2.0",
         "cross-env": "^7.0.2",
@@ -41,7 +42,7 @@
         "typescript": "^4.1.2"
     },
     "peerDependencies": {
-        "three": "^0.124.0"
+        "three": "^0.126.0"
     },
     "publishConfig": {
         "access": "public"

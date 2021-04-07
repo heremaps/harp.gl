@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -177,7 +177,7 @@ export class PoiManager {
             }
 
             const positions = new THREE.BufferAttribute(
-                new Float32Array(poiGeometry.positions.buffer),
+                new Float64Array(poiGeometry.positions.buffer),
                 poiGeometry.positions.itemCount
             );
 
@@ -377,7 +377,13 @@ export class PoiManager {
         }
         const textElement = poiBuilder
             .withIcon(imageTextureName, shieldGroupIndex)
-            .build(text, positionArray, tile.offset, getAttributes(poiGeometry));
+            .build(
+                text,
+                positionArray,
+                tile.offset,
+                tile.dataSource.name,
+                getAttributes(poiGeometry)
+            );
 
         tile.addTextElement(textElement);
     }
@@ -401,6 +407,7 @@ export class PoiManager {
                     getText(poiGeometry, i),
                     getPosition(positions, worldOffsetX, i),
                     tile.offset,
+                    tile.dataSource.name,
                     getAttributes(poiGeometry, i),
                     undefined,
                     offsetDirection

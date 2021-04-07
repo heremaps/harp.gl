@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -225,7 +225,7 @@ describe("MapView Picking", async function () {
 
             assert.isDefined(decodeTile.textGeometries);
             assert.isDefined(decodeTile.geometries);
-            assert.equal(decodeTile.geometries.length, 2);
+            assert.equal(decodeTile.geometries.length, 3);
         });
 
         it("Decoded tile contains text pick info", async () => {
@@ -258,17 +258,20 @@ describe("MapView Picking", async function () {
 
             assert.isDefined(polygonGeometry, "polygon geometry missing");
             assert.isDefined(polygonGeometry.groups, "polygon geometry groups missing");
-            assert.equal(polygonGeometry.groups.length, 1);
+            assert.equal(polygonGeometry.groups.length, 2);
             assert.isDefined(polygonGeometry.objInfos, "objInfos missing");
-            assert.equal(polygonGeometry.objInfos!.length, 1);
+            assert.equal(polygonGeometry.objInfos!.length, 2);
 
-            const objInfo = polygonGeometry.objInfos![0] as any;
-            assert.include(objInfo, GEOJSON_DATA.features[0].properties);
+            assert.include(polygonGeometry.objInfos![0], GEOJSON_DATA.features[0].properties);
+            assert.include(polygonGeometry.objInfos![1], GEOJSON_DATA.features[3].properties);
         });
     });
 
     describe("Picking tests", async function () {
+        this.timeout(5000);
+
         const pickPolygonAt: number[] = [13.084716796874998, 22.61401087437029];
+        const pickPolyOutlineAt: number[] = [-1.0, 29.0];
         const pickLineAt: number[] = ((GEOJSON_DATA.features[1].geometry as any)
             .coordinates as number[][])[0];
         const pickLabelAt: number[] = (GEOJSON_DATA.features[2].geometry as any).coordinates;
@@ -322,6 +325,17 @@ describe("MapView Picking", async function () {
                                 ? pickPolygonAt.concat([FAKE_HEIGHT])
                                 : pickPolygonAt,
                             featureIdx: 0,
+                            projection,
+                            elevation,
+                            shiftLongitude
+                        },
+                        {
+                            name: `Pick ${elevatedText}polygon outline in ${projName} projection. \
+                            Shifted: ${shiftLongitude}`,
+                            rayOrigGeo: elevation
+                                ? pickPolyOutlineAt.concat([FAKE_HEIGHT])
+                                : pickPolyOutlineAt,
+                            featureIdx: 3,
                             projection,
                             elevation,
                             shiftLongitude

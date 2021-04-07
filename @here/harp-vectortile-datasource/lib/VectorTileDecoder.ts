@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -217,16 +217,13 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
             cachedExprResults: new Map()
         };
 
-        const featureId = env.lookup("$id") as number | undefined;
-
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processLineFeature(
                 layer,
                 extents,
                 geometry,
                 context,
-                techniques,
-                featureId
+                techniques
             );
         }
     }
@@ -269,16 +266,13 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
             cachedExprResults: new Map()
         };
 
-        const featureId = env.lookup("$id") as number | undefined;
-
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPolygonFeature(
                 layer,
                 extents,
                 geometry,
                 context,
-                techniques,
-                featureId
+                techniques
             );
         }
     }

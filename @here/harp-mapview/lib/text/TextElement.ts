@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -30,6 +30,7 @@ import { TextElementType } from "./TextElementType";
 
 /**
  * Additional information for an icon that is to be rendered along with a {@link TextElement}.
+ * @internal
  */
 export interface PoiInfo {
     /**
@@ -99,8 +100,8 @@ export interface PoiInfo {
     textIsOptional?: boolean;
 
     /**
-     * If true, the text will appear even if the icon cannot be rendered because of missing icon
-     * graphics. Defaults to `true`.
+     * If true, the text will appear even if the icon is blocked by other labels or if it cannot be
+     * rendered because of missing icon graphics. Defaults to `false`.
      */
     iconIsOptional?: boolean;
 
@@ -120,11 +121,6 @@ export interface PoiInfo {
      * missing resource. Defaults to `false`.
      */
     isValid?: boolean;
-
-    /**
-     * ID to identify the (POI) icon.
-     */
-    featureId?: number;
 
     /**
      * Reference back to owning {@link TextElement}.
@@ -216,6 +212,7 @@ export enum LoadingState {
 
 /**
  * `TextElement` is used to create 2D text elements (for example, labels).
+ * @internal
  */
 export class TextElement {
     /**
@@ -375,7 +372,8 @@ export class TextElement {
      *              negative value are always rendered, ignoring priorities and allowing overrides.
      * @param xOffset - Optional X offset of this `TextElement` in screen coordinates.
      * @param yOffset - Optional Y offset of this `TextElement` in screen coordinates.
-     * @param featureId - Optional number to identify feature (originated from `OmvDataSource`).
+     * @param featureId - Optional string to identify feature (originated from {@link DataSource}).
+     *                  Number ids are deprecated in favor of strings.
      * @param fadeNear - Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label starts fading out (opacity decreases).
      * @param fadeFar - Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
@@ -391,12 +389,13 @@ export class TextElement {
         public priority = 0,
         public xOffset: number = 0,
         public yOffset: number = 0,
-        public featureId?: number,
+        public featureId?: string | number,
         public style?: string,
         public fadeNear?: number,
         public fadeFar?: number,
         readonly tileOffset?: number,
-        readonly offsetDirection?: number
+        readonly offsetDirection?: number,
+        readonly dataSourceName?: string
     ) {
         if (renderParams instanceof TextRenderStyle) {
             this.renderStyle = renderParams;
@@ -506,8 +505,19 @@ export class TextElement {
         this.m_layoutStyle = style;
     }
 
+    /**
+     * @returns Whether this text element has a valid feature id.
+     */
     hasFeatureId(): boolean {
-        return this.featureId !== undefined && this.featureId !== 0;
+        if (this.featureId === undefined) {
+            return false;
+        }
+
+        if (typeof this.featureId === "number") {
+            return this.featureId !== 0;
+        }
+
+        return this.featureId.length > 0;
     }
 
     /**

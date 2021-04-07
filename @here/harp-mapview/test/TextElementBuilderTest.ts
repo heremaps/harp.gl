@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -28,6 +28,7 @@ describe("TextElementBuilder", function () {
         getRenderStyle: () => renderStyle,
         getLayoutStyle: () => layoutStyle
     } as any) as TileTextStyleCache;
+    const dataSourceName = "anonymous";
 
     function buildPoiTechnique(properties: {}): PoiTechnique & IndexedTechniqueParams {
         return { name: "labeled-icon", _index: 0, _styleSetIndex: 0, ...properties };
@@ -45,8 +46,10 @@ describe("TextElementBuilder", function () {
     it("reuses same technique between calls to withTechnique", () => {
         const textTechnique = buildTextTechnique({ priority: 42 });
         const builder = new TextElementBuilder(env, styleCache, 0);
-        const label1 = builder.withTechnique(textTechnique).build("one", new Vector3(), 0);
-        const label2 = builder.build("two", new Vector3(), 0);
+        const label1 = builder
+            .withTechnique(textTechnique)
+            .build("one", new Vector3(), 0, dataSourceName);
+        const label2 = builder.build("two", new Vector3(), 0, dataSourceName);
 
         expect(label1?.priority).equals(label2?.priority).and.equals(textTechnique.priority);
     });
@@ -59,8 +62,8 @@ describe("TextElementBuilder", function () {
         const label1 = builder
             .withTechnique(poiTechnique)
             .withIcon(iconName, shieldGroupIndex)
-            .build("one", new Vector3(), 0);
-        const label2 = builder.build("two", new Vector3(), 0);
+            .build("one", new Vector3(), 0, dataSourceName);
+        const label2 = builder.build("two", new Vector3(), 0, dataSourceName);
 
         expect(label1.poiInfo?.imageTextureName)
             .equals(label2.poiInfo?.imageTextureName)
@@ -68,6 +71,9 @@ describe("TextElementBuilder", function () {
         expect(label1.poiInfo?.shieldGroupIndex)
             .equals(label2.poiInfo?.shieldGroupIndex)
             .and.equals(shieldGroupIndex);
+
+        expect(label1.dataSourceName).equals(dataSourceName);
+        expect(label2.dataSourceName).equals(dataSourceName);
     });
 
     it("uses textMayOverlap and textReserveSpace for marker techniques", () => {
@@ -77,8 +83,10 @@ describe("TextElementBuilder", function () {
             textReserveSpace: true
         });
         const builder = new TextElementBuilder(env, styleCache, 0);
-        const poi = builder.withTechnique(poiTechnique).build("", new Vector3(), 0);
-        const lineMarker = builder.withTechnique(lineMarkerTechnique).build("", new Vector3(), 0);
+        const poi = builder.withTechnique(poiTechnique).build("", new Vector3(), 0, dataSourceName);
+        const lineMarker = builder
+            .withTechnique(lineMarkerTechnique)
+            .build("", new Vector3(), 0, dataSourceName);
 
         expect(poi.mayOverlap).equals(poiTechnique.textMayOverlap);
         expect(poi.reserveSpace).equals(poiTechnique.textReserveSpace);
@@ -91,7 +99,7 @@ describe("TextElementBuilder", function () {
         const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon(undefined)
-            .build("", new Vector3(), 0);
+            .build("", new Vector3(), 0, dataSourceName);
         expect(poi.poiInfo).undefined;
     });
 
@@ -109,7 +117,7 @@ describe("TextElementBuilder", function () {
         const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon("")
-            .build("", new Vector3(), 0);
+            .build("", new Vector3(), 0, dataSourceName);
         expect(poi.minZoomLevel).equals(Math.min(iconMinZoomLevel, textMinZoomLevel));
         expect(poi.maxZoomLevel).equals(Math.max(iconMaxZoomLevel, textMaxZoomLevel));
     });
@@ -119,7 +127,7 @@ describe("TextElementBuilder", function () {
         const poi = new TextElementBuilder(env, styleCache, 0)
             .withTechnique(poiTechnique)
             .withIcon("dummy")
-            .build("", new Vector3(), 0);
+            .build("", new Vector3(), 0, dataSourceName);
         expect(poi.renderOrder)
             .equals(poi.poiInfo?.renderOrder)
             .and.equals(poiTechnique.renderOrder);
@@ -131,7 +139,7 @@ describe("TextElementBuilder", function () {
         const poi = new TextElementBuilder(env, styleCache, baseRenderOrder)
             .withTechnique(poiTechnique)
             .withIcon("dummy")
-            .build("", new Vector3(), 0);
+            .build("", new Vector3(), 0, dataSourceName);
         expect(poi.renderOrder)
             .equals(poi.poiInfo?.renderOrder)
             .and.equals(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -293,12 +293,15 @@ export class TextElementState {
         const { textFadeTime } = this.element;
         this.m_textRenderState = new RenderState(textFadeTime);
 
-        const iconFadeTime = this.element.poiInfo?.technique.iconFadeTime;
-
         if (
             this.element.type === TextElementType.PoiLabel ||
             this.element.type === TextElementType.LineMarker
         ) {
+            // If there's no fade time for icon, use same as text to keep fading of text and icon
+            // in sync.
+            const techniqueIconFadeTime = this.element.poiInfo?.technique.iconFadeTime;
+            const iconFadeTime =
+                techniqueIconFadeTime !== undefined ? techniqueIconFadeTime * 1000 : textFadeTime;
             this.m_iconRenderState = new RenderState(iconFadeTime);
         }
     }

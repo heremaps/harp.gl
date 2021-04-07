@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -83,8 +83,7 @@ export class TextGeometry {
     private m_mesh: THREE.Mesh;
     private m_bgMesh: THREE.Mesh;
 
-    private m_pickingCount: number;
-    private m_pickingDataArray: PickingData[];
+    private m_pickingDataArray: PickingData[] = [];
 
     /**
      * Creates a new `TextGeometry`.
@@ -107,7 +106,6 @@ export class TextGeometry {
         this.m_currentCapacity = Math.min(initialSize, capacity);
         this.m_drawCount = 0;
         this.m_updateOffset = 0;
-        this.m_pickingCount = 0;
 
         this.m_vertexBuffer = new THREE.InterleavedBuffer(
             new Float32Array(this.m_currentCapacity * QUAD_VERTEX_MEMORY_FOOTPRINT),
@@ -132,8 +130,6 @@ export class TextGeometry {
         this.m_geometry.setAttribute("bgColor", this.m_bgColorAttribute);
         this.m_geometry.setIndex(this.m_indexBuffer);
 
-        this.m_pickingDataArray = new Array(this.m_currentCapacity);
-
         this.m_mesh = new THREE.Mesh(this.m_geometry, material);
         this.m_bgMesh = new THREE.Mesh(this.m_geometry, backgroundMaterial);
         this.m_mesh.renderOrder = Number.MAX_SAFE_INTEGER;
@@ -157,7 +153,7 @@ export class TextGeometry {
     clear() {
         this.m_drawCount = 0;
         this.m_updateOffset = 0;
-        this.m_pickingCount = 0;
+        this.m_pickingDataArray.length = 0;
     }
 
     /**
@@ -440,17 +436,16 @@ export class TextGeometry {
      * @param pickingData - Picking data to be added.
      */
     addPickingData(startIdx: number, endIdx: number, pickingData: any): boolean {
-        if (this.m_pickingCount >= this.m_currentCapacity) {
+        if (this.m_pickingDataArray.length >= this.m_currentCapacity) {
             return false;
         }
 
-        this.m_pickingDataArray[this.m_pickingCount] = {
+        this.m_pickingDataArray.push({
             start: Math.min(startIdx, this.capacity),
             end: Math.min(endIdx, this.capacity),
             data: pickingData
-        };
+        });
 
-        ++this.m_pickingCount;
         return true;
     }
 

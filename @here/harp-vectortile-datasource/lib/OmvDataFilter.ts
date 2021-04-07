@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -30,6 +30,7 @@ import {
 export interface OmvFeatureFilter {
     /**
      * Returns `true` if the filter contains rules for specific kinds.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     hasKindFilter: boolean;
 
@@ -73,6 +74,7 @@ export interface OmvFeatureFilter {
      *
      * @param {(string | string[])} kind Tag "kind" of the tag.
      * @returns {boolean}
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     wantsKind(kind: string | string[]): boolean;
 }
@@ -328,6 +330,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      * Add all the specified strings as "enabledKinds".
      *
      * @param {string[]} enabledKinds List of kinds that should be generated.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     processKinds(enabledKinds: string[]) {
         this.m_kindsToProcess = this.m_kindsToProcess.concat(enabledKinds);
@@ -337,6 +340,7 @@ export class OmvFeatureFilterDescriptionBuilder {
      * Add all the specified strings as "disabledKinds".
      *
      * @param {string[]} disabledKinds List of kinds that should _not_ be generated.
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
      */
     ignoreKinds(disabledKinds: string[]) {
         this.m_kindsToIgnore = this.m_kindsToIgnore.concat(disabledKinds);
@@ -631,6 +635,9 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         );
     }
 
+    /**
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
+     */
     wantsKind(kind: string | string[]): boolean {
         // undefined -> no way to filter
         if (kind === undefined) {
@@ -647,6 +654,9 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         );
     }
 
+    /**
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
+     */
     get hasKindFilter(): boolean {
         return this.enabledKinds !== undefined || this.disabledKinds !== undefined;
     }
@@ -698,6 +708,9 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
 export class ComposedDataFilter implements OmvFeatureFilter {
     constructor(readonly filters: OmvFeatureFilter[]) {}
 
+    /**
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
+     */
     get hasKindFilter() {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.hasKindFilter,
@@ -733,6 +746,9 @@ export class ComposedDataFilter implements OmvFeatureFilter {
         );
     }
 
+    /**
+     * @deprecated See {@link @here/here-datasource-protocol/BaseTechniqueParams.kind}.
+     */
     wantsKind(kind: string | string[]): boolean {
         return this.filters.reduce<boolean>(
             (result, filter) => result && filter.wantsKind(kind),

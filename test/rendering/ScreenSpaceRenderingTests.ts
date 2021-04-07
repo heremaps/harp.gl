@@ -1,8 +1,10 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import { Style } from "@here/harp-datasource-protocol";
 
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
@@ -81,6 +83,53 @@ describe("ScreenSpaceRendering Test", function () {
         });
     });
 
+    it("renders icons and text using double precision coordinates", async function () {
+        this.timeout(5000);
+
+        // HARP-14465: Text and cross icon must be centered on green square.
+        const squaresStyle: Style = {
+            when: "$geometryType == 'point'",
+            technique: "squares",
+            color: "green",
+            size: 17,
+            styleSet: "geojson"
+        };
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-precision-icon-text",
+            theme: new ThemeBuilder()
+                .withFontCatalog()
+                .withMarkerStyle()
+                .withStyle(squaresStyle)
+                .build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: {
+                            text: "o",
+                            color: "white",
+                            imageTexture: "plus-icon",
+                            iconYOffset: 0,
+                            size: 18
+                        },
+                        geometry: {
+                            type: "MultiPoint",
+                            coordinates: [
+                                [14.60015, 53.30007],
+                                [14.60015, 53.29993],
+                                [14.59985, 53.29993],
+                                [14.59985, 53.30007]
+                            ]
+                        }
+                    }
+                ]
+            },
+            lookAt: { tilt: 0, zoomLevel: 20 },
+            tileGeoJson: false
+        });
+    });
     it("renders point using marker technique, with theme set to datasource", async function () {
         this.timeout(5000);
 

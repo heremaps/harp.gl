@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,8 +7,7 @@
 import {
     BufferAttribute as ThreeBufferAttribute,
     BufferGeometry as ThreeBufferGeometry,
-    InterleavedBufferAttribute as ThreeInterleavedBufferAttribute,
-    TypedArray
+    InterleavedBufferAttribute as ThreeInterleavedBufferAttribute
 } from "three";
 
 import {
@@ -26,7 +25,7 @@ import {
  * See also [[CustomDatasourceExample]].
  */
 export namespace ThreeBufferUtils {
-    export function getBufferElementType(buffer: TypedArray): BufferElementType {
+    export function getBufferElementType(buffer: ArrayBufferView): BufferElementType {
         if (buffer instanceof Int8Array) {
             return "int8";
         } else if (buffer instanceof Uint8Array) {
@@ -49,7 +48,7 @@ export namespace ThreeBufferUtils {
     export function fromThreeBufferAttribute(
         bufferAttribute: ThreeBufferAttribute
     ): BufferAttribute {
-        const buffer = (bufferAttribute.array as any) as TypedArray;
+        const buffer = (bufferAttribute.array as any) as ArrayBufferView;
         return {
             name: bufferAttribute.name,
             buffer: buffer.buffer,

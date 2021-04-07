@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -87,9 +87,10 @@ export interface PathGeometry {
 
 /**
  * Attributes corresponding to some decoded geometry. It may be either a map
- * of multiple attributes or just a number with the geometry's feature id.
+ * of multiple attributes or just a string with the geometry's feature id (id numbers are
+ * deprecated).
  */
-export type AttributeMap = {} | number;
+export type AttributeMap = {} | string | number;
 
 /**
  * This object keeps textual data together with metadata to place it on the map.
@@ -266,16 +267,11 @@ export interface TextGeometry {
  * Structured clone compliant version of a `three.js` geometry object with points of interest (POIs)
  * to be rendered. It is composed of buffers with metadata for POI objects.
  */
-export interface PoiGeometry {
-    positions: BufferAttribute;
-    texts: number[];
+export interface PoiGeometry extends TextGeometry {
     /**
      * Names of the image texture or the name of the POI as indices into the array `stringCatalog`.
      */
     imageTextures?: number[];
-    technique?: number;
-    stringCatalog: Array<string | undefined>;
-    objInfos?: AttributeMap[];
     // Angle in degrees from north clockwise specifying the directions the icons can be shifted.
     offsetDirections?: number[];
 }
@@ -339,18 +335,21 @@ export function getProjectionName(projection: Projection): string | never {
 
 /**
  * @returns Feature id from the provided attribute map.
+ * @internal
  */
-export function getFeatureId(attributeMap: AttributeMap | undefined): number {
+export function getFeatureId(attributeMap: AttributeMap | undefined): string | number {
     if (attributeMap === undefined) {
         return 0;
     }
 
-    if (typeof attributeMap === "number") {
+    if (typeof attributeMap === "string" || typeof attributeMap === "number") {
         return attributeMap;
-    }
+    } else if (attributeMap.hasOwnProperty("$id")) {
+        const id = (attributeMap as any).$id;
 
-    if (attributeMap.hasOwnProperty("$id")) {
-        return (attributeMap as any).$id as number;
+        if (typeof id === "string" || typeof id === "number") {
+            return id;
+        }
     }
 
     return 0;
@@ -441,4 +440,28 @@ export function getFeatureText(
     }
 
     return getFeatureName(env, propName, useAbbreviation, useIsoCode, languages);
+}
+
+/**
+ * Determine whether to scale heights by the projection scale factor for geometry
+ * using the given technique.
+ * @remarks Unless explicitly defined, the scale factor to convert meters to world space units
+ * won't be applied if the tile's level is less than a fixed storage level.
+ * @param context - Context for evaluation of technique attributes.
+ * @param technique - Technique to be evaluated.
+ * @param tileLevel - The level of the tile where the geometry is stored.
+ * @returns `true` if height must be scaled, `false` otherwise.
+ */
+export function scaleHeight(
+    context: Env | AttrEvaluationContext,
+    technique: Technique,
+    tileLevel: number
+): boolean {
+    const SCALED_HEIGHT_MIN_STORAGE_LEVEL = 12;
+    const useConstantHeight = evaluateTechniqueAttr(
+        context,
+        technique.constantHeight,
+        tileLevel < SCALED_HEIGHT_MIN_STORAGE_LEVEL
+    );
+    return !useConstantHeight;
 }

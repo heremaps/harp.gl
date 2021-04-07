@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -610,7 +610,7 @@ export namespace FadingFeature {
                 renderer: THREE.WebGLRenderer,
                 scene: THREE.Scene,
                 camera: THREE.Camera,
-                geometry: THREE.Geometry | THREE.BufferGeometry,
+                geometry: THREE.BufferGeometry,
                 material: THREE.Material & FadingFeature,
                 group: THREE.Group
             ) => {
@@ -1114,7 +1114,6 @@ export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements Ext
         // outputs of the vertex shader not used in the pixel shader, the properties in question
         // are `vExtrusionRatio` and `vExtrusionAxis`.
         this.applyExtrusionParameters({ ...params, zFightingWorkaround: false });
-        this.flatShading = false;
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual

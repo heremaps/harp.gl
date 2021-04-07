@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -76,5 +76,15 @@ describe("PoiBuilder", function () {
             .withIcon(undefined)
             .build({} as TextElement);
         expect(poiInfo).undefined;
+    });
+
+    it("text and icon are not optional by default", () => {
+        const poiTechnique = buildPoiTechnique({});
+        const poiInfo = new PoiBuilder(env)
+            .withTechnique(poiTechnique)
+            .withIcon("dummy")
+            .build({} as TextElement);
+        expect(poiInfo?.textIsOptional).to.be.false;
+        expect(poiInfo?.iconIsOptional).to.be.false;
     });
 });

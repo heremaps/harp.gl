@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -332,20 +332,20 @@ export class PolarTileDataSource extends DataSource {
             }
         }
 
-        const g = new THREE.Geometry();
-
-        for (const point of points) {
-            const projected = dstProjection.projectPoint(point, new THREE.Vector3());
-            g.vertices.push(projected.sub(tile.center));
-        }
-
-        for (let i = 1; i < points.length - 1; i++) {
-            g.faces.push(isNorthPole ? new THREE.Face3(0, i, i + 1) : new THREE.Face3(0, i + 1, i));
-        }
-
         const geometry = new THREE.BufferGeometry();
-        geometry.fromGeometry(g);
-        g.dispose();
+
+        const vertices: THREE.Vector3[] = points.map(point => {
+            const projected = dstProjection.projectPoint(point, new THREE.Vector3());
+            projected.sub(tile.center);
+            return projected;
+        });
+        geometry.setFromPoints(vertices);
+
+        const indices: number[] = [];
+        for (let i = 1; i < vertices.length - 1; i++) {
+            isNorthPole ? indices.push(0, i, i + 1) : indices.push(0, i + 1, i);
+        }
+        geometry.setIndex(indices);
 
         const mesh = new THREE.Mesh(geometry, techniqueEntry.material);
         mesh.userData = {

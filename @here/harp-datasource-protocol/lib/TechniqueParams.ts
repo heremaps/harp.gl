@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,6 +24,7 @@ export type MetricUnit = "Meter" | "Pixel";
 
 /**
  * Standard kinds of geometry.
+ * @deprecated See {@link BaseTechniqueParams.kind}.
  */
 export enum StandardGeometryKind {
     /**
@@ -99,6 +100,7 @@ export enum StandardGeometryKind {
  *```
  * If specified in this way, specific types of data (here: highway roads) can be enabled and/or
  * disabled.
+ * @deprecated See {@link BaseTechniqueParams.kind}.
  */
 export type GeometryKind = string | StandardGeometryKind;
 
@@ -209,9 +211,17 @@ export interface BaseTechniqueParams {
     category?: DynamicProperty<string>;
 
     /**
-     * Optional. If `true`, no IDs will be saved for the geometry this technique creates.
+     * Optional. If `true` or `Pickability.transient`, no IDs will be saved for the geometry
+     * this style creates. Default is `Pickability.onlyVisible`, which allows all pickable and
+     * visible objects to be picked, Pickability.all, will also allow invisible objects to be
+     * picked.
+     * @defaultValue `Pickability.onlyVisible`
+     * The boolean option is for backwardscompatibilty, please use the Pickability.
+     *
+     *
+     * TODO: deprecate and rename to something that makes more sense
      */
-    transient?: boolean;
+    transient?: boolean | Pickability;
 
     /**
      * Distance to the camera `(0.0 = camera position, 1.0 = farPlane) at which the object start
@@ -232,6 +242,7 @@ export interface BaseTechniqueParams {
      * One kind is set as default in the technique, and can be overridden in the style.
      *
      * @deprecated Use {@link enabled} with expressions based on `['dynamic-properties']` operator.
+     * See "object picking" example.
      */
     kind?: GeometryKind | GeometryKindSet;
 
@@ -269,6 +280,16 @@ export interface BaseTechniqueParams {
      * Maximum zoom level. If the current zoom level is equal to or greater, the technique will not be used.
      */
     maxZoomLevel?: DynamicProperty<number>;
+
+    /**
+     * If `true`, geometry height won't be scaled on projection. Enable it for projections with
+     * variable scale factor (e.g. mercator) to avoid distortions in geometry with great heights and
+     * latitude spans. E.g. a large object with even height would look oblique to the ground plane
+     * on mercator unless this property is set to `true`.
+     *
+     * @defaultValue `true` for geometries stored at level less than `12`.
+     */
+    constantHeight?: DynamicProperty<boolean>;
 }
 
 export enum TextureCoordinateType {
@@ -485,6 +506,42 @@ export enum PoiStackMode {
 }
 
 /**
+ * Define the pickability of an object.
+ */
+export enum Pickability {
+    /**
+     * Pickable if visible.
+     */
+    onlyVisible = "only-visible",
+    /**
+     * Not Pickable at all.
+     */
+    transient = "transient",
+    /**
+     * All objects of this type pickable.
+     */
+    all = "all"
+}
+
+/**
+ * Converts backwards compatible transient property to pure {@type Pickabilty} object
+ *
+ * @param transient The transient property from the style
+ */
+export function transientToPickability(transient?: boolean | Pickability): Pickability {
+    let pickability: Pickability = Pickability.onlyVisible;
+    if (transient !== undefined && transient !== null) {
+        pickability =
+            typeof transient === "string"
+                ? transient
+                : transient === true
+                ? Pickability.transient
+                : Pickability.onlyVisible;
+    }
+    return pickability;
+}
+
+/**
  * Defines options (tokens) supported for text placements defined via [[placements]] attribute.
  *
  * @remarks
@@ -660,10 +717,9 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      */
     minDistance?: number;
     /**
-     * If true, the text will appear even if the icon cannot be rendered because of missing icon
-     * graphics.
+     * If `true`, text will appear even if the icon is blocked by other labels.
      *
-     * @defaultValue `true`
+     * @defaultValue `false`
      */
     iconIsOptional?: boolean;
     /**
@@ -1212,14 +1268,6 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * @format color-hex
      */
     defaultColor?: DynamicProperty<StyleColor>;
-
-    /**
-     * If `true`, the height of the extruded buildings will not be modified by the mercator
-     * projection distortion that happens around the poles.
-     *
-     * @defaultValue `false`
-     */
-    constantHeight?: boolean;
 
     /**
      * If `true`, wall geometry will is added along the tile boundaries.

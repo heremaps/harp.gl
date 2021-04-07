@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,12 +7,11 @@
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { LoggerManager } from "@here/harp-utils";
+import { HRN, OlpClientSettings } from "@here/olp-sdk-core";
 import {
     CatalogClient,
     CatalogVersionRequest,
     DataRequest,
-    HRN,
-    OlpClientSettings,
     VersionedLayerClient
 } from "@here/olp-sdk-dataservice-read";
 

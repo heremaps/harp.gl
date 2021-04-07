@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -60,7 +60,7 @@ export namespace ThreejsCameraAnimation {
     message.innerHTML = `Example showing camera animations using
 <a href="${threejsLink}">three.js</a>
 <br>
-Tap our use left/right keys to change location`;
+Tap or use left/right keys to change location`;
 
     message.style.cssText = `
     color: #000;

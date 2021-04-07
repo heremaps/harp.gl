@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -125,7 +125,7 @@ export class PoiBuilder {
         }
 
         const textIsOptional = technique.textIsOptional === true;
-        const iconIsOptional = technique.iconIsOptional !== false;
+        const iconIsOptional = technique.iconIsOptional === true;
         const renderTextDuringMovements = !(technique.renderTextDuringMovements === false);
         const iconMayOverlap = technique.iconMayOverlap ?? technique.textMayOverlap;
 
@@ -146,7 +146,6 @@ export class PoiBuilder {
             renderTextDuringMovements,
             mayOverlap: iconMayOverlap,
             reserveSpace: iconReserveSpace,
-            featureId: textElement.featureId,
             iconBrightness: technique.iconBrightness,
             iconColor,
             iconMinZoomLevel: this.m_iconMinZoomLevel,

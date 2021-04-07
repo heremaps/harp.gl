@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -41,7 +41,7 @@ export namespace ElevatedGeoJsonMarkersExample {
                         type: "Feature",
                         id: 0,
                         properties: { text: "Fernsehturm" },
-                        geometry: { type: "Point", coordinates: [13.4094, 52.52085, 420] }
+                        geometry: { type: "Point", coordinates: [13.4094, 52.52085, 245] }
                     }
                 ]
             });

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,14 +12,16 @@ import { gt } from "semver";
 
 const fetch = require("node-fetch");
 
-//This script prepares the documentation and harp.gl website to be deployed
-// by Travis to S3
+//This script prepares the documentation and harp.gl website to be deployed to S3
 // Precondition: documentation ready on /dist folder
 // including docs and examples (e.g. after yarn run build && yarn run typedoc)
 
-const branch = process.env.TRAVIS_BRANCH;
+// See: https://docs.github.com/en/actions/reference/environment-variables
+const branch = process.env.GITHUB_REF;
 const commitHash = execSync("git rev-parse --short HEAD").toString().trimRight();
-const refName = branch !== "master" ? commitHash : "master";
+// We store releases using the short commit hash
+const isReleaseBranch = branch?.includes("release");
+const refName = isReleaseBranch ? commitHash : "master";
 
 // create the following directory structure
 // dist
@@ -55,7 +57,7 @@ interface Release {
     version: string;
 }
 
-if (branch !== "master") {
+if (isReleaseBranch) {
     const now = new Date();
     // WARNING, dates are 0 indexed, hence +1
     const dateString = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;

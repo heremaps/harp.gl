@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -84,7 +84,7 @@ export class HighPrecisionPoints extends THREE.Points implements HighPrecisionOb
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
             camera: THREE.Camera,
-            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _geometry: THREE.BufferGeometry,
             _material: THREE.Material,
             _group: THREE.Group
         ) => {

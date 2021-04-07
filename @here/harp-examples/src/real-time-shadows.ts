@@ -1,9 +1,8 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import "three/examples/js/controls/TrackballControls";
 
 import { Theme } from "@here/harp-datasource-protocol";
@@ -11,6 +10,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
+import { HereWebTileDataSource } from "@here/harp-webtile-datasource";
 import { GUI } from "dat.gui";
 import * as THREE from "three";
 
@@ -46,7 +46,8 @@ const guiOptions = {
     minutes: date.getMinutes(),
     time: date.getHours() + date.getMinutes() / 60,
     timeIndicator: `${date.getHours()}:${date.getMinutes()}`,
-    debugCamera: false
+    debugCamera: false,
+    enableRasterTiles: false
 };
 // Reference solar noon time is used to calculate time offsets at specific coordinates.
 const refSolarNoon = SunCalc.getTimes(date, 0, 0).solarNoon;
@@ -60,6 +61,12 @@ function swapCamera() {
     directionalLightHelper.visible = !directionalLightHelper.visible;
     shadowCameraHelper.visible = !shadowCameraHelper.visible;
 }
+
+const hereWebTileDataSource = new HereWebTileDataSource({
+    apikey,
+    renderingOptions: { renderOrder: 50 },
+    name: "raster-tiles"
+});
 
 function setupDebugStuff() {
     const mapCameraHelper = new THREE.CameraHelper(map["m_rteCamera"]);
@@ -282,6 +289,14 @@ function addGuiElements() {
         timeSlider.updateDisplay();
     });
     gui.add(guiOptions, "debugCamera").onChange(swapCamera);
+    gui.add(guiOptions, "enableRasterTiles").onChange((enable: boolean) => {
+        const rasterSource = map.getDataSourceByName("raster-tiles");
+        if (rasterSource && !enable) {
+            map.removeDataSource(rasterSource);
+        } else if (!rasterSource && enable) {
+            map.addDataSource(hereWebTileDataSource);
+        }
+    });
 }
 
 export namespace RealTimeShadows {

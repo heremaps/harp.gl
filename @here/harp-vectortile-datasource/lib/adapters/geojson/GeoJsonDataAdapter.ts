@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -145,13 +145,11 @@ function signedPolygonArea(contour: GeoPointLike[]): number {
 }
 
 function convertRings(coordinates: GeoPointLike[][], decodeInfo: DecodeInfo): IPolygonGeometry {
-    let outerWinding: boolean | undefined;
     const rings = coordinates.map((ring, i) => {
+        const isOuterRing = i === 0;
+        const isClockWise = signedPolygonArea(ring) < 0;
         const { positions } = convertLineStringGeometry(ring, decodeInfo);
-        const winding = signedPolygonArea(ring) < 0;
-        if (i === 0) {
-            outerWinding = winding;
-        } else if (winding === outerWinding) {
+        if ((isOuterRing && !isClockWise) || (!isOuterRing && isClockWise)) {
             positions.reverse();
         }
         return positions;
@@ -211,9 +209,9 @@ export class GeoJsonDataAdapter implements DataAdapter {
 
         for (const feature of featureCollection.features) {
             const $geometryType = convertGeometryType(feature.geometry.type);
-
             const env = new MapEnv({
                 ...feature.properties,
+                $id: feature.id ?? null,
                 $layer,
                 $level,
                 $zoom,

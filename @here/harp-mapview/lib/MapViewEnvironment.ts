@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -153,7 +153,7 @@ export class MapViewEnvironment {
                 }
                 this.m_createdLights!.push(light);
 
-                const clonedLight: THREE.Light = light.clone();
+                const clonedLight: THREE.Light = light.clone() as THREE.Light;
                 this.m_mapView.overlayScene.add(clonedLight);
                 if (clonedLight instanceof THREE.DirectionalLight) {
                     this.m_mapView.overlayScene.add(clonedLight.target.clone());

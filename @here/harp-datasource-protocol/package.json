@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-datasource-protocol",
-    "version": "0.21.1",
+    "version": "0.23.0",
     "description": "Components used for the decoding and styling of data that is used by the Datasources.",
     "main": "index.js",
     "typings": "index",
@@ -24,25 +24,26 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-geometry": "^0.21.0",
-        "@here/harp-geoutils": "^0.21.0",
-        "@here/harp-utils": "^0.21.0",
+        "@here/harp-geometry": "^0.23.0",
+        "@here/harp-geoutils": "^0.23.0",
+        "@here/harp-utils": "^0.23.0",
         "csscolorparser": "^1.0.3"
     },
     "devDependencies": {
-        "@here/harp-test-utils": "^0.21.0",
+        "@here/harp-test-utils": "^0.23.0",
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.2.0",
+        "@types/three": "^0.126.0",
         "chai": "^4.0.2",
         "cross-env": "^7.0.2",
         "mocha": "^8.2.1",
         "source-map-support": "^0.5.19",
-        "three": "^0.124.0",
+        "three": "^0.126.0",
         "ts-json-schema-generator": "^0.68.1",
         "typescript": "^4.1.2"
     },
     "peerDependencies": {
-        "three": "^0.124.0"
+        "three": "^0.126.0"
     },
     "publishConfig": {
         "access": "public"

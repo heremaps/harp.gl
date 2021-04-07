@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -661,6 +661,27 @@ describe("StyleSetEvaluator", function () {
                     when: ["==", ["geometry-type"], "Polygon"],
                     technique: "extruded-polygon",
                     maxZoomLevel: ["get", "maxLevel"]
+                }
+            ])
+        );
+
+        // Techniques are not filtered if min/maxZoomLevel are dynamic expressions.
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 14, minLevel: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: ["get", "minLevel", ["dynamic-properties"]]
+                }
+            ])
+        );
+
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15, maxLevel: 14 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    maxZoomLevel: ["case", true, ["get", "maxLevel"], ["zoom"]]
                 }
             ])
         );

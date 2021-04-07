@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 HERE Europe B.V.
+ * Copyright (C) 2019-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -87,8 +87,14 @@ export class TransferManager implements ITransferManager {
         try {
             if (retryCount < maxRetries) {
                 const response = await fetchFunction(url, init);
-                if (response.status !== 503) {
+                // Return response when successful or empty
+                if (response.status === 200 || response.status === 204) {
                     return response;
+                } else if (response.status >= 400 && response.status < 500) {
+                    // Prevent further retries in case of a client error code
+                    retryCount = maxRetries;
+                    const responseText = await response.text();
+                    throw new Error(responseText);
                 }
             } else {
                 throw new Error("Max number of retries reached");
