@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-website",
-    "version": "0.23.1",
+    "version": "0.24.0",
     "description": "harp.gl website",
     "scripts": {
         "build": "webpack --config ./webpack.config.js",
@@ -18,10 +18,10 @@
     "license": "Apache-2.0",
     "private": true,
     "devDependencies": {
-        "@here/harp-geoutils": "^0.23.0",
-        "@here/harp-mapview": "^0.23.1",
-        "@here/harp-utils": "^0.23.0",
-        "@here/harp-vectortile-datasource": "^0.23.1",
+        "@here/harp-geoutils": "^0.24.0",
+        "@here/harp-mapview": "^0.24.0",
+        "@here/harp-utils": "^0.24.0",
+        "@here/harp-vectortile-datasource": "^0.24.0",
         "copy-webpack-plugin": "^7.0.0",
         "css-loader": "^5.0.1",
         "file-loader": "^6.0.0",
