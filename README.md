@@ -6,7 +6,7 @@
 
 ### [harp.gl site](https://www.harp.gl/)
 
-### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/) Registration available [here](https://join.slack.com/t/heredev/shared_invite/zt-nix6y5fb-WPQwpFlxZs1P4EJWhkrT9Q).
+### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/) Registration available [here](http://t.her.is/slack).
 
 ## Overview
 
