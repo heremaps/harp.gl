@@ -63,7 +63,7 @@
         "test": "ts-mocha ./@here/*/test/*.ts",
         "performance-test-node": "ts-mocha ./test/performance/**/*.ts",
         "cleanup": "./scripts/cleanup.sh",
-        "cov-test": "nyc mocha -r ts-node/register ./@here/*/test/*.ts",
+        "cov-test": "nyc yarn test",
         "cov-report-html": "nyc report --reporter=html",
         "start": "ts-node ./scripts/credentials.ts -- . && webpack serve --config @here/harp-examples/webpack.config.js",
         "build": "npm run build-bundle && npm run build-examples",
