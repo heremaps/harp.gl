@@ -3,12 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    DecodedTile,
-    GeometryKindSet,
-    GeometryType,
-    TextPathGeometry
-} from "@here/harp-datasource-protocol";
+import { DecodedTile, GeometryKindSet, GeometryType } from "@here/harp-datasource-protocol";
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
@@ -169,11 +164,6 @@ type TileCallback = (tile: Tile) => void;
  */
 export class Tile implements CachedResource {
     /**
-     * A list of the THREE.js objects stored in this `Tile`.
-     */
-    readonly objects: TileObject[] = [];
-
-    /**
      * The optional list of HERE TileKeys of tiles with geometries that cross the boundaries of this
      * `Tile`.
      */
@@ -254,8 +244,12 @@ export class Tile implements CachedResource {
      *
      * Prepared text geometries optimized for display.
      */
-    protected preparedTextPaths: TextPathGeometry[] | undefined;
     protected readonly m_tileGeometryLoader?: TileGeometryLoader;
+
+    /**
+     * A list of the THREE.js objects stored in this `Tile`.
+     */
+    private m_objects: TileObject[] = [];
 
     /**
      * The bounding box of this `Tile` in world coordinates.
@@ -295,6 +289,8 @@ export class Tile implements CachedResource {
 
     private m_resourceInfo: TileResourceInfo | undefined;
 
+    // Promise resolved when textures are ready to be rendered.
+    private m_texturesReadyPromise: Promise<any> | undefined;
     // List of owned textures for disposal
     private readonly m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
 
@@ -440,6 +436,22 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Returns the list of objects (instances of THREE.js Object3D) stored in this `Tile`.
+     */
+    get objects(): TileObject[] {
+        return this.m_objects;
+    }
+
+    /**
+     * Sets a new list of objects in the tile, clearing any old ones along with all their resources.
+     * @param objects - The objects to set in the tile.
+     */
+    set objects(objects: TileObject[]) {
+        this.clearObjects();
+        this.m_objects = objects;
+    }
+
+    /**
      * Compute {@link TileResourceInfo} of this `Tile`.
      *
      * @remarks
@@ -467,6 +479,7 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * @internal
      * Add ownership of a texture to this tile.
      *
      * @remarks
@@ -475,6 +488,25 @@ export class Tile implements CachedResource {
      */
     addOwnedTexture(texture: THREE.Texture): void {
         this.m_ownedTextures.add(texture);
+
+        this.m_texturesReadyPromise = Promise.all([
+            this.m_texturesReadyPromise,
+            new Promise<THREE.Texture>((resolve, reject) => {
+                texture.onUpdate = () => {
+                    resolve(texture!);
+                    texture!.onUpdate = null as any;
+                };
+            })
+        ]);
+    }
+
+    /**
+     * @internal
+     * Returns a promise resolved when all textures owned by this tile are ready
+     * to be rendered.
+     */
+    waitTexturesReady(): Promise<void> {
+        return this.m_texturesReadyPromise ?? Promise.resolve();
     }
 
     /**
@@ -804,7 +836,7 @@ export class Tile implements CachedResource {
      */
     get hasGeometry(): boolean {
         if (this.m_forceHasGeometry === undefined) {
-            return this.objects.length !== 0;
+            return this.m_objects.length !== 0;
         } else {
             return this.m_forceHasGeometry;
         }
@@ -900,76 +932,27 @@ export class Tile implements CachedResource {
      * `Tile`or if the ownership was explicitely set to this `Tile` by [[addOwnedTexture]]).
      */
     clear() {
-        const disposeMaterial = (material: THREE.Material) => {
-            Object.getOwnPropertyNames(material).forEach((property: string) => {
-                const materialProperty = (material as any)[property];
-                if (materialProperty !== undefined && materialProperty instanceof THREE.Texture) {
-                    const texture = materialProperty;
-                    if (this.shouldDisposeTexture(texture)) {
-                        texture.dispose();
-                    }
-                }
-            });
-            material.dispose();
-        };
-
-        const disposeObject = (object: TileObject & DisposableObject) => {
-            if (this.shouldDisposeObjectGeometry(object)) {
-                if (object.geometry !== undefined) {
-                    object.geometry.dispose();
-                }
-
-                if (object.geometries !== undefined) {
-                    for (const geometry of object.geometries) {
-                        geometry.dispose();
-                    }
-                }
-            }
-
-            if (object.material !== undefined && this.shouldDisposeObjectMaterial(object)) {
-                if (object.material instanceof Array) {
-                    object.material.forEach((material: THREE.Material | undefined) => {
-                        if (material !== undefined) {
-                            disposeMaterial(material);
-                        }
-                    });
-                } else {
-                    disposeMaterial(object.material);
-                }
-            }
-        };
-
-        this.objects.forEach((rootObject: TileObject & DisposableObject) => {
-            rootObject.traverse((object: TileObject & DisposableObject) => {
-                disposeObject(object);
-            });
-
-            disposeObject(rootObject);
-        });
-        this.objects.length = 0;
-
-        if (this.preparedTextPaths) {
-            this.preparedTextPaths = [];
-        }
-
-        this.m_textStyleCache.clear();
+        this.clearObjects();
         this.clearTextElements();
-        this.invalidateResourceInfo();
     }
 
     /**
      * Removes all {@link TextElement} from the tile.
      */
     clearTextElements() {
+        this.m_textStyleCache.clear();
+
         if (!this.hasTextElements()) {
             return;
         }
+
         this.textElementsChanged = true;
         this.m_pathBlockingElements.splice(0);
         this.textElementGroups.forEach((element: TextElement) => {
             element.dispose();
         });
         this.textElementGroups.clear();
+        this.invalidateResourceInfo();
     }
 
     /**
@@ -1022,7 +1005,7 @@ export class Tile implements CachedResource {
      * @internal
      */
     update(zoomLevel: number): void {
-        for (const object of this.objects) {
+        for (const object of this.m_objects) {
             if (object instanceof LodMesh) {
                 object.setLevelOfDetail(zoomLevel - this.tileKey.level);
             }
@@ -1099,6 +1082,57 @@ export class Tile implements CachedResource {
         // To be used in subclasses.
     }
 
+    private clearObjects() {
+        const disposeMaterial = (material: THREE.Material) => {
+            Object.getOwnPropertyNames(material).forEach((property: string) => {
+                const materialProperty = (material as any)[property];
+                if (materialProperty !== undefined && materialProperty instanceof THREE.Texture) {
+                    const texture = materialProperty;
+                    if (this.shouldDisposeTexture(texture)) {
+                        texture.dispose();
+                    }
+                }
+            });
+            material.dispose();
+        };
+
+        const disposeObject = (object: TileObject & DisposableObject) => {
+            if (this.shouldDisposeObjectGeometry(object)) {
+                if (object.geometry !== undefined) {
+                    object.geometry.dispose();
+                }
+
+                if (object.geometries !== undefined) {
+                    for (const geometry of object.geometries) {
+                        geometry.dispose();
+                    }
+                }
+            }
+
+            if (object.material !== undefined && this.shouldDisposeObjectMaterial(object)) {
+                if (object.material instanceof Array) {
+                    object.material.forEach((material: THREE.Material | undefined) => {
+                        if (material !== undefined) {
+                            disposeMaterial(material);
+                        }
+                    });
+                } else {
+                    disposeMaterial(object.material);
+                }
+            }
+        };
+
+        this.m_objects.forEach((rootObject: TileObject & DisposableObject) => {
+            rootObject.traverse((object: TileObject & DisposableObject) => {
+                disposeObject(object);
+            });
+
+            disposeObject(rootObject);
+        });
+        this.m_objects.length = 0;
+        this.invalidateResourceInfo();
+    }
+
     private attachGeometryLoadedCallback() {
         assert(this.m_tileGeometryLoader !== undefined);
         this.m_tileGeometryLoader!.waitFinished()
@@ -1163,7 +1197,7 @@ export class Tile implements CachedResource {
         // They should be counted only once even if they are shared.
         const visitedObjects: Map<string, boolean> = new Map();
 
-        for (const object of this.objects) {
+        for (const object of this.m_objects) {
             if (object.visible) {
                 num3dObjects++;
             }

@@ -3,7 +3,11 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { getPropertyValue, isTextTechnique } from "@here/harp-datasource-protocol";
+import {
+    getPropertyValue,
+    isTextTechnique,
+    TextPathGeometry
+} from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { DataSource, TextElement, Tile } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
@@ -133,8 +137,21 @@ function addObject(
 }
 
 export class OmvDebugLabelsTile extends Tile {
+    // Keep text paths to render them for debugging.
+    private preparedTextPaths: TextPathGeometry[] | undefined;
+
     constructor(dataSource: DataSource, tileKey: TileKey) {
         super(dataSource, tileKey);
+    }
+
+    /**
+     * @override
+     */
+    clearTextElements() {
+        super.clearTextElements();
+        if (this.preparedTextPaths) {
+            this.preparedTextPaths = [];
+        }
     }
 
     /**

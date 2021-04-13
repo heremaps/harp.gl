@@ -344,7 +344,6 @@ export class TileGeometryLoader {
 
         const geometryCreator = TileGeometryCreator.instance;
 
-        tile.clear();
         // Set up techniques which should be processed.
         geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
         geometryCreator.createAllGeometries(tile, decodedTile);

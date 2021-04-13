@@ -84,7 +84,7 @@ import { MapAdapterUpdateEnv, MapMaterialAdapter } from "../MapMaterialAdapter";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElementBuilder } from "../text/TextElementBuilder";
-import { Tile, TileFeatureData } from "../Tile";
+import { Tile, TileFeatureData, TileObject } from "../Tile";
 import { addGroundPlane } from "./AddGroundPlane";
 import { registerTileObject } from "./RegisterTileObject";
 
@@ -277,6 +277,10 @@ export class TileGeometryCreator {
      * @param decodedTile - The decodedTile containing the actual tile map data.
      */
     createAllGeometries(tile: Tile, decodedTile: DecodedTile) {
+        // Clear any old text elements from the tile. Old objects can only be cleared
+        // once the new objects are created and their resources are ready.
+        tile.clearTextElements();
+
         const filter = (technique: IndexedTechnique): boolean => {
             return technique._kindState !== false;
         };
@@ -543,10 +547,9 @@ export class TileGeometryCreator {
         const materials: THREE.Material[] = [];
         const extrudedMaterials: THREE.Material[] = [];
         const animatedExtrusionHandler = mapView.animatedExtrusionHandler;
-        const dataSource = tile.dataSource;
         const discreteZoomLevel = Math.floor(mapView.zoomLevel);
         const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
-        const objects = tile.objects;
+        const objects: TileObject[] = [];
         const viewRanges = mapView.viewRanges;
         const elevationEnabled = mapView.elevationProvider !== undefined;
 
@@ -602,21 +605,15 @@ export class TileGeometryCreator {
                 let material: THREE.Material | undefined = materials[techniqueIndex];
 
                 if (material === undefined) {
-                    const onMaterialUpdated = (texture: THREE.Texture) => {
-                        dataSource.requestUpdate();
-                        if (texture !== undefined) {
-                            tile.addOwnedTexture(texture);
-                        }
-                    };
                     material = createMaterial(
-                        mapView.renderer.capabilities,
+                        mapView.renderer,
                         {
                             technique,
                             env: mapView.env,
                             fog: mapView.scene.fog !== null,
                             shadowsEnabled: mapView.shadowsEnabled
                         },
-                        onMaterialUpdated
+                        tile
                     );
                     if (material === undefined) {
                         continue;
@@ -1083,6 +1080,10 @@ export class TileGeometryCreator {
         if (extrudedMaterials.length > 0) {
             mapView.animatedExtrusionHandler.add(tile, extrudedMaterials);
         }
+        // Replace the old tile objects with the new ones only when the new textures are ready.
+        tile.waitTexturesReady().then(() => {
+            tile.objects = objects;
+        });
     }
 
     /**

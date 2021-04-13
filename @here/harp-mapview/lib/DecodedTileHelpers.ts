@@ -90,17 +90,16 @@ export interface MaterialOptions {
  *
  * @param rendererCapabilities - The capabilities of the renderer that will use the material.
  * @param options - The material options the subsequent functions need.
- * @param materialUpdateCallback - Optional callback when the material gets updated,
- *                               e.g. after texture loading.
+ * @param tile - Optional tile that will own all material resources (e.g. textures).
  *
  * @returns new material instance that matches `technique.name`
  *
  * @internal
  */
 export function createMaterial(
-    rendererCapabilities: THREE.WebGLCapabilities,
+    renderer: THREE.WebGLRenderer,
     options: MaterialOptions,
-    textureReadyCallback?: (texture: THREE.Texture) => void
+    tile?: Tile
 ): THREE.Material | undefined {
     const technique = options.technique;
     const Constructor = getMaterialConstructor(technique, options.shadowsEnabled === true);
@@ -112,7 +111,7 @@ export function createMaterial(
     }
 
     if (Constructor.prototype instanceof RawShaderMaterial) {
-        settings.rendererCapabilities = rendererCapabilities;
+        settings.rendererCapabilities = renderer.capabilities;
         if (Constructor !== HighPrecisionLineMaterial) {
             settings.fog = options.fog;
         }
@@ -171,19 +170,15 @@ export function createMaterial(
                         texture.repeat.y = properties.repeatV;
                     }
                 }
-                (material as any)[texturePropertyName] = texture;
-                texture.needsUpdate = true;
-                material.needsUpdate = true;
-
-                if (textureReadyCallback) {
-                    textureReadyCallback(texture);
-                }
+                // Force texture uploaded before rendering.
+                renderer.initTexture(texture);
             };
 
             const onError = (error: ErrorEvent | string) => {
                 logger.error("#createMaterial: Failed to load texture: ", error);
             };
 
+            let texture: THREE.Texture | undefined;
             let textureUrl: string | undefined;
             if (typeof textureProperty === "string") {
                 textureUrl = textureProperty;
@@ -199,7 +194,7 @@ export function createMaterial(
                             textureDataType
                         );
 
-                        const texture = new THREE.DataTexture(
+                        texture = new THREE.DataTexture(
                             textureBuffer,
                             properties.width,
                             properties.height,
@@ -216,15 +211,21 @@ export function createMaterial(
                     });
                     textureUrl = URL.createObjectURL(textureBlob);
                 }
+            } else {
+                logger.error("texture has unexpected type");
             }
 
             if (textureUrl) {
-                new THREE.TextureLoader().load(
-                    textureUrl,
+                texture = new THREE.TextureLoader().load(
+                    textureUrl!,
                     onLoad,
                     undefined, // onProgress
                     onError
                 );
+            }
+            if (texture) {
+                (material as any)[texturePropertyName] = texture;
+                tile?.addOwnedTexture(texture);
             }
         });
     }
