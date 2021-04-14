@@ -15,7 +15,10 @@ import {
 } from "@here/harp-geoutils";
 import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { TaskQueue } from "@here/harp-utils";
-import { assert, expect } from "chai";
+import * as chai from "chai";
+import * as chai_as_promised from "chai-as-promised";
+chai.use(chai_as_promised);
+const { expect, assert } = chai;
 import * as sinon from "sinon";
 import * as THREE from "three";
 
@@ -207,6 +210,19 @@ describe("Tile", function () {
             tile.clearTextElements();
             expect(tile.textElementGroups.count()).to.equal(0);
             assert.isTrue(tile.textElementsChanged);
+        });
+
+        it("clearTextElements from non-empty tile invalidates resource info", function () {
+            const tile = new Tile(stubDataSource, tileKey);
+            tile.addTextElement(createFakeTextElement());
+            expect(tile.textElementGroups.count()).to.equal(1);
+            const resourceInfo = tile.getResourceInfo();
+            expect(resourceInfo).not.undefined;
+
+            tile.clearTextElements();
+            expect(tile.textElementGroups.count()).to.equal(0);
+            assert.isTrue(tile.textElementsChanged);
+            expect(tile.getResourceInfo()).not.equals(resourceInfo);
         });
 
         it("dispose diposes of text elements", function () {
@@ -443,6 +459,65 @@ describe("Tile", function () {
 
             expect(tile.updateGeometry()).be.true;
             expect(updateSpy.called).be.false;
+        });
+    });
+
+    it("objects setter clears previous objects and textures", function () {
+        const geometryDisposeSpy = sinon.spy();
+        const tile = stubDataSource.getTile(tileKey);
+        const texture = new THREE.Texture();
+        const textureDisposeSpy = sinon.spy(texture, "dispose");
+        const material = new THREE.MeshStandardMaterial({ map: texture });
+        tile.objects = [new THREE.Mesh({ dispose: geometryDisposeSpy } as any, material)];
+
+        tile.addOwnedTexture(texture);
+        expect(tile.waitTexturesReady()).not.undefined;
+        const resourceInfo = tile.getResourceInfo();
+        expect(resourceInfo).not.undefined;
+
+        tile.objects = [];
+        expect(tile.objects).to.be.empty;
+        expect(tile.waitTexturesReady()).undefined;
+        expect(tile.shouldDisposeTexture(texture)).is.false;
+        expect(tile.getResourceInfo()).not.equals(resourceInfo);
+        expect(textureDisposeSpy.called).is.true;
+        expect(geometryDisposeSpy.called).is.true;
+    });
+
+    it("clear disposes all objects, textures and text elements", function () {
+        const tile = stubDataSource.getTile(tileKey);
+        tile.objects = [new THREE.Object3D()];
+        const texture = new THREE.Texture();
+        tile.addOwnedTexture(texture);
+        expect(tile.waitTexturesReady()).not.undefined;
+        tile.addTextElement({ dispose: () => {} });
+        const resourceInfo = tile.getResourceInfo();
+        expect(resourceInfo).not.undefined;
+
+        tile.clear();
+        expect(tile.objects).to.be.empty;
+        expect(tile.waitTexturesReady()).undefined;
+        expect(tile.shouldDisposeTexture(texture)).is.false;
+        expect(tile.textElementGroups.count()).equals(0);
+        expect(tile.getResourceInfo()).not.equals(resourceInfo);
+    });
+
+    describe("textures", function () {
+        it("waitTexturesReady returns undefined if no textures added", function () {
+            const tile = stubDataSource.getTile(tileKey);
+            expect(tile.waitTexturesReady()).is.undefined;
+        });
+
+        it("addOwnedTexture adds texture and resolves promise on texture update", function () {
+            const tile = stubDataSource.getTile(tileKey);
+
+            const texture = new THREE.Texture();
+            tile.addOwnedTexture(texture);
+            expect(tile.shouldDisposeTexture(texture)).is.true;
+            const texturePromise = tile.waitTexturesReady();
+            expect(texturePromise).is.not.undefined;
+            texture.onUpdate();
+            expect(texturePromise).to.eventually.be.fulfilled;
         });
     });
 });

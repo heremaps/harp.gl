@@ -189,6 +189,19 @@ function addToExtrudedMaterials(
     }
 }
 
+function setTileObjects(tile: Tile, objects: TileObject[]) {
+    // Replace the old tile objects with the new ones only when the new textures are ready.
+    const texturesPromise = tile.waitTexturesReady();
+    if (texturesPromise) {
+        texturesPromise.then(() => {
+            tile.objects = objects;
+            tile.dataSource.requestUpdate();
+        });
+    } else {
+        tile.objects = objects;
+    }
+}
+
 /**
  * Parameters that control fading.
  */
@@ -1080,10 +1093,7 @@ export class TileGeometryCreator {
         if (extrudedMaterials.length > 0) {
             mapView.animatedExtrusionHandler.add(tile, extrudedMaterials);
         }
-        // Replace the old tile objects with the new ones only when the new textures are ready.
-        tile.waitTexturesReady().then(() => {
-            tile.objects = objects;
-        });
+        setTileObjects(tile, objects);
     }
 
     /**

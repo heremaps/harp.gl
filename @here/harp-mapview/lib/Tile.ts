@@ -292,7 +292,7 @@ export class Tile implements CachedResource {
     // Promise resolved when textures are ready to be rendered.
     private m_texturesReadyPromise: Promise<any> | undefined;
     // List of owned textures for disposal
-    private readonly m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
+    private m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
 
     private readonly m_textStyleCache: TileTextStyleCache;
     private m_uniqueKey: number;
@@ -503,10 +503,10 @@ export class Tile implements CachedResource {
     /**
      * @internal
      * Returns a promise resolved when all textures owned by this tile are ready
-     * to be rendered.
+     * to be rendered, or undefined if the tile has no textures.
      */
-    waitTexturesReady(): Promise<void> {
-        return this.m_texturesReadyPromise ?? Promise.resolve();
+    waitTexturesReady(): Promise<void> | undefined {
+        return this.m_texturesReadyPromise;
     }
 
     /**
@@ -1130,6 +1130,8 @@ export class Tile implements CachedResource {
             disposeObject(rootObject);
         });
         this.m_objects.length = 0;
+        this.m_texturesReadyPromise = undefined;
+        this.m_ownedTextures = new WeakSet();
         this.invalidateResourceInfo();
     }
 

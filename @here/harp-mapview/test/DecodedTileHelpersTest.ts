@@ -10,6 +10,7 @@ import {
     MapEnv,
     ShaderTechnique,
     SolidLineTechnique,
+    StandardTechnique,
     Technique
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
@@ -17,7 +18,9 @@ import { MapMeshStandardMaterial, SolidLineMaterial } from "@here/harp-materials
 import { assertLogsSync } from "@here/harp-test-utils";
 import { LoggerManager } from "@here/harp-utils";
 import { assert, expect } from "chai";
+import * as sinon from "sinon";
 import * as THREE from "three";
+import { WebGLRenderer } from "three";
 
 import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
 import {
@@ -36,8 +39,14 @@ function assertLogsError(testCode: () => void, errorMessagePattern: string | Reg
 
 describe("DecodedTileHelpers", function () {
     const env = new MapEnv({ $zoom: 10, $pixelToMeters: 2 });
-    const rendererCapabilities = { isWebGL2: false } as any;
+    let renderer: WebGLRenderer;
+    let initTextureSpy: sinon.SinonSpy<any>;
+
     describe("createMaterial", function () {
+        beforeEach(function () {
+            initTextureSpy = sinon.spy();
+            renderer = { capabilities: { isWebGL2: false }, initTexture: initTextureSpy } as any;
+        });
         it("supports #rgba in base material colors", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
@@ -45,7 +54,7 @@ describe("DecodedTileHelpers", function () {
                 renderOrder: 0,
                 color: "#f0f7"
             };
-            const material = createMaterial(rendererCapabilities, {
+            const material = createMaterial(renderer, {
                 technique,
                 env
             })! as SolidLineMaterial;
@@ -64,7 +73,7 @@ describe("DecodedTileHelpers", function () {
                 color: "#f0f",
                 secondaryColor: "#f0f7"
             };
-            const material = createMaterial(rendererCapabilities, {
+            const material = createMaterial(renderer, {
                 technique,
                 env
             })! as SolidLineMaterial;
@@ -83,7 +92,7 @@ describe("DecodedTileHelpers", function () {
                 color: "not-a-color"
             };
             assertLogsError(() => {
-                const material = createMaterial(rendererCapabilities, {
+                const material = createMaterial(renderer, {
                     technique,
                     env
                 })! as SolidLineMaterial;
@@ -98,7 +107,7 @@ describe("DecodedTileHelpers", function () {
                 renderOrder: 0,
                 color: "#f0f7"
             };
-            const material = createMaterial(rendererCapabilities, {
+            const material = createMaterial(renderer, {
                 technique,
                 env
             })! as SolidLineMaterial;
@@ -114,7 +123,7 @@ describe("DecodedTileHelpers", function () {
                 color: "#f0f7",
                 depthTest: true
             };
-            const material = createMaterial(rendererCapabilities, {
+            const material = createMaterial(renderer, {
                 technique,
                 env
             })! as SolidLineMaterial;
@@ -166,6 +175,35 @@ describe("DecodedTileHelpers", function () {
                 false
             );
             assert.isTrue(object instanceof THREE.Line, "expected a THREE.Line object");
+        });
+
+        it("initializes texture and adds it to tile", function () {
+            const addOwnedTextureSpy = sinon.spy();
+            const tile = ({ addOwnedTexture: addOwnedTextureSpy } as any) as Tile;
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/raw",
+                    dataTextureProperties: {
+                        width: 1,
+                        height: 1
+                    }
+                }
+            };
+            const material = createMaterial(
+                renderer,
+                {
+                    technique,
+                    env
+                },
+                tile
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(initTextureSpy.called);
+            assert.isTrue(addOwnedTextureSpy.called);
         });
     });
     it("applyBaseColorToMaterial toggles opacity with material", function () {

@@ -24,7 +24,7 @@ import { MapMeshBasicMaterial } from "@here/harp-materials";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
-import { RawShaderMaterial } from "three";
+import { RawShaderMaterial, WebGLRenderer } from "three";
 
 import { DataSource } from "../lib/DataSource";
 import { isDepthPrePassMesh } from "../lib/DepthPrePass";
@@ -35,7 +35,8 @@ import { Tile } from "../lib/Tile";
 
 class FakeMapView {
     private readonly m_scene = new THREE.Scene();
-    private readonly m_renderer = { capabilities: { isWebGL2: false } };
+
+    constructor(private readonly m_renderer: {}) {}
 
     get zoomLevel(): number {
         return 0;
@@ -61,8 +62,8 @@ class FakeMapView {
         return mercatorProjection;
     }
 
-    get renderer() {
-        return this.m_renderer;
+    get renderer(): WebGLRenderer {
+        return this.m_renderer as any;
     }
 }
 
@@ -76,6 +77,47 @@ class MockDataSource extends DataSource {
     getTile(tileKey: TileKey): Tile | undefined {
         throw new Error("Method not implemented.");
     }
+}
+
+function getStandardTechniquePolygonTile(): DecodedTile {
+    return {
+        geometries: [
+            {
+                type: GeometryType.Polygon,
+                vertexAttributes: [
+                    {
+                        name: "position",
+                        buffer: new Float32Array([1.0, 2.0, 3.0]),
+                        type: "float",
+                        itemCount: 3
+                    }
+                ],
+                groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }],
+                edgeIndex: {
+                    name: "index",
+                    buffer: new Uint16Array([0]),
+                    type: "float",
+                    itemCount: 1
+                }
+            }
+        ],
+        techniques: [
+            {
+                name: "standard",
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/raw",
+                    dataTextureProperties: {
+                        width: 1,
+                        height: 1
+                    }
+                },
+                renderOrder: 0,
+                _index: 0,
+                _styleSetIndex: 0
+            }
+        ]
+    };
 }
 
 function getExtrudedPolygonTile(): DecodedTile {
@@ -186,9 +228,14 @@ describe("TileGeometryCreator", () => {
     const tgc = TileGeometryCreator.instance;
     let mapView: FakeMapView;
     const sandbox = sinon.createSandbox();
+    let initTextureStub: sinon.SinonStub;
 
     beforeEach(function () {
-        mapView = new FakeMapView();
+        initTextureStub = sandbox.stub();
+        mapView = new FakeMapView({
+            capabilities: { isWebGL2: false },
+            initTexture: initTextureStub
+        });
         mockDatasource = sandbox.createStubInstance(MockDataSource);
         mockDatasource.getTilingScheme.callsFake(() => webMercatorTilingScheme);
         sandbox.stub(mockDatasource, "projection").get(() => mercatorProjection);
@@ -215,7 +262,7 @@ describe("TileGeometryCreator", () => {
         assert.equal(newTile.blockingElements[0].points.length, 2);
     });
 
-    it("terrain tile gets tile displacement map as user data", () => {
+    it("terrain tile gets tile displacement map as user data", async () => {
         const decodedDisplacementMap: DisplacementMap = {
             xCountVertices: 2,
             yCountVertices: 3,
@@ -252,7 +299,7 @@ describe("TileGeometryCreator", () => {
 
         describe(`${webGLVersion} support`, () => {
             beforeEach(() => {
-                mapView.renderer.capabilities.isWebGL2 = isWebGL2;
+                (mapView.renderer.capabilities as any).isWebGL2 = isWebGL2;
             });
             it("extruded polygon materials have expected glslVersion", () => {
                 const decodedTile: DecodedTile = getExtrudedPolygonTile();
@@ -277,7 +324,7 @@ describe("TileGeometryCreator", () => {
         });
     }
     describe("pickable geometry", () => {
-        it("extruded polygon depth prepass and edges geometries are registered as non-pickable", () => {
+        it("extruded polygon depth prepass and edges geometries are registered as non-pickable", async () => {
             const decodedTile: DecodedTile = getExtrudedPolygonTile();
             tgc.createObjects(newTile, decodedTile);
             assert.equal(newTile.objects.length, 3);
@@ -291,7 +338,7 @@ describe("TileGeometryCreator", () => {
             });
         });
 
-        it("fill outline geometry is registered as pickable", () => {
+        it("fill outline geometry is registered as pickable", async () => {
             const decodedTile: DecodedTile = getFillTile();
             tgc.createObjects(newTile, decodedTile);
             assert.equal(newTile.objects.length, 2);
@@ -304,7 +351,7 @@ describe("TileGeometryCreator", () => {
             expect(adapter1!.isPickable()).to.equal(true);
         });
 
-        it("solid line without outline is registered as pickable", () => {
+        it("solid line without outline is registered as pickable", async () => {
             const decodedTile: DecodedTile = getSolidLineTile();
             tgc.createObjects(newTile, decodedTile);
             assert.equal(newTile.objects.length, 1);
@@ -313,7 +360,7 @@ describe("TileGeometryCreator", () => {
             expect(adapter!.isPickable()).to.equal(true);
         });
 
-        it("only outline geometry from solid line with outline is registered as pickable", () => {
+        it("only outline geometry from solid line with outline is registered as pickable", async () => {
             const decodedTile: DecodedTile = {
                 geometries: [
                     {
@@ -335,6 +382,7 @@ describe("TileGeometryCreator", () => {
                 ]
             };
             tgc.createObjects(newTile, decodedTile);
+            await newTile.waitTexturesReady();
             assert.equal(newTile.objects.length, 2);
             const adapter0 = MapObjectAdapter.get(newTile.objects[0]);
             expect(adapter0).not.equals(undefined);
@@ -475,7 +523,7 @@ describe("TileGeometryCreator", () => {
         ];
 
         techniques.forEach(technique => {
-            it(`side of the geometry - technique ${technique}`, () => {
+            it(`side of the geometry - technique ${technique}`, async () => {
                 const decodedTile: DecodedTile = {
                     geometries: [
                         {
@@ -506,5 +554,23 @@ describe("TileGeometryCreator", () => {
                 assert.strictEqual(material.side, THREE.DoubleSide);
             });
         });
+    });
+
+    it("new objects replace old tile objects when textures are loaded", async () => {
+        const initialObj = new THREE.Object3D();
+        newTile.objects = [initialObj];
+        assert.lengthOf(newTile.objects, 1);
+        assert.strictEqual(newTile.objects[0], initialObj);
+
+        const decodedTile: DecodedTile = getStandardTechniquePolygonTile();
+        tgc.createObjects(newTile, decodedTile);
+        assert.lengthOf(newTile.objects, 1);
+        assert.strictEqual(newTile.objects[0], initialObj);
+
+        const texture = initTextureStub.args[0][0] as THREE.Texture;
+        texture.onUpdate(); // fake texture update.
+        await newTile.waitTexturesReady();
+        assert.equal(newTile.objects.length, 1);
+        assert.notStrictEqual(newTile.objects[0], initialObj);
     });
 });
