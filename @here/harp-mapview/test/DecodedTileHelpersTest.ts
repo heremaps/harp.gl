@@ -4,18 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr, getPropertyValue, MapEnv, SolidLineTechnique } from "@here/harp-datasource-protocol";
-import { SolidLineMaterial } from "@here/harp-materials";
+import {
+    Expr,
+    getPropertyValue,
+    MapEnv,
+    ShaderTechnique,
+    SolidLineTechnique,
+    Technique
+} from "@here/harp-datasource-protocol";
+import { TileKey } from "@here/harp-geoutils";
+import { MapMeshStandardMaterial, SolidLineMaterial } from "@here/harp-materials";
 import { assertLogsSync } from "@here/harp-test-utils";
 import { LoggerManager } from "@here/harp-utils";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import * as THREE from "three";
 
+import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
 import {
     applyBaseColorToMaterial,
+    buildObject,
     createMaterial,
-    evaluateColorProperty
-} from "../lib/DecodedTileHelpers";
+    evaluateColorProperty,
+    usesObject3D
+} from "./../lib/DecodedTileHelpers";
+import { Tile } from "./../lib/Tile";
+import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 function assertLogsError(testCode: () => void, errorMessagePattern: string | RegExp) {
     return assertLogsSync(testCode, LoggerManager.instance.channel, "error", errorMessagePattern);
@@ -24,7 +37,7 @@ function assertLogsError(testCode: () => void, errorMessagePattern: string | Reg
 describe("DecodedTileHelpers", function () {
     const env = new MapEnv({ $zoom: 10, $pixelToMeters: 2 });
     const rendererCapabilities = { isWebGL2: false } as any;
-    describe("#createMaterial", function () {
+    describe("createMaterial", function () {
         it("supports #rgba in base material colors", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
@@ -108,8 +121,54 @@ describe("DecodedTileHelpers", function () {
             assert.exists(material);
             assert.isTrue(material.depthTest);
         });
+
+        it("ShaderTechnique", function () {
+            const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
+            const technique: ShaderTechnique = {
+                name: "shader",
+                primitive: "line",
+                params: {
+                    clipping: true,
+                    uniforms: {
+                        lineColor: { value: new THREE.Color("#f00") }
+                    },
+                    vertexShader: "",
+                    fragmentShader: ""
+                },
+                renderOrder: 0
+            };
+            const env = new MapEnv({ $zoom: 14 });
+            const renderer: THREE.WebGLRenderer = { capabilities: { isWebGL2: false } } as any;
+            const shaderMaterial = createMaterial(renderer, { technique, env });
+            assert.isTrue(
+                shaderMaterial instanceof THREE.ShaderMaterial,
+                "expected a THREE.ShaderMaterial"
+            );
+            if (shaderMaterial instanceof THREE.ShaderMaterial) {
+                assert.isObject(
+                    shaderMaterial.uniforms.lineColor,
+                    "expected a uniform named lineColor"
+                );
+                assert.isTrue(
+                    shaderMaterial.uniforms.lineColor.value instanceof THREE.Color,
+                    "expected a uniform of type THREE.Color"
+                );
+                assert.isString(shaderMaterial.vertexShader);
+                assert.isString(shaderMaterial.fragmentShader);
+                assert.isTrue(shaderMaterial.clipping);
+            }
+            assert.isTrue(usesObject3D(technique));
+            const object = buildObject(
+                technique,
+                new THREE.BufferGeometry(),
+                new THREE.Material(),
+                tile,
+                false
+            );
+            assert.isTrue(object instanceof THREE.Line, "expected a THREE.Line object");
+        });
     });
-    it("#applyBaseColorToMaterial toggles opacity with material", function () {
+    it("applyBaseColorToMaterial toggles opacity with material", function () {
         const material = new THREE.MeshBasicMaterial();
         assert.equal(material.blending, THREE.NormalBlending);
         const technique: SolidLineTechnique = {
@@ -133,7 +192,7 @@ describe("DecodedTileHelpers", function () {
         assert.equal(material.color.getHex(), 0xff00ff);
         assert.equal(material.transparent, false);
     });
-    describe("#evaluateColorProperty", function () {
+    describe("evaluateColorProperty", function () {
         it("leaves numbers untouched", function () {
             assert.strictEqual(evaluateColorProperty(0, env), 0);
             assert.strictEqual(evaluateColorProperty(0xff00ff, env), 0xff00ff);
@@ -161,7 +220,7 @@ describe("DecodedTileHelpers", function () {
         });
     });
 
-    describe("#getPropertyValue", function () {
+    describe("getPropertyValue", function () {
         it("returns literals untouched", function () {
             assert.equal(getPropertyValue(0, env), 0);
             assert.equal(getPropertyValue("a", env), "a");
@@ -190,5 +249,144 @@ describe("DecodedTileHelpers", function () {
             assert.strictEqual(getPropertyValue("rgb(255, 0, 0)", env), 0xff0000);
             assert.strictEqual(getPropertyValue("rgba(255, 0, 0, 0.5)", env), -2130771968);
         });
+    });
+
+    describe("buildObject", function () {
+        const tests: Array<{ technique: Technique; object: any; elevation: boolean }> = [
+            {
+                technique: {
+                    name: "extruded-line",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            {
+                technique: { name: "standard", renderOrder: 0 },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            {
+                technique: {
+                    name: "extruded-polygon",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            { technique: { name: "fill", renderOrder: 0 }, elevation: false, object: THREE.Mesh },
+            {
+                technique: { name: "squares", renderOrder: 0 },
+                elevation: false,
+                object: THREE.Points
+            },
+            {
+                technique: {
+                    name: "line",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Line
+            },
+            {
+                technique: {
+                    name: "segments",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.LineSegments
+            },
+            {
+                technique: {
+                    name: "shader",
+                    primitive: "point",
+                    params: {},
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Points
+            },
+            {
+                technique: {
+                    name: "shader",
+                    primitive: "line",
+                    params: {},
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Line
+            },
+            {
+                technique: {
+                    name: "shader",
+                    primitive: "mesh",
+                    params: {},
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            { technique: { name: "text", renderOrder: 0 }, object: undefined, elevation: false },
+            {
+                technique: {
+                    name: "extruded-polygon",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: true,
+                object: DisplacedMesh
+            },
+            {
+                technique: { name: "standard", renderOrder: 0 },
+                elevation: true,
+                object: DisplacedMesh
+            },
+            {
+                technique: {
+                    name: "extruded-line",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: true,
+                object: DisplacedMesh
+            },
+            {
+                technique: { name: "fill", renderOrder: 0 },
+                elevation: true,
+                object: DisplacedMesh
+            }
+        ];
+
+        for (const test of tests) {
+            const name =
+                "primitive" in test.technique
+                    ? `${test.technique.name}(${test.technique.primitive})`
+                    : test.technique.name;
+            const elevation = test.elevation ? "elevation" : "no elevation";
+            const testName = `buildObject builds proper obj for ${name} technique with ${elevation}`;
+            it(testName, function () {
+                const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
+                const geometry = new THREE.BufferGeometry();
+                const material = new MapMeshStandardMaterial();
+
+                const technique = test.technique;
+                const objClass = test.object;
+                if (objClass === undefined) {
+                    assert.isFalse(usesObject3D(technique));
+                } else {
+                    assert.isTrue(usesObject3D(technique));
+                    const obj = buildObject(technique, geometry, material, tile, test.elevation);
+                    expect(obj).to.be.instanceOf(objClass);
+                }
+            });
+        }
     });
 });
