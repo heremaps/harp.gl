@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - '*'
+      ### disabled for faster testing of CI
+  #pull_request:
+  #  branches:
+  #    - '*'
 
 env:
   nodeTestTimeout: 4000
