@@ -10,6 +10,7 @@ import {
     MapEnv,
     ShaderTechnique,
     SolidLineTechnique,
+    StandardTechnique,
     Technique
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
@@ -17,6 +18,7 @@ import { MapMeshStandardMaterial, SolidLineMaterial } from "@here/harp-materials
 import { assertLogsSync } from "@here/harp-test-utils";
 import { LoggerManager } from "@here/harp-utils";
 import { assert, expect } from "chai";
+import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
@@ -30,6 +32,8 @@ import {
 import { Tile } from "./../lib/Tile";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
+const itBrowserOnly = typeof Blob !== "undefined" ? it : xit;
+
 function assertLogsError(testCode: () => void, errorMessagePattern: string | RegExp) {
     return assertLogsSync(testCode, LoggerManager.instance.channel, "error", errorMessagePattern);
 }
@@ -37,6 +41,12 @@ function assertLogsError(testCode: () => void, errorMessagePattern: string | Reg
 describe("DecodedTileHelpers", function () {
     const env = new MapEnv({ $zoom: 10, $pixelToMeters: 2 });
     const rendererCapabilities = { isWebGL2: false } as any;
+    const sandbox = sinon.createSandbox();
+
+    afterEach(function () {
+        sandbox.restore();
+    });
+
     describe("createMaterial", function () {
         it("supports #rgba in base material colors", function () {
             const technique: SolidLineTechnique = {
@@ -138,8 +148,7 @@ describe("DecodedTileHelpers", function () {
                 renderOrder: 0
             };
             const env = new MapEnv({ $zoom: 14 });
-            const renderer: THREE.WebGLRenderer = { capabilities: { isWebGL2: false } } as any;
-            const shaderMaterial = createMaterial(renderer, { technique, env });
+            const shaderMaterial = createMaterial(rendererCapabilities, { technique, env });
             assert.isTrue(
                 shaderMaterial instanceof THREE.ShaderMaterial,
                 "expected a THREE.ShaderMaterial"
@@ -166,6 +175,151 @@ describe("DecodedTileHelpers", function () {
                 false
             );
             assert.isTrue(object instanceof THREE.Line, "expected a THREE.Line object");
+        });
+
+        it("creates texture from url", async function () {
+            const fakeImageElement: HTMLImageElement = {} as any;
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map:
+                    "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIyLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHdpZHRoPSI0OHB4IiBoZWlnaHQ9IjQ4cHgiIHZlcnNpb249IjEuMSIgaWQ9Imx1aS1pY29uLWRlc3RpbmF0aW9ucGluLW9uZGFyay1zb2xpZC1sYXJnZSIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQ4IDQ4IgoJIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDQ4IDQ4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8ZyBpZD0ibHVpLWljb24tZGVzdGluYXRpb25waW4tb25kYXJrLXNvbGlkLWxhcmdlLWJvdW5kaW5nLWJveCIgb3BhY2l0eT0iMCI+CgkJPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQ3LDF2NDZIMVYxSDQ3IE00OCwwSDB2NDhoNDhWMEw0OCwweiIvPgoJPC9nPgoJPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9IiNmZmZmZmYiIGQ9Ik0yNCwyQzEzLjg3MDgsMiw1LjY2NjcsMTAuMTU4NCw1LjY2NjcsMjAuMjIzMwoJCWMwLDUuMDMyNSwyLjA1MzMsOS41ODg0LDUuMzcxNywxMi44ODgzTDI0LDQ2bDEyLjk2MTctMTIuODg4M2MzLjMxODMtMy4zLDUuMzcxNy03Ljg1NTgsNS4zNzE3LTEyLjg4ODMKCQlDNDIuMzMzMywxMC4xNTg0LDM0LjEyOTIsMiwyNCwyeiBNMjQsMjVjLTIuNzY1LDAtNS0yLjIzNS01LTVzMi4yMzUtNSw1LTVzNSwyLjIzNSw1LDVTMjYuNzY1LDI1LDI0LDI1eiIvPgo8L2c+Cjwvc3ZnPgo="
+            };
+
+            const callbackSpy = sandbox.spy();
+            sandbox
+                .stub(THREE.ImageLoader.prototype, "load")
+                .callsFake((url, onLoad?, _onProgress?, _onError?) => {
+                    assert.equal(url, technique.map);
+                    onLoad?.(fakeImageElement);
+                    return fakeImageElement;
+                });
+            let material: MapMeshStandardMaterial | undefined;
+            await new Promise<void>((resolve, _) => {
+                material = createMaterial(
+                    rendererCapabilities,
+                    {
+                        technique,
+                        env
+                    },
+                    callbackSpy
+                ) as MapMeshStandardMaterial;
+                resolve();
+            });
+            assert.exists(material);
+            assert.exists(material!.map);
+            assert.strictEqual(material!.map!.image, fakeImageElement);
+            assert.isTrue(callbackSpy.called);
+        });
+
+        it("creates texture from raw texture buffer", function () {
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/raw",
+                    dataTextureProperties: {
+                        width: 1,
+                        height: 1
+                    }
+                }
+            };
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
+        });
+
+        itBrowserOnly("creates texture from png texture buffer", function () {
+            const fakeImageElement: HTMLImageElement = {} as any;
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/png",
+                    dataTextureProperties: {
+                        width: 1,
+                        height: 1
+                    }
+                }
+            };
+            let objectURL: string | undefined;
+            sandbox
+                .stub(THREE.ImageLoader.prototype, "load")
+                .callsFake((url, onLoad?, _onProgress?, _onError?) => {
+                    objectURL = url;
+                    onLoad?.(fakeImageElement);
+                    return fakeImageElement;
+                });
+            const revokeObjectURLSpy = sandbox.spy(URL, "revokeObjectURL");
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
+            assert.isDefined(objectURL);
+            material.map?.dispose();
+            assert.isTrue(revokeObjectURLSpy.calledWith(objectURL));
+        });
+
+        it("creates texture from dynamic property with HTML element", function () {
+            const env = new MapEnv({ image: { nodeName: "IMG" } });
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: Expr.fromJSON(["get", "image", ["dynamic-properties"]])
+            };
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
+        });
+
+        it("creates default texture when dynamic property evaluates to null", function () {
+            const env = new MapEnv({ image: null });
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: Expr.fromJSON(["get", "image", ["dynamic-properties"]])
+            };
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
         });
     });
     it("applyBaseColorToMaterial toggles opacity with material", function () {

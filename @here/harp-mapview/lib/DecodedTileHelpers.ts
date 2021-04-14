@@ -89,14 +89,22 @@ export interface MaterialOptions {
 function createTextureFromURL(
     url: string,
     onLoad: (texture: THREE.Texture) => void,
-    onError: (error: ErrorEvent | string) => void
+    onError: (error: ErrorEvent | string) => void,
+    isObjectURL: boolean
 ) {
-    new THREE.TextureLoader().load(
+    const texture = new THREE.TextureLoader().load(
         url,
         onLoad,
         undefined, // onProgress
         onError
     );
+
+    if (isObjectURL) {
+        // Remove object URL on dispose to avoid memory leaks.
+        texture.addEventListener("dispose", () => {
+            URL.revokeObjectURL(url);
+        });
+    }
 }
 
 function createTextureFromRawImage(
@@ -164,7 +172,6 @@ function createTexture(
             }
         }
         (material as any)[texturePropertyName] = texture;
-        texture.needsUpdate = true;
         material.needsUpdate = true;
 
         if (textureReadyCallback) {
@@ -187,7 +194,7 @@ function createTexture(
     }
 
     if (typeof textureProperty === "string") {
-        createTextureFromURL(textureProperty, onLoad, onError);
+        createTextureFromURL(textureProperty, onLoad, onError, false);
     } else if (isTextureBuffer(textureProperty)) {
         if (textureProperty.type === "image/raw") {
             createTextureFromRawImage(textureProperty, onLoad, onError);
@@ -195,11 +202,11 @@ function createTexture(
             const textureBlob = new Blob([textureProperty.buffer], {
                 type: textureProperty.type
             });
-            createTextureFromURL(URL.createObjectURL(textureBlob), onLoad, onError);
+            createTextureFromURL(URL.createObjectURL(textureBlob), onLoad, onError, true);
         }
     } else if (
-        textureProperty instanceof HTMLImageElement ||
-        textureProperty instanceof HTMLCanvasElement
+        typeof textureProperty === "object" &&
+        (textureProperty.nodeName === "IMG" || textureProperty.nodeName === "CANVAS")
     ) {
         onLoad(new THREE.CanvasTexture(textureProperty));
     }

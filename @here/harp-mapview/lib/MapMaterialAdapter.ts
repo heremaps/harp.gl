@@ -6,13 +6,10 @@
 
 import { ColorUtils, Expr, getPropertyValue, Value } from "@here/harp-datasource-protocol";
 import { disableBlending, enableBlending, RawShaderMaterial } from "@here/harp-materials";
-import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { evaluateColorProperty } from "./DecodedTileHelpers";
 import { MapView } from "./MapView";
-
-const logger = LoggerManager.instance.create("MapMaterialAdapter");
 
 /**
  * @hidden
@@ -36,6 +33,10 @@ export type StylePropertyEvaluator = (context: MapAdapterUpdateEnv) => Value;
  */
 export interface StyledProperties {
     [name: string]: Expr | StylePropertyEvaluator | Value | undefined;
+}
+
+function isTextureProperty(propertyName: string): boolean {
+    return propertyName === "map" || propertyName.endsWith("Map");
 }
 
 /**
@@ -166,7 +167,7 @@ export class MapMaterialAdapter {
             }
             if (propName === "color" || propName === "opacity") {
                 updateBaseColor = true;
-            } else if (!propName.endsWith("map")) {
+            } else if (!isTextureProperty(propName)) {
                 // Static textures are already set in the material during tile construction.
                 this.applyMaterialGenericProp(propName, currentValue);
             }
@@ -198,7 +199,7 @@ export class MapMaterialAdapter {
                 // `color` and `opacity` are special properties to support RGBA
                 if (propName === "color" || propName === "opacity") {
                     updateBaseColor = true;
-                } else if (propName === "map" || propName.endsWith("Map")) {
+                } else if (isTextureProperty(propName)) {
                     this.applyMaterialTextureProp(propName, newValue);
                     somethingChanged = true;
                 } else {
@@ -219,8 +220,9 @@ export class MapMaterialAdapter {
 
     private applyMaterialTextureProp(propName: string, value: Value) {
         const m = this.material as any;
-        if (!m[propName]) {
-            logger.error("Texture not created on material construction");
+        // Wait until the texture is loaded for the first time on tile creation, that way,
+        // the old texture properties can be copied to the new texture.
+        if (!m[propName] || value === null) {
             return;
         }
         const oldTexture = m[propName];
@@ -228,10 +230,13 @@ export class MapMaterialAdapter {
 
         if (typeof value === "string") {
             newTexture = new THREE.TextureLoader().load(value, (texture: THREE.Texture) => {
-                m[propName] = newTexture;
+                m[propName] = texture;
             });
-        } else if (value instanceof HTMLImageElement || value instanceof HTMLCanvasElement) {
-            newTexture = new THREE.CanvasTexture(value);
+        } else if (
+            typeof value === "object" &&
+            ((value as any).nodeName === "IMG" || (value as any).nodeName === "CANVAS")
+        ) {
+            newTexture = new THREE.CanvasTexture(value as any);
             m[propName] = newTexture;
         }
 
