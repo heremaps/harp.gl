@@ -6,10 +6,13 @@
 
 import { ColorUtils, Expr, getPropertyValue, Value } from "@here/harp-datasource-protocol";
 import { disableBlending, enableBlending, RawShaderMaterial } from "@here/harp-materials";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { evaluateColorProperty } from "./DecodedTileHelpers";
 import { MapView } from "./MapView";
+
+const logger = LoggerManager.instance.create("MapMaterialAdapter");
 
 /**
  * @hidden
@@ -163,7 +166,8 @@ export class MapMaterialAdapter {
             }
             if (propName === "color" || propName === "opacity") {
                 updateBaseColor = true;
-            } else {
+            } else if (!propName.endsWith("map")) {
+                // Static textures are already set in the material during tile construction.
                 this.applyMaterialGenericProp(propName, currentValue);
             }
         }
@@ -194,6 +198,9 @@ export class MapMaterialAdapter {
                 // `color` and `opacity` are special properties to support RGBA
                 if (propName === "color" || propName === "opacity") {
                     updateBaseColor = true;
+                } else if (propName === "map" || propName.endsWith("Map")) {
+                    this.applyMaterialTextureProp(propName, newValue);
+                    somethingChanged = true;
                 } else {
                     this.applyMaterialGenericProp(propName, newValue);
                     somethingChanged = true;
@@ -208,6 +215,34 @@ export class MapMaterialAdapter {
             }
         }
         return somethingChanged;
+    }
+
+    private applyMaterialTextureProp(propName: string, value: Value) {
+        const m = this.material as any;
+        if (!m[propName]) {
+            logger.error("Texture not created on material construction");
+            return;
+        }
+        const oldTexture = m[propName];
+        let newTexture: THREE.Texture | undefined;
+
+        if (typeof value === "string") {
+            newTexture = new THREE.TextureLoader().load(value, (texture: THREE.Texture) => {
+                m[propName] = newTexture;
+            });
+        } else if (value instanceof HTMLImageElement || value instanceof HTMLCanvasElement) {
+            newTexture = new THREE.CanvasTexture(value);
+            m[propName] = newTexture;
+        }
+
+        if (newTexture) {
+            newTexture.wrapS = oldTexture.wrapS;
+            newTexture.wrapT = oldTexture.wrapT;
+            newTexture.magFilter = oldTexture.magFilter;
+            newTexture.minFilter = oldTexture.minFilter;
+            newTexture.flipY = oldTexture.flipY;
+            newTexture.repeat = oldTexture.repeat;
+        }
     }
 
     private applyMaterialGenericProp(propName: string, value: Value) {
