@@ -120,10 +120,10 @@ export class Ring {
         }
 
         return !(
-            (curr.x <= 0 && next.x <= 0) ||
-            (curr.x >= extents && next.x >= extents) ||
-            (curr.y <= 0 && next.y <= 0) ||
-            (curr.y >= extents && next.y >= extents)
+            (curr.x < 0 && next.x < 0) ||
+            (curr.x > extents && next.x > extents) ||
+            (curr.y < 0 && next.y < 0) ||
+            (curr.y > extents && next.y > extents)
         );
     }
 }
