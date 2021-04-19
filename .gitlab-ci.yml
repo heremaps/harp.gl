@@ -30,6 +30,6 @@ downstream_bridge:
   variables:
     CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME: $CI_COMMIT_BRANCH
   trigger:
-    project: $CI_PROJECT_NAMESPACE/sdk
+    project: $CI_MERGE_REQUEST_PROJECT_PATH/sdk
     branch: $CI_COMMIT_BRANCH
     strategy: depend
