@@ -28,7 +28,7 @@ create-branch:
 downstream_bridge:
   stage: trigger
   variables:
-    CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME: $CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+    CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME: $CI_COMMIT_BRANCH
   trigger:
     project: rendering/harp.gl/sdk
     branch: $CI_COMMIT_BRANCH
