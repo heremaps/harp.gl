@@ -28,6 +28,6 @@ create-branch:
 downstream_bridge:
   stage: trigger
   trigger:
-    project: $DOWNSTREAM_PROJECT_NAME
+    project: rendering/harp.gl/sdk
     branch: $CI_COMMIT_BRANCH
     strategy: depend
