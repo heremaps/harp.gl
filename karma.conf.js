@@ -13,7 +13,13 @@ const { options } = require("./karma.options");
  */
 ("use.strict");
 module.exports = function (config) {
-    console.log(config);
+    const reports = config.coverage
+        ? {
+              html: "coverage",
+              "text-summary": ""
+          }
+        : {};
+
     config.set({
         ...options,
 
@@ -104,7 +110,8 @@ module.exports = function (config) {
             coverageOptions: {
                 // This is needed otherwise the tests are included in the code coverage %.
                 exclude: [/test/]
-            }
+            },
+            reports
         }
     });
 };
