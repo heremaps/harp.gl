@@ -71,11 +71,8 @@ module.exports = function (config) {
             // This package doesn't work, specifically the reference to `vector_tile.js`, it needs
             // to be fixed, something like the following should work... but doesn't and needs to be
             // investigated.
-            // {
-            //     pattern: "@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.js",
-            //     included: true
-            // },
-            //"@here/harp-vectortile-datasource/**/*.ts"
+            "@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.js",
+            "@here/harp-vectortile-datasource/**/*.ts",
 
             // This test complains about: Unable to resolve module [original-fs], it should be
             // checked if this test can run in the browser, or not.
@@ -89,10 +86,8 @@ module.exports = function (config) {
         exclude: [
             // Files that are to be excluded from the list included above.
             "**/test/rendering/**/*.*",
-            "@here/harp-examples/codebrowser.ts",
             "@here/harp-test-utils/lib/rendering/RenderingTestResultServer.ts",
             "@here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts",
-            "@here/harp-vectortile-datasource/test/*.ts",
             "@here/harp-datasource-protocol/test/ThemeTypingsTest.ts"
         ],
         proxies: {
@@ -107,21 +102,29 @@ module.exports = function (config) {
             // source files, that you wanna generate coverage for
             // do not include tests or libraries
             // (these files will be instrumented by Istanbul)
+            "@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.js": [
+                "karma-typescript"
+            ],
             "@here/**/*.ts": ["karma-typescript"]
         },
         // karma-typescript generates a coverage folder
         reporters: ["progress", "karma-typescript"],
         karmaTypescriptConfig: {
             tsconfig: "./tsconfig.json",
+
             // Don't try to compile the referenced
             compilerOptions: {
-                skipLibCheck: true
+                skipLibCheck: true,
+                // This is needed because there is a Typescript file which references vector_tile.js
+                allowJs: true
             },
             coverageOptions: {
                 // This is needed otherwise the tests are included in the code coverage %.
                 exclude: [/test/]
             },
-            reports
+            reports,
+            // "allowJs" tries to compile all sorts of stuff, so we need to restrict it.
+            exclude: ["**/webpack.*.js", "karma.*js"]
         }
     });
 };
