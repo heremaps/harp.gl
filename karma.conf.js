@@ -15,8 +15,11 @@ const { options } = require("./karma.options");
 module.exports = function (config) {
     const reports = config.coverage
         ? {
+              // For developers to look locally
               html: "coverage",
-              "text-summary": ""
+              "text-summary": "",
+              // Needed for codecov.io
+              lcov: "lcov"
           }
         : {};
 
