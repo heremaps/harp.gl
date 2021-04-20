@@ -58,7 +58,7 @@ jobs:
       if: matrix.os != 'windows-latest'
     - name: Publish Coverage (Linux)
       run: |
-        bash <(curl -s https://codecov.io/bash) -f coverage/*.json
+        bash <(curl -s https://codecov.io/bash) -f lcov/**/*.info
       shell: bash
       if: matrix.os == 'ubuntu-latest'
     - name: Save Coverage Report (Linux)
