@@ -13,6 +13,7 @@ const { options } = require("./karma.options");
  */
 ("use.strict");
 module.exports = function (config) {
+    console.log(config);
     config.set({
         ...options,
 
