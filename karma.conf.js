@@ -15,10 +15,8 @@ const { options } = require("./karma.options");
 module.exports = function (config) {
     const reports = config.coverage
         ? {
-              // For developers to look locally
-              html: "coverage",
               "text-summary": "",
-              // Needed for codecov.io
+              // Needed for codecov.io, includes html as well
               lcov: "lcov"
           }
         : {};
@@ -64,7 +62,11 @@ module.exports = function (config) {
             {
                 pattern: "@here/harp-mapview/test/resources/*.*",
                 included: false
-            }
+            },
+            {
+                pattern: "@here/harp-datasource-protocol/theme.schema.json",
+                included: false
+            },
 
             // This package doesn't work, specifically the reference to `vector_tile.js`, it needs
             // to be fixed, something like the following should work... but doesn't and needs to be
@@ -77,7 +79,12 @@ module.exports = function (config) {
 
             // This test complains about: Unable to resolve module [original-fs], it should be
             // checked if this test can run in the browser, or not.
-            // "@here/harp-map-theme/**/*.ts",
+            "@here/harp-map-theme/test/DefaultThemeTest.ts",
+            // These files are needed for the test above.
+            {
+                pattern: "@here/harp-map-theme/resources/*.json",
+                included: false
+            }
         ],
         exclude: [
             // Files that are to be excluded from the list included above.
