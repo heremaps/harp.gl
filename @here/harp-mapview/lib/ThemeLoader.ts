@@ -24,7 +24,6 @@ import {
     IContextLogger,
     ISimpleChannel,
     RelativeUriResolver,
-    resolveReferenceUri,
     UriResolver
 } from "@here/harp-utils";
 
