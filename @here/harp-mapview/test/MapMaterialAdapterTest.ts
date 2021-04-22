@@ -29,7 +29,7 @@ describe("MapMaterialAdapter", function () {
                 THREE.NearestMipmapNearestFilter
             );
             oldTexture.repeat = new THREE.Vector2(2, 3);
-            const newImage = { nodeName: "IMG" };
+            const newImage = { nodeName: "IMG", complete: true };
             const material = new THREE.MeshStandardMaterial({ map: oldTexture });
             const adapter = new MapMaterialAdapter(material, {
                 map: Expr.fromJSON(["get", "image", ["dynamic-properties"]])
@@ -49,6 +49,39 @@ describe("MapMaterialAdapter", function () {
             assert.equal(newTexture.minFilter, oldTexture.minFilter);
             assert.equal(newTexture.flipY, oldTexture.flipY);
             assert.equal(newTexture.repeat, oldTexture.repeat);
+        });
+
+        it("waits for a HTMLImageElement to be complete before setting it in the material", function () {
+            const oldTexture = new THREE.Texture();
+            const material = new THREE.MeshStandardMaterial({ map: oldTexture });
+            const adapter = new MapMaterialAdapter(material, {
+                map: Expr.fromJSON(["get", "image", ["dynamic-properties"]])
+            });
+            let onLoadFunc: () => {} | undefined;
+            const newImage = {
+                nodeName: "IMG",
+                complete: false,
+                addEventListener: sinon.stub().callsFake((event: string, onLoad: () => {}) => {
+                    assert.strictEqual(event, "load");
+                    onLoadFunc = onLoad;
+                }),
+                removeEventListener: sinon.spy()
+            };
+            const env = new MapEnv({ image: newImage });
+
+            const updated = adapter.ensureUpdated({ env, frameNumber: 1 });
+
+            assert.isTrue(updated);
+            const stillOldTexture = material.map!;
+            assert.isDefined(stillOldTexture);
+            assert.strictEqual(stillOldTexture, oldTexture);
+
+            assert.isDefined(onLoadFunc!);
+            onLoadFunc!();
+            assert.isTrue(newImage.removeEventListener.called);
+            const newTexture = material.map!;
+            assert.notStrictEqual(newTexture, oldTexture);
+            assert.strictEqual(newTexture.image, newImage);
         });
 
         it("creates texture from dynamic property with URL", function () {

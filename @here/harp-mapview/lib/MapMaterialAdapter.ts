@@ -232,12 +232,23 @@ export class MapMaterialAdapter {
             newTexture = new THREE.TextureLoader().load(value, (texture: THREE.Texture) => {
                 m[propName] = texture;
             });
-        } else if (
-            typeof value === "object" &&
-            ((value as any).nodeName === "IMG" || (value as any).nodeName === "CANVAS")
-        ) {
-            newTexture = new THREE.CanvasTexture(value as any);
-            m[propName] = newTexture;
+        } else if (typeof value === "object") {
+            const element = value as any;
+            const isImage = element.nodeName === "IMG";
+            const isCanvas = element.nodeName === "CANVAS";
+            if (isImage || isCanvas) {
+                newTexture = new THREE.CanvasTexture(element);
+
+                if (isImage && !element.complete) {
+                    const onLoad = () => {
+                        m[propName] = newTexture;
+                        element.removeEventListener("load", onLoad);
+                    };
+                    element.addEventListener("load", onLoad);
+                } else {
+                    m[propName] = newTexture;
+                }
+            }
         }
 
         if (newTexture) {
