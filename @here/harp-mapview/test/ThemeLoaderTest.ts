@@ -53,11 +53,6 @@ describe("ThemeLoader", function () {
             assert.equal(result.url, resolveReferenceUri(appBaseUrl, sampleThemeUrl));
         });
 
-        it("resolves absolute url of theme loaded from relative url", async function () {
-            const result = await ThemeLoader.load(sampleThemeUrl);
-            assert.equal(result.url, resolveReferenceUri(appBaseUrl, sampleThemeUrl));
-        });
-
         it("resolves urls of resources embedded in theme", async function () {
             const absoluteSampleThemeUrl = resolveReferenceUri(appBaseUrl, sampleThemeUrl);
 
