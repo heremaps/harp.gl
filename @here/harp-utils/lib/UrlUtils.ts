@@ -130,10 +130,7 @@ export function getUrlHostAndProtocol(
 
     const match = url.match(urlOriginRe);
     if (!match) {
-        return {
-            protocol: "",
-            host: ""
-        };
+        throw new Error(`getUrlHostAndProtocol: unable to parse URL '${url}'`);
     }
     return {
         protocol: match[1],
