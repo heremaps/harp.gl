@@ -235,7 +235,8 @@ const fillTechniqueDescriptor = mergeTechniqueDescriptor<FillTechnique>(
             color: { scope: AttrScope.TechniqueRendering, automatic: true },
             opacity: { scope: AttrScope.TechniqueRendering, automatic: true },
             transparent: { scope: AttrScope.TechniqueRendering, automatic: true },
-            lineWidth: AttrScope.TechniqueRendering
+            lineWidth: AttrScope.TechniqueRendering,
+            map: { scope: AttrScope.TechniqueRendering, automatic: true }
         }
     }
 );

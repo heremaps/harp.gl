@@ -1199,6 +1199,20 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
      * Width of the lines. Currently limited to the [0, 1] range.
      */
     lineWidth?: DynamicProperty<number>;
+
+    /*
+     * URL or texture buffer that should be used as color map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshBasicMaterial.map
+     */
+    map?: DynamicProperty<string | TextureBuffer>;
+    mapProperties?: DynamicProperty<TextureProperties>;
+
+    /**
+     * Whether and how texture coordinates should be generated. No texture coordinates are
+     * generated if `undefined`.
+     * Should be set if a `map` is assigned.
+     */
+    textureCoordinateType?: TextureCoordinateType;
 }
 
 /**

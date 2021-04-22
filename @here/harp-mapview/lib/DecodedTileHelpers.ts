@@ -13,11 +13,10 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isShaderTechnique,
-    isStandardTechnique,
-    isTerrainTechnique,
     isTextureBuffer,
     parseStringEncodedColor,
     ShaderTechnique,
+    supportsTextures,
     Technique,
     TEXTURE_PROPERTY_KEYS,
     TextureBuffer,
@@ -260,11 +259,7 @@ export function createMaterial(
 
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
 
-    if (
-        isStandardTechnique(technique) ||
-        isTerrainTechnique(technique) ||
-        isExtrudedPolygonTechnique(technique)
-    ) {
+    if (supportsTextures(technique)) {
         TEXTURE_PROPERTY_KEYS.forEach((texturePropertyName: string) =>
             createTexture(material, texturePropertyName, options, textureReadyCallback)
         );

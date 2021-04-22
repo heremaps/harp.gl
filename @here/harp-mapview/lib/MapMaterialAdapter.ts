@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ColorUtils, Expr, getPropertyValue, Value } from "@here/harp-datasource-protocol";
+import {
+    ColorUtils,
+    Expr,
+    getPropertyValue,
+    TEXTURE_PROPERTY_KEYS,
+    Value
+} from "@here/harp-datasource-protocol";
 import { disableBlending, enableBlending, RawShaderMaterial } from "@here/harp-materials";
 import * as THREE from "three";
 
@@ -36,7 +42,7 @@ export interface StyledProperties {
 }
 
 function isTextureProperty(propertyName: string): boolean {
-    return propertyName === "map" || propertyName.endsWith("Map");
+    return TEXTURE_PROPERTY_KEYS.includes(propertyName);
 }
 
 /**
