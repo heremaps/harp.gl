@@ -135,7 +135,7 @@ export class ThemeLoader {
                 throw new Error(`ThemeLoader#load: cannot load theme: ${response.statusText}`);
             }
             theme = (await response.json()) as Theme;
-            theme.url = resolveReferenceUri(getAppBaseUrl(), themeUrl);
+            theme.url = themeUrl;
             theme = this.resolveUrls(theme, options);
         } else if (theme.url === undefined) {
             // assume that theme url is same as baseUrl
