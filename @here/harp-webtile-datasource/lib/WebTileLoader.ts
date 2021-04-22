@@ -58,7 +58,7 @@ export class WebTileLoader extends BaseTileLoader {
                 const planeMesh = addGroundPlane(
                     this.tile,
                     this.dataSource.renderOrder,
-                    undefined,
+                    0xffffff,
                     this.dataSource.opacity,
                     true
                 );
@@ -67,6 +67,7 @@ export class WebTileLoader extends BaseTileLoader {
                 if (this.dataSource.transparent) {
                     enableBlending(planeMaterial);
                 }
+                planeMaterial.depthTest = false;
 
                 this.tile.invalidateResourceInfo();
                 this.dataSource.requestUpdate();

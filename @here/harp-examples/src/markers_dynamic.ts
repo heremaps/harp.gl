@@ -6,7 +6,7 @@
 
 import { FeaturesDataSource, MapViewPointFeature } from "@here/harp-features-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls, MapControlsUI } from "@here/harp-map-controls";
+import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import {
     APIFormat,
@@ -14,6 +14,7 @@ import {
     GeoJsonDataProvider,
     VectorTileDataSource
 } from "@here/harp-vectortile-datasource";
+import { GUI } from "dat.gui";
 
 import { apikey, copyrightInfo } from "../config";
 
@@ -70,7 +71,8 @@ export namespace DynamicMarkersExample {
                 }
             },
             target: new GeoCoordinates(52.52, 13.4),
-            zoomLevel: 12
+            zoomLevel: 12,
+            delayLabelsUntilMovementFinished: false
         });
 
         CopyrightElementHandler.install("copyrightNotice").attach(map);
@@ -84,18 +86,30 @@ export namespace DynamicMarkersExample {
         window.addEventListener("resize", () => {
             map.resize(window.innerWidth, window.innerHeight);
         });
+        const omvDataSource = new VectorTileDataSource({
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+            apiFormat: APIFormat.XYZOMV,
+            styleSetName: "tilezen",
+            maxDataLevel: 17,
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
+            copyrightInfo
+        });
+        map.addDataSource(omvDataSource);
 
+        // Register the icon image referenced in the style.
+        for (const { name, url } of icons) {
+            map.userImageCache.addImage(name, url);
+        }
         map.update();
 
         return map;
     }
 
-    function handlePick(
-        mapView: MapView,
-        markersDataSource: FeaturesDataSource,
-        x: number,
-        y: number
-    ): void {
+    function removeMarker(x: number, y: number): void {
         // Intersection test filtering the results by layer name to get only markers.
         const layerName = (markersDataSource.dataProvider() as GeoJsonDataProvider).name;
         const results = mapView.intersectMapObjects(x, y).filter(result => {
@@ -115,78 +129,83 @@ export namespace DynamicMarkersExample {
     }
 
     let markerId = 0;
-    function attachClickEvents(mapView: MapView, markersDataSource: FeaturesDataSource) {
-        mapView.canvas.addEventListener("click", event => {
-            if (event.shiftKey) {
-                const geo = mapView.getGeoCoordinatesAt(event.clientX, event.clientY);
-                if (geo) {
-                    // Add a new marker to the data source at the click coordinates.
-                    markersDataSource.add(
-                        new MapViewPointFeature(geo.toGeoPoint() as number[], {
-                            text: markerId.toString(),
-                            id: markerId,
-                            icon: icons[markerId % icons.length].name,
-                            renderOrder: markerId
-                        })
-                    );
-                    markerId++;
-                }
-            } else if (event.ctrlKey) {
-                handlePick(mapView, markersDataSource, event.pageX, event.pageY);
-            }
-        });
 
+    function addMarker(x: number, y: number) {
+        const geo = mapView.getGeoCoordinatesAt(x, y);
+        if (geo) {
+            // Add a new marker to the data source at the click coordinates.
+            markersDataSource.add(
+                new MapViewPointFeature(geo.toGeoPoint() as number[], {
+                    text: markerId.toString(),
+                    id: markerId,
+                    icon: icons[markerId % icons.length].name,
+                    renderOrder: markerId
+                })
+            );
+            markerId++;
+        }
+    }
+
+    function clearMarkers() {
+        markersDataSource.clear();
+        markerId = 0;
+    }
+    function getCanvasPosition(event: MouseEvent | Touch): { x: number; y: number } {
+        const { left, top } = mapView.canvas.getBoundingClientRect();
+        return { x: event.clientX - Math.floor(left), y: event.clientY - Math.floor(top) };
+    }
+
+    function attachInputEvents() {
+        const canvas = mapView.canvas;
+        new LongPressHandler(
+            canvas,
+            event => {
+                const canvasPos = getCanvasPosition(event);
+                removeMarker(canvasPos.x, canvasPos.y);
+            },
+            event => {
+                const canvasPos = getCanvasPosition(event);
+                addMarker(canvasPos.x, canvasPos.y);
+            }
+        );
         window.addEventListener("keypress", event => {
             if (event.key === "c") {
-                markersDataSource.clear();
-                markerId = 0;
+                clearMarkers();
             }
         });
+    }
 
-        const instructions = `
-Shift+Left Click to add a marker<br/>Ctrl+Left Click to remove it<br/>
-Press 'c' to clear the map.<br/>`;
+    function addUI() {
+        const gui = new GUI();
+        gui.width = 250;
+        gui.add(
+            {
+                clear: clearMarkers
+            },
+            "clear"
+        ).name("(C)lear markers");
+    }
+
+    function addInstructions() {
         const message = document.createElement("div");
-        message.style.position = "absolute";
-        message.style.cssFloat = "right";
-        message.style.top = "10px";
-        message.style.right = "10px";
-        message.style.backgroundColor = "grey";
-        message.innerHTML = instructions;
+        message.innerHTML = `Tap map to add a marker, long press on a marker to remove it`;
+        message.style.position = "relative";
+        message.style.top = "60px";
         document.body.appendChild(message);
     }
 
-    function attachDataSources(mapView: MapView) {
-        const omvDataSource = new VectorTileDataSource({
-            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-            apiFormat: APIFormat.XYZOMV,
-            styleSetName: "tilezen",
-            maxDataLevel: 17,
-            authenticationCode: apikey,
-            authenticationMethod: {
-                method: AuthenticationMethod.QueryString,
-                name: "apikey"
-            },
-            copyrightInfo
-        });
-        mapView.addDataSource(omvDataSource);
-
-        // Register the icon image referenced in the style.
-        for (const { name, url } of icons) {
-            mapView.userImageCache.addImage(name, url);
-        }
-
-        // Create a [[FeaturesDataSource]] for the markers.
-        const markersDataSource = new FeaturesDataSource({
-            name: "geojson",
-            styleSetName: "geojson",
-            gatherFeatureAttributes: true
-        });
-        mapView.addDataSource(markersDataSource);
-
-        attachClickEvents(mapView, markersDataSource);
-    }
+    addInstructions();
 
     const mapView = initializeMapView("mapCanvas");
-    attachDataSources(mapView);
+
+    // Create a [[FeaturesDataSource]] for the markers.
+    const markersDataSource = new FeaturesDataSource({
+        name: "geojson",
+        styleSetName: "geojson",
+        gatherFeatureAttributes: true
+    });
+    mapView.addDataSource(markersDataSource);
+
+    attachInputEvents();
+    addUI();
 }

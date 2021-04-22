@@ -313,7 +313,8 @@ describe("DataSource", function () {
         describe("requestUpdate", function () {
             it("dispatches an update event", function () {
                 const spy = sinon.spy((e: any) => {
-                    /* noop */
+                    // This behavior changed with r127
+                    expect(e.target).to.equal(dataSource);
                 });
                 dataSource.addEventListener("update", spy);
                 dataSource.requestUpdate();
@@ -321,7 +322,6 @@ describe("DataSource", function () {
                 expect(spy.calledOnce).to.be.true;
                 const event = spy.getCalls()[0].args[0];
                 expect(event.type).to.equal("update");
-                expect(event.target).to.equal(dataSource);
             });
         });
     });

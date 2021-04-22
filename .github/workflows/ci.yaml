@@ -52,9 +52,8 @@ jobs:
     - name: Pretest
       run: yarn run pre-test
       shell: bash
-    - name: Test on Node.js
-      run: |
-        yarn cov-test --forbid-only --timeout ${{ env.nodeTestTimeout }}
+    - name: Test Coverage
+      run: yarn cov-test --forbid-only --timeout ${{ env.nodeTestTimeout }}
       shell: bash
       if: matrix.os != 'windows-latest'
     - name: Generate coverage report
@@ -62,6 +61,11 @@ jobs:
         yarn cov-report-html
       shell: bash
       if: matrix.os != 'windows-latest'
+    - name: Publish Coverage (Linux)
+      run: |
+        bash <(curl -s https://codecov.io/bash) -f coverage/*.json
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
     - name: Save Coverage Report (Linux)
       uses: actions/upload-artifact@master
       with:
@@ -115,4 +119,3 @@ jobs:
       shell: bash
       #  typedoc doesn't work on windows -> https://github.com/unstubbable/typedoc-plugin-monorepo/pull/1
       if: matrix.os != 'windows-latest'
-

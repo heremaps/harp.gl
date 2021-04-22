@@ -464,6 +464,7 @@ export class TileGeometryCreator {
                         textPath.text,
                         path,
                         tile.offset,
+                        tile.dataSource.name,
                         textPath.objInfos,
                         textPath.pathLengthSqr
                     );
@@ -489,7 +490,7 @@ export class TileGeometryCreator {
                 }
 
                 const positions = new THREE.BufferAttribute(
-                    new Float32Array(text.positions.buffer),
+                    new Float64Array(text.positions.buffer),
                     text.positions.itemCount
                 );
 
@@ -516,6 +517,7 @@ export class TileGeometryCreator {
                         label!,
                         point,
                         tile.offset,
+                        tile.dataSource.name,
                         attributes
                     );
                     tile.addTextElement(textElement);

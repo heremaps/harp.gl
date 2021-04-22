@@ -124,12 +124,17 @@ describe("OmvDecodedTileEmitter", function () {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, level);
         const decodeInfo = new DecodeInfo("test", mercatorProjection, tileKey);
 
-        function getExpectedHeight(geoAltitude: number, worldCoords: Vector3Like) {
+        function getExpectedHeight(
+            geoAltitude: number,
+            worldCoords: Vector3Like,
+            toSinglePrecision = true
+        ) {
             const scaleFactor = expectScaledHeight
                 ? decodeInfo.targetProjection.getScaleFactor(worldCoords)
                 : 1.0;
+            const expectedHeight = geoAltitude * scaleFactor;
             // Force conversion to single precision as in decoder so that results match.
-            return new Float32Array([geoAltitude * scaleFactor])[0];
+            return toSinglePrecision ? new Float32Array([expectedHeight])[0] : expectedHeight;
         }
 
         it(`Point Height at level ${level} with constantHeight ${
@@ -174,13 +179,13 @@ describe("OmvDecodedTileEmitter", function () {
 
             assert.equal(textGeometries?.length, 1, "only one geometry created");
 
-            const buffer = new Float32Array(textGeometries![0].positions.buffer);
+            const buffer = new Float64Array(textGeometries![0].positions.buffer);
             assert.equal(buffer.length, 3, "one position (3 coordinates)");
 
             const actualHeight = buffer[2];
             assert.approximately(
                 actualHeight,
-                getExpectedHeight(geoCoords.altitude, worldCoords),
+                getExpectedHeight(geoCoords.altitude, worldCoords, false),
                 1e-6
             );
         });
@@ -304,6 +309,129 @@ describe("OmvDecodedTileEmitter", function () {
 
         assert.closeTo(texCoords[6], 0, eps);
         assert.closeTo(texCoords[7], 1, eps);
+    });
+
+    it("Ring data conversion to polygon data: exterior ring with hole", function () {
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
+        const projection = mercatorProjection;
+
+        const decodeInfo = new DecodeInfo("test", projection, tileKey);
+        const polygons: IPolygonGeometry[] = [
+            {
+                rings: [
+                    [
+                        // exterior CW
+                        new Vector2(Math.floor(extents * 0.1), Math.floor(extents * 0.1)),
+                        new Vector2(Math.floor(extents * 0.9), Math.floor(extents * 0.1)),
+                        new Vector2(Math.floor(extents * 0.9), Math.floor(extents * 0.9)),
+                        new Vector2(Math.floor(extents * 0.1), Math.floor(extents * 0.9))
+                    ],
+                    [
+                        // interior CCW
+                        new Vector2(Math.floor(extents * 0.2), Math.floor(extents * 0.8)),
+                        new Vector2(Math.floor(extents * 0.8), Math.floor(extents * 0.8)),
+                        new Vector2(Math.floor(extents * 0.8), Math.floor(extents * 0.2)),
+                        new Vector2(Math.floor(extents * 0.2), Math.floor(extents * 0.2))
+                    ]
+                ]
+            }
+        ];
+
+        const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo);
+
+        const storageLevel = 10;
+        const mockContext = {
+            env: new MapEnv({ layer: "mock-layer" }),
+            storageLevel,
+            zoomLevel: storageLevel
+        };
+
+        const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockContext.env);
+        tileEmitter.processPolygonFeature(
+            "mock-layer",
+            4096,
+            polygons,
+            mockContext,
+            matchedTechniques
+        );
+
+        const decodedTile = tileEmitter.getDecodedTile();
+
+        const { techniques, geometries } = decodedTile;
+        assert.equal(techniques.length, 1, "only one technique created");
+        assert.equal(
+            isStandardTechnique(techniques[0]),
+            true,
+            "created technique is standard technique"
+        );
+        assert.equal(geometries.length, 1, "only one geometry created");
+        assert.equal(geometries[0].type, GeometryType.Polygon, "geometry is a polygon");
+        assert.equal(
+            geometries[0].vertexAttributes?.length,
+            2,
+            "number of attributes is as expected"
+        );
+
+        const firstGeometry = geometries[0];
+        const vertexCount = 8;
+        checkVertexAttribute(firstGeometry, 0, "position", vertexCount);
+        const texCoords = checkVertexAttribute(firstGeometry, 1, "uv", vertexCount);
+
+        const eps = 1e-3;
+        assert.closeTo(texCoords[0], 0.1, eps);
+        assert.closeTo(texCoords[1], 0.9, eps);
+
+        assert.closeTo(texCoords[2], 0.9, eps);
+        assert.closeTo(texCoords[3], 0.9, eps);
+
+        assert.closeTo(texCoords[4], 0.9, eps);
+        assert.closeTo(texCoords[5], 0.1, eps);
+
+        assert.closeTo(texCoords[6], 0.1, eps);
+        assert.closeTo(texCoords[7], 0.1, eps);
+    });
+
+    it("Ring data conversion to polygon data: exterior ring clipped into a ring with no area", function () {
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
+        const projection = mercatorProjection;
+
+        const decodeInfo = new DecodeInfo("test", projection, tileKey);
+        const polygons: IPolygonGeometry[] = [
+            {
+                rings: [
+                    [
+                        // exterior CW
+                        new Vector2(extents, 0),
+                        new Vector2(extents + 1, 0),
+                        new Vector2(extents + 1, extents),
+                        new Vector2(extents, extents)
+                    ]
+                ]
+            }
+        ];
+
+        const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo);
+
+        const storageLevel = 10;
+        const mockContext = {
+            env: new MapEnv({ layer: "mock-layer" }),
+            storageLevel,
+            zoomLevel: storageLevel
+        };
+
+        const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockContext.env);
+        tileEmitter.processPolygonFeature(
+            "mock-layer",
+            4096,
+            polygons,
+            mockContext,
+            matchedTechniques
+        );
+
+        const decodedTile = tileEmitter.getDecodedTile();
+
+        const { geometries } = decodedTile;
+        assert.equal(geometries.length, 0, "geometries with zero area are discarded");
     });
 
     it("Test splitJaggyLines for short paths", function () {

@@ -64,7 +64,7 @@ function swapCamera() {
 
 const hereWebTileDataSource = new HereWebTileDataSource({
     apikey,
-    dataSourceOrder: 5,
+    renderingOptions: { renderOrder: 50 },
     name: "raster-tiles"
 });
 

@@ -282,25 +282,21 @@ export class MapViewAtmosphere {
     }
 
     private createSkyGeometry() {
-        let skyGeometry: THREE.Geometry;
         switch (this.m_projection.type) {
             case ProjectionType.Spherical:
-                skyGeometry = new THREE.SphereGeometry(
+                this.m_skyGeometry = new THREE.SphereGeometry(
                     EarthConstants.EQUATORIAL_RADIUS * (1 + SKY_ATMOSPHERE_ALTITUDE_FACTOR),
                     256,
                     256
                 );
                 break;
             default: {
-                skyGeometry = new THREE.PlaneGeometry(200, 200);
+                this.m_skyGeometry = new THREE.PlaneGeometry(200, 200);
                 break;
             }
         }
 
-        skyGeometry.translate(0, 0, 0);
-        this.m_skyGeometry = new THREE.BufferGeometry();
-        this.m_skyGeometry.fromGeometry(skyGeometry);
-        skyGeometry.dispose();
+        this.m_skyGeometry.translate(0, 0, 0);
 
         if (this.m_materialVariant === AtmosphereShadingVariant.ScatteringShader) {
             this.m_skyMaterial = new SkyAtmosphereMaterial({
@@ -335,24 +331,20 @@ export class MapViewAtmosphere {
     }
 
     private createGroundGeometry() {
-        let groundGeometry: THREE.Geometry;
         switch (this.m_projection.type) {
             case ProjectionType.Spherical:
-                groundGeometry = new THREE.SphereGeometry(
+                this.m_groundGeometry = new THREE.SphereGeometry(
                     EarthConstants.EQUATORIAL_RADIUS * (1 + GROUND_ATMOSPHERE_ALTITUDE_FACTOR),
                     256,
                     256
                 );
                 break;
             default: {
-                groundGeometry = new THREE.PlaneGeometry(200, 200);
+                this.m_groundGeometry = new THREE.PlaneGeometry(200, 200);
                 break;
             }
         }
-        groundGeometry.translate(0, 0, 0);
-        this.m_groundGeometry = new THREE.BufferGeometry();
-        this.m_groundGeometry.fromGeometry(groundGeometry);
-        groundGeometry.dispose();
+        this.m_groundGeometry.translate(0, 0, 0);
 
         if (this.m_materialVariant === AtmosphereShadingVariant.ScatteringShader) {
             this.m_groundMaterial = new GroundAtmosphereMaterial({
@@ -416,7 +408,7 @@ export class MapViewAtmosphere {
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
             camera: THREE.Camera,
-            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _geometry: THREE.BufferGeometry,
             material: THREE.Material,
             _group: THREE.Group
         ) => {
@@ -427,7 +419,7 @@ export class MapViewAtmosphere {
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
             camera: THREE.Camera,
-            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _geometry: THREE.BufferGeometry,
             _material: THREE.Material,
             _group: THREE.Group
         ) => {
@@ -450,7 +442,7 @@ export class MapViewAtmosphere {
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
             camera: THREE.Camera,
-            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _geometry: THREE.BufferGeometry,
             material: THREE.Material,
             _group: THREE.Group
         ) => {

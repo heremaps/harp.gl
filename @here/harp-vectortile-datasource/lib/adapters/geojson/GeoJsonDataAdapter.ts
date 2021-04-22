@@ -9,7 +9,7 @@ import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
 import { Vector2Like } from "@here/harp-geoutils/lib/math/Vector2Like";
 import { ILogger } from "@here/harp-utils";
-import { Vector2, Vector3 } from "three";
+import { ShapeUtils, Vector2, Vector3 } from "three";
 
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
@@ -134,21 +134,11 @@ function convertLineGeometry(
         convertLineStringGeometry(lineString, decodeInfo)
     );
 }
-
-function signedPolygonArea(contour: GeoPointLike[]): number {
-    const n = contour.length;
-    let area = 0.0;
-    for (let p = n - 1, q = 0; q < n; p = q++) {
-        area += contour[p][0] * contour[q][1] - contour[q][0] * contour[p][1];
-    }
-    return area * 0.5;
-}
-
 function convertRings(coordinates: GeoPointLike[][], decodeInfo: DecodeInfo): IPolygonGeometry {
     const rings = coordinates.map((ring, i) => {
         const isOuterRing = i === 0;
-        const isClockWise = signedPolygonArea(ring) < 0;
         const { positions } = convertLineStringGeometry(ring, decodeInfo);
+        const isClockWise = ShapeUtils.area(positions) > 0;
         if ((isOuterRing && !isClockWise) || (!isOuterRing && isClockWise)) {
             positions.reverse();
         }

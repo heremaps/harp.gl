@@ -154,7 +154,7 @@ export class MapControls extends EventDispatcher {
     /**
      * Inertia damping duration for the zoom, in seconds.
      */
-    zoomInertiaDampingDuration = 0.5;
+    zoomInertiaDampingDuration = 0.6;
 
     /**
      * Inertia damping duration for the panning, in seconds.
@@ -180,12 +180,34 @@ export class MapControls extends EventDispatcher {
 
     /**
      * Determines the zoom level delta for single mouse wheel movement. So after each mouse wheel
-     * movement the current zoom level will be added or subtracted by this value. The default value
-     * is `0.2` - this means that every 5th mouse wheel movement you will cross a zoom level.
+     * movement the current zoom level will be added or subtracted by this value.
+     *
+     * The default values are:
+     * - `0.2` when `inertiaEnabled` is `false` - this means that every 5th mouse wheel movement
+     * you will cross a zoom level.
+     * - `0.8`, otherwise.
+     */
+    get zoomLevelDeltaOnMouseWheel(): number {
+        return this.m_zoomLevelDeltaOnMouseWheel !== undefined
+            ? this.m_zoomLevelDeltaOnMouseWheel
+            : this.inertiaEnabled
+            ? 0.8
+            : 0.2;
+    }
+
+    /**
+     * Set the zoom level delta for a single mouse wheel movement.
      *
      * **Note**: To reverse the zoom direction, you can provide a negative value.
      */
-    zoomLevelDeltaOnMouseWheel = 0.2;
+    set zoomLevelDeltaOnMouseWheel(delta: number) {
+        this.m_zoomLevelDeltaOnMouseWheel = delta;
+    }
+
+    /**
+     * @private
+     */
+    private m_zoomLevelDeltaOnMouseWheel?: number;
 
     /**
      * Zoom level delta when using the UI controls.
@@ -666,7 +688,14 @@ export class MapControls extends EventDispatcher {
     }
 
     private easeOutCubic(startValue: number, endValue: number, time: number): number {
-        return startValue + (endValue - startValue) * (--time * time * time + 1);
+        // https://easings.net/#easeOutCubic
+        return startValue + (endValue - startValue) * (1 - Math.pow(1 - time, 3));
+    }
+
+    private easeOutCirc(startValue: number, endValue: number, time: number): number {
+        // https://easings.net/#easeOutCirc
+        const easing = Math.sqrt(1 - Math.pow(time - 1, 2));
+        return startValue + (endValue - startValue) * easing;
     }
 
     private handleZoom() {
@@ -702,7 +731,7 @@ export class MapControls extends EventDispatcher {
         this.currentZoom =
             !this.inertiaEnabled || Math.abs(this.zoomLevelTargeted - this.m_startZoom) < EPSILON
                 ? this.zoomLevelTargeted
-                : this.easeOutCubic(
+                : this.easeOutCirc(
                       this.m_startZoom,
                       this.zoomLevelTargeted,
                       Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
@@ -1012,7 +1041,7 @@ export class MapControls extends EventDispatcher {
         );
 
         this.setZoomLevel(
-            this.zoomLevelTargeted + this.zoomLevelDeltaOnMouseWheel * (event.deltaY > 0 ? -1 : 1),
+            this.mapView.zoomLevel - this.zoomLevelDeltaOnMouseWheel * Math.sign(event.deltaY),
             screenTarget
         );
 

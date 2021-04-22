@@ -51,6 +51,8 @@ export abstract class ClippingEdge {
      *
      * @param polygon Clip the polygon against this edge.
      * @param extent The extent of the bounding box.
+     *
+     * @return The clipped polygon.
      */
     clipPolygon(polygon: Vector2[], extent: number): Vector2[] {
         const inputList = polygon;
@@ -115,7 +117,12 @@ class TopClippingEdge extends ClippingEdge {
 }
 
 class RightClippingEdge extends ClippingEdge {
-    /** @override */
+    /**
+     * @override
+     *
+     * See: HARP-14633, this should potentially be changed to < as it was previously.
+     * However further investigation is needed to confirm this.
+     */
     inside(point: Vector2, extent: number): boolean {
         return point.x <= extent;
     }
@@ -200,7 +207,7 @@ const clipEdges = [
 ];
 
 /**
- * Clip the given polygon using the Sutherland-Hodgman algorithm.
+ * Clip the given polygon against a rectangle using the Sutherland-Hodgman algorithm.
  *
  * @remarks
  * The coordinates of the polygon must be integer numbers.

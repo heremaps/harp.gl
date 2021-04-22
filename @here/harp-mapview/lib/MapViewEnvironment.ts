@@ -153,7 +153,7 @@ export class MapViewEnvironment {
                 }
                 this.m_createdLights!.push(light);
 
-                const clonedLight: THREE.Light = light.clone();
+                const clonedLight: THREE.Light = light.clone() as THREE.Light;
                 this.m_mapView.overlayScene.add(clonedLight);
                 if (clonedLight instanceof THREE.DirectionalLight) {
                     this.m_mapView.overlayScene.add(clonedLight.target.clone());

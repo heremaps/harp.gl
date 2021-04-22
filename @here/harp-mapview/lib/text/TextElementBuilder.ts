@@ -195,6 +195,7 @@ export class TextElementBuilder {
      * @param text - The text to be displayed.
      * @param points - The position(s) for the text element.
      * @param tileOffset - The TextElement's tile offset, see {@link Tile.offset}.
+     * @param dataSourceName - The name of the data source.
      * @param attributes - TextElement attribute map.
      * @param pathLengthSqr - Precomputed path length squared for path labels.
      * @return The created text element.
@@ -203,6 +204,7 @@ export class TextElementBuilder {
         text: string,
         points: THREE.Vector3 | THREE.Vector3[],
         tileOffset: number,
+        dataSourceName: string,
         attributes?: AttributeMap,
         pathLengthSqr?: number,
         offsetDirection?: number
@@ -229,7 +231,8 @@ export class TextElementBuilder {
             this.m_fadeNear,
             this.m_fadeFar,
             tileOffset,
-            offsetDirection
+            offsetDirection,
+            dataSourceName
         );
         textElement.minZoomLevel = this.m_minZoomLevel;
         textElement.maxZoomLevel = this.m_maxZoomLevel;

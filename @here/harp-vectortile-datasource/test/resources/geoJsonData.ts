@@ -74,7 +74,7 @@ export const GEOJSON_DATA: FeatureCollection = {
 };
 
 export const THEME: Theme = {
-    // INFO: Commented out until text renderer refactor (Travis ci build fails).
+    // INFO: Commented out until text renderer refactor (CI build fails).
     // defaultTextStyle: {
     //     name: "defaultTextStyle",
     //     color: "#6D7477",
