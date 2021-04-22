@@ -17,7 +17,7 @@ module.exports = function (config) {
         ? {
               "text-summary": "",
               // Needed for codecov.io, includes html as well
-              lcov: "lcov"
+              lcov: "coverage"
           }
         : {};
 
