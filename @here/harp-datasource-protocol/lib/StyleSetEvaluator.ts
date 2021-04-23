@@ -737,6 +737,11 @@ export class StyleSetEvaluator {
             .map(([_attrName, attrValue]) => {
                 if (attrValue === undefined) {
                     return "U";
+                } else if (typeof attrValue === "object") {
+                    return JSON.stringify(attrValue, (key, value) => {
+                        // ArrayBuffers cannot be directly stringified, convert them to arrays.
+                        return value instanceof ArrayBuffer ? new Uint8Array(value) : value;
+                    });
                 } else {
                     return JSON.stringify(attrValue);
                 }

@@ -265,6 +265,30 @@ describe("StyleSetEvaluator", function () {
             assert.deepEqual(techniquesTileA[2], techniquesTileB[0]);
             assert.deepEqual(techniquesTileA[0], techniquesTileC[1]);
         });
+
+        it("technique cache key changes for different array buffers", function () {
+            const texturedStyle: StyleSet = [
+                {
+                    technique: "fill",
+                    when: "kind == 'park'",
+                    attr: {
+                        map: ["get", "map"]
+                    }
+                }
+            ];
+
+            const buffer1 = new Uint8Array([1, 2, 3, 4]).buffer;
+            const buffer2 = new Uint8Array([4, 3, 2, 1]).buffer;
+
+            const techniquesTileA = (() => {
+                const ev = new StyleSetEvaluator({ styleSet: texturedStyle });
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer: buffer1 } }));
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer: buffer2 } }));
+                return ev.decodedTechniques;
+            })();
+
+            assert.equal(techniquesTileA.length, 2);
+        });
     });
     describe('definitions / "ref" operator support', function () {
         const sampleStyleDeclaration: Style = {
