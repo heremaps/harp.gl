@@ -875,7 +875,8 @@ describe("MapView Styling Test", function () {
                     // }
                 });
             });
-            describe("textured", function () {
+            xdescribe("textured", function () {
+                // Flaky, frame complete needs to be fixed.
                 makePolygonTestCases(
                     "fill",
                     {
