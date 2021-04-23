@@ -18,6 +18,7 @@ import {
     SolidLineStyle,
     Style,
     TextTechniqueStyle,
+    TextureBuffer,
     TextureCoordinateType,
     Theme,
     Value
@@ -27,6 +28,7 @@ import { GeoBox, OrientedBox3, ProjectionType } from "@here/harp-geoutils";
 import { LookAtParams, MapAnchor, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";
+import { loadImageData } from "@here/harp-test-utils/lib/rendering/DomImageUtils";
 import { getReferenceImageUrl } from "@here/harp-test-utils/lib/rendering/ReferenceImageLocator";
 import { getOptionValue } from "@here/harp-utils";
 import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker";
@@ -876,12 +878,26 @@ describe("MapView Styling Test", function () {
                 });
             });
             describe("textured", function () {
+                const textureBuffer = {} as TextureBuffer;
+
+                this.beforeAll(async () => {
+                    // HARP-15210: Frame complete event does not wait for textures to be
+                    // loaded. In the meantime preload the texture buffer here to ensure
+                    // the texture is rendered at frame complete.
+                    const imageData = await loadImageData("../dist/resources/radar.png");
+                    textureBuffer.buffer = imageData.data.buffer;
+                    textureBuffer.type = "image/raw";
+                    textureBuffer.dataTextureProperties = {
+                        width: imageData.width,
+                        height: imageData.height
+                    };
+                });
                 makePolygonTestCases(
                     "fill",
                     {
                         "fill-texture-feature-space": {
                             color: "#ffffff",
-                            map: "../dist/resources/radar0.png",
+                            map: textureBuffer,
                             mapProperties: { flipY: true },
                             transparent: true,
                             textureCoordinateType: TextureCoordinateType.FeatureSpace,
@@ -897,9 +913,7 @@ describe("MapView Styling Test", function () {
                         }
                     },
                     {
-                        dynamicProperties: [
-                            { name: "dynamic-texture", value: "../dist/resources/radar1.png" }
-                        ]
+                        dynamicProperties: [{ name: "dynamic-texture", value: textureBuffer }]
                     }
                 );
             });
