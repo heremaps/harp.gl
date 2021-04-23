@@ -21,6 +21,9 @@ module.exports = function (config) {
           }
         : {};
 
+    // We need to know where to find the harp-fontcatalog resources.
+    const isMapSdk = require("fs").existsSync("./../../mapsdk");
+
     config.set({
         ...options,
 
@@ -55,8 +58,15 @@ module.exports = function (config) {
                 pattern: "@here/harp-test-utils/test/resources/*.*",
                 included: false
             },
+            // This is needed to access the font resources when running the repo separate from the
+            // sdk.
             {
                 pattern: "node_modules/@here/harp-fontcatalog/resources/**/*.*",
+                included: false
+            },
+            // This is needed when this repo is managed with the repo tool
+            {
+                pattern: "@here/harp-text-canvas/resources/fonts/**/*.*",
                 included: false
             },
             {
@@ -95,8 +105,9 @@ module.exports = function (config) {
             // bundle the tests with karma-typescript, so we have to configure where the resources are,
             // by default the resources relative to the root base folder.
             "/@here": "/base/@here",
-            "/@here/harp-fontcatalog/resources/":
-                "/base/node_modules/@here/harp-fontcatalog/resources/"
+            "/@here/harp-fontcatalog/resources/": isMapSdk
+                ? "/base/@here/harp-text-canvas/resources/fonts/"
+                : "/base/node_modules/@here/harp-fontcatalog/resources/"
         },
         preprocessors: {
             // source files, that you wanna generate coverage for
