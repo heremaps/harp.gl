@@ -100,7 +100,7 @@ export function baseUrl(url: string | undefined) {
  * @return origin of given URL
  */
 export function getUrlOrigin(url: string | undefined): string {
-    if (url === undefined) {
+    if (url === undefined || url === "") {
         return "";
     }
     const parsed = getUrlHostAndProtocol(url);

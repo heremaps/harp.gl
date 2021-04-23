@@ -6,7 +6,7 @@
 
 import "@here/harp-fetch";
 
-import { getUrlOrigin, LoggerManager } from "@here/harp-utils";
+import { getAppBaseUrl, getUrlOrigin, LoggerManager } from "@here/harp-utils";
 
 import { isWorkerBootstrapRequest, WorkerBootstrapResponse } from "./WorkerBootstrapDefs";
 
@@ -85,8 +85,8 @@ export class WorkerLoader {
         }
         return this.startWorkerImmediately(scriptUrl, timeout).catch(error => {
             if (typeof window !== "undefined") {
-                const pageUrl = window.location.href;
-                const fullScriptUrl = new URL(scriptUrl, pageUrl).href;
+                const pageUrl = getAppBaseUrl();
+                const fullScriptUrl = new URL(scriptUrl).href;
                 if (getUrlOrigin(fullScriptUrl) === getUrlOrigin(pageUrl)) {
                     throw error;
                 }
