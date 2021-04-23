@@ -404,58 +404,58 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * URL or texture buffer that should be used as color map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.map
      */
-    map?: string | TextureBuffer;
-    mapProperties?: TextureProperties;
+    map?: DynamicProperty<string | TextureBuffer>;
+    mapProperties?: DynamicProperty<TextureProperties>;
 
     /**
      * URL or texture buffer that should be used as normal map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.normalMap
      */
-    normalMap?: string | TextureBuffer;
-    normalMapType?: number;
-    normalMapProperties?: TextureProperties;
+    normalMap?: DynamicProperty<string | TextureBuffer>;
+    normalMapType?: DynamicProperty<number>;
+    normalMapProperties?: DynamicProperty<TextureProperties>;
 
     /**
      * URL or texture buffer that should be used as displacement map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.displacementMap
      */
-    displacementMap?: string | TextureBuffer;
-    displacementMapProperties?: TextureProperties;
+    displacementMap?: DynamicProperty<string | TextureBuffer>;
+    displacementMapProperties?: DynamicProperty<TextureProperties>;
 
     /**
      * URL or texture buffer that should be used as roughness map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughnessMap
      */
-    roughnessMap?: string | TextureBuffer;
-    roughnessMapProperties?: TextureProperties;
+    roughnessMap?: DynamicProperty<string | TextureBuffer>;
+    roughnessMapProperties?: DynamicProperty<TextureProperties>;
 
     /**
      * URL or texture buffer that should be used as emissive map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissiveMap
      */
-    emissiveMap?: string | TextureBuffer;
-    emissiveMapProperties?: TextureProperties;
+    emissiveMap?: DynamicProperty<string | TextureBuffer>;
+    emissiveMapProperties?: DynamicProperty<TextureProperties>;
 
     /**
      * URL or texture buffer that should be used as bump map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.bumpMap
      */
-    bumpMap?: string | TextureBuffer;
-    bumpMapProperties?: TextureProperties;
+    bumpMap?: DynamicProperty<string | TextureBuffer>;
+    bumpMapProperties?: DynamicProperty<TextureProperties>;
 
     /**
      * URL or texture buffer that should be used as metalness map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalnessMap
      */
-    metalnessMap?: string | TextureBuffer;
-    metalnessMapProperties?: TextureProperties;
+    metalnessMap?: DynamicProperty<string | TextureBuffer>;
+    metalnessMapProperties?: DynamicProperty<TextureProperties>;
 
     /**
      * URL or texture buffer that should be used as alpha map. See:
      * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.alphaMap
      */
-    alphaMap?: string | TextureBuffer;
-    alphaMapProperties?: TextureProperties;
+    alphaMap?: DynamicProperty<string | TextureBuffer>;
+    alphaMapProperties?: DynamicProperty<TextureProperties>;
 }
 
 /**
@@ -1199,6 +1199,20 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
      * Width of the lines. Currently limited to the [0, 1] range.
      */
     lineWidth?: DynamicProperty<number>;
+
+    /*
+     * URL or texture buffer that should be used as color map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshBasicMaterial.map
+     */
+    map?: DynamicProperty<string | TextureBuffer>;
+    mapProperties?: DynamicProperty<TextureProperties>;
+
+    /**
+     * Whether and how texture coordinates should be generated. No texture coordinates are
+     * generated if `undefined`.
+     * Should be set if a `map` is assigned.
+     */
+    textureCoordinateType?: TextureCoordinateType;
 }
 
 /**

@@ -430,20 +430,26 @@ export function needsVertexNormals(technique: Technique): boolean {
 }
 
 /**
+ * Type guard to check if an object is an instance of a technique with textures.
+ */
+export function supportsTextures(
+    technique: Technique
+): technique is FillTechnique | StandardTechnique | ExtrudedPolygonTechnique | TerrainTechnique {
+    return (
+        isFillTechnique(technique) ||
+        isStandardTechnique(technique) ||
+        isExtrudedPolygonTechnique(technique) ||
+        isTerrainTechnique(technique)
+    );
+}
+
+/**
  * Get the texture coordinate type if the technique supports it.
  */
 export function textureCoordinateType(technique: Technique): TextureCoordinateType | undefined {
-    if (isStandardTechnique(technique)) {
-        return technique.textureCoordinateType;
-    } else if (isExtrudedPolygonTechnique(technique)) {
-        return technique.textureCoordinateType;
-    } else if (isTerrainTechnique(technique)) {
-        return technique.textureCoordinateType;
-    } else if (isShaderTechnique(technique)) {
-        return technique.textureCoordinateType;
-    } else {
-        return undefined;
-    }
+    return supportsTextures(technique) || isShaderTechnique(technique)
+        ? technique.textureCoordinateType
+        : undefined;
 }
 
 /**

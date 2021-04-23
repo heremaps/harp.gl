@@ -4,18 +4,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr, getPropertyValue, MapEnv, SolidLineTechnique } from "@here/harp-datasource-protocol";
-import { SolidLineMaterial } from "@here/harp-materials";
+import {
+    Expr,
+    getPropertyValue,
+    MapEnv,
+    ShaderTechnique,
+    SolidLineTechnique,
+    StandardTechnique,
+    Technique
+} from "@here/harp-datasource-protocol";
+import { TileKey } from "@here/harp-geoutils";
+import { MapMeshStandardMaterial, SolidLineMaterial } from "@here/harp-materials";
 import { assertLogsSync } from "@here/harp-test-utils";
 import { LoggerManager } from "@here/harp-utils";
-import { assert } from "chai";
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
 import * as THREE from "three";
 
+import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
 import {
     applyBaseColorToMaterial,
+    buildObject,
     createMaterial,
-    evaluateColorProperty
-} from "../lib/DecodedTileHelpers";
+    evaluateColorProperty,
+    usesObject3D
+} from "./../lib/DecodedTileHelpers";
+import { Tile } from "./../lib/Tile";
+import { FakeOmvDataSource } from "./FakeOmvDataSource";
+
+const itBrowserOnly = typeof Blob !== "undefined" ? it : xit;
 
 function assertLogsError(testCode: () => void, errorMessagePattern: string | RegExp) {
     return assertLogsSync(testCode, LoggerManager.instance.channel, "error", errorMessagePattern);
@@ -24,7 +41,13 @@ function assertLogsError(testCode: () => void, errorMessagePattern: string | Reg
 describe("DecodedTileHelpers", function () {
     const env = new MapEnv({ $zoom: 10, $pixelToMeters: 2 });
     const rendererCapabilities = { isWebGL2: false } as any;
-    describe("#createMaterial", function () {
+    const sandbox = sinon.createSandbox();
+
+    afterEach(function () {
+        sandbox.restore();
+    });
+
+    describe("createMaterial", function () {
         it("supports #rgba in base material colors", function () {
             const technique: SolidLineTechnique = {
                 name: "solid-line",
@@ -108,8 +131,198 @@ describe("DecodedTileHelpers", function () {
             assert.exists(material);
             assert.isTrue(material.depthTest);
         });
+
+        it("ShaderTechnique", function () {
+            const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
+            const technique: ShaderTechnique = {
+                name: "shader",
+                primitive: "line",
+                params: {
+                    clipping: true,
+                    uniforms: {
+                        lineColor: { value: new THREE.Color("#f00") }
+                    },
+                    vertexShader: "",
+                    fragmentShader: ""
+                },
+                renderOrder: 0
+            };
+            const env = new MapEnv({ $zoom: 14 });
+            const shaderMaterial = createMaterial(rendererCapabilities, { technique, env });
+            assert.isTrue(
+                shaderMaterial instanceof THREE.ShaderMaterial,
+                "expected a THREE.ShaderMaterial"
+            );
+            if (shaderMaterial instanceof THREE.ShaderMaterial) {
+                assert.isObject(
+                    shaderMaterial.uniforms.lineColor,
+                    "expected a uniform named lineColor"
+                );
+                assert.isTrue(
+                    shaderMaterial.uniforms.lineColor.value instanceof THREE.Color,
+                    "expected a uniform of type THREE.Color"
+                );
+                assert.isString(shaderMaterial.vertexShader);
+                assert.isString(shaderMaterial.fragmentShader);
+                assert.isTrue(shaderMaterial.clipping);
+            }
+            assert.isTrue(usesObject3D(technique));
+            const object = buildObject(
+                technique,
+                new THREE.BufferGeometry(),
+                new THREE.Material(),
+                tile,
+                false
+            );
+            assert.isTrue(object instanceof THREE.Line, "expected a THREE.Line object");
+        });
+
+        it("creates texture from url", async function () {
+            const fakeImageElement: HTMLImageElement = {} as any;
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map:
+                    "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIyLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHdpZHRoPSI0OHB4IiBoZWlnaHQ9IjQ4cHgiIHZlcnNpb249IjEuMSIgaWQ9Imx1aS1pY29uLWRlc3RpbmF0aW9ucGluLW9uZGFyay1zb2xpZC1sYXJnZSIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQ4IDQ4IgoJIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDQ4IDQ4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8ZyBpZD0ibHVpLWljb24tZGVzdGluYXRpb25waW4tb25kYXJrLXNvbGlkLWxhcmdlLWJvdW5kaW5nLWJveCIgb3BhY2l0eT0iMCI+CgkJPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQ3LDF2NDZIMVYxSDQ3IE00OCwwSDB2NDhoNDhWMEw0OCwweiIvPgoJPC9nPgoJPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGw9IiNmZmZmZmYiIGQ9Ik0yNCwyQzEzLjg3MDgsMiw1LjY2NjcsMTAuMTU4NCw1LjY2NjcsMjAuMjIzMwoJCWMwLDUuMDMyNSwyLjA1MzMsOS41ODg0LDUuMzcxNywxMi44ODgzTDI0LDQ2bDEyLjk2MTctMTIuODg4M2MzLjMxODMtMy4zLDUuMzcxNy03Ljg1NTgsNS4zNzE3LTEyLjg4ODMKCQlDNDIuMzMzMywxMC4xNTg0LDM0LjEyOTIsMiwyNCwyeiBNMjQsMjVjLTIuNzY1LDAtNS0yLjIzNS01LTVzMi4yMzUtNSw1LTVzNSwyLjIzNSw1LDVTMjYuNzY1LDI1LDI0LDI1eiIvPgo8L2c+Cjwvc3ZnPgo="
+            };
+
+            const callbackSpy = sandbox.spy();
+            sandbox
+                .stub(THREE.ImageLoader.prototype, "load")
+                .callsFake((url, onLoad?, _onProgress?, _onError?) => {
+                    assert.equal(url, technique.map);
+                    onLoad?.(fakeImageElement);
+                    return fakeImageElement;
+                });
+            let material: MapMeshStandardMaterial | undefined;
+            await new Promise<void>((resolve, _) => {
+                material = createMaterial(
+                    rendererCapabilities,
+                    {
+                        technique,
+                        env
+                    },
+                    callbackSpy
+                ) as MapMeshStandardMaterial;
+                resolve();
+            });
+            assert.exists(material);
+            assert.exists(material!.map);
+            assert.strictEqual(material!.map!.image, fakeImageElement);
+            assert.isTrue(callbackSpy.called);
+        });
+
+        it("creates texture from raw texture buffer", function () {
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/raw",
+                    dataTextureProperties: {
+                        width: 1,
+                        height: 1
+                    }
+                }
+            };
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
+        });
+
+        itBrowserOnly("creates texture from png texture buffer", function () {
+            const fakeImageElement: HTMLImageElement = {} as any;
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/png",
+                    dataTextureProperties: {
+                        width: 1,
+                        height: 1
+                    }
+                }
+            };
+            let objectURL: string | undefined;
+            sandbox
+                .stub(THREE.ImageLoader.prototype, "load")
+                .callsFake((url, onLoad?, _onProgress?, _onError?) => {
+                    objectURL = url;
+                    onLoad?.(fakeImageElement);
+                    return fakeImageElement;
+                });
+            const revokeObjectURLSpy = sandbox.spy(URL, "revokeObjectURL");
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
+            assert.isDefined(objectURL);
+            material.map?.dispose();
+            assert.isTrue(revokeObjectURLSpy.calledWith(objectURL));
+        });
+
+        it("creates texture from dynamic property with HTML element", function () {
+            const env = new MapEnv({ image: { nodeName: "IMG" } });
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: Expr.fromJSON(["get", "image", ["dynamic-properties"]])
+            };
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
+        });
+
+        it("creates default texture when dynamic property evaluates to null", function () {
+            const env = new MapEnv({ image: null });
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: Expr.fromJSON(["get", "image", ["dynamic-properties"]])
+            };
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.exists(material.map);
+            assert.isTrue(callbackSpy.called);
+        });
     });
-    it("#applyBaseColorToMaterial toggles opacity with material", function () {
+    it("applyBaseColorToMaterial toggles opacity with material", function () {
         const material = new THREE.MeshBasicMaterial();
         assert.equal(material.blending, THREE.NormalBlending);
         const technique: SolidLineTechnique = {
@@ -133,7 +346,7 @@ describe("DecodedTileHelpers", function () {
         assert.equal(material.color.getHex(), 0xff00ff);
         assert.equal(material.transparent, false);
     });
-    describe("#evaluateColorProperty", function () {
+    describe("evaluateColorProperty", function () {
         it("leaves numbers untouched", function () {
             assert.strictEqual(evaluateColorProperty(0, env), 0);
             assert.strictEqual(evaluateColorProperty(0xff00ff, env), 0xff00ff);
@@ -161,7 +374,7 @@ describe("DecodedTileHelpers", function () {
         });
     });
 
-    describe("#getPropertyValue", function () {
+    describe("getPropertyValue", function () {
         it("returns literals untouched", function () {
             assert.equal(getPropertyValue(0, env), 0);
             assert.equal(getPropertyValue("a", env), "a");
@@ -190,5 +403,144 @@ describe("DecodedTileHelpers", function () {
             assert.strictEqual(getPropertyValue("rgb(255, 0, 0)", env), 0xff0000);
             assert.strictEqual(getPropertyValue("rgba(255, 0, 0, 0.5)", env), -2130771968);
         });
+    });
+
+    describe("buildObject", function () {
+        const tests: Array<{ technique: Technique; object: any; elevation: boolean }> = [
+            {
+                technique: {
+                    name: "extruded-line",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            {
+                technique: { name: "standard", renderOrder: 0 },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            {
+                technique: {
+                    name: "extruded-polygon",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            { technique: { name: "fill", renderOrder: 0 }, elevation: false, object: THREE.Mesh },
+            {
+                technique: { name: "squares", renderOrder: 0 },
+                elevation: false,
+                object: THREE.Points
+            },
+            {
+                technique: {
+                    name: "line",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Line
+            },
+            {
+                technique: {
+                    name: "segments",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.LineSegments
+            },
+            {
+                technique: {
+                    name: "shader",
+                    primitive: "point",
+                    params: {},
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Points
+            },
+            {
+                technique: {
+                    name: "shader",
+                    primitive: "line",
+                    params: {},
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Line
+            },
+            {
+                technique: {
+                    name: "shader",
+                    primitive: "mesh",
+                    params: {},
+                    renderOrder: 0
+                },
+                elevation: false,
+                object: THREE.Mesh
+            },
+            { technique: { name: "text", renderOrder: 0 }, object: undefined, elevation: false },
+            {
+                technique: {
+                    name: "extruded-polygon",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: true,
+                object: DisplacedMesh
+            },
+            {
+                technique: { name: "standard", renderOrder: 0 },
+                elevation: true,
+                object: DisplacedMesh
+            },
+            {
+                technique: {
+                    name: "extruded-line",
+                    color: "#f00",
+                    lineWidth: 1,
+                    renderOrder: 0
+                },
+                elevation: true,
+                object: DisplacedMesh
+            },
+            {
+                technique: { name: "fill", renderOrder: 0 },
+                elevation: true,
+                object: DisplacedMesh
+            }
+        ];
+
+        for (const test of tests) {
+            const name =
+                "primitive" in test.technique
+                    ? `${test.technique.name}(${test.technique.primitive})`
+                    : test.technique.name;
+            const elevation = test.elevation ? "elevation" : "no elevation";
+            const testName = `buildObject builds proper obj for ${name} technique with ${elevation}`;
+            it(testName, function () {
+                const tile = new Tile(new FakeOmvDataSource({ name: "omv" }), new TileKey(0, 0, 0));
+                const geometry = new THREE.BufferGeometry();
+                const material = new MapMeshStandardMaterial();
+
+                const technique = test.technique;
+                const objClass = test.object;
+                if (objClass === undefined) {
+                    assert.isFalse(usesObject3D(technique));
+                } else {
+                    assert.isTrue(usesObject3D(technique));
+                    const obj = buildObject(technique, geometry, material, tile, test.elevation);
+                    expect(obj).to.be.instanceOf(objClass);
+                }
+            });
+        }
     });
 });

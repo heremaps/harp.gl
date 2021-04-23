@@ -19,7 +19,8 @@ import {
     Style,
     TextTechniqueStyle,
     TextureCoordinateType,
-    Theme
+    Theme,
+    Value
 } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
 import { GeoBox, OrientedBox3, ProjectionType } from "@here/harp-geoutils";
@@ -124,6 +125,7 @@ interface GeoJsonMapViewRenderingTestOptions extends RenderingTestOptions {
      * Add small grid 4x4 to center of map with each cell of this size in world units.
      */
     grid?: number;
+    dynamicProperties?: Array<{ name: string; value: Value }>;
 }
 
 function mapViewFeaturesRenderingTest(
@@ -151,6 +153,10 @@ function mapViewFeaturesRenderingTest(
                 decoder: new VectorTileDecoder(),
                 tiler: new GeoJsonTiler(),
                 gatherFeatureAttributes: true
+            });
+
+            options.dynamicProperties?.forEach(dynamicProperty => {
+                mapView?.setDynamicProperty(dynamicProperty.name, dynamicProperty.value);
             });
             mapView.addDataSource(dataSource);
 
@@ -758,7 +764,8 @@ describe("MapView Styling Test", function () {
             properties: {
                 name: "Awesome Building",
                 kind: "building",
-                height: 200
+                height: 200,
+                bbox: [-0.004, -0.002, 0.001, 0.001]
             }
         };
         const rectangle2: Feature = {
@@ -867,6 +874,34 @@ describe("MapView Styling Test", function () {
                     //     lineWidth: "5px"
                     // }
                 });
+            });
+            describe("textured", function () {
+                makePolygonTestCases(
+                    "fill",
+                    {
+                        "fill-texture-feature-space": {
+                            color: "#ffffff",
+                            map: "../dist/resources/radar0.png",
+                            mapProperties: { flipY: true },
+                            transparent: true,
+                            textureCoordinateType: TextureCoordinateType.FeatureSpace,
+                            enabled: ["match", ["get", "name"], "Awesome Building", true, false]
+                        },
+                        "fill-texture-dynamic": {
+                            color: "#ffffff",
+                            map: ["get", "dynamic-texture", ["dynamic-properties"]],
+                            mapProperties: { flipY: true },
+                            transparent: true,
+                            textureCoordinateType: TextureCoordinateType.FeatureSpace,
+                            enabled: ["match", ["get", "name"], "Awesome Building", true, false]
+                        }
+                    },
+                    {
+                        dynamicProperties: [
+                            { name: "dynamic-texture", value: "../dist/resources/radar1.png" }
+                        ]
+                    }
+                );
             });
         });
         describe("standard technique", function () {
