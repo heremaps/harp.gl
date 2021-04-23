@@ -15,7 +15,9 @@ import { baseUrl } from "./UrlUtils";
  * * In node, it resolves to `file://${process.cwd()}`.
  */
 export function getAppBaseUrl() {
-    var regex = new RegExp("data\:text\/html\;base64\,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$");
+    var regex = new RegExp(
+        "data:text/html;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$"
+    );
     if (regex.test(window.location.href)) {
         return baseUrl("");
     }
