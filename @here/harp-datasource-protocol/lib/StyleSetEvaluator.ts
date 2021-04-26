@@ -359,6 +359,7 @@ export class StyleSetEvaluator {
     private m_zoomLevel: number | undefined;
     private m_previousResult: IndexedTechnique[] | undefined;
     private m_previousEnv: Env | undefined;
+    private m_nextArrayBufferId = 0;
 
     constructor(private readonly m_options: StyleSetOptions) {
         this.m_definitions = this.m_options.definitions;
@@ -738,9 +739,18 @@ export class StyleSetEvaluator {
                 if (attrValue === undefined) {
                     return "U";
                 } else if (typeof attrValue === "object") {
-                    return JSON.stringify(attrValue, (key, value) => {
-                        // ArrayBuffers cannot be directly stringified, convert them to arrays.
-                        return value instanceof ArrayBuffer ? new Uint8Array(value) : value;
+                    return JSON.stringify(attrValue, (_, value) => {
+                        if (value instanceof ArrayBuffer) {
+                            // ArrayBuffers cannot be directly stringified. They can be converted
+                            // to typed arrays and then stringified, but it's too slow. Instead,
+                            // assign them unique ids.
+                            let arrayBufferId = (value as any).id;
+                            if (arrayBufferId === undefined) {
+                                arrayBufferId = (value as any).id = this.m_nextArrayBufferId++;
+                            }
+                            return arrayBufferId;
+                        }
+                        return value;
                     });
                 } else {
                     return JSON.stringify(attrValue);
