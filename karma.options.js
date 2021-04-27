@@ -22,12 +22,20 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
 
     // Fixes the prefix to search for files, required for running the tests from sdk
     const fixPrefix = function (file) {
+        const appendPrefix = file => {
+            if (file.startsWith("**") || file.startsWith("node_modules")) {
+                return file;
+            } else {
+                return path.join(prefixDirectory, file);
+            }
+        };
         if (typeof file === "string") {
-            return path.join(prefixDirectory, file);
+            return appendPrefix(file);
         } else {
             return {
-                pattern: path.join(file.skip ? "" : prefixDirectory, file.pattern),
-                included: file.included
+                ...{ pattern: appendPrefix(file.pattern) },
+                // Conditionally add this if not undefined.
+                ...(file.included !== undefined && { included: file.included })
             };
         }
     };
@@ -81,7 +89,6 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
             // sdk.
             {
                 pattern: "node_modules/@here/harp-fontcatalog/resources/**/*.*",
-                skip: true,
                 included: false
             },
             // This is needed when this repo is managed with the repo tool
@@ -119,8 +126,9 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
             "**/test/rendering/**/*.*",
             "@here/harp-test-utils/lib/rendering/RenderingTestResultServer.ts",
             "@here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts",
-            "@here/harp-datasource-protocol/test/ThemeTypingsTest.ts"
-        ],
+            "@here/harp-datasource-protocol/test/ThemeTypingsTest.ts",
+            "**/*.d.ts"
+        ].map(file => fixPrefix(file)),
 
         // source files, that you wanna generate coverage for
         // do not include tests or libraries
