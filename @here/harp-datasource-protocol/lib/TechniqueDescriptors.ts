@@ -245,7 +245,7 @@ const standardTechniqueDescriptor = mergeTechniqueDescriptor<StandardTechnique>(
     baseTechniqueParamsDescriptor,
     {
         attrDescriptors: {
-            color: AttrScope.FeatureGeometry,
+            color: { scope: AttrScope.TechniqueRendering, automatic: true },
             vertexColors: { scope: AttrScope.TechniqueRendering, automatic: true },
             wireframe: { scope: AttrScope.TechniqueRendering, automatic: true },
             roughness: { scope: AttrScope.TechniqueRendering, automatic: true },

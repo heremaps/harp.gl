@@ -919,6 +919,29 @@ describe("MapView Styling Test", function () {
             });
         });
         describe("standard technique", function () {
+            mapViewFeaturesRenderingTest(`polygon-dynamic-color`, {
+                geoJson: {
+                    type: "FeatureCollection",
+                    features: [rectangle1, rectangle2, referenceBackground]
+                },
+                theme: {
+                    lights,
+                    styles: {
+                        geojson: [
+                            referenceBackroundStyle,
+                            {
+                                when: "$geometryType == 'polygon'",
+                                technique: "standard",
+                                attr: {
+                                    color: ["get", "dynamic-color", ["dynamic-properties"]]
+                                }
+                            }
+                        ]
+                    }
+                },
+                dynamicProperties: [{ name: "dynamic-color", value: "green" }]
+            });
+
             mapViewFeaturesRenderingTest(
                 `polygon-standard-texture`,
                 {
