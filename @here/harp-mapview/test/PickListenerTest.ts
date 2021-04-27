@@ -207,6 +207,32 @@ describe("PickListener", function () {
             expect(listener.results).to.have.ordered.members(expectedResults);
         });
 
+        it("ignores small distance differences for sorting", function () {
+            const listener = new PickListener();
+            const eps = 1e-6;
+            const expectedResults: PickResult[] = [
+                {
+                    type: PickObjectType.Point,
+                    point,
+                    distance: eps,
+                    renderOrder: 2,
+                    dataSourceName
+                },
+                {
+                    type: PickObjectType.Point,
+                    point,
+                    distance: 0,
+                    renderOrder: 1,
+                    dataSourceName
+                }
+            ];
+            listener.addResult(expectedResults[1]);
+            listener.addResult(expectedResults[0]);
+            listener.finish();
+
+            expect(listener.results).to.have.ordered.members(expectedResults);
+        });
+
         it("keeps only the closest maximum result count if specified", function () {
             const maxResultCount = 1;
             const listener = new PickListener({ maxResultCount });
