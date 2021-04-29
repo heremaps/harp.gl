@@ -32,8 +32,7 @@ jobs:
             - name: Test
               run: |
                   yarn pre-test
-                  yarn cov-test --forbid-only
-                  yarn build-tests
+                  yarn test-cov
                   yarn karma-headless
                   yarn karma-headless-firefox
                   ./scripts/test-npm-packages.sh
