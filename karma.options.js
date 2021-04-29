@@ -140,8 +140,24 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
             "@here/**/*.ts": ["karma-typescript"]
         },
 
-        // karma-typescript generates a coverage folder
-        reporters: ["progress", "karma-typescript"],
+        // We use coverage-istanbul instead of karma-typescript because it can output json format
+        // which provides numbers similar to the previous report and not very conservative numbers.
+        reporters: ["progress", "coverage-istanbul"],
+
+        coverageIstanbulReporter: {
+            // reports can be any that are listed here: https://github.com/istanbuljs/istanbuljs/tree/73c25ce79f91010d1ff073aa6ff3fd01114f90db/packages/istanbul-reports/lib
+            reports: ["html", "text-summary", "json"],
+
+            dir: path.join(__dirname, "coverage"),
+
+            "report-config": {
+                html: {
+                    // outputs the report in ./coverage/html
+                    subdir: "html"
+                }
+            }
+        },
+
         proxies: {
             // How to access the local resources, normally this would handled by webpack, but we need to
             // bundle the tests with karma-typescript, so we have to configure where the resources are,
