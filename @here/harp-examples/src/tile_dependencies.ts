@@ -101,7 +101,8 @@ export namespace TileDependenciesExample {
                     tileKey.row === this.mainTileKey.row
                 ) {
                     //snippet:tile_dependencies.ts
-                    return Promise.resolve(new Float32Array([0, 1, this.mainTileKey.mortonCode()]));
+                    const { row, column, level } = this.mainTileKey;
+                    return Promise.resolve(new Float32Array([0, 1, row, column, level]));
                     //end:tile_dependencies.ts
                 }
             }
