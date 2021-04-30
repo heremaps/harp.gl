@@ -229,15 +229,16 @@ export namespace TileDependenciesExample {
         window.addEventListener("resize", () => {
             map.resize(window.innerWidth, window.innerHeight);
         });
-        const customDataProvider1 = new CustomDataProvider(new TileKey(16385, 16384, 15));
 
-        const customDataProvider = new CustomDataProvider(new TileKey(16384, 16384, 15));
+        const customDP1 = new CustomDataProvider(new TileKey(16385, 16384, 15));
+        const customDP = new CustomDataProvider(new TileKey(16384, 16384, 15));
+
         // snippet:tile_dependencies_create.ts
         const customDatasource = new CustomDataSource({
             name: "customDatasource",
             styleSetName: "customStyleSet",
             tilingScheme: webMercatorTilingScheme,
-            dataProvider: customDataProvider,
+            dataProvider: customDP,
             concurrentDecoderServiceName: CUSTOM_DECODER_SERVICE_TYPE,
             storageLevelOffset: -1
         });
@@ -245,7 +246,7 @@ export namespace TileDependenciesExample {
             name: "customDatasource1",
             styleSetName: "customStyleSet",
             tilingScheme: webMercatorTilingScheme,
-            dataProvider: customDataProvider1,
+            dataProvider: customDP1,
             concurrentDecoderServiceName: CUSTOM_DECODER_SERVICE_TYPE,
             storageLevelOffset: -1
         });
@@ -269,8 +270,8 @@ export namespace TileDependenciesExample {
 
         const gui = new GUI({ width: 300 });
         gui.add(guiOptions, "tileDependencies").onChange(val => {
-            customDataProvider.enableTileDependencies = !customDataProvider.enableTileDependencies;
-            customDataProvider1.enableTileDependencies = !customDataProvider1.enableTileDependencies;
+            customDP.enableTileDependencies = !customDP.enableTileDependencies;
+            customDP1.enableTileDependencies = !customDP1.enableTileDependencies;
             map.clearTileCache();
             map.update();
         });
