@@ -104,15 +104,8 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
                 pattern: "@here/harp-datasource-protocol/theme.schema.json",
                 included: false
             },
-
-            // This package doesn't work, specifically the reference to `vector_tile.js`, it needs
-            // to be fixed, something like the following should work... but doesn't and needs to be
-            // investigated.
             "@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.js",
             "@here/harp-vectortile-datasource/**/*.ts",
-
-            // This test complains about: Unable to resolve module [original-fs], it should be
-            // checked if this test can run in the browser, or not.
             "@here/harp-map-theme/test/DefaultThemeTest.ts",
             // These files are needed for the test above.
             {
