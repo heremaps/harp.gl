@@ -171,7 +171,7 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
             },
             coverageOptions: {
                 // This is needed otherwise the tests are included in the code coverage %.
-                exclude: [/test/]
+            exclude: [/test\/+/, /vector_tile\.js/, /\.node\.ts/, /index.*\.ts/]
             },
             reports,
             // "allowJs" tries to compile all sorts of stuff, so we need to restrict it.
