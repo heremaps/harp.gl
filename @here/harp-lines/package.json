@@ -9,6 +9,7 @@
         "lib": "lib"
     },
     "scripts": {
+        "test": "echo \"The testing of this package is handled by the image based comparison tests by the sdk\"",
         "build": "tsc --build $EXTRA_TSC_ARGS",
         "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
