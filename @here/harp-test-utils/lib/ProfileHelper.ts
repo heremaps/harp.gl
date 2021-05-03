@@ -12,7 +12,7 @@ import * as fs from "fs";
 // `performance`, `PerformanceObserver`, ... are global in Browser environment, but only available
 // from `perf_hooks` in node env.
 // Note, the following had to be commented out, because "karma-typescript" tries to resolve the
-// require, even before executing the if condition.
+// require, even before executing the if condition, see HARP-15322
 // if (typeof window === "undefined") {
 //     const perfHooks = require("perf_hooks");
 
