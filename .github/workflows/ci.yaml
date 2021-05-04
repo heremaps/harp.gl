@@ -53,17 +53,12 @@ jobs:
       run: yarn run pre-test
       shell: bash
     - name: Test Coverage
-      run: yarn cov-test --forbid-only --timeout ${{ env.nodeTestTimeout }}
-      shell: bash
-      if: matrix.os != 'windows-latest'
-    - name: Generate coverage report
-      run: |
-        yarn cov-report-html
+      run: yarn test-cov
       shell: bash
       if: matrix.os != 'windows-latest'
     - name: Publish Coverage (Linux)
       run: |
-        bash <(curl -s https://codecov.io/bash) -f coverage/*.json
+        bash <(curl -s https://codecov.io/bash) -f coverage/**/*.info
       shell: bash
       if: matrix.os == 'ubuntu-latest'
     - name: Save Coverage Report (Linux)

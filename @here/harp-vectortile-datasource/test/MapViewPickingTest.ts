@@ -33,7 +33,7 @@ import {
     getTestResourceUrl,
     silenceLoggingAroundFunction,
     waitForEvent
-} from "@here/harp-test-utils/";
+} from "@here/harp-test-utils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
@@ -393,6 +393,7 @@ describe("MapView Picking", async function () {
 
         for (const testCase of testCases) {
             it(testCase.name, async () => {
+                this.timeout(10000);
                 mapView.projection = testCase.projection;
 
                 if (testCase.pixelRatio !== undefined) {

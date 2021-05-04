@@ -105,10 +105,13 @@ describe("LoggerManager", function () {
 
     it("Replace default console channel", function () {
         const manager = LoggerManager.instance;
+        const previousChannel = manager.channel;
         const multiChannel = new MultiChannel();
         LoggerManager.instance.setChannel(multiChannel);
 
         assert.equal(manager.channel instanceof ConsoleChannel, false);
+
+        LoggerManager.instance.setChannel(previousChannel);
     });
 
     describe("Check channel compliancy", function () {

@@ -9,6 +9,14 @@ import { createLineGeometry } from "@here/harp-lines";
 import { measureThroughputSync } from "@here/harp-test-utils/lib/ProfileHelper";
 import * as THREE from "three";
 
+if (typeof window === "undefined") {
+    const perfHooks = require("perf_hooks");
+
+    (global as any).performance = perfHooks.performance;
+    (global as any).PerformanceObserver = perfHooks.PerformanceObserver;
+    (global as any).PerformanceEntry = perfHooks.PerformanceEntry;
+}
+
 describe(`lines`, function () {
     this.timeout(0);
     const center = new THREE.Vector3();

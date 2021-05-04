@@ -9,9 +9,6 @@
     "files": [
         "src/index.js"
     ],
-    "scripts": {
-        "test": "mocha $EXTRA_MOCHA_ARGS ./test/*.js"
-    },
     "repository": {
         "type": "git",
         "url": "https://github.com/heremaps/harp.gl.git",

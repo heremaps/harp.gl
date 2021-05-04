@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { baseUrl } from "./UrlUtils";
+
 /**
  * Get base URL for from where relative URLs will be loaded.
  *
@@ -13,5 +15,8 @@
  * * In node, it resolves to `file://${process.cwd()}`.
  */
 export function getAppBaseUrl() {
-    return `file://${process.cwd()}/`;
+    if (typeof window === "undefined") {
+        return `file://${process.cwd()}/`;
+    }
+    return baseUrl(window.location.href);
 }

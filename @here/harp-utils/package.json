@@ -2,8 +2,8 @@
     "name": "@here/harp-utils",
     "version": "0.24.0",
     "description": "Provides utilities: logging, debugging.",
-    "main": "index.js",
-    "browser": "index.web.js",
+    "main": "index.node.js",
+    "browser": "index.js",
     "scripts": {
         "build": "tsc --build $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",

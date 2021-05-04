@@ -9,7 +9,7 @@
         "lib": "lib"
     },
     "scripts": {
-        "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+        "test": "echo \"The testing of this package is handled by the image based comparison tests by the sdk\"",
         "build": "tsc --build $EXTRA_TSC_ARGS",
         "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
