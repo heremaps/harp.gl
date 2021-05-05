@@ -23,6 +23,7 @@ import * as THREE from "three";
 
 import { GeoJsonDataAdapter } from "./adapters/geojson/GeoJsonDataAdapter";
 import { GeoJsonVtDataAdapter } from "./adapters/geojson-vt/GeoJsonVtDataAdapter";
+import { OcmDataAdapter } from "./adapters/ocm/OcmDataAdapter";
 import { OmvDataAdapter } from "./adapters/omv/OmvDataAdapter";
 import { DataAdapter } from "./DataAdapter";
 import { DecodeInfo } from "./DecodeInfo";
@@ -78,6 +79,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
 
         this.m_dataAdapters.push(new GeoJsonVtDataAdapter(this, dataPreFilter, logger));
         this.m_dataAdapters.push(new GeoJsonDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new OcmDataAdapter(this, logger));
     }
 
     get storageLevelOffset() {
