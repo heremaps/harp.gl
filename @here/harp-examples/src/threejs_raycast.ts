@@ -37,6 +37,7 @@ import { apikey, copyrightInfo } from "../config";
 export namespace ThreejsRaycast {
     const scale = 100;
     const geometry = new THREE.BoxGeometry(1 * scale, 1 * scale, 1 * scale);
+    geometry.translate(0, 0, scale / 2);
     const material = new THREE.MeshStandardMaterial({
         color: 0x00ff00fe
     });
