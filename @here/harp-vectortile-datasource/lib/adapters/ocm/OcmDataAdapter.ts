@@ -5,14 +5,28 @@
  */
 
 import { Env, MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
-import { TileKey } from "@here/harp-geoutils";
-import { ILogger } from "@here/harp-utils";
-import { ShapeUtils, Vector3 } from "three";
+import {
+    GeoBox,
+    GeoPointLike,
+    hereTilingScheme,
+    OrientedBox3,
+    pduEquirectangularProjection,
+    Projection,
+    TileKey,
+    TilingScheme,
+    Vector2Like,
+    webMercatorProjection
+} from "@here/harp-geoutils";
+import { ILogger, Logger, LoggerManager } from "@here/harp-utils";
+import { ShapeUtils, Vector2, Vector3 } from "three";
 
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
-import { isArrayBufferLike } from "../../OmvUtils";
+import { isArrayBufferLike, world2tile, WorldTileProjectionCookie } from "../../OmvUtils";
+import { IOcmData, IOcmFeature } from "./IOcmData";
+
+const logger = LoggerManager.instance.create("OcmDataAdapter");
 
 function decodeFeatureId(feature: any, logger?: ILogger): number | string | undefined {
     if (feature.hasOwnProperty("id")) {
@@ -33,14 +47,14 @@ function decodeFeatureId(feature: any, logger?: ILogger): number | string | unde
     return undefined;
 }
 
-function readAttributes(layer: any, feature: any, defaultAttributes: ValueMap = {}): ValueMap {
+function readAttributes(feature: IOcmFeature, defaultAttributes: ValueMap = {}): ValueMap {
     // TODO: Read feature attributes and insert them into a value map.
     // Optional: Convert attributes to OMV so that a OMV style can be used directly.
-    return {};
+    return Object.assign(defaultAttributes, feature.properties);
 }
 
 export function createFeatureEnv(
-    layer: any,
+    layerName: string,
     feature: any,
     geometryType: string,
     storageLevel: number,
@@ -49,7 +63,7 @@ export function createFeatureEnv(
     parent?: Env
 ): MapEnv {
     const attributes: ValueMap = {
-        $layer: layer.name,
+        $layer: layerName,
         $level: storageLevel,
         $zoom: Math.max(0, storageLevel - (storageLevelOffset ?? 0)),
         $geometryType: geometryType
@@ -61,7 +75,7 @@ export function createFeatureEnv(
         attributes.$id = featureId;
     }
 
-    readAttributes(layer, feature, attributes);
+    readAttributes(feature, attributes);
 
     return new MapEnv(attributes, parent);
 }
@@ -104,6 +118,36 @@ function checkWinding(multipolygon: IPolygonGeometry[]) {
     }
 }
 
+const DEFAULT_EXTENTS = 4 * 1024;
+
+class OcmDecodeInfo {
+    readonly geoBox: GeoBox;
+
+    readonly projectedBoundingBox = new OrientedBox3();
+
+    worldTileProjectionCookie?: WorldTileProjectionCookie;
+
+    constructor(readonly tileKey: TileKey) {
+        this.geoBox = this.tilingScheme.getGeoBox(tileKey);
+    }
+
+    /**
+     * The [[TilingScheme]] of the OMV data, currenly it is defined
+     * to be [[webMercatorTilingScheme]].
+     */
+    get tilingScheme(): TilingScheme {
+        return hereTilingScheme;
+    }
+
+    /**
+     * The [[Projection]] of OMV tiled data, currenly it is defined
+     * to be [[webMercatorProjection]].
+     */
+    get sourceProjection(): Projection {
+        return pduEquirectangularProjection;
+    }
+}
+
 /**
  * The class `OcmDataAdapter` converts OMV protobuf geo data
  * to geometries for the given `IGeometryProcessor`.
@@ -115,8 +159,8 @@ export class OcmDataAdapter implements DataAdapter {
     private readonly m_processor: IGeometryProcessor;
     private readonly m_logger?: ILogger;
 
-    private readonly m_tileKey!: TileKey;
-    private m_layer!: any;
+    private m_decodeInfo!: OcmDecodeInfo;
+    private readonly m_layer!: any;
 
     /**
      * Constructs a new [[OmvProtobufDataAdapter]].
@@ -148,7 +192,12 @@ export class OcmDataAdapter implements DataAdapter {
      * @param decodeInfo - The [[DecodedInfo]] of the tile to proceess.
      */
     process(data: {}, decodeInfo: DecodeInfo) {
-        // TODO: Go through each layer
+        const ocmData: IOcmData = data;
+        this.m_decodeInfo = new OcmDecodeInfo(decodeInfo.tileKey);
+        for (var [layerName, features] of Object.entries(ocmData)) {
+            //logger.log(`Layer ${layerName} has ${features.length} features`);
+            this.visitLayer(layerName, features);
+        }
     }
 
     /**
@@ -156,12 +205,48 @@ export class OcmDataAdapter implements DataAdapter {
      *
      * @param layer - The OCM layer to process.
      */
-    visitLayer(layer: any): boolean {
-        this.m_layer = layer;
-        // TODO: Go through each feature and call the corresponding feature visitor method depending
-        // on geometry type(below).
+    private visitLayer(name: string, features: IOcmFeature[]): boolean {
+        for (const feature of features) {
+            switch (feature.geometry.type) {
+                case "Point":
+                    this.visitPointFeature(feature, name);
+                    break;
+                case "Line":
+                    this.visitLineFeature(feature, name);
+                    break;
+                case "Polygon":
+                    this.visitPolygonFeature(feature, name);
+                    break;
+            }
+        }
 
         return true;
+    }
+
+    private toWebMercatorTile<VectorType extends Vector2Like>(
+        tileGeoPoint: GeoPointLike,
+        target: VectorType
+    ): VectorType {
+        const swCorner = this.m_decodeInfo.geoBox.southWest;
+        const geoCoords = this.m_decodeInfo.sourceProjection.unprojectPoint({
+            x: tileGeoPoint[0],
+            y: tileGeoPoint[1],
+            z: 0
+        });
+        geoCoords.latitude += swCorner.latitude;
+        geoCoords.longitude += swCorner.longitude;
+        geoCoords.altitude = geoCoords.altitude
+            ? geoCoords.altitude + (swCorner.altitude ?? 0)
+            : undefined;
+        const worldCoords = webMercatorProjection.projectPoint(geoCoords, new Vector3());
+
+        return world2tile<VectorType>(
+            DEFAULT_EXTENTS,
+            this.m_decodeInfo as DecodeInfo,
+            worldCoords,
+            false,
+            target
+        );
     }
 
     /**
@@ -169,25 +254,15 @@ export class OcmDataAdapter implements DataAdapter {
      *
      * @param feature - The OCM point features to process.
      */
-    visitPointFeature(feature: any): void {
-        if (feature.geometry === undefined) {
-            return;
-        }
-
-        const storageLevel = this.m_tileKey.level;
-        const layerName = this.m_layer.name;
-
-        // TODO: Read feature geometry and transform to local webMercator coordinates, relative to
-        // north-west tile corner (see tile2world()), layer extents should indicate the tile size.
-        const layerExtents = this.m_layer.extent ?? 4096;
-        const geometry: Vector3[] = [];
-
-        if (geometry.length === 0) {
-            return;
-        }
+    private visitPointFeature(feature: IOcmFeature, layerName: string): void {
+        const storageLevel = this.m_decodeInfo.tileKey.level;
+        const webMTileCoords = this.toWebMercatorTile(
+            feature.geometry.coordinates as GeoPointLike,
+            new Vector3()
+        );
 
         const env = createFeatureEnv(
-            this.m_layer,
+            layerName,
             feature,
             "point",
             storageLevel,
@@ -195,7 +270,13 @@ export class OcmDataAdapter implements DataAdapter {
             this.m_logger
         );
 
-        this.m_processor.processPointFeature(layerName, layerExtents, geometry, env, storageLevel);
+        this.m_processor.processPointFeature(
+            layerName,
+            DEFAULT_EXTENTS,
+            [webMTileCoords],
+            env,
+            storageLevel
+        );
     }
 
     /**
@@ -203,25 +284,21 @@ export class OcmDataAdapter implements DataAdapter {
      *
      * @param feature - The line features to process.
      */
-    visitLineFeature(feature: any): void {
-        if (feature.geometry === undefined) {
+    private visitLineFeature(feature: IOcmFeature, layerName: string): void {
+        const storageLevel = this.m_decodeInfo.tileKey.level;
+        const line = feature.geometry.coordinates as GeoPointLike[];
+        if (line.length === 0) {
             return;
         }
+        const webMTileCoords: Vector2[] = [];
+        const geometry: ILineGeometry[] = [{ positions: webMTileCoords }];
 
-        const storageLevel = this.m_tileKey.level;
-        const layerName = this.m_layer.name;
-        const layerExtents = this.m_layer.extent ?? 4096;
-
-        // TODO: Read feature geometry and transform to local webMercator coordinates, relative to
-        // north-west tile corner (see tile2world()), layer extents should indicate the tile size.
-        const geometry: ILineGeometry[] = [];
-
-        if (geometry.length === 0) {
-            return;
+        for (const point of line) {
+            webMTileCoords.push(this.toWebMercatorTile(point, new Vector2()));
         }
 
         const env = createFeatureEnv(
-            this.m_layer,
+            layerName,
             feature,
             "line",
             storageLevel,
@@ -229,7 +306,13 @@ export class OcmDataAdapter implements DataAdapter {
             this.m_logger
         );
 
-        this.m_processor.processLineFeature(layerName, layerExtents, geometry, env, storageLevel);
+        this.m_processor.processLineFeature(
+            layerName,
+            DEFAULT_EXTENTS,
+            geometry,
+            env,
+            storageLevel
+        );
     }
 
     /**
@@ -237,42 +320,43 @@ export class OcmDataAdapter implements DataAdapter {
      *
      * @param feature - The polygon features to process.
      */
-    visitPolygonFeature(feature: any): void {
-        if (feature.geometry === undefined) {
+    private visitPolygonFeature(feature: IOcmFeature, layerName: string): void {
+        const storageLevel = this.m_decodeInfo.tileKey.level;
+
+        const srcGeometry = feature.geometry.coordinates as GeoPointLike[][];
+        if (srcGeometry.length === 0) {
             return;
         }
 
-        const storageLevel = this.m_tileKey.level;
-        const layerName = this.m_layer.name;
-        const layerExtents = this.m_layer.extent ?? 4096;
-
-        // TODO: Read feature geometry and transform to local webMercator coordinates, relative to
-        // north-west tile corner (see tile2world()), layer extents should indicate the tile size.
-        // Also check ring winding.
         const geometry: IPolygonGeometry[] = [];
-        // let currentPolygon: IPolygonGeometry | undefined;
-        // let currentRing: Vector2[];
-        // let exteriorWinding: number | undefined;
+        let currentPolygon: IPolygonGeometry | undefined;
 
-        // if (currentRing !== undefined && currentRing.length > 0) {
-        //     const currentRingWinding = Math.sign(ShapeUtils.area(currentRing));
-        //     // Winding order from XYZ spaces might be not MVT spec compliant, see HARP-11151.
-        //     // We take the winding of the very first ring as reference.
-        //     if (exteriorWinding === undefined) {
-        //         exteriorWinding = currentRingWinding;
-        //     }
-        //     // MVT spec defines that each exterior ring signals the beginning of a new polygon.
-        //     // see https://github.com/mapbox/vector-tile-spec/tree/master/2.1
-        //     if (currentRingWinding === exteriorWinding) {
-        //         // Create a new polygon and push it into the collection of polygons
-        //         currentPolygon = { rings: [] };
-        //         geometry.push(currentPolygon);
-        //     }
-        //     // Push the ring into the current polygon
-        //     currentRing.push(currentRing[0].clone());
-        //     currentPolygon?.rings.push(currentRing);
-        // }
+        for (const srcRing of srcGeometry) {
+            const currentRing: Vector2[] = [];
+            for (const point of srcRing) {
+                currentRing.push(this.toWebMercatorTile(point, new Vector2()));
+            }
 
+            let exteriorWinding: number | undefined;
+            if (currentRing.length > 0) {
+                const currentRingWinding = Math.sign(ShapeUtils.area(currentRing));
+                // Winding order from XYZ spaces might be not MVT spec compliant, see HARP-11151.
+                // We take the winding of the very first ring as reference.
+                if (exteriorWinding === undefined) {
+                    exteriorWinding = currentRingWinding;
+                }
+                // MVT spec defines that each exterior ring signals the beginning of a new polygon.
+                // see https://github.com/mapbox/vector-tile-spec/tree/master/2.1
+                if (currentRingWinding === exteriorWinding) {
+                    // Create a new polygon and push it into the collection of polygons
+                    currentPolygon = { rings: [] };
+                    geometry.push(currentPolygon);
+                }
+                // Push the ring into the current polygon
+                currentRing.push(currentRing[0].clone());
+                currentPolygon?.rings.push(currentRing);
+            }
+        }
         if (geometry.length === 0) {
             return;
         }
@@ -280,7 +364,7 @@ export class OcmDataAdapter implements DataAdapter {
         checkWinding(geometry);
 
         const env = createFeatureEnv(
-            this.m_layer,
+            layerName,
             feature,
             "polygon",
             storageLevel,
@@ -290,7 +374,7 @@ export class OcmDataAdapter implements DataAdapter {
 
         this.m_processor.processPolygonFeature(
             layerName,
-            layerExtents,
+            DEFAULT_EXTENTS,
             geometry,
             env,
             storageLevel
