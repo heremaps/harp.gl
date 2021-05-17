@@ -109,6 +109,7 @@ export class MapMaterialAdapter {
 
     private m_lastUpdateFrameNumber = -1;
     private readonly m_dynamicProperties: Array<[string, Expr | StylePropertyEvaluator]>;
+    private readonly tmpColor = new THREE.Color();
 
     constructor(material: THREE.Material, styledProperties: StyledProperties) {
         this.material = material;
@@ -279,10 +280,13 @@ export class MapMaterialAdapter {
                 colorValue = parsed;
             }
             const rgbValue = ColorUtils.removeAlphaFromHex(colorValue);
-            m[propName].set(rgbValue);
-        } else {
-            m[propName] = value;
+            this.tmpColor.set(rgbValue);
+            // We set the value, i.e. using =, as opposed to setting the color directly using set
+            // because the material may be a custom material with a setter.
+            value = this.tmpColor;
         }
+
+        m[propName] = value;
     }
 
     private applyMaterialBaseColor(color: Value, opacity: number | undefined) {
