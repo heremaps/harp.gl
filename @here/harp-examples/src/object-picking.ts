@@ -5,6 +5,8 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
+import { DebugTileDataSource } from "@here/harp-debug-datasource";
+import { webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, PickResult } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
@@ -100,6 +102,15 @@ export namespace PickingExample {
     function handlePick(mapViewUsed: MapView, x: number, y: number) {
         // get an array of intersection results from MapView
 
+        const canvasPos = mapViewUsed.getScreenPosition({ lat: 0, lng: 0 });
+        // eslint-disable-next-line no-console
+        console.log("position at lat,lon: 0,0 x: " + canvasPos!.x + " y: " + canvasPos!.y);
+        console.log(mapViewUsed.intersectMapObjects(canvasPos!.x, canvasPos!.y));
+        console.log("position under mouse: x: " + x + " y: " + y);
+        console.log(mapViewUsed.intersectMapObjects(x, y));
+
+        /*
+
         let usableIntersections = mapViewUsed
             .intersectMapObjects(x, y)
             .filter(item => item.userData !== undefined);
@@ -124,7 +135,7 @@ export namespace PickingExample {
         element.style.visibility = "visible";
 
         // Display userData inside of helper box
-        element.innerText = JSON.stringify(current.userData, undefined, 2);
+        element.innerText = JSON.stringify(current.userData, undefined, 2);*/
     }
     // end:datasource_object_picking_2.ts
 
@@ -173,8 +184,8 @@ export namespace PickingExample {
                 extends: [selectionTheme, "resources/berlin_tilezen_base.json"]
             },
             enableRoadPicking: true,
-            target: [-74.01, 40.707],
-            zoomLevel: 18
+            target: [0, 0],
+            zoomLevel: 8
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
@@ -227,6 +238,8 @@ export namespace PickingExample {
         mapView.setDynamicProperty("selection", []);
 
         await mapView.addDataSource(omvDataSource);
+        const dds = new DebugTileDataSource(webMercatorTilingScheme);
+        await mapView.addDataSource(dds);
 
         mapView.update();
     }

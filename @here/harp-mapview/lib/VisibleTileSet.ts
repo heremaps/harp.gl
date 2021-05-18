@@ -930,6 +930,9 @@ export class VisibleTileSet {
             i++
         ) {
             const tileEntry = visibleTileKeys[i];
+            if (tileEntry.tileKey.mortonCode() !== 23210) {
+                continue;
+            }
             const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset, frameNumber);
             if (tile === undefined) {
                 continue;
