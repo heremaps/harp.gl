@@ -68,6 +68,7 @@ success-update-github-pipline-status:
     - when: never
 
 failure-update-github-pipline-status:
+    stage: final-status
     script:
         - echo $LATEST_GITHUB_COMMIT
         - |
