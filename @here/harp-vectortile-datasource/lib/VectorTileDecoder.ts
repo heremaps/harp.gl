@@ -311,7 +311,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
 
     /** @override */
     decodeThemedTile(
-        data: ArrayBufferLike,
+        data: ArrayBufferLike | {},
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
         projection: Projection

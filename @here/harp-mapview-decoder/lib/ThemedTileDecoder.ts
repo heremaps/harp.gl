@@ -35,7 +35,7 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     }
 
     decodeTile(
-        data: ArrayBufferLike,
+        data: ArrayBufferLike | {},
         tileKey: TileKey,
         projection: Projection
     ): Promise<DecodedTile | undefined> {
