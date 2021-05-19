@@ -52,7 +52,7 @@ pending-update-github-pipline-status:
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token $GITHUB_TOKEN" \
           https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
-          -d '{"state":"pending","context":"ci/gitlab/main.gitlab.in.here.com", "target_url":"'$CI_PIPELINE_URL'"}'
+          -d '{"state":"pending","context":"Internal_CI", "target_url":"'$CI_PIPELINE_URL'"}'
     rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: always
@@ -68,7 +68,7 @@ success-update-github-pipline-status:
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token $GITHUB_TOKEN" \
           https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
-          -d '{"state":"success","context":"ci/gitlab/main.gitlab.in.here.com","target_url":"'$CI_PIPELINE_URL'"}'
+          -d '{"state":"success","context":"Internal_CI","target_url":"'$CI_PIPELINE_URL'"}'
     rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: on_success
@@ -84,7 +84,7 @@ failure-update-github-pipline-status:
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token $GITHUB_TOKEN" \
           https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
-          -d '{"state":"failure","context":"ci/gitlab/main.gitlab.in.here.com","target_url":"'$CI_PIPELINE_URL'"}'
+          -d '{"state":"failure","context":"Internal_CI","target_url":"'$CI_PIPELINE_URL'"}'
     rules:
     - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: on_failure
