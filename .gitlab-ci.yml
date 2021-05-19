@@ -13,7 +13,7 @@ default:
 workflow:
   rules:
     - if: $CI_EXTERNAL_PULL_REQUEST_IID
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
 
 trigger_internal_ci:
   stage: build
@@ -47,7 +47,7 @@ pending-update-github-pipline-status:
           https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
           -d '{"state":"pending","context":"ci/gitlab/main.gitlab.in.here.com", "target_url":"'$CI_PIPELINE_URL'"}'
     rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: always
     - when: never
 
@@ -63,7 +63,7 @@ success-update-github-pipline-status:
           https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
           -d '{"state":"success","context":"ci/gitlab/main.gitlab.in.here.com","target_url":"'$CI_PIPELINE_URL'"}'
     rules:
-    - if: $CI_PIPELINE_SOURCE == 'trigger'
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: on_success
     - when: never
 
@@ -79,7 +79,7 @@ failure-update-github-pipline-status:
           https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
           -d '{"state":"failure","context":"ci/gitlab/main.gitlab.in.here.com","target_url":"'$CI_PIPELINE_URL'"}'
     rules:
-    - if: $CI_PIPELINE_SOURCE == 'trigger'
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
       when: on_failure
     - when: never
 
