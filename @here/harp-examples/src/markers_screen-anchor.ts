@@ -13,6 +13,25 @@ import THREE = require("three");
 import { apikey } from "../config";
 
 export namespace GeoToScreenExample {
+    document.body.innerHTML += `
+        <style>
+        .message {
+            position: absolute;
+            float: right;
+            top: 10px;
+            left: 100px;
+            text-align: left;
+            max-width: 40%;
+            color: #eee;
+            text-shadow: grey 0px 0px 2px;
+        }
+        @media screen and (max-width: 600px) {
+            .message {
+                display: none;
+            }
+        }
+        </style>
+    `;
     const BERLIN = new GeoCoordinates(52.5186234, 13.373993);
     const geoPosition = {
         lat: BERLIN.lat,
@@ -162,6 +181,7 @@ export namespace GeoToScreenExample {
 
     function addInfoMessage() {
         const message = document.createElement("div");
+        message.className = "message";
         message.innerHTML = `
   <br />  This example shows how MapView.getScreenPosition works for various cases
   <br />     the red square is painted on the screen in screen coordinates, whereas the green cube
@@ -169,12 +189,6 @@ export namespace GeoToScreenExample {
   <br />  Use the arrow keys or the gui to change the geoPosition
   <br />  Jump to next worlds with "j" and "l"
   `;
-        message.style.position = "absolute";
-        message.style.cssFloat = "right";
-        message.style.top = "10px";
-        message.style.left = "100px";
-        message.style.textAlign = "left";
-        message.style.textShadow = "0px 0px 2px gray";
         document.body.appendChild(message);
     }
 
