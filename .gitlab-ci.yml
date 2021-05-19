@@ -23,8 +23,15 @@ trigger_internal_ci:
   script:
     - |
       set -e
-      echo $CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+      echo $CI_EXTERNAL_PULL_REQUEST_IID
+      if [ -z "$CI_EXTERNAL_PULL_REQUEST_IID" ]
+      then
+            echo "CI_EXTERNAL_PULL_REQUEST_IID is empty since CI is trigger from sdk"
+            export CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME=$CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+            export CI_EXTERNAL_PULL_REQUEST_IID=$EXT_PULL_REQUEST_IID
+      fi
       export TRIGGER_BRANCH=$CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+
       #Creating a new branch
         curl --request POST --header \
         "PRIVATE-TOKEN: $SVC_HLS_RENDER_API" \
