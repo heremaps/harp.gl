@@ -1,27 +1,37 @@
 stages:
+  - initial-status
   - build
   - trigger
+  - final-status
 
 default:
   interruptible: true
+  image: node
+  tags: 
+    - docker-prod
 
 workflow:
   rules:
     - if: $CI_EXTERNAL_PULL_REQUEST_IID
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
 
 trigger_internal_ci:
   stage: build
-  image: node
-  tags: 
-    - docker-prod
   variables:
     DOWNSTREAM_PROJECT_ID: $DOWNSTREAM_PROJECT_ID
     DOWNSTREAM_PROJECT_NAME: $DOWNSTREAM_PROJECT_NAME
   script:
     - |
       set -e
-      echo $CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+      echo $CI_EXTERNAL_PULL_REQUEST_IID
+      if [ -z "$CI_EXTERNAL_PULL_REQUEST_IID" ]
+      then
+            echo "CI_EXTERNAL_PULL_REQUEST_IID is empty since CI is trigger from sdk"
+            export CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME=$CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+            export CI_EXTERNAL_PULL_REQUEST_IID=$EXT_PULL_REQUEST_IID
+      fi
       export TRIGGER_BRANCH=$CI_EXTERNAL_PULL_REQUEST_SOURCE_BRANCH_NAME
+
       #Creating a new branch
         curl --request POST --header \
         "PRIVATE-TOKEN: $SVC_HLS_RENDER_API" \
@@ -32,6 +42,53 @@ trigger_internal_ci:
      paths:
       - generated-config.yml
 
+pending-update-github-pipline-status:
+    stage: initial-status
+    script:
+        - echo $LATEST_GITHUB_COMMIT
+        - |
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
+          -d '{"state":"pending","context":"Internal_CI", "target_url":"'$CI_PIPELINE_URL'"}'
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: always
+    - when: never
+
+success-update-github-pipline-status:
+    stage: final-status
+    script:
+        - echo $LATEST_GITHUB_COMMIT
+        - |
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
+          -d '{"state":"success","context":"Internal_CI","target_url":"'$CI_PIPELINE_URL'"}'
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: on_success
+    - when: never
+
+failure-update-github-pipline-status:
+    stage: final-status
+    script:
+        - echo $LATEST_GITHUB_COMMIT
+        - |
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          https://api.github.com/repos/heremaps/harp.gl/statuses/$LATEST_GITHUB_COMMIT \
+          -d '{"state":"failure","context":"Internal_CI","target_url":"'$CI_PIPELINE_URL'"}'
+    rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+      when: on_failure
+    - when: never
 
 bridge_for_bridge:
   stage: trigger
