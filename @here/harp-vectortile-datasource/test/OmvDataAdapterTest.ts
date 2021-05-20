@@ -11,7 +11,6 @@ import * as sinon from "sinon";
 import { OmvDataAdapter } from "../lib/adapters/omv/OmvDataAdapter";
 import { com } from "../lib/adapters/omv/proto/vector_tile";
 import { DecodeInfo } from "../lib/DecodeInfo";
-import { FakeOmvFeatureFilter } from "./FakeOmvFeatureFilter";
 import { MockGeometryProcessor } from "./MockGeometryProcessor";
 
 enum VTJsonGeometryType {
@@ -137,9 +136,9 @@ describe("OmvDataAdapter", function () {
     let TileDecodeStub: any;
 
     beforeEach(function () {
-        decodeInfo = new DecodeInfo("", mercatorProjection, new TileKey(0, 0, 1));
+        decodeInfo = new DecodeInfo(mercatorProjection, new TileKey(0, 0, 1));
         geometryProcessor = new MockGeometryProcessor();
-        adapter = new OmvDataAdapter(geometryProcessor, new FakeOmvFeatureFilter());
+        adapter = new OmvDataAdapter();
         TileDecodeStub = sinon.stub(com.mapbox.pb.Tile, "decode");
     });
 
@@ -150,7 +149,7 @@ describe("OmvDataAdapter", function () {
     it("process polygon geometries with correct winding", function () {
         const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
         TileDecodeStub.returns(MVTTile);
-        adapter.process(1 as any, decodeInfo);
+        adapter.process(1 as any, decodeInfo, geometryProcessor);
         const polygons = polygonSpy.getCalls()[0].args[2];
         expect(polygons.length).equals(2);
     });
@@ -165,7 +164,7 @@ describe("OmvDataAdapter", function () {
         tile.layers = [layer];
         TileDecodeStub.returns(tile);
 
-        adapter.process(fakeData as any, decodeInfo);
+        adapter.process(fakeData as any, decodeInfo, geometryProcessor);
         const polygons = polygonSpy.getCalls()[0].args[2];
         expect(polygons.length).equals(2);
     });

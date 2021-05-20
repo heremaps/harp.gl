@@ -6,7 +6,7 @@
 
 import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
-import { ILogger } from "@here/harp-utils";
+import { ILogger, LoggerManager } from "@here/harp-utils";
 import * as Long from "long";
 import { ShapeUtils, Vector2, Vector3 } from "three";
 
@@ -36,6 +36,8 @@ const propertyCategories = [
     "sintValue",
     "boolValue"
 ];
+
+const logger = LoggerManager.instance.create("OmvDataAdapter", { enabled: false });
 
 function simplifiedValue(value: com.mapbox.pb.Tile.IValue): Value {
     const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -211,30 +213,14 @@ function roundUpLineCoordinates(geometry: ILineGeometry[], layerExtents: number)
  */
 
 export class OmvDataAdapter implements DataAdapter, OmvVisitor {
-    id = "omv-protobuf";
-
     private readonly m_geometryCommands = new GeometryCommands();
-    private readonly m_processor: IGeometryProcessor;
-    private readonly m_logger?: ILogger;
-    private m_dataFilter?: OmvFeatureFilter;
 
     private m_tileKey!: TileKey;
     private m_layer!: com.mapbox.pb.Tile.ILayer;
+    private m_dataFilter?: OmvFeatureFilter;
+    private m_processor!: IGeometryProcessor;
 
     public roundUpCoordinatesIfNeeded: boolean = false;
-
-    /**
-     * Constructs a new [[OmvProtobufDataAdapter]].
-     *
-     * @param processor - The [[IGeometryProcessor]] used to process the data.
-     * @param dataFilter - The [[OmvFeatureFilter]] used to filter features.
-     * @param logger - The [[ILogger]] used to log diagnostic messages.
-     */
-    constructor(processor: IGeometryProcessor, dataFilter?: OmvFeatureFilter, logger?: ILogger) {
-        this.m_processor = processor;
-        this.m_dataFilter = dataFilter;
-        this.m_logger = logger;
-    }
 
     /**
      * The [[OmvFeatureFilter]] used to filter features.
@@ -251,24 +237,22 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
     }
 
     /**
-     * Checks that the given data can be processed by this [[OmvProtobufDataAdapter]].
+     * @override
      */
     canProcess(data: ArrayBufferLike | {}): boolean {
         return isArrayBufferLike(data);
     }
 
     /**
-     * Processes the given data payload using this adapter's [[IGeometryProcessor]].
-     *
-     * @param data - The data payload to process.
-     * @param decodeInfo - The [[DecodedInfo]] of the tile to proceess.
+     * @override
      */
-    process(data: ArrayBufferLike, decodeInfo: DecodeInfo) {
+    process(data: ArrayBufferLike, decodeInfo: DecodeInfo, geometryProcessor: IGeometryProcessor) {
         const { tileKey } = decodeInfo;
         const payload = new Uint8Array(data);
         const proto = com.mapbox.pb.Tile.decode(payload);
 
         this.m_tileKey = tileKey;
+        this.m_processor = geometryProcessor;
 
         visitOmv(proto, this);
     }
@@ -335,7 +319,7 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             "point",
             storageLevel,
             this.m_processor.storageLevelOffset,
-            this.m_logger
+            logger
         );
 
         this.m_processor.processPointFeature(layerName, layerExtents, geometry, env, storageLevel);
@@ -390,7 +374,7 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             "line",
             storageLevel,
             this.m_processor.storageLevelOffset,
-            this.m_logger
+            logger
         );
 
         this.m_processor.processLineFeature(layerName, layerExtents, geometry, env, storageLevel);
@@ -466,7 +450,7 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             "polygon",
             storageLevel,
             this.m_processor.storageLevelOffset,
-            this.m_logger
+            logger
         );
 
         this.m_processor.processPolygonFeature(

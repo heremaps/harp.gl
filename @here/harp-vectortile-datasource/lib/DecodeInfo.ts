@@ -64,13 +64,11 @@ export class DecodeInfo {
     /**
      * Constructs a new [[DecodeInfo]].
      *
-     * @param adapterId - The id of the [[OmvDataAdapter]] used for decoding.
      * @param targetProjection - The [[Projection]]
      * @param tileKey - The [[TileKey]] of the Tile to decode.
      * @param storageLevelOffset - The storage level offset.
      */
     constructor(
-        readonly adapterId: string,
         readonly targetProjection: Projection,
         readonly tileKey: TileKey,
         readonly storageLevelOffset: number = 0

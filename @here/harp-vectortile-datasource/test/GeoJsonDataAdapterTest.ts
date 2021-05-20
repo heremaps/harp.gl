@@ -10,7 +10,6 @@ import * as sinon from "sinon";
 
 import { GeoJsonDataAdapter } from "../lib/adapters/geojson/GeoJsonDataAdapter";
 import { DecodeInfo } from "../lib/DecodeInfo";
-import { FakeOmvFeatureFilter } from "./FakeOmvFeatureFilter";
 import { MockGeometryProcessor } from "./MockGeometryProcessor";
 
 const featureCollection = {
@@ -64,9 +63,9 @@ describe("GeoJsonDataAdapter", function () {
     let adapter: GeoJsonDataAdapter;
 
     beforeEach(function () {
-        decodeInfo = new DecodeInfo("", mercatorProjection, new TileKey(0, 0, 1));
+        decodeInfo = new DecodeInfo(mercatorProjection, new TileKey(0, 0, 1));
         geometryProcessor = new MockGeometryProcessor();
-        adapter = new GeoJsonDataAdapter(geometryProcessor, new FakeOmvFeatureFilter());
+        adapter = new GeoJsonDataAdapter();
     });
 
     it("canProcess returns true for a FeatureCollection", function () {
@@ -77,7 +76,7 @@ describe("GeoJsonDataAdapter", function () {
         const pointSpy = sinon.spy(geometryProcessor, "processPointFeature");
         const lineSpy = sinon.spy(geometryProcessor, "processLineFeature");
         const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
-        adapter.process(featureCollection as any, decodeInfo);
+        adapter.process(featureCollection as any, decodeInfo, geometryProcessor);
 
         expect(pointSpy.calledOnce);
         const pointEnv = pointSpy.getCalls()[0].args[3];

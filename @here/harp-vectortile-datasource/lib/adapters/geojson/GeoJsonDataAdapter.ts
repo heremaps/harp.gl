@@ -8,13 +8,11 @@ import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
 import { Vector2Like } from "@here/harp-geoutils/lib/math/Vector2Like";
-import { ILogger } from "@here/harp-utils";
 import { ShapeUtils, Vector2, Vector3 } from "three";
 
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
-import { OmvFeatureFilter } from "../../OmvDataFilter";
 import { world2tile } from "../../OmvUtils";
 
 const DEFAULT_EXTENTS = 4 * 1024;
@@ -170,14 +168,9 @@ function convertPointGeometry(
 }
 
 export class GeoJsonDataAdapter implements DataAdapter {
-    id = "GeoJsonDataAdapter";
-
-    constructor(
-        readonly m_processor: IGeometryProcessor,
-        readonly dataFilter: OmvFeatureFilter,
-        readonly m_logger?: ILogger
-    ) {}
-
+    /**
+     * @override
+     */
     canProcess(featureCollection: Partial<GeoJsonFeatureCollection>): boolean {
         return (
             featureCollection &&
@@ -186,7 +179,12 @@ export class GeoJsonDataAdapter implements DataAdapter {
         );
     }
 
-    process(featureCollection: GeoJsonFeatureCollection, decodeInfo: DecodeInfo): void {
+    /** @override */
+    process(
+        featureCollection: GeoJsonFeatureCollection,
+        decodeInfo: DecodeInfo,
+        geometryProcessor: IGeometryProcessor
+    ): void {
         if (!Array.isArray(featureCollection.features) || featureCollection.features.length === 0) {
             return;
         }
@@ -194,7 +192,7 @@ export class GeoJsonDataAdapter implements DataAdapter {
         const { tileKey } = decodeInfo;
 
         const $level = tileKey.level;
-        const $zoom = Math.max(0, tileKey.level - (this.m_processor.storageLevelOffset ?? 0));
+        const $zoom = Math.max(0, tileKey.level - (geometryProcessor.storageLevelOffset ?? 0));
         const $layer = "geojson";
 
         for (const feature of featureCollection.features) {
@@ -233,7 +231,7 @@ export class GeoJsonDataAdapter implements DataAdapter {
                     geometry = clippedGeometries;
 
                     if (geometry.length > 0) {
-                        this.m_processor.processLineFeature(
+                        geometryProcessor.processLineFeature(
                             $layer,
                             DEFAULT_EXTENTS,
                             clippedGeometries,
@@ -246,7 +244,7 @@ export class GeoJsonDataAdapter implements DataAdapter {
                 case "Polygon":
                 case "MultiPolygon": {
                     const geometry = convertPolygonGeometry(feature.geometry, decodeInfo);
-                    this.m_processor.processPolygonFeature(
+                    geometryProcessor.processPolygonFeature(
                         $layer,
                         DEFAULT_EXTENTS,
                         geometry,
@@ -258,7 +256,7 @@ export class GeoJsonDataAdapter implements DataAdapter {
                 case "Point":
                 case "MultiPoint": {
                     const geometry = convertPointGeometry(feature.geometry, decodeInfo);
-                    this.m_processor.processPointFeature(
+                    geometryProcessor.processPointFeature(
                         $layer,
                         DEFAULT_EXTENTS,
                         geometry,

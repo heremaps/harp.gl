@@ -146,9 +146,9 @@ export function createOMVDecoderPerformanceTest(
 
             await measurePerformanceSync(counterName, repeats, function () {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvDataAdapter(geometryProcessor, undefined);
-                    const decodeInfo = new DecodeInfo("profiler", mercatorProjection, tileKey, 0);
-                    decoder.process(tileData, decodeInfo);
+                    const decoder = new OmvDataAdapter();
+                    const decodeInfo = new DecodeInfo(mercatorProjection, tileKey, 0);
+                    decoder.process(tileData, decodeInfo, geometryProcessor);
                 }
             });
         });
@@ -169,7 +169,8 @@ export function createOMVDecoderPerformanceTest(
                     const decoder = new VectorTileDataProcessor(
                         projection,
                         styleSetEvaluator,
-                        false
+                        false,
+                        new OmvDataAdapter()
                     );
                     decoder.getDecodedTile(tileKey, tileData);
                 }
@@ -193,7 +194,8 @@ export function createOMVDecoderPerformanceTest(
                     const decoder = new VectorTileDataProcessor(
                         projection,
                         styleSetEvaluator,
-                        false
+                        false,
+                        new OmvDataAdapter()
                     );
                     decoder.getDecodedTile(tileKey, tileData);
                 }

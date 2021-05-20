@@ -10,7 +10,6 @@ import * as sinon from "sinon";
 
 import { GeoJsonVtDataAdapter } from "../lib/adapters/geojson-vt/GeoJsonVtDataAdapter";
 import { DecodeInfo } from "../lib/DecodeInfo";
-import { FakeOmvFeatureFilter } from "./FakeOmvFeatureFilter";
 import { MockGeometryProcessor } from "./MockGeometryProcessor";
 
 enum VTJsonGeometryType {
@@ -107,9 +106,9 @@ describe("GeoJsonVtDataAdapter", function () {
     let adapter: GeoJsonVtDataAdapter;
 
     beforeEach(function () {
-        decodeInfo = new DecodeInfo("", mercatorProjection, new TileKey(0, 0, 1));
+        decodeInfo = new DecodeInfo(mercatorProjection, new TileKey(0, 0, 1));
         geometryProcessor = new MockGeometryProcessor();
-        adapter = new GeoJsonVtDataAdapter(geometryProcessor, new FakeOmvFeatureFilter());
+        adapter = new GeoJsonVtDataAdapter();
     });
 
     it("canProcess returns true for a geojson-vt Tile", function () {
@@ -120,7 +119,7 @@ describe("GeoJsonVtDataAdapter", function () {
         const pointSpy = sinon.spy(geometryProcessor, "processPointFeature");
         const lineSpy = sinon.spy(geometryProcessor, "processLineFeature");
         const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
-        adapter.process(geojsonVtTile as any, decodeInfo);
+        adapter.process(geojsonVtTile as any, decodeInfo, geometryProcessor);
 
         expect(pointSpy.calledOnce);
         const pointEnv = pointSpy.getCalls()[0].args[3];
@@ -137,7 +136,7 @@ describe("GeoJsonVtDataAdapter", function () {
 
     it("process tile's polygon geometries and create a single polygon from nested rings", function () {
         const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
-        adapter.process(geojsonVtTile as any, decodeInfo);
+        adapter.process(geojsonVtTile as any, decodeInfo, geometryProcessor);
 
         expect(polygonSpy.calledOnce);
         const polygons = polygonSpy.getCalls()[0].args[2];

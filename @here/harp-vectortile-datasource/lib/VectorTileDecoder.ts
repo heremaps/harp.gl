@@ -56,28 +56,24 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         private readonly m_projection: Projection,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_showMissingTechniques: boolean,
+        private readonly m_dataAdapter: DataAdapter,
         private readonly m_dataFilter?: OmvFeatureFilter,
         private readonly m_featureModifiers?: OmvFeatureModifier[],
         private readonly m_gatherFeatureAttributes = false,
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
         private readonly m_enableElevationOverlay = false,
-        private readonly m_roundUpCoordinatesIfNeeded = false,
+        roundUpCoordinatesIfNeeded = false,
         private readonly m_languages?: string[]
     ) {
-        const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
-        const dataPreFilter = m_dataFilter
-            ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
-            : styleSetDataFilter;
-
-        // Register the default adapters.
-
-        const omvDataAdapter = new OmvDataAdapter(this, dataPreFilter, logger);
-        omvDataAdapter.roundUpCoordinatesIfNeeded = m_roundUpCoordinatesIfNeeded;
-        this.m_dataAdapters.push(omvDataAdapter);
-
-        this.m_dataAdapters.push(new GeoJsonVtDataAdapter(this, dataPreFilter, logger));
-        this.m_dataAdapters.push(new GeoJsonDataAdapter(this, dataPreFilter, logger));
+        if (this.m_dataAdapter instanceof OmvDataAdapter) {
+            const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
+            const dataPreFilter = m_dataFilter
+                ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
+                : styleSetDataFilter;
+            this.m_dataAdapter.dataFilter = dataPreFilter;
+            this.m_dataAdapter.roundUpCoordinatesIfNeeded = roundUpCoordinatesIfNeeded;
+        }
     }
 
     get storageLevelOffset() {
@@ -93,28 +89,9 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
      * @returns A [[DecodedTile]]
      */
     getDecodedTile(tileKey: TileKey, data: ArrayBufferLike | {}): DecodedTile {
-        let dataAdapter;
-        for (const adapter of this.m_dataAdapters.values()) {
-            if (adapter.canProcess(data)) {
-                dataAdapter = adapter;
-                break;
-            }
-        }
-        if (dataAdapter === undefined) {
-            return {
-                techniques: [],
-                geometries: []
-            };
-        }
-
         this.m_styleSetEvaluator.resetTechniques();
 
-        const decodeInfo = new DecodeInfo(
-            dataAdapter.id,
-            this.m_projection,
-            tileKey,
-            this.m_storageLevelOffset
-        );
+        const decodeInfo = new DecodeInfo(this.m_projection, tileKey, this.m_storageLevelOffset);
 
         this.m_decodedTileEmitter = new VectorTileDataEmitter(
             decodeInfo,
@@ -125,7 +102,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
             this.m_languages
         );
 
-        dataAdapter.process(data, decodeInfo);
+        this.m_dataAdapter.process(data, decodeInfo, this);
         return this.m_decodedTileEmitter.getDecodedTile();
     }
 
@@ -304,6 +281,12 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     private m_enableElevationOverlay: boolean = false;
     private m_roundUpCoordinatesIfNeeded: boolean = false;
 
+    private static readonly DEFAULT_DATA_ADAPTERS: DataAdapter[] = [
+        new OmvDataAdapter(),
+        new GeoJsonVtDataAdapter(),
+        new GeoJsonDataAdapter()
+    ];
+
     /** @override */
     connect(): Promise<void> {
         return Promise.resolve();
@@ -317,11 +300,16 @@ export class VectorTileDecoder extends ThemedTileDecoder {
         projection: Projection
     ): Promise<DecodedTile> {
         const startTime = PerformanceTimer.now();
+        const dataAdapter = this.getDataAdapter(data);
+        if (!dataAdapter) {
+            return Promise.reject(new Error("Unsupported data format."));
+        }
 
         const decoder = new VectorTileDataProcessor(
             projection,
             styleSetEvaluator,
             this.m_showMissingTechniques,
+            dataAdapter,
             this.m_featureFilter,
             this.m_featureModifiers,
             this.m_gatherFeatureAttributes,
@@ -331,7 +319,6 @@ export class VectorTileDecoder extends ThemedTileDecoder {
             this.m_roundUpCoordinatesIfNeeded,
             this.languages
         );
-
         const decodedTile = decoder.getDecodedTile(tileKey, data);
 
         decodedTile.decodeTime = PerformanceTimer.now() - startTime;
@@ -425,6 +412,25 @@ export class VectorTileDecoder extends ThemedTileDecoder {
         if (options?.languages !== undefined) {
             this.languages = options.languages;
         }
+    }
+
+    /**
+     * Returns the appropiate data adapter to convert the given data into the format expected by
+     * VectorTileDecoder.
+     * @note Default adapters are available for GeoJson and OMV formats. This function may be
+     * overriden to support additional formats.
+     *
+     * @param data - The input data to be coverted.
+     * @returns The DataAdapter to convert the data, or undefined if there's no adapter for that
+     * data format.
+     */
+    protected getDataAdapter(data: ArrayBufferLike | {}): DataAdapter | undefined {
+        for (const adapter of VectorTileDecoder.DEFAULT_DATA_ADAPTERS) {
+            if (adapter.canProcess(data)) {
+                return adapter;
+            }
+        }
+        return undefined;
     }
 
     private createFeatureModifier(

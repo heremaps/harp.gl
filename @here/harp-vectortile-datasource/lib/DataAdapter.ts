@@ -5,6 +5,7 @@
  */
 
 import { DecodeInfo } from "./DecodeInfo";
+import { IGeometryProcessor } from "./IGeometryProcessor";
 
 /**
  * The class `DataAdapter` prepares vector data so it
@@ -12,15 +13,11 @@ import { DecodeInfo } from "./DecodeInfo";
  */
 export interface DataAdapter {
     /**
-     * `DataAdapter`'s id.
-     */
-    id: string;
-
-    /**
      * Checks if the given data can be processed by this `DataAdapter`.
      *
      * @param data - The raw data to adapt.
      */
+
     canProcess(data: ArrayBufferLike | {}): boolean;
 
     /**
@@ -29,5 +26,9 @@ export interface DataAdapter {
      * @param data - The raw data to process.
      * @param decodeInfo - The `DecodeInfo` of the tile to process.
      */
-    process(data: ArrayBufferLike | {}, decodeInfo: DecodeInfo): void;
+    process(
+        data: ArrayBufferLike | {},
+        decodeInfo: DecodeInfo,
+        geometryProcessor: IGeometryProcessor
+    ): void;
 }

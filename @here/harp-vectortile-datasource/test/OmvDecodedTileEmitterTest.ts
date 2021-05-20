@@ -45,7 +45,6 @@ const layer = "dummy";
 describe("OmvDecodedTileEmitter", function () {
     function createTileEmitter(
         decodeInfo: DecodeInfo = new DecodeInfo(
-            "test",
             mercatorProjection,
             TileKey.fromRowColumnLevel(0, 0, 1)
         ),
@@ -122,7 +121,7 @@ describe("OmvDecodedTileEmitter", function () {
     ]) {
         const result = expectScaledHeight ? "scaled" : "not scaled";
         const tileKey = TileKey.fromRowColumnLevel(0, 0, level);
-        const decodeInfo = new DecodeInfo("test", mercatorProjection, tileKey);
+        const decodeInfo = new DecodeInfo(mercatorProjection, tileKey);
 
         function getExpectedHeight(
             geoAltitude: number,
@@ -253,7 +252,7 @@ describe("OmvDecodedTileEmitter", function () {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
 
-        const decodeInfo = new DecodeInfo("test", projection, tileKey);
+        const decodeInfo = new DecodeInfo(projection, tileKey);
         const polygons = tileGeoBoxToPolygonGeometry(decodeInfo);
 
         const { tileEmitter, styleSetEvaluator } = createTileEmitter(decodeInfo);
@@ -315,7 +314,7 @@ describe("OmvDecodedTileEmitter", function () {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
 
-        const decodeInfo = new DecodeInfo("test", projection, tileKey);
+        const decodeInfo = new DecodeInfo(projection, tileKey);
         const polygons: IPolygonGeometry[] = [
             {
                 rings: [
@@ -395,7 +394,7 @@ describe("OmvDecodedTileEmitter", function () {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
 
-        const decodeInfo = new DecodeInfo("test", projection, tileKey);
+        const decodeInfo = new DecodeInfo(projection, tileKey);
         const polygons: IPolygonGeometry[] = [
             {
                 rings: [
