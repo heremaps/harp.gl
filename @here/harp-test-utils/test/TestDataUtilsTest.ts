@@ -8,7 +8,7 @@
 
 import { assert } from "chai";
 
-import { loadTestResource } from "../index";
+import { loadTestResource } from "../index.web";
 
 describe("@here/harp-test-utils", function () {
     describe("#loadTestResource", function () {

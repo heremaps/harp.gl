@@ -1732,12 +1732,10 @@ describe("MapView", function () {
 
     describe("frame complete", function () {
         it("MapView emits frame complete for empty map", async function () {
-            this.timeout(100);
             mapView = new MapView(mapViewOptions);
             return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
         it("MapView emits frame complete after map initialized", async function () {
-            this.timeout(100);
             mapView = new MapView(mapViewOptions);
 
             const dataSource = new FakeOmvDataSource({ name: "omv" });
@@ -1746,7 +1744,6 @@ describe("MapView", function () {
             return await waitForEvent(mapView, MapViewEventNames.FrameComplete);
         });
         it("MapView emits frame complete again after map update", async function () {
-            this.timeout(100);
             mapView = new MapView(mapViewOptions);
 
             const dataSource = new FakeOmvDataSource({ name: "omv" });

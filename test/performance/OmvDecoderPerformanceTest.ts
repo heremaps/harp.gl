@@ -14,7 +14,7 @@ import {
     webMercatorProjection
 } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
-import { getTestResourceUrl } from "@here/harp-test-utils";
+import { getTestResourceUrl } from "@here/harp-test-utils/index.node";
 import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
 import {
     APIFormat,
@@ -31,6 +31,14 @@ import {
 } from "@here/harp-vectortile-datasource/lib/IGeometryProcessor";
 import { VectorTileDataProcessor } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
 import { assert } from "chai";
+
+if (typeof window === "undefined") {
+    const perfHooks = require("perf_hooks");
+
+    (global as any).performance = perfHooks.performance;
+    (global as any).PerformanceObserver = perfHooks.PerformanceObserver;
+    (global as any).PerformanceEntry = perfHooks.PerformanceEntry;
+}
 
 export interface OMVDecoderPerformanceTestOptions {
     /**

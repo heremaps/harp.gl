@@ -962,6 +962,11 @@ export class VisibleTileSet {
                         visibleTileKeys.find(
                             tileKeyEntry =>
                                 tileKeyEntry.tileKey.mortonCode() === tileKey.mortonCode()
+                        ) === undefined &&
+                        // Check that we haven't already added this TileKey
+                        dependentTiles.find(
+                            tileKeyEntry =>
+                                tileKeyEntry.tileKey.mortonCode() === tileKey.mortonCode()
                         ) === undefined
                     ) {
                         dependentTiles.push(new TileKeyEntry(tileKey, 0));

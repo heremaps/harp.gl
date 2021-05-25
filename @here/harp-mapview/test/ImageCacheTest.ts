@@ -73,6 +73,7 @@ describe("MapViewImageCache", function () {
 
     if (typeof document !== "undefined") {
         it("#addImage with load", async function () {
+            this.timeout(5000);
             const cache = new MapViewImageCache();
             cache.clear();
 
@@ -104,6 +105,8 @@ describe("MapViewImageCache", function () {
         });
 
         it("#addImage (load cancelled)", async function () {
+            this.timeout(5000);
+
             const cache = new MapViewImageCache();
             cache.clear();
 
@@ -432,6 +435,7 @@ describe("ImageCache", function () {
         });
 
         it("#loadImage, from bad url", async function () {
+            this.timeout(5000);
             const owner = {};
             const cache = ImageCache.instance;
 

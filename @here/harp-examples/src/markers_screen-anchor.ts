@@ -13,11 +13,28 @@ import THREE = require("three");
 import { apikey } from "../config";
 
 export namespace GeoToScreenExample {
+    document.body.innerHTML += `
+        <style>
+        .message {
+            position: absolute;
+            top: 10px;
+            left: 100px;
+            text-align: left;
+            max-width: 40%;
+            color: #eee;
+        }
+        @media screen and (max-width: 600px) {
+            .message {
+                display: none;
+            }
+        }
+        </style>
+    `;
     const BERLIN = new GeoCoordinates(52.5186234, 13.373993);
     const geoPosition = {
-        lat: BERLIN.lat,
-        lng: BERLIN.lng,
-        alt: BERLIN.altitude ?? 0
+        latitude: BERLIN.lat,
+        longitude: BERLIN.lng,
+        altitude: BERLIN.altitude ?? 0
     };
 
     // Create a new MapView for the HTMLCanvasElement of the given id.
@@ -58,9 +75,9 @@ export namespace GeoToScreenExample {
 
     function addGuiElements() {
         const gui = new GUI({ width: 300 });
-        gui.add(geoPosition, "lat").step(0.0001).onChange(updateAnchors);
-        gui.add(geoPosition, "lng").step(0.0001).onChange(updateAnchors);
-        gui.add(geoPosition, "alt").step(0.0001).onChange(updateAnchors);
+        gui.add(geoPosition, "latitude").step(0.0001).onChange(updateAnchors);
+        gui.add(geoPosition, "longitude").step(0.0001).onChange(updateAnchors);
+        gui.add(geoPosition, "altitude").step(0.0001).onChange(updateAnchors);
         gui.add(mapView, "tileWrappingEnabled").onChange((value: boolean) => {
             mapView.tileWrappingEnabled = value;
         });
@@ -105,20 +122,14 @@ export namespace GeoToScreenExample {
         }
     }
     function updateMapAnchor() {
-        if (mapAnchor !== undefined && mapAnchor.geoPosition !== undefined) {
+        if (mapAnchor !== undefined && mapAnchor.anchor !== undefined) {
             const scaleFactor = mapView.targetDistance / 10000;
             if (mapAnchor.scale.x !== scaleFactor) {
                 mapAnchor.scale.set(scaleFactor, scaleFactor, scaleFactor);
                 mapView.update();
             }
-            if (
-                mapAnchor.geoPosition.latitude !== geoPosition.lat ||
-                mapAnchor.geoPosition.longitude !== geoPosition.lng ||
-                mapAnchor.geoPosition.altitude !== geoPosition.alt
-            ) {
-                mapAnchor.geoPosition.latitude = geoPosition.lat;
-                mapAnchor.geoPosition.longitude = geoPosition.lng;
-                mapAnchor.geoPosition.altitude = geoPosition.alt;
+            if (!(mapAnchor.anchor as GeoCoordinates).equals(geoPosition)) {
+                mapAnchor.anchor = GeoCoordinates.fromObject(geoPosition);
                 mapView.update();
             }
         }
@@ -127,9 +138,9 @@ export namespace GeoToScreenExample {
     function updateAnchors() {
         gui.updateDisplay();
         const screenpos = mapView.getScreenPosition({
-            latitude: geoPosition.lat,
-            longitude: geoPosition.lng,
-            altitude: geoPosition.alt
+            latitude: geoPosition.latitude,
+            longitude: geoPosition.longitude,
+            altitude: geoPosition.altitude
         });
         updateScreenAnchor(screenpos);
         updateScreenAnchorValues(screenpos);
@@ -141,7 +152,7 @@ export namespace GeoToScreenExample {
             new THREE.BoxBufferGeometry(100, 100, 100),
             new THREE.MeshBasicMaterial({ color: "green" })
         ) as MapAnchor;
-        mapAnchor.geoPosition = BERLIN;
+        mapAnchor.anchor = BERLIN;
         mapAnchor.overlay = true;
         mapAnchor.renderOrder = Number.MAX_SAFE_INTEGER;
         mapView.mapAnchors.add(mapAnchor);
@@ -152,6 +163,7 @@ export namespace GeoToScreenExample {
         const screenAnchor = document.createElement("div");
         screenAnchor.id = "screenAnchor";
         screenAnchor.style.position = "absolute";
+        screenAnchor.style.zIndex = "-1"; // move it below GUI controls
         screenAnchor.style.backgroundColor = "red";
         screenAnchor.style.width = "10px";
         screenAnchor.style.height = "10px";
@@ -162,19 +174,18 @@ export namespace GeoToScreenExample {
 
     function addInfoMessage() {
         const message = document.createElement("div");
+        message.className = "message";
         message.innerHTML = `
-  <br />  This example shows how MapView.getScreenPosition works for various cases
-  <br />     the red square is painted on the screen in screen coordinates, whereas the green cube
-  <br />     lives in the world.
-  <br />  Use the arrow keys or the gui to change the geoPosition
-  <br />  Jump to next worlds with "j" and "l"
-  `;
-        message.style.position = "absolute";
-        message.style.cssFloat = "right";
-        message.style.top = "10px";
-        message.style.left = "100px";
-        message.style.textAlign = "left";
-        message.style.textShadow = "0px 0px 2px gray";
+   <p>
+     This example shows how MapView.getScreenPosition works for various cases
+     the red square is painted on the screen in screen coordinates, whereas the green cube
+     lives in the world.
+   </p>
+   <p>
+     Use the arrow keys or the GUI to change the position.
+     Jump to next worlds with "j" and "l"
+   </p>
+   `;
         document.body.appendChild(message);
     }
 
@@ -209,16 +220,16 @@ export namespace GeoToScreenExample {
         const step = 1 / Math.pow(mapView.zoomLevel, 2);
         switch (direction) {
             case "ArrowLeft":
-                geoPosition.lng -= step;
+                geoPosition.longitude -= step;
                 break;
             case "ArrowRight":
-                geoPosition.lng += step;
+                geoPosition.longitude += step;
                 break;
             case "ArrowUp":
-                geoPosition.lat += step;
+                geoPosition.latitude += step;
                 break;
             case "ArrowDown":
-                geoPosition.lat -= step;
+                geoPosition.latitude -= step;
                 break;
             default:
                 stopAnchorUpdate();

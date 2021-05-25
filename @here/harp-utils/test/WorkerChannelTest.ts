@@ -49,11 +49,16 @@ describe("WorkerChannel", function () {
 
         const stubbedPost = sinon.stub(self, "postMessage") as any;
 
+        const previousChannel = LoggerManager.instance.channel;
+        // !!Messing with the global instance is bad, because it affects other tests.!!
         LoggerManager.instance.setChannel(new WorkerChannel());
         const logger = LoggerManager.instance.create(loggerName);
         logger.log(message1, message2);
 
         assert.equal(stubbedPost.callCount, 1);
         assert.isTrue(stubbedPost.alwaysCalledWithExactly(expectedMessage));
+
+        // !!Messing with the global instance is bad, because it affects other tests.!!
+        LoggerManager.instance.setChannel(previousChannel);
     });
 });

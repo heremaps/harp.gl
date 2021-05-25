@@ -11,9 +11,12 @@ import { PickResult } from "./PickHandler";
 
 // Default sorting by distance first and then by reversed render order.
 function defaultSort(lhs: PickResult, rhs: PickResult) {
+    // HARP-14553: Set a distance tolerance to ignore small distance differences between 2D objects
+    // that are supposed to lie on the same plane.
+    const eps = 1e-4;
     const distanceDiff = lhs.distance - rhs.distance;
     const haveRenderOrder = lhs.renderOrder !== undefined && rhs.renderOrder !== undefined;
-    if (distanceDiff !== 0 || !haveRenderOrder) {
+    if (Math.abs(distanceDiff) > eps || !haveRenderOrder) {
         return distanceDiff;
     }
 

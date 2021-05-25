@@ -265,6 +265,72 @@ describe("StyleSetEvaluator", function () {
             assert.deepEqual(techniquesTileA[2], techniquesTileB[0]);
             assert.deepEqual(techniquesTileA[0], techniquesTileC[1]);
         });
+
+        it("technique cache key changes for different array buffers", function () {
+            const texturedStyle: StyleSet = [
+                {
+                    technique: "fill",
+                    when: "kind == 'park'",
+                    attr: {
+                        map: ["get", "map"]
+                    }
+                }
+            ];
+
+            const buffer1 = new Uint8Array([1, 2, 3, 4]).buffer;
+            const buffer2 = new Uint8Array([4, 3, 2, 1]).buffer;
+
+            const techniquesTileA = (() => {
+                const ev = new StyleSetEvaluator({ styleSet: texturedStyle });
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer: buffer1 } }));
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer: buffer2 } }));
+                return ev.decodedTechniques;
+            })();
+
+            assert.equal(techniquesTileA.length, 2);
+
+            const techniquesTileB = (() => {
+                const ev = new StyleSetEvaluator({ styleSet: texturedStyle });
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer: buffer2 } }));
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer: buffer1 } }));
+                return ev.decodedTechniques;
+            })();
+
+            assert.equal(techniquesTileB.length, 2);
+
+            // reset _index from result techniques, because it may differ
+            [...techniquesTileA, ...techniquesTileB].forEach(t => {
+                t._index = 0;
+            });
+
+            // Now, respective techniques should have same cache key irrespectively to from
+            // which tile they come.
+            assert.deepEqual(techniquesTileA[0], techniquesTileB[1]);
+            assert.deepEqual(techniquesTileA[1], techniquesTileB[0]);
+        });
+
+        it("returns same technique when same array buffer is used twice", function () {
+            const texturedStyle: StyleSet = [
+                {
+                    technique: "fill",
+                    when: "kind == 'park'",
+                    attr: {
+                        map: ["get", "map"]
+                    }
+                }
+            ];
+
+            const buffer = new Uint8Array([1, 2, 3, 4]).buffer;
+
+            const techniquesTile = (() => {
+                const ev = new StyleSetEvaluator({ styleSet: texturedStyle });
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer } }));
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", map: { buffer } }));
+                return ev.decodedTechniques;
+            })();
+
+            assert.equal(techniquesTile.length, 1);
+        });
     });
     describe('definitions / "ref" operator support', function () {
         const sampleStyleDeclaration: Style = {

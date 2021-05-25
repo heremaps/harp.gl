@@ -845,45 +845,71 @@ export class VectorTileDataEmitter {
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
+                for (let i = 0; i < polygon.rings.length; i++) {
+                    const isExterior = i === 0;
+                    let ringCoords: THREE.Vector2[] = polygon.rings[i];
 
-                for (const outline of polygon.rings) {
-                    let coords = outline;
-
-                    // disable clipping for the polygon geometries
+                    // Disable clipping for the polygon geometries
                     // rendered using the extruded-polygon technique.
                     // We can't clip these polygons for now because
                     // otherwise we could break the current assumptions
                     // used to add oultines around the extruded geometries.
                     if (shouldClipPolygons) {
-                        // quick test to avoid clipping if all the coords
+                        // Quick test to avoid clipping if all the coords
                         // of the current polygon are inside the tile bounds.
-                        const hasCoordsOutsideTileBounds = coords.some(
+                        const hasCoordsOutsideTileBounds = ringCoords.some(
                             p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
                         );
-
                         if (hasCoordsOutsideTileBounds) {
-                            coords = clipPolygon(coords, extents);
+                            ringCoords = clipPolygon(ringCoords, extents);
                         }
                     }
 
-                    if (coords.length === 0) {
-                        continue;
+                    const area = THREE.ShapeUtils.area(ringCoords);
+
+                    // According to MVT spec, the rings defining a polygon follow this layout:
+                    // [[ext-ring], seq([int-ring])]
+                    //
+                    // For example:
+                    // ┌───────ext1───────┐
+                    // │                  │
+                    // │  ┌────hole────┐  │
+                    // │  │            │  │
+                    // │  │            │  │    w:CW     w:CCW
+                    // │  │            │  │   [[ext1], [hole]]
+                    // │  │            │  │
+                    // │  │            │  │
+                    // │  │            │  │
+                    // │  └──────>─────┘  │
+                    // │                  │
+                    // └─────────<────────┘
+                    // So, if one exterior ring get clipped to a zero-area polygon we
+                    // can imply that all the inner rings collapsed as well.
+                    // As per spec, all the inner rings must enclosed within the exterior ring.
+                    // Using this assumption, we can skip the whole polygon.
+                    if (isExterior && area === 0) {
+                        break;
                     }
 
-                    let textureCoords: THREE.Vector2[] | undefined;
+                    // For holes, push the current ring only if it has a non-zero area
+                    if (area !== 0) {
+                        let textureCoords: THREE.Vector2[] | undefined;
 
-                    if (computeTexCoords !== undefined) {
-                        textureCoords = coords.map(coord => computeTexCoords(coord, extents));
+                        if (computeTexCoords !== undefined) {
+                            textureCoords = ringCoords.map(coord =>
+                                computeTexCoords(coord, extents)
+                            );
+                        }
+
+                        rings.push(
+                            new Ring(ringCoords, textureCoords, extents, shouldClipPolygons)
+                        );
                     }
-
-                    rings.push(new Ring(coords, textureCoords, extents, shouldClipPolygons));
                 }
 
-                if (rings.length === 0) {
-                    continue;
+                if (rings.length > 0) {
+                    polygons.push(rings);
                 }
-
-                polygons.push(rings);
             }
 
             const isLine = isSolidLineTechnique(technique) || isLineTechnique(technique);
@@ -1388,207 +1414,226 @@ export class VectorTileDataEmitter {
             const startIndexCount = indices.length;
             const edgeStartIndexCount = edgeIndices.length;
 
-            for (let ringIndex = 0; ringIndex < polygon.length; ) {
-                const vertices: number[] = [];
-                const polygonBaseVertex = positions.length / 3;
+            // Iterate over the exterior ring of the current polygon
+            const vertices: number[] = [];
+            const polygonBaseVertex = positions.length / 3;
+            const exteriorRing = polygon[0];
 
-                const ring = polygon[ringIndex++];
+            const featureStride = exteriorRing.vertexStride;
+            const vertexStride = featureStride + 2;
 
-                const featureStride = ring.vertexStride;
-                const vertexStride = featureStride + 2;
-                const winding = ring.winding;
+            // The exterior ring is always the first
+            for (let i = 0; i < exteriorRing.points.length; ++i) {
+                const point = exteriorRing.points[i];
 
-                for (let i = 0; i < ring.points.length; ++i) {
-                    const point = ring.points[i];
+                // Invert the Y component to preserve the correct winding without transforming
+                // from webMercator's local to global space.
+                vertices.push(point.x, -point.y);
 
-                    // Invert the Y component to preserve the correct winding without transforming
-                    // from webMercator's local to global space.
+                if (exteriorRing.textureCoords !== undefined) {
+                    vertices.push(exteriorRing.textureCoords[i].x, exteriorRing.textureCoords[i].y);
+                }
+
+                const nextIdx = (i + 1) % exteriorRing.points.length;
+
+                const properEdge = exteriorRing.isProperEdge(i);
+
+                // Calculate nextEdge and nextWall.
+                vertices.push(
+                    properEdge ? nextIdx : -1,
+                    boundaryWalls || properEdge ? nextIdx : -1
+                );
+            }
+
+            // Iterate over the inner rings - if any
+            const holes: number[] = [];
+            let ringIndex = 1;
+            while (ringIndex < polygon.length) {
+                const vertexOffset = vertices.length / vertexStride;
+                holes.push(vertexOffset);
+
+                const hole = polygon[ringIndex++];
+                for (let i = 0; i < hole.points.length; ++i) {
+                    const nextIdx = (i + 1) % hole.points.length;
+                    const point = hole.points[i];
+
+                    // Invert the Y component to preserve the correct winding without
+                    // transforming from webMercator's local to global space.
                     vertices.push(point.x, -point.y);
 
-                    if (ring.textureCoords !== undefined) {
-                        vertices.push(ring.textureCoords[i].x, ring.textureCoords[i].y);
+                    if (hole.textureCoords !== undefined) {
+                        vertices.push(hole.textureCoords[i].x, hole.textureCoords[i].y);
                     }
-
-                    const nextIdx = (i + 1) % ring.points.length;
-
-                    const properEdge = ring.isProperEdge(i);
 
                     // Calculate nextEdge and nextWall.
+                    const insideExtents = hole.isProperEdge(i);
+
                     vertices.push(
-                        properEdge ? nextIdx : -1,
-                        boundaryWalls || properEdge ? nextIdx : -1
+                        insideExtents ? vertexOffset + nextIdx : -1,
+                        boundaryWalls || insideExtents ? vertexOffset + nextIdx : -1
                     );
                 }
+            }
 
-                // Iterate over the inner rings. The inner rings have the opposite winding
-                // of the outer rings.
-                const holes: number[] = [];
-                while (ringIndex < polygon.length && polygon[ringIndex].winding !== winding) {
-                    const vertexOffset = vertices.length / vertexStride;
-                    holes.push(vertexOffset);
+            try {
+                // Triangulate the footprint polyline.
+                const triangles = earcut(vertices, holes, vertexStride);
+                const originalVertexCount = vertices.length / vertexStride;
 
-                    const hole = polygon[ringIndex++];
-                    for (let i = 0; i < hole.points.length; ++i) {
-                        const nextIdx = (i + 1) % hole.points.length;
-                        const point = hole.points[i];
+                // Subdivide for spherical projections if needed.
+                if (isSpherical) {
+                    const geom = new THREE.BufferGeometry();
 
-                        // Invert the Y component to preserve the correct winding without
-                        // transforming from webMercator's local to global space.
-                        vertices.push(point.x, -point.y);
+                    const positionArray = [];
+                    const uvArray = [];
+                    const edgeArray = [];
+                    const wallArray = [];
 
-                        if (hole.textureCoords !== undefined) {
-                            vertices.push(hole.textureCoords[i].x, hole.textureCoords[i].y);
-                        }
-
-                        // Calculate nextEdge and nextWall.
-                        const insideExtents = hole.isProperEdge(i);
-
-                        vertices.push(
-                            insideExtents ? vertexOffset + nextIdx : -1,
-                            boundaryWalls || insideExtents ? vertexOffset + nextIdx : -1
-                        );
-                    }
-                }
-
-                try {
-                    // Triangulate the footprint polyline.
-                    const triangles = earcut(vertices, holes, vertexStride);
-                    const originalVertexCount = vertices.length / vertexStride;
-
-                    // Subdivide for spherical projections if needed.
-                    if (isSpherical) {
-                        const geom = new THREE.BufferGeometry();
-
-                        const positionArray = [];
-                        const uvArray = [];
-                        const edgeArray = [];
-                        const wallArray = [];
-
-                        // Transform to global webMercator coordinates to be able to reproject to
-                        // sphere.
-                        for (let i = 0; i < vertices.length; i += vertexStride) {
-                            const worldPos = tile2world(
-                                extents,
-                                this.m_decodeInfo,
-                                tmpV2.set(vertices[i], vertices[i + 1]),
-                                true,
-                                tmpV3r
-                            );
-                            positionArray.push(worldPos.x, worldPos.y, 0);
-                            if (texCoordType !== undefined) {
-                                uvArray.push(vertices[i + 2], vertices[i + 3]);
-                            }
-                            edgeArray.push(vertices[i + featureStride]);
-                            wallArray.push(vertices[i + featureStride + 1]);
-                        }
-
-                        // Create the temporary geometry used for subdivision.
-                        const posAttr = new THREE.BufferAttribute(
-                            new Float32Array(positionArray),
-                            3
-                        );
-                        geom.setAttribute("position", posAttr);
-                        let uvAttr: THREE.BufferAttribute | undefined;
-                        if (texCoordType !== undefined) {
-                            uvAttr = new THREE.BufferAttribute(new Float32Array(uvArray), 2);
-                            geom.setAttribute("uv", uvAttr);
-                        }
-                        const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);
-                        geom.setAttribute("edge", edgeAttr);
-                        const wallAttr = new THREE.BufferAttribute(new Float32Array(wallArray), 1);
-                        geom.setAttribute("wall", edgeAttr);
-                        const index = createIndexBufferAttribute(triangles, posAttr.count - 1);
-                        const indexAttr =
-                            index.type === "uint32"
-                                ? new THREE.Uint32BufferAttribute(index.buffer, 1)
-                                : new THREE.Uint16BufferAttribute(index.buffer, 1);
-                        geom.setIndex(indexAttr);
-
-                        // Increase tesselation of polygons for certain zoom levels
-                        // to remove mixed LOD cracks
-                        const zoomLevel = this.m_decodeInfo.tileKey.level;
-                        if (zoomLevel >= 3 && zoomLevel < 9) {
-                            const subdivision = Math.pow(2, 9 - zoomLevel);
-                            const { geoBox } = this.m_decodeInfo;
-                            const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
-                                subdivision,
-                                geoBox,
-                                SubdivisionMode.NoDiagonals,
-                                webMercatorProjection
-                            );
-                            edgeModifier.modify(geom);
-                        }
-
-                        // FIXME(HARP-5700): Subdivision modifier ignores texture coordinates.
-                        const modifier = new SphericalGeometrySubdivisionModifier(
-                            THREE.MathUtils.degToRad(10),
-                            webMercatorProjection
-                        );
-                        modifier.modify(geom);
-
-                        // Reassemble the vertex buffer, transforming the subdivided global
-                        // webMercator points back to local space.
-                        vertices.length = 0;
-                        triangles.length = 0;
-                        for (let i = 0; i < posAttr.array.length; i += 3) {
-                            const tilePos = world2tile(
-                                extents,
-                                this.m_decodeInfo,
-                                tmpV3.set(posAttr.array[i], posAttr.array[i + 1], 0),
-                                true,
-                                tmpV2r
-                            );
-                            vertices.push(tilePos.x, tilePos.y);
-                            if (texCoordType !== undefined) {
-                                vertices.push(uvAttr!.array[(i / 3) * 2]);
-                                vertices.push(uvAttr!.array[(i / 3) * 2 + 1]);
-                            }
-                            vertices.push(edgeAttr.array[i / 3]);
-                            vertices.push(wallAttr.array[i / 3]);
-                        }
-
-                        const geomIndex = geom.getIndex();
-                        if (geomIndex !== null) {
-                            triangles.push(...(geomIndex.array as Float32Array));
-                        }
-                    }
-
-                    // Add the footprint/roof vertices to the position buffer.
-                    tempVertNormal.set(0, 0, 1);
-
-                    // Assemble the vertex buffer.
+                    // Transform to global webMercator coordinates to be able to reproject to
+                    // sphere.
                     for (let i = 0; i < vertices.length; i += vertexStride) {
-                        webMercatorTile2TargetWorld(
+                        const worldPos = tile2world(
                             extents,
                             this.m_decodeInfo,
                             tmpV2.set(vertices[i], vertices[i + 1]),
-                            tmpV3,
-                            false, // no need to scale height (source data is 2D).
-                            true
+                            true,
+                            tmpV3r
                         );
-
-                        const scaleFactor = scaleHeights
-                            ? this.m_decodeInfo.targetProjection.getScaleFactor(tmpV3)
-                            : 1.0;
-                        this.m_maxGeometryHeight = Math.max(
-                            this.m_maxGeometryHeight,
-                            scaleFactor * height
-                        );
-                        this.m_minGeometryHeight = Math.min(
-                            this.m_minGeometryHeight,
-                            scaleFactor * height
-                        );
-
-                        if (isSpherical) {
-                            tempVertNormal.set(tmpV3.x, tmpV3.y, tmpV3.z).normalize();
+                        positionArray.push(worldPos.x, worldPos.y, 0);
+                        if (texCoordType !== undefined) {
+                            uvArray.push(vertices[i + 2], vertices[i + 3]);
                         }
-                        tmpV3.sub(this.center);
+                        edgeArray.push(vertices[i + featureStride]);
+                        wallArray.push(vertices[i + featureStride + 1]);
+                    }
 
-                        tempFootDisp.copy(tempVertNormal).multiplyScalar(floorHeight * scaleFactor);
+                    // Create the temporary geometry used for subdivision.
+                    const posAttr = new THREE.BufferAttribute(new Float32Array(positionArray), 3);
+                    geom.setAttribute("position", posAttr);
+                    let uvAttr: THREE.BufferAttribute | undefined;
+                    if (texCoordType !== undefined) {
+                        uvAttr = new THREE.BufferAttribute(new Float32Array(uvArray), 2);
+                        geom.setAttribute("uv", uvAttr);
+                    }
+                    const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);
+                    geom.setAttribute("edge", edgeAttr);
+                    const wallAttr = new THREE.BufferAttribute(new Float32Array(wallArray), 1);
+                    geom.setAttribute("wall", edgeAttr);
+                    const index = createIndexBufferAttribute(triangles, posAttr.count - 1);
+                    const indexAttr =
+                        index.type === "uint32"
+                            ? new THREE.Uint32BufferAttribute(index.buffer, 1)
+                            : new THREE.Uint16BufferAttribute(index.buffer, 1);
+                    geom.setIndex(indexAttr);
+
+                    // Increase tesselation of polygons for certain zoom levels
+                    // to remove mixed LOD cracks
+                    const zoomLevel = this.m_decodeInfo.tileKey.level;
+                    if (zoomLevel >= 3 && zoomLevel < 9) {
+                        const subdivision = Math.pow(2, 9 - zoomLevel);
+                        const { geoBox } = this.m_decodeInfo;
+                        const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
+                            subdivision,
+                            geoBox,
+                            SubdivisionMode.NoDiagonals,
+                            webMercatorProjection
+                        );
+                        edgeModifier.modify(geom);
+                    }
+
+                    // FIXME(HARP-5700): Subdivision modifier ignores texture coordinates.
+                    const modifier = new SphericalGeometrySubdivisionModifier(
+                        THREE.MathUtils.degToRad(10),
+                        webMercatorProjection
+                    );
+                    modifier.modify(geom);
+
+                    // Reassemble the vertex buffer, transforming the subdivided global
+                    // webMercator points back to local space.
+                    vertices.length = 0;
+                    triangles.length = 0;
+                    for (let i = 0; i < posAttr.array.length; i += 3) {
+                        const tilePos = world2tile(
+                            extents,
+                            this.m_decodeInfo,
+                            tmpV3.set(posAttr.array[i], posAttr.array[i + 1], 0),
+                            true,
+                            tmpV2r
+                        );
+                        vertices.push(tilePos.x, tilePos.y);
+                        if (texCoordType !== undefined) {
+                            vertices.push(uvAttr!.array[(i / 3) * 2]);
+                            vertices.push(uvAttr!.array[(i / 3) * 2 + 1]);
+                        }
+                        vertices.push(edgeAttr.array[i / 3]);
+                        vertices.push(wallAttr.array[i / 3]);
+                    }
+
+                    const geomIndex = geom.getIndex();
+                    if (geomIndex !== null) {
+                        triangles.push(...(geomIndex.array as Float32Array));
+                    }
+                }
+
+                // Add the footprint/roof vertices to the position buffer.
+                tempVertNormal.set(0, 0, 1);
+
+                // Assemble the vertex buffer.
+                for (let i = 0; i < vertices.length; i += vertexStride) {
+                    webMercatorTile2TargetWorld(
+                        extents,
+                        this.m_decodeInfo,
+                        tmpV2.set(vertices[i], vertices[i + 1]),
+                        tmpV3,
+                        false, // no need to scale height (source data is 2D).
+                        true
+                    );
+
+                    const scaleFactor = scaleHeights
+                        ? this.m_decodeInfo.targetProjection.getScaleFactor(tmpV3)
+                        : 1.0;
+                    this.m_maxGeometryHeight = Math.max(
+                        this.m_maxGeometryHeight,
+                        scaleFactor * height
+                    );
+                    this.m_minGeometryHeight = Math.min(
+                        this.m_minGeometryHeight,
+                        scaleFactor * height
+                    );
+
+                    if (isSpherical) {
+                        tempVertNormal.set(tmpV3.x, tmpV3.y, tmpV3.z).normalize();
+                    }
+                    tmpV3.sub(this.center);
+
+                    tempFootDisp.copy(tempVertNormal).multiplyScalar(floorHeight * scaleFactor);
+                    positions.push(
+                        tmpV3.x + tempFootDisp.x,
+                        tmpV3.y + tempFootDisp.y,
+                        tmpV3.z + tempFootDisp.z
+                    );
+                    if (texCoordType !== undefined) {
+                        textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
+                    }
+                    if (this.m_enableElevationOverlay) {
+                        normals.push(...tempVertNormal.toArray());
+                    }
+                    if (isExtruded) {
+                        tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
                         positions.push(
-                            tmpV3.x + tempFootDisp.x,
-                            tmpV3.y + tempFootDisp.y,
-                            tmpV3.z + tempFootDisp.z
+                            tmpV3.x + tempRoofDisp.x,
+                            tmpV3.y + tempRoofDisp.y,
+                            tmpV3.z + tempRoofDisp.z
+                        );
+                        extrusionAxis.push(
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            tempRoofDisp.x - tempFootDisp.x,
+                            tempRoofDisp.y - tempFootDisp.y,
+                            tempRoofDisp.z - tempFootDisp.z,
+                            1.0
                         );
                         if (texCoordType !== undefined) {
                             textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
@@ -1596,80 +1641,56 @@ export class VectorTileDataEmitter {
                         if (this.m_enableElevationOverlay) {
                             normals.push(...tempVertNormal.toArray());
                         }
-                        if (isExtruded) {
-                            tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
-                            positions.push(
-                                tmpV3.x + tempRoofDisp.x,
-                                tmpV3.y + tempRoofDisp.y,
-                                tmpV3.z + tempRoofDisp.z
-                            );
-                            extrusionAxis.push(
-                                0.0,
-                                0.0,
-                                0.0,
-                                0.0,
-                                tempRoofDisp.x - tempFootDisp.x,
-                                tempRoofDisp.y - tempFootDisp.y,
-                                tempRoofDisp.z - tempFootDisp.z,
-                                1.0
-                            );
-                            if (texCoordType !== undefined) {
-                                textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
-                            }
-                            if (this.m_enableElevationOverlay) {
-                                normals.push(...tempVertNormal.toArray());
-                            }
-                            if (color !== undefined) {
-                                colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
-                            }
+                        if (color !== undefined) {
+                            colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
                         }
                     }
-
-                    // Add the footprint/roof indices to the index buffer.
-                    for (let i = 0; i < triangles.length; i += 3) {
-                        if (isExtruded) {
-                            // When extruding we duplicate the vertices, so that all even vertices
-                            // belong to the bottom and all odd vertices belong to the top.
-                            const i0 = polygonBaseVertex + triangles[i + 0] * 2 + 1;
-                            const i1 = polygonBaseVertex + triangles[i + 1] * 2 + 1;
-                            const i2 = polygonBaseVertex + triangles[i + 2] * 2 + 1;
-                            indices.push(i0, i1, i2);
-                        } else {
-                            const i0 = polygonBaseVertex + triangles[i + 0];
-                            const i1 = polygonBaseVertex + triangles[i + 1];
-                            const i2 = polygonBaseVertex + triangles[i + 2];
-                            indices.push(i0, i1, i2);
-                        }
-                    }
-
-                    // Assemble the index buffer for edges (follow vertices as linked list).
-                    if (hasEdges) {
-                        this.addEdges(
-                            polygonBaseVertex,
-                            originalVertexCount,
-                            vertexStride,
-                            featureStride,
-                            positions,
-                            vertices,
-                            edgeIndices,
-                            isExtruded,
-                            extrudedPolygonTechnique.footprint,
-                            extrudedPolygonTechnique.maxSlope
-                        );
-                    }
-                    if (isExtruded) {
-                        this.addWalls(
-                            polygonBaseVertex,
-                            originalVertexCount,
-                            vertexStride,
-                            featureStride,
-                            vertices,
-                            indices
-                        );
-                    }
-                } catch (err) {
-                    logger.error(`cannot triangulate geometry`, err);
                 }
+
+                // Add the footprint/roof indices to the index buffer.
+                for (let i = 0; i < triangles.length; i += 3) {
+                    if (isExtruded) {
+                        // When extruding we duplicate the vertices, so that all even vertices
+                        // belong to the bottom and all odd vertices belong to the top.
+                        const i0 = polygonBaseVertex + triangles[i + 0] * 2 + 1;
+                        const i1 = polygonBaseVertex + triangles[i + 1] * 2 + 1;
+                        const i2 = polygonBaseVertex + triangles[i + 2] * 2 + 1;
+                        indices.push(i0, i1, i2);
+                    } else {
+                        const i0 = polygonBaseVertex + triangles[i + 0];
+                        const i1 = polygonBaseVertex + triangles[i + 1];
+                        const i2 = polygonBaseVertex + triangles[i + 2];
+                        indices.push(i0, i1, i2);
+                    }
+                }
+
+                // Assemble the index buffer for edges (follow vertices as linked list).
+                if (hasEdges) {
+                    this.addEdges(
+                        polygonBaseVertex,
+                        originalVertexCount,
+                        vertexStride,
+                        featureStride,
+                        positions,
+                        vertices,
+                        edgeIndices,
+                        isExtruded,
+                        extrudedPolygonTechnique.footprint,
+                        extrudedPolygonTechnique.maxSlope
+                    );
+                }
+                if (isExtruded) {
+                    this.addWalls(
+                        polygonBaseVertex,
+                        originalVertexCount,
+                        vertexStride,
+                        featureStride,
+                        vertices,
+                        indices
+                    );
+                }
+            } catch (err) {
+                logger.error(`cannot triangulate geometry`, err);
             }
 
             if (this.m_gatherFeatureAttributes) {

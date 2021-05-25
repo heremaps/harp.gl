@@ -205,9 +205,18 @@ class CustomDecoder extends ThemedTileDecoder {
         const numberDependenciesIndex = numberPoints + 1;
         // Add 1 because we need to skip the first element
         const numberDependencies = data[numberDependenciesIndex];
-        for (let i = 0; i < numberDependencies; i++) {
-            // Add 1 to skip the number of dependencies
-            dependencies.push(data[numberDependenciesIndex + i + 1]);
+        // The format of each dependency is row, column, level, because we can't store the
+        // mortonCode in 32bits safely. I could have split into two 32 bit values, but that makes
+        // the code harder to read and debug, so this is fine, and the number of dependent tiles is
+        // generally not too big.
+
+        // Add 1 to skip the numberDependencies value
+        const offset = numberDependenciesIndex + 1;
+        for (let i = 0; i < numberDependencies; i += 3) {
+            const row = data[offset + i];
+            const column = data[offset + i + 1];
+            const level = data[offset + i + 2];
+            dependencies.push(TileKey.fromRowColumnLevel(row, column, level).mortonCode());
         }
     }
 }

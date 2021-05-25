@@ -356,7 +356,7 @@ export class PickHandler {
         if (
             featureData.starts === undefined ||
             featureData.starts.length === 0 ||
-            (intersect.faceIndex === undefined && intersect.index === undefined)
+            (typeof intersect.faceIndex !== "number" && intersect.index === undefined)
         ) {
             if (featureData.objInfos.length === 1) {
                 pickResult.userData = featureData.objInfos[0];
@@ -370,7 +370,7 @@ export class PickHandler {
         }
 
         const intersectIndex =
-            intersect.faceIndex !== undefined ? intersect.faceIndex * 3 : intersect.index!;
+            typeof intersect.faceIndex === "number" ? intersect.faceIndex * 3 : intersect.index!;
 
         // TODO: Implement binary search.
         let objInfosIndex = 0;

@@ -19,5 +19,5 @@ export namespace ExtrusionFeatureDefs {
      *
      * Used to avoid z-fighting between ground plane and building.
      */
-    export const MIN_BUILDING_HEIGHT = 0.01;
+    export const MIN_BUILDING_HEIGHT = 0.1;
 }

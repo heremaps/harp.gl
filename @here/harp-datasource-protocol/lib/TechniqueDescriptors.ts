@@ -235,7 +235,8 @@ const fillTechniqueDescriptor = mergeTechniqueDescriptor<FillTechnique>(
             color: { scope: AttrScope.TechniqueRendering, automatic: true },
             opacity: { scope: AttrScope.TechniqueRendering, automatic: true },
             transparent: { scope: AttrScope.TechniqueRendering, automatic: true },
-            lineWidth: AttrScope.TechniqueRendering
+            lineWidth: AttrScope.TechniqueRendering,
+            map: { scope: AttrScope.TechniqueRendering, automatic: true }
         }
     }
 );
@@ -244,7 +245,7 @@ const standardTechniqueDescriptor = mergeTechniqueDescriptor<StandardTechnique>(
     baseTechniqueParamsDescriptor,
     {
         attrDescriptors: {
-            color: AttrScope.FeatureGeometry,
+            color: { scope: AttrScope.TechniqueRendering, automatic: true },
             vertexColors: { scope: AttrScope.TechniqueRendering, automatic: true },
             wireframe: { scope: AttrScope.TechniqueRendering, automatic: true },
             roughness: { scope: AttrScope.TechniqueRendering, automatic: true },
@@ -256,7 +257,15 @@ const standardTechniqueDescriptor = mergeTechniqueDescriptor<StandardTechnique>(
             emissive: { scope: AttrScope.TechniqueRendering, automatic: true },
             emissiveIntensity: { scope: AttrScope.TechniqueRendering, automatic: true },
             refractionRatio: { scope: AttrScope.TechniqueRendering, automatic: true },
-            normalMapType: { scope: AttrScope.TechniqueRendering, automatic: true }
+            normalMapType: { scope: AttrScope.TechniqueRendering, automatic: true },
+            map: { scope: AttrScope.TechniqueRendering, automatic: true },
+            normalMap: { scope: AttrScope.TechniqueRendering, automatic: true },
+            displacementMap: { scope: AttrScope.TechniqueRendering, automatic: true },
+            roughnessMap: { scope: AttrScope.TechniqueRendering, automatic: true },
+            emissiveMap: { scope: AttrScope.TechniqueRendering, automatic: true },
+            bumpMap: { scope: AttrScope.TechniqueRendering, automatic: true },
+            metalnessMap: { scope: AttrScope.TechniqueRendering, automatic: true },
+            alphaMap: { scope: AttrScope.TechniqueRendering, automatic: true }
         }
     }
 );

@@ -60,6 +60,11 @@ export namespace TileDependenciesExample {
     `;
     class CustomDataProvider extends DataProvider {
         enableTileDependencies: boolean = false;
+
+        constructor(readonly mainTileKey: TileKey) {
+            super();
+        }
+
         connect() {
             // Here you could connect to the service.
             return Promise.resolve();
@@ -85,18 +90,19 @@ export namespace TileDependenciesExample {
                 data.push(x, y);
             }
 
-            const mainTileKey = new TileKey(16384, 16384, 15);
-            if (tileKey.mortonCode() === mainTileKey.mortonCode()) {
+            if (tileKey.mortonCode() === this.mainTileKey.mortonCode()) {
                 return Promise.resolve(new Float32Array([data.length, ...data, 0]));
             } else {
                 // Simulate that the tile contents spread over multiple tiles
                 if (
                     this.enableTileDependencies &&
-                    (tileKey.column >= mainTileKey.column - 3 ||
-                        tileKey.column <= mainTileKey.column + 3)
+                    (tileKey.column >= this.mainTileKey.column - 3 ||
+                        tileKey.column <= this.mainTileKey.column + 3) &&
+                    tileKey.row === this.mainTileKey.row
                 ) {
                     //snippet:tile_dependencies.ts
-                    return Promise.resolve(new Float32Array([0, 1, mainTileKey.mortonCode()]));
+                    const { row, column, level } = this.mainTileKey;
+                    return Promise.resolve(new Float32Array([0, 1, row, column, level]));
                     //end:tile_dependencies.ts
                 }
             }
@@ -224,16 +230,27 @@ export namespace TileDependenciesExample {
             map.resize(window.innerWidth, window.innerHeight);
         });
 
-        const customDataProvider = new CustomDataProvider();
+        const customDP1 = new CustomDataProvider(new TileKey(16385, 16384, 15));
+        const customDP = new CustomDataProvider(new TileKey(16384, 16384, 15));
+
         // snippet:tile_dependencies_create.ts
         const customDatasource = new CustomDataSource({
             name: "customDatasource",
             styleSetName: "customStyleSet",
             tilingScheme: webMercatorTilingScheme,
-            dataProvider: customDataProvider,
+            dataProvider: customDP,
             concurrentDecoderServiceName: CUSTOM_DECODER_SERVICE_TYPE,
             storageLevelOffset: -1
         });
+        const customDatasource1 = new CustomDataSource({
+            name: "customDatasource1",
+            styleSetName: "customStyleSet",
+            tilingScheme: webMercatorTilingScheme,
+            dataProvider: customDP1,
+            concurrentDecoderServiceName: CUSTOM_DECODER_SERVICE_TYPE,
+            storageLevelOffset: -1
+        });
+        map.addDataSource(customDatasource1);
         map.addDataSource(customDatasource);
 
         // Also visualize the tile borders:
@@ -253,7 +270,8 @@ export namespace TileDependenciesExample {
 
         const gui = new GUI({ width: 300 });
         gui.add(guiOptions, "tileDependencies").onChange(val => {
-            customDataProvider.enableTileDependencies = !customDataProvider.enableTileDependencies;
+            customDP.enableTileDependencies = !customDP.enableTileDependencies;
+            customDP1.enableTileDependencies = !customDP1.enableTileDependencies;
             map.clearTileCache();
             map.update();
         });
