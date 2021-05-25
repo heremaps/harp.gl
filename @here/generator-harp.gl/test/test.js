@@ -48,7 +48,7 @@ describe("harp.gl:app", function () {
 
     after(function () {
         if (process.env.KEEP_TEMP_DIR) {
-            console.log("Keeping", runContext);
+            console.log("Keeping", runContext.cwd);
         } else {
             fsExtra.rmrfSync(runContext.cwd);
         }
