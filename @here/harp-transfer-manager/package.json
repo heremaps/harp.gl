@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-transfer-manager",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "Provides a manager that orchestrates downloading URLs, particularly static map resources.",
     "main": "index.js",
     "typings": "index",
@@ -24,7 +24,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-fetch": "^0.24.0"
+        "@here/harp-fetch": "^0.25.0"
     },
     "devDependencies": {
         "@types/chai": "^4.2.14",

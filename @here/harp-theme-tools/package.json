@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-theme-tools",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "Tools for harp.gl-theme optimiziation.",
     "bin": {
         "harp-theme-optimizer": "lib/cli-build-theme.js"
@@ -27,7 +27,7 @@
         "theme"
     ],
     "dependencies": {
-        "@here/harp-mapview": "^0.24.0",
+        "@here/harp-mapview": "^0.25.0",
         "commander": "^5.1.0",
         "glob": "^7.1.4",
         "path": "^0.12.7"

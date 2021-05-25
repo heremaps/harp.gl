@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-atlas-tools",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "Sprites and texture atlas generator for harp.gl maps",
     "main": "lib/index.js",
     "bin": {
