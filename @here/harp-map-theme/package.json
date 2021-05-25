@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-map-theme",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "Map themes",
     "main": "index.js",
     "typings": "index",
@@ -24,10 +24,10 @@
     },
     "license": "Apache-2.0",
     "devDependencies": {
-        "@here/harp-atlas-tools": "^0.24.0",
-        "@here/harp-datasource-protocol": "^0.24.0",
+        "@here/harp-atlas-tools": "^0.25.0",
+        "@here/harp-datasource-protocol": "^0.25.0",
         "@here/harp-fontcatalog": "^0.1.6",
-        "@here/harp-test-utils": "^0.24.0",
+        "@here/harp-test-utils": "^0.25.0",
         "@types/ajv": "^1.0.0",
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.2.0",

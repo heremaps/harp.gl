@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-mapview-decoder",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "Decoder worker for mapview",
     "main": "index.js",
     "typings": "index",
@@ -26,16 +26,16 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-datasource-protocol": "^0.24.0",
-        "@here/harp-fetch": "^0.24.0",
-        "@here/harp-geoutils": "^0.24.0",
-        "@here/harp-lrucache": "^0.24.0",
-        "@here/harp-mapview": "^0.24.0",
-        "@here/harp-utils": "^0.24.0",
+        "@here/harp-datasource-protocol": "^0.25.0",
+        "@here/harp-fetch": "^0.25.0",
+        "@here/harp-geoutils": "^0.25.0",
+        "@here/harp-lrucache": "^0.25.0",
+        "@here/harp-mapview": "^0.25.0",
+        "@here/harp-utils": "^0.25.0",
         "geojson-vt": "^3.2.1"
     },
     "devDependencies": {
-        "@here/harp-test-utils": "^0.24.0",
+        "@here/harp-test-utils": "^0.25.0",
         "@types/chai": "^4.2.14",
         "@types/chai-as-promised": "^7.1.2",
         "@types/mocha": "^8.2.0",

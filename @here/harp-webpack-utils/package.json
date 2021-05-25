@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-webpack-utils",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "harp.gl webpack utilities",
     "scripts": {
         "build": "tsc --build $EXTRA_TSC_ARGS",

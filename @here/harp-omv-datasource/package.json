@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-omv-datasource",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "HERE OMV Data source",
     "main": "index.js",
     "typings": "index",
@@ -27,11 +27,11 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-vectortile-datasource": "^0.24.0"
+        "@here/harp-vectortile-datasource": "^0.25.0"
     },
     "devDependencies": {
-        "@here/harp-fetch": "^0.24.0",
-        "@here/harp-test-utils": "^0.24.0",
+        "@here/harp-fetch": "^0.25.0",
+        "@here/harp-test-utils": "^0.25.0",
         "@types/chai": "^4.2.14",
         "@types/earcut": "^2.1.1",
         "@types/long": "^4.0.1",
