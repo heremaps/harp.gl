@@ -2,12 +2,8 @@ const fs = require("fs");
 const fsExtra = require("fs.extra");
 const path = require("path");
 const yeomanTestHelpers = require("yeoman-test");
-const {
-    assert
-} = require("chai");
-const {
-    spawnSync
-} = require('child_process');
+const { assert } = require("chai");
+const { spawnSync } = require("child_process");
 
 /*
 
@@ -17,13 +13,13 @@ const {
 
 */
 describe("harp.gl:app", function () {
-
     this.timeout(300000);
 
-    let helperDirectory;
+    let runContext;
 
     before(async function () {
-        helperDirectory = await yeomanTestHelpers.run(path.join(__dirname, '../generators/app'))
+        runContext = await yeomanTestHelpers
+            .run(path.join(__dirname, "../generators/app"))
             .inTmpDir(function (dir) {
                 if (process.env.USE_NPMRC) {
                     const targetPath = path.join(dir, ".npmrc");
@@ -31,29 +27,30 @@ describe("harp.gl:app", function () {
                 }
             })
             .withPrompts({
-                'access_token': 'test_token'
+                language: "typescript",
+                apikey: "test_token"
             });
 
-        assert.isString(helperDirectory);
+        assert.isNotNull(runContext);
     });
 
     it("webpack", async function () {
         const installStatus = spawnSync("npm", ["install"], {
-            cwd: helperDirectory
+            cwd: runContext.cwd
         });
         assert.strictEqual(installStatus.status, 0, installStatus.output);
 
         const buildStatus = spawnSync("npm", ["run", "build"], {
-            cwd: helperDirectory
+            cwd: runContext.cwd
         });
         assert.strictEqual(buildStatus.status, 0, buildStatus.output);
     });
 
     after(function () {
         if (process.env.KEEP_TEMP_DIR) {
-            console.log("Keeping", helperDirectory);
+            console.log("Keeping", runContext.cwd);
         } else {
-            fsExtra.rmrfSync(helperDirectory);
+            fsExtra.rmrfSync(runContext.cwd);
         }
     });
 });
