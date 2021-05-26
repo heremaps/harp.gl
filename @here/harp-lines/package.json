@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-lines",
-    "version": "0.24.0",
+    "version": "0.25.0",
     "description": "Create three.js geometries for wide lines",
     "main": "index.js",
     "typings": "index",
@@ -24,12 +24,12 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-materials": "^0.24.0"
+        "@here/harp-materials": "^0.25.0"
     },
     "devDependencies": {
-        "@here/harp-geoutils": "^0.24.0",
-        "@here/harp-test-utils": "^0.24.0",
-        "@here/harp-utils": "^0.24.0",
+        "@here/harp-geoutils": "^0.25.0",
+        "@here/harp-test-utils": "^0.25.0",
+        "@here/harp-utils": "^0.25.0",
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.2.0",
         "@types/three": "^0.127.0",
