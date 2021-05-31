@@ -14,6 +14,10 @@ import { baseUrl } from "./UrlUtils";
  *
  * * In node, it resolves to `file://${process.cwd()}`.
  */
+
+// Prevents build error that sometimes occurs when 
+declare var process: any;
+
 export function getAppBaseUrl() {
     if (typeof window === "undefined") {
         return `file://${process.cwd()}/`;
