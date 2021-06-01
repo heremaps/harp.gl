@@ -70,8 +70,7 @@ export namespace GeoJsonVisibilityExample {
         const featuresDataSource = new VectorTileDataSource({
             decoder: new VectorTileDecoder(),
             styleSetName: "geojson",
-            dataProvider,
-            addGroundPlane: false
+            dataProvider
         });
 
         featuresDataSource.dataSourceOrder = 1;

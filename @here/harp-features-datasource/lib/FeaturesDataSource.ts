@@ -66,7 +66,8 @@ export class FeaturesDataSource extends VectorTileDataSource {
     constructor(options?: FeatureDataSourceOptions) {
         super({
             ...options,
-            dataProvider: new GeoJsonDataProvider(NAME, DEFAULT_GEOJSON, options)
+            dataProvider: new GeoJsonDataProvider(NAME, DEFAULT_GEOJSON, options),
+            addGroundPlane: false
         });
         if (options !== undefined) {
             if (options.features !== undefined) {
