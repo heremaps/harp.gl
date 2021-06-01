@@ -128,7 +128,8 @@ export namespace GeoJsonCustomShaderExample {
         private addEvRange() {
             const datasource = new VectorTileDataSource({
                 dataProvider: new GeoJsonDataProvider("geojson", geojson as any),
-                styleSetName: "geojson"
+                styleSetName: "geojson",
+                addGroundPlane: false
             });
             this.mapView.addDataSource(datasource);
         }
