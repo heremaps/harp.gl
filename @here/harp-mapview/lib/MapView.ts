@@ -43,6 +43,7 @@ import {
 import * as THREE from "three";
 
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
+import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
 import { ClipPlanesEvaluator, createDefaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
@@ -2118,6 +2119,15 @@ export class MapView extends EventDispatcher {
 
         dataSource.attach(this);
         dataSource.setEnableElevationOverlay(this.m_elevationProvider !== undefined);
+        const conflictingDataSource = this.m_tileDataSources.find(
+            ds => ds.addGroundPlane === true && !(ds instanceof BackgroundDataSource)
+        );
+        if (dataSource.addGroundPlane === true && conflictingDataSource !== undefined) {
+            // eslint-disable-next-line no-console
+            console.warn(
+                `The DataSources ${dataSource.name} and ${conflictingDataSource.name} both have a ground plane added, this will cause problems with the fallback logic, see HARP-14728 & HARP-15488.`
+            );
+        }
         this.m_tileDataSources.push(dataSource);
         this.m_sceneEnvironment?.updateBackgroundDataSource();
 

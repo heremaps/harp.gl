@@ -113,7 +113,8 @@ export namespace TiledGeoJsonPointExample {
         const geoJsonDataSource = new VectorTileDataSource({
             dataProvider: geoJsonDataProvider,
             name: "geojson",
-            styleSetName: "geojson"
+            styleSetName: "geojson",
+            addGroundPlane: false
         });
         map.addDataSource(geoJsonDataSource);
 
