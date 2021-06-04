@@ -115,25 +115,6 @@ describe("GeoJsonVtDataAdapter", function () {
         expect(adapter.canProcess(geojsonVtTile as any)).to.be.true;
     });
 
-    it("process copies geojson-vt feature's id to env's $id", function () {
-        const pointSpy = sinon.spy(geometryProcessor, "processPointFeature");
-        const lineSpy = sinon.spy(geometryProcessor, "processLineFeature");
-        const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
-        adapter.process(geojsonVtTile as any, decodeInfo, geometryProcessor);
-
-        expect(pointSpy.calledOnce);
-        const pointEnv = pointSpy.getCalls()[0].args[3];
-        expect(pointEnv.lookup("$id")).equals(geojsonVtTile.features[0].id);
-
-        expect(lineSpy.calledOnce);
-        const lineEnv = lineSpy.getCalls()[0].args[3];
-        expect(lineEnv.lookup("$id")).equals(geojsonVtTile.features[1].id);
-
-        expect(polygonSpy.calledOnce);
-        const polygonEnv = polygonSpy.getCalls()[0].args[3];
-        expect(polygonEnv.lookup("$id")).equals(geojsonVtTile.features[2].id);
-    });
-
     it("process tile's polygon geometries and create a single polygon from nested rings", function () {
         const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
         adapter.process(geojsonVtTile as any, decodeInfo, geometryProcessor);

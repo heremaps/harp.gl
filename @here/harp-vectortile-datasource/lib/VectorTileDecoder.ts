@@ -8,7 +8,8 @@ import {
     DecoderOptions,
     GeometryKind,
     IndexedTechnique,
-    OptionsMap
+    OptionsMap,
+    ValueMap
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
@@ -47,12 +48,11 @@ import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
 const logger = LoggerManager.instance.create("VectorTileDecoder", { enabled: false });
 
 export class VectorTileDataProcessor implements IGeometryProcessor {
-    // The emitter is optional now.
-    // TODO: Add option to control emitter generation.
     private m_decodedTileEmitter: VectorTileDataEmitter | undefined;
     private readonly m_dataAdapters: DataAdapter[] = [];
 
     constructor(
+        private readonly m_tileKey: TileKey,
         private readonly m_projection: Projection,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_showMissingTechniques: boolean,
@@ -81,17 +81,19 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
     }
 
     /**
-     * Given a tile and a protobuffer, it returns a decoded tile and it creates the geometries that
-     * belong to it.
+     * Decodes the given tile data.
      *
-     * @param tileKey - The tile to be decoded.
-     * @param data - The protobuffer to decode from.
+     * @param data - The tile data to decode.
      * @returns A [[DecodedTile]]
      */
-    getDecodedTile(tileKey: TileKey, data: ArrayBufferLike | {}): DecodedTile {
+    getDecodedTile(data: ArrayBufferLike | {}): DecodedTile {
         this.m_styleSetEvaluator.resetTechniques();
 
-        const decodeInfo = new DecodeInfo(this.m_projection, tileKey, this.m_storageLevelOffset);
+        const decodeInfo = new DecodeInfo(
+            this.m_projection,
+            this.m_tileKey,
+            this.m_storageLevelOffset
+        );
 
         this.m_decodedTileEmitter = new VectorTileDataEmitter(
             decodeInfo,
@@ -111,49 +113,24 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: THREE.Vector3[],
-        env: MapEnv,
-        storageLevel: number
+        properties: ValueMap,
+        featureId: string | number | undefined
     ): void {
-        if (this.m_featureModifiers !== undefined) {
-            if (
-                this.m_featureModifiers.find(fm => {
-                    // TODO: The logic of feature ignore should be actually in the feature filtering
-                    // mechanism - see OmvFeatureFilter.
-                    return !fm.doProcessPointFeature(layer, env, storageLevel);
-                }) !== undefined
-            ) {
-                return;
-            }
-        }
-
-        const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "point"),
-            GeometryKind.Label
+        assert(this.m_decodedTileEmitter !== undefined);
+        // Pass feature modifier method to processFeature if there's any modifier. Get it from any
+        // modifier, processFeature will later apply it to all using Function.apply().
+        const featureModifierFunc = this.m_featureModifiers?.[0].doProcessPointFeature;
+        this.processFeature(
+            layer,
+            extents,
+            geometry,
+            "point",
+            properties,
+            featureId,
+            this.m_decodedTileEmitter!.processPointFeature,
+            GeometryKind.Label,
+            featureModifierFunc
         );
-
-        if (techniques.length === 0) {
-            if (this.m_showMissingTechniques) {
-                logger.log(
-                    "OmvDecoder#processPointFeature: no techniques for object:",
-                    JSON.stringify(env.unmap())
-                );
-            }
-            return;
-        }
-        const context: AttrEvaluationContext = {
-            env,
-            cachedExprResults: new Map()
-        };
-
-        if (this.m_decodedTileEmitter) {
-            this.m_decodedTileEmitter.processPointFeature(
-                layer,
-                extents,
-                geometry,
-                context,
-                techniques
-            );
-        }
     }
 
     /** @override */
@@ -161,48 +138,24 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: ILineGeometry[],
-        env: MapEnv,
-        storageLevel: number
+        properties: ValueMap,
+        featureId: string | number | undefined
     ): void {
-        if (this.m_featureModifiers !== undefined) {
-            if (
-                this.m_featureModifiers.find(fm => {
-                    return !fm.doProcessLineFeature(layer, env, storageLevel);
-                }) !== undefined
-            ) {
-                return;
-            }
-        }
-
-        const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "line"),
-            GeometryKind.Line
+        assert(this.m_decodedTileEmitter !== undefined);
+        // Pass feature modifier method to processFeature if there's any modifier. Get it from any
+        // modifier, processFeature will later apply it to all using Function.apply().
+        const featureModifierFunc = this.m_featureModifiers?.[0].doProcessLineFeature;
+        this.processFeature(
+            layer,
+            extents,
+            geometry,
+            "line",
+            properties,
+            featureId,
+            this.m_decodedTileEmitter!.processLineFeature,
+            GeometryKind.Line,
+            featureModifierFunc
         );
-
-        if (techniques.length === 0) {
-            if (this.m_showMissingTechniques) {
-                logger.log(
-                    "OmvDecoder#processLineFeature: no techniques for object:",
-                    JSON.stringify(env.unmap())
-                );
-            }
-            return;
-        }
-
-        const context: AttrEvaluationContext = {
-            env,
-            cachedExprResults: new Map()
-        };
-
-        if (this.m_decodedTileEmitter) {
-            this.m_decodedTileEmitter.processLineFeature(
-                layer,
-                extents,
-                geometry,
-                context,
-                techniques
-            );
-        }
     }
 
     /** @override */
@@ -210,48 +163,93 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: IPolygonGeometry[],
-        env: MapEnv,
-        storageLevel: number
+        properties: ValueMap,
+        featureId: string | number | undefined
     ): void {
-        if (this.m_featureModifiers !== undefined) {
-            if (
-                this.m_featureModifiers.find(fm => {
-                    return !fm.doProcessPolygonFeature(layer, env, storageLevel);
-                }) !== undefined
-            ) {
-                return;
-            }
-        }
+        assert(this.m_decodedTileEmitter !== undefined);
+        // Pass feature modifier method to processFeature if there's any modifier. Get it from any
+        // modifier, processFeature will later apply it to all using Function.apply().
+        const featureModifierFunc = this.m_featureModifiers?.[0].doProcessPolygonFeature;
+        this.processFeature(
+            layer,
+            extents,
+            geometry,
+            "polygon",
+            properties,
+            featureId,
+            this.m_decodedTileEmitter!.processPolygonFeature,
+            GeometryKind.Area,
+            featureModifierFunc
+        );
+    }
 
+    private processFeature(
+        layer: string,
+        extents: number,
+        geometry: THREE.Vector3[] | ILineGeometry[] | IPolygonGeometry[],
+        geometryType: string,
+        properties: ValueMap,
+        featureId: string | number | undefined,
+        emitterFunc: (...args: any[]) => void,
+        geometryKind: GeometryKind,
+        featureModifierFunc?: (...args: any[]) => boolean
+    ) {
+        const env = this.createMapEnv(properties, featureId, layer, geometryType);
+        if (
+            this.m_featureModifiers?.find(fm => {
+                // TODO: The logic of feature ignore should be actually in the feature filtering
+                // mechanism - see OmvFeatureFilter.
+                assert(featureModifierFunc !== undefined);
+                return !featureModifierFunc!.apply(fm, [layer, env, this.m_tileKey.level]);
+            }) !== undefined
+        ) {
+            return;
+        }
         const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "polygon"),
-            GeometryKind.Area
+            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, geometryType),
+            geometryKind
         );
 
         if (techniques.length === 0) {
             if (this.m_showMissingTechniques) {
                 logger.log(
-                    "OmvDecoder#processPolygonFeature: no techniques for object:",
+                    "VectorTileDataProcessor#processPointFeature: no techniques for object:",
                     JSON.stringify(env.unmap())
                 );
             }
             return;
         }
-
-        const context = {
+        const context: AttrEvaluationContext = {
             env,
             cachedExprResults: new Map()
         };
 
         if (this.m_decodedTileEmitter) {
-            this.m_decodedTileEmitter.processPolygonFeature(
+            emitterFunc.apply(this.m_decodedTileEmitter, [
                 layer,
                 extents,
                 geometry,
                 context,
                 techniques
-            );
+            ]);
         }
+    }
+
+    private createMapEnv(
+        properties: ValueMap,
+        featureId: string | number | undefined,
+        layer: string,
+        geometryType: string
+    ): MapEnv {
+        const level = this.m_tileKey.level;
+        return new MapEnv({
+            $layer: layer,
+            $id: featureId ?? null,
+            $level: level,
+            $zoom: Math.max(0, level - (this.m_storageLevelOffset ?? 0)),
+            $geometryType: geometryType,
+            ...properties
+        });
     }
 
     private applyKindFilter(
@@ -306,6 +304,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
         }
 
         const decoder = new VectorTileDataProcessor(
+            tileKey,
             projection,
             styleSetEvaluator,
             this.m_showMissingTechniques,
@@ -319,7 +318,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
             this.m_roundUpCoordinatesIfNeeded,
             this.languages
         );
-        const decodedTile = decoder.getDecodedTile(tileKey, data);
+        const decodedTile = decoder.getDecodedTile(data);
 
         decodedTile.decodeTime = PerformanceTimer.now() - startTime;
 

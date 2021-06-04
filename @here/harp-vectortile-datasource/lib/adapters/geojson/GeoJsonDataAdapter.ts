@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
+import { ValueMap } from "@here/harp-datasource-protocol/lib/Env";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
 import { Vector2Like } from "@here/harp-geoutils/lib/math/Vector2Like";
@@ -64,25 +64,6 @@ interface GeoJsonFeature {
 interface GeoJsonFeatureCollection {
     type: "FeatureCollection";
     features: GeoJsonFeature[];
-}
-
-function convertGeometryType(type: string): string {
-    switch (type) {
-        case "LineString":
-            return "line";
-        case "MultiLineString":
-            return "line";
-        case "Polygon":
-            return "polygon";
-        case "MultiPolygon":
-            return "polygon";
-        case "Point":
-            return "point";
-        case "MultiPoint":
-            return "point";
-        default:
-            return "unknown";
-    } // switch
 }
 
 const worldP = new Vector3();
@@ -188,24 +169,9 @@ export class GeoJsonDataAdapter implements DataAdapter {
         if (!Array.isArray(featureCollection.features) || featureCollection.features.length === 0) {
             return;
         }
-
-        const { tileKey } = decodeInfo;
-
-        const $level = tileKey.level;
-        const $zoom = Math.max(0, tileKey.level - (geometryProcessor.storageLevelOffset ?? 0));
-        const $layer = "geojson";
+        const layer = "geojson";
 
         for (const feature of featureCollection.features) {
-            const $geometryType = convertGeometryType(feature.geometry.type);
-            const env = new MapEnv({
-                ...feature.properties,
-                $id: feature.id ?? null,
-                $layer,
-                $level,
-                $zoom,
-                $geometryType
-            });
-
             switch (feature.geometry.type) {
                 case "LineString":
                 case "MultiLineString": {
@@ -232,11 +198,11 @@ export class GeoJsonDataAdapter implements DataAdapter {
 
                     if (geometry.length > 0) {
                         geometryProcessor.processLineFeature(
-                            $layer,
+                            layer,
                             DEFAULT_EXTENTS,
                             clippedGeometries,
-                            env,
-                            $level
+                            feature.properties,
+                            feature.id
                         );
                     }
                     break;
@@ -245,11 +211,11 @@ export class GeoJsonDataAdapter implements DataAdapter {
                 case "MultiPolygon": {
                     const geometry = convertPolygonGeometry(feature.geometry, decodeInfo);
                     geometryProcessor.processPolygonFeature(
-                        $layer,
+                        layer,
                         DEFAULT_EXTENTS,
                         geometry,
-                        env,
-                        $level
+                        feature.properties,
+                        feature.id
                     );
                     break;
                 }
@@ -257,11 +223,11 @@ export class GeoJsonDataAdapter implements DataAdapter {
                 case "MultiPoint": {
                     const geometry = convertPointGeometry(feature.geometry, decodeInfo);
                     geometryProcessor.processPointFeature(
-                        $layer,
+                        layer,
                         DEFAULT_EXTENTS,
                         geometry,
-                        env,
-                        $level
+                        feature.properties,
+                        feature.id
                     );
                     break;
                 }

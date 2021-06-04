@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
+import { ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { webMercatorProjection } from "@here/harp-geoutils";
 import { ShapeUtils, Vector2, Vector3 } from "three";
 
@@ -97,17 +97,7 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
         decodeInfo: DecodeInfo,
         geometryProcessor: IGeometryProcessor
     ) {
-        const { tileKey } = decodeInfo;
         for (const feature of tile.features) {
-            const env = new MapEnv({
-                $layer: tile.layer,
-                $geometryType: this.convertGeometryType(feature.type),
-                $level: tileKey.level,
-                $zoom: Math.max(0, tileKey.level - (geometryProcessor.storageLevelOffset ?? 0)),
-                $id: feature.id,
-                ...feature.tags
-            });
-
             switch (feature.type) {
                 case VTJsonGeometryType.Point: {
                     for (const pointGeometry of feature.geometry) {
@@ -120,8 +110,8 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
                             tile.layer,
                             VT_JSON_EXTENTS,
                             [position],
-                            env,
-                            tileKey.level
+                            feature.tags,
+                            feature.id
                         );
                     }
                     break;
@@ -161,8 +151,8 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
                         tile.layer,
                         VT_JSON_EXTENTS,
                         lines,
-                        env,
-                        tileKey.level
+                        feature.tags,
+                        feature.id
                     );
 
                     break;
@@ -191,8 +181,8 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
                         tile.layer,
                         VT_JSON_EXTENTS,
                         polygons,
-                        env,
-                        tileKey.level
+                        feature.tags,
+                        feature.id
                     );
 
                     break;
@@ -201,19 +191,6 @@ export class GeoJsonVtDataAdapter implements DataAdapter {
                     break;
                 }
             }
-        }
-    }
-
-    private convertGeometryType(type: VTJsonGeometryType): string {
-        switch (type) {
-            case VTJsonGeometryType.Point:
-                return "point";
-            case VTJsonGeometryType.LineString:
-                return "line";
-            case VTJsonGeometryType.Polygon:
-                return "polygon";
-            default:
-                return "unknown";
         }
     }
 }

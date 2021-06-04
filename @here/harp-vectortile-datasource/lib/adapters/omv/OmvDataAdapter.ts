@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
+import { Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
 import { ILogger, LoggerManager } from "@here/harp-utils";
 import * as Long from "long";
@@ -57,15 +57,6 @@ function simplifiedValue(value: com.mapbox.pb.Tile.IValue): Value {
     throw new Error("not happening");
 }
 
-function replaceReservedName(name: string): string {
-    switch (name) {
-        case "id":
-            return "$id";
-        default:
-            return name;
-    } // switch
-}
-
 function decodeFeatureId(
     feature: com.mapbox.pb.Tile.IFeature,
     logger?: ILogger
@@ -90,48 +81,20 @@ function decodeFeatureId(
 
 function readAttributes(
     layer: com.mapbox.pb.Tile.ILayer,
-    feature: com.mapbox.pb.Tile.IFeature,
-    defaultAttributes: ValueMap = {}
+    feature: com.mapbox.pb.Tile.IFeature
 ): ValueMap {
     const attrs = new FeatureAttributes();
 
-    const attributes: ValueMap = defaultAttributes || {};
+    const attributes: ValueMap = {};
 
     attrs.accept(layer, feature, {
         visitAttribute: (name, value) => {
-            attributes[replaceReservedName(name)] = simplifiedValue(value);
+            attributes[name] = simplifiedValue(value);
             return true;
         }
     });
 
     return attributes;
-}
-
-export function createFeatureEnv(
-    layer: com.mapbox.pb.Tile.ILayer,
-    feature: com.mapbox.pb.Tile.IFeature,
-    geometryType: string,
-    storageLevel: number,
-    storageLevelOffset?: number,
-    logger?: ILogger,
-    parent?: Env
-): MapEnv {
-    const attributes: ValueMap = {
-        $layer: layer.name,
-        $level: storageLevel,
-        $zoom: Math.max(0, storageLevel - (storageLevelOffset ?? 0)),
-        $geometryType: geometryType
-    };
-
-    // Some sources serve `id` directly as `IFeature` property ...
-    const featureId = decodeFeatureId(feature, logger);
-    if (featureId !== undefined) {
-        attributes.$id = featureId;
-    }
-
-    readAttributes(layer, feature, attributes);
-
-    return new MapEnv(attributes, parent);
 }
 
 export function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGeometryType {
@@ -313,16 +276,13 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "point",
-            storageLevel,
-            this.m_processor.storageLevelOffset,
-            logger
+        this.m_processor.processPointFeature(
+            layerName,
+            layerExtents,
+            geometry,
+            readAttributes(this.m_layer, feature),
+            decodeFeatureId(feature, logger)
         );
-
-        this.m_processor.processPointFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
 
     /**
@@ -367,17 +327,13 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
         if (this.mustRoundUpCoordinates) {
             roundUpLineCoordinates(geometry, layerExtents);
         }
-
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "line",
-            storageLevel,
-            this.m_processor.storageLevelOffset,
-            logger
+        this.m_processor.processLineFeature(
+            layerName,
+            layerExtents,
+            geometry,
+            readAttributes(this.m_layer, feature),
+            decodeFeatureId(feature, logger)
         );
-
-        this.m_processor.processLineFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
 
     /**
@@ -444,21 +400,12 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
 
         checkWinding(geometry);
 
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "polygon",
-            storageLevel,
-            this.m_processor.storageLevelOffset,
-            logger
-        );
-
         this.m_processor.processPolygonFeature(
             layerName,
             layerExtents,
             geometry,
-            env,
-            storageLevel
+            readAttributes(this.m_layer, feature),
+            decodeFeatureId(feature, logger)
         );
     }
 
