@@ -22,6 +22,7 @@ import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
+import { TileLoaderState } from "./ITileLoader";
 import { TileTaskGroups } from "./MapView";
 import { Tile } from "./Tile";
 import { TileOffsetUtils } from "./Utils";
@@ -1318,6 +1319,11 @@ export class VisibleTileSet {
             const tileKey = DataSourceCache.getKeyForTile(tile);
             if (!retainedTiles.has(tileKey)) {
                 retainedTiles.add(tileKey);
+                // We need to cancel the loader first because if we don't then the call to
+                // tileLoader.loadAndDecode() inside Tile::load will return the existing promise (if
+                // the tile is still loading) and not re-request the tile data from the provider as
+                // required.
+                tile.tileLoader?.cancel();
                 this.addToTaskQueue(tile);
             }
         };
