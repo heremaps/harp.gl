@@ -1031,6 +1031,7 @@ export class TileGeometryCreator {
                         fadingParams,
                         viewRanges,
                         LineRenderPass.FIRST_PASS,
+                        // Revert these changes, they aren't necessary
                         tile,
                         srcGeometry,
                         this
@@ -1051,16 +1052,17 @@ export class TileGeometryCreator {
                         fadingParams,
                         viewRanges,
                         LineRenderPass.SECOND_PASS,
+                        // As above
                         tile,
                         srcGeometry,
                         this
                     );
-                    this.addUserData(tile, srcGeometry, technique, outlineObjAA);
-                    registerTileObject(tile, outlineObjAA, techniqueKind, {
-                        technique,
-                        // TODO: Do we need this?
-                        pickability: techniquePickability
-                    });
+                    // this.addUserData(tile, srcGeometry, technique, outlineObjAA);
+                    // registerTileObject(tile, outlineObjAA, techniqueKind, {
+                    //     technique,
+                    //     // TODO: Do we need this?
+                    //     pickability: techniquePickability
+                    // });
                     objects.push(outlineObjAA);
                 }
             }
