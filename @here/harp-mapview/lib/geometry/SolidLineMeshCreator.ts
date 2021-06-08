@@ -5,6 +5,7 @@
  */
 
 import {
+    Env,
     Geometry,
     getPropertyValue,
     MapEnv,
@@ -85,6 +86,7 @@ export class SolidLineMeshCreator {
         object: SolidLineMesh,
         outlineTechnique: SolidLineTechnique,
         mapEnv: MapEnv,
+        mapEnvParent: Env,
         fadingParams: FadingParameters,
         viewRanges: ViewRanges,
         lineRenderPass: LineRenderPass,
@@ -133,7 +135,7 @@ export class SolidLineMeshCreator {
                 mainMaterialAdapter.ensureUpdated(frameMapView);
                 const mainLineWidth = mainMaterialAdapter.currentStyledProperties.lineWidth;
 
-                const secondaryLineWidth = getPropertyValue(secondaryWidth, mapEnv);
+                const secondaryLineWidth = getPropertyValue(secondaryWidth, mapEnvParent);
                 console.log("Secondary line width: " + secondaryLineWidth);
                 const opacity = outlineMaterialAdapter.currentStyledProperties.opacity as
                     | number

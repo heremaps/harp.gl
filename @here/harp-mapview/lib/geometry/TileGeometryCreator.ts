@@ -819,7 +819,7 @@ export class TileGeometryCreator {
                         ? Pickability.transient
                         : techniquePickability
                 });
-                //objects.push(object);
+                objects.push(object);
 
                 // Add the extruded polygon edges as a separate geometry.
                 if (
@@ -1016,7 +1016,7 @@ export class TileGeometryCreator {
                     this.addUserData(tile, srcGeometry, technique, outline);
                     // TODO, check if this double overlaps... should be easy to test in the IBCT,
                     // it does...
-                    //objects.push(outline);
+                    objects.push(outline);
                 }
 
                 // Add the solid line outlines as a separate geometry.
@@ -1027,6 +1027,7 @@ export class TileGeometryCreator {
                         object as SolidLineMesh,
                         technique as SolidLineTechnique,
                         discreteZoomEnv,
+                        mapView.env,
                         fadingParams,
                         viewRanges,
                         LineRenderPass.FIRST_PASS,
@@ -1042,21 +1043,25 @@ export class TileGeometryCreator {
                     objects.push(outlineObj);
 
                     // Create & add the AA for the outline
-                    // const outlineObjAA = SolidLineMeshCreator.createOutlineObj(
-                    //     outlineObj,
-                    //     technique as SolidLineTechnique,
-                    //     discreteZoomEnv,
-                    //     fadingParams,
-                    //     viewRanges,
-                    //     LineRenderPass.SECOND_PASS
-                    // );
-                    // this.addUserData(tile, srcGeometry, technique, outlineObjAA);
-                    // registerTileObject(tile, outlineObjAA, techniqueKind, {
-                    //     technique,
-                    //     // TODO: Do we need this?
-                    //     pickability: techniquePickability
-                    // });
-                    //objects.push(outlineObjAA);
+                    const outlineObjAA = SolidLineMeshCreator.createOutlineObj(
+                        outlineObj,
+                        technique as SolidLineTechnique,
+                        discreteZoomEnv,
+                        mapView.env,
+                        fadingParams,
+                        viewRanges,
+                        LineRenderPass.SECOND_PASS,
+                        tile,
+                        srcGeometry,
+                        this
+                    );
+                    this.addUserData(tile, srcGeometry, technique, outlineObjAA);
+                    registerTileObject(tile, outlineObjAA, techniqueKind, {
+                        technique,
+                        // TODO: Do we need this?
+                        pickability: techniquePickability
+                    });
+                    objects.push(outlineObjAA);
                 }
             }
         }
