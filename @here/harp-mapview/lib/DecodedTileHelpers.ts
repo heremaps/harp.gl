@@ -275,6 +275,18 @@ export function createMaterial(
 }
 
 /**
+ * Clones the material and wires up the properties.
+ * @param material Material to clone
+ * @param technique Technique to render
+ * @returns cloned material.
+ */
+export function cloneMaterial(material: THREE.Material, technique: Technique): THREE.Material {
+    const newMaterial = material.clone();
+    MapMaterialAdapter.create(newMaterial, getMainMaterialStyledProps(technique));
+    return newMaterial;
+}
+
+/**
  * Returns a [[THREE.BufferAttribute]] created from a provided
  * {@link @here/harp-datasource-protocol#BufferAttribute} object.
  *

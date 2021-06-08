@@ -422,8 +422,9 @@ function intersectGroup(
  * @internal
  */
 export class SolidLineMesh extends THREE.Mesh {
-    static readonly RENDER_ORDER_OFFSET = 1;
-    isSecondPass: boolean = false;
+    // Render order offset applied to the separate mesh used for AA.
+    static readonly RENDER_ORDER_OFFSET = 0.01;
+    referenceRenderOrder: number | undefined;
 
     /**
      * Finds the intersections of a ray with a mesh, assuming the mesh is a polyline extruded in
@@ -508,21 +509,5 @@ export class SolidLineMesh extends THREE.Mesh {
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
     raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
         SolidLineMesh.raycast(this, raycaster, intersects);
-    }
-
-    /**
-     * Creates the second pass mesh which renders the AA for transparent lines.
-     * This is required as a two step approach because otherwise the AA renders into the stencil
-     * buffer and creates artifacts when the line overlaps itself or at tile borders, see:
-     * MAPSJS-2929
-     */
-    createAAMesh(): SolidLineMesh {
-        const outline = this.clone() as SolidLineMesh;
-        const aaMaterial = (this.material as SolidLineMaterial).clone();
-        aaMaterial.pass = LineRenderPass.SECOND_PASS;
-        outline.material = aaMaterial;
-        outline.renderOrder += SolidLineMesh.RENDER_ORDER_OFFSET;
-        outline.isSecondPass = true;
-        return outline;
     }
 }

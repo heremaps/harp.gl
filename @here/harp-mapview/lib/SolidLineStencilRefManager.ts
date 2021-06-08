@@ -45,10 +45,9 @@ export class SolidLineStencilRefManager {
 
     private getStencilValue(object: SolidLineMesh) {
         // See SolidLineMesh::createAAMesh, we want the first and second passes to have the
-        // exact same stencil value
-        const renderOrder = object.isSecondPass
-            ? object.renderOrder - SolidLineMesh.RENDER_ORDER_OFFSET
-            : object.renderOrder;
+        // exact same stencil value, however they must have a different render order to ensure that
+        // there is no overlapping at the tile borders.
+        const renderOrder = object.referenceRenderOrder ?? object.renderOrder;
         return (
             this.m_renderOrderStencilValues.get(renderOrder) ??
             this.allocateStencilValue(renderOrder)

@@ -89,6 +89,7 @@ import { Tile, TileFeatureData } from "../Tile";
 import { addGroundPlane } from "./AddGroundPlane";
 import { registerTileObject } from "./RegisterTileObject";
 import { SolidLineMesh } from "./SolidLineMesh";
+import { SolidLineMeshCreator } from "./SolidLineMeshCreator";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
 
@@ -994,101 +995,64 @@ export class TileGeometryCreator {
                 }
 
                 if (isSolidLineTechnique(technique)) {
-                    const outline = (object as SolidLineMesh).createAAMesh();
+                    const outline = SolidLineMeshCreator.createAAMesh(
+                        object as SolidLineMesh,
+                        technique
+                    );
+                    // Consider to move this to the class above...?
                     registerTileObject(tile, outline, techniqueKind, {
                         technique,
                         pickability: techniquePickability
                     });
-                    objects.push(outline);
-                }
-
-                // Add the fill area edges as a separate geometry.
-                if (hasSolidLinesOutlines) {
-                    const outlineTechnique = technique as SolidLineTechnique;
-                    const outlineMaterial = material.clone() as SolidLineMaterial;
-                    applyBaseColorToMaterial(
-                        outlineMaterial,
-                        outlineMaterial.color,
-                        outlineTechnique,
-                        outlineTechnique.secondaryColor ?? 0x000000,
-                        discreteZoomEnv
-                    );
-
-                    if (outlineTechnique.secondaryCaps !== undefined) {
-                        outlineMaterial.caps = getPropertyValue(
-                            outlineTechnique.secondaryCaps,
-                            mapView.env
-                        );
-                    }
-                    const outlineObj = buildObject(
-                        technique,
-                        bufferGeometry,
-                        outlineMaterial,
-                        tile,
-                        elevationEnabled
-                    );
-
-                    outlineObj.renderOrder =
-                        (getPropertyValue(outlineTechnique.secondaryRenderOrder, mapView.env) ??
-                            0) - 0.0000001;
-
-                    this.addUserData(tile, srcGeometry, technique, outlineObj);
-
                     const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
                     FadingFeature.addRenderHelper(
-                        outlineObj,
+                        object,
                         viewRanges,
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
                         false
                     );
 
-                    const secondaryWidth = buildMetricValueEvaluator(
-                        outlineTechnique.secondaryWidth,
-                        outlineTechnique.metricUnit
+                    this.addUserData(tile, srcGeometry, technique, outline);
+                    // TODO, check if this double overlaps... should be easy to test in the IBCT,
+                    // it does...
+                    //objects.push(outline);
+                }
+
+                // Add the solid line outlines as a separate geometry.
+                if (hasSolidLinesOutlines) {
+                    const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
+                    const outlineObj = SolidLineMeshCreator.createOutlineObj(
+                        object as SolidLineMesh,
+                        technique as SolidLineTechnique,
+                        discreteZoomEnv,
+                        fadingParams,
+                        viewRanges,
+                        LineRenderPass.FIRST_PASS
                     );
+
+                    // Consider to move into separate class
+                    this.addUserData(tile, srcGeometry, technique, outlineObj);
                     registerTileObject(tile, outlineObj, techniqueKind, { technique });
-                    const mainMaterialAdapter = MapMaterialAdapter.get(material);
 
-                    const outlineMaterialAdapter = MapMaterialAdapter.create(outlineMaterial, {
-                        color: outlineTechnique.secondaryColor,
-                        opacity: outlineTechnique.opacity,
-                        caps: outlineTechnique.secondaryCaps,
-                        // Still handled above
-                        lineWidth: (frameMapView: MapAdapterUpdateEnv) => {
-                            if (!mainMaterialAdapter) {
-                                return;
-                            }
-                            mainMaterialAdapter.ensureUpdated(frameMapView);
-                            const mainLineWidth =
-                                mainMaterialAdapter.currentStyledProperties.lineWidth;
-
-                            const secondaryLineWidth = getPropertyValue(
-                                secondaryWidth,
-                                mapView.env
-                            );
-                            const opacity = outlineMaterialAdapter.currentStyledProperties
-                                .opacity as number | null;
-                            if (
-                                typeof mainLineWidth === "number" &&
-                                typeof secondaryLineWidth === "number"
-                            ) {
-                                if (
-                                    secondaryLineWidth <= mainLineWidth &&
-                                    (opacity === null || opacity === undefined || opacity === 1)
-                                ) {
-                                    // We could mark object as invisible somehow, not sure how
-                                    // objectAdapter.markInvisible();
-                                    return 0;
-                                } else {
-                                    return secondaryLineWidth;
-                                }
-                            } else {
-                                return 0;
-                            }
-                        }
-                    });
                     objects.push(outlineObj);
+
+                    // Create & add the AA for the outline
+                    const outlineObjAA = SolidLineMeshCreator.createOutlineObj(
+                        outlineObj,
+                        technique as SolidLineTechnique,
+                        discreteZoomEnv,
+                        fadingParams,
+                        viewRanges,
+                        LineRenderPass.SECOND_PASS
+                    );
+                    this.addUserData(tile, srcGeometry, technique, outlineObjAA);
+                    registerTileObject(tile, outlineObjAA, techniqueKind, {
+                        technique,
+                        // TODO: Do we need this?
+                        pickability: techniquePickability
+                    });
+                    //objects.push(outlineObjAA);
                 }
             }
         }
