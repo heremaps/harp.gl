@@ -239,9 +239,31 @@ void main() {
         ? clamp((distToEdge + width) / (2.0 * width), 0.0, 1.0) // prefer a boxstep
         : smoothstep(-width, width, distToEdge);
 
-    if (opacity < 0.98 && 1.0 - s < opacity) {
-        // drop the fragment when the line is using opacity.
-        discard;
+    // First render pass
+    if(opacity < 0.98) {
+        #ifdef DISCARD_AA
+
+        if(distToEdge > -width) {
+            // This render pass is just the solid geometry
+            discard;
+        }
+
+        #elif defined( JUST_AA )
+
+        if(distToEdge <= -width) {
+            // MAPSJS-2929: This render pass is just the AA applied to the edge of the roads this is
+            // needed for example when we have opacity, because otherwise the stencil buffer means that
+            // in some cases the middle of the line shows the AA artifacts, so we split the rendering of
+            // transparent line in two.
+            discard;
+        }
+
+        #endif
+
+        if(1.0 - s < opacity) {
+            // drop the fragment when the line is using opacity.
+            discard;
+        }
     }
 
     alpha *= 1.0 - s;
@@ -313,6 +335,11 @@ void main() {
     #include <fading_fragment>
     #endif
 }`;
+
+export enum LineRenderPass {
+    FIRST_PASS,
+    SECOND_PASS
+}
 
 /**
  * Parameters used when constructing a new {@link SolidLineMaterial}.
@@ -405,6 +432,11 @@ export interface SolidLineMaterialParameters
      * How much to offset in world units.
      */
     offset?: number;
+
+    /**
+     * Which pass this should be. This is required for transparent lines.
+     */
+    pass?: LineRenderPass;
 }
 
 /**
@@ -527,6 +559,11 @@ export class SolidLineMaterial
 
         // Apply initial parameter values.
         if (params) {
+            if (params.pass === undefined) {
+                this.pass = LineRenderPass.FIRST_PASS;
+            } else {
+                this.pass = params.pass;
+            }
             if (params.color !== undefined) {
                 tmpColor.set(params.color as any);
                 this.color = tmpColor;
@@ -586,6 +623,16 @@ export class SolidLineMaterial
                 this.invalidateFog();
             }
             this.offset = params.offset ?? 0;
+            if (params.pass) {
+                this.pass = params.pass;
+            }
+        }
+    }
+
+    set pass(pass: LineRenderPass) {
+        if (this.stencilWrite) {
+            setShaderMaterialDefine(this, "DISCARD_AA", pass === LineRenderPass.FIRST_PASS);
+            setShaderMaterialDefine(this, "JUST_AA", pass === LineRenderPass.SECOND_PASS);
         }
     }
 

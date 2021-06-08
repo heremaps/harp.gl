@@ -5,7 +5,11 @@
  */
 
 import { mercatorProjection } from "@here/harp-geoutils";
-import { SolidLineMaterial, SolidLineMaterialParameters } from "@here/harp-materials";
+import {
+    LineRenderPass,
+    SolidLineMaterial,
+    SolidLineMaterialParameters
+} from "@here/harp-materials";
 import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
 
@@ -246,15 +250,18 @@ describe("Rendering lines: ", function () {
 
         for (const test of config) {
             const lineParams = lineStyle;
+            lineParams.rendererCapabilities = { isWebGL2: false } as any;
+            lineParams.pass = LineRenderPass.FIRST_PASS;
+            const material = new SolidLineMaterial(lineParams);
+
             let uvs: number[] | undefined;
             if (lineParams.displacementMap) {
+                material.displacementMap = lineParams.displacementMap;
                 uvs = [];
                 for (let i = 0; i < test.points.length; i += 3) {
                     uvs.push(test.points[i] / cellSize + 0.5, test.points[i + 1] / cellSize + 0.5);
                 }
             }
-            lineParams.rendererCapabilities = { isWebGL2: false } as any;
-            const material = new SolidLineMaterial(lineParams);
             const lineGeometry = createLineGeometry(
                 new THREE.Vector3(),
                 test.points,
@@ -277,12 +284,18 @@ describe("Rendering lines: ", function () {
             column = cellSize * (step % maxColumnCount) + halfCellSize;
             row = canvas.height - cellSize * Math.floor(step / maxColumnCount) - halfCellSize;
             mesh.position.set(column, row, 0);
-            if (lineParams.displacementMap) {
-                (mesh.material as SolidLineMaterial).displacementMap = lineParams.displacementMap;
-            }
+
+            scene.add(mesh);
+
+            // Second render pass to do the AA
+            lineParams.pass = LineRenderPass.SECOND_PASS;
+            // Important to not clone, because otherwise you have to fiddle around with the defines
+            const outlineMaterial = new SolidLineMaterial(lineParams);
+            const outline = new THREE.Mesh(geometry, outlineMaterial);
+            outline.position.set(column, row, 0);
+            scene.add(outline);
 
             step += 1;
-            scene.add(mesh);
         }
 
         scene.position.set(-canvas.width / 2, -canvas.height / 2, 0);

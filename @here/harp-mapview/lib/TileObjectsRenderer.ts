@@ -13,11 +13,9 @@ import {
 } from "@here/harp-datasource-protocol";
 
 import { BackgroundDataSource } from "./BackgroundDataSource";
-import { SolidLineMesh } from "./geometry/SolidLineMesh";
 import { MapObjectAdapter } from "./MapObjectAdapter";
+import { SolidLineStencilRefManager } from "./SolidLineStencilRefManager";
 import { Tile, TileFeatureData, TileObject } from "./Tile";
-
-const DEFAULT_STENCIL_VALUE = 1;
 
 /*
  * Interface to represent the items of three.js render lists.
@@ -33,9 +31,7 @@ interface RenderItem {
 }
 
 export class TileObjectRenderer {
-    private readonly m_renderOrderStencilValues = new Map<number, number>();
-    // Valid values start at 1, because the screen is cleared to zero
-    private m_stencilValue: number = DEFAULT_STENCIL_VALUE;
+    private readonly m_stencilManager = new SolidLineStencilRefManager();
 
     constructor(private readonly m_env: MapEnv, private readonly m_renderer: THREE.WebGLRenderer) {}
 
@@ -56,7 +52,7 @@ export class TileObjectRenderer {
                     continue;
                 }
 
-                this.updateStencilRef(object);
+                this.m_stencilManager.updateStencilRef(object);
 
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
@@ -76,8 +72,7 @@ export class TileObjectRenderer {
     }
 
     prepareRender() {
-        this.m_stencilValue = DEFAULT_STENCIL_VALUE;
-        this.m_renderOrderStencilValues.clear();
+        this.m_stencilManager.clearValues();
     }
 
     /**
@@ -159,33 +154,6 @@ export class TileObjectRenderer {
         // Temporary workaround due to incorrect comparator type definition:
         // https://github.com/three-types/three-ts-types/issues/41
         this.m_renderer.setOpaqueSort((painterSortStable as any) as () => void);
-    }
-
-    private updateStencilRef(object: TileObject) {
-        // TODO: acquire a new style value of if transparent
-        if (object.renderOrder !== undefined && object instanceof SolidLineMesh) {
-            const material = object.material;
-            if (Array.isArray(material)) {
-                material.forEach(
-                    mat => (mat.stencilRef = this.getStencilValue(object.renderOrder))
-                );
-            } else {
-                material.stencilRef = this.getStencilValue(object.renderOrder);
-            }
-        }
-    }
-
-    private allocateStencilValue(renderOrder: number) {
-        const stencilValue = this.m_stencilValue++;
-        this.m_renderOrderStencilValues.set(renderOrder, stencilValue);
-        return stencilValue;
-    }
-
-    private getStencilValue(renderOrder: number) {
-        return (
-            this.m_renderOrderStencilValues.get(renderOrder) ??
-            this.allocateStencilValue(renderOrder)
-        );
     }
 
     /**

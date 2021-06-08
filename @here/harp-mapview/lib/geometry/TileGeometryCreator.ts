@@ -57,6 +57,7 @@ import {
     FadingFeature,
     hasExtrusionFeature,
     isHighPrecisionLineMaterial,
+    LineRenderPass,
     MapMeshDepthMaterial,
     MapMeshStandardMaterial,
     setDisplacementMapToMaterial,
@@ -87,6 +88,7 @@ import { TextElementBuilder } from "../text/TextElementBuilder";
 import { Tile, TileFeatureData } from "../Tile";
 import { addGroundPlane } from "./AddGroundPlane";
 import { registerTileObject } from "./RegisterTileObject";
+import { SolidLineMesh } from "./SolidLineMesh";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
 
@@ -664,6 +666,7 @@ export class TileGeometryCreator {
                     // TODO: Unify access to shader defines via SolidLineMaterial setters
                     assert(!isHighPrecisionLineMaterial(material));
                     const lineMaterial = material as SolidLineMaterial;
+                    lineMaterial.pass = LineRenderPass.FIRST_PASS;
                     if (
                         technique.clipping === true &&
                         tile.projection.type === ProjectionType.Planar
@@ -988,6 +991,15 @@ export class TileGeometryCreator {
                         opacity: fillTechnique.opacity
                     });
                     objects.push(outlineObj);
+                }
+
+                if (isSolidLineTechnique(technique)) {
+                    const outline = (object as SolidLineMesh).createAAMesh();
+                    registerTileObject(tile, outline, techniqueKind, {
+                        technique,
+                        pickability: techniquePickability
+                    });
+                    objects.push(outline);
                 }
 
                 // Add the fill area edges as a separate geometry.
