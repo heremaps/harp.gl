@@ -819,7 +819,7 @@ export class TileGeometryCreator {
                         ? Pickability.transient
                         : techniquePickability
                 });
-                objects.push(object);
+                //objects.push(object);
 
                 // Add the extruded polygon edges as a separate geometry.
                 if (
@@ -1022,36 +1022,40 @@ export class TileGeometryCreator {
                 // Add the solid line outlines as a separate geometry.
                 if (hasSolidLinesOutlines) {
                     const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
+                    assert((object as SolidLineMesh).material === material);
                     const outlineObj = SolidLineMeshCreator.createOutlineObj(
                         object as SolidLineMesh,
                         technique as SolidLineTechnique,
                         discreteZoomEnv,
                         fadingParams,
                         viewRanges,
-                        LineRenderPass.FIRST_PASS
+                        LineRenderPass.FIRST_PASS,
+                        tile,
+                        srcGeometry,
+                        this
                     );
 
                     // Consider to move into separate class
-                    this.addUserData(tile, srcGeometry, technique, outlineObj);
-                    registerTileObject(tile, outlineObj, techniqueKind, { technique });
+                    // this.addUserData(tile, srcGeometry, technique, outlineObj);
+                    // registerTileObject(tile, outlineObj, techniqueKind, { technique });
 
                     objects.push(outlineObj);
 
                     // Create & add the AA for the outline
-                    const outlineObjAA = SolidLineMeshCreator.createOutlineObj(
-                        outlineObj,
-                        technique as SolidLineTechnique,
-                        discreteZoomEnv,
-                        fadingParams,
-                        viewRanges,
-                        LineRenderPass.SECOND_PASS
-                    );
-                    this.addUserData(tile, srcGeometry, technique, outlineObjAA);
-                    registerTileObject(tile, outlineObjAA, techniqueKind, {
-                        technique,
-                        // TODO: Do we need this?
-                        pickability: techniquePickability
-                    });
+                    // const outlineObjAA = SolidLineMeshCreator.createOutlineObj(
+                    //     outlineObj,
+                    //     technique as SolidLineTechnique,
+                    //     discreteZoomEnv,
+                    //     fadingParams,
+                    //     viewRanges,
+                    //     LineRenderPass.SECOND_PASS
+                    // );
+                    // this.addUserData(tile, srcGeometry, technique, outlineObjAA);
+                    // registerTileObject(tile, outlineObjAA, techniqueKind, {
+                    //     technique,
+                    //     // TODO: Do we need this?
+                    //     pickability: techniquePickability
+                    // });
                     //objects.push(outlineObjAA);
                 }
             }
@@ -1147,7 +1151,7 @@ export class TileGeometryCreator {
         (material as MapMeshStandardMaterial).displacementMap!.needsUpdate = true;
     }
 
-    private addUserData(
+    addUserData(
         tile: Tile,
         srcGeometry: Geometry,
         technique: Technique,

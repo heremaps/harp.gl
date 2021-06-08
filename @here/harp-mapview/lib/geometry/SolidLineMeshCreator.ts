@@ -4,9 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getPropertyValue, MapEnv, SolidLineTechnique } from "@here/harp-datasource-protocol";
+import {
+    Geometry,
+    getPropertyValue,
+    MapEnv,
+    SolidLineTechnique
+} from "@here/harp-datasource-protocol";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { FadingFeature, LineRenderPass, SolidLineMaterial } from "@here/harp-materials";
+import { assert } from "@here/harp-utils";
 
 import {
     applyBaseColorToMaterial,
@@ -14,8 +20,10 @@ import {
     cloneMaterial
 } from "../DecodedTileHelpers";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "../MapMaterialAdapter";
+import { Tile } from "../Tile";
+import { registerTileObject } from "./RegisterTileObject";
 import { SolidLineMesh } from "./SolidLineMesh";
-import { FadingParameters } from "./TileGeometryCreator";
+import { FadingParameters, TileGeometryCreator } from "./TileGeometryCreator";
 
 /**
  * Creates the SolidLineMesh AA (antialiased) mesh and the outline + outline AA mesh.
@@ -79,12 +87,17 @@ export class SolidLineMeshCreator {
         mapEnv: MapEnv,
         fadingParams: FadingParameters,
         viewRanges: ViewRanges,
-        lineRenderPass: LineRenderPass
+        lineRenderPass: LineRenderPass,
+        tile: Tile,
+        geometry: Geometry,
+        tgc: TileGeometryCreator
     ): SolidLineMesh {
         const outlineObj =
             lineRenderPass === LineRenderPass.FIRST_PASS
                 ? SolidLineMeshCreator.cloneObject(object, outlineTechnique, mapEnv)
                 : SolidLineMeshCreator.createAAMesh(object, outlineTechnique);
+
+        tgc.addUserData(tile, geometry, outlineTechnique, outlineObj);
 
         FadingFeature.addRenderHelper(
             outlineObj,
@@ -99,9 +112,14 @@ export class SolidLineMeshCreator {
             outlineTechnique.metricUnit
         );
 
+        registerTileObject(tile, outlineObj, outlineTechnique.kind, {
+            technique: outlineTechnique
+        });
+
         const originalOutlineMaterial = object.material as SolidLineMaterial;
         const outlineMaterial = outlineObj.material as SolidLineMaterial;
         const mainMaterialAdapter = MapMaterialAdapter.get(originalOutlineMaterial);
+        assert(mainMaterialAdapter !== undefined);
 
         const outlineMaterialAdapter = MapMaterialAdapter.create(outlineMaterial, {
             color: outlineTechnique.secondaryColor,
@@ -116,6 +134,7 @@ export class SolidLineMeshCreator {
                 const mainLineWidth = mainMaterialAdapter.currentStyledProperties.lineWidth;
 
                 const secondaryLineWidth = getPropertyValue(secondaryWidth, mapEnv);
+                console.log("Secondary line width: " + secondaryLineWidth);
                 const opacity = outlineMaterialAdapter.currentStyledProperties.opacity as
                     | number
                     | null;
