@@ -226,6 +226,17 @@ enum LineType {
 type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => THREE.Vector2;
 const tmpColor = new THREE.Color();
 
+/**
+ * Options for VectorTileDataEmitter, @see {@link DecoderOptions} and {@link OmvDecoderOptions}.
+ * @internal
+ */
+export interface VectorTileDataEmitterOptions {
+    gatherFeatureAttributes?: boolean;
+    skipShortLabels?: boolean;
+    enableElevationOverlay?: boolean;
+    languages?: string[];
+}
+
 export class VectorTileDataEmitter {
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
@@ -242,14 +253,20 @@ export class VectorTileDataEmitter {
     private m_maxGeometryHeight: number = 0;
     private m_minGeometryHeight: number = 0;
 
+    private readonly m_gatherFeatureAttributes: boolean;
+    private readonly m_skipShortLabels: boolean;
+    private readonly m_enableElevationOverlay: boolean;
+    private readonly m_languages?: string[];
+
     constructor(
         private readonly m_decodeInfo: DecodeInfo,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
-        private readonly m_gatherFeatureAttributes: boolean,
-        private readonly m_skipShortLabels: boolean,
-        private readonly m_enableElevationOverlay: boolean,
-        private readonly m_languages?: string[]
-    ) {}
+        options: VectorTileDataEmitterOptions = {}
+    ) {
+        this.m_gatherFeatureAttributes = options.gatherFeatureAttributes ?? false;
+        this.m_skipShortLabels = options.skipShortLabels ?? true;
+        this.m_enableElevationOverlay = options.enableElevationOverlay ?? false;
+    }
 
     get projection() {
         return this.m_decodeInfo.targetProjection;

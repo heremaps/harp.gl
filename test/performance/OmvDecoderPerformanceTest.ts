@@ -115,8 +115,6 @@ export function createOMVDecoderPerformanceTest(
             });
 
             const geometryProcessor: IGeometryProcessor = {
-                storageLevelOffset: 0,
-
                 processPointFeature(
                     layerName: string,
                     tileExtents: number,
@@ -173,7 +171,6 @@ export function createOMVDecoderPerformanceTest(
                         tileKey,
                         projection,
                         styleSetEvaluator,
-                        false,
                         new OmvDataAdapter()
                     );
                     decoder.getDecodedTile(tileData);
@@ -199,7 +196,6 @@ export function createOMVDecoderPerformanceTest(
                         tileKey,
                         projection,
                         styleSetEvaluator,
-                        false,
                         new OmvDataAdapter()
                     );
                     decoder.getDecodedTile(tileData);

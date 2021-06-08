@@ -4,18 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
+import {
+    MapEnv,
+    StyleSetEvaluator,
+    Value,
+    ValueMap
+} from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
-import { ILogger, LoggerManager } from "@here/harp-utils";
+import { assert, ILogger, LoggerManager } from "@here/harp-utils";
 import * as Long from "long";
 import { ShapeUtils, Vector2, Vector3 } from "three";
 
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
-import { OmvFeatureFilter } from "../../OmvDataFilter";
-import { OmvGeometryType } from "../../OmvDecoderDefs";
+import {
+    ComposedDataFilter,
+    OmvFeatureFilter,
+    OmvFeatureModifier,
+    OmvGenericFeatureFilter,
+    OmvGenericFeatureModifier
+} from "../../OmvDataFilter";
+import {
+    FeatureModifierId,
+    OmvDecoderOptions,
+    OmvFeatureFilterDescription,
+    OmvGeometryType
+} from "../../OmvDecoderDefs";
+import { OmvPoliticalViewFeatureModifier } from "../../OmvPoliticalViewFeatureModifier";
 import { isArrayBufferLike } from "../../OmvUtils";
+import { StyleSetDataFilter } from "../../StyleSetDataFilter";
 import {
     FeatureAttributes,
     GeometryCommands,
@@ -59,8 +77,12 @@ function simplifiedValue(value: com.mapbox.pb.Tile.IValue): Value {
 
 function decodeFeatureId(
     feature: com.mapbox.pb.Tile.IFeature,
+    properties: ValueMap,
     logger?: ILogger
 ): number | string | undefined {
+    if (properties.id !== undefined && properties.id !== null) {
+        return properties.id as number | string;
+    }
     if (feature.hasOwnProperty("id")) {
         const id = feature.id;
         if (typeof id === "number") {
@@ -169,6 +191,18 @@ function roundUpPolygonCoordinates(geometry: IPolygonGeometry[], layerExtents: n
 function roundUpLineCoordinates(geometry: ILineGeometry[], layerExtents: number) {
     geometry.forEach(line => roundUpCoordinates(line.positions, layerExtents));
 }
+function createFeatureModifier(
+    filterDescription: OmvFeatureFilterDescription,
+    featureModifierId?: FeatureModifierId
+): OmvFeatureModifier {
+    switch (featureModifierId) {
+        case FeatureModifierId.default:
+            return new OmvGenericFeatureModifier(filterDescription);
+        default:
+            assert(!"Unrecognized feature modifier id, using default!");
+            return new OmvGenericFeatureModifier(filterDescription);
+    }
+}
 
 /**
  * The class `OmvDataAdapter` converts OMV protobuf geo data
@@ -181,9 +215,9 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
     private m_tileKey!: TileKey;
     private m_layer!: com.mapbox.pb.Tile.ILayer;
     private m_dataFilter?: OmvFeatureFilter;
+    private m_featureModifiers?: OmvFeatureModifier[];
     private m_processor!: IGeometryProcessor;
-
-    public roundUpCoordinatesIfNeeded: boolean = false;
+    private m_roundUpCoordinatesIfNeeded: boolean = false;
 
     /**
      * The [[OmvFeatureFilter]] used to filter features.
@@ -193,10 +227,73 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
     }
 
     /**
-     * The [[OmvFeatureFilter]] used to filter features.
+     * Configures the OMV adapter.
+     *
+     * @param options - Configuration options.
+     * @param styleSetEvaluator - Style set evaluator instance, used for filtering.
      */
-    set dataFilter(dataFilter: OmvFeatureFilter | undefined) {
-        this.m_dataFilter = dataFilter;
+    configure(options: OmvDecoderOptions, styleSetEvaluator: StyleSetEvaluator) {
+        if (options.filterDescription !== undefined) {
+            if (options.filterDescription !== null) {
+                // TODO: Feature modifier is always used only with feature filter.
+                // At best the filtering feature should be excluded from other feature
+                // modifiers and be performed solely via OmvGenericFeature modifier or filter.
+                const filterDescription = options.filterDescription;
+                const featureModifiersIds = options.featureModifiers;
+
+                // Create new filter from description.
+                this.m_dataFilter = new OmvGenericFeatureFilter(filterDescription);
+                // Create feature modifiers.
+                const featureModifiers: OmvFeatureModifier[] = [];
+                if (featureModifiersIds !== undefined) {
+                    featureModifiersIds.forEach(fmId => {
+                        featureModifiers.push(createFeatureModifier(filterDescription, fmId));
+                    });
+                } else {
+                    featureModifiers.push(
+                        createFeatureModifier(filterDescription, FeatureModifierId.default)
+                    );
+                }
+                this.m_featureModifiers = featureModifiers;
+            } else {
+                // null is the signal to clear the filter/modifier
+                this.m_dataFilter = undefined;
+                this.m_featureModifiers = undefined;
+            }
+            const styleSetDataFilter = new StyleSetDataFilter(styleSetEvaluator);
+            this.m_dataFilter = this.m_dataFilter
+                ? new ComposedDataFilter([styleSetDataFilter, this.m_dataFilter])
+                : styleSetDataFilter;
+        }
+
+        if (options.politicalView !== undefined) {
+            const politicalView = options.politicalView;
+            let featureModifiers = this.m_featureModifiers;
+            // Remove existing political view modifiers, this actually setups default,
+            // commonly accepted point of view - without feature modifier.
+            if (featureModifiers) {
+                featureModifiers = featureModifiers.filter(
+                    fm => !(fm instanceof OmvPoliticalViewFeatureModifier)
+                );
+            }
+            // If political view is indeed requested append feature modifier at the end of list.
+            if (politicalView.length !== 0) {
+                assert(
+                    politicalView.length === 2,
+                    "The political view must be specified as two letters ISO 3166-1 standard!"
+                );
+                const povFeatureModifier = new OmvPoliticalViewFeatureModifier(politicalView);
+                if (featureModifiers) {
+                    featureModifiers.push(povFeatureModifier);
+                } else {
+                    featureModifiers = [povFeatureModifier];
+                }
+            }
+            // Reset modifiers if nothing was added.
+            this.m_featureModifiers =
+                featureModifiers && featureModifiers.length > 0 ? featureModifiers : undefined;
+        }
+        this.m_roundUpCoordinatesIfNeeded = options.roundUpCoordinatesIfNeeded ?? false;
     }
 
     /**
@@ -248,19 +345,24 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
      */
     visitPointFeature(feature: com.mapbox.pb.Tile.IFeature): void {
         if (feature.geometry === undefined) {
+            return undefined;
+        }
+
+        // Pass feature modifier method to processFeature if there's any modifier. Get it from any
+        // modifier, processFeature will later apply it to all using Function.apply().
+        const modifierFunc = this.m_featureModifiers?.[0].doProcessPointFeature;
+
+        const properties = this.filterAndModifyFeature(
+            feature,
+            this.m_dataFilter?.wantsPointFeature,
+            modifierFunc
+        );
+        if (!properties) {
             return;
         }
 
-        const storageLevel = this.m_tileKey.level;
         const layerName = this.m_layer.name;
         const layerExtents = this.m_layer.extent ?? 4096;
-
-        if (
-            this.m_dataFilter !== undefined &&
-            !this.m_dataFilter.wantsPointFeature(layerName, asGeometryType(feature), storageLevel)
-        ) {
-            return;
-        }
 
         const geometry: Vector3[] = [];
         this.m_geometryCommands.accept(feature.geometry, {
@@ -280,8 +382,8 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             layerName,
             layerExtents,
             geometry,
-            readAttributes(this.m_layer, feature),
-            decodeFeatureId(feature, logger)
+            properties,
+            decodeFeatureId(feature, properties, logger)
         );
     }
 
@@ -295,16 +397,21 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             return;
         }
 
-        const storageLevel = this.m_tileKey.level;
-        const layerName = this.m_layer.name;
-        const layerExtents = this.m_layer.extent ?? 4096;
+        // Pass feature modifier method to processFeature if there's any modifier. Get it from any
+        // modifier, processFeature will later apply it to all using Function.apply().
+        const modifierFunc = this.m_featureModifiers?.[0].doProcessLineFeature;
 
-        if (
-            this.m_dataFilter !== undefined &&
-            !this.m_dataFilter.wantsLineFeature(layerName, asGeometryType(feature), storageLevel)
-        ) {
+        const properties = this.filterAndModifyFeature(
+            feature,
+            this.m_dataFilter?.wantsLineFeature,
+            modifierFunc
+        );
+        if (!properties) {
             return;
         }
+
+        const layerName = this.m_layer.name;
+        const layerExtents = this.m_layer.extent ?? 4096;
 
         const geometry: ILineGeometry[] = [];
         let positions: Vector2[];
@@ -331,8 +438,8 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             layerName,
             layerExtents,
             geometry,
-            readAttributes(this.m_layer, feature),
-            decodeFeatureId(feature, logger)
+            properties,
+            decodeFeatureId(feature, properties, logger)
         );
     }
 
@@ -346,16 +453,21 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             return;
         }
 
-        const storageLevel = this.m_tileKey.level;
-        const layerName = this.m_layer.name;
-        const layerExtents = this.m_layer.extent ?? 4096;
+        // Pass feature modifier method to processFeature if there's any modifier. Get it from any
+        // modifier, processFeature will later apply it to all using Function.apply().
+        const modifierFunc = this.m_featureModifiers?.[0].doProcessPolygonFeature;
 
-        if (
-            this.m_dataFilter !== undefined &&
-            !this.m_dataFilter.wantsPolygonFeature(layerName, asGeometryType(feature), storageLevel)
-        ) {
+        const properties = this.filterAndModifyFeature(
+            feature,
+            this.m_dataFilter?.wantsPolygonFeature,
+            modifierFunc
+        );
+        if (!properties) {
             return;
         }
+
+        const layerName = this.m_layer.name;
+        const layerExtents = this.m_layer.extent ?? 4096;
 
         const geometry: IPolygonGeometry[] = [];
         let currentPolygon: IPolygonGeometry | undefined;
@@ -404,14 +516,54 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
             layerName,
             layerExtents,
             geometry,
-            readAttributes(this.m_layer, feature),
-            decodeFeatureId(feature, logger)
+            properties,
+            decodeFeatureId(feature, properties, logger)
         );
+    }
+
+    /**
+     * Applies any filter and modifiers to a given feature.
+     *
+     * @param feature - The feature to filter and modify.
+     * @param filterFunc - The filtering function.
+     * @param modifierFunc - The modifier function.
+     * @returns The modified feature properties or `undefined` if feature is filtered out.
+     */
+    private filterAndModifyFeature(
+        feature: com.mapbox.pb.Tile.IFeature,
+        filterFunc?: (...args: any[]) => boolean,
+        modifierFunc?: (...args: any[]) => boolean
+    ): ValueMap | undefined {
+        const storageLevel = this.m_tileKey.level;
+        const layerName = this.m_layer.name;
+        const geometryType = asGeometryType(feature);
+
+        if (
+            this.m_dataFilter &&
+            filterFunc!.apply(this.m_dataFilter, [layerName, geometryType, storageLevel]) === false
+        ) {
+            return undefined;
+        }
+
+        const properties = readAttributes(this.m_layer, feature);
+        const env = new MapEnv(properties);
+        if (
+            this.m_featureModifiers?.find(fm => {
+                // TODO: The logic of feature ignore should be actually in the feature filtering
+                // mechanism - see OmvFeatureFilter.
+                assert(modifierFunc !== undefined);
+                return !modifierFunc!.apply(fm, [layerName, env, this.m_tileKey.level]);
+            }) !== undefined
+        ) {
+            return undefined;
+        }
+
+        return properties;
     }
 
     private get mustRoundUpCoordinates(): boolean {
         return (
-            this.roundUpCoordinatesIfNeeded &&
+            this.m_roundUpCoordinatesIfNeeded &&
             this.m_tileKey.level < 5 &&
             this.m_tileKey.column === this.m_tileKey.columnCount() - 1
         );

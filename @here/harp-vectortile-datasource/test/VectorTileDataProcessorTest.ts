@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { GeometryKind, IndexedTechnique } from "@here/harp-datasource-protocol";
-import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import { Vector2, Vector3 } from "three";
 
-import { VectorTileDataProcessor } from "../index-worker";
+import { VectorTileDataProcessor, VectorTileDataProcessorOptions } from "../index-worker";
 import { DataAdapter } from "../lib/DataAdapter";
 import { DecodeInfo } from "../lib/DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../lib/IGeometryProcessor";
-import { OmvFeatureFilter, OmvFeatureModifier } from "../lib/OmvDataFilter";
+import { OmvFeatureFilter } from "../lib/OmvDataFilter";
 import { OmvGeometryType } from "../lib/OmvDecoderDefs";
 import { VectorTileDataEmitter } from "../lib/VectorTileDataEmitter";
 
@@ -30,20 +30,6 @@ class FakeDataAdapter implements DataAdapter {
         decodeInfo: DecodeInfo,
         geometryProcessor: IGeometryProcessor
     ): void {}
-}
-
-class FakeFeatureModifier implements OmvFeatureModifier {
-    doProcessPointFeature(layer: string, env: MapEnv, level: number): boolean {
-        return true;
-    }
-
-    doProcessLineFeature(layer: string, env: MapEnv, level: number): boolean {
-        return true;
-    }
-
-    doProcessPolygonFeature(layer: string, env: MapEnv, level: number): boolean {
-        return true;
-    }
 }
 
 class FakeFeatureFilter implements OmvFeatureFilter {
@@ -71,11 +57,9 @@ class FakeFeatureFilter implements OmvFeatureFilter {
 }
 
 describe("VectorTileDataProcessor", function () {
-    const sandbox = sinon.createSandbox();
     let processor: VectorTileDataProcessor;
     let dataAdapter: DataAdapter;
     let featureFilter: FakeFeatureFilter;
-    let featureModifier: FakeFeatureModifier;
     let styleSetEvaluator: StyleSetEvaluator;
     const tileKey = new TileKey(0, 0, 2);
     const storageLevelOffset = 1;
@@ -84,23 +68,18 @@ describe("VectorTileDataProcessor", function () {
         styleSetEvaluator = new StyleSetEvaluator({ styleSet: [] });
         dataAdapter = new FakeDataAdapter();
         featureFilter = new FakeFeatureFilter();
-        featureModifier = new FakeFeatureModifier();
         processor = new VectorTileDataProcessor(
             tileKey,
             mercatorProjection,
             styleSetEvaluator,
-            false,
             dataAdapter,
-            featureFilter,
-            [featureModifier],
-            false,
-            true,
-            storageLevelOffset
+            { storageLevelOffset } as VectorTileDataProcessorOptions,
+            featureFilter
         );
     });
 
     afterEach(function () {
-        sandbox.restore();
+        sinon.restore();
     });
 
     function createPointGeometry(): Vector3[] {
@@ -117,36 +96,28 @@ describe("VectorTileDataProcessor", function () {
 
     interface TestInstance {
         processorMethod: "processPointFeature" | "processLineFeature" | "processPolygonFeature";
-        modifierMethod:
-            | "doProcessPointFeature"
-            | "doProcessLineFeature"
-            | "doProcessPolygonFeature";
         geometryType: "point" | "line" | "polygon";
         geometryGenerator: () => any;
     }
     const testInstances: TestInstance[] = [
         {
             processorMethod: "processPointFeature",
-            modifierMethod: "doProcessPointFeature",
             geometryType: "point",
             geometryGenerator: createPointGeometry
         },
         {
             processorMethod: "processLineFeature",
-            modifierMethod: "doProcessLineFeature",
             geometryType: "line",
             geometryGenerator: createLineGeometry
         },
         {
             processorMethod: "processPolygonFeature",
-            modifierMethod: "doProcessPolygonFeature",
             geometryType: "polygon",
             geometryGenerator: createPolygonGeometry
         }
     ];
     for (const testInstance of testInstances) {
         const processorMethod = testInstance.processorMethod;
-        const modifierMethod = testInstance.modifierMethod;
         const geometryType = testInstance.geometryType;
         const geometryGenerator = testInstance.geometryGenerator;
         const dummyExtents = 4096;
@@ -156,7 +127,7 @@ describe("VectorTileDataProcessor", function () {
         describe(`${processorMethod}`, function () {
             it("sets reserved feature properties", function () {
                 const styleEvalSpy = sinon.spy(styleSetEvaluator, "getMatchingTechniques");
-                sandbox
+                sinon
                     .stub(dataAdapter, "process")
                     .callsFake((data, decodeInfo, geometryProcessor: IGeometryProcessor) => {
                         geometryProcessor[processorMethod](
@@ -180,47 +151,6 @@ describe("VectorTileDataProcessor", function () {
                 expect(mapEnv.lookup("$geometryType")).equals(geometryType);
             });
 
-            it("applies feature modifiers before finding matching techniques", function () {
-                const modifiedValue = 42;
-                sandbox
-                    .stub(featureModifier, modifierMethod as any)
-                    .callsFake((layer: string, env: MapEnv, level: number) => {
-                        if (env.lookup("prop") !== undefined) {
-                            env.entries["prop"] = modifiedValue;
-                            return true;
-                        }
-                        return false;
-                    });
-
-                const styleEvalSpy = sinon.spy(styleSetEvaluator, "getMatchingTechniques");
-
-                sandbox
-                    .stub(dataAdapter, "process")
-                    .callsFake((data, decodeInfo, geometryProcessor: IGeometryProcessor) => {
-                        geometryProcessor[processorMethod](
-                            layerName,
-                            dummyExtents,
-                            geometryGenerator(),
-                            { prop: 0 },
-                            featureId
-                        );
-                        geometryProcessor[processorMethod](
-                            layerName,
-                            dummyExtents,
-                            geometryGenerator(),
-                            {},
-                            featureId + 1
-                        );
-                    });
-
-                processor.getDecodedTile({});
-
-                expect(styleEvalSpy.calledOnce).is.true;
-
-                const mapEnv = styleEvalSpy.firstCall.args[0];
-                expect(mapEnv.lookup("prop")).equals(modifiedValue);
-            });
-
             it("filters techniques by kind", function () {
                 const matchingTechniques: IndexedTechnique[] = [
                     {
@@ -240,12 +170,12 @@ describe("VectorTileDataProcessor", function () {
                         kind: GeometryKind.Border
                     }
                 ];
-                sandbox
+                sinon
                     .stub(styleSetEvaluator, "getMatchingTechniques")
                     .callsFake(() => matchingTechniques);
-                sandbox.stub(styleSetEvaluator, "techniques").get(() => matchingTechniques);
-                sandbox.stub(styleSetEvaluator, "decodedTechniques").get(() => matchingTechniques);
-                sandbox
+                sinon.stub(styleSetEvaluator, "techniques").get(() => matchingTechniques);
+                sinon.stub(styleSetEvaluator, "decodedTechniques").get(() => matchingTechniques);
+                sinon
                     .stub(dataAdapter, "process")
                     .callsFake((data, decodeInfo, geometryProcessor: IGeometryProcessor) => {
                         geometryProcessor[processorMethod](
@@ -260,7 +190,7 @@ describe("VectorTileDataProcessor", function () {
                 sinon.stub(featureFilter, "wantsKind").callsFake((kind: string | string[]) => {
                     return kind === GeometryKind.Road;
                 });
-                const emitterSpy = sandbox.spy(
+                const emitterSpy = sinon.spy(
                     VectorTileDataEmitter.prototype,
                     processorMethod as any
                 );

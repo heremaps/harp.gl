@@ -57,11 +57,6 @@ export interface ILineGeometry {
  */
 export interface IGeometryProcessor {
     /**
-     * The offset to apply the storage level of a tile to compute the zoom level.
-     */
-    storageLevelOffset?: number;
-
-    /**
      * Process a sequence of point features.
      *
      * The points are represented as local webMercator coordinates (coordinates relative to
