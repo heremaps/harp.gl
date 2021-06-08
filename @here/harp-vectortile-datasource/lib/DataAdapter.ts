@@ -17,7 +17,6 @@ export interface DataAdapter {
      *
      * @param data - The raw data to adapt.
      */
-
     canProcess(data: ArrayBufferLike | {}): boolean;
 
     /**
@@ -25,6 +24,8 @@ export interface DataAdapter {
      *
      * @param data - The raw data to process.
      * @param decodeInfo - The `DecodeInfo` of the tile to process.
+     * @param geometryProcessor - Must be called for every feature providing its geometry
+     * (point,line or polygon) and properties. @see {@link IGeometryProcessor} for more details.
      */
     process(
         data: ArrayBufferLike | {},

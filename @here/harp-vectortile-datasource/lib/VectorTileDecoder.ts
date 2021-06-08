@@ -47,6 +47,10 @@ import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
 
 const logger = LoggerManager.instance.create("VectorTileDecoder", { enabled: false });
 
+/**
+ * Geometry processor for vector tiles.
+ * @internal
+ */
 export class VectorTileDataProcessor implements IGeometryProcessor {
     private m_decodedTileEmitter: VectorTileDataEmitter | undefined;
     private readonly m_dataAdapters: DataAdapter[] = [];
@@ -278,6 +282,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
     private m_roundUpCoordinatesIfNeeded: boolean = false;
+    private m_dataAdapter?: DataAdapter;
 
     private static readonly DEFAULT_DATA_ADAPTERS: DataAdapter[] = [
         new OmvDataAdapter(),
@@ -298,10 +303,14 @@ export class VectorTileDecoder extends ThemedTileDecoder {
         projection: Projection
     ): Promise<DecodedTile> {
         const startTime = PerformanceTimer.now();
-        const dataAdapter = this.getDataAdapter(data);
-        if (!dataAdapter) {
-            return Promise.reject(new Error("Unsupported data format."));
+        if (!this.m_dataAdapter) {
+            this.m_dataAdapter = this.getDataAdapter(data);
+            if (!this.m_dataAdapter) {
+                return Promise.reject(new Error("Unsupported data format."));
+            }
         }
+        const dataAdapter = this.m_dataAdapter!;
+        assert(dataAdapter.canProcess(data));
 
         const decoder = new VectorTileDataProcessor(
             tileKey,
