@@ -287,13 +287,15 @@ describe("Rendering lines: ", function () {
 
             scene.add(mesh);
 
-            // Second render pass to do the AA
-            lineParams.pass = LineRenderPass.SECOND_PASS;
-            // Important to not clone, because otherwise you have to fiddle around with the defines
-            const outlineMaterial = new SolidLineMaterial(lineParams);
-            const outline = new THREE.Mesh(geometry, outlineMaterial);
-            outline.position.set(column, row, 0);
-            scene.add(outline);
+            if (lineStyle.opacity && lineStyle.opacity !== 1) {
+                // Second render pass to do the AA
+                lineParams.pass = LineRenderPass.SECOND_PASS;
+                // Important to not clone, because otherwise you have to fiddle around with the defines
+                const outlineMaterial = new SolidLineMaterial(lineParams);
+                const outline = new THREE.Mesh(geometry, outlineMaterial);
+                outline.position.set(column, row, 0);
+                scene.add(outline);
+            }
 
             step += 1;
         }
