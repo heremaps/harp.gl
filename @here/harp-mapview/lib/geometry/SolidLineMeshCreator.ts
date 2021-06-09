@@ -159,7 +159,6 @@ export class SolidLineMeshCreator {
                 const mainLineWidth = mainMaterialAdapter.currentStyledProperties.lineWidth;
 
                 const secondaryLineWidth = getPropertyValue(secondaryWidth, mapEnvParent);
-                console.log("Secondary line width: " + secondaryLineWidth);
                 const opacity = outlineMaterialAdapter.currentStyledProperties.opacity as
                     | number
                     | null;
