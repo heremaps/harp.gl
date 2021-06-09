@@ -22,7 +22,6 @@ import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
-import { TileLoaderState } from "./ITileLoader";
 import { TileTaskGroups } from "./MapView";
 import { Tile } from "./Tile";
 import { TileOffsetUtils } from "./Utils";
