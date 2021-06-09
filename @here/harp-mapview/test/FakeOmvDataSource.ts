@@ -26,10 +26,20 @@ export class FakeTileLoader implements ITileLoader {
         geometries: []
     };
 
+    reject?: (reason?: any) => void;
+
     isFinished: boolean = false;
 
     loadAndDecode(): Promise<TileLoaderState> {
-        return Promise.resolve(TileLoaderState.Ready);
+        this.state = TileLoaderState.Loading;
+        return new Promise((resolve, reject) => {
+            this.reject = reject;
+            // We use setTimeout to delay the resolve
+            setTimeout(() => {
+                this.state = TileLoaderState.Loaded;
+                resolve(TileLoaderState.Ready);
+            });
+        });
     }
 
     waitSettled(): Promise<TileLoaderState> {
@@ -37,7 +47,8 @@ export class FakeTileLoader implements ITileLoader {
     }
 
     cancel(): void {
-        // Not covered with tests yet
+        this.state = TileLoaderState.Canceled;
+        this.reject!(this.state);
     }
 }
 export class FakeOmvDataSource extends DataSource {
