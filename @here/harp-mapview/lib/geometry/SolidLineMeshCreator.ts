@@ -141,10 +141,12 @@ export class SolidLineMeshCreator {
                     | number
                     | null;
                 if (typeof mainLineWidth === "number" && typeof secondaryLineWidth === "number") {
-                    if (
-                        secondaryLineWidth <= mainLineWidth &&
-                        (opacity === null || opacity === undefined || opacity === 1)
-                    ) {
+                    const opaque = opacity === null || opacity === undefined || opacity === 1;
+                    const outlineSmallerThanMainLine =
+                        secondaryLineWidth <= mainLineWidth && opaque;
+                    const secondPassAndOpaque =
+                        opaque && lineRenderPass === LineRenderPass.SECOND_PASS;
+                    if (outlineSmallerThanMainLine || secondPassAndOpaque) {
                         // We could mark object as invisible somehow, not sure how
                         // objectAdapter.markInvisible();
                         return 0;
