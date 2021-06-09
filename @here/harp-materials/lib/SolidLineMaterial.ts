@@ -525,7 +525,9 @@ export class SolidLineMaterial
                             )
                         ),
                         dashSize: new THREE.Uniform(SolidLineMaterial.DEFAULT_DASH_SIZE),
-                        gapSize: new THREE.Uniform(SolidLineMaterial.DEFAULT_GAP_SIZE)
+                        gapSize: new THREE.Uniform(SolidLineMaterial.DEFAULT_GAP_SIZE),
+                        // MEGA HAX
+                        pass: new THREE.Uniform(LineRenderPass.FIRST_PASS)
                     },
                     // We need the fog uniforms available when we use `fog` setter as the internal
                     // recompilation cannot add or remove uniforms.
@@ -623,17 +625,20 @@ export class SolidLineMaterial
                 this.invalidateFog();
             }
             this.offset = params.offset ?? 0;
-            if (params.pass) {
-                this.pass = params.pass;
-            }
         }
     }
 
     set pass(pass: LineRenderPass) {
-        if (this.stencilWrite) {
-            setShaderMaterialDefine(this, "DISCARD_AA", pass === LineRenderPass.FIRST_PASS);
-            setShaderMaterialDefine(this, "JUST_AA", pass === LineRenderPass.SECOND_PASS);
-        }
+        // Super hacks, but to store this as a private member causes issues with the call to
+        // super above which isn't so great.
+        this.uniforms.pass.value = pass;
+        this.setAADefines(pass);
+    }
+
+    get pass() {
+        return this.uniforms.pass !== undefined
+            ? this.uniforms.pass.value
+            : LineRenderPass.FIRST_PASS;
     }
 
     /**
@@ -874,7 +879,24 @@ export class SolidLineMaterial
         return this;
     }
 
-    setStencilWrite(opacity: number) {
+    private setStencilWrite(opacity: number) {
         this.stencilWrite = opacity < 0.98;
+        // If this potentially changes, then we need to update the defines which control the
+        // separate passes.
+        const pass = this.pass;
+        this.setAADefines(pass);
+    }
+
+    private setAADefines(pass: LineRenderPass) {
+        setShaderMaterialDefine(
+            this,
+            "DISCARD_AA",
+            this.stencilWrite && pass === LineRenderPass.FIRST_PASS
+        );
+        setShaderMaterialDefine(
+            this,
+            "JUST_AA",
+            this.stencilWrite && pass === LineRenderPass.SECOND_PASS
+        );
     }
 }

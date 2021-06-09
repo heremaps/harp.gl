@@ -146,7 +146,8 @@ function mapViewFeaturesRenderingTest(
                 theme: options.theme ?? {},
                 preserveDrawingBuffer: true,
                 disableFading: true,
-                pixelRatio: 1
+                pixelRatio: 1,
+                addBackgroundDatasource: false
             });
             mapView.animatedExtrusionHandler.enabled = false;
             const dataSource = new FeaturesDataSource({

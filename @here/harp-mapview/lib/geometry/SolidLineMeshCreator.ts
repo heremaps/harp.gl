@@ -6,6 +6,7 @@
 
 import {
     Env,
+    Expr,
     Geometry,
     getPropertyValue,
     MapEnv,
@@ -18,7 +19,7 @@ import { assert } from "@here/harp-utils";
 import {
     applyBaseColorToMaterial,
     buildMetricValueEvaluator,
-    cloneMaterial
+    getMainMaterialStyledProps
 } from "../DecodedTileHelpers";
 import { MapAdapterUpdateEnv, MapMaterialAdapter } from "../MapMaterialAdapter";
 import { Tile } from "../Tile";
@@ -38,13 +39,34 @@ export class SolidLineMeshCreator {
      * buffer and creates artifacts when the line overlaps itself or at tile borders, see:
      * MAPSJS-2929
      */
-    static createAAMesh(object: SolidLineMesh, technique: SolidLineTechnique): SolidLineMesh {
+    static createAAMesh(
+        object: SolidLineMesh,
+        technique: SolidLineTechnique,
+        mapEnv: Env
+    ): SolidLineMesh {
         const outline = object.clone() as SolidLineMesh;
-        const aaMaterial = cloneMaterial(
-            outline.material as THREE.Material,
-            technique
-        ) as SolidLineMaterial;
+
+        const mainMaterialAdapter = MapMaterialAdapter.get(object.material as THREE.Material);
+        assert(mainMaterialAdapter !== undefined);
+        // Is this ok to cast away the array??
+        const aaMaterial = (outline.material as THREE.Material).clone() as SolidLineMaterial;
         aaMaterial.pass = LineRenderPass.SECOND_PASS;
+        const baseProps = getMainMaterialStyledProps(technique);
+        MapMaterialAdapter.create(aaMaterial, {
+            ...baseProps,
+            // We customize the lineWidth to stop it from rendering when the line is opaque.
+            lineWidth: (frameMapView: MapAdapterUpdateEnv) => {
+                const opacity = aaMaterial.opacity;
+                const transparent = opacity !== 1 && opacity !== undefined;
+                if (transparent) {
+                    return mainMaterialAdapter!.currentStyledProperties.lineWidth;
+                } else {
+                    // We could mark object as invisible somehow, not sure how
+                    // objectAdapter.markInvisible();
+                    return 0;
+                }
+            }
+        });
         outline.material = aaMaterial;
         // The AA must be rendered after, because we want to paint the AA where the road doesn't yet
         // exist (by using the stencil buffer).
@@ -96,8 +118,9 @@ export class SolidLineMeshCreator {
     ): SolidLineMesh {
         const outlineObj =
             lineRenderPass === LineRenderPass.FIRST_PASS
-                ? SolidLineMeshCreator.cloneObject(object, outlineTechnique, mapEnv)
-                : SolidLineMeshCreator.createAAMesh(object, outlineTechnique);
+                ? // TODO: Is this the correct env?
+                  SolidLineMeshCreator.cloneObject(object, outlineTechnique, mapEnv)
+                : SolidLineMeshCreator.createAAMesh(object, outlineTechnique, mapEnv);
 
         tgc.addUserData(tile, geometry, outlineTechnique, outlineObj);
 

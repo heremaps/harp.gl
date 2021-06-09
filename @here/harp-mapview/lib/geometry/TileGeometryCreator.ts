@@ -819,7 +819,10 @@ export class TileGeometryCreator {
                         ? Pickability.transient
                         : techniquePickability
                 });
+
+                //if (isSolidLineTechnique(technique)) {
                 objects.push(object);
+                //}
 
                 // Add the extruded polygon edges as a separate geometry.
                 if (
@@ -997,7 +1000,8 @@ export class TileGeometryCreator {
                 if (isSolidLineTechnique(technique)) {
                     const outline = SolidLineMeshCreator.createAAMesh(
                         object as SolidLineMesh,
-                        technique
+                        technique,
+                        mapView.env
                     );
                     // Consider to move this to the class above...?
                     registerTileObject(tile, outline, techniqueKind, {
@@ -1158,12 +1162,7 @@ export class TileGeometryCreator {
         (material as MapMeshStandardMaterial).displacementMap!.needsUpdate = true;
     }
 
-    addUserData(
-        tile: Tile,
-        srcGeometry: Geometry,
-        technique: Technique,
-        object: THREE.Object3D
-    ) {
+    addUserData(tile: Tile, srcGeometry: Geometry, technique: Technique, object: THREE.Object3D) {
         if (isTerrainTechnique(technique)) {
             assert(
                 Object.keys(object.userData).length === 0,
