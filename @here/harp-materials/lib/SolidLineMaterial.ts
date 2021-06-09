@@ -546,13 +546,13 @@ export class SolidLineMaterial
         // assigned in the constructor, this also mimics ShaderMaterial set of defaults
         // for overridden props.
         this.fog = fogParam;
-        this.setOpacity(opacityParam);
 
         // initialize the stencil pass
         this.stencilFunc = THREE.NotEqualStencilFunc;
         this.stencilZPass = THREE.ReplaceStencilOp;
         this.stencilRef = 1;
-        this.stencilWrite = false;
+        this.setStencilWrite(opacityParam);
+        this.setOpacity(opacityParam);
 
         enforceBlending(this);
         this.extensions.derivatives = true;
@@ -669,9 +669,7 @@ export class SolidLineMaterial
     /** @override */
     setOpacity(opacity: number) {
         super.setOpacity(opacity);
-        if (opacity !== undefined) {
-            this.stencilWrite = opacity < 0.98;
-        }
+        this.setStencilWrite(opacity);
     }
 
     /**
@@ -874,5 +872,9 @@ export class SolidLineMaterial
         this.invalidateFog();
         this.setOpacity(other.opacity);
         return this;
+    }
+
+    setStencilWrite(opacity: number) {
+        this.stencilWrite = opacity < 0.98;
     }
 }
