@@ -345,7 +345,7 @@ export class OmvDataAdapter implements DataAdapter, OmvVisitor {
      */
     visitPointFeature(feature: com.mapbox.pb.Tile.IFeature): void {
         if (feature.geometry === undefined) {
-            return undefined;
+            return;
         }
 
         // Pass feature modifier method to processFeature if there's any modifier. Get it from any

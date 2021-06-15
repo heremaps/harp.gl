@@ -169,7 +169,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         if (techniques.length === 0) {
             if (this.m_options.showMissingTechniques) {
                 logger.log(
-                    "VectorTileDataProcessor#processPointFeature: no techniques for object:",
+                    "VectorTileDataProcessor#processFeature: no techniques for object:",
                     JSON.stringify(env.unmap())
                 );
             }
@@ -230,8 +230,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     private m_featureFilter?: OmvFeatureFilter;
     private readonly m_roundUpCoordinatesIfNeeded: boolean = false;
     private m_dataAdapter?: DataAdapter;
-    private m_options: OptionsMap = {};
-    private m_optionsChanged: boolean = false;
+    private m_options: { map: OptionsMap; changed: boolean } = { map: {}, changed: false };
     private readonly m_defaultDataAdapters: DataAdapter[] = [];
 
     constructor() {
@@ -264,13 +263,13 @@ export class VectorTileDecoder extends ThemedTileDecoder {
         }
         const dataAdapter = this.m_dataAdapter!;
         assert(dataAdapter.canProcess(data));
-        if (this.m_optionsChanged) {
+        if (this.m_options.changed) {
             if (dataAdapter instanceof OmvDataAdapter) {
-                const omvOptions = this.m_options as OmvDecoderOptions;
+                const omvOptions = this.m_options.map as OmvDecoderOptions;
                 dataAdapter.configure(omvOptions, styleSetEvaluator);
                 this.m_featureFilter = dataAdapter.dataFilter;
             }
-            this.m_optionsChanged = false;
+            this.m_options.changed = false;
         }
 
         const decoder = new VectorTileDataProcessor(
@@ -278,7 +277,7 @@ export class VectorTileDecoder extends ThemedTileDecoder {
             projection,
             styleSetEvaluator,
             dataAdapter,
-            this.m_options as VectorTileDataProcessorOptions,
+            this.m_options.map as VectorTileDataProcessorOptions,
             this.m_featureFilter
         );
         const decodedTile = decoder.getDecodedTile(data);
@@ -291,12 +290,12 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     /** @override */
     configure(options?: DecoderOptions, customOptions?: OptionsMap): void {
         super.configure(options, customOptions);
-        this.m_options = {
-            ...this.m_options,
+        this.m_options.map = {
+            ...this.m_options.map,
             ...options,
             ...customOptions
         };
-        this.m_optionsChanged = true;
+        this.m_options.changed = true;
     }
 
     /**
