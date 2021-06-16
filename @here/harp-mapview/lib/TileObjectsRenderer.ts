@@ -158,7 +158,7 @@ export class TileObjectRenderer {
 
         // Temporary workaround due to incorrect comparator type definition:
         // https://github.com/three-types/three-ts-types/issues/41
-        this.m_renderer.setOpaqueSort((painterSortStable as any) as () => void);
+        this.m_renderer.setOpaqueSort(painterSortStable);
     }
 
     private updateStencilRef(object: TileObject) {

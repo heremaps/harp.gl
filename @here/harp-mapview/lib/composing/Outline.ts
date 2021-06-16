@@ -339,8 +339,6 @@ export class OutlineEffect {
             vertexShader,
             fragmentShader,
             side: THREE.BackSide,
-            //wireframe: true,
-            skinning: false,
             morphTargets: false,
             morphNormals: false,
             fog: false,
