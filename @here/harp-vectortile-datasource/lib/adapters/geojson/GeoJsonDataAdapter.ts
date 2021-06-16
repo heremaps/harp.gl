@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Env";
+import { ValueMap } from "@here/harp-datasource-protocol/lib/Env";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { GeoCoordinates, GeoPointLike, webMercatorProjection } from "@here/harp-geoutils";
 import { Vector2Like } from "@here/harp-geoutils/lib/math/Vector2Like";
-import { ILogger } from "@here/harp-utils";
 import { ShapeUtils, Vector2, Vector3 } from "three";
 
 import { DataAdapter } from "../../DataAdapter";
 import { DecodeInfo } from "../../DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "../../IGeometryProcessor";
-import { OmvFeatureFilter } from "../../OmvDataFilter";
 import { world2tile } from "../../OmvUtils";
 
 const DEFAULT_EXTENTS = 4 * 1024;
@@ -66,25 +64,6 @@ interface GeoJsonFeature {
 interface GeoJsonFeatureCollection {
     type: "FeatureCollection";
     features: GeoJsonFeature[];
-}
-
-function convertGeometryType(type: string): string {
-    switch (type) {
-        case "LineString":
-            return "line";
-        case "MultiLineString":
-            return "line";
-        case "Polygon":
-            return "polygon";
-        case "MultiPolygon":
-            return "polygon";
-        case "Point":
-            return "point";
-        case "MultiPoint":
-            return "point";
-        default:
-            return "unknown";
-    } // switch
 }
 
 const worldP = new Vector3();
@@ -170,14 +149,9 @@ function convertPointGeometry(
 }
 
 export class GeoJsonDataAdapter implements DataAdapter {
-    id = "GeoJsonDataAdapter";
-
-    constructor(
-        readonly m_processor: IGeometryProcessor,
-        readonly dataFilter: OmvFeatureFilter,
-        readonly m_logger?: ILogger
-    ) {}
-
+    /**
+     * @override
+     */
     canProcess(featureCollection: Partial<GeoJsonFeatureCollection>): boolean {
         return (
             featureCollection &&
@@ -186,28 +160,18 @@ export class GeoJsonDataAdapter implements DataAdapter {
         );
     }
 
-    process(featureCollection: GeoJsonFeatureCollection, decodeInfo: DecodeInfo): void {
+    /** @override */
+    process(
+        featureCollection: GeoJsonFeatureCollection,
+        decodeInfo: DecodeInfo,
+        geometryProcessor: IGeometryProcessor
+    ): void {
         if (!Array.isArray(featureCollection.features) || featureCollection.features.length === 0) {
             return;
         }
-
-        const { tileKey } = decodeInfo;
-
-        const $level = tileKey.level;
-        const $zoom = Math.max(0, tileKey.level - (this.m_processor.storageLevelOffset ?? 0));
-        const $layer = "geojson";
+        const layer = "geojson";
 
         for (const feature of featureCollection.features) {
-            const $geometryType = convertGeometryType(feature.geometry.type);
-            const env = new MapEnv({
-                ...feature.properties,
-                $id: feature.id ?? null,
-                $layer,
-                $level,
-                $zoom,
-                $geometryType
-            });
-
             switch (feature.geometry.type) {
                 case "LineString":
                 case "MultiLineString": {
@@ -233,12 +197,12 @@ export class GeoJsonDataAdapter implements DataAdapter {
                     geometry = clippedGeometries;
 
                     if (geometry.length > 0) {
-                        this.m_processor.processLineFeature(
-                            $layer,
+                        geometryProcessor.processLineFeature(
+                            layer,
                             DEFAULT_EXTENTS,
                             clippedGeometries,
-                            env,
-                            $level
+                            feature.properties,
+                            feature.id
                         );
                     }
                     break;
@@ -246,24 +210,24 @@ export class GeoJsonDataAdapter implements DataAdapter {
                 case "Polygon":
                 case "MultiPolygon": {
                     const geometry = convertPolygonGeometry(feature.geometry, decodeInfo);
-                    this.m_processor.processPolygonFeature(
-                        $layer,
+                    geometryProcessor.processPolygonFeature(
+                        layer,
                         DEFAULT_EXTENTS,
                         geometry,
-                        env,
-                        $level
+                        feature.properties,
+                        feature.id
                     );
                     break;
                 }
                 case "Point":
                 case "MultiPoint": {
                     const geometry = convertPointGeometry(feature.geometry, decodeInfo);
-                    this.m_processor.processPointFeature(
-                        $layer,
+                    geometryProcessor.processPointFeature(
+                        layer,
                         DEFAULT_EXTENTS,
                         geometry,
-                        env,
-                        $level
+                        feature.properties,
+                        feature.id
                     );
                     break;
                 }

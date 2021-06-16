@@ -141,7 +141,7 @@ export interface OmvFeatureFilterDescription {
 /**
  * Internal interface for options passed from the [[OmvDataSource]] to the decoder.
  *
- * @hidden
+ * @internal
  */
 export interface OmvDecoderOptions {
     /**

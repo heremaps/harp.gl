@@ -226,6 +226,17 @@ enum LineType {
 type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => THREE.Vector2;
 const tmpColor = new THREE.Color();
 
+/**
+ * Options for VectorTileDataEmitter, see {@link DecoderOptions} and {@link OmvDecoderOptions}.
+ * @internal
+ */
+export interface VectorTileDataEmitterOptions {
+    gatherFeatureAttributes?: boolean;
+    skipShortLabels?: boolean;
+    enableElevationOverlay?: boolean;
+    languages?: string[];
+}
+
 export class VectorTileDataEmitter {
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
@@ -245,11 +256,12 @@ export class VectorTileDataEmitter {
     constructor(
         private readonly m_decodeInfo: DecodeInfo,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
-        private readonly m_gatherFeatureAttributes: boolean,
-        private readonly m_skipShortLabels: boolean,
-        private readonly m_enableElevationOverlay: boolean,
-        private readonly m_languages?: string[]
-    ) {}
+        private readonly m_options: VectorTileDataEmitterOptions = {}
+    ) {
+        this.m_options.gatherFeatureAttributes = m_options.gatherFeatureAttributes ?? false;
+        this.m_options.skipShortLabels = m_options.skipShortLabels ?? true;
+        this.m_options.enableElevationOverlay = m_options.enableElevationOverlay ?? false;
+    }
 
     get projection() {
         return this.m_decodeInfo.targetProjection;
@@ -336,7 +348,7 @@ export class VectorTileDataEmitter {
             for (const pos of tilePositions) {
                 if (shouldCreateTextGeometries) {
                     const textTechnique = technique as TextTechnique;
-                    const text = getFeatureText(context, textTechnique, this.m_languages);
+                    const text = getFeatureText(context, textTechnique, this.m_options.languages);
 
                     if (text !== undefined && text.length > 0) {
                         texts.push(meshBuffers.addText(text));
@@ -365,7 +377,7 @@ export class VectorTileDataEmitter {
                     );
                 }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
-                objInfos.push(this.m_gatherFeatureAttributes ? env.entries : featureId);
+                objInfos.push(this.m_options.gatherFeatureAttributes ? env.entries : featureId);
                 offsetDirections.push((env.lookup("offset_direction") as number) ?? 0);
 
                 if (wantsPoi) {
@@ -634,14 +646,14 @@ export class VectorTileDataEmitter {
                 isLineMarkerTechnique(technique)
             ) {
                 const textTechnique = technique as TextTechnique;
-                const text = getFeatureText(context, textTechnique, this.m_languages);
+                const text = getFeatureText(context, textTechnique, this.m_options.languages);
 
                 if (text === undefined || text.length === 0) {
                     continue;
                 }
                 let validLines: number[][] = [];
 
-                if (this.m_skipShortLabels) {
+                if (this.m_options.skipShortLabels) {
                     // Filter the lines, keep only those that are long enough for labelling. Also,
                     // split jagged label paths to keep processing and rendering only those that
                     // have no sharp corners, which would not be rendered anyway.
@@ -679,7 +691,7 @@ export class VectorTileDataEmitter {
                             path,
                             pathLengthSqr,
                             text: String(text),
-                            objInfos: this.m_gatherFeatureAttributes
+                            objInfos: this.m_options.gatherFeatureAttributes
                                 ? env.entries
                                 : getFeatureId(env.entries)
                         });
@@ -719,7 +731,7 @@ export class VectorTileDataEmitter {
                             texts: [0],
                             stringCatalog: [text, imageTexture],
                             imageTextures: [1],
-                            objInfos: this.m_gatherFeatureAttributes
+                            objInfos: this.m_options.gatherFeatureAttributes
                                 ? [env.entries]
                                 : [getFeatureId(env.entries)]
                         });
@@ -764,7 +776,9 @@ export class VectorTileDataEmitter {
                     triangulateLine(aLine, lineWidth, positions, indices, addCircle);
                     featureStarts.push(start);
                     objInfos.push(
-                        this.m_gatherFeatureAttributes ? env.entries : getFeatureId(env.entries)
+                        this.m_options.gatherFeatureAttributes
+                            ? env.entries
+                            : getFeatureId(env.entries)
                     );
                 });
 
@@ -1189,7 +1203,7 @@ export class VectorTileDataEmitter {
             (isFillTechnique(technique) ||
                 isSolidLineTechnique(technique) ||
                 isExtrudedPolygonTechnique(technique)) &&
-            this.m_enableElevationOverlay
+            this.m_options.enableElevationOverlay
         ) {
             return TextureCoordinateType.TileSpace;
         }
@@ -1265,7 +1279,7 @@ export class VectorTileDataEmitter {
                 lines: lineGroup
             };
 
-            if (this.m_gatherFeatureAttributes) {
+            if (this.m_options.gatherFeatureAttributes) {
                 aLine.objInfos = [featureAttributes];
                 aLine.featureStarts = [0];
             }
@@ -1275,7 +1289,7 @@ export class VectorTileDataEmitter {
             lineGroup = lineGroupGeometries.lines;
 
             if (
-                this.m_gatherFeatureAttributes &&
+                this.m_options.gatherFeatureAttributes &&
                 lineGroupGeometries.objInfos &&
                 lineGroupGeometries.featureStarts
             ) {
@@ -1615,7 +1629,7 @@ export class VectorTileDataEmitter {
                     if (texCoordType !== undefined) {
                         textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
                     }
-                    if (this.m_enableElevationOverlay) {
+                    if (this.m_options.enableElevationOverlay) {
                         normals.push(...tempVertNormal.toArray());
                     }
                     if (isExtruded) {
@@ -1638,7 +1652,7 @@ export class VectorTileDataEmitter {
                         if (texCoordType !== undefined) {
                             textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
                         }
-                        if (this.m_enableElevationOverlay) {
+                        if (this.m_options.enableElevationOverlay) {
                             normals.push(...tempVertNormal.toArray());
                         }
                         if (color !== undefined) {
@@ -1693,7 +1707,7 @@ export class VectorTileDataEmitter {
                 logger.error(`cannot triangulate geometry`, err);
             }
 
-            if (this.m_gatherFeatureAttributes) {
+            if (this.m_options.gatherFeatureAttributes) {
                 meshBuffers.objInfos.push(context.env.entries);
                 meshBuffers.featureStarts.push(startIndexCount);
                 meshBuffers.edgeFeatureStarts.push(edgeStartIndexCount);
