@@ -5,7 +5,7 @@
  */
 
 import { GeometryType, getFeatureId, Technique } from "@here/harp-datasource-protocol";
-import { OrientedBox3 } from "@here/harp-geoutils";
+import { OrientedBox3, TileKey } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 import { IntersectParams } from "./IntersectParams";
@@ -114,6 +114,11 @@ export interface PickResult {
      * not be modified.
      */
     userData?: any;
+
+    /**
+     * The tile key containing the picked object.
+     */
+    tileKey?: TileKey;
 }
 
 const tmpV3 = new THREE.Vector3();
@@ -211,7 +216,7 @@ export class PickHandler {
             );
 
             for (const intersect of intersects) {
-                pickListener.addResult(this.createResult(intersect));
+                pickListener.addResult(this.createResult(intersect, tile));
             }
         }
 
@@ -248,13 +253,14 @@ export class PickHandler {
         return this.m_pickingRaycaster;
     }
 
-    private createResult(intersection: THREE.Intersection): PickResult {
+    private createResult(intersection: THREE.Intersection, tile?: Tile): PickResult {
         const pickResult: PickResult = {
             type: PickObjectType.Unspecified,
             point: intersection.point,
             distance: intersection.distance,
             dataSourceName: intersection.object.userData?.dataSource,
-            intersection
+            intersection,
+            tileKey: tile?.tileKey
         };
 
         if (
