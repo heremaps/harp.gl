@@ -11,17 +11,23 @@ import {
     ShaderTechnique,
     SolidLineTechnique,
     StandardTechnique,
-    Technique
+    Technique,
+    TextureProperties
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { MapMeshStandardMaterial, SolidLineMaterial } from "@here/harp-materials";
 import { assertLogsSync } from "@here/harp-test-utils";
 import { LoggerManager } from "@here/harp-utils";
-import { assert, expect } from "chai";
+import * as chai from "chai";
+import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 import * as THREE from "three";
+chai.use(chaiAsPromised);
+// Needed for using expect(...).true for example
+const { expect, assert } = chai;
 
 import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
+import { toTextureFilter, toWrappingMode } from "../lib/ThemeHelpers";
 import {
     applyBaseColorToMaterial,
     buildObject,
@@ -42,6 +48,7 @@ describe("DecodedTileHelpers", function () {
     const env = new MapEnv({ $zoom: 10, $pixelToMeters: 2 });
     const rendererCapabilities = { isWebGL2: false } as any;
     const sandbox = sinon.createSandbox();
+    const wait = (ms: number = 0) => new Promise(res => setTimeout(res, ms));
 
     afterEach(function () {
         sandbox.restore();
@@ -187,29 +194,43 @@ describe("DecodedTileHelpers", function () {
             };
 
             const callbackSpy = sandbox.spy();
+            let onImageLoad: ((image: HTMLImageElement) => void) | undefined;
             sandbox
                 .stub(THREE.ImageLoader.prototype, "load")
                 .callsFake((url, onLoad?, _onProgress?, _onError?) => {
                     assert.equal(url, technique.map);
-                    onLoad?.(fakeImageElement);
+                    onImageLoad = onLoad;
                     return fakeImageElement;
                 });
-            let material: MapMeshStandardMaterial | undefined;
-            await new Promise<void>((resolve, _) => {
-                material = createMaterial(
-                    rendererCapabilities,
-                    {
-                        technique,
-                        env
-                    },
-                    callbackSpy
-                ) as MapMeshStandardMaterial;
-                resolve();
+
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.isDefined(onImageLoad);
+            assert.isTrue(callbackSpy.called);
+
+            // Check that texture promised is not yet resolved.
+            let textureLoaded = false;
+            const texturePromise = callbackSpy.firstCall.args[0];
+            texturePromise.then(() => {
+                textureLoaded = true;
             });
+            assert.isFalse(textureLoaded);
             assert.exists(material);
+            assert.notExists(material!.map);
+
+            // Call image load callback, promise must now be resolved and texture set in material.
+            onImageLoad!(fakeImageElement);
+            await wait();
+
+            assert.isTrue(textureLoaded);
             assert.exists(material!.map);
             assert.strictEqual(material!.map!.image, fakeImageElement);
-            assert.isTrue(callbackSpy.called);
         });
 
         it("creates texture from raw texture buffer", function () {
@@ -237,6 +258,70 @@ describe("DecodedTileHelpers", function () {
             assert.exists(material);
             assert.exists(material.map);
             assert.isTrue(callbackSpy.called);
+            const texturePromise = callbackSpy.firstCall.args[0];
+            return assert.isFulfilled(texturePromise);
+        });
+
+        it("rejects texture promise if raw texture buffer does not have properties", function () {
+            const callbackSpy = sinon.spy();
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/raw"
+                }
+            };
+            const material = createMaterial(
+                rendererCapabilities,
+                {
+                    technique,
+                    env
+                },
+                callbackSpy
+            ) as MapMeshStandardMaterial;
+            assert.exists(material);
+            assert.notExists(material.map);
+            assert.isTrue(callbackSpy.called);
+            const texturePromise = callbackSpy.firstCall.args[0];
+            return assert.isRejected(texturePromise);
+        });
+
+        it("inits texture properties with values from technique", function () {
+            const technique: StandardTechnique = {
+                name: "standard",
+                renderOrder: 0,
+                map: {
+                    buffer: new ArrayBuffer(1),
+                    type: "image/raw",
+                    dataTextureProperties: {
+                        width: 1,
+                        height: 1
+                    }
+                },
+                mapProperties: {
+                    wrapS: "mirror",
+                    wrapT: "repeat",
+                    magFilter: "nearest",
+                    minFilter: "linear",
+                    flipY: true,
+                    repeatU: 3,
+                    repeatV: 2
+                }
+            };
+            const material = createMaterial(rendererCapabilities, {
+                technique,
+                env
+            }) as MapMeshStandardMaterial;
+            assert.exists(material?.map);
+            const map = material!.map!;
+            const expectedProps = technique.mapProperties! as TextureProperties;
+            assert.equal(map.wrapS, toWrappingMode(expectedProps.wrapS!));
+            assert.equal(map.magFilter, toTextureFilter(expectedProps.magFilter!));
+            assert.equal(map.minFilter, toTextureFilter(expectedProps.minFilter!));
+            assert.equal(map.flipY, expectedProps.flipY);
+            assert.equal(map.repeat.x, expectedProps.repeatU);
+            assert.equal(map.repeat.y, expectedProps.repeatV);
         });
 
         itBrowserOnly("creates texture from png texture buffer", function () {

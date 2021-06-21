@@ -209,6 +209,7 @@ export interface PolygonFadingParameters extends FadingParameters {
 
 /**
  * Support class to create geometry for a {@link Tile} from a {@link @here/harp-datasource-protocol#DecodedTile}.
+ * @internal
  */
 export class TileGeometryCreator {
     private static m_instance: TileGeometryCreator;
@@ -275,13 +276,35 @@ export class TileGeometryCreator {
      *
      * @param tile - The {@link Tile} to process.
      * @param decodedTile - The decodedTile containing the actual tile map data.
+     * @returns Promise resolved when all textures are ready to render.
      */
-    createAllGeometries(tile: Tile, decodedTile: DecodedTile) {
+    createAllGeometries(tile: Tile, decodedTile: DecodedTile): Promise<void> {
         const filter = (technique: IndexedTechnique): boolean => {
             return technique._kindState !== false;
         };
 
-        this.createObjects(tile, decodedTile, filter);
+        let texturesReady: Promise<any> = Promise.resolve();
+        const onNewTexture = (texturePromise: Promise<THREE.Texture>) => {
+            texturesReady = Promise.all([
+                texturesReady,
+                texturePromise
+                    .then(texture => {
+                        tile.addOwnedTexture(texture);
+                        if (!texture.image) {
+                            return Promise.resolve();
+                        }
+                        return new Promise<void>(resolve => {
+                            texture.onUpdate = () => {
+                                (texture.onUpdate as any) = null;
+                                resolve();
+                            };
+                            tile.mapView.renderer.initTexture(texture);
+                        });
+                    })
+                    .catch(() => {}) // Keep waiting for the other textures even if one fails.
+            ]);
+        };
+        this.createObjects(tile, decodedTile, onNewTexture, filter);
 
         this.preparePois(tile, decodedTile);
 
@@ -308,6 +331,7 @@ export class TileGeometryCreator {
             // parent's geometry doesn't show through.
             addGroundPlane(tile, -1);
         }
+        return texturesReady;
     }
 
     createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
@@ -531,19 +555,21 @@ export class TileGeometryCreator {
      *
      * @param tile - The {@link Tile} to create the geometry on.
      * @param decodedTile - The {@link @here/harp-datasource-protocol#DecodedTile}.
+     * @param onTextureCreated - Callback for each texture created, getting a promise that will be
+     * resolved once the texture is loaded. Texture is not uploaded to GPU.
      * @param techniqueFilter -: Optional filter. Should return true for any technique that is
      *      applicable.
      */
     createObjects(
         tile: Tile,
         decodedTile: DecodedTile,
+        onTextureCreated: (texture: Promise<THREE.Texture>) => void,
         techniqueFilter?: (technique: IndexedTechnique) => boolean
     ) {
         const mapView = tile.mapView;
         const materials: THREE.Material[] = [];
         const extrudedMaterials: THREE.Material[] = [];
         const animatedExtrusionHandler = mapView.animatedExtrusionHandler;
-        const dataSource = tile.dataSource;
         const discreteZoomLevel = Math.floor(mapView.zoomLevel);
         const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
         const objects = tile.objects;
@@ -602,12 +628,6 @@ export class TileGeometryCreator {
                 let material: THREE.Material | undefined = materials[techniqueIndex];
 
                 if (material === undefined) {
-                    const onMaterialUpdated = (texture: THREE.Texture) => {
-                        dataSource.requestUpdate();
-                        if (texture !== undefined) {
-                            tile.addOwnedTexture(texture);
-                        }
-                    };
                     material = createMaterial(
                         mapView.renderer.capabilities,
                         {
@@ -616,7 +636,7 @@ export class TileGeometryCreator {
                             fog: mapView.scene.fog !== null,
                             shadowsEnabled: mapView.shadowsEnabled
                         },
-                        onMaterialUpdated
+                        onTextureCreated
                     );
                     if (material === undefined) {
                         continue;
