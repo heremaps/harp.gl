@@ -319,10 +319,10 @@ export class TileGeometryLoader {
         this.m_state = TileGeometryLoaderState.CreationQueued;
     }
 
-    private createGeometry(
+    private async createGeometry(
         enabledKinds: GeometryKindSet | undefined,
         disabledKinds: GeometryKindSet | undefined
-    ) {
+    ): Promise<void> {
         if (this.m_state === TileGeometryLoaderState.CreatingGeometry) {
             return;
         }
@@ -347,13 +347,12 @@ export class TileGeometryLoader {
         tile.clear();
         // Set up techniques which should be processed.
         geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
-        geometryCreator.createAllGeometries(tile, decodedTile).then(() => {
-            if (stats.enabled) {
-                this.addStats(stats, now);
-            }
-            this.finish();
-            tile.dataSource.requestUpdate();
-        });
+        await geometryCreator.createAllGeometries(tile, decodedTile);
+        if (stats.enabled) {
+            this.addStats(stats, now);
+        }
+        this.finish();
+        tile.dataSource.requestUpdate();
     }
 
     private addStats(stats: PerformanceStatistics, now: number) {

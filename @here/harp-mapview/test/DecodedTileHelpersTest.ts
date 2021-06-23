@@ -23,7 +23,7 @@ import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 import * as THREE from "three";
 chai.use(chaiAsPromised);
-// Needed for using expect(...).true for example
+// Needed for using assert.isFulfilled for example
 const { expect, assert } = chai;
 
 import { DisplacedMesh } from "../lib/geometry/DisplacedMesh";
@@ -216,18 +216,18 @@ describe("DecodedTileHelpers", function () {
 
             // Check that texture promised is not yet resolved.
             let textureLoaded = false;
-            const texturePromise = callbackSpy.firstCall.args[0];
-            texturePromise.then(() => {
+            const texturePromise = callbackSpy.firstCall.args[0].then(() => {
                 textureLoaded = true;
             });
+
+            await wait();
             assert.isFalse(textureLoaded);
             assert.exists(material);
             assert.notExists(material!.map);
 
             // Call image load callback, promise must now be resolved and texture set in material.
             onImageLoad!(fakeImageElement);
-            await wait();
-
+            await assert.isFulfilled(texturePromise);
             assert.isTrue(textureLoaded);
             assert.exists(material!.map);
             assert.strictEqual(material!.map!.image, fakeImageElement);

@@ -196,7 +196,7 @@ describe("TileGeometryLoader", function () {
             expect(geometryLoader.isFinished).to.be.false;
 
             makeTexturesReady!();
-            await wait();
+            await expect(texturesPromise).to.eventually.be.fulfilled;
             expect(geometryLoader.isFinished).to.be.true;
         });
 

@@ -21,10 +21,15 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { MapMeshBasicMaterial } from "@here/harp-materials";
-import { assert, expect } from "chai";
+import * as chai from "chai";
+import * as chaiAsPromised from "chai-as-promised";
 import * as sinon from "sinon";
 import * as THREE from "three";
 import { RawShaderMaterial } from "three";
+
+chai.use(chaiAsPromised);
+// Needed for using assert(...).isFulfilled for example
+const { expect, assert } = chai;
 
 import { DataSource } from "../lib/DataSource";
 import { isDepthPrePassMesh } from "../lib/DepthPrePass";
@@ -572,7 +577,7 @@ describe("TileGeometryCreator", () => {
 
         it("uploads textures to GPU and adds them to owner tile", async function () {
             let promiseResolved = false;
-            tgc.createAllGeometries(newTile, decodedTile).then(() => {
+            const texturesPromise = tgc.createAllGeometries(newTile, decodedTile).then(() => {
                 promiseResolved = true;
             });
 
@@ -580,7 +585,7 @@ describe("TileGeometryCreator", () => {
             assert.isFalse(promiseResolved);
 
             initTextures!();
-            await wait();
+            await assert.isFulfilled(texturesPromise);
 
             assert.isTrue(promiseResolved);
             assert.equal(newTile.objects.length, 1);
