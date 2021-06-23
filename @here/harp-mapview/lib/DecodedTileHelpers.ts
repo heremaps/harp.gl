@@ -112,7 +112,7 @@ function createTextureFromRawImage(
     onError: (error: ErrorEvent | string) => void
 ) {
     const properties = textureBuffer.dataTextureProperties;
-    if (properties !== undefined) {
+    if (properties) {
         const textureDataType: THREE.TextureDataType | undefined = properties.type
             ? toTextureDataType(properties.type)
             : undefined;
@@ -131,84 +131,88 @@ function createTextureFromRawImage(
     }
 }
 
+function initTextureProperties(texture: THREE.Texture, properties?: TextureProperties) {
+    if (!properties) {
+        return;
+    }
+    if (properties.wrapS !== undefined) {
+        texture.wrapS = toWrappingMode(properties.wrapS);
+    }
+    if (properties.wrapT !== undefined) {
+        texture.wrapT = toWrappingMode(properties.wrapT);
+    }
+    if (properties.magFilter !== undefined) {
+        texture.magFilter = toTextureFilter(properties.magFilter);
+    }
+    if (properties.minFilter !== undefined) {
+        texture.minFilter = toTextureFilter(properties.minFilter);
+    }
+    if (properties.flipY !== undefined) {
+        texture.flipY = properties.flipY;
+    }
+    if (properties.repeatU !== undefined) {
+        texture.repeat.x = properties.repeatU;
+    }
+    if (properties.repeatV !== undefined) {
+        texture.repeat.y = properties.repeatV;
+    }
+}
+
 function createTexture(
     material: THREE.Material,
     texturePropertyName: string,
-    options: MaterialOptions,
-    textureReadyCallback?: (texture: THREE.Texture) => void
-) {
+    options: MaterialOptions
+): Promise<THREE.Texture> | undefined {
     const technique = options.technique;
     let textureProperty = (technique as any)[texturePropertyName];
     if (textureProperty === undefined) {
-        return;
+        return undefined;
     }
 
-    const onLoad = (texture: THREE.Texture) => {
-        const properties = (technique as any)[
-            texturePropertyName + "Properties"
-        ] as TextureProperties;
-        if (properties !== undefined) {
-            if (properties.wrapS !== undefined) {
-                texture.wrapS = toWrappingMode(properties.wrapS);
-            }
-            if (properties.wrapT !== undefined) {
-                texture.wrapT = toWrappingMode(properties.wrapT);
-            }
-            if (properties.magFilter !== undefined) {
-                texture.magFilter = toTextureFilter(properties.magFilter);
-            }
-            if (properties.minFilter !== undefined) {
-                texture.minFilter = toTextureFilter(properties.minFilter);
-            }
-            if (properties.flipY !== undefined) {
-                texture.flipY = properties.flipY;
-            }
-            if (properties.repeatU !== undefined) {
-                texture.repeat.x = properties.repeatU;
-            }
-            if (properties.repeatV !== undefined) {
-                texture.repeat.y = properties.repeatV;
+    const texturePromise = new Promise<THREE.Texture>((resolve, reject) => {
+        const onLoad = (texture: THREE.Texture) => {
+            const properties: TextureProperties | undefined = (technique as any)[
+                texturePropertyName + "Properties"
+            ];
+            initTextureProperties(texture, properties);
+            (material as any)[texturePropertyName] = texture;
+            material.needsUpdate = true;
+            resolve(texture);
+        };
+        const onError = (error: ErrorEvent | string) => {
+            logger.error("#createMaterial: Failed to load texture: ", error);
+            reject(error);
+        };
+
+        if (Expr.isExpr(textureProperty)) {
+            textureProperty = getPropertyValue(textureProperty, options.env);
+            if (!textureProperty) {
+                // Expression may evaluate to a valid texture at any time, create a fake texture to
+                // avoid shader recompilation.
+                onLoad(new THREE.Texture());
+                return;
             }
         }
-        (material as any)[texturePropertyName] = texture;
-        material.needsUpdate = true;
 
-        if (textureReadyCallback) {
-            textureReadyCallback(texture);
+        if (typeof textureProperty === "string") {
+            createTextureFromURL(textureProperty, onLoad, onError, false);
+        } else if (isTextureBuffer(textureProperty)) {
+            if (textureProperty.type === "image/raw") {
+                createTextureFromRawImage(textureProperty, onLoad, onError);
+            } else {
+                const textureBlob = new Blob([textureProperty.buffer], {
+                    type: textureProperty.type
+                });
+                createTextureFromURL(URL.createObjectURL(textureBlob), onLoad, onError, true);
+            }
+        } else if (
+            typeof textureProperty === "object" &&
+            (textureProperty.nodeName === "IMG" || textureProperty.nodeName === "CANVAS")
+        ) {
+            onLoad(new THREE.CanvasTexture(textureProperty));
         }
-    };
-
-    const onError = (error: ErrorEvent | string) => {
-        logger.error("#createMaterial: Failed to load texture: ", error);
-    };
-
-    if (Expr.isExpr(textureProperty)) {
-        textureProperty = getPropertyValue(textureProperty, options.env);
-        if (!textureProperty) {
-            // Expression may evaluate to a valid texture at any time, create a fake texture to
-            // avoid shader recompilation.
-            onLoad(new THREE.Texture());
-            return;
-        }
-    }
-
-    if (typeof textureProperty === "string") {
-        createTextureFromURL(textureProperty, onLoad, onError, false);
-    } else if (isTextureBuffer(textureProperty)) {
-        if (textureProperty.type === "image/raw") {
-            createTextureFromRawImage(textureProperty, onLoad, onError);
-        } else {
-            const textureBlob = new Blob([textureProperty.buffer], {
-                type: textureProperty.type
-            });
-            createTextureFromURL(URL.createObjectURL(textureBlob), onLoad, onError, true);
-        }
-    } else if (
-        typeof textureProperty === "object" &&
-        (textureProperty.nodeName === "IMG" || textureProperty.nodeName === "CANVAS")
-    ) {
-        onLoad(new THREE.CanvasTexture(textureProperty));
-    }
+    });
+    return texturePromise;
 }
 
 /**
@@ -216,17 +220,17 @@ function createTexture(
  *
  * @param rendererCapabilities - The capabilities of the renderer that will use the material.
  * @param options - The material options the subsequent functions need.
- * @param materialUpdateCallback - Optional callback when the material gets updated,
- *                               e.g. after texture loading.
+ * @param onTextureCreated - Optional callback for each texture created for the material, getting
+ * a promise that will be resolved once the texture is loaded. Texture is not uploaded to GPU.
  *
- * @returns new material instance that matches `technique.name`
+ * @returns new material instance that matches `technique.name`.
  *
  * @internal
  */
 export function createMaterial(
     rendererCapabilities: THREE.WebGLCapabilities,
     options: MaterialOptions,
-    textureReadyCallback?: (texture: THREE.Texture) => void
+    onTextureCreated?: (texture: Promise<THREE.Texture>) => void
 ): THREE.Material | undefined {
     const technique = options.technique;
     const Constructor = getMaterialConstructor(technique, options.shadowsEnabled === true);
@@ -260,9 +264,12 @@ export function createMaterial(
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
 
     if (supportsTextures(technique)) {
-        TEXTURE_PROPERTY_KEYS.forEach((texturePropertyName: string) =>
-            createTexture(material, texturePropertyName, options, textureReadyCallback)
-        );
+        TEXTURE_PROPERTY_KEYS.forEach((texturePropertyName: string) => {
+            const texturePromise = createTexture(material, texturePropertyName, options);
+            if (texturePromise) {
+                onTextureCreated?.(texturePromise);
+            }
+        });
     }
 
     if (isShaderTechnique(technique)) {
