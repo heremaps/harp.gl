@@ -100,7 +100,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 color: "#BC002D",
                 // This causes the bug HARP-12247
                 enabled: ["get", "enabled", ["dynamic-properties"]],
-                size: 150
+                size: ["get", "size", ["dynamic-properties"]]
             }
         ];
 
@@ -108,7 +108,8 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             mochaTest: this,
             testImageName: "geojson-point-enabled-as-dynamic-expression",
             theme: { lights, styles: { geojson: greenStyle } },
-            geoJson: "../dist/resources/basic_polygon.json"
+            geoJson: "../dist/resources/basic_polygon.json",
+            size: 150
         });
     });
     it("renders extruded polygons with height", async function () {

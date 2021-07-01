@@ -29,6 +29,7 @@ export interface GeoJsonTestOptions extends GeoJsonDataSourceTestOptions {
     dataProvider?: DataProvider;
     extraDataSource?: GeoJsonDataSourceTestOptions;
     beforeFinishCallback?: (mapView: MapView) => void;
+    size?: number;
 }
 
 function createDataSource(
@@ -102,6 +103,9 @@ export class GeoJsonTest {
         const dataSource = createDataSource("geojson", options);
 
         this.mapView.setDynamicProperty("enabled", true);
+        if (options.size) {
+            this.mapView.setDynamicProperty("size", options.size);
+        }
         await this.mapView.addDataSource(dataSource);
 
         if (options.extraDataSource) {
