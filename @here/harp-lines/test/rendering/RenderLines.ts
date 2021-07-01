@@ -99,6 +99,13 @@ describe("Rendering lines: ", function () {
         }
     ];
 
+    const oneLine: TestLineParams[] = [
+        {
+            name: "longline",
+            points: [-100, 0, 10, 0, 0, 10, 300, 0, 10]
+        }
+    ];
+
     const displacedLinesConfig: TestLineParams[] = [
         {
             name: "straight line 15 points",
@@ -374,8 +381,8 @@ describe("Rendering lines: ", function () {
         const lineStyle = {
             lineWidth: 8,
             color: "#F00",
-            gapSize: 4,
-            dashSize: 4,
+            gapSize: 100,
+            dashSize: 100,
             dashColor: "#00F",
             outlineWidth: 3,
             outlineColor: "#0F0",
@@ -399,13 +406,14 @@ describe("Rendering lines: ", function () {
 
     it("renders dashed lines - lineWidth: 2, gapSize: 2, dashSize: 2", async function (this: Mocha.Context) {
         const lineStyle = {
-            lineWidth: 2,
+            lineWidth: 100,
             color: "#FFF",
-            gapSize: 2,
-            dashSize: 2,
+            gapSize: 40,
+            dashSize: 100,
+            dashColor: "#FFF",
             rendererCapabilities: webglRenderer.capabilities
         };
-        await renderLines(linesConfig, this, "dashed-lines-1px", lineStyle);
+        await renderLines(oneLine, this, "dashed-lines-1px", lineStyle);
     });
 
     it("renders dashed lines with dashColor: #F00", async function (this: Mocha.Context) {

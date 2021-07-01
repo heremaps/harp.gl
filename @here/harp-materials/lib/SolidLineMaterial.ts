@@ -37,7 +37,7 @@ const DefinesLineCapsMapping: { [key: number]: LineCaps } = Object.keys(
     const defineValue: number = LineCapsDefinesMapping[defineKey];
     r[defineValue] = defineKey;
     return r;
-}, ({} as any) as { [key: number]: LineCaps });
+}, {} as any as { [key: number]: LineCaps });
 
 export enum LineDashesModes {
     DASHES_SQUARE = 0,
@@ -58,7 +58,7 @@ const DefinesLineDashesMapping: { [key: number]: LineDashes } = Object.keys(
     const defineValue: number = LineDashesDefinesMapping[defineKey];
     r[defineValue] = defineKey;
     return r;
-}, ({} as any) as { [key: number]: LineDashes });
+}, {} as any as { [key: number]: LineDashes });
 
 /**
  * The vLength contains the actual line length, it's needed for the creation of line caps by
@@ -218,6 +218,55 @@ varying vec3 vColor;
 
 #include <fog_pars_fragment>
 
+// Author:
+// Title:
+
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+uniform float u_time;
+
+float sdTriangle( in vec2 p, in vec2 p0, in vec2 p1, in vec2 p2 )
+{
+	vec2 e0 = p1 - p0;
+	vec2 e1 = p2 - p1;
+	vec2 e2 = p0 - p2;
+
+	vec2 v0 = p - p0;
+	vec2 v1 = p - p1;
+	vec2 v2 = p - p2;
+
+	vec2 pq0 = v0 - e0*clamp( dot(v0,e0)/dot(e0,e0), 0.0, 1.0 );
+	vec2 pq1 = v1 - e1*clamp( dot(v1,e1)/dot(e1,e1), 0.0, 1.0 );
+	vec2 pq2 = v2 - e2*clamp( dot(v2,e2)/dot(e2,e2), 0.0, 1.0 );
+    
+    float s = e0.x*e2.y - e0.y*e2.x;
+    vec2 d = min( min( vec2( dot( pq0, pq0 ), s*(v0.x*e0.y-v0.y*e0.x) ),
+                       vec2( dot( pq1, pq1 ), s*(v1.x*e1.y-v1.y*e1.x) )),
+                       vec2( dot( pq2, pq2 ), s*(v2.x*e2.y-v2.y*e2.x) ));
+
+	return -sqrt(d.x)*sign(d.y);
+}
+
+float sdfBox( in vec2 p, in vec2 boxP, in vec2 size )
+{
+    vec2 toP = p - boxP;
+    float toCornerX = max(abs(toP.x) - size.x, 0.0);
+    float toCornerY = max(abs(toP.y) - size.y, 0.0);
+    
+    float d = length(vec2(toCornerX, toCornerY));
+    return d;
+}
+
+
+
+
+
+
+
 void main() {
     float alpha = opacity;
     vec3 outputDiffuse = diffuse;
@@ -268,6 +317,23 @@ void main() {
     #endif
     #endif
 
+    // alpha *= step(0.9, distToDashEdge * 2.0);
+    
+    float result = 1.0;
+    #ifdef USE_DASHED_LINE
+        vec2 st = vec2(1.0 - (distToDashOrigin * 2.0), distToCenter);
+        //alpha *= length(st);
+        // (2.0 * gl_FragCoord.xy/u_resolution.xy) - 1.0;
+        //st.x *= u_resolution.x/u_resolution.y;
+
+        float triangle = sdTriangle( st, vec2(0.8,0.0), vec2(0.4,-0.5), vec2(0.4,0.5));
+        float box = sdfBox(st, vec2(-0.050,0.010), vec2(0.670,0.160));
+        result = min(box, triangle) > 0.0 ? 1.0 : 0.5;
+    #endif
+    //alpha *= 
+    // float res = max(1.0-step(0.0,triangle), box <= 0.010 ? 1.0 : 0.0);
+    // gl_FragColor = vec4(res, res, res,1.0);
+
     #ifdef USE_OUTLINE
     // Calculate distance to outline (0.0: lineEdge, outlineWidth/lineWidth: outlineEdge) and
     // compute the outlineBlendFactor (used to mix line and outline colors).
@@ -287,11 +353,13 @@ void main() {
       outlineColor,
       outlineBlendFactor
     );
+    outputDiffuse = vec3(1.0, 0.0, 0.0);
     #else
     outputDiffuse = mix(outputDiffuse, outlineColor, outlineBlendFactor);
     #endif
     #endif
-
+    outputDiffuse *= result;
+    
     #if defined(USE_DASHED_LINE) && !defined(USE_DASH_COLOR)
     // Multiply the alpha by the dashBlendFactor.
     #if defined(USE_OUTLINE)
@@ -412,7 +480,8 @@ export interface SolidLineMaterialParameters
  */
 export class SolidLineMaterial
     extends RawShaderMaterial
-    implements DisplacementFeature, FadingFeature {
+    implements DisplacementFeature, FadingFeature
+{
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;
     static DEFAULT_OUTLINE_WIDTH: number = 0.0;
