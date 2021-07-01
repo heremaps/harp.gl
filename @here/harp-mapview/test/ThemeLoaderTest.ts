@@ -306,6 +306,71 @@ describe("ThemeLoader", function () {
             assert.deepEqual(result.definitions!.roadColor, { type: "color", value: "#fff" });
             assert.deepEqual(result.definitions!.waterColor, { type: "color", value: "#0f0" });
         });
+        it("supports multiple inheritance with textures", async function () {
+            const inheritedTheme: Theme = {
+                extends: [
+                    {
+                        images: {
+                            foo: {
+                                url: "icons://maki_icons.png",
+                                preload: true
+                            },
+                            baz: {
+                                url: "icons://maki_icons.png",
+                                preload: true
+                            }
+                        },
+                        imageTextures: [
+                            {
+                                name: "foo",
+                                image: "foo"
+                            },
+                            {
+                                name: "baz",
+                                image: "baz"
+                            }
+                        ]
+                    },
+                    {
+                        images: {
+                            bar: {
+                                url: "icons://maki_icons.png",
+                                preload: true
+                            },
+                            baz: {
+                                url: "icons://override.png",
+                                atlas: "icons://icons/maki_icons.json",
+                                preload: true
+                            }
+                        },
+                        imageTextures: [
+                            {
+                                name: "bar",
+                                image: "bar"
+                            },
+                            {
+                                name: "baz",
+                                image: "baz"
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            const result = await ThemeLoader.load(inheritedTheme);
+            assert.exists(result.images?.foo);
+            assert.exists(result.images?.bar);
+            assert.exists(result.images?.baz);
+
+            assert.equal(result.images?.baz.url, "icons://override.png");
+            assert.exists(result.images?.baz.atlas);
+
+            assert.deepEqual(result.imageTextures?.map(imageTexture => imageTexture.name).sort(), [
+                "bar",
+                "baz",
+                "foo"
+            ]);
+        });
     });
 
     describe("#load support for inheritance and optional reference resolving", function () {

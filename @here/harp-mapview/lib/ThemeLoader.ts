@@ -10,6 +10,7 @@ import { isJsonExpr } from "@here/harp-datasource-protocol";
 import {
     Definitions,
     FlatTheme,
+    ImageTexture,
     isJsonExprReference,
     Style,
     Styles,
@@ -524,7 +525,42 @@ export class ThemeLoader {
         } else if (theme.styles) {
             styles = { ...theme.styles };
         }
-        return { ...baseTheme, ...theme, definitions, styles };
+
+        return {
+            ...baseTheme,
+            ...theme,
+            // Due to nested structure of the images/textures it needs a
+            // deep merge with a duplicate exclusion.
+            ...ThemeLoader.mergeImageTextures(theme, baseTheme),
+            definitions,
+            styles
+        };
+    }
+
+    private static mergeImageTextures(
+        theme: Theme,
+        baseTheme: Theme
+    ): Pick<FlatTheme, "images" | "imageTextures"> {
+        const images = { ...baseTheme.images, ...theme.images };
+        let imageTextures: ImageTexture[] = [];
+
+        if (!baseTheme.imageTextures && theme.imageTextures) {
+            imageTextures = theme.imageTextures;
+        } else if (baseTheme.imageTextures && !theme.imageTextures) {
+            imageTextures = baseTheme.imageTextures;
+        } else if (baseTheme.imageTextures && theme.imageTextures) {
+            imageTextures = theme.imageTextures.slice();
+            baseTheme.imageTextures.forEach(val => {
+                if (!imageTextures.find(({ name }) => name === val.name)) {
+                    imageTextures.push(val);
+                }
+            });
+        }
+
+        return {
+            images,
+            imageTextures
+        };
     }
 
     private static convertFlatTheme(theme: Theme | FlatTheme): Theme {
