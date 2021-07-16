@@ -366,16 +366,17 @@ export class SphereHorizon {
         return this.m_cameraPitch;
     }
 
+    // TODO: Support off-center projections.
     private get halfFovVertical(): number {
         if (this.m_halfFovVertical === undefined) {
-            this.m_halfFovVertical = THREE.MathUtils.degToRad(this.m_camera.fov / 2);
+            this.m_halfFovVertical = CameraUtils.getVerticalFov(this.m_camera) / 2;
         }
         return this.m_halfFovVertical;
     }
 
     private get halfFovHorizontal(): number {
         if (this.m_halfFovHorizontal === undefined) {
-            this.m_halfFovHorizontal = CameraUtils.computeHorizontalFov(this.m_camera) / 2;
+            this.m_halfFovHorizontal = CameraUtils.getHorizontalFov(this.m_camera) / 2;
         }
         return this.m_halfFovHorizontal;
     }
