@@ -8,6 +8,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+import { PerspectiveCamera } from "three";
 
 import { ElevationProvider } from "./ElevationProvider";
 import { MapViewUtils } from "./Utils";
@@ -658,6 +659,21 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     }
 }
 
+function getTopAndBottomFov(camera: THREE.PerspectiveCamera) {
+    const centerYOffsetNDC = -camera.projectionMatrix.elements[9];
+    const fov = THREE.MathUtils.degToRad(camera.fov);
+    const halfFov = fov / 2;
+
+    if (centerYOffsetNDC === 0) {
+        return { topFov: halfFov, bottomFov: halfFov };
+    }
+
+    const tanHFov = Math.tan(halfFov);
+    const topFov = Math.atan((1 - centerYOffsetNDC) * tanHFov);
+    const bottomFov = fov - topFov;
+
+    return { topFov, bottomFov };
+}
 /**
  * Evaluates camera clipping planes taking into account ground distance and camera angles.
  *
@@ -736,19 +752,14 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // Top plane origin altitude
         let z2: number;
         // For perspective projection:
-        if (camera.type === "PerspectiveCamera") {
-            const cam = (camera as any) as THREE.PerspectiveCamera;
+        if (camera instanceof PerspectiveCamera) {
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
             // Half fov angle in radians
-            const halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
-            topAngleRad = THREE.MathUtils.clamp(
-                cameraTilt + halfFovAngle,
-                -halfPiLimit,
-                halfPiLimit
-            );
+            const { topFov, bottomFov } = getTopAndBottomFov(camera);
+            topAngleRad = THREE.MathUtils.clamp(cameraTilt + topFov, -halfPiLimit, halfPiLimit);
             bottomAngleRad = THREE.MathUtils.clamp(
-                cameraTilt - halfFovAngle,
+                cameraTilt - bottomFov,
                 -halfPiLimit,
                 halfPiLimit
             );
@@ -804,19 +815,19 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // Project clipping plane distances for the top/bottom frustum planes (edges), but
         // only if we deal with perspective camera type, this step is not required
         // for orthographic projections, cause all clip planes are parallel to eye vector.
-        if (camera.type === "PerspectiveCamera") {
-            const cam = camera as THREE.PerspectiveCamera;
+        if (camera instanceof PerspectiveCamera) {
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
             // Half fov angle in radians
-            const halfFovAngle = THREE.MathUtils.degToRad(cam.fov / 2);
-            const cosHalfFov = Math.cos(halfFovAngle);
+            const { topFov, bottomFov } = getTopAndBottomFov(camera);
+            const cosTopFov = Math.cos(topFov);
+            const cosBottomFov = topFov === bottomFov ? cosTopFov : Math.cos(bottomFov);
             // cos(halfFov) = near / bottomDist
             // near = cos(halfFov) * bottomDist
-            viewRanges.near = planesDist.bottom * cosHalfFov;
+            viewRanges.near = planesDist.bottom * cosBottomFov;
             // cos(halfFov) = far / topDist
             // far = cos(halfFov) * topDist
-            viewRanges.far = planesDist.top * cosHalfFov;
+            viewRanges.far = planesDist.top * cosTopFov;
         }
         // Orthographic camera projection.
         else {
