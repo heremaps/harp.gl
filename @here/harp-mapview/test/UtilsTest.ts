@@ -135,7 +135,7 @@ describe("MapViewUtils", function () {
             };
             const mapView = (mapViewMock as any) as MapView;
             const target = new GeoCoordinates(52.5, 13.5);
-            const tiltLimit = THREE.MathUtils.degToRad(45);
+            const maxTiltAngle = THREE.MathUtils.degToRad(45);
 
             it("keeps look at target when orbiting around center", function () {
                 const target = new GeoCoordinates(52.5, 13.5);
@@ -154,15 +154,12 @@ describe("MapViewUtils", function () {
                 } = MapViewUtils.getTargetAndDistance(mapView.projection, mapView.camera);
 
                 const deltaTilt = THREE.MathUtils.degToRad(45);
-                const deltaHeading = THREE.MathUtils.degToRad(42);
-                MapViewUtils.orbitAroundScreenPoint(
-                    mapView,
-                    0,
-                    0,
-                    deltaHeading,
+                const deltaAzimuth = THREE.MathUtils.degToRad(42);
+                MapViewUtils.orbitAroundScreenPoint(mapView, {
+                    deltaAzimuth,
                     deltaTilt,
-                    tiltLimit
-                );
+                    maxTiltAngle
+                });
 
                 const {
                     target: newWorldTarget,
@@ -190,15 +187,12 @@ describe("MapViewUtils", function () {
                 );
 
                 const deltaTilt = THREE.MathUtils.degToRad(80);
-                const deltaHeading = 0;
-                MapViewUtils.orbitAroundScreenPoint(
-                    mapView,
-                    0,
-                    0,
-                    deltaHeading,
+                const deltaAzimuth = 0;
+                MapViewUtils.orbitAroundScreenPoint(mapView, {
+                    deltaAzimuth,
                     deltaTilt,
-                    tiltLimit
-                );
+                    maxTiltAngle
+                });
 
                 const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
                 expect(mapTargetWorld).to.not.be.null;
@@ -209,7 +203,7 @@ describe("MapViewUtils", function () {
                     mapTargetWorld!
                 );
                 expect(tilt).to.be.closeTo(
-                    tiltLimit,
+                    maxTiltAngle,
                     projection === sphereProjection
                         ? 1e-7 // FIXME: Is this huge error expected?
                         : Number.EPSILON
@@ -227,21 +221,22 @@ describe("MapViewUtils", function () {
                     );
 
                     const deltaTilt = THREE.MathUtils.degToRad(46);
-                    const deltaHeading = 0;
+                    const deltaAzimuth = 0;
                     // OffsetX must be 0 for this to work for Sphere & Mercator, when this is non-zero,
                     // it works for planar, but not sphere.
                     const offsetX = 0.1;
                     const offsetY = 0.1;
 
-                    MapViewUtils.orbitAroundScreenPoint(
-                        mapView,
-                        offsetX,
-                        offsetY,
-                        deltaHeading,
+                    MapViewUtils.orbitAroundScreenPoint(mapView, {
+                        center: {
+                            x: offsetX,
+                            y: offsetY
+                        },
+                        deltaAzimuth,
                         // Delta is past the tilt limit.
                         deltaTilt,
-                        tiltLimit
-                    );
+                        maxTiltAngle
+                    });
                     const mapTargetWorldNew = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
 
                     const afterTilt = MapViewUtils.extractTiltAngleFromLocation(
@@ -250,13 +245,13 @@ describe("MapViewUtils", function () {
                         mapTargetWorldNew!
                     );
                     if (projection === sphereProjection) {
-                        if (afterTilt > tiltLimit) {
+                        if (afterTilt > maxTiltAngle) {
                             // If greater, then only within EPS, otherwise it should be less.
-                            expect(afterTilt).to.be.closeTo(tiltLimit, EPS);
+                            expect(afterTilt).to.be.closeTo(maxTiltAngle, EPS);
                         }
                     } else {
                         // Use a custom EPS, Number.Epsilon is too strict for such maths
-                        expect(afterTilt).to.be.closeTo(tiltLimit, EPS);
+                        expect(afterTilt).to.be.closeTo(maxTiltAngle, EPS);
                     }
                 }
             });
@@ -280,15 +275,16 @@ describe("MapViewUtils", function () {
                 expect(oldRotationTarget).to.be.not.null;
 
                 const deltaTilt = THREE.MathUtils.degToRad(45);
-                const deltaHeading = THREE.MathUtils.degToRad(42);
-                MapViewUtils.orbitAroundScreenPoint(
-                    mapView,
-                    offsetX,
-                    offsetY,
-                    deltaHeading,
+                const deltaAzimuth = THREE.MathUtils.degToRad(42);
+                MapViewUtils.orbitAroundScreenPoint(mapView, {
+                    center: {
+                        x: offsetX,
+                        y: offsetY
+                    },
+                    deltaAzimuth,
                     deltaTilt,
-                    tiltLimit
-                );
+                    maxTiltAngle
+                });
 
                 const newRotationTarget = MapViewUtils.rayCastWorldCoordinates(
                     mapView,

@@ -618,14 +618,11 @@ export class MapControls extends EventDispatcher {
 
         const deltaAzimuth = this.m_currentAzimuth - this.m_lastAzimuth;
 
-        MapViewUtils.orbitAroundScreenPoint(
-            this.mapView,
-            0,
-            0,
+        MapViewUtils.orbitAroundScreenPoint(this.mapView, {
             deltaAzimuth,
-            0,
-            this.m_maxTiltAngle
-        );
+            deltaTilt: 0,
+            maxTiltAngle: this.m_maxTiltAngle
+        });
         this.updateMapView();
     }
 
@@ -671,9 +668,13 @@ export class MapControls extends EventDispatcher {
             : this.targetedTilt;
 
         const initialTilt = this.currentTilt;
-        const deltaAngle = this.m_currentTilt - initialTilt;
+        const deltaTilt = this.m_currentTilt - initialTilt;
 
-        MapViewUtils.orbitAroundScreenPoint(this.mapView, 0, 0, 0, deltaAngle, this.m_maxTiltAngle);
+        MapViewUtils.orbitAroundScreenPoint(this.mapView, {
+            deltaAzimuth: 0,
+            deltaTilt,
+            maxTiltAngle: this.m_maxTiltAngle
+        });
         this.updateMapView();
 
         if (tiltAnimationFinished) {
@@ -990,14 +991,15 @@ export class MapControls extends EventDispatcher {
         } else if (this.m_state === State.ORBIT) {
             this.stopExistingAnimations();
 
-            MapViewUtils.orbitAroundScreenPoint(
-                this.mapView,
-                this.m_initialMousePosition.x,
-                this.m_initialMousePosition.y,
-                this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
-                -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y,
-                this.m_maxTiltAngle
-            );
+            MapViewUtils.orbitAroundScreenPoint(this.mapView, {
+                center: this.m_tmpVector2.set(
+                    this.m_initialMousePosition.x,
+                    this.m_initialMousePosition.y
+                ),
+                deltaAzimuth: this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
+                deltaTilt: -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y,
+                maxTiltAngle: this.m_maxTiltAngle
+            });
         }
 
         this.m_lastMousePosition.set(mousePos.x, mousePos.y);
@@ -1296,18 +1298,16 @@ export class MapControls extends EventDispatcher {
 
             if (this.rotateEnabled) {
                 this.updateCurrentRotation();
-                const deltaRotation =
+                const deltaAzimuth =
                     this.m_touchState.currentRotation - this.m_touchState.initialRotation;
                 this.stopExistingAnimations();
 
-                MapViewUtils.orbitAroundScreenPoint(
-                    this.mapView,
-                    center.x,
-                    center.y,
-                    deltaRotation,
-                    0,
-                    this.m_maxTiltAngle
-                );
+                MapViewUtils.orbitAroundScreenPoint(this.mapView, {
+                    center: this.m_tmpVector2.set(center.x, center.y),
+                    deltaAzimuth,
+                    deltaTilt: 0,
+                    maxTiltAngle: this.m_maxTiltAngle
+                });
             }
         }
 
@@ -1319,14 +1319,11 @@ export class MapControls extends EventDispatcher {
                 firstTouch.lastTouchPoint
             );
             this.stopExistingAnimations();
-            MapViewUtils.orbitAroundScreenPoint(
-                this.mapView,
-                0,
-                0,
-                this.orbitingTouchDeltaFactor * diff.x,
-                -this.orbitingTouchDeltaFactor * diff.y,
-                this.m_maxTiltAngle
-            );
+            MapViewUtils.orbitAroundScreenPoint(this.mapView, {
+                deltaAzimuth: this.orbitingTouchDeltaFactor * diff.x,
+                deltaTilt: -this.orbitingTouchDeltaFactor * diff.y,
+                maxTiltAngle: this.m_maxTiltAngle
+            });
         }
 
         this.m_zoomAnimationStartTime = performance.now();
