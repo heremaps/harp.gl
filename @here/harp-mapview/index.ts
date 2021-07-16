@@ -16,6 +16,7 @@ export * from "./lib/AnimatedExtrusionHandler";
 export * from "./lib/BaseTileLoader";
 export * from "./lib/BoundsGenerator";
 export * from "./lib/CameraMovementDetector";
+export * from "./lib/CameraUtils";
 export * from "./lib/ClipPlanesEvaluator";
 export * from "./lib/ColorCache";
 export * from "./lib/composing";

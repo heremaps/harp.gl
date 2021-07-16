@@ -9,6 +9,7 @@ import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils"
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { CameraUtils } from "./CameraUtils";
 import { ElevationProvider } from "./ElevationProvider";
 import { MapViewUtils } from "./Utils";
 
@@ -99,13 +100,13 @@ namespace SphericalProj {
      * Calculate distance to the nearest point where the near plane is tangent to the sphere,
      * projected onto the camera forward vector.
      * @param camera - The camera.
-     * @param halfVerticalFovAngle
+     * @param bottomFov - Angle from camera forward vector to frustum bottom plane.
      * @param R - The sphere radius.
      * @returns The tangent point distance if the point is visible, otherwise `undefined`.
      */
     export function getProjNearPlaneTanDistance(
         camera: THREE.Camera,
-        halfVerticalFovAngle: number,
+        bottomFov: number,
         R: number
     ): number | undefined {
         //                                                          ,^;;;;;;;;;;;;;;;;-
@@ -142,7 +143,7 @@ namespace SphericalProj {
         const cosTanDirToFwdDir = near / camToTanVec.length();
 
         // Tangent point visible if angle from fwdDir to tangent is less than to frustum bottom.
-        return cosTanDirToFwdDir > Math.cos(halfVerticalFovAngle) ? near : undefined;
+        return cosTanDirToFwdDir > Math.cos(bottomFov) ? near : undefined;
     }
 
     /**
@@ -593,20 +594,23 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
  * angle (angle between look-at vector and ground surface normal).
  */
 export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
-    private static readonly NDC_BOTTOM_DIR = new THREE.Vector2(0, -1);
+    private static readonly NDC_TOP_DIR = new THREE.Vector2(0, 1);
     private static readonly NDC_TOP_RIGHT_DIR = new THREE.Vector2(1, 1);
+    private static readonly NDC_BOTTOM_RIGHT_DIR = new THREE.Vector2(1, -1);
+    private static readonly NDC_BOTTOM_DIR = new THREE.Vector2(0, -1);
+    private static readonly NDC_BOTTOM_LEFT_DIR = new THREE.Vector2(-1, -1);
+    private static readonly NDC_TOP_LEFT_DIR = new THREE.Vector2(-1, 1);
 
-    /**
-     * Calculate distances to top/bottom frustum plane intersections with the ground plane.
-     *
-     * @param camera - The perspective camera.
-     * @param projection - The geo-projection used to convert geographic to world coordinates.
-     */
-    private getFrustumGroundIntersectionDist(
+    /** @override */
+    protected evaluateDistancePlanarProj(
         camera: THREE.PerspectiveCamera,
-        projection: Projection
-    ): { top: number; bottom: number } {
-        assert(projection.type !== ProjectionType.Spherical);
+        projection: Projection,
+        elevationProvider?: ElevationProvider
+    ): ViewRanges {
+        // Find intersections of top/bottom frustum side's medians with the ground plane, taking
+        // into account min/max elevations.Top side intersection distance determines the far
+        // distance (it's further away than bottom intersection on tilted views), and bottom side
+        // intersection distance determines the near distance.
         //   🎥
         //   C
         //   |\
@@ -638,51 +642,42 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         //
         // The intersection distances to be found are |c1| (bottom plane) and |c2| (top plane).
 
+        assert(projection.type !== ProjectionType.Spherical);
+        const viewRanges = { ...this.minimumViewRange };
         const halfPiLimit = Math.PI / 2 - epsilon;
         const z = projection.groundDistance(camera.position);
         const cameraTilt = MapViewUtils.extractCameraTilt(camera, projection);
-        // Angle between top/bottom plane and eye vector is half of the vertical fov.
-        const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
+
+        // Angles between top/bottom plane and eye vector. For centered projections both are equal
+        // to half of the vertical fov.
+        const { top: topFov, bottom: bottomFov } = CameraUtils.getSideFovs(camera);
         // Angle between z and c2
-        const topAngle = THREE.MathUtils.clamp(cameraTilt + halfFov, -halfPiLimit, halfPiLimit);
+        const topAngle = THREE.MathUtils.clamp(cameraTilt + topFov, -halfPiLimit, halfPiLimit);
         // Angle between z and c1
-        const bottomAngle = THREE.MathUtils.clamp(cameraTilt - halfFov, -halfPiLimit, halfPiLimit);
+        const bottomAngle = THREE.MathUtils.clamp(
+            cameraTilt - bottomFov,
+            -halfPiLimit,
+            halfPiLimit
+        );
 
         // Compute |c2|. This will determine the far distance (top intersection is further away than
         // bottom intersection on tilted views), so take the furthest distance possible, i.e.the
         // distance to the min elevation.
         // cos(topAngle) = (z2 - minElev) / |c2|
         // |c2| = (z2 - minElev) / cos(topAngle)
-        const topDist = (z - this.minElevation) / Math.cos(topAngle);
+        const topDist = Math.max(0, (z - this.minElevation) / Math.cos(topAngle));
         // Compute |c1|. This will determine the near distance, so take the nearest distance
         // possible, i.e.the distance to the max elevation.
-        const bottomDist = (z - this.maxElevation) / Math.cos(bottomAngle);
-
-        return { top: Math.max(topDist, 0), bottom: Math.max(bottomDist, 0) };
-    }
-
-    /** @override */
-    protected evaluateDistancePlanarProj(
-        camera: THREE.PerspectiveCamera,
-        projection: Projection,
-        elevationProvider?: ElevationProvider
-    ): ViewRanges {
-        assert(projection.type !== ProjectionType.Spherical);
-        const viewRanges = { ...this.minimumViewRange };
-
-        // Find the distances to the top/bottom frustum plane intersections with the ground plane.
-        const planesDist = this.getFrustumGroundIntersectionDist(camera, projection);
+        const bottomDist = Math.max(0, (z - this.maxElevation) / Math.cos(bottomAngle));
 
         // Project intersection distances onto the eye vector.
-        // Angle between top/bottom plane and eye vector is half of the vertical fov.
-        const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
-        const cosHalfFov = Math.cos(halfFov);
         // cos(halfFov) = near / bottomDist
         // near = cos(halfFov) * bottomDist
-        viewRanges.near = planesDist.bottom * cosHalfFov;
+        viewRanges.near = bottomDist * Math.cos(bottomFov);
         // cos(halfFov) = far / topDist
         // far = cos(halfFov) * topDist
-        viewRanges.far = planesDist.top * cosHalfFov;
+        viewRanges.far = topDist * Math.cos(topFov);
+
         return this.applyViewRangeConstraints(viewRanges, camera, projection, elevationProvider);
     }
 
@@ -694,18 +689,29 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
     ): ViewRanges {
         assert(projection.type === ProjectionType.Spherical);
         const viewRanges = { ...this.minimumViewRange };
-        assert(camera instanceof THREE.PerspectiveCamera, "Unsupported camera type.");
-        const perspectiveCam = camera as THREE.PerspectiveCamera;
 
-        viewRanges.near = this.computeNearDistSphericalProj(perspectiveCam, projection);
-        viewRanges.far = this.computeFarDistSphericalProj(perspectiveCam, projection);
+        // Angles between top/bottom plane and eye vector. For centered projections both are equal
+        // to half of the vertical fov.
+        const { top: topFov, bottom: bottomFov } = CameraUtils.getSideFovs(camera);
+        const tilt = SphericalProj.getNormalToFwdAngle(camera);
+        const isTopInterFarther = topFov + tilt > bottomFov - tilt;
+
+        viewRanges.near = this.computeNearDistSphericalProj(
+            camera,
+            projection,
+            bottomFov,
+            isTopInterFarther
+        );
+        viewRanges.far = this.computeFarDistSphericalProj(camera, projection, isTopInterFarther);
 
         return this.applyViewRangeConstraints(viewRanges, camera, projection, elevationProvider);
     }
 
     private computeNearDistSphericalProj(
         camera: THREE.PerspectiveCamera,
-        projection: Projection
+        projection: Projection,
+        bottomFov: number,
+        isBottomIntersectionNearer: boolean
     ): number {
         assert(projection.type === ProjectionType.Spherical);
 
@@ -717,36 +723,46 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             return 0;
         }
 
-        const perspectiveCam = camera as THREE.PerspectiveCamera;
-        const halfVerticalFovAngle = THREE.MathUtils.degToRad(perspectiveCam.fov / 2);
         const maxR = EarthConstants.EQUATORIAL_RADIUS + this.maxElevation;
-        const ndcBottomDir = TiltViewClipPlanesEvaluator.NDC_BOTTOM_DIR;
+        const ndcNearIntersectionDir = isBottomIntersectionNearer
+            ? TiltViewClipPlanesEvaluator.NDC_BOTTOM_DIR
+            : TiltViewClipPlanesEvaluator.NDC_TOP_DIR;
 
         // Use as near the distance of the near plane's tangent point to the sphere. If not visible,
         // use the distance to then bottom frustum side intersection.
         const near =
-            SphericalProj.getProjNearPlaneTanDistance(camera, halfVerticalFovAngle, maxR) ??
-            SphericalProj.getProjSphereIntersectionDistance(camera, ndcBottomDir, maxR);
+            SphericalProj.getProjNearPlaneTanDistance(camera, bottomFov, maxR) ??
+            SphericalProj.getProjSphereIntersectionDistance(camera, ndcNearIntersectionDir, maxR);
         assert(near !== undefined, "No reference point for near distance found");
         return near ?? defaultNear;
     }
 
     private computeFarDistSphericalProj(
         camera: THREE.PerspectiveCamera,
-        projection: Projection
+        projection: Projection,
+        isTopIntersectionFarther: boolean
     ): number {
         assert(projection.type === ProjectionType.Spherical);
         const r = EarthConstants.EQUATORIAL_RADIUS;
         const minR = r + this.minElevation;
         const maxR = r + this.maxElevation;
         const d = camera.position.length();
-        const ndcTopRightDir = TiltViewClipPlanesEvaluator.NDC_TOP_RIGHT_DIR;
+
+        const isRightIntersectionFarther =
+            CameraUtils.getPrincipalPoint(camera, new THREE.Vector2()).x <= 0.0;
+        const ndcFarIntersectionDir = isTopIntersectionFarther
+            ? isRightIntersectionFarther
+                ? TiltViewClipPlanesEvaluator.NDC_TOP_RIGHT_DIR
+                : TiltViewClipPlanesEvaluator.NDC_TOP_LEFT_DIR
+            : isRightIntersectionFarther
+            ? TiltViewClipPlanesEvaluator.NDC_BOTTOM_RIGHT_DIR
+            : TiltViewClipPlanesEvaluator.NDC_BOTTOM_LEFT_DIR;
 
         // If the top right frustum edge intersects the world, use as far distance the distance to
         // the intersection projected on the eye vector. Otherwise, use the distance of the horizon
         // at the maximum elevation.
         return (
-            SphericalProj.getProjSphereIntersectionDistance(camera, ndcTopRightDir, minR) ??
+            SphericalProj.getProjSphereIntersectionDistance(camera, ndcFarIntersectionDir, minR) ??
             SphericalProj.getFarDistanceFromElevatedHorizon(camera, d, r, maxR)
         );
     }

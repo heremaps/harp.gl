@@ -15,6 +15,7 @@ import {
 import { expect } from "chai";
 import * as THREE from "three";
 
+import { CameraUtils } from "../lib/CameraUtils";
 import { TiltViewClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { MapViewUtils } from "../lib/Utils";
 
@@ -22,9 +23,10 @@ function setupPerspectiveCamera(
     projection: Projection,
     zoomLevel?: number,
     distance?: number,
-    tilt: number = 0
+    tilt: number = 0,
+    principalPointNDC?: THREE.Vector2
 ): THREE.PerspectiveCamera {
-    const vFov = 90;
+    const vFov = 40;
     const camera = new THREE.PerspectiveCamera(vFov, 1, 1, 100);
     const geoTarget = new GeoCoordinates(0, 0);
     const heading = 0;
@@ -48,6 +50,9 @@ function setupPerspectiveCamera(
         projection,
         camera.position
     );
+    if (principalPointNDC) {
+        CameraUtils.setPrincipalPoint(camera, principalPointNDC);
+    }
     camera.updateMatrixWorld();
 
     return camera;
@@ -58,92 +63,109 @@ interface ZoomLevelTest {
     zoomLevel: number;
     far: number;
     near: number;
+    ppalPointNDC?: [number, number];
 }
 
 const mercatorZoomTruthTable: ZoomLevelTest[] = [
-    { zoomLevel: 1, far: 20057066, near: 19077865 },
-    { zoomLevel: 2, far: 10028528, near: 9538523 },
-    { zoomLevel: 3, far: 5014259, near: 4768853 },
-    { zoomLevel: 4, far: 2507124, near: 2384018 },
-    { zoomLevel: 5, far: 1253557, near: 1191600 },
-    { zoomLevel: 6, far: 626773, near: 595391 },
-    { zoomLevel: 7, far: 313381, near: 297287 },
-    { zoomLevel: 8, far: 156686, near: 148235 },
-    { zoomLevel: 9, far: 78338, near: 73708 },
-    { zoomLevel: 10, far: 39164, near: 36445 },
-    { zoomLevel: 11, far: 19577, near: 17814 },
-    { zoomLevel: 12, far: 9783, near: 8498 },
-    { zoomLevel: 13, far: 4886, near: 3840 },
-    { zoomLevel: 14, far: 2438, near: 1511 },
-    { zoomLevel: 15, far: 1214, near: 347 },
-    { zoomLevel: 16, far: 605, near: 1 },
-    { zoomLevel: 17, far: 302, near: 1 },
-    { zoomLevel: 18, far: 151, near: 1 },
-    { zoomLevel: 19, far: 76, near: 1 },
-    { zoomLevel: 20, far: 38, near: 1 },
-    { tilt: 45, zoomLevel: 1, far: 118997158, near: 8193471 },
-    { tilt: 45, zoomLevel: 2, far: 59498575, near: 4096447 },
-    { tilt: 45, zoomLevel: 3, far: 29749284, near: 2047934 },
-    { tilt: 45, zoomLevel: 4, far: 14874638, near: 1023678 },
-    { tilt: 45, zoomLevel: 5, far: 7437316, near: 511550 },
-    { tilt: 45, zoomLevel: 6, far: 3718654, near: 255486 },
-    { tilt: 45, zoomLevel: 7, far: 1859323, near: 127454 },
-    { tilt: 45, zoomLevel: 8, far: 929658, near: 63438 },
-    { tilt: 45, zoomLevel: 9, far: 464825, near: 31430 },
-    { tilt: 45, zoomLevel: 10, far: 232409, near: 15426 },
-    { tilt: 45, zoomLevel: 11, far: 116201, near: 7424 },
-    { tilt: 45, zoomLevel: 12, far: 58097, near: 3423 },
-    { tilt: 45, zoomLevel: 13, far: 29045, near: 1422 },
-    { tilt: 45, zoomLevel: 14, far: 14519, near: 422 },
-    { tilt: 45, zoomLevel: 15, far: 7256, near: 1 },
-    { tilt: 45, zoomLevel: 16, far: 3628, near: 1 },
-    { tilt: 45, zoomLevel: 17, far: 1814, near: 1 },
-    { tilt: 45, zoomLevel: 18, far: 907, near: 1 },
-    { tilt: 45, zoomLevel: 19, far: 453, near: 1 },
-    { tilt: 45, zoomLevel: 20, far: 227, near: 1 }
+    // Top down view tests.
+    { zoomLevel: 1, far: 53762306, near: 53762306 },
+    { zoomLevel: 2, far: 26881153, near: 26881153 },
+    { zoomLevel: 3, far: 13440577, near: 13440577 },
+    { zoomLevel: 4, far: 6720288, near: 6720288 },
+    { zoomLevel: 5, far: 3360144, near: 3360144 },
+    { zoomLevel: 6, far: 1680072, near: 1680072 },
+    { zoomLevel: 7, far: 840036, near: 840036 },
+    { zoomLevel: 8, far: 420018, near: 420018 },
+    { zoomLevel: 9, far: 210009, near: 210009 },
+    { zoomLevel: 10, far: 105005, near: 105005 },
+    { zoomLevel: 11, far: 52502, near: 52502 },
+    { zoomLevel: 12, far: 26251, near: 26251 },
+    { zoomLevel: 13, far: 13126, near: 13126 },
+    { zoomLevel: 14, far: 6563, near: 6563 },
+    { zoomLevel: 15, far: 3281, near: 3281 },
+    { zoomLevel: 16, far: 1641, near: 1641 },
+    { zoomLevel: 17, far: 820, near: 820 },
+    { zoomLevel: 18, far: 410, near: 410 },
+    { zoomLevel: 19, far: 205, near: 205 },
+    { zoomLevel: 20, far: 103, near: 103 },
+
+    // Tilted view, horizon not visible.
+    { tilt: 45, zoomLevel: 1, far: 84527972, near: 39416041 },
+    { tilt: 45, zoomLevel: 2, far: 42263986, near: 19708020 },
+    { tilt: 45, zoomLevel: 3, far: 21131993, near: 9854010 },
+    { tilt: 45, zoomLevel: 4, far: 10565997, near: 4927005 },
+    { tilt: 45, zoomLevel: 5, far: 5282998, near: 2463503 },
+    { tilt: 45, zoomLevel: 6, far: 2641499, near: 1231751 },
+    { tilt: 45, zoomLevel: 7, far: 1320750, near: 615876 },
+    { tilt: 45, zoomLevel: 8, far: 660375, near: 307938 },
+    { tilt: 45, zoomLevel: 9, far: 330187, near: 153969 },
+    { tilt: 45, zoomLevel: 10, far: 165094, near: 76984 },
+    { tilt: 45, zoomLevel: 11, far: 82547, near: 38492 },
+    { tilt: 45, zoomLevel: 12, far: 41273, near: 19246 },
+    { tilt: 45, zoomLevel: 13, far: 20637, near: 9623 },
+    { tilt: 45, zoomLevel: 14, far: 10318, near: 4812 },
+    { tilt: 45, zoomLevel: 15, far: 5159, near: 2406 },
+    { tilt: 45, zoomLevel: 16, far: 2580, near: 1203 },
+    { tilt: 45, zoomLevel: 17, far: 1290, near: 601 },
+    { tilt: 45, zoomLevel: 18, far: 645, near: 301 },
+    { tilt: 45, zoomLevel: 19, far: 322, near: 150 },
+    { tilt: 45, zoomLevel: 20, far: 161, near: 75 },
+
+    // Change horizon visibility by changing tilt or offsetting principal point.
+    { tilt: 60, zoomLevel: 15, far: 8879, near: 2013 },
+    { tilt: 60, zoomLevel: 15, far: 19688, near: 2434, ppalPointNDC: [0, -0.5] },
+    { tilt: 70, zoomLevel: 15, far: 19688, near: 1641 },
+    { tilt: 70, zoomLevel: 15, far: 6563, near: 1279, ppalPointNDC: [0, 0.5] },
+    { tilt: 80, zoomLevel: 15, far: 19688, near: 1071 }
 ];
 
 const sphereZoomTruthTable: ZoomLevelTest[] = [
-    { zoomLevel: 1, far: 25028303, near: 19016491 },
-    { zoomLevel: 2, far: 14033501, near: 9489079 },
-    { zoomLevel: 3, far: 7903190, near: 4733187 },
-    { zoomLevel: 4, far: 4369110, near: 2361030 },
-    { zoomLevel: 5, far: 1721023, near: 1185829 },
-    { zoomLevel: 6, far: 701834, near: 594464 },
-    { zoomLevel: 7, far: 329865, near: 297083 },
-    { zoomLevel: 8, far: 160586, near: 148186 },
-    { zoomLevel: 9, far: 79288, near: 73697 },
-    { zoomLevel: 10, far: 39398, near: 36443 },
-    { zoomLevel: 11, far: 19635, near: 17813 },
-    { zoomLevel: 12, far: 9798, near: 8498 },
-    { zoomLevel: 13, far: 4890, near: 3840 },
-    { zoomLevel: 14, far: 2439, near: 1511 },
-    { zoomLevel: 15, far: 1214, near: 347 },
-    { zoomLevel: 16, far: 605, near: 1 },
-    { zoomLevel: 17, far: 302, near: 1 },
-    { zoomLevel: 18, far: 151, near: 1 },
-    { zoomLevel: 19, far: 76, near: 1 },
-    { zoomLevel: 20, far: 38, near: 1 },
-    { tilt: 45, zoomLevel: 1, far: 24199114, near: 17181678 },
-    { tilt: 45, zoomLevel: 2, far: 13812467, near: 7646758 },
-    { tilt: 45, zoomLevel: 3, far: 8309093, near: 3024516 },
-    { tilt: 45, zoomLevel: 4, far: 5235087, near: 1309563 },
-    { tilt: 45, zoomLevel: 5, far: 3408142, near: 602421 },
-    { tilt: 45, zoomLevel: 6, far: 2269560, near: 283622 },
-    { tilt: 45, zoomLevel: 7, far: 1539268, near: 133965 },
-    { tilt: 45, zoomLevel: 8, far: 929666, near: 64077 },
-    { tilt: 45, zoomLevel: 9, far: 464827, near: 31590 },
-    { tilt: 45, zoomLevel: 10, far: 232410, near: 15466 },
-    { tilt: 45, zoomLevel: 11, far: 116201, near: 7434 },
-    { tilt: 45, zoomLevel: 12, far: 58097, near: 3425 },
-    { tilt: 45, zoomLevel: 13, far: 29045, near: 1423 },
-    { tilt: 45, zoomLevel: 14, far: 14519, near: 422 },
-    { tilt: 45, zoomLevel: 15, far: 7256, near: 1 },
-    { tilt: 45, zoomLevel: 16, far: 3628, near: 1 },
-    { tilt: 45, zoomLevel: 17, far: 1814, near: 1 },
-    { tilt: 45, zoomLevel: 18, far: 907, near: 1 },
-    { tilt: 45, zoomLevel: 19, far: 453, near: 1 },
-    { tilt: 45, zoomLevel: 20, far: 227, near: 1 }
+    { zoomLevel: 1, far: 59464016, near: 53762306 },
+    { zoomLevel: 2, far: 32036154, near: 26881153 },
+    { zoomLevel: 3, far: 17766076, near: 13440577 },
+    { zoomLevel: 4, far: 8418150, near: 6720288 },
+    { zoomLevel: 5, far: 3641838, near: 3360144 },
+    { zoomLevel: 6, far: 1743526, near: 1680072 },
+    { zoomLevel: 7, far: 855246, near: 840036 },
+    { zoomLevel: 8, far: 423749, near: 420018 },
+    { zoomLevel: 9, far: 210933, near: 210009 },
+    { zoomLevel: 10, far: 105235, near: 105005 },
+    { zoomLevel: 11, far: 52560, near: 52502 },
+    { zoomLevel: 12, far: 26265, near: 26251 },
+    { zoomLevel: 13, far: 13129, near: 13126 },
+    { zoomLevel: 14, far: 6564, near: 6563 },
+    { zoomLevel: 15, far: 3282, near: 3281 },
+    { zoomLevel: 16, far: 1641, near: 1641 },
+    { zoomLevel: 17, far: 820, near: 820 },
+    { zoomLevel: 18, far: 410, near: 410 },
+    { zoomLevel: 19, far: 205, near: 205 },
+    { zoomLevel: 20, far: 103, near: 103 },
+    { tilt: 45, zoomLevel: 1, far: 58067604, near: 51894193 },
+    { tilt: 45, zoomLevel: 2, far: 31009971, near: 25013040 },
+    { tilt: 45, zoomLevel: 3, far: 17277892, near: 11579312 },
+    { tilt: 45, zoomLevel: 4, far: 10131005, near: 5384245 },
+    { tilt: 45, zoomLevel: 5, far: 6233888, near: 2584338 },
+    { tilt: 45, zoomLevel: 6, far: 3976347, near: 1263063 },
+    { tilt: 45, zoomLevel: 7, far: 1500918, near: 623865 },
+    { tilt: 45, zoomLevel: 8, far: 696027, near: 309957 },
+    { tilt: 45, zoomLevel: 9, far: 338345, near: 154477 },
+    { tilt: 45, zoomLevel: 10, far: 167054, near: 77112 },
+    { tilt: 45, zoomLevel: 11, far: 83028, near: 38524 },
+    { tilt: 45, zoomLevel: 12, far: 41393, near: 19254 },
+    { tilt: 45, zoomLevel: 13, far: 20666, near: 9625 },
+    { tilt: 45, zoomLevel: 14, far: 10326, near: 4812 },
+    { tilt: 45, zoomLevel: 15, far: 5161, near: 2406 },
+    { tilt: 45, zoomLevel: 16, far: 2580, near: 1203 },
+    { tilt: 45, zoomLevel: 17, far: 1290, near: 601 },
+    { tilt: 45, zoomLevel: 18, far: 645, near: 301 },
+    { tilt: 45, zoomLevel: 19, far: 322, near: 150 },
+    { tilt: 45, zoomLevel: 20, far: 161, near: 75 },
+
+    // Make horizon visible by offseting principal point.
+    { zoomLevel: 7, far: 876962, near: 840036, ppalPointNDC: [0, -0.9] },
+    { zoomLevel: 7, far: 876962, near: 840036, ppalPointNDC: [0, 0.9] },
+    { zoomLevel: 7, far: 876962, near: 840036, ppalPointNDC: [-0.9, 0] },
+    { zoomLevel: 7, far: 876962, near: 840036, ppalPointNDC: [0.9, 0] }
 ];
 
 describe("ClipPlanesEvaluator", function () {
@@ -231,7 +253,7 @@ describe("ClipPlanesEvaluator", function () {
                     farMaxRatio
                 );
                 // Tilt camera to force a large far distance.
-                const tiltDeg = 45;
+                const tiltDeg = 60;
                 const camera = setupPerspectiveCamera(projection, undefined, distance, tiltDeg);
                 const viewRange = evaluator.evaluateClipPlanes(camera, projection);
                 const eps = 1e-6;
@@ -240,13 +262,19 @@ describe("ClipPlanesEvaluator", function () {
             });
             describe("evaluateClipPlanes returns correct values for each zoom & tilt", function () {
                 zoomTruthTable.forEach((test: ZoomLevelTest) => {
-                    it(`zoom level ${test.zoomLevel}, tilt ${test.tilt ?? 0}`, function () {
-                        const evaluator = new TiltViewClipPlanesEvaluator();
+                    it(`zoom level ${test.zoomLevel}, tilt ${test.tilt ?? 0}, ppal point ${
+                        test.ppalPointNDC ?? [0, 0]
+                    }`, function () {
+                        const evaluator = new TiltViewClipPlanesEvaluator(0, 0, 1, 0);
+                        const ppalPointNDC = test.ppalPointNDC
+                            ? new THREE.Vector2(test.ppalPointNDC[0], test.ppalPointNDC[1])
+                            : undefined;
                         const camera = setupPerspectiveCamera(
                             projection,
                             test.zoomLevel,
                             undefined,
-                            test.tilt
+                            test.tilt,
+                            ppalPointNDC
                         );
                         const viewRange = evaluator.evaluateClipPlanes(camera, projection);
                         expect(Math.round(viewRange.far)).eq(test.far);
