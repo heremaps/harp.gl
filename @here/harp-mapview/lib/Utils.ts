@@ -243,16 +243,23 @@ export namespace MapViewUtils {
         deltaTilt: number,
         maxTiltAngle: number
     ) {
-        const rotationTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, offsetX, offsetY);
-        if (rotationTargetWorld === null) {
+        const projMatrix = mapView.camera.projectionMatrix;
+        const projCenterOffset = { x: -projMatrix.elements[8], y: -projMatrix.elements[9] };
+
+        const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(
+            mapView,
+            projCenterOffset.x,
+            projCenterOffset.y
+        );
+        if (mapTargetWorld === null) {
             return;
         }
 
-        const mapTargetWorld =
+        const rotationTargetWorld =
             offsetX === 0 && offsetY === 0
-                ? rotationTargetWorld
-                : MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-        if (mapTargetWorld === null) {
+                ? mapTargetWorld
+                : MapViewUtils.rayCastWorldCoordinates(mapView, offsetX, offsetY);
+        if (rotationTargetWorld === null) {
             return;
         }
 
