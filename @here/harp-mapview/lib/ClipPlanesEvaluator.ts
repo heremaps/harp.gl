@@ -133,6 +133,8 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
 /**
  * Top view, clip planes evaluator that computes view ranges based on ground distance and elevation.
  *
+ * @deprecated Default evaluator {@link TiltViewClipPlanesEvaluator} supports top-down views.
+ *
  * @remarks
  * This evaluator supports both planar and spherical projections, although it behavior is
  * slightly different in each case. General algorithm sets near plane and far plane close
