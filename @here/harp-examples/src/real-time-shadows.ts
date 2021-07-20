@@ -47,7 +47,8 @@ const guiOptions = {
     time: date.getHours() + date.getMinutes() / 60,
     timeIndicator: `${date.getHours()}:${date.getMinutes()}`,
     debugCamera: false,
-    enableRasterTiles: false
+    enableRasterTiles: false,
+    textureSquareSize: 1024
 };
 // Reference solar noon time is used to calculate time offsets at specific coordinates.
 const refSolarNoon = SunCalc.getTimes(date, 0, 0).solarNoon;
@@ -296,6 +297,13 @@ function addGuiElements() {
         } else if (!rasterSource && enable) {
             map.addDataSource(hereWebTileDataSource);
         }
+    });
+    gui.add(guiOptions, "textureSquareSize", 256, 4096, 32).onChange(size => {
+        (sun.shadow.map as any).dispose();
+        (sun.shadow as any).map = null;
+        sun.shadow.mapSize.width = size;
+        sun.shadow.mapSize.height = size;
+        map.update();
     });
 }
 
