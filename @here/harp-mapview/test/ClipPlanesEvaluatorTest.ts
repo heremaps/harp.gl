@@ -51,7 +51,7 @@ describe("ClipPlanesEvaluator sphereProjection", function () {
         { zoomLevel: 20, far: 38, near: 1 }
     ];
     tests.forEach((test: Test) => {
-        it("evaluateClipPlanes", function () {
+        it(`evaluateClipPlanes zoom level ${test.zoomLevel}`, function () {
             const canvasHeight = 500;
             const focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
                 THREE.MathUtils.degToRad(vFov),
@@ -69,7 +69,7 @@ describe("ClipPlanesEvaluator sphereProjection", function () {
                 projection,
                 camera.position
             );
-            camera.updateMatrix();
+            camera.updateMatrixWorld();
             const viewRange = evaluator.evaluateClipPlanes(camera, projection);
             expect(Math.round(viewRange.far)).eq(test.far);
             expect(Math.round(viewRange.near)).eq(test.near);
