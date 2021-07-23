@@ -339,7 +339,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     ) {
         super(maxElevation, minElevation);
         assert(nearMin > 0);
-        assert(nearFarMarginRatio > epsilon);
+        assert(nearFarMarginRatio >= 0);
         assert(farMaxRatio > 1.0);
         const nearFarMargin = nearFarMarginRatio * nearMin;
         this.m_minimumViewRange = {
@@ -857,77 +857,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         viewRanges.maximum = farMax;
 
         return viewRanges;
-    }
-}
-
-/**
- * Provides the most basic evaluation concept giving fixed values with some constraints.
- */
-export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
-    readonly minFar: number;
-    private m_nearPlane: number;
-    private m_farPlane: number;
-
-    constructor(readonly minNear: number = 1, readonly minFarOffset: number = 10) {
-        this.minFar = minNear + minFarOffset;
-        this.m_nearPlane = minNear;
-        this.m_farPlane = this.minFar;
-    }
-
-    get nearPlane(): number {
-        return this.m_nearPlane;
-    }
-
-    set nearPlane(fixedNear: number) {
-        this.invalidatePlanes(fixedNear, this.m_farPlane);
-    }
-
-    get farPlane(): number {
-        return this.m_farPlane;
-    }
-
-    set farPlane(fixedFar: number) {
-        this.invalidatePlanes(this.m_nearPlane, fixedFar);
-    }
-
-    set minElevation(elevation: number) {}
-
-    get minElevation(): number {
-        // This evaluator does not support elevation so its always set to 0.
-        return 0;
-    }
-
-    set maxElevation(elevation: number) {}
-
-    get maxElevation(): number {
-        // This evaluator does not support elevation so its always set to 0.
-        return 0;
-    }
-
-    /** @override */
-    evaluateClipPlanes(
-        camera: THREE.Camera,
-        projection: Projection,
-        elevationProvider?: ElevationProvider
-    ): ViewRanges {
-        // We do not need to perform actual evaluation cause results are precomputed and
-        // kept stable until somebody changes the properties.
-        const viewRanges: ViewRanges = {
-            near: this.m_nearPlane,
-            far: this.m_farPlane,
-            minimum: this.minNear,
-            maximum: this.m_farPlane
-        };
-        return viewRanges;
-    }
-
-    private invalidatePlanes(near: number, far: number) {
-        // When clamping prefer to extend far plane at about minimum distance, giving
-        // near distance setup priority over far.
-        const nearDist: number = Math.max(this.minNear, near);
-        const farDist: number = Math.max(this.minFar, far, nearDist + this.minFarOffset);
-        this.m_nearPlane = nearDist;
-        this.m_farPlane = farDist;
     }
 }
 
