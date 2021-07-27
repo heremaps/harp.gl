@@ -52,6 +52,10 @@ export class MapViewThemeManager {
         return this.m_theme;
     }
 
+    /**
+     * To tell whether the current ThemeManager is updating the theme.
+     * @returns `true` if the ThemeManger is still updating, `false` otherwise.
+     */
     isUpdating(): boolean {
         return this.m_updatePromise !== undefined;
     }

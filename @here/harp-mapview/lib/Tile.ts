@@ -1042,34 +1042,33 @@ export class Tile implements CachedResource {
      * @param priority - Priority assigned to asynchronous tasks doing the geometry update.
      * @param enabledKinds - {@link GeometryKind}s that will be created.
      * @param disabledKinds - {@link GeometryKind}s that will not be created.
-     * @return `true` if tile uses a geometry loader, `false` otherwise.
      * @internal
      */
     updateGeometry(
         priority?: number,
         enabledKinds?: GeometryKindSet,
         disabledKinds?: GeometryKindSet
-    ): boolean {
+    ): void {
         if (!this.m_tileGeometryLoader) {
-            return false;
+            return;
         }
 
         if (this.m_tileGeometryLoader.isSettled) {
-            return true;
+            return;
         }
 
         if (this.dataSource.isDetached()) {
             this.m_tileGeometryLoader.cancel();
-            return true;
+            return;
         }
 
         if (this.tileLoader) {
             if (!this.tileLoader.isFinished) {
-                return true;
+                return;
             } else if (!this.decodedTile) {
                 // Finish loading if tile has no data.
                 this.m_tileGeometryLoader.finish();
-                return true;
+                return;
             }
         }
 
@@ -1077,7 +1076,6 @@ export class Tile implements CachedResource {
             this.m_tileGeometryLoader.priority = priority;
         }
         this.m_tileGeometryLoader.update(enabledKinds, disabledKinds);
-        return true;
     }
 
     /**

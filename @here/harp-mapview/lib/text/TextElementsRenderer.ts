@@ -593,8 +593,9 @@ export class TextElementsRenderer {
      * Places text elements for the current frame.
      * @param dataSourceTileList - List of tiles to be rendered for each data source.
      * @param time - Current frame time.
+     * @param isThemeUpdating - Flag telling whether the MapViewThemeManager is still updating or not
      */
-    placeText(dataSourceTileList: DataSourceTileList[], time: number) {
+    placeText(dataSourceTileList: DataSourceTileList[], time: number, isThemeUpdating: boolean) {
         const tileTextElementsChanged = checkIfTextElementsChanged(dataSourceTileList);
 
         const textElementsAvailable =
@@ -639,7 +640,7 @@ export class TextElementsRenderer {
         // after all groups in the new level were updated.
         const placeNewTextElements =
             (updateTextElements || anyTextGroupEvicted) && this.m_addNewLabels;
-        this.placeTextElements(time, placeNewTextElements);
+        this.placeTextElements(time, placeNewTextElements, isThemeUpdating);
         this.placeOverlayTextElements();
     }
 
@@ -1433,7 +1434,7 @@ export class TextElementsRenderer {
         }
     }
 
-    private placeTextElements(time: number, placeNewTextElements: boolean) {
+    private placeTextElements(time: number, placeNewTextElements: boolean, isThemeUpdating: boolean) {
         const renderParams: RenderParams = {
             numRenderedTextElements: 0,
             fadeAnimationRunning: false,
@@ -1498,8 +1499,16 @@ export class TextElementsRenderer {
         }
 
         if (placeNew) {
-            // Place new text elements of the last priority.
-            this.placeNewTextElements(currentPriorityBegin, groupStates.length, renderParams);
+            if (isThemeUpdating) {
+              // MapViewThemeManager is resposible for caching images linked to labels, e.g. POI with icons.
+              // Labels are placed on each rendering iteration while the theme manager is asyncronously
+              // updating the theme. If we try to place texts while the images aren't cached yet, we will ended up
+              // in a cache miss.
+              this.m_forceNewLabelsPass = true;
+            } else {
+              // Place new text elements of the last priority.
+              this.placeNewTextElements(currentPriorityBegin, groupStates.length, renderParams);
+            }
         }
 
         if (placementStats) {

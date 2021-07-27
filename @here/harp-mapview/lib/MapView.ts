@@ -3365,96 +3365,33 @@ export class MapView extends EventDispatcher {
     }
 
     /**
-     * Renders the current frame.
+     * Callback used inside the main render method.
+     * @param viewRangesStatus
+     * @param gatherStatistics
+     * @param currentFrameEvent
+     * @param frameStartTime
+     * @param setupTime
+     * @param stats
      */
-    private render(frameStartTime: number): void {
-        if (this.m_drawing) {
-            return;
-        }
-
-        if (this.disposed) {
-            logger.warn("render(): MapView has been disposed of.");
-            return;
-        }
-
-        this.RENDER_EVENT.time = frameStartTime;
-        this.dispatchEvent(this.RENDER_EVENT);
-
-        this.m_tileObjectRenderer.prepareRender();
-
-        ++this.m_frameNumber;
-
-        let currentFrameEvent: FrameStats | undefined;
-        const stats = PerformanceStatistics.instance;
-        const gatherStatistics: boolean = stats.enabled;
-        if (gatherStatistics) {
-            currentFrameEvent = stats.currentFrame;
-
-            if (this.m_previousFrameTimeStamp !== undefined) {
-                // In contrast to fullFrameTime we also measure the application code
-                // for the FPS. This means FPS != 1000 / fullFrameTime.
-                const timeSincePreviousFrame = frameStartTime - this.m_previousFrameTimeStamp;
-                currentFrameEvent.setValue("render.fps", 1000 / timeSincePreviousFrame);
-            }
-
-            // We store the last frame statistics at the beginning of the next frame b/c additional
-            // work (i.e. geometry creation) is done outside of the animation frame but still needs
-            // to be added to the `fullFrameTime` (see [[TileGeometryLoader]]).
-            stats.storeAndClearFrameInfo();
-
-            currentFrameEvent = currentFrameEvent as FrameStats;
-            currentFrameEvent.setValue("renderCount.frameNumber", this.m_frameNumber);
-        }
-
-        this.m_previousFrameTimeStamp = frameStartTime;
-
-        let setupTime: number | undefined;
+    private render_(
+        viewRangesStatus: any,
+        gatherStatistics: boolean,
+        currentFrameEvent: FrameStats | undefined,
+        frameStartTime: number,
+        setupTime: number | undefined,
+        stats: PerformanceStatistics
+    ): void {
         let cullTime: number | undefined;
         let textPlacementTime: number | undefined;
         let drawTime: number | undefined;
         let textDrawTime: number | undefined;
         let endTime: number | undefined;
 
-        this.m_renderer.info.reset();
-
-        this.m_updatePending = false;
-        this.m_thisFrameTilesChanged = undefined;
-
-        this.m_drawing = true;
-
-        if (this.m_renderer.getPixelRatio() !== this.pixelRatio) {
-            this.m_renderer.setPixelRatio(this.pixelRatio);
+        // View ranges has changed due to features (with elevation) that affects clip planes
+        // positioning, update cameras with new clip planes positions.
+        if (viewRangesStatus.viewRangesChanged) {
+            this.updateCameras(viewRangesStatus.viewRanges);
         }
-
-        this.updateCameras();
-        this.updateEnv();
-
-        this.m_renderer.clear();
-
-        // clear the scenes
-        this.m_sceneRoot.children.length = 0;
-        this.m_overlaySceneRoot.children.length = 0;
-
-        if (gatherStatistics) {
-            setupTime = PerformanceTimer.now();
-        }
-
-        // TBD: Update renderList only any of its params (camera, etc...) has changed.
-        if (!this.lockVisibleTileSet) {
-            const viewRangesStatus = this.m_visibleTiles.updateRenderList(
-                this.storageLevel,
-                Math.floor(this.zoomLevel),
-                this.getEnabledTileDataSources(),
-                this.m_frameNumber,
-                this.m_elevationRangeSource
-            );
-            // View ranges has changed due to features (with elevation) that affects clip planes
-            // positioning, update cameras with new clip planes positions.
-            if (viewRangesStatus.viewRangesChanged) {
-                this.updateCameras(viewRangesStatus.viewRanges);
-            }
-        }
-
         if (gatherStatistics) {
             cullTime = PerformanceTimer.now();
         }
@@ -3542,7 +3479,7 @@ export class MapView extends EventDispatcher {
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
 
         if (this.renderLabels && !this.m_pointOfView) {
-            this.m_textElementsRenderer.placeText(renderList, frameStartTime);
+            this.m_textElementsRenderer.placeText(renderList, frameStartTime, this.m_themeManager.isUpdating());
         }
 
         if (gatherStatistics) {
@@ -3585,8 +3522,6 @@ export class MapView extends EventDispatcher {
 
         this.m_visibleTiles.disposePendingTiles();
 
-        this.m_drawing = false;
-
         this.checkCopyrightUpdates();
 
         // do this post paint therefore use a Timeout, if it has not been executed cancel and
@@ -3628,6 +3563,9 @@ export class MapView extends EventDispatcher {
             stats.addMemoryInfo();
         }
 
+
+        this.m_drawing = false;
+
         this.DID_RENDER_EVENT.time = frameStartTime;
         this.dispatchEvent(this.DID_RENDER_EVENT);
 
@@ -3649,8 +3587,99 @@ export class MapView extends EventDispatcher {
                 }
             }
 
+            // this.m_updatePending = false;
             this.FRAME_COMPLETE_EVENT.time = frameStartTime;
             this.dispatchEvent(this.FRAME_COMPLETE_EVENT);
+          }
+
+    }
+    /**
+     * Renders the current frame.
+     */
+    private render(frameStartTime: number): void {
+        if (this.m_drawing) {
+            return;
+        }
+
+        if (this.disposed) {
+            logger.warn("render(): MapView has been disposed of.");
+            return;
+        }
+
+        this.RENDER_EVENT.time = frameStartTime;
+        this.dispatchEvent(this.RENDER_EVENT);
+
+        this.m_tileObjectRenderer.prepareRender();
+        this.m_updatePending = true;
+        ++this.m_frameNumber;
+
+        let currentFrameEvent: FrameStats | undefined;
+        const performanceStats = PerformanceStatistics.instance;
+        const gatherStatistics: boolean = performanceStats.enabled;
+        if (gatherStatistics) {
+            currentFrameEvent = performanceStats.currentFrame;
+
+            if (this.m_previousFrameTimeStamp !== undefined) {
+                // In contrast to fullFrameTime we also measure the application code
+                // for the FPS. This means FPS != 1000 / fullFrameTime.
+                const timeSincePreviousFrame = frameStartTime - this.m_previousFrameTimeStamp;
+                currentFrameEvent.setValue("render.fps", 1000 / timeSincePreviousFrame);
+            }
+
+            // We store the last frame statistics at the beginning of the next frame b/c additional
+            // work (i.e. geometry creation) is done outside of the animation frame but still needs
+            // to be added to the `fullFrameTime` (see [[TileGeometryLoader]]).
+            performanceStats.storeAndClearFrameInfo();
+
+            currentFrameEvent = currentFrameEvent as FrameStats;
+            currentFrameEvent.setValue("renderCount.frameNumber", this.m_frameNumber);
+        }
+
+        this.m_previousFrameTimeStamp = frameStartTime;
+
+        let setupTime: number | undefined;
+
+        this.m_renderer.info.reset();
+
+        this.m_thisFrameTilesChanged = undefined;
+
+        this.m_drawing = true;
+
+        if (this.m_renderer.getPixelRatio() !== this.pixelRatio) {
+            this.m_renderer.setPixelRatio(this.pixelRatio);
+        }
+
+        this.updateCameras();
+        this.updateEnv();
+
+        this.m_renderer.clear();
+
+        // clear the scenes
+        this.m_sceneRoot.children.length = 0;
+        this.m_overlaySceneRoot.children.length = 0;
+
+        if (gatherStatistics) {
+            setupTime = PerformanceTimer.now();
+        }
+
+        // TBD: Update renderList only any of its params (camera, etc...) has changed.
+        if (!this.lockVisibleTileSet) {
+            const viewRangesStatus = this.m_visibleTiles.updateRenderList(
+                this.storageLevel,
+                Math.floor(this.zoomLevel),
+                this.getEnabledTileDataSources(),
+                this.m_frameNumber,
+                this.m_elevationRangeSource
+            );
+
+            this.render_(
+                viewRangesStatus,
+                gatherStatistics,
+                currentFrameEvent,
+                frameStartTime,
+                setupTime,
+                performanceStats
+            );
         }
     }
 

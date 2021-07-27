@@ -237,7 +237,7 @@ export class TileGeometryLoader {
                 this.setGeometryKinds(enabledKinds, disabledKinds);
                 this.setDecodedTile(tile.decodedTile);
             }
-            this.queueGeometryCreation(enabledKinds, disabledKinds);
+            this.createGeometry(enabledKinds, disabledKinds);
         }
     }
 
@@ -295,34 +295,11 @@ export class TileGeometryLoader {
         this.m_decodedTile = undefined;
     }
 
-    private queueGeometryCreation(
+
+    private createGeometry(
         enabledKinds: GeometryKindSet | undefined,
         disabledKinds: GeometryKindSet | undefined
-    ) {
-        if (this.m_state === TileGeometryLoaderState.CreationQueued) {
-            return;
-        }
-
-        this.m_taskQueue.add({
-            execute: this.createGeometry.bind(this, enabledKinds, disabledKinds),
-            group: TileTaskGroups.CREATE,
-            getPriority: this.getPriority.bind(this),
-            isExpired: () => {
-                return this.m_state !== TileGeometryLoaderState.CreationQueued;
-            },
-            estimatedProcessTime: () => {
-                //TODO: this seems to be close in many cases, but take some measures to confirm
-                return (this.tile.decodedTile?.decodeTime ?? 30) / 6;
-            }
-        });
-
-        this.m_state = TileGeometryLoaderState.CreationQueued;
-    }
-
-    private async createGeometry(
-        enabledKinds: GeometryKindSet | undefined,
-        disabledKinds: GeometryKindSet | undefined
-    ): Promise<void> {
+    ): void {
         if (this.m_state === TileGeometryLoaderState.CreatingGeometry) {
             return;
         }
@@ -347,7 +324,7 @@ export class TileGeometryLoader {
         tile.clear();
         // Set up techniques which should be processed.
         geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
-        await geometryCreator.createAllGeometries(tile, decodedTile);
+        geometryCreator.createAllGeometries(tile, decodedTile);
         if (stats.enabled) {
             this.addStats(stats, now);
         }

@@ -373,9 +373,6 @@ export class PoiBatchRegistry {
     }
 }
 
-// keep track of the missing textures, but only warn once
-const missingTextureName: Map<string, boolean> = new Map();
-
 function findImageItem(
     poiInfo: PoiInfo,
     imageCaches: MapViewImageCache[],
@@ -394,15 +391,6 @@ function findImageItem(
         }
     }
 
-    if (!imageItem) {
-        logger.error(`init: No imageItem found with name
-            '${imageTexture?.image ?? imageTextureName}'`);
-        poiInfo.isValid = false;
-        if (missingTextureName.get(imageTextureName) === undefined) {
-            missingTextureName.set(imageTextureName, true);
-            logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
-        }
-    }
     return imageItem;
 }
 
@@ -662,7 +650,11 @@ export class PoiRenderer {
 
         const imageTexture = this.m_poiManager.getImageTexture(imageTextureName);
         const imageItem = findImageItem(poiInfo, this.m_imageCaches, imageTexture);
+        // Skip if the POI texture name is not found in the MapView Images cache.
+        // This might be a gap between the time the image was cached (in main thread) and
+        // the moment this code is executed (in the worker) so, a cache miss might occure.
         if (!imageItem) {
+            poiInfo.isValid = false;
             return;
         }
 

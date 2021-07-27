@@ -96,27 +96,29 @@ export class TileGeometryManager {
     /**
      * Process the {@link Tile}s for rendering. May alter the content of the tile per frame.
      */
-    updateTiles(tiles: Tile[]): void {
+    updateTiles(tiles: Tile[]): void{
         let prio = 0;
         for (const tile of tiles) {
-            //this assumes the tiles are ordered by priority, this is currently done in
-            // the visible tile set with 0 as the highest priority
+            // This assumes the tiles are ordered by priority, this is currently done in
+            // the visible tile set with 0 as the highest priority.
             const tilePriority = prio++;
-            const updateDone = tile.updateGeometry(
-                tilePriority,
-                this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
-                this.enableFilterByKind ? this.disabledGeometryKinds : undefined
-            );
-            if (updateDone && this.m_tileUpdateCallback) {
-                this.m_tileUpdateCallback(tile);
-            }
+            tile.updateGeometry(
+              tilePriority,
+              this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
+              this.enableFilterByKind ? this.disabledGeometryKinds : undefined
+            )
         }
 
+        if (this.m_tileUpdateCallback) {
+          tiles.forEach(this.m_tileUpdateCallback);
+        }
         // If the visibility status of the kinds changed since the last update, the new visibility
         // status is applied (again).
         if (this.updateTileObjectVisibility(tiles)) {
             this.mapView.update();
         }
+
+
     }
 
     /**

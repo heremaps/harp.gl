@@ -400,9 +400,10 @@ export class PoiManager {
     ) {
         for (let i = 0; i < positions.count; ++i) {
             const offsetDirection = poiGeometry.offsetDirections?.[i] ?? 0;
+            const imageTextureStringName = getImageTexture(poiGeometry, i);
 
             const textElement = poiBuilder
-                .withIcon(getImageTexture(poiGeometry, i))
+                .withIcon(imageTextureStringName)
                 .build(
                     getText(poiGeometry, i),
                     getPosition(positions, worldOffsetX, i),

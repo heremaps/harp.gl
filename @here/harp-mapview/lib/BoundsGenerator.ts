@@ -366,7 +366,7 @@ export class BoundsGenerator {
     }
 
     private generateOnPlane(): GeoPolygon | undefined {
-        //!!!!!!!ALTITUDE IS NOT TAKEN INTO ACCOUNT!!!!!!!!!
+        // ALTITUDE IS NOT TAKEN INTO ACCOUNT
         const coordinates: GeoCoordinates[] = [];
 
         // 1.) Raycast into all four corners of the canvas

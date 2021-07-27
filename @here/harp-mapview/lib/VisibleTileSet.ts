@@ -558,6 +558,7 @@ export class VisibleTileSet {
         elevationRangeSource?: ElevationRangeSource
     ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
         let allVisibleTilesLoaded: boolean = true;
+        const visibleTiles : Tile[] = [];
         // This isn't really const, because we pass by ref to the methods below.
         const newTilesPerFrame = 0;
 
@@ -568,6 +569,7 @@ export class VisibleTileSet {
         );
         this.dataSourceTileList = [];
         this.m_coveringMap.clear();
+
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
             visibleTileKeys.sort(compareDistances);
 
@@ -592,9 +594,10 @@ export class VisibleTileSet {
                 },
                 false
             );
-            // creates geometry if not yet available
-            this.m_tileGeometryManager.updateTiles(visibleResult.visibleTiles);
-            this.m_tileGeometryManager.updateTiles(dependentResult.visibleTiles);
+
+
+            visibleTiles.push(...visibleResult.visibleTiles, ...dependentResult.visibleTiles);
+
             // used to actually render the tiles or find alternatives for incomplete tiles
             this.dataSourceTileList.push({
                 dataSource,
@@ -610,8 +613,10 @@ export class VisibleTileSet {
             allVisibleTilesLoaded = allVisibleTilesLoaded && visibleResult.allDataSourceTilesLoaded;
         }
 
-        this.allVisibleTilesLoaded =
-            allVisibleTilesLoaded && visibleTileKeysResult.allBoundingBoxesFinal;
+        // Creates geometry if not yet available
+        this.m_tileGeometryManager.updateTiles(visibleTiles);
+
+        this.allVisibleTilesLoaded = allVisibleTilesLoaded && visibleTileKeysResult.allBoundingBoxesFinal;
 
         this.populateRenderedTiles();
 

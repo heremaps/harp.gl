@@ -278,16 +278,13 @@ export class TileGeometryCreator {
      * @param decodedTile - The decodedTile containing the actual tile map data.
      * @returns Promise resolved when all textures are ready to render.
      */
-    createAllGeometries(tile: Tile, decodedTile: DecodedTile): Promise<void> {
+    createAllGeometries(tile: Tile, decodedTile: DecodedTile): any {
         const filter = (technique: IndexedTechnique): boolean => {
             return technique._kindState !== false;
         };
 
-        let texturesReady: Promise<any> = Promise.resolve();
         const onNewTexture = (texturePromise: Promise<THREE.Texture>) => {
-            texturesReady = Promise.all([
-                texturesReady,
-                texturePromise
+            texturePromise
                     .then(texture => {
                         tile.addOwnedTexture(texture);
                         if (!texture.image) {
@@ -302,7 +299,6 @@ export class TileGeometryCreator {
                         });
                     })
                     .catch(() => {}) // Keep waiting for the other textures even if one fails.
-            ]);
         };
         this.createObjects(tile, decodedTile, onNewTexture, filter);
 
@@ -331,7 +327,6 @@ export class TileGeometryCreator {
             // parent's geometry doesn't show through.
             addGroundPlane(tile, -1);
         }
-        return texturesReady;
     }
 
     createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
