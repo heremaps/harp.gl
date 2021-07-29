@@ -51,27 +51,28 @@ namespace SphericalProj {
         minR: number,
         maxR: number
     ): number {
-        //         , - ~ ~ ~ - ,
-        //     , '               ' ,        E
-        //   ,           .           ,    . ' far + elev
-        //  ,            .   maxR    , '   /
+        //                              E
+        //                         far +_
+        //         , - ~ ~ ~ - ,      +  <_
+        //     , '               ' , +     <_ F
+        //   ,           .          +,    . '
+        //  ,            .   maxR  + , '   /
         // ,             .     ,  '    ,  /
-        // ,             . O '         , / te
-        // ,             | .           ,/
+        // ,             . O '   +     , / te
+        // ,             | .    +      ,/
         //  ,            |   . minR   ,/
-        //   ,           |      .    ,
-        //     ,         |        , '_____ far
-        //       ' -_, _ | _ ,  ' / T (Tangent point = Horizon)
-        //     near      |  eye   /
-        //             d |  +   / t
-        //               | +  /
-        //               |+ /
-        //               C ---> up
-
-        // Compute angle between camera eye vector and tangent in camera's up direction.
-        const normalToTanAngle = Math.asin(minR / d);
-        const eyeToTanAngle = Math.abs(normalToTanAngle - SphericalProj.getCameraPitch(camera));
-
+        //   ,           |     +.    ,/
+        //     ,         |    +   , '/
+        //       ' -_, _ | _ ,  '  / T (Tangent point = Horizon)
+        //     near      |  +     /
+        //             d | +    / t
+        //               |+   /
+        //               |+  /
+        //               C /---> up
+        //
+        // CE: Eye vector
+        // OC: Normal at camera
+        // CO-CE: Pitch
         const t = getHorizonDistance(d, minR);
 
         // Because we would like to see elevated geometry that may be visible beyond
@@ -79,7 +80,12 @@ namespace SphericalProj {
         // the tangent line by te (see graph above).
         const te = getHorizonDistance(maxR, minR);
 
-        // Project CE vector(length t + te) onto eye vector to get far distance.
+        const normalToTanAngle = Math.asin(minR / d); // Angle CO-CT
+        // Angle between eye vector (CE) and tangent (CT) in camera's up direction. CE-CT (or CE-CF)
+        const eyeToTanAngle = Math.abs(normalToTanAngle - SphericalProj.getCameraPitch(camera));
+
+        // Project CF vector(length t + te) onto eye vector (CE) to get far distance.
+        // |CE| = cos(CE-CT) * |CF| (angle CE-EF is the projection right angle).
         const far = Math.cos(eyeToTanAngle) * (t + te);
 
         return far;
