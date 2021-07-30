@@ -40,10 +40,10 @@ namespace SphericalProj {
      * plus distance from elevated geometry to horizon(so that high objects behind horizon
      * remain visible).
      * @see https://en.wikipedia.org/wiki/Horizon#Objects_above_the_horizon
+     * @param camera - The camera.
      * @param d - Distance from camera to origin.
      * @param minR - Min sphere radius.
      * @param maxR - Max sphere radius.
-     * @param alpha - Angle between camera eye vector and tangent.
      */
     export function getFarDistanceFromElevatedHorizon(
         camera: THREE.PerspectiveCamera,
@@ -51,10 +51,10 @@ namespace SphericalProj {
         minR: number,
         maxR: number
     ): number {
-        //                              E
+        //                              F
         //                         far +_
         //         , - ~ ~ ~ - ,      +  <_
-        //     , '               ' , +     <_ F
+        //     , '               ' , +     <_ E
         //   ,           .          +,    . '
         //  ,            .   maxR  + , '   /
         // ,             .     ,  '    ,  /
@@ -66,13 +66,13 @@ namespace SphericalProj {
         //       ' -_, _ | _ ,  '  / T (Tangent point = Horizon)
         //     near      |  +     /
         //             d | +    / t
-        //               |+   /
+        //               | +   /
         //               |+  /
         //               C /---> up
         //
-        // CE: Eye vector
+        // CF: Forward (look-at) vector.
         // OC: Normal at camera
-        // CO-CE: Pitch
+        // OCF: Angle between camera normal and forward vector.
         const t = getHorizonDistance(d, minR);
 
         // Because we would like to see elevated geometry that may be visible beyond
@@ -80,13 +80,15 @@ namespace SphericalProj {
         // the tangent line by te (see graph above).
         const te = getHorizonDistance(maxR, minR);
 
-        const normalToTanAngle = Math.asin(minR / d); // Angle CO-CT
-        // Angle between eye vector (CE) and tangent (CT) in camera's up direction. CE-CT (or CE-CF)
-        const eyeToTanAngle = Math.abs(normalToTanAngle - SphericalProj.getCameraPitch(camera));
+        const normalToTanAngle = Math.asin(minR / d); // Angle OCT
+        // Angle between fwd vector (CF) and tangent (CT) in camera's up direction: FCT (= FCE)
+        const fwdToTanAngle = Math.abs(
+            normalToTanAngle - SphericalProj.getNormalToFwdAngle(camera)
+        );
 
-        // Project CF vector(length t + te) onto eye vector (CE) to get far distance.
-        // |CE| = cos(CE-CT) * |CF| (angle CE-EF is the projection right angle).
-        const far = Math.cos(eyeToTanAngle) * (t + te);
+        // Project CE vector(length t + te) onto fwd vector (CF) to get far distance.
+        // |CF| = cos(FCE) * |CE| (angle CFE is the projection right angle).
+        const far = Math.cos(fwdToTanAngle) * (t + te);
 
         return far;
     }
@@ -96,7 +98,7 @@ namespace SphericalProj {
      * the earth's sphere projected along the camera's view direction.
      * @param worldSpaceIntersection - Furthest intersection point between frustum an sphere.
      * @param camera - The camera.
-     * @returns Camera pitch.
+     * @returns Far distance.
      */
     export function getFarPlaneBasedOnFovIntersection(
         worldSpaceIntersection: THREE.Vector3,
@@ -107,14 +109,14 @@ namespace SphericalProj {
     }
 
     /**
-     * Calculate angle between look at and surface normal at camera position.
+     * Calculate angle between forward vector and surface normal at camera position.
      * @param camera - The camera.
-     * @returns Camera pitch.
+     * @returns The angle in radians.
      */
-    export function getCameraPitch(camera: THREE.PerspectiveCamera): number {
+    export function getNormalToFwdAngle(camera: THREE.PerspectiveCamera): number {
         const camToOriginDir = tmpVectors[0].copy(camera.position).negate().normalize();
-        const cosPitch = camToOriginDir.dot(camera.getWorldDirection(tmpVectors[1]));
-        return Math.acos(THREE.MathUtils.clamp(cosPitch, -1.0, 1.0));
+        const cosAngle = camToOriginDir.dot(camera.getWorldDirection(tmpVectors[1]));
+        return Math.acos(THREE.MathUtils.clamp(cosAngle, -1.0, 1.0));
     }
 }
 
