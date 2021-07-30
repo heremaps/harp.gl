@@ -96,11 +96,11 @@ namespace SphericalProj {
     }
 
     /**
-     * Calculate distance to the nearest point where the near plane is tangent to the globe,
-     * projected onto the eye vector.
+     * Calculate distance to the nearest point where the near plane is tangent to the sphere,
+     * projected onto the camera forward vector.
      * @param camera - The camera.
      * @param halfVerticalFovAngle
-     * @param R - The globe radius.
+     * @param R - The sphere radius.
      * @returns The tangent point distance if the point is visible, otherwise `undefined`.
      */
     export function getProjNearPlaneTanDistance(
@@ -108,20 +108,49 @@ namespace SphericalProj {
         halfVerticalFovAngle: number,
         R: number
     ): number | undefined {
-        const fwdDir = camera.getWorldDirection(tmpVectors[0]);
-        const nearPlaneTanPoint = tmpVectors[1].copy(fwdDir).multiplyScalar(-R);
-        const camToTan = nearPlaneTanPoint.sub(camera.position);
-        const tanDistAlongEyeDir = camToTan.dot(fwdDir);
-        const cosTanDirToEyeDir = tanDistAlongEyeDir / camToTan.length();
+        //                                                          ,^;;;;;;;;;;;;;;;;-
+        //                                                      ^^^^:                `;^^^:
+        //                          near plane              `++^                          '++^
+        //                              ,                 :?;                                `*?'
+        //                              +;              :\"                                     ^\-
+        //                               {-           `/:                                         *>
+        //                                }`  :^^^^` :/                                            '{`
+        //                               ;\N^^'     :|                                              `}`
+        //              fwdDir     ';^^^;` ,|      :(                                                 }`
+        // up                  :^^^^,   90° *>     }                                                  '}
+        //  ^            :^^^^,              ('   \'                                                   (-
+        //  |      `;^^^;`                    }   }                                                     }
+        //  | ,^^^^:                          `}  }                                                     }
+        // CAM<--------------------------------{$?&-------------------------O                           {
+        //    \ ';;;;;;;:`                      ^^}                  :^^^^,                             }
+        //     \        `;;;;;;;;,               (%            -^^^^;`                                 `}
+        //      \               `:;;;;;;;'        @, 90°  '^^^^;`                                      (-
+        //       \       camToTanVec     ';;;;;;;TAN`:^^^^"   -R*fwdDir                               ,{
+        //        \                              `:}@-                                               `}
+        //         \                                *$                                              `}`
+        //   Bottom frustum plane                    }$`                                           "(
+        //                                            }{^                                        `\;
+        //                                            `}"|:                                     >|`
+        //                                             '( ,*+`                               '**`
+        //                                              ;|   ^++-                         :+>:
+        //                                               ;      ;^^^;`               -;^^^,
+        //                                                          `;;;;;;;;;;;;;;;;"
 
-        return cosTanDirToEyeDir > Math.cos(halfVerticalFovAngle) ? tanDistAlongEyeDir : undefined;
+        const fwdDir = camera.getWorldDirection(tmpVectors[0]);
+        const camToTanVec = tmpVectors[1].copy(fwdDir).multiplyScalar(-R).sub(camera.position);
+        const near = camToTanVec.dot(fwdDir);
+        const cosTanDirToFwdDir = near / camToTanVec.length();
+
+        // Tangent point visible if angle from fwdDir to tangent is less than to frustum bottom.
+        return cosTanDirToFwdDir > Math.cos(halfVerticalFovAngle) ? near : undefined;
     }
 
     /**
-     * Calculate the distance to the intersection of a given ray with the globe.
+     * Calculate the distance to the intersection of a given ray with the sphere,
+     * projected onto the camera forward vector.
      * @param camera - The camera.
      * @param ndcDir - Ray direction in NDC coordinates.
-     * @param R - The globe radius.
+     * @param R - The sphere radius.
      * @returns Intersection distance or `undefined` if there's no intersection.
      */
     export function getProjSphereIntersectionDistance(
@@ -700,15 +729,14 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             z2 = cameraAltitude + sinBeta * cam.top;
             z1 = cameraAltitude - sinBeta * cam.bottom;
         }
-        // Distance along the top plane to the ground, |c2|. This will determine the far distance,
-        // so take the furthest distance possible, i.e. the distance to the min elevation.
+        // Compute |c2|. This will determine the far distance (top intersection is further away than
+        // bottom intersection on tilted views), so take the furthest distance possible, i.e.the
+        // distance to the min elevation.
         // cos(topAngle) = (z2 - minElev) / |c2|
         // |c2| = (z2 - minElev) / cos(topAngle)
         const topDist = (z2 - this.minElevation) / Math.cos(topAngleRad);
-        // Distance along the bottom plane to the ground, |c1|. This will determine the near
-        // distance, so take the nearest distance possible, i.e. the distance to the max elevation.
-        // cos(bottomAngle) = (z - minElev) / |c1|
-        // |c1| = (z - minElev) / cos(bottomAngle)
+        // Compute |c1|. This will determine the near distance, so take the nearest distance
+        // possible, i.e.the distance to the max elevation.
         const bottomDist = (z1 - this.maxElevation) / Math.cos(bottomAngleRad);
 
         return { top: Math.max(topDist, 0), bottom: Math.max(bottomDist, 0) };
@@ -723,10 +751,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         assert(projection.type !== ProjectionType.Spherical);
         const viewRanges = { ...this.minimumViewRange };
 
-        // Find intersections of top/bottom frustum side's medians with the ground plane, taking
-        // into account min/max elevations.Top side intersection distance determines the far
-        // distance (it's further away than bottom intersection on tilted views), and bottom side
-        // intersection distance determines the near distance.
+        // Find the distances to the top/bottom frustum plane intersections with the ground plane.
         const planesDist = this.getFrustumGroundIntersectionDist(camera, projection);
 
         if (camera instanceof THREE.PerspectiveCamera) {
@@ -794,14 +819,13 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const maxR = EarthConstants.EQUATORIAL_RADIUS + this.maxElevation;
         const ndcBottomDir = TiltViewClipPlanesEvaluator.NDC_BOTTOM_DIR;
 
-        // Take as near distance the distance to the point where the near plane is tangent to the
-        // globe. If the tangent point is not visible, take instead the distance to the intersection
-        // of the bottom frustum side's median and the globe.
-        return (
+        // Use as near the distance of the near plane's tangent point to the sphere. If not visible,
+        // use the distance to then bottom frustum side intersection.
+        const near =
             SphericalProj.getProjNearPlaneTanDistance(camera, halfVerticalFovAngle, maxR) ??
-            SphericalProj.getProjSphereIntersectionDistance(camera, ndcBottomDir, maxR) ??
-            defaultNear
-        );
+            SphericalProj.getProjSphereIntersectionDistance(camera, ndcBottomDir, maxR);
+        assert(near !== undefined, "No reference point for near distance found");
+        return near ?? defaultNear;
     }
 
     private computeFarDistSphericalProj(
