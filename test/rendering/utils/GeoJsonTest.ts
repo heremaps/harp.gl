@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { Projection } from "@here/harp.gl/lib";
 import { FlatTheme, GeoJson, Theme } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
@@ -30,6 +31,7 @@ export interface GeoJsonTestOptions extends GeoJsonDataSourceTestOptions {
     extraDataSource?: GeoJsonDataSourceTestOptions;
     beforeFinishCallback?: (mapView: MapView) => void;
     size?: number;
+    projection?: Projection;
 }
 
 function createDataSource(
@@ -76,7 +78,8 @@ export class GeoJsonTest {
             theme: options.theme,
             preserveDrawingBuffer: true,
             pixelRatio: 1,
-            disableFading: true
+            disableFading: true,
+            projection: options.projection
         });
         this.mapView.animatedExtrusionHandler.enabled = false;
 
