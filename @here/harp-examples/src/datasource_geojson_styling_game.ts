@@ -119,7 +119,8 @@ export namespace GeoJsonStylingGame {
             dataProvider: geoJsonDataProvider,
             name: "geojson",
             styleSetName: "geojson",
-            gatherFeatureAttributes: true
+            gatherFeatureAttributes: true,
+            addGroundPlane: false
         });
 
         await mapView.addDataSource(geoJsonDataSource);

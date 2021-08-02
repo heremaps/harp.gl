@@ -168,7 +168,8 @@ export namespace GeoJsonHeatmapExample {
     );
     const geoJsonDataSource = new VectorTileDataSource({
         dataProvider: geoJsonDataProvider,
-        styleSetName: "geojson"
+        styleSetName: "geojson",
+        addGroundPlane: false
     });
     baseMap.addDataSource(geoJsonDataSource);
 

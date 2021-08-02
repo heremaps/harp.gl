@@ -99,7 +99,6 @@ describe("TileGeometryLoader", function () {
     let dataSource: DataSource;
     let mapView: MapView;
     let geometryLoader: TileGeometryLoader;
-    let sandbox: any;
 
     before(function () {
         tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
@@ -112,11 +111,10 @@ describe("TileGeometryLoader", function () {
         dataSource.attach(mapView);
         tile = dataSource.getTile(tileKey)!;
         geometryLoader = (tile as any).m_tileGeometryLoader!;
-        sandbox = sinon.createSandbox();
     });
 
     afterEach(function () {
-        sandbox.restore();
+        sinon.restore();
     });
 
     describe("tile preprocessing", function () {
@@ -157,8 +155,8 @@ describe("TileGeometryLoader", function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spySetDecodedTile = sandbox.spy(geometryLoader, "setDecodedTile") as any;
+            const spyProcessTechniques = sinon.spy(geometryCreator, "processTechniques") as any;
+            const spySetDecodedTile = sinon.spy(geometryLoader, "setDecodedTile") as any;
             expect(spyProcessTechniques.callCount).equal(0);
             expect(spySetDecodedTile.callCount).equal(0);
 
@@ -181,12 +179,33 @@ describe("TileGeometryLoader", function () {
             expect(geometryLoader.isFinished).to.be.true;
         });
 
+        it("should wait until all textures are ready to render", async function () {
+            tile.decodedTile = createFakeDecodedTile();
+
+            const geometryCreator = TileGeometryCreator.instance;
+            let makeTexturesReady: () => void | undefined;
+            const texturesPromise = new Promise<void>(resolve => {
+                makeTexturesReady = resolve;
+            });
+            sinon.stub(geometryCreator, "createAllGeometries").returns(texturesPromise);
+            geometryLoader!.update();
+            expect(mapView.taskQueue.numItemsLeft(TileTaskGroups.CREATE)).equal(1);
+            expect(mapView.taskQueue.processNext(TileTaskGroups.CREATE)).equal(true);
+
+            await wait();
+            expect(geometryLoader.isFinished).to.be.false;
+
+            makeTexturesReady!();
+            await expect(texturesPromise).to.eventually.be.fulfilled;
+            expect(geometryLoader.isFinished).to.be.true;
+        });
+
         it("should create geometry for decoded tile only once (via taskqueue)", async function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            const spyProcessTechniques = sinon.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sinon.spy(geometryCreator, "createAllGeometries") as any;
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 
@@ -212,8 +231,8 @@ describe("TileGeometryLoader", function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            const spyProcessTechniques = sinon.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sinon.spy(geometryCreator, "createAllGeometries") as any;
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 
@@ -234,8 +253,8 @@ describe("TileGeometryLoader", function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            const spyProcessTechniques = sinon.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sinon.spy(geometryCreator, "createAllGeometries") as any;
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 
@@ -257,8 +276,8 @@ describe("TileGeometryLoader", function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            const spyProcessTechniques = sinon.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sinon.spy(geometryCreator, "createAllGeometries") as any;
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 
@@ -295,8 +314,8 @@ describe("TileGeometryLoader", function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            const spyProcessTechniques = sinon.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sinon.spy(geometryCreator, "createAllGeometries") as any;
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 
@@ -331,8 +350,8 @@ describe("TileGeometryLoader", function () {
             tile.decodedTile = createFakeDecodedTile();
 
             const geometryCreator = TileGeometryCreator.instance;
-            const spyProcessTechniques = sandbox.spy(geometryCreator, "processTechniques") as any;
-            const spyCreateGeometries = sandbox.spy(geometryCreator, "createAllGeometries") as any;
+            const spyProcessTechniques = sinon.spy(geometryCreator, "processTechniques") as any;
+            const spyCreateGeometries = sinon.spy(geometryCreator, "createAllGeometries") as any;
             expect(spyCreateGeometries.callCount).equal(0);
             expect(spyProcessTechniques.callCount).equal(0);
 

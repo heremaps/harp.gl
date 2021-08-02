@@ -4,16 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { mercatorProjection, TileKey } from "@here/harp-geoutils";
+import { mercatorProjection } from "@here/harp-geoutils/lib/projection/MercatorProjection";
+import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { expect } from "chai";
 import * as sinon from "sinon";
 
-import { GeoJsonDataAdapter } from "../lib/adapters/geojson/GeoJsonDataAdapter";
+import {
+    GeoJsonDataAdapter,
+    GeoJsonFeatureCollection
+} from "../lib/adapters/geojson/GeoJsonDataAdapter";
 import { DecodeInfo } from "../lib/DecodeInfo";
-import { FakeOmvFeatureFilter } from "./FakeOmvFeatureFilter";
 import { MockGeometryProcessor } from "./MockGeometryProcessor";
 
-const featureCollection = {
+const featureCollection: GeoJsonFeatureCollection = {
     type: "FeatureCollection",
     features: [
         {
@@ -59,36 +62,53 @@ const featureCollection = {
 };
 
 describe("GeoJsonDataAdapter", function () {
-    let decodeInfo: DecodeInfo;
-    let geometryProcessor: MockGeometryProcessor;
     let adapter: GeoJsonDataAdapter;
 
     beforeEach(function () {
-        decodeInfo = new DecodeInfo("", mercatorProjection, new TileKey(0, 0, 1));
-        geometryProcessor = new MockGeometryProcessor();
-        adapter = new GeoJsonDataAdapter(geometryProcessor, new FakeOmvFeatureFilter());
+        adapter = new GeoJsonDataAdapter();
     });
 
     it("canProcess returns true for a FeatureCollection", function () {
         expect(adapter.canProcess(featureCollection as any)).to.be.true;
     });
 
-    it("process copies geojson feature's id to env's $id", function () {
+    it("sets the specified layer name", () => {
+        const decodeInfo = new DecodeInfo(mercatorProjection, new TileKey(0, 0, 1));
+        const geometryProcessor = new MockGeometryProcessor();
+
         const pointSpy = sinon.spy(geometryProcessor, "processPointFeature");
         const lineSpy = sinon.spy(geometryProcessor, "processLineFeature");
         const polygonSpy = sinon.spy(geometryProcessor, "processPolygonFeature");
-        adapter.process(featureCollection as any, decodeInfo);
 
-        expect(pointSpy.calledOnce);
-        const pointEnv = pointSpy.getCalls()[0].args[3];
-        expect(pointEnv.lookup("$id")).equals(featureCollection.features[0].id);
+        const LAYER_NAME = "foo";
 
-        expect(lineSpy.calledOnce);
-        const lineEnv = lineSpy.getCalls()[0].args[3];
-        expect(lineEnv.lookup("$id")).equals(featureCollection.features[1].id);
+        adapter.process(featureCollection, decodeInfo, geometryProcessor, LAYER_NAME);
 
-        expect(polygonSpy.calledOnce);
-        const polygonEnv = polygonSpy.getCalls()[0].args[3];
-        expect(polygonEnv.lookup("$id")).equals(featureCollection.features[2].id);
+        sinon.assert.calledOnce(pointSpy);
+        sinon.assert.calledWith(
+            pointSpy,
+            LAYER_NAME,
+            sinon.match.number,
+            sinon.match.array,
+            sinon.match.object
+        );
+
+        sinon.assert.calledOnce(lineSpy);
+        sinon.assert.calledWith(
+            lineSpy,
+            LAYER_NAME,
+            sinon.match.number,
+            sinon.match.array,
+            sinon.match.object
+        );
+
+        sinon.assert.calledOnce(polygonSpy);
+        sinon.assert.calledWith(
+            polygonSpy,
+            LAYER_NAME,
+            sinon.match.number,
+            sinon.match.array,
+            sinon.match.object
+        );
     });
 });

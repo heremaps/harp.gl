@@ -7,3 +7,4 @@
 export * from "./lib/VectorTileDecoder";
 export * from "./lib/GeoJsonTilerService";
 export * from "./lib/OmvDecoderDefs";
+export * from "./lib/DataAdapter";

@@ -39,7 +39,7 @@ export function getWebGLRendererStub(sandbox: sinon.SinonSandbox, clearColorStub
         info: { autoReset: true, reset: () => undefined },
         debug: { checkShaderErrors: true },
         capabilities: { isWebGL2: false },
-        setOpaqueSort: (sort: any) => undefined,
+        setOpaqueSort: (a: any, b: any) => undefined,
         domElement: {
             addEventListener: () => {},
             removeEventListener: () => {}

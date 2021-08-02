@@ -106,7 +106,8 @@ export namespace ElevatedGeoJsonMarkersExample {
             new VectorTileDataSource({
                 dataProvider: new CustomGeoJsonDataProvider(),
                 name: "geojson",
-                styleSetName: "geojson"
+                styleSetName: "geojson",
+                addGroundPlane: false
             })
         );
 

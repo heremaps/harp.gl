@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { TileKey } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -15,11 +16,11 @@ import { Tile } from "../lib/Tile";
 describe("PickHandler", function () {
     let pickHandler: PickHandler;
     let mapViewMock: MapView;
-
+    let tile: Tile;
     beforeEach(function () {
         const size = new THREE.Vector2(800, 600);
         const camera = new THREE.PerspectiveCamera();
-        const tile = ({
+        tile = ({
             boundingBox: {
                 extents: new THREE.Vector3(1252344.2714, 1252344.2714, 11064),
                 position: new THREE.Vector3(21289852.6142, 26299229.6999, 11064),
@@ -28,7 +29,8 @@ describe("PickHandler", function () {
                 zAxis: new THREE.Vector3(0, 0, 1)
             },
             computeWorldOffsetX: () => 0,
-            dependencies: []
+            dependencies: [],
+            tileKey: TileKey.fromRowColumnLevel(1, 2, 3)
         } as unknown) as Tile;
 
         mapViewMock = ({
@@ -290,6 +292,41 @@ describe("PickHandler", function () {
                 $id: "yVgD20bhJO",
                 name: "abruzzo"
             });
+        });
+
+        it("returns an array of PickResult objects each having the expected properties", function () {
+            sinon
+                .stub(mapViewMock, "getWorldPositionAt")
+                .callsFake(() => new THREE.Vector3(21604645.272347387, 25315004.93397993, 0));
+
+            raycasterFromScreenPointStub.callsFake((x: number, y: number) => {
+                const raycaster = raycasterFromScreenPointStub.wrappedMethod.call(
+                    pickHandler,
+                    x,
+                    y
+                );
+
+                sinon
+                    .stub(raycaster, "intersectObjects")
+                    .callsFake((objects, recursive, target: THREE.Intersection[] = []) => {
+                        target.push({
+                            point: new THREE.Vector3(174781.2243, 62415.6655, -2160787.9966),
+                            distance: 2168613.8654252696,
+                            object: ({
+                                userData: {}
+                            } as any) as THREE.Object3D
+                        });
+
+                        return target;
+                    });
+
+                return raycaster;
+            });
+
+            const results = pickHandler.intersectMapObjects(467, 276);
+            expect(results).not.to.be.empty;
+            expect(results[0].tileKey).to.equal(tile.tileKey);
+            // TODO: expand to other properties in PickResult
         });
     });
 });

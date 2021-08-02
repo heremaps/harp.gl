@@ -713,7 +713,7 @@ export class ComposedDataFilter implements OmvFeatureFilter {
      */
     get hasKindFilter() {
         return this.filters.reduce<boolean>(
-            (result, filter) => result && filter.hasKindFilter,
+            (result, filter) => result || filter.hasKindFilter,
             true
         );
     }

@@ -8,7 +8,8 @@ import {
     DecoderOptions,
     GeometryKind,
     IndexedTechnique,
-    OptionsMap
+    OptionsMap,
+    ValueMap
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
@@ -27,105 +28,62 @@ import { OmvDataAdapter } from "./adapters/omv/OmvDataAdapter";
 import { DataAdapter } from "./DataAdapter";
 import { DecodeInfo } from "./DecodeInfo";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import {
-    ComposedDataFilter,
-    OmvFeatureFilter,
-    OmvFeatureModifier,
-    OmvGenericFeatureFilter,
-    OmvGenericFeatureModifier
-} from "./OmvDataFilter";
-import {
-    FeatureModifierId,
-    OmvDecoderOptions,
-    OmvFeatureFilterDescription,
-    VECTOR_TILE_DECODER_SERVICE_TYPE
-} from "./OmvDecoderDefs";
-import { OmvPoliticalViewFeatureModifier } from "./OmvPoliticalViewFeatureModifier";
-import { StyleSetDataFilter } from "./StyleSetDataFilter";
-import { VectorTileDataEmitter } from "./VectorTileDataEmitter";
+import { OmvFeatureFilter } from "./OmvDataFilter";
+import { OmvDecoderOptions, VECTOR_TILE_DECODER_SERVICE_TYPE } from "./OmvDecoderDefs";
+import { VectorTileDataEmitter, VectorTileDataEmitterOptions } from "./VectorTileDataEmitter";
 
 const logger = LoggerManager.instance.create("VectorTileDecoder", { enabled: false });
 
+/**
+ * Options for VectorTileDataProcessor, @see {@link OmvDecoderOptions}.
+ * @internal
+ */
+export interface VectorTileDataProcessorOptions extends VectorTileDataEmitterOptions {
+    storageLevelOffset?: number;
+    showMissingTechniques?: boolean;
+}
+
+/**
+ * Geometry processor for vector tiles.
+ * @internal
+ */
 export class VectorTileDataProcessor implements IGeometryProcessor {
-    // The emitter is optional now.
-    // TODO: Add option to control emitter generation.
     private m_decodedTileEmitter: VectorTileDataEmitter | undefined;
-    private readonly m_dataAdapters: DataAdapter[] = [];
 
     constructor(
+        private readonly m_tileKey: TileKey,
         private readonly m_projection: Projection,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
-        private readonly m_showMissingTechniques: boolean,
-        private readonly m_dataFilter?: OmvFeatureFilter,
-        private readonly m_featureModifiers?: OmvFeatureModifier[],
-        private readonly m_gatherFeatureAttributes = false,
-        private readonly m_skipShortLabels = true,
-        private readonly m_storageLevelOffset = 0,
-        private readonly m_enableElevationOverlay = false,
-        private readonly m_roundUpCoordinatesIfNeeded = false,
-        private readonly m_languages?: string[]
+        private readonly m_dataAdapter: DataAdapter,
+        private readonly m_options: VectorTileDataProcessorOptions = {},
+        private readonly m_dataFilter?: OmvFeatureFilter
     ) {
-        const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
-        const dataPreFilter = m_dataFilter
-            ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
-            : styleSetDataFilter;
-
-        // Register the default adapters.
-
-        const omvDataAdapter = new OmvDataAdapter(this, dataPreFilter, logger);
-        omvDataAdapter.roundUpCoordinatesIfNeeded = m_roundUpCoordinatesIfNeeded;
-        this.m_dataAdapters.push(omvDataAdapter);
-
-        this.m_dataAdapters.push(new GeoJsonVtDataAdapter(this, dataPreFilter, logger));
-        this.m_dataAdapters.push(new GeoJsonDataAdapter(this, dataPreFilter, logger));
-    }
-
-    get storageLevelOffset() {
-        return this.m_storageLevelOffset;
+        m_options.storageLevelOffset = m_options.storageLevelOffset ?? 0;
+        m_options.showMissingTechniques = m_options.showMissingTechniques ?? false;
     }
 
     /**
-     * Given a tile and a protobuffer, it returns a decoded tile and it creates the geometries that
-     * belong to it.
+     * Decodes the given tile data.
      *
-     * @param tileKey - The tile to be decoded.
-     * @param data - The protobuffer to decode from.
+     * @param data - The tile data to decode.
      * @returns A [[DecodedTile]]
      */
-    getDecodedTile(tileKey: TileKey, data: ArrayBufferLike | {}): DecodedTile {
-        let dataAdapter;
-        for (const adapter of this.m_dataAdapters.values()) {
-            if (adapter.canProcess(data)) {
-                dataAdapter = adapter;
-                break;
-            }
-        }
-        if (dataAdapter === undefined) {
-            return {
-                techniques: [],
-                geometries: []
-            };
-        }
-
+    getDecodedTile(data: ArrayBufferLike | {}): DecodedTile {
         this.m_styleSetEvaluator.resetTechniques();
 
         const decodeInfo = new DecodeInfo(
-            dataAdapter.id,
             this.m_projection,
-            tileKey,
-            this.m_storageLevelOffset
+            this.m_tileKey,
+            this.m_options.storageLevelOffset!
         );
 
         this.m_decodedTileEmitter = new VectorTileDataEmitter(
             decodeInfo,
             this.m_styleSetEvaluator,
-            this.m_gatherFeatureAttributes,
-            this.m_skipShortLabels,
-            this.m_enableElevationOverlay,
-            this.m_languages
+            this.m_options
         );
 
-        dataAdapter.process(data, decodeInfo);
+        this.m_dataAdapter.process(data, decodeInfo, this);
         return this.m_decodedTileEmitter.getDecodedTile();
     }
 
@@ -134,49 +92,20 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: THREE.Vector3[],
-        env: MapEnv,
-        storageLevel: number
+        properties: ValueMap,
+        featureId: string | number | undefined
     ): void {
-        if (this.m_featureModifiers !== undefined) {
-            if (
-                this.m_featureModifiers.find(fm => {
-                    // TODO: The logic of feature ignore should be actually in the feature filtering
-                    // mechanism - see OmvFeatureFilter.
-                    return !fm.doProcessPointFeature(layer, env, storageLevel);
-                }) !== undefined
-            ) {
-                return;
-            }
-        }
-
-        const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "point"),
+        assert(this.m_decodedTileEmitter !== undefined);
+        this.processFeature(
+            layer,
+            extents,
+            geometry,
+            "point",
+            properties,
+            featureId,
+            this.m_decodedTileEmitter!.processPointFeature,
             GeometryKind.Label
         );
-
-        if (techniques.length === 0) {
-            if (this.m_showMissingTechniques) {
-                logger.log(
-                    "OmvDecoder#processPointFeature: no techniques for object:",
-                    JSON.stringify(env.unmap())
-                );
-            }
-            return;
-        }
-        const context: AttrEvaluationContext = {
-            env,
-            cachedExprResults: new Map()
-        };
-
-        if (this.m_decodedTileEmitter) {
-            this.m_decodedTileEmitter.processPointFeature(
-                layer,
-                extents,
-                geometry,
-                context,
-                techniques
-            );
-        }
     }
 
     /** @override */
@@ -184,48 +113,20 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: ILineGeometry[],
-        env: MapEnv,
-        storageLevel: number
+        properties: ValueMap,
+        featureId: string | number | undefined
     ): void {
-        if (this.m_featureModifiers !== undefined) {
-            if (
-                this.m_featureModifiers.find(fm => {
-                    return !fm.doProcessLineFeature(layer, env, storageLevel);
-                }) !== undefined
-            ) {
-                return;
-            }
-        }
-
-        const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "line"),
+        assert(this.m_decodedTileEmitter !== undefined);
+        this.processFeature(
+            layer,
+            extents,
+            geometry,
+            "line",
+            properties,
+            featureId,
+            this.m_decodedTileEmitter!.processLineFeature,
             GeometryKind.Line
         );
-
-        if (techniques.length === 0) {
-            if (this.m_showMissingTechniques) {
-                logger.log(
-                    "OmvDecoder#processLineFeature: no techniques for object:",
-                    JSON.stringify(env.unmap())
-                );
-            }
-            return;
-        }
-
-        const context: AttrEvaluationContext = {
-            env,
-            cachedExprResults: new Map()
-        };
-
-        if (this.m_decodedTileEmitter) {
-            this.m_decodedTileEmitter.processLineFeature(
-                layer,
-                extents,
-                geometry,
-                context,
-                techniques
-            );
-        }
     }
 
     /** @override */
@@ -233,48 +134,78 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: IPolygonGeometry[],
-        env: MapEnv,
-        storageLevel: number
+        properties: ValueMap,
+        featureId: string | number | undefined
     ): void {
-        if (this.m_featureModifiers !== undefined) {
-            if (
-                this.m_featureModifiers.find(fm => {
-                    return !fm.doProcessPolygonFeature(layer, env, storageLevel);
-                }) !== undefined
-            ) {
-                return;
-            }
-        }
-
-        const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "polygon"),
+        assert(this.m_decodedTileEmitter !== undefined);
+        this.processFeature(
+            layer,
+            extents,
+            geometry,
+            "polygon",
+            properties,
+            featureId,
+            this.m_decodedTileEmitter!.processPolygonFeature,
             GeometryKind.Area
+        );
+    }
+
+    private processFeature(
+        layer: string,
+        extents: number,
+        geometry: THREE.Vector3[] | ILineGeometry[] | IPolygonGeometry[],
+        geometryType: string,
+        properties: ValueMap,
+        featureId: string | number | undefined,
+        emitterFunc: (...args: any[]) => void,
+        geometryKind: GeometryKind
+    ) {
+        const env = this.createMapEnv(properties, featureId, layer, geometryType);
+        const techniques = this.applyKindFilter(
+            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, geometryType),
+            geometryKind
         );
 
         if (techniques.length === 0) {
-            if (this.m_showMissingTechniques) {
+            if (this.m_options.showMissingTechniques) {
                 logger.log(
-                    "OmvDecoder#processPolygonFeature: no techniques for object:",
+                    "VectorTileDataProcessor#processFeature: no techniques for object:",
                     JSON.stringify(env.unmap())
                 );
             }
             return;
         }
-
-        const context = {
+        const context: AttrEvaluationContext = {
             env,
             cachedExprResults: new Map()
         };
 
         if (this.m_decodedTileEmitter) {
-            this.m_decodedTileEmitter.processPolygonFeature(
+            emitterFunc.apply(this.m_decodedTileEmitter, [
                 layer,
                 extents,
                 geometry,
                 context,
                 techniques
-            );
+            ]);
         }
+    }
+
+    private createMapEnv(
+        properties: ValueMap,
+        featureId: string | number | undefined,
+        layer: string,
+        geometryType: string
+    ): MapEnv {
+        const level = this.m_tileKey.level;
+        return new MapEnv({
+            $layer: layer,
+            $id: featureId ?? null,
+            $level: level,
+            $zoom: Math.max(0, level - this.m_options.storageLevelOffset!),
+            $geometryType: geometryType,
+            ...properties
+        });
     }
 
     private applyKindFilter(
@@ -296,13 +227,20 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
  * The vector tile decoder.
  */
 export class VectorTileDecoder extends ThemedTileDecoder {
-    private m_showMissingTechniques: boolean = false;
     private m_featureFilter?: OmvFeatureFilter;
-    private m_featureModifiers?: OmvFeatureModifier[];
-    private m_gatherFeatureAttributes: boolean = false;
-    private m_skipShortLabels: boolean = true;
-    private m_enableElevationOverlay: boolean = false;
-    private m_roundUpCoordinatesIfNeeded: boolean = false;
+    private readonly m_roundUpCoordinatesIfNeeded: boolean = false;
+    private m_dataAdapter?: DataAdapter;
+    private m_options: { map: OptionsMap; changed: boolean } = { map: {}, changed: false };
+    private readonly m_defaultDataAdapters: DataAdapter[] = [];
+
+    constructor() {
+        super();
+        this.m_defaultDataAdapters.push(
+            new OmvDataAdapter(),
+            new GeoJsonVtDataAdapter(),
+            new GeoJsonDataAdapter()
+        );
+    }
 
     /** @override */
     connect(): Promise<void> {
@@ -311,28 +249,38 @@ export class VectorTileDecoder extends ThemedTileDecoder {
 
     /** @override */
     decodeThemedTile(
-        data: ArrayBufferLike,
+        data: ArrayBufferLike | {},
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
         projection: Projection
     ): Promise<DecodedTile> {
         const startTime = PerformanceTimer.now();
+        if (!this.m_dataAdapter) {
+            this.m_dataAdapter = this.getDataAdapter(data);
+            if (!this.m_dataAdapter) {
+                return Promise.reject(new Error("Unsupported data format."));
+            }
+        }
+        const dataAdapter = this.m_dataAdapter!;
+        assert(dataAdapter.canProcess(data));
+        if (this.m_options.changed) {
+            if (dataAdapter instanceof OmvDataAdapter) {
+                const omvOptions = this.m_options.map as OmvDecoderOptions;
+                dataAdapter.configure(omvOptions, styleSetEvaluator);
+                this.m_featureFilter = dataAdapter.dataFilter;
+            }
+            this.m_options.changed = false;
+        }
 
         const decoder = new VectorTileDataProcessor(
+            tileKey,
             projection,
             styleSetEvaluator,
-            this.m_showMissingTechniques,
-            this.m_featureFilter,
-            this.m_featureModifiers,
-            this.m_gatherFeatureAttributes,
-            this.m_skipShortLabels,
-            this.m_storageLevelOffset,
-            this.m_enableElevationOverlay,
-            this.m_roundUpCoordinatesIfNeeded,
-            this.languages
+            dataAdapter,
+            this.m_options.map as VectorTileDataProcessorOptions,
+            this.m_featureFilter
         );
-
-        const decodedTile = decoder.getDecodedTile(tileKey, data);
+        const decodedTile = decoder.getDecodedTile(data);
 
         decodedTile.decodeTime = PerformanceTimer.now() - startTime;
 
@@ -342,102 +290,31 @@ export class VectorTileDecoder extends ThemedTileDecoder {
     /** @override */
     configure(options?: DecoderOptions, customOptions?: OptionsMap): void {
         super.configure(options, customOptions);
-
-        if (customOptions) {
-            const omvOptions = customOptions as OmvDecoderOptions;
-
-            if (omvOptions.showMissingTechniques !== undefined) {
-                this.m_showMissingTechniques = omvOptions.showMissingTechniques === true;
-            }
-
-            if (omvOptions.filterDescription !== undefined) {
-                if (omvOptions.filterDescription !== null) {
-                    // TODO: Feature modifier is always used only with feature filter.
-                    // At best the filtering feature should be excluded from other feature
-                    // modifiers and be performed solely via OmvGenericFeature modifier or filter.
-                    const filterDescription = omvOptions.filterDescription;
-                    const featureModifiersIds = omvOptions.featureModifiers;
-
-                    // Create new filter from description.
-                    this.m_featureFilter = new OmvGenericFeatureFilter(filterDescription);
-                    // Create feature modifiers.
-                    const featureModifiers: OmvFeatureModifier[] = [];
-                    if (featureModifiersIds !== undefined) {
-                        featureModifiersIds.forEach(fmId => {
-                            featureModifiers.push(
-                                this.createFeatureModifier(filterDescription, fmId)
-                            );
-                        });
-                    } else {
-                        featureModifiers.push(
-                            this.createFeatureModifier(filterDescription, FeatureModifierId.default)
-                        );
-                    }
-                    this.m_featureModifiers = featureModifiers;
-                } else {
-                    // null is the signal to clear the filter/modifier
-                    this.m_featureFilter = undefined;
-                    this.m_featureModifiers = undefined;
-                }
-            }
-
-            if (omvOptions.politicalView !== undefined) {
-                const politicalView = omvOptions.politicalView;
-                let featureModifiers = this.m_featureModifiers;
-                // Remove existing political view modifiers, this actually setups default,
-                // commonly accepted point of view - without feature modifier.
-                if (featureModifiers) {
-                    featureModifiers = featureModifiers.filter(
-                        fm => !(fm instanceof OmvPoliticalViewFeatureModifier)
-                    );
-                }
-                // If political view is indeed requested append feature modifier at the end of list.
-                if (politicalView.length !== 0) {
-                    assert(
-                        politicalView.length === 2,
-                        "The political view must be specified as two letters ISO 3166-1 standard!"
-                    );
-                    const povFeatureModifier = new OmvPoliticalViewFeatureModifier(politicalView);
-                    if (featureModifiers) {
-                        featureModifiers.push(povFeatureModifier);
-                    } else {
-                        featureModifiers = [povFeatureModifier];
-                    }
-                }
-                // Reset modifiers if nothing was added.
-                this.m_featureModifiers =
-                    featureModifiers && featureModifiers.length > 0 ? featureModifiers : undefined;
-            }
-
-            if (omvOptions.gatherFeatureAttributes !== undefined) {
-                this.m_gatherFeatureAttributes = omvOptions.gatherFeatureAttributes === true;
-            }
-            if (omvOptions.skipShortLabels !== undefined) {
-                this.m_skipShortLabels = omvOptions.skipShortLabels;
-            }
-            if (omvOptions.enableElevationOverlay !== undefined) {
-                this.m_enableElevationOverlay = omvOptions.enableElevationOverlay;
-            }
-            if (omvOptions.roundUpCoordinatesIfNeeded !== undefined) {
-                this.m_roundUpCoordinatesIfNeeded = omvOptions.roundUpCoordinatesIfNeeded;
-            }
-        }
-        if (options?.languages !== undefined) {
-            this.languages = options.languages;
-        }
+        this.m_options.map = {
+            ...this.m_options.map,
+            ...options,
+            ...customOptions
+        };
+        this.m_options.changed = true;
     }
 
-    private createFeatureModifier(
-        filterDescription: OmvFeatureFilterDescription,
-        featureModifierId?: FeatureModifierId
-    ): OmvFeatureModifier {
-        switch (featureModifierId) {
-            case FeatureModifierId.default:
-                return new OmvGenericFeatureModifier(filterDescription);
-            default:
-                assert(!"Unrecognized feature modifier id, using default!");
-                return new OmvGenericFeatureModifier(filterDescription);
+    /**
+     * Returns the appropiate data adapter to convert the given data into the format expected by
+     * VectorTileDecoder.
+     * @note Default adapters are available for GeoJson and OMV formats.
+     * Child classes may override this function to support additional formats.
+     *
+     * @param data - The input data to be coverted.
+     * @returns The DataAdapter to convert the data, or undefined if there's no adapter for that
+     * data format.
+     */
+    protected getDataAdapter(data: ArrayBufferLike | {}): DataAdapter | undefined {
+        for (const adapter of this.m_defaultDataAdapters) {
+            if (adapter.canProcess(data)) {
+                return adapter;
+            }
         }
+        return undefined;
     }
 }
 

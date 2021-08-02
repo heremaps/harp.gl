@@ -25,6 +25,7 @@ import { DataSource, DataSourceOptions } from "../lib/DataSource";
 import { FrustumIntersection, TileKeyEntry } from "../lib/FrustumIntersection";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { TileGeometryManager } from "../lib/geometry/TileGeometryManager";
+import { TileLoaderState } from "../lib/ITileLoader";
 import { MapView, TileTaskGroups } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
@@ -428,6 +429,36 @@ describe("VisibleTileSet", function () {
         assert.equal(dataSourceTileList.length, 1);
         assert.equal(dataSourceTileList[0].visibleTiles.length, 1);
         assert.equal(dataSourceTileList[0]?.visibleTiles[0].tileKey.mortonCode(), 1);
+    });
+
+    it("#markTilesDirty cancels tileloader", async function () {
+        setupBerlinCenterCameraFromSamples();
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        let dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+        let visibleTiles = dataSourceTileList[0].visibleTiles;
+
+        fixture.mapView.taskQueue.processNext(TileTaskGroups.FETCH_AND_DECODE, undefined, 2);
+        assert(visibleTiles.every(tile => tile.tileLoader?.state === TileLoaderState.Loading));
+
+        // See FakeTileLoader, this will take ~ 50ms.
+        await Promise.all(visibleTiles.map(tile => tile.tileLoader?.loadAndDecode()));
+
+        assert(visibleTiles.every(tile => tile.tileLoader?.state === TileLoaderState.Loaded));
+
+        // We need to reset the state.
+        fixture.vts.clearTileCache();
+        // Force the tiles to re-load.
+        dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
+
+        visibleTiles = dataSourceTileList[0].visibleTiles;
+        assert(visibleTiles.every(tile => tile.tileLoader?.state === TileLoaderState.Loading));
+
+        // This is the crux of this test, we want to check that the loader state is cancelled.
+        fixture.vts.markTilesDirty();
+        assert(visibleTiles.every(tile => tile.tileLoader?.state === TileLoaderState.Canceled));
+        await Promise.all(visibleTiles.map(tile => tile.tileLoader?.loadAndDecode()));
+        assert(visibleTiles.every(tile => tile.tileLoader?.state === TileLoaderState.Loaded));
     });
 
     it("#markTilesDirty properly handles cached & visible tiles", async function () {

@@ -50,110 +50,6 @@ export interface ClipPlanesEvaluator {
 }
 
 /**
- * Simplest camera clip planes evaluator, interpolates near/far planes based on ground distance.
- *
- * @remarks
- * At general ground distance to camera along the surface normal is used as reference point for
- * planes evaluation, where near plane distance is set as fraction of this distance refereed as
- * [[nearMultiplier]]. Far plane equation has its own multiplier - [[nearFarMultiplier]],
- * which is applied to near plane and offset giving finally far plane distance.
- * This evaluator supports both planar and spherical projections, although it's behavior is
- * slightly different in each case. General algorithm sets near plane between camera and
- * ground level, while far plane is just calculated using scale and bias approach with far offset
- * and multiplier.
- * @deprecated Class contains the legacy (first and original) clip planes evaluation method, which
- * is widely used in examples thus is still kept for backward compatibility and comparisons.
- */
-export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
-    readonly farMin: number;
-
-    protected m_tmpVectors: THREE.Vector3[] = [
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3()
-    ];
-
-    protected m_tmpQuaternion: THREE.Quaternion = new THREE.Quaternion();
-
-    constructor(
-        readonly nearMin: number = 0.1,
-        readonly nearMultiplier: number = 0.1,
-        readonly nearFarMultiplier = 50.0,
-        readonly farOffset = 200.0
-    ) {
-        assert(nearMin > 0);
-        assert(nearFarMultiplier >= 0);
-        assert(farOffset >= 0);
-        this.farMin = nearMin * nearFarMultiplier + farOffset;
-    }
-
-    set minElevation(elevation: number) {}
-
-    get minElevation(): number {
-        // This evaluator does not support elevation so its always set to 0.
-        return 0;
-    }
-
-    set maxElevation(elevation: number) {}
-
-    get maxElevation(): number {
-        // This evaluator does not support elevation so its always set to 0.
-        return 0;
-    }
-
-    evaluateClipPlanes(
-        camera: THREE.Camera,
-        projection: Projection,
-        elevationProvider?: ElevationProvider
-    ): ViewRanges {
-        let nearPlane: number = this.nearMin;
-        let farPlane: number = this.farMin;
-        if (projection.type === ProjectionType.Spherical) {
-            // near and far plane for a set up where
-            // the camera is looking at the center of the scene.
-            const r = EarthConstants.EQUATORIAL_RADIUS;
-            const d = camera.position.length();
-            const alpha = Math.asin(r / d);
-            // Extract X, Y, Z axes into tmp vectors array.
-            camera.matrixWorld.extractBasis(
-                this.m_tmpVectors[0],
-                this.m_tmpVectors[1],
-                this.m_tmpVectors[2]
-            );
-            // Setup quaternion based on X axis.
-            this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], alpha);
-            // Acquire forward vector based on Z axis reversed (keep it in tmpVectors[2]).
-            const fwd = this.m_tmpVectors[2].negate();
-            // Apply quaternion rotation to forward vector, store it in tmpVectors[1].
-            const fwdRot = this.m_tmpVectors[1].copy(fwd).applyQuaternion(this.m_tmpQuaternion);
-            // Store camera position tmpVectors[0] and reference it with p.
-            const p = this.m_tmpVectors[0].copy(camera.position);
-            p.addScaledVector(fwdRot, Math.sqrt(d * d - r * r));
-            farPlane = p.sub(camera.position).dot(fwd) + this.farOffset;
-            nearPlane = Math.max(
-                this.nearMin,
-                projection.groundDistance(camera.position) * this.nearMultiplier
-            );
-        } else if (projection.type === ProjectionType.Planar) {
-            const groundDistance = projection.groundDistance(camera.position);
-            nearPlane = Math.max(this.nearMin, groundDistance * this.nearMultiplier);
-            // Will be already clamped to minFar due to clamping above.
-            farPlane = nearPlane * this.nearFarMultiplier + this.farOffset;
-        } else {
-            assert(false, "Unsupported projection type");
-        }
-
-        const viewRanges: ViewRanges = {
-            near: nearPlane,
-            far: farPlane,
-            minimum: this.nearMin,
-            maximum: farPlane
-        };
-        return viewRanges;
-    }
-}
-
-/**
  * Abstract evaluator class that adds support for elevation constraints.
  *
  * @remarks
@@ -236,6 +132,8 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
 
 /**
  * Top view, clip planes evaluator that computes view ranges based on ground distance and elevation.
+ *
+ * @deprecated Default evaluator {@link TiltViewClipPlanesEvaluator} supports top-down views.
  *
  * @remarks
  * This evaluator supports both planar and spherical projections, although it behavior is

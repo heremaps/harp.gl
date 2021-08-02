@@ -54,6 +54,10 @@ export class WebTileLoader extends BaseTileLoader {
                 texture.minFilter = THREE.LinearFilter;
                 texture.magFilter = THREE.LinearFilter;
                 texture.generateMipmaps = false;
+                // This is required because the WebTileDataSource uses the default setting of
+                // useGeometryLoader on the DataSource, so it has to clear the tile's objects
+                // manually.
+                this.tile.clear();
                 this.tile.addOwnedTexture(texture);
                 const planeMesh = addGroundPlane(
                     this.tile,

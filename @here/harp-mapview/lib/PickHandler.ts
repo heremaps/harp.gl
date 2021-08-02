@@ -5,7 +5,7 @@
  */
 
 import { GeometryType, getFeatureId, Technique } from "@here/harp-datasource-protocol";
-import { OrientedBox3 } from "@here/harp-geoutils";
+import { OrientedBox3, TileKey } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 import { IntersectParams } from "./IntersectParams";
@@ -83,6 +83,14 @@ export interface PickResult {
     dataSourceName: string | undefined;
 
     /**
+     * Data source order, useful for sorting a collection of picking results.
+     * A number for objects/features coming from tiles (as those have data sources attached),
+     * an undefined when objects are added via "mapView.mapAnchors.add(object)" - those are treated as
+     * base layer objects during picking (same as "dataSourceOrder: 0").
+     */
+    dataSourceOrder: number | undefined;
+
+    /**
      * Render order of the intersected object.
      */
     renderOrder?: number;
@@ -90,7 +98,7 @@ export interface PickResult {
     /**
      * An optional feature ID of the picked object.
      * @remarks The ID may be assigned by the object's {@link DataSource}, for example in case of
-     * Optimized Map Vector (OMV) and GeoJSON datata sources.
+     * Optimized Map Vector (OMV) and GeoJSON data sources.
      */
     featureId?: number | string;
 
@@ -114,6 +122,11 @@ export interface PickResult {
      * not be modified.
      */
     userData?: any;
+
+    /**
+     * The tile key containing the picked object.
+     */
+    tileKey?: TileKey;
 }
 
 const tmpV3 = new THREE.Vector3();
@@ -211,7 +224,7 @@ export class PickHandler {
             );
 
             for (const intersect of intersects) {
-                pickListener.addResult(this.createResult(intersect));
+                pickListener.addResult(this.createResult(intersect, tile));
             }
         }
 
@@ -248,13 +261,15 @@ export class PickHandler {
         return this.m_pickingRaycaster;
     }
 
-    private createResult(intersection: THREE.Intersection): PickResult {
+    private createResult(intersection: THREE.Intersection, tile?: Tile): PickResult {
         const pickResult: PickResult = {
             type: PickObjectType.Unspecified,
             point: intersection.point,
             distance: intersection.distance,
             dataSourceName: intersection.object.userData?.dataSource,
-            intersection
+            dataSourceOrder: tile?.dataSource?.dataSourceOrder,
+            intersection,
+            tileKey: tile?.tileKey
         };
 
         if (
