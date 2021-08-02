@@ -447,18 +447,15 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     ): ViewRanges {
         assert(projection.type === ProjectionType.Spherical);
 
-        let nearPlane: number = this.nearMin;
-        let farPlane: number = this.nearMin * this.farMaxRatio;
-
         // The near plane calculus is quite straight forward and works the same as for planar
         // projections. We simply search for the closest point of the ground just above
         // the camera, then we apply margin (elevation) to it along the sphere surface normal:
         const cameraAltitude = projection.groundDistance(camera.position);
-        nearPlane = cameraAltitude - this.maxElevation;
+        let nearPlane = cameraAltitude - this.maxElevation;
 
         const r = EarthConstants.EQUATORIAL_RADIUS;
-        let d = camera.position.length();
-        d = d === 0 ? epsilon : d;
+        const camPosLength = camera.position.length();
+        const d = camPosLength === 0 ? epsilon : camPosLength;
 
         // This solution computes near and far plane for a set up where
         // the camera is looking at the center of the scene.
@@ -488,7 +485,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
 
         const maxR = r + this.maxElevation;
         const farTangent = SphericalProj.getFarDistanceFromElevatedHorizon(camera, d, r, maxR);
-        farPlane =
+        let farPlane =
             halfFovAngle > alpha
                 ? farTangent
                 : this.getFovBasedFarPlane(camera, d, r, 2 * halfFovAngle, projection);
@@ -679,8 +676,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
 
         // Project intersection distances onto the eye vector.
         // Angle between top/bottom plane and eye vector is half of the vertical fov.
-        const halfFovAngle = THREE.MathUtils.degToRad(camera.fov / 2);
-        const cosHalfFov = Math.cos(halfFovAngle);
+        const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
+        const cosHalfFov = Math.cos(halfFov);
         // cos(halfFov) = near / bottomDist
         // near = cos(halfFov) * bottomDist
         viewRanges.near = planesDist.bottom * cosHalfFov;
