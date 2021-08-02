@@ -454,8 +454,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         let nearPlane = cameraAltitude - this.maxElevation;
 
         const r = EarthConstants.EQUATORIAL_RADIUS;
-        const camPosLength = camera.position.length();
-        const d = camPosLength === 0 ? epsilon : camPosLength;
+        const d = Math.max(epsilon, camera.position.length());
 
         // This solution computes near and far plane for a set up where
         // the camera is looking at the center of the scene.
