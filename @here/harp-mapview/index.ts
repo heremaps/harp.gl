@@ -28,6 +28,7 @@ export * from "./lib/copyrights/CopyrightCoverageProvider";
 export * from "./lib/copyrights/UrlCopyrightProvider";
 export * from "./lib/DataSource";
 export * from "./lib/EventDispatcher";
+export * from "./lib/FixedClipPlanesEvaluator";
 export * from "./lib/PolarTileDataSource";
 export * from "./lib/DecodedTileHelpers";
 export * from "./lib/DepthPrePass";

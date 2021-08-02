@@ -144,7 +144,9 @@ describe("MapView Picking", async function () {
                 return webMercatorTilingScheme;
             },
             setLanguages() {},
-            mapView: undefined
+            mapView: undefined,
+            maxGeometryHeight: 0,
+            minGeometryHeight: 0
         } as any;
         fakeElevationRangeSource = {
             connect: () => Promise.resolve(),
