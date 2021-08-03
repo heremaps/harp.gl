@@ -1517,37 +1517,24 @@ export namespace MapViewUtils {
 
     /**
      * Get perspective camera frustum planes distances.
+     * @remarks Inverse operation of THREE.Matrix4.makePerspective().
      * @return all plane distances in helper object.
      */
     export function getCameraFrustumPlanes(
         camera: THREE.PerspectiveCamera
     ): { left: number; right: number; top: number; bottom: number; near: number; far: number } {
-        const near = camera.near;
-        const far = camera.far;
-        let top = (near * Math.tan(THREE.MathUtils.degToRad(0.5 * camera.fov))) / camera.zoom;
-        let height = 2 * top;
-        let width = camera.aspect * height;
-        let left = -0.5 * width;
-
-        const view = camera.view;
-        if (view !== null && view.enabled) {
-            const fullWidth = view.fullWidth;
-            const fullHeight = view.fullHeight;
-
-            left += (view.offsetX * width) / fullWidth;
-            top -= (view.offsetY * height) / fullHeight;
-            width *= view.width / fullWidth;
-            height *= view.height / fullHeight;
-        }
-
-        // Correct by skew factor
-        left += camera.filmOffset !== 0 ? (near * camera.filmOffset) / camera.getFilmWidth() : 0;
-
+        const pMatrix = camera.projectionMatrix.elements;
+        const near = pMatrix[14] / (pMatrix[10] - 1);
+        const far = pMatrix[14] / (pMatrix[10] + 1);
+        const bottom = (near * (pMatrix[9] - 1)) / pMatrix[5];
+        const top = (near * (pMatrix[9] + 1)) / pMatrix[5];
+        const left = (near * (pMatrix[8] - 1)) / pMatrix[0];
+        const right = (near * (pMatrix[8] - 1)) / pMatrix[0];
         return {
             left,
-            right: left + width,
+            right,
             top,
-            bottom: top - height,
+            bottom,
             near,
             far
         };
