@@ -10,6 +10,83 @@ export namespace CameraUtils {
     const tmpV = new THREE.Vector2();
 
     /**
+     * Computes a camera's horizontal field of view.
+     *
+     * @param camera
+     * @returns Horizontal field of view in radians.
+     */
+    export function computeHorizontalFov(camera: THREE.PerspectiveCamera): number {
+        const vFov = THREE.MathUtils.degToRad(camera.fov);
+        return 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+    }
+
+    /**
+     * Set a camera's horizontal field of view.
+     *
+     * @param camera
+     * @param hFov - The horizontal field of view in radians.
+     */
+    export function setHorizontalFov(camera: THREE.PerspectiveCamera, hFov: number): void {
+        camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(hFov / 2) / camera.aspect));
+    }
+    /**
+     * Computes a camera's focal length for a given viewport height.
+     *
+     * @param vFov - Vertical field of view in rad.
+     * @param height - Viewport height in pixels.
+     */
+    export function computeFocalLength(camera: THREE.PerspectiveCamera, height: number): number {
+        const vFov = THREE.MathUtils.degToRad(camera.fov);
+        return height / 2 / Math.tan(vFov / 2);
+    }
+
+    /**
+     * Sets a camera's vertical field of view for given focal length and viewport height.
+     *
+     * @param focalLength - Focal length in pixels (see {@link computeFocalLength})
+     * @param height - Viewport height in pixels.
+     */
+    export function setVerticalFov(
+        camera: THREE.PerspectiveCamera,
+        focalLength: number,
+        height: number
+    ): void {
+        camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(height / 2 / focalLength));
+    }
+
+    /**
+     * Calculates object's screen size based on the focal length and it's camera distance.
+     *
+     * @param focalLength - Focal length in pixels (see {@link computeFocalLength})
+     * @param distance - Object distance in world space.
+     * @param worldSize - Object size in world space.
+     * @return object size in screen space.
+     */
+    export function convertWorldToScreenSize(
+        focalLength: number,
+        distance: number,
+        worldSize: number
+    ): number {
+        return (focalLength * worldSize) / distance;
+    }
+
+    /**
+     * Calculates object's world size based on the focal length and it's camera distance.
+     *
+     * @param focalLength - Focal length in pixels (see {@link computeFocalLength})
+     * @param distance - Object distance in world space.
+     * @param screenSize - Object size in screen space.
+     * @return object size in world space.
+     */
+    export function convertScreenToWorldSize(
+        focalLength: number,
+        distance: number,
+        screenSize: number
+    ): number {
+        return (distance * screenSize) / focalLength;
+    }
+
+    /**
      * Returns the camera's principal point (intersection of principal ray and image plane)
      * in NDC coordinates.
      * @beta

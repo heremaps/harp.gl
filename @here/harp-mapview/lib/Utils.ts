@@ -79,6 +79,8 @@ const cache = {
     ]
 };
 
+const tmpCamera = new THREE.PerspectiveCamera();
+
 /**
  * Rounds a given zoom level up to the nearest integer value if it's close enough.
  *
@@ -1647,6 +1649,7 @@ export namespace MapViewUtils {
     }
 
     /**
+     * @deprecated
      * Translates a linear distance value [0..1], where 1 is the distance to the far plane, into
      * [0..cameraFar].
      *
@@ -1659,76 +1662,48 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Calculates vertical field of view for given horizontal field of vision and aspect ratio.
-     *
-     * @param hFov - Horizontal field of view in rad.
-     * @param aspect - Aspect ratio.
+     * @deprecated Use {@link CameraUtils.setHorizontalFov}.
      */
     export function calculateVerticalFovByHorizontalFov(hFov: number, aspect: number): number {
-        return 2 * Math.atan(Math.tan(hFov / 2) / aspect);
+        tmpCamera.aspect = aspect;
+        CameraUtils.setHorizontalFov(tmpCamera, hFov);
+        return THREE.MathUtils.degToRad(tmpCamera.fov);
     }
 
     /**
-     * Calculates horizontal field of view for given vertical field of vision and aspect ratio.
-     *
-     * @param hFov - Vertical field of view in rad.
-     * @param aspect - Aspect ratio.
+     * @deprecated Use {@link CameraUtils.computeHorizontalFov}.
      */
     export function calculateHorizontalFovByVerticalFov(vFov: number, aspect: number): number {
-        return 2 * Math.atan(Math.tan(vFov / 2) * aspect);
+        tmpCamera.fov = THREE.MathUtils.radToDeg(vFov);
+        tmpCamera.aspect = aspect;
+        return CameraUtils.computeHorizontalFov(tmpCamera);
     }
 
     /**
-     * Calculates the focal length based on the vertical FOV and height.
-     *
-     * @param vFov - Vertical field of view in rad.
-     * @param height - Height of canvas in pixels.
+     * @deprecated Use {@link CameraUtils.computeFocalLength}.
      */
     export function calculateFocalLengthByVerticalFov(vFov: number, height: number): number {
-        return height / 2 / Math.tan(vFov / 2);
+        tmpCamera.fov = THREE.MathUtils.radToDeg(vFov);
+        return CameraUtils.computeFocalLength(tmpCamera, height);
     }
 
     /**
-     * Calculates the vertical field of view based on the focal length and the height.
-     *
-     * @param focalLength - Focal length in pixels (see [[calculateFocalLengthByVerticalFov]])
-     * @param height - Height of canvas in pixels.
+     * @deprecated Use {@link CameraUtils.setVerticalFov}.
      */
     export function calculateFovByFocalLength(focalLength: number, height: number): number {
-        return THREE.MathUtils.radToDeg(2 * Math.atan(height / 2 / focalLength));
+        CameraUtils.setVerticalFov(tmpCamera, focalLength, height);
+        return tmpCamera.fov;
     }
 
     /**
-     * Calculates object's screen size based on the focal length and it's camera distance.
-     *
-     * @param focalLength - Focal length in pixels (see [[calculateFocalLengthByVerticalFov]])
-     * @param distance - Object distance in world space.
-     * @param worldSize - Object size in world space.
-     * @return object size in screen space.
+     * @deprecated Use {@link CameraUtils.convertWorldToScreenSize}.
      */
-    export function calculateScreenSizeByFocalLength(
-        focalLength: number,
-        distance: number,
-        worldSize: number
-    ): number {
-        return (focalLength * worldSize) / distance;
-    }
+    export const calculateScreenSizeByFocalLength = CameraUtils.convertWorldToScreenSize;
 
     /**
-     * Calculates object's world size based on the focal length and it's camera distance.
-     *
-     * @param focalLength - Focal length in pixels (see [[calculateFocalLengthByVerticalFov]])
-     * @param distance - Object distance in world space.
-     * @param screenSize - Object size in screen space.
-     * @return object size in world space.
+     * @deprecated Use {@link CameraUtils.convertScreenToWorldSize}.
      */
-    export function calculateWorldSizeByFocalLength(
-        focalLength: number,
-        distance: number,
-        screenSize: number
-    ): number {
-        return (distance * screenSize) / focalLength;
-    }
+    export const calculateWorldSizeByFocalLength = CameraUtils.convertScreenToWorldSize;
 
     /**
      * Computes estimate for size of a THREE.Object3D object and its children. Shared materials
