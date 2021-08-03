@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EarthConstants, MathUtils, sphereProjection } from "@here/harp-geoutils";
+import { EarthConstants, sphereProjection } from "@here/harp-geoutils";
 import { Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { CameraUtils } from "./CameraUtils";
 import { MapViewUtils } from "./Utils";
 
 const twoPi = Math.PI * 2;
@@ -367,18 +368,14 @@ export class SphereHorizon {
 
     private get hFovVertical(): number {
         if (this.m_hFovVertical === undefined) {
-            this.m_hFovVertical = MathUtils.degToRad(this.m_camera.fov / 2);
+            this.m_hFovVertical = THREE.MathUtils.degToRad(this.m_camera.fov / 2);
         }
         return this.m_hFovVertical;
     }
 
     private get hFovHorizontal(): number {
         if (this.m_hFovHorizontal === undefined) {
-            this.m_hFovHorizontal =
-                MapViewUtils.calculateHorizontalFovByVerticalFov(
-                    this.hFovVertical * 2,
-                    this.m_camera.aspect
-                ) / 2;
+            this.m_hFovHorizontal = CameraUtils.computeHorizontalFov(this.m_camera) / 2;
         }
         return this.m_hFovHorizontal;
     }

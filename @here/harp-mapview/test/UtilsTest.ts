@@ -456,17 +456,6 @@ describe("MapViewUtils", function () {
         });
     });
 
-    it("calculates horizontal and vertical fov", function () {
-        const vFov = 60;
-        const hFov = THREE.MathUtils.radToDeg(
-            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.MathUtils.degToRad(vFov), 0.9)
-        );
-        const calculatedVFov = THREE.MathUtils.radToDeg(
-            MapViewUtils.calculateVerticalFovByHorizontalFov(THREE.MathUtils.degToRad(hFov), 0.9)
-        );
-        expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
-    });
-
     it("estimate size of world with one cube", async function () {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
