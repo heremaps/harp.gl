@@ -33,8 +33,8 @@ import { apikey } from "../config";
  */
 
 export namespace PickingExample {
-    document.body.innerHTML += `
-        <style>
+    const template = document.createElement("template");
+    template.innerHTML = `<style>
             #mouse-picked-result{
                 position:absolute;
                 bottom:5px;
@@ -47,16 +47,15 @@ export namespace PickingExample {
                 text-align: left;
                 right:50px;
             }
-            #mapCanvas {
-              top: 0;
-            }
             #info{
-                color: #fff;
+                position: absolute;
+                left: 0;
+                right: 0;
+                margin: 0 auto;
                 width: 80%;
-                left: 50%;
-                position: relative;
-                margin: 10px 0 0 -40%;
+                color: #fff;
                 font-size: 15px;
+                text-align: center;
             }
             @media screen and (max-width: 700px) {
                 #info{
@@ -66,8 +65,10 @@ export namespace PickingExample {
         </style>
         <p id=info>Click/touch a feature on the map to read its data (Land masses are not features).
         </p>
-        <pre id="mouse-picked-result"></pre>
-    `;
+        <pre id="mouse-picked-result"></pre>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
 
     initializeMapView("mapCanvas").catch(err => {
         throw err;

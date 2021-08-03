@@ -16,18 +16,14 @@ import {
 import { apikey, copyrightInfo } from "../config";
 
 export namespace DataDrivenThemeExample {
-    document.body.innerHTML +=
-        `
-    <style>
-        #mapCanvas {
-          top: 0;
-        }
-        #info{
+    const template = document.createElement("template");
+    template.innerHTML =
+        `<style>
+        #info {
+            position: absolute;
             color: #fff;
-            width: 80%;
-            left: 50%;
-            position: relative;
-            margin: 10px 0 0 -40%;
+            width: 100%;
+            text-align: center;
             font-size: 15px;
         }
         @media screen and (max-width: 700px) {
@@ -38,6 +34,9 @@ export namespace DataDrivenThemeExample {
     </style>
     <p id=info>This example shows how to utilize the data from the styles.<br/>` +
         `Here the population of a city is displayed below its name.</p>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
     function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 

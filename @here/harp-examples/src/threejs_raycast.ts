@@ -112,18 +112,18 @@ export namespace ThreejsRaycast {
         return map;
     }
 
-    document.body.innerHTML +=
+    const template = document.createElement("template");
+    template.innerHTML =
         `<style>
-            #mapCanvas{
-                top:0;
-            }
             #info{
-                color: #000;
+                position: absolute;
+                left: 0;
+                right: 0;
+                margin: 0 auto;
                 width: 80%;
-                left: 50%;
-                position: relative;
-                margin: 10px 0 0 -40%;
+                color: #fff;
                 font-size: 15px;
+                text-align: center;
             }
             @media screen and (max-width: 700px) {
                 #info{
@@ -132,8 +132,10 @@ export namespace ThreejsRaycast {
             }
         </style>
         <p id=info>Long click to add a pink box under the mouse cursor, with respect of ` +
-        `buildings' height.</p>
-    `;
+        `buildings' height.</p>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
 
     const mapView = initializeMapView("mapCanvas");
 

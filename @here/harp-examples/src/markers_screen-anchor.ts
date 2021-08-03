@@ -13,8 +13,8 @@ import THREE = require("three");
 import { apikey } from "../config";
 
 export namespace GeoToScreenExample {
-    document.body.innerHTML += `
-        <style>
+    const template = document.createElement("template");
+    template.innerHTML = `<style>
         .message {
             position: absolute;
             top: 10px;
@@ -28,8 +28,11 @@ export namespace GeoToScreenExample {
                 display: none;
             }
         }
-        </style>
-    `;
+        </style>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
+
     const BERLIN = new GeoCoordinates(52.5186234, 13.373993);
     const geoPosition = {
         latitude: BERLIN.lat,

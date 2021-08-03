@@ -142,7 +142,11 @@ export namespace GeoJsonExample {
     }
 
     function createBaseMap(theme: Theme): MapView {
-        document.body.innerHTML += getExampleHTML();
+        const template = document.createElement("template");
+        template.innerHTML = getExampleHTML();
+        template.content.childNodes.forEach(node => {
+            document.body.appendChild(node);
+        });
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
@@ -180,8 +184,7 @@ export namespace GeoJsonExample {
     }
 
     function getExampleHTML(): string {
-        return `
-            <link href="https://fonts.googleapis.com/css?family=Fira+Sans&amp;display=swap" rel="stylesheet">
+        return `<link href="https://fonts.googleapis.com/css?family=Fira+Sans&amp;display=swap" rel="stylesheet">
             <style>
                 :root{
                     --editor-width:${editorWidth};
@@ -287,7 +290,6 @@ export namespace GeoJsonExample {
             <div id="drag-overlay">
                 <div id="drag-dashes"></div>
             </div>
-            <p id=info>Drag and drop a GeoJSON or browse a local one.</p>
-        `;
+            <p id=info>Drag and drop a GeoJSON or browse a local one.</p>`;
     }
 }

@@ -21,27 +21,28 @@ import { apikey, copyrightInfo } from "../config";
  * This example showcases interpolated [[MapView]] techniques.
  */
 export namespace TiledGeoJsonTechniquesExample {
-    document.body.innerHTML += `
-        <style>
-            #mapCanvas {
-              top: 0;
-            }
-            #info{
-                color: #fff;
+    const template = document.createElement("template");
+    template.innerHTML = `<style>
+            #info {
+                position: absolute;
+                left: 0;
+                right: 0;
+                margin: 0 auto;
                 width: 80%;
-                left: 50%;
-                position: relative;
-                margin: 10px 0 0 -40%;
+                color: #fff;
                 font-size: 15px;
+                text-align: center;
             }
             @media screen and (max-width: 700px) {
-                #info{
+                #info {
                     font-size:11px;
                 }
             }
         </style>
-        <p id=info>Zoom in and out to smoothly transition between styles.</p>
-    `;
+        <p id=info>Zoom in and out to smoothly transition between styles.</p>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
 
     const theme: Theme = {
         clearColor: "#234152",

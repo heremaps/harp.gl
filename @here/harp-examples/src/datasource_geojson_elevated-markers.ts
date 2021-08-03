@@ -116,14 +116,6 @@ export namespace ElevatedGeoJsonMarkersExample {
         return map;
     }
 
-    document.body.innerHTML += `
-    <style>
-        #mapCanvas {
-          top: 0;
-        }
-    </style>
-`;
-
     const mapView = initializeMapView("mapCanvas");
 
     const omvDataSource = new VectorTileDataSource({

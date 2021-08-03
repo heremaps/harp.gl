@@ -104,10 +104,9 @@ export namespace ThreejsAddSimpleObject {
     message.innerHTML = `Long click to add a ${scale}m wide cube to the scene.`;
     message.style.cssText = `
         color: #000;
-        width: 80%;
-        left: 50%;
-        position: relative;
-        margin-left: -40%;
+        width: 100%;
+        position: absolute;
+        text-align: center;
         font-size: 15px;
     `;
 

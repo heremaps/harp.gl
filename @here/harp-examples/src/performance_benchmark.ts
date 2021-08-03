@@ -109,9 +109,8 @@ powerPreferenceMap.set("LowPower", MapViewPowerPreference.LowPower);
 powerPreferenceMap.set("HighPerformance", MapViewPowerPreference.HighPerformance);
 
 // Append the HTML code for the table styles.
-document.head.innerHTML += `
-<style>
-
+const template1 = document.createElement("template");
+template1.innerHTML = `<style>
 #canvasDiv {
     pointer-events: none;
 }
@@ -187,13 +186,16 @@ th:hover {
     font-size: 0.8em;
     font-weight: normal;
 }
-</style>
-`;
+</style>`;
+template1.content.childNodes.forEach(node => {
+    document.body.appendChild(node);
+});
 
 // Add the HTML code for the table.
 const canvasParent = document.getElementById("mapCanvas")!.parentNode! as HTMLElement;
-canvasParent.innerHTML += `
-<div id="tableDiv">
+
+const template2 = document.createElement("template");
+template2.innerHTML = `<div id="tableDiv">
 <p class="labelLine">
     <span class="label">Benchmark:</span>
     <span id="testTitle" class="value"></span>
@@ -254,9 +256,10 @@ canvasParent.innerHTML += `
     <span id="testDuration" class="value"></span>
 </p>
 <table id="resultTable"> </table>
-</div>
-`;
-
+</div>`;
+template2.content.childNodes.forEach(node => {
+    canvasParent.appendChild(node);
+});
 export namespace PerformanceBenchmark {
     let mapViewApp: PerformanceUtils.MapViewApp;
 

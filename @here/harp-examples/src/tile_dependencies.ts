@@ -38,8 +38,8 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
 
 export namespace TileDependenciesExample {
     const guiOptions = { tileDependencies: false };
-    document.body.innerHTML += `
-        <style>
+    const template = document.createElement("template");
+    template.innerHTML = `<style>
             #mouse-picked-result{
                 position:absolute;
                 bottom:5px;
@@ -56,8 +56,10 @@ export namespace TileDependenciesExample {
               top: 0;
             }
         </style>
-        <pre id="mouse-picked-result"></pre>
-    `;
+        <pre id="mouse-picked-result"></pre>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
     class CustomDataProvider extends DataProvider {
         enableTileDependencies: boolean = false;
 

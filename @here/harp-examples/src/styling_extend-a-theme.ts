@@ -54,19 +54,18 @@ import { apikey, copyrightInfo } from "../config";
  */
 
 export namespace HelloCustomThemeExample {
-    document.body.innerHTML +=
-        `
-    <style>
-        #mapCanvas {
-          top: 0;
-        }
+    const template = document.createElement("template");
+    template.innerHTML =
+        `<style>
         #info{
-            color: #fff;
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
             width: 80%;
-            left: 50%;
-            position: relative;
-            margin: 10px 0 0 -40%;
+            color: #fff;
             font-size: 15px;
+            text-align: center;
         }
         @media screen and (max-width: 700px) {
             #info{
@@ -74,10 +73,12 @@ export namespace HelloCustomThemeExample {
             }
         }
     </style>
-    <p id=info>This example shows the theme extension mechanism: the styles for the parks ` +
+    <p id="info">This example shows the theme extension mechanism: the styles for the parks ` +
         `and the buildings are overwritten from an original theme to make them respectively green` +
-        ` and brown.</p>
-`;
+        ` and brown.</p>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;

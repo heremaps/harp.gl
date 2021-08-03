@@ -39,20 +39,21 @@ export namespace HelloWorldTexturedExample {
     }
 
     function addTextureCopyright() {
-        document.body.innerHTML += `
-<style>
-    #mapCanvas {
-        top: 0;
-    }
-    #texture-license{
-        margin: 10px;
-        padding: 10px;
-        color: #cccccc;
-    }
-</style>
-<p id="texture-license">Textures by
-<a href="https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480" target="_blank">
-West</a>.</p>`;
+        const template = document.createElement("template");
+        template.innerHTML = `<style>
+            #texture-license {
+                position: absolute;
+                width: 100%;
+                text-align: center;
+                color: #cccccc;
+            }
+        </style>
+        <p id="texture-license">Textures by
+        <a href="https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480" target="_blank">
+        West</a>.</p>`;
+        template.content.childNodes.forEach(node => {
+            document.body.appendChild(node);
+        });
     }
 
     /**

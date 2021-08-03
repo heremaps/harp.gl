@@ -68,7 +68,29 @@ export namespace CameraOrbitExample {
     });
 
     function createBaseMap(): MapView {
-        document.body.innerHTML += getExampleHTML();
+        const template = document.createElement("template");
+        template.innerHTML = `<style>
+            #mapCanvas {
+                top:0
+            }
+            #info {
+                color: #fff;
+                width: 80%;
+                left: 50%;
+                position: absolute;
+                margin: 10px 0 0 -40%;
+                font-size: 15px;
+            }
+            @media screen and (max-width: 700px) {
+                #info{
+                    font-size:11px;
+                }
+            }
+            </style>
+            <p id=info></p>`;
+        template.content.childNodes.forEach(node => {
+            document.body.appendChild(node);
+        });
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
@@ -102,29 +124,5 @@ export namespace CameraOrbitExample {
             `zoomLevel: ${options.zoomLevel.toFixed(1)}, ` +
             `tilt: ${options.tilt.toFixed(1)}, ` +
             `heading: ${options.heading.toFixed(1)}})`;
-    }
-
-    function getExampleHTML() {
-        return `
-            <style>
-                #mapCanvas{
-                    top:0
-                }
-                #info{
-                    color: #fff;
-                    width: 80%;
-                    left: 50%;
-                    position: relative;
-                    margin: 10px 0 0 -40%;
-                    font-size: 15px;
-                }
-                @media screen and (max-width: 700px) {
-                    #info{
-                        font-size:11px;
-                    }
-                }
-                </style>
-                <p id=info></p>
-        `;
     }
 }

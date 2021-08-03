@@ -37,27 +37,26 @@ import { apikey } from "../config";
  * ```
  */
 export namespace GeoJsonHeatmapExample {
-    document.body.innerHTML += `
-        <style>
-            #mapCanvas {
-              top: 0;
-            }
+    const template = document.createElement("template");
+    template.innerHTML = `<style>
+        #info{
+            color: #fff;
+            width: 80%;
+            left: 50%;
+            position: absolute;
+            margin: 10px 0 0 -40%;
+            font-size: 15px;
+        }
+        @media screen and (max-width: 700px) {
             #info{
-                color: #fff;
-                width: 80%;
-                left: 50%;
-                position: relative;
-                margin: 10px 0 0 -40%;
-                font-size: 15px;
+                font-size:11px;
             }
-            @media screen and (max-width: 700px) {
-                #info{
-                    font-size:11px;
-                }
-            }
-        </style>
-        <p id=info></p>
-    `;
+        }
+    </style>
+    <p id=info></p>`;
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
 
     /**
      * Creates a new MapView for the HTMLCanvasElement of the given id.

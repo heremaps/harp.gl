@@ -102,8 +102,8 @@ export namespace SynchronousRendering {
         }
 
         addHTMLElements(text: string) {
-            document.body.innerHTML += `
-                <style>
+            const template = document.createElement("template");
+            template.innerHTML = `<style>
                     #popupLine {
                         position: absolute;
                         border: 0;
@@ -112,7 +112,7 @@ export namespace SynchronousRendering {
                         height: 100%;
                         top: 0;
                         overflow: hidden;
-                        z-index: 1;
+                        z-index: 0;
                     }
                     .popup {
                         background: #000;
@@ -125,8 +125,10 @@ export namespace SynchronousRendering {
                     }
                 </style>
                 <canvas id="popupLine"></canvas>
-                <div class="popup">${text}</div>
-            `;
+                <div class="popup">${text}</div>`;
+            template.content.childNodes.forEach(node => {
+                document.body.appendChild(node);
+            });
         }
 
         drawConnectionLine() {

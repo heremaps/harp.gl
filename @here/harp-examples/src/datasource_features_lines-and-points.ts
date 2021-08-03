@@ -205,7 +205,11 @@ export namespace LinesPointsFeaturesExample {
     }
 
     function createBaseMap(theme: Theme): MapView {
-        document.body.innerHTML += getExampleHTML();
+        const template = document.createElement("template");
+        template.innerHTML = getExampleHTML();
+        template.content.childNodes.forEach(node => {
+            document.body.appendChild(node);
+        });
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
@@ -236,8 +240,7 @@ export namespace LinesPointsFeaturesExample {
 
     function getExampleHTML() {
         return (
-            `
-            <style>
+            `<style>
                 #mapCanvas {
                     top: 0;
                 }
@@ -247,7 +250,7 @@ export namespace LinesPointsFeaturesExample {
                     text-align: center;
                     font-family: monospace;
                     left: 50%;
-                    position: relative;
+                    position: absolute;
                     margin: 10px 0 0 -40%;
                     font-size: 15px;
                 }
@@ -289,8 +292,7 @@ export namespace LinesPointsFeaturesExample {
                     <div id=caption-bg>
                         <h1>Hotspots on Earth's mantle, with main ridges and trenches.</h1>
                     </div>
-                </div>
-        `
+                </div>`
         );
     }
 }

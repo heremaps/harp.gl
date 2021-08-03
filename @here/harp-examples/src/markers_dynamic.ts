@@ -189,8 +189,10 @@ export namespace DynamicMarkersExample {
     function addInstructions() {
         const message = document.createElement("div");
         message.innerHTML = `Tap map to add a marker, long press on a marker to remove it`;
-        message.style.position = "relative";
+        message.style.position = "absolute";
+        message.style.width = "100%";
         message.style.top = "60px";
+        message.style.textAlign = "center";
         document.body.appendChild(message);
     }
 

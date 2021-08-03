@@ -23,6 +23,8 @@ import * as THREE from "three";
  */
 export namespace TextCanvasDynamicExample {
     const stats = new Stats();
+    stats.dom.style.bottom = "0px";
+    stats.dom.style.top = "auto";
     const gui = new GUI({ hideable: false });
     const guiOptions = {
         input: "Type to start...",

@@ -37,7 +37,11 @@ import { apikey, copyrightInfo } from "../config";
 
 export namespace TripleViewExample {
     // inject HTML code to page to show additional map canvases and position them side-by-side
-    document.body.innerHTML += getExampleHTML();
+    const template = document.createElement("template");
+    template.innerHTML = getExampleHTML();
+    template.content.childNodes.forEach(node => {
+        document.body.appendChild(node);
+    });
 
     const numberOfSyncXViews = 3;
     // Adjust CSS to see more then 1 row in Y axis
@@ -178,8 +182,7 @@ export namespace TripleViewExample {
     // end:harp_gl_multiview_tripleView_3.ts
 
     function getExampleHTML() {
-        return `
-            <style>
+        return `<style>
                 .themeName {
                     font-weight: bold;
                     padding: 1em;
@@ -252,7 +255,6 @@ export namespace TripleViewExample {
                 <div class="themeName" id="mapTheme3">
                     Day reduced theme
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 }

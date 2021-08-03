@@ -39,12 +39,72 @@
                 font-weight: normal;
             }
         </style>
+        <link href="menu.css" rel="stylesheet"/>
+        <link href="view-source-btn.css" rel="stylesheet"/>
     </head>
     <body>
+        <button id="hamburgerMenu" href="#">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div id="navPanel" class="collapsed">
+            <div id="titleBar">
+                <a href="http://harp.gl">
+                    <h1 id="title">harp.gl</h1>
+                </a>
+                <a id=documentation title="Documentation" target="_blank"
+                    href=https://www.harp.gl/docs/master/doc/> <svg viewBox="0 0 23 60"
+                    height="25" width="23">
+                    <path
+                        d="M -1.6965819,8.2701467 V 35.224035 c 0.0283,0.847295 0.648697,1.588424 1.318981,1.5861 0.64875499,0.0046 1.15590999,-0.400431 1.463019,-0.762541 l 4.217,-7.516842 4.217,7.517911 c 0.327,0.582909 0.9389999,0.856715 1.5499999,0.734786 0.045,-0.0086 0.089,-0.0021 0.134,-0.01497 0.657,-0.195729 1.099,-0.816072 1.099,-1.54444 V 8.2701467 Z" />
+                    <path
+                        style="fill:none;stroke-width:4px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
+                        d="M 31.544194,1.8446699 31.499,58.375 H -4.4999998 v -47 H 31.499" />
+                    <path
+                        style="fill:none;stroke-width:4px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
+                        d="m -4.5,58.375 c -2.8186816,0.0081 -5.078877,-1.790886 -5.125,-4.3545 V 6.6875 C -9.580216,4.4229047 -7.1760603,2.001032 -4.6438447,1.9924176 L 31.544194,1.8446699" />
+                    <path
+                        style="fill:none;stroke-width:4px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
+                        d="m -9.625,6.6875 c 0.02296,2.96301 1.8301551,4.714336 5.1250002,4.6875" />
+                    </svg>
+                </a>
+                <a id=github title="Visit Harp.gl repository on GitHub"
+                    href=https://github.com/heremaps/harp.gl target="_blank"> <svg
+                    class="octicon octicon-mark-github v-align-middle" height="25"
+                    viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+                    <path
+                        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z">
+                    </path></svg>
+                </a>
+
+                <button id="closeButton" href="#">
+                    <span></span>
+                    <span></span>
+                </button>
+                <div style="clear:both"></div>
+            </div>
+
+            <div class="filterBlock">
+                <input type="text" id="filterInput">
+                <svg id=magnifier-placeholder viewBox="30 30 110 110" width=20 height=20>
+                    <circle style="stroke-width:15;fill:none;stroke:#252c36;" cx="75" cy="75"
+                        r="35" />
+                    <path style="fill:none;stroke:#252c36;stroke-width:15;" d="m 100,100 35,35" />
+                </svg>
+                </input>
+                <button href="#" id="clearFilterButton" style="display:none;">&#215;</button>
+            </div>
+            <div id="exampleList"></div>
+        </div>
+
         <canvas id="mapCanvas"></canvas>
         <div id="app"></div>
         <div id="copyrightNotice"></div>
 
+        <button id="viewSource" title="View the source code" href=# style="display:block;">
+            <p>&#60;/&#62;</p>
+        </button>
         <!--
             These paths are to be used by clients, when using map bundle from CDN.
         -->
@@ -58,6 +118,8 @@
         <script src="credentials.js"></script>
         <script src="three.min.js"></script>
         <script src="harp.js"></script>
+        <script src="example-definitions.js"></script>
+        <script src="example-browser.bundle.js"></script>
 
         <script>
             const canvas = document.getElementById("mapCanvas");

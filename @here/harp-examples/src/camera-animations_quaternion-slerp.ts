@@ -64,10 +64,9 @@ Tap or use left/right keys to change location`;
 
     message.style.cssText = `
     color: #000;
-    width: 80%;
-    left: 50%;
-    position: relative;
-    margin-left: -40%;
+    width: 100%;
+    text-align: center;
+    position: absolute;
     font-size: 15px;
     `;
     document.body.appendChild(message);

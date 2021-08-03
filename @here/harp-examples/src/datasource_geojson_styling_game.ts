@@ -49,12 +49,9 @@ import * as geojson from "../resources/italy.json";
 
 export namespace GeoJsonStylingGame {
     async function main() {
-        document.body.innerHTML += `
-        <style>
-            #mapCanvas {
-              top: 0;
-            }
-            #prompter{
+        const template = document.createElement("template");
+        template.innerHTML = `<style>
+            #prompter {
                 margin: 10px;
                 padding: 10px;
                 display: inline-block;
@@ -63,12 +60,14 @@ export namespace GeoJsonStylingGame {
                 position: absolute;
                 right: 0;
             }
-            #asked-name{
+            #asked-name {
                 text-transform: uppercase
             }
         </style>
-        <p id="prompter">Find the following region: <strong id="asked-name"></strong></p>
-    `;
+        <p id="prompter">Find the following region: <strong id="asked-name"></strong></p>`;
+        template.content.childNodes.forEach(node => {
+            document.body.appendChild(node);
+        });
 
         const REGION_LIST = (geojson.features as Feature[])
             .filter(feature => {

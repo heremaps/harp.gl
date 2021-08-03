@@ -275,7 +275,11 @@ export namespace PolygonsFeaturesExample {
     }
 
     function createBaseMap(): MapView {
-        document.body.innerHTML += getExampleHTML();
+        const template = document.createElement("template");
+        template.innerHTML = getExampleHTML();
+        template.content.childNodes.forEach(node => {
+            document.body.appendChild(node);
+        });
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
@@ -405,8 +409,7 @@ export namespace PolygonsFeaturesExample {
 
     function getExampleHTML() {
         return (
-            `
-            <style>
+            `<style>
                 #mapCanvas {
                     top: 0;
                 }
@@ -482,8 +485,7 @@ export namespace PolygonsFeaturesExample {
                     <h1>Member states of the European Union</h1>
                     <div id=dates-container></div>
                 </div>
-            </div>
-        `
+            </div>`
         );
     }
 }
