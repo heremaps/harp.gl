@@ -189,7 +189,8 @@ describe("FontCatalog", () => {
         assert.strictEqual(fontCatalog.distanceRange, 8);
         assert.strictEqual(fontCatalog.maxCodePointCount, 256);
     });
-    it("Loads assets for sample text.", async () => {
+    it("Loads assets for sample text.", async function () {
+        this.timeout(5000);
         for (const sample of textSamples) {
             await fontCatalog!.loadCharset(sample, textRenderStyle);
         }
