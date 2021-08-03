@@ -35,7 +35,6 @@ jobs:
                   yarn test-cov
                   yarn karma-headless
                   yarn karma-headless-firefox
-                  ./scripts/test-npm-packages.sh
               shell: bash
 
             - name: Build
