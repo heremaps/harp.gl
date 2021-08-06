@@ -1460,9 +1460,43 @@ export namespace MapViewUtils {
     }
 
     /**
-     * @deprecated Use {@link CameraUtils.getFrustumPlaneDistances}.
+     * Get perspective camera frustum planes distances.
+     * @deprecated
+     * @return all plane distances in helper object.
      */
-    export const getCameraFrustumPlanes = CameraUtils.getFrustumPlaneDistances;
+    export function getCameraFrustumPlanes(
+        camera: THREE.PerspectiveCamera
+    ): { left: number; right: number; top: number; bottom: number; near: number; far: number } {
+        const near = camera.near;
+        const far = camera.far;
+        let top = (near * Math.tan(THREE.MathUtils.degToRad(0.5 * camera.fov))) / camera.zoom;
+        let height = 2 * top;
+        let width = camera.aspect * height;
+        let left = -0.5 * width;
+
+        const view = camera.view;
+        if (view !== null && view.enabled) {
+            const fullWidth = view.fullWidth;
+            const fullHeight = view.fullHeight;
+
+            left += (view.offsetX * width) / fullWidth;
+            top -= (view.offsetY * height) / fullHeight;
+            width *= view.width / fullWidth;
+            height *= view.height / fullHeight;
+        }
+
+        // Correct by skew factor
+        left += camera.filmOffset !== 0 ? (near * camera.filmOffset) / camera.getFilmWidth() : 0;
+
+        return {
+            left,
+            right: left + width,
+            top,
+            bottom: top - height,
+            near,
+            far
+        };
+    }
 
     /**
      * Casts a ray in NDC space from the current view of the camera and returns the intersection
@@ -1589,7 +1623,7 @@ export namespace MapViewUtils {
      */
     export function calculateVerticalFovByHorizontalFov(hFov: number, aspect: number): number {
         tmpCamera.aspect = aspect;
-        CameraUtils.setHorizontalFov(tmpCamera, THREE.MathUtils.radToDeg(hFov));
+        CameraUtils.setHorizontalFov(tmpCamera, hFov);
         return THREE.MathUtils.degToRad(tmpCamera.fov);
     }
 
@@ -1606,13 +1640,15 @@ export namespace MapViewUtils {
      * @deprecated Use {@link CameraUtils.computeFocalLength}.
      */
     export function calculateFocalLengthByVerticalFov(vFov: number, height: number): number {
-        return CameraUtils.computeFocalLength(THREE.MathUtils.radToDeg(vFov), height);
+        return CameraUtils.computeFocalLength(vFov, height);
     }
 
     /**
      * @deprecated Use {@link CameraUtils.computeVerticalFov}.
      */
-    export const calculateFovByFocalLength = CameraUtils.computeVerticalFov;
+    export function calculateFovByFocalLength(focalLength: number, height: number): number {
+        return THREE.MathUtils.radToDeg(CameraUtils.computeVerticalFov(focalLength, height));
+    }
 
     /**
      * @deprecated Use {@link CameraUtils.convertWorldToScreenSize}.

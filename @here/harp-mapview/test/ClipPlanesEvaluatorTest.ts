@@ -33,7 +33,10 @@ function setupPerspectiveCamera(
     MapViewUtils.getCameraRotationAtTarget(projection, geoTarget, heading, tilt, camera.quaternion);
 
     const canvasHeight = 500;
-    const focalLength = CameraUtils.computeFocalLength(vFov, canvasHeight);
+    const focalLength = CameraUtils.computeFocalLength(
+        THREE.MathUtils.degToRad(vFov),
+        canvasHeight
+    );
     if (!distance) {
         expect(zoomLevel).to.not.be.undefined;
         distance = MapViewUtils.calculateDistanceFromZoomLevel({ focalLength }, zoomLevel ?? 1);

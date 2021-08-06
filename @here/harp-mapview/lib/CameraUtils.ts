@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 
-import { MAX_FOV_DEG, MIN_FOV_DEG } from "./FovCalculation";
+import { MAX_FOV_RAD, MIN_FOV_RAD } from "./FovCalculation";
 
 export namespace CameraUtils {
     /**
@@ -38,12 +38,10 @@ export namespace CameraUtils {
      * @internal
      *
      * @param camera
-     * @param hFov - The horizontal field of view in degrees.
+     * @param hFov - The horizontal field of view in radians.
      */
     export function setHorizontalFov(camera: THREE.PerspectiveCamera, hFov: number): void {
-        camera.fov = THREE.MathUtils.radToDeg(
-            2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(hFov) / 2) / camera.aspect)
-        );
+        camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(hFov / 2) / camera.aspect));
     }
 
     /**
@@ -51,15 +49,15 @@ export namespace CameraUtils {
      * @internal
      *
      * @param camera
-     * @param fov - The vertical field of view in degress.
+     * @param fov - The vertical field of view in radians.
      */
     export function setVerticalFov(camera: THREE.PerspectiveCamera, fov: number): void {
-        camera.fov = THREE.MathUtils.clamp(fov, MIN_FOV_DEG, MAX_FOV_DEG);
+        camera.fov = THREE.MathUtils.radToDeg(THREE.MathUtils.clamp(fov, MIN_FOV_RAD, MAX_FOV_RAD));
 
-        let hFov = THREE.MathUtils.radToDeg(computeHorizontalFov(camera));
+        let hFov = computeHorizontalFov(camera);
 
-        if (hFov > MAX_FOV_DEG || hFov < MIN_FOV_DEG) {
-            hFov = THREE.MathUtils.clamp(hFov, MIN_FOV_DEG, MAX_FOV_DEG);
+        if (hFov > MAX_FOV_RAD || hFov < MIN_FOV_RAD) {
+            hFov = THREE.MathUtils.clamp(hFov, MIN_FOV_RAD, MAX_FOV_RAD);
             setHorizontalFov(camera, hFov);
         }
     }
@@ -68,12 +66,12 @@ export namespace CameraUtils {
      * Computes a camera's focal length for a given viewport height.
      * @beta
      *
-     * @param vFov - Vertical field of view in degress.
+     * @param vFov - Vertical field of view in radians.
      * @param height - Viewport height in pixels.
      * @returns focal length in pixels.
      */
     export function computeFocalLength(vFov: number, height: number): number {
-        return height / 2 / Math.tan(THREE.MathUtils.degToRad(vFov) / 2);
+        return height / 2 / Math.tan(vFov / 2);
     }
 
     /**
@@ -108,44 +106,5 @@ export namespace CameraUtils {
         screenSize: number
     ): number {
         return (distance * screenSize) / focalLength;
-    }
-
-    /**
-     * Get perspective camera frustum planes distances to the camera's principal ray.
-     * @beta
-     * @returns all plane distances in helper object.
-     */
-    export function getFrustumPlaneDistances(
-        camera: THREE.PerspectiveCamera
-    ): { left: number; right: number; top: number; bottom: number; near: number; far: number } {
-        const near = camera.near;
-        const far = camera.far;
-        let top = (near * Math.tan(THREE.MathUtils.degToRad(0.5 * camera.fov))) / camera.zoom;
-        let height = 2 * top;
-        let width = camera.aspect * height;
-        let left = -0.5 * width;
-
-        const view = camera.view;
-        if (view !== null && view.enabled) {
-            const fullWidth = view.fullWidth;
-            const fullHeight = view.fullHeight;
-
-            left += (view.offsetX * width) / fullWidth;
-            top -= (view.offsetY * height) / fullHeight;
-            width *= view.width / fullWidth;
-            height *= view.height / fullHeight;
-        }
-
-        // Correct by skew factor
-        left += camera.filmOffset !== 0 ? (near * camera.filmOffset) / camera.getFilmWidth() : 0;
-
-        return {
-            left,
-            right: left + width,
-            top,
-            bottom: top - height,
-            near,
-            far
-        };
     }
 }

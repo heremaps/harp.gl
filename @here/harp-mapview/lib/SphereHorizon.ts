@@ -45,8 +45,8 @@ export class SphereHorizon {
     private readonly m_intersections: number[][] = [];
     private m_isFullyVisible: boolean = true;
     private m_cameraPitch?: number;
-    private m_hFovVertical?: number;
-    private m_hFovHorizontal?: number;
+    private m_halfFovVertical?: number;
+    private m_halfFovHorizontal?: number;
 
     /**
      * Constructs the SphereHorizon for the given camera.
@@ -196,12 +196,12 @@ export class SphereHorizon {
                 side === CanvasSide.Top
                     ? this.m_normalToTangentAngle - this.cameraPitch
                     : this.m_normalToTangentAngle + this.cameraPitch;
-            return this.hFovVertical >= Math.abs(eyeToTangentAngle);
+            return this.halfFovVertical >= Math.abs(eyeToTangentAngle);
         } else {
             const eyeToTangentAngle = this.m_normalToTangentAngle;
             return (
-                this.hFovHorizontal >= Math.abs(eyeToTangentAngle) &&
-                this.cameraPitch <= this.hFovVertical
+                this.halfFovHorizontal >= Math.abs(eyeToTangentAngle) &&
+                this.cameraPitch <= this.halfFovVertical
             );
         }
     }
@@ -279,7 +279,7 @@ export class SphereHorizon {
 
         const radiusSq = this.m_radius * this.m_radius;
         const yBottom =
-            this.m_distanceToHorizonCenter * Math.tan(this.cameraPitch - this.hFovVertical);
+            this.m_distanceToHorizonCenter * Math.tan(this.cameraPitch - this.halfFovVertical);
         let tTopRight: number | undefined;
         let tBottomRight: number | undefined;
 
@@ -302,10 +302,10 @@ export class SphereHorizon {
                         const eyeToHorizon =
                             this.m_distanceToHorizonCenter / Math.cos(this.cameraPitch);
                         const yRight = this.m_distanceToHorizonCenter * Math.tan(this.cameraPitch);
-                        const xRight = eyeToHorizon * Math.tan(this.hFovHorizontal);
+                        const xRight = eyeToHorizon * Math.tan(this.halfFovHorizontal);
                         const eyeToBottom =
-                            (this.m_distanceToHorizonCenter * Math.cos(this.hFovVertical)) /
-                            Math.cos(this.cameraPitch - this.hFovVertical);
+                            (this.m_distanceToHorizonCenter * Math.cos(this.halfFovVertical)) /
+                            Math.cos(this.cameraPitch - this.halfFovVertical);
                         const xBottomRight = (xRight * eyeToBottom) / eyeToHorizon;
                         const yBottomRight = yBottom;
                         const intersections = Math2D.intersectLineAndCircle(
@@ -333,7 +333,7 @@ export class SphereHorizon {
                     case CanvasSide.Top: {
                         const yTop =
                             this.m_distanceToHorizonCenter *
-                            Math.tan(this.cameraPitch + this.hFovVertical);
+                            Math.tan(this.cameraPitch + this.halfFovVertical);
                         const x = Math.sqrt(radiusSq - yTop * yTop);
                         const t = Math.atan2(yTop, x) / twoPi;
                         sideIntersections.push(t, 0.5 - t);
@@ -366,17 +366,17 @@ export class SphereHorizon {
         return this.m_cameraPitch;
     }
 
-    private get hFovVertical(): number {
-        if (this.m_hFovVertical === undefined) {
-            this.m_hFovVertical = THREE.MathUtils.degToRad(this.m_camera.fov / 2);
+    private get halfFovVertical(): number {
+        if (this.m_halfFovVertical === undefined) {
+            this.m_halfFovVertical = THREE.MathUtils.degToRad(this.m_camera.fov / 2);
         }
-        return this.m_hFovVertical;
+        return this.m_halfFovVertical;
     }
 
-    private get hFovHorizontal(): number {
-        if (this.m_hFovHorizontal === undefined) {
-            this.m_hFovHorizontal = CameraUtils.computeHorizontalFov(this.m_camera) / 2;
+    private get halfFovHorizontal(): number {
+        if (this.m_halfFovHorizontal === undefined) {
+            this.m_halfFovHorizontal = CameraUtils.computeHorizontalFov(this.m_camera) / 2;
         }
-        return this.m_hFovHorizontal;
+        return this.m_halfFovHorizontal;
     }
 }

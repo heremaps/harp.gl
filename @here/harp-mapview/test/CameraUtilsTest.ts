@@ -15,8 +15,7 @@ describe("CameraUtils", function () {
         const vFov = 60;
         const aspect = 0.9;
         const camera = new THREE.PerspectiveCamera(vFov, aspect);
-        const hFov = THREE.MathUtils.radToDeg(CameraUtils.computeHorizontalFov(camera));
-        CameraUtils.setHorizontalFov(camera, hFov);
+        CameraUtils.setHorizontalFov(camera, CameraUtils.computeHorizontalFov(camera));
         expect(camera.fov).to.be.closeTo(vFov, 1e-11);
     });
 });

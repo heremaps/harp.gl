@@ -3858,18 +3858,17 @@ export class MapView extends EventDispatcher {
     /**
      * Sets the field of view calculation, and applies it immediately to the camera.
      *
-     * @param type - How to calculate the FOV
+     * @param fovCalculation - How to calculate the FOV
+     * @param height - Viewport height.
      */
     private setFovOnCamera(fovCalculation: FovCalculation, height: number) {
         let fov = 0;
         if (fovCalculation.type === "fixed") {
             this.updateFocalLength(height);
-            fov = fovCalculation.fov;
+            fov = THREE.MathUtils.degToRad(fovCalculation.fov);
         } else {
             assert(this.m_focalLength !== 0);
-            fov = THREE.MathUtils.radToDeg(
-                CameraUtils.computeVerticalFov(this.m_focalLength, height)
-            );
+            fov = CameraUtils.computeVerticalFov(this.m_focalLength, height);
         }
 
         CameraUtils.setVerticalFov(this.m_camera, fov);
@@ -3886,7 +3885,7 @@ export class MapView extends EventDispatcher {
     private updateFocalLength(height: number) {
         assert(this.m_options.fovCalculation !== undefined);
         this.m_focalLength = CameraUtils.computeFocalLength(
-            this.m_options.fovCalculation!.fov,
+            THREE.MathUtils.degToRad(this.m_options.fovCalculation!.fov),
             height
         );
     }

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 /**
  * Specifies how the FOV (Field of View) should be calculated.
  */
@@ -42,3 +44,5 @@ export interface FovCalculation {
 export const DEFAULT_FOV_CALCULATION: FovCalculation = { type: "dynamic", fov: 40 };
 export const MIN_FOV_DEG = 10;
 export const MAX_FOV_DEG = 140;
+export const MIN_FOV_RAD = THREE.MathUtils.degToRad(MIN_FOV_DEG);
+export const MAX_FOV_RAD = THREE.MathUtils.degToRad(MAX_FOV_DEG);
