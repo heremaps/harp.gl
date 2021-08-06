@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Style } from "@here/harp-datasource-protocol";
+import { FeatureCollection, Style } from "@here/harp-datasource-protocol";
+import { sphereProjection } from "@here/harp-geoutils";
 
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
@@ -231,6 +232,119 @@ describe("ScreenSpaceRendering Test", function () {
             beforeFinishCallback: async mapView => {
                 await mapView.removeDataSource(mapView.getDataSourceByName("geojson")!);
             }
+        });
+    });
+
+    it("renders elevated point using marker technique", async function () {
+        this.timeout(5000);
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-elevated-point",
+            theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "Marker" },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3, 15] }
+                    }
+                ]
+            },
+            lookAt: { tilt: 80, zoomLevel: 19 },
+            tileGeoJson: false
+        });
+    });
+    it("renders point markers using dataSourceOrder", async function () {
+        this.timeout(5000);
+
+        const markerStyle: Style = {
+            when: ["==", ["geometry-type"], "Point"],
+            technique: "labeled-icon",
+            imageTexture: ["get", "icon"],
+            text: ["get", "text"],
+            size: 15,
+            iconMayOverlap: true,
+            iconReserveSpace: false,
+            textMayOverlap: true,
+            textReserveSpace: false,
+            color: "black",
+            renderOrder: ["get", "renderOrder"],
+            styleSet: "geojson"
+        };
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "markers-with-different-dataSourceOrders",
+            theme: new ThemeBuilder().withStyle(markerStyle).withFontCatalog().build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "1", icon: "red-icon", renderOrder: 1 },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3] }
+                    },
+                    {
+                        type: "Feature",
+                        properties: { text: "2", icon: "red-icon", renderOrder: 2 },
+                        geometry: { type: "Point", coordinates: [14.65, 53.33] }
+                    }
+                ]
+            },
+            extraDataSource: {
+                geoJson: {
+                    type: "FeatureCollection",
+                    features: [
+                        {
+                            type: "Feature",
+                            properties: { text: "3", icon: "green-icon", renderOrder: 0 },
+                            geometry: { type: "Point", coordinates: [14.68, 53.26] }
+                        }
+                    ]
+                },
+                dataSourceOrder: 1
+            }
+        });
+    });
+
+    it("renders marker correctly on zoomed out globe", async function () {
+        const geoJson: FeatureCollection = {
+            type: "FeatureCollection",
+            features: [
+                {
+                    type: "Feature",
+                    properties: { color: "#436981" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [
+                            [
+                                [-180, -90],
+                                [180, -90],
+                                [180, 90],
+                                [-180, 90],
+                                [-180, -90]
+                            ]
+                        ]
+                    }
+                },
+                {
+                    type: "Feature",
+                    geometry: { type: "Point", coordinates: [0, 0] }
+                }
+            ]
+        };
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "marker-on-zoomed-out-globe",
+            theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
+            geoJson,
+            lookAt: {
+                zoomLevel: 3,
+                target: [0, 0]
+            },
+            projection: sphereProjection
         });
     });
 });

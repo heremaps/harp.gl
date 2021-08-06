@@ -5,6 +5,7 @@
  */
 import { FlatTheme, GeoJson, Theme } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
+import { Projection } from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
@@ -30,6 +31,7 @@ export interface GeoJsonTestOptions extends GeoJsonDataSourceTestOptions {
     extraDataSource?: GeoJsonDataSourceTestOptions;
     beforeFinishCallback?: (mapView: MapView) => void;
     size?: number;
+    projection?: Projection;
 }
 
 function createDataSource(
@@ -76,7 +78,8 @@ export class GeoJsonTest {
             theme: options.theme,
             preserveDrawingBuffer: true,
             pixelRatio: 1,
-            disableFading: true
+            disableFading: true,
+            projection: options.projection
         });
         this.mapView.animatedExtrusionHandler.enabled = false;
 

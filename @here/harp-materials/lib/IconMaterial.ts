@@ -78,7 +78,7 @@ export class IconMaterial extends RawShaderMaterial {
                   uniforms: {
                       map: new THREE.Uniform(params.map)
                   },
-                  depthTest: true,
+                  depthTest: false,
                   depthWrite: false,
                   transparent: true,
 

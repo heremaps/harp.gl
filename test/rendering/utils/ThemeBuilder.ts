@@ -24,6 +24,10 @@ export class ThemeBuilder {
         {
             name: "green-icon",
             image: "green-icon"
+        },
+        {
+            name: "plus-icon",
+            image: "plus-icon"
         }
     ];
 
