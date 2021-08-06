@@ -255,7 +255,7 @@ The purpose of a commit message is to summarize the scope and context of a patch
 
 Example:
 
-```typescript
+````typescript
 /**
  * Instances of `CancellationToken` can be used to cancel an ongoing request.
  *
@@ -299,7 +299,7 @@ Example:
      * @param qnr - The tile key to compare to.
      * @returns `true` if this tile key has identical row, column and level, `false` otherwise.
      */
-```
+````
 
 ## Deprecation
 
