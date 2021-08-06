@@ -9,6 +9,7 @@ import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils"
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { CameraUtils } from "./CameraUtils";
 import { ElevationProvider } from "./ElevationProvider";
 import { MapViewUtils } from "./Utils";
 
@@ -476,10 +477,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         let halfFovAngle = THREE.MathUtils.degToRad(camera.fov / 2);
         // If width > height, then we have to compute the horizontal FOV.
         if (camera.aspect > 1) {
-            halfFovAngle = MapViewUtils.calculateHorizontalFovByVerticalFov(
-                THREE.MathUtils.degToRad(camera.fov),
-                camera.aspect
-            );
+            halfFovAngle = CameraUtils.computeHorizontalFov(camera);
         }
 
         const maxR = r + this.maxElevation;

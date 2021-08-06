@@ -7,6 +7,7 @@ import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { expect } from "chai";
 import { MathUtils, PerspectiveCamera, Vector3 } from "three";
 
+import { CameraUtils } from "../lib/CameraUtils";
 import { CanvasSide, SphereHorizon } from "../lib/SphereHorizon";
 import { MapViewUtils } from "../lib/Utils";
 
@@ -64,10 +65,7 @@ describe("SphereHorizon", function () {
     }
 
     before(function () {
-        focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
-            MathUtils.degToRad(vFov),
-            canvasHeight
-        );
+        focalLength = CameraUtils.computeFocalLength(MathUtils.degToRad(vFov), canvasHeight);
     });
 
     beforeEach(function () {

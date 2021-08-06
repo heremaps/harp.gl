@@ -15,6 +15,7 @@ import {
 import { expect } from "chai";
 import * as THREE from "three";
 
+import { CameraUtils } from "../lib/CameraUtils";
 import { TiltViewClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { MapViewUtils } from "../lib/Utils";
 
@@ -32,7 +33,7 @@ function setupPerspectiveCamera(
     MapViewUtils.getCameraRotationAtTarget(projection, geoTarget, heading, tilt, camera.quaternion);
 
     const canvasHeight = 500;
-    const focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
+    const focalLength = CameraUtils.computeFocalLength(
         THREE.MathUtils.degToRad(vFov),
         canvasHeight
     );
