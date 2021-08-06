@@ -542,7 +542,12 @@ function getMainMaterialStyledProps(technique: Technique): StyledProperties {
         }
         case "circles":
         case "squares":
-            return pick(technique, automaticAttributes);
+            const baseProps = pick(technique, automaticAttributes);
+            baseProps.size = buildMetricValueEvaluator(
+                technique.size,
+                technique.metricUnit
+            );
+            return baseProps;
         case "extruded-line":
             return pick(technique, [
                 "color",

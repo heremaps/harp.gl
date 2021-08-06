@@ -473,14 +473,18 @@ export interface PointTechniqueParams extends BaseTechniqueParams {
      */
     texture?: string;
     /**
+     * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
+     */
+    metricUnit?: MetricUnit;
+    /**
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
     opacity?: DynamicProperty<number>;
     /**
-     * Size of point in pixels.
+     * Size of point in `metricUnit`.
      */
-    size?: DynamicProperty<number>;
+    size?: DynamicProperty<StyleLength>;
     /**
      * Whether to enable picking on these points.
      */
