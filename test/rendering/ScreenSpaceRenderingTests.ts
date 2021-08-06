@@ -233,4 +233,77 @@ describe("ScreenSpaceRendering Test", function () {
             }
         });
     });
+
+    it("renders elevated point using marker technique", async function () {
+        this.timeout(5000);
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-elevated-point",
+            theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "Marker" },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3, 15] }
+                    }
+                ]
+            },
+            lookAt: { tilt: 80, zoomLevel: 19 },
+            tileGeoJson: false
+        });
+    });
+    it("renders point markers using dataSourceOrder", async function () {
+        this.timeout(5000);
+
+        const markerStyle: Style = {
+            when: ["==", ["geometry-type"], "Point"],
+            technique: "labeled-icon",
+            imageTexture: ["get", "icon"],
+            text: ["get", "text"],
+            size: 15,
+            iconMayOverlap: true,
+            iconReserveSpace: false,
+            textMayOverlap: true,
+            textReserveSpace: false,
+            color: "black",
+            renderOrder: ["get", "renderOrder"],
+            styleSet: "geojson"
+        };
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "markers-with-different-dataSourceOrders",
+            theme: new ThemeBuilder().withStyle(markerStyle).withFontCatalog().build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "1", icon: "red-icon", renderOrder: 1 },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3] }
+                    },
+                    {
+                        type: "Feature",
+                        properties: { text: "2", icon: "red-icon", renderOrder: 2 },
+                        geometry: { type: "Point", coordinates: [14.65, 53.33] }
+                    }
+                ]
+            },
+            extraDataSource: {
+                geoJson: {
+                    type: "FeatureCollection",
+                    features: [
+                        {
+                            type: "Feature",
+                            properties: { text: "3", icon: "green-icon", renderOrder: 0 },
+                            geometry: { type: "Point", coordinates: [14.68, 53.26] }
+                        }
+                    ]
+                },
+                dataSourceOrder: 1
+            }
+        });
+    });
 });
