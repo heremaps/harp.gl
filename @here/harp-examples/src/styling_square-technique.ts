@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
@@ -20,6 +21,37 @@ import { apikey } from "../config";
  * [[include:squares_technique_example.ts]]
  * ```
  */
+
+const squareTheme: Theme = {
+    styles: {
+        tilezen: [
+            {
+                layer: "places",
+                technique: "squares",
+                when: ["==", ["geometry-type"], "Point"],
+                color: "#ff00ff",
+                metricUnit: "Meter",
+                size: 50
+            }
+        ]
+    }
+};
+
+const circleTheme: Theme = {
+    styles: {
+        tilezen: [
+            {
+                layer: "places",
+                technique: "circles",
+                when: ["==", ["geometry-type"], "Point"],
+                color: "#ff00ff",
+                metricUnit: "Meter",
+                size: 50
+            }
+        ]
+    }
+};
+
 export namespace SquaresTechniqueExample {
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {
@@ -30,20 +62,7 @@ export namespace SquaresTechniqueExample {
         const map = new MapView({
             canvas,
             // snippet:squares_technique_example.ts
-            theme: {
-                extends: "resources/berlin_tilezen_base.json",
-                styles: {
-                    tilezen: [
-                        {
-                            layer: "places",
-                            technique: "squares",
-                            when: ["==", ["geometry-type"], "Point"],
-                            color: "#ff00ff",
-                            size: 500
-                        }
-                    ]
-                }
-            },
+            theme: "resources/berlin_tilezen_base.json",
             // end:squares_technique_example.ts
             target: NY,
             tilt: 50,
@@ -77,6 +96,25 @@ export namespace SquaresTechniqueExample {
         });
 
         map.addDataSource(omvDataSource);
+
+        const points = new VectorTileDataSource({
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+            authenticationCode: apikey,
+            dataSourceOrder: 1,
+            addGroundPlane: false
+        });
+        map.addDataSource(points);
+        let theme = 0;
+        const changeTheme = () => {
+            if (theme++ % 2 === 0) {
+                points.setTheme(circleTheme);
+            } else {
+                points.setTheme(squareTheme);
+            }
+            map.update();
+            setTimeout(changeTheme, 2000);
+        };
+        setTimeout(changeTheme, 1000);
 
         return map;
     }
