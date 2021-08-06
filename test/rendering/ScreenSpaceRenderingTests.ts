@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Style } from "@here/harp-datasource-protocol";
+import { FeatureCollection, Style } from "@here/harp-datasource-protocol";
+import { sphereProjection } from "@here/harp-geoutils";
 
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
@@ -304,6 +305,46 @@ describe("ScreenSpaceRendering Test", function () {
                 },
                 dataSourceOrder: 1
             }
+        });
+    });
+
+    it("renders marker correctly on zoomed out globe", async function () {
+        const geoJson: FeatureCollection = {
+            type: "FeatureCollection",
+            features: [
+                {
+                    type: "Feature",
+                    properties: { color: "#436981" },
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: [
+                            [
+                                [-180, -90],
+                                [180, -90],
+                                [180, 90],
+                                [-180, 90],
+                                [-180, -90]
+                            ]
+                        ]
+                    }
+                },
+                {
+                    type: "Feature",
+                    geometry: { type: "Point", coordinates: [0, 0] }
+                }
+            ]
+        };
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "marker-on-zoomed-out-globe",
+            theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
+            geoJson,
+            lookAt: {
+                zoomLevel: 3,
+                target: [0, 0]
+            },
+            projection: sphereProjection
         });
     });
 });
