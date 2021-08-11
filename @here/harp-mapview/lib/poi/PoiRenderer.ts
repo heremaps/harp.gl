@@ -373,9 +373,7 @@ export class PoiBatchRegistry {
     }
 }
 
-// keep track of the missing textures, but only warn once
-const missingTextureName: Map<string, boolean> = new Map();
-
+// Searches the given caches for the texture name or the texture itself.
 function findImageItem(
     poiInfo: PoiInfo,
     imageCaches: MapViewImageCache[],
@@ -395,13 +393,8 @@ function findImageItem(
     }
 
     if (!imageItem) {
-        logger.error(`init: No imageItem found with name
-            '${imageTexture?.image ?? imageTextureName}'`);
+        // Because the image doesn't exist in the image cache, set to invalid.
         poiInfo.isValid = false;
-        if (missingTextureName.get(imageTextureName) === undefined) {
-            missingTextureName.set(imageTextureName, true);
-            logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
-        }
     }
     return imageItem;
 }
@@ -492,8 +485,12 @@ export class PoiRenderer {
         if (poiInfo === undefined) {
             return false;
         }
+        const { imageItem, imageTexture } = this.imageCached(poiInfo);
+        if (!imageItem) {
+            return false;
+        }
         if (poiInfo.buffer === undefined) {
-            this.preparePoi(pointLabel, env);
+            this.preparePoi(pointLabel, env, imageItem, imageTexture);
         }
         return poiInfo.buffer !== undefined;
     }
@@ -539,7 +536,10 @@ export class PoiRenderer {
 
         if (opacity > 0) {
             if (!poiInfo.buffer) {
-                this.preparePoi(poiInfo.textElement, env);
+                const { imageItem, imageTexture } = this.imageCached(poiInfo);
+                if (imageItem) {
+                    this.preparePoi(poiInfo.textElement, env, imageItem, imageTexture);
+                }
             }
             this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
         }
@@ -628,10 +628,37 @@ export class PoiRenderer {
     }
 
     /**
+     * @internal
+     * Returns whether the image and its texture are in the cache or not. Note, this can be managed
+     * externally, so there is no guarantee that the image actually exists (even if we have the
+     * request for it), because the API lets external users delete items from the cache.
+     */
+    private imageCached(
+        poiInfo: PoiInfo
+    ): { imageItem: ImageItem | undefined; imageTexture: ImageTexture | undefined } {
+        const imageTextureName = poiInfo.imageTextureName;
+        if (imageTextureName === undefined) {
+            poiInfo.isValid = false;
+            return { imageItem: undefined, imageTexture: undefined };
+        }
+
+        const imageTexture = this.m_poiManager.getImageTexture(imageTextureName);
+        const imageItem = findImageItem(poiInfo, this.m_imageCaches, imageTexture);
+        return { imageItem, imageTexture };
+    }
+
+    /**
      * Register the POI at the [[PoiBatchRegistry]] which may require some setup, for example
      * loading of the actual image.
+     *
+     * Assumes that the image requested exists already in the cache.
      */
-    private preparePoi(pointLabel: TextElement, env: Env): void {
+    private preparePoi(
+        pointLabel: TextElement,
+        env: Env,
+        imageItem: ImageItem,
+        imageTexture?: ImageTexture
+    ): void {
         const poiInfo = pointLabel.poiInfo;
         if (!poiInfo || !pointLabel.visible) {
             return;
@@ -652,18 +679,6 @@ export class PoiRenderer {
                 // PoiTable has not been loaded, but is required to determine visibility.
                 return;
             }
-        }
-
-        const imageTextureName = poiInfo.imageTextureName;
-        if (imageTextureName === undefined) {
-            poiInfo.isValid = false;
-            return;
-        }
-
-        const imageTexture = this.m_poiManager.getImageTexture(imageTextureName);
-        const imageItem = findImageItem(poiInfo, this.m_imageCaches, imageTexture);
-        if (!imageItem) {
-            return;
         }
 
         if (imageItem.loaded) {
@@ -767,6 +782,6 @@ export class PoiRenderer {
             poiInfo,
             this.addLayer(poiInfo.renderOrder!)
         );
-        poiInfo.isValid = true;
+        poiInfo.isValid = poiInfo.buffer !== undefined;
     }
 }

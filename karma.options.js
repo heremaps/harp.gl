@@ -170,6 +170,7 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
                 allowJs: true
             },
             coverageOptions: {
+                instrumentation: isCoverage ? true : false,
                 // This is needed otherwise the tests are included in the code coverage %.
                 exclude: [
                     /test\/+/,
