@@ -478,6 +478,14 @@ export class PoiRenderer {
         }
         const { imageItem, imageTexture } = this.imageCached(poiInfo.imageTextureName);
         if (!imageItem) {
+            // Set the POI to be invalid, so it will not be rendered, nor will it be re-checked in a
+            // future request. The item must exist (but not necessarily loaded in the cache before
+            // the POI can be initialized). We don't log an error, because the API of the
+            // MapViewImageCache allows the user to delete an image from the cache. The geometry
+            // creation is handled using some task queue which means that in some cases, a POI entry
+            // may be removed before the geometry is created. See queueGeometryCreation, which
+            // appends some item to the list. In such cases, the POI will just be abandoned and the
+            // geometry will be recreated with the new ImageItem.
             poiInfo.isValid = false;
             return false;
         }
