@@ -159,6 +159,10 @@ describe("PoiRenderer", function () {
 
             const imageLoaded = poiRenderer.prepareRender(pointLabel, mapEnv);
             expect(imageLoaded).true;
+
+            // Check that a second attempt to prepareRender succeeds.
+            const imageLoadedAgain = poiRenderer.prepareRender(pointLabel, mapEnv);
+            expect(imageLoadedAgain).true;
         });
 
         it("poi is valid when in cache and loading not started", async () => {
@@ -174,6 +178,10 @@ describe("PoiRenderer", function () {
             const waitingForLoad = poiRenderer.prepareRender(pointLabel, mapEnv);
             const result = await Promise.resolve(waitingForLoad);
             expect(result).true;
+
+            // Check that a second attempt to prepareRender succeeds.
+            const imageLoadedAgain = poiRenderer.prepareRender(pointLabel, mapEnv);
+            expect(imageLoadedAgain).true;
         });
 
         it("poi is invalid when not in cache, adding to cache doesn't help", async () => {

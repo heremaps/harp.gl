@@ -494,7 +494,7 @@ export class PoiRenderer {
         if (poiInfo.buffer === undefined) {
             return this.preparePoi(pointLabel, env, imageItem, imageTexture);
         }
-        return false;
+        return poiInfo.buffer !== undefined;
     }
 
     /**
