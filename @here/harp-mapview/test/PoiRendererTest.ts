@@ -11,13 +11,17 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { Env } from "@here/harp-datasource-protocol";
-import { MapView, MapViewImageCache, PoiManager, TextElement } from "@here/harp-mapview";
 import { Math2D } from "@here/harp-utils";
 import { expect } from "chai";
+
+import { MapViewImageCache } from "../lib/image/MapViewImageCache";
+import { MapView } from "../lib/MapView";
+import { PoiManager } from "../lib/poi/PoiManager";
+import { PoiBuffer, PoiRenderer } from "../lib/poi/PoiRenderer";
+import { TextElement } from "../lib/text/TextElement";
+
 import sinon = require("sinon");
 import * as THREE from "three";
-
-import { PoiBuffer, PoiRenderer } from "../lib/poi/PoiRenderer";
 
 describe("PoiRenderer", function () {
     describe("computeIconScreenBox", function () {
@@ -159,21 +163,13 @@ describe("PoiRenderer", function () {
             const testCache = new MapViewImageCache();
             // This is the difference to the test above, we don't start loading, we expect the
             // prepareRender function to do this.
-            const testImageItem = addRandomImageToCache(testCache, testImageName, false);
+            addRandomImageToCache(testCache, testImageName, false);
             const caches = [testCache];
             const poiRenderer = new PoiRenderer(webGLRenderer, poiManager, caches);
             const pointLabel = createPointLabel(testImageName);
             const waitingForLoad = poiRenderer.prepareRender(pointLabel, mapEnv);
-            // This is false because the image is still being loaded in the background. It is
-            // started in the preparePoi function.
-            expect(waitingForLoad).false;
-
-            // Promise.resolve used to convert the type `ImageItem | Promise<ImageItem>` to
-            // `Promise<ImageItem>`.
-            await Promise.resolve(testImageItem);
-
-            const imageLoaded = poiRenderer.prepareRender(pointLabel, mapEnv);
-            expect(imageLoaded).true;
+            const result = await Promise.resolve(waitingForLoad);
+            expect(result).true;
         });
 
         it("poi is invalid when not in cache, adding to cache doesn't help", async () => {

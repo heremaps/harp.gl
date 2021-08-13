@@ -470,8 +470,9 @@ export class PoiRenderer {
      * @param env - TODO! The current zoomLevel level of {@link MapView}
      *
      * @returns `True` if the space is not already allocated by another object (text label or POI)
+     * or a Promise if the image has to be loaded first.
      */
-    prepareRender(pointLabel: TextElement, env: Env): boolean {
+    prepareRender(pointLabel: TextElement, env: Env): boolean | Promise<boolean> {
         const poiInfo = pointLabel.poiInfo;
         if (poiInfo === undefined) {
             return false;
@@ -490,9 +491,9 @@ export class PoiRenderer {
             return false;
         }
         if (poiInfo.buffer === undefined) {
-            this.preparePoi(pointLabel, env, imageItem, imageTexture);
+            return this.preparePoi(pointLabel, env, imageItem, imageTexture);
         }
-        return poiInfo.buffer !== undefined;
+        return false;
     }
 
     /**
@@ -650,56 +651,65 @@ export class PoiRenderer {
      * loading of the actual image.
      *
      * Assumes that the image requested exists already in the cache.
+     *
+     * If the ImageItem hasn't had a request to load, this is done here as well, this is returned so
+     * that the user can await on this to know when to use the image.
+     *
+     * @returns if the POI was setup, or not (as a Promise because of the reason above, or
+     * directly).
      */
     private preparePoi(
         pointLabel: TextElement,
         env: Env,
         imageItem: ImageItem,
         imageTexture?: ImageTexture
-    ): void {
+    ): boolean | Promise<boolean> {
         const poiInfo = pointLabel.poiInfo;
         if (!poiInfo || !pointLabel.visible) {
-            return;
+            return false;
         }
 
         if (poiInfo.buffer !== undefined || poiInfo.isValid === false) {
             // Already set up, nothing to be done here.
-            return;
+            return false;
         }
 
         if (poiInfo.poiTableName !== undefined) {
             if (this.m_poiManager.updatePoiFromPoiTable(pointLabel)) {
                 if (!pointLabel.visible) {
                     // PoiTable set this POI to not visible.
-                    return;
+                    return false;
                 }
             } else {
                 // PoiTable has not been loaded, but is required to determine visibility.
-                return;
+                return false;
             }
         }
 
         if (imageItem.loaded) {
             this.setupPoiInfo(poiInfo, imageItem, env, imageTexture);
-            return;
+            return poiInfo.isValid === true;
         }
 
         if (imageItem.loading) {
             // already being loaded, will be rendered once available
-            return;
+            return false;
         }
 
-        imageItem
+        return imageItem
             .loadImage()
             .then(loadedImageItem => {
                 // Skip setup if image was not loaded (cancelled).
                 if (loadedImageItem?.image) {
                     this.setupPoiInfo(poiInfo, loadedImageItem, env, imageTexture);
+                    return poiInfo.isValid === true;
                 }
+                return false;
             })
             .catch(error => {
                 logger.error(`preparePoi: Failed to load imageItem: '${imageItem.url}`, error);
                 poiInfo.isValid = false;
+                return false;
             });
     }
 

@@ -1723,7 +1723,8 @@ export class TextElementsRenderer {
             this.m_viewState.lookAtDistance
         );
         const iconReady =
-            renderIcon && this.m_poiRenderer.prepareRender(pointLabel, this.m_viewState.env);
+            renderIcon &&
+            this.m_poiRenderer.prepareRender(pointLabel, this.m_viewState.env) === true;
         let iconInvisible = false;
         if (iconReady) {
             const result = placeIcon(
