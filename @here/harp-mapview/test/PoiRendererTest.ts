@@ -104,7 +104,7 @@ describe("PoiRenderer", function () {
         });
     });
 
-    describe("search for cached images", () => {
+    describe("search for cached images", function () {
         const webGLRenderer = {
             capabilities: {
                 isWebGL2: false
@@ -140,7 +140,7 @@ describe("PoiRenderer", function () {
             return testCache.addImage(name, `https://picsum.photos/${x++}/${y++}`, load);
         };
 
-        it("poi is valid when in cache and loading started", async () => {
+        it("poi is valid when in cache and loading started", async function () {
             this.timeout(5000);
 
             const testCache = new MapViewImageCache();
@@ -165,7 +165,7 @@ describe("PoiRenderer", function () {
             expect(imageLoadedAgain).true;
         });
 
-        it("poi is valid when in cache and loading not started", async () => {
+        it("poi is valid when in cache and loading not started", async function () {
             this.timeout(5000);
 
             const testCache = new MapViewImageCache();
@@ -184,7 +184,7 @@ describe("PoiRenderer", function () {
             expect(imageLoadedAgain).true;
         });
 
-        it("poi is invalid when not in cache, adding to cache doesn't help", async () => {
+        it("poi is invalid when not in cache, adding to cache doesn't help", async function () {
             this.timeout(5000);
 
             const testCache = new MapViewImageCache();
