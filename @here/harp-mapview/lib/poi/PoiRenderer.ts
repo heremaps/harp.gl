@@ -375,28 +375,19 @@ export class PoiBatchRegistry {
 
 // Searches the given caches for the texture name or the texture itself.
 function findImageItem(
-    poiInfo: PoiInfo,
+    imageTextureName: string,
     imageCaches: MapViewImageCache[],
     imageTexture?: ImageTexture
 ): ImageItem | undefined {
-    assert(poiInfo.imageTextureName !== undefined);
-    const imageTextureName = poiInfo.imageTextureName!;
-
-    let imageItem: ImageItem | undefined;
     for (const imageCache of imageCaches) {
-        imageItem = imageTexture
+        const imageItem = imageTexture
             ? imageCache.findImageByName(imageTexture.image)
             : imageCache.findImageByName(imageTextureName);
         if (imageItem) {
-            break;
+            return imageItem;
         }
     }
-
-    if (!imageItem) {
-        // Because the image doesn't exist in the image cache, set to invalid.
-        poiInfo.isValid = false;
-    }
-    return imageItem;
+    return undefined;
 }
 
 /**
@@ -485,8 +476,9 @@ export class PoiRenderer {
         if (poiInfo === undefined) {
             return false;
         }
-        const { imageItem, imageTexture } = this.imageCached(poiInfo);
+        const { imageItem, imageTexture } = this.imageCached(poiInfo.imageTextureName);
         if (!imageItem) {
+            poiInfo.isValid = false;
             return false;
         }
         if (poiInfo.buffer === undefined) {
@@ -536,7 +528,7 @@ export class PoiRenderer {
 
         if (opacity > 0) {
             if (!poiInfo.buffer) {
-                const { imageItem, imageTexture } = this.imageCached(poiInfo);
+                const { imageItem, imageTexture } = this.imageCached(poiInfo.imageTextureName);
                 if (imageItem) {
                     this.preparePoi(poiInfo.textElement, env, imageItem, imageTexture);
                 }
@@ -634,16 +626,14 @@ export class PoiRenderer {
      * request for it), because the API lets external users delete items from the cache.
      */
     private imageCached(
-        poiInfo: PoiInfo
+        imageTextureName?: string
     ): { imageItem: ImageItem | undefined; imageTexture: ImageTexture | undefined } {
-        const imageTextureName = poiInfo.imageTextureName;
         if (imageTextureName === undefined) {
-            poiInfo.isValid = false;
             return { imageItem: undefined, imageTexture: undefined };
         }
 
         const imageTexture = this.m_poiManager.getImageTexture(imageTextureName);
-        const imageItem = findImageItem(poiInfo, this.m_imageCaches, imageTexture);
+        const imageItem = findImageItem(imageTextureName, this.m_imageCaches, imageTexture);
         return { imageItem, imageTexture };
     }
 

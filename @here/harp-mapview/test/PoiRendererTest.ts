@@ -100,7 +100,7 @@ describe("PoiRenderer", function () {
         });
     });
 
-    describe.only("search for cached images", () => {
+    describe("search for cached images", () => {
         const webGLRenderer = {
             capabilities: {
                 isWebGL2: false
@@ -111,27 +111,40 @@ describe("PoiRenderer", function () {
         const testImageName = "testImage";
         const mapEnv = new Env();
 
-        it("poi is valid when in cache", async () => {
-            const testCache = new MapViewImageCache();
-            // Add a test image to the cache
-            const testImageItem = testCache.addImage(
-                testImageName,
-                "https://picsum.photos/200/300",
-                true
-            );
-            const caches = [testCache];
-            const poiRenderer = new PoiRenderer(webGLRenderer, poiManager, caches);
-
-            const pointLabel = {
+        const createPointLabel = (name: string) => {
+            return {
                 poiInfo: {
-                    imageTextureName: testImageName,
+                    imageTextureName: name,
                     isValid: true,
                     buffer: undefined,
                     technique: {}
                 },
                 visible: true
             } as TextElement;
+        };
+
+        let x = 1;
+        let y = 1;
+
+        const addRandomImageToCache = (
+            testCache: MapViewImageCache,
+            name: string,
+            load: boolean
+        ) => {
+            // Note, the images must be unique, otherwise the test will fail, because the internal
+            // caching mechanism of the ImageCache will have already loaded the image.
+            return testCache.addImage(name, `https://picsum.photos/${x++}/${y++}`, load);
+        };
+
+        it("poi is valid when in cache and loading started", async () => {
+            const testCache = new MapViewImageCache();
+            const testImageItem = addRandomImageToCache(testCache, testImageName, true);
+            const caches = [testCache];
+            const poiRenderer = new PoiRenderer(webGLRenderer, poiManager, caches);
+            const pointLabel = createPointLabel(testImageName);
             const waitingForLoad = poiRenderer.prepareRender(pointLabel, mapEnv);
+            // This is false because the image is still being loaded in the background, notice the
+            // true flag passed to the call to testCache.addImage.
             expect(waitingForLoad).false;
 
             // Promise.resolve used to convert the type `ImageItem | Promise<ImageItem>` to
@@ -142,29 +155,18 @@ describe("PoiRenderer", function () {
             expect(imageLoaded).true;
         });
 
-        it("poi is invalid when not cache, but recreated when added to cache", async () => {
+        it("poi is valid when in cache and loading not started", async () => {
             const testCache = new MapViewImageCache();
-            // Empty cache for now
+            // This is the difference to the test above, we don't start loading, we expect the
+            // prepareRender function to do this.
+            const testImageItem = addRandomImageToCache(testCache, testImageName, false);
             const caches = [testCache];
             const poiRenderer = new PoiRenderer(webGLRenderer, poiManager, caches);
-
-            const pointLabel = {
-                poiInfo: {
-                    imageTextureName: testImageName,
-                    isValid: true,
-                    buffer: undefined,
-                    technique: {}
-                },
-                visible: true
-            } as TextElement;
+            const pointLabel = createPointLabel(testImageName);
             const waitingForLoad = poiRenderer.prepareRender(pointLabel, mapEnv);
+            // This is false because the image is still being loaded in the background. It is
+            // started in the preparePoi function.
             expect(waitingForLoad).false;
-
-            const testImageItem = testCache.addImage(
-                testImageName,
-                "https://picsum.photos/200/300",
-                true
-            );
 
             // Promise.resolve used to convert the type `ImageItem | Promise<ImageItem>` to
             // `Promise<ImageItem>`.
@@ -172,6 +174,26 @@ describe("PoiRenderer", function () {
 
             const imageLoaded = poiRenderer.prepareRender(pointLabel, mapEnv);
             expect(imageLoaded).true;
+        });
+
+        it("poi is invalid when not in cache, adding to cache doesn't help", async () => {
+            const testCache = new MapViewImageCache();
+            // Empty cache for now
+            const caches = [testCache];
+            const poiRenderer = new PoiRenderer(webGLRenderer, poiManager, caches);
+            const pointLabel = createPointLabel(testImageName);
+            const waitingForLoad = poiRenderer.prepareRender(pointLabel, mapEnv);
+            expect(waitingForLoad).false;
+
+            const testImageItem = addRandomImageToCache(testCache, testImageName, true);
+
+            // Promise.resolve used to convert the type `ImageItem | Promise<ImageItem>` to
+            // `Promise<ImageItem>`.
+            await Promise.resolve(testImageItem);
+
+            const imageLoaded = poiRenderer.prepareRender(pointLabel, mapEnv);
+            // Check that adding to the cache late doesn't help.
+            expect(imageLoaded).false;
         });
     });
 });
