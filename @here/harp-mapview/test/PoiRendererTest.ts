@@ -141,6 +141,8 @@ describe("PoiRenderer", function () {
         };
 
         it("poi is valid when in cache and loading started", async () => {
+            this.timeout(5000);
+
             const testCache = new MapViewImageCache();
             const testImageItem = addRandomImageToCache(testCache, testImageName, true);
             const caches = [testCache];
@@ -160,6 +162,8 @@ describe("PoiRenderer", function () {
         });
 
         it("poi is valid when in cache and loading not started", async () => {
+            this.timeout(5000);
+
             const testCache = new MapViewImageCache();
             // This is the difference to the test above, we don't start loading, we expect the
             // prepareRender function to do this.
@@ -173,6 +177,8 @@ describe("PoiRenderer", function () {
         });
 
         it("poi is invalid when not in cache, adding to cache doesn't help", async () => {
+            this.timeout(5000);
+
             const testCache = new MapViewImageCache();
             // Empty cache for now
             const caches = [testCache];

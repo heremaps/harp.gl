@@ -470,7 +470,8 @@ export class PoiRenderer {
      * @param env - TODO! The current zoomLevel level of {@link MapView}
      *
      * @returns `True` if the space is not already allocated by another object (text label or POI)
-     * or a Promise if the image has to be loaded first.
+     * or a Promise if the image has to be loaded first. This happens when the user explicitly
+     * doesn't load the image when it is put into the cache.
      */
     prepareRender(pointLabel: TextElement, env: Env): boolean | Promise<boolean> {
         const poiInfo = pointLabel.poiInfo;
