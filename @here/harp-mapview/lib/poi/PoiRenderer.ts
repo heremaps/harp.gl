@@ -469,32 +469,19 @@ export class PoiRenderer {
      * @param pointLabel - TextElement with PoiInfo for rendering the POI icon.
      * @param env - TODO! The current zoomLevel level of {@link MapView}
      *
-     * @returns `True` if the space is not already allocated by another object (text label or POI)
-     * or a Promise if the image has to be loaded first. This happens when the user explicitly
-     * doesn't load the image when it is put into the cache.
+     * @returns `True` if the label can be rendered or a Promise if the image has to be loaded
+     * first. This happens when the user explicitly doesn't load the image when it is put into the
+     * cache.
      */
     prepareRender(pointLabel: TextElement, env: Env): boolean | Promise<boolean> {
         const poiInfo = pointLabel.poiInfo;
         if (poiInfo === undefined) {
             return false;
         }
-        const { imageItem, imageTexture } = this.imageCached(poiInfo.imageTextureName);
-        if (!imageItem) {
-            // Set the POI to be invalid, so it will not be rendered, nor will it be re-checked in a
-            // future request. The item must exist (but not necessarily loaded in the cache before
-            // the POI can be initialized). We don't log an error, because the API of the
-            // MapViewImageCache allows the user to delete an image from the cache. The geometry
-            // creation is handled using some task queue which means that in some cases, a POI entry
-            // may be removed before the geometry is created. See queueGeometryCreation, which
-            // appends some item to the list. In such cases, the POI will just be abandoned and the
-            // geometry will be recreated with the new ImageItem.
-            poiInfo.isValid = false;
-            return false;
-        }
         if (poiInfo.buffer === undefined) {
-            return this.preparePoi(pointLabel, env, imageItem, imageTexture);
+            return this.preparePoi(pointLabel, env);
         }
-        return poiInfo.buffer !== undefined;
+        return true;
     }
 
     /**
@@ -538,10 +525,7 @@ export class PoiRenderer {
 
         if (opacity > 0) {
             if (!poiInfo.buffer) {
-                const { imageItem, imageTexture } = this.imageCached(poiInfo.imageTextureName);
-                if (imageItem) {
-                    this.preparePoi(poiInfo.textElement, env, imageItem, imageTexture);
-                }
+                this.preparePoi(poiInfo.textElement, env);
             }
             this.m_poiBatchRegistry.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
         }
@@ -659,12 +643,7 @@ export class PoiRenderer {
      * @returns if the POI was setup, or not (as a Promise because of the reason above, or
      * directly).
      */
-    private preparePoi(
-        pointLabel: TextElement,
-        env: Env,
-        imageItem: ImageItem,
-        imageTexture?: ImageTexture
-    ): boolean | Promise<boolean> {
+    private preparePoi(pointLabel: TextElement, env: Env): boolean | Promise<boolean> {
         const poiInfo = pointLabel.poiInfo;
         if (!poiInfo || !pointLabel.visible) {
             return false;
@@ -685,6 +664,16 @@ export class PoiRenderer {
                 // PoiTable has not been loaded, but is required to determine visibility.
                 return false;
             }
+        }
+
+        const { imageItem, imageTexture } = this.imageCached(poiInfo.imageTextureName);
+        if (!imageItem) {
+            // Set the POI to be invalid, so it will not be rendered, nor will it be re-checked in a
+            // future request. The item must exist (but not necessarily loaded in the cache before
+            // the POI can be initialized). We don't log an error, because the API of the
+            // MapViewImageCache allows the user to delete an image from the cache.
+            poiInfo.isValid = false;
+            return false;
         }
 
         if (imageItem.loaded) {
