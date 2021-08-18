@@ -6,6 +6,7 @@
 import { Expr, getProjectionName } from "@here/harp-datasource-protocol";
 import {
     GeoBox,
+    GeoBoxExtentLike,
     GeoCoordinates,
     GeoCoordinatesLike,
     GeoPolygon,
@@ -13,9 +14,11 @@ import {
     MercatorConstants,
     mercatorProjection,
     MIN_LONGITUDE,
+    Projection,
     sphereProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import {
     getTestResourceUrl,
     silenceLoggingAroundFunction,
@@ -32,7 +35,7 @@ import { ElevationProvider } from "../lib/ElevationProvider";
 import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSource";
 import { MapMaterialAdapter } from "../lib/MapMaterialAdapter";
 import { MapObjectAdapter } from "../lib/MapObjectAdapter";
-import { MapView, MapViewEventNames, MapViewOptions } from "../lib/MapView";
+import { LookAtParams, MapView, MapViewEventNames, MapViewOptions } from "../lib/MapView";
 import { DEFAULT_CLEAR_COLOR } from "../lib/MapViewEnvironment";
 import { MapViewFog } from "../lib/MapViewFog";
 import * as FontCatalogLoader from "../lib/text/FontCatalogLoader";
@@ -133,288 +136,301 @@ describe("MapView", function () {
         expect(mapView.geoCenter.longitude).to.be.closeTo(coords.longitude, 0.000000000001);
     });
 
-    for (const { projection, projectionName, epsilon } of [
-        {
-            projection: sphereProjection,
-            projectionName: "sphere",
-            // On sphere, we do lots of math and unfortunately loose lots of precision
-            epsilon: 1e-10
-        },
-        {
-            projection: mercatorProjection,
-            projectionName: "mercator",
-            // ... comparing to flat projection.
-            epsilon: 1e-13
-        }
-    ]) {
-        describe(`camera positioning - ${projectionName} projection`, function () {
-            for (const { testName, lookAtParams } of [
-                {
-                    testName: "berlin/18 topView",
-                    lookAtParams: {
-                        target: new GeoCoordinates(52.5145, 13.3501),
-                        zoomLevel: 18
-                    }
-                },
-                {
-                    testName: "berlin/18 tilted/rotated",
-                    lookAtParams: {
-                        target: new GeoCoordinates(52.5145, 13.3501),
-                        zoomLevel: 18,
-                        tilt: 10,
-                        heading: 20
-                    }
-                },
-                {
-                    testName: "france/6 topView",
-                    lookAtParams: {
-                        target: new GeoCoordinates(47.232873, 1.2194824999999998),
-                        zoom: 6.7
-                    }
-                },
-                {
-                    testName: "france/6 tilted/rotated",
-                    lookAtParams: {
-                        target: new GeoCoordinates(47.232873, 1.2194824999999998),
-                        zoom: 6.7,
-                        tilt: 25,
-                        heading: 15
-                    }
-                },
-                {
-                    testName: "usa/5 topView",
-                    lookAtParams: {
-                        target: new GeoCoordinates(40.60472, -103.0152),
-                        zoom: 5
-                    }
-                },
-                {
-                    testName: "usa/5 tilted/rotated",
-                    lookAtParams: {
-                        target: new GeoCoordinates(40.60472, -103.0152),
-                        zoom: 5,
-                        tilt: 30,
-                        heading: -160
-                    }
-                },
-                {
-                    testName: "berlin bounds only",
-                    lookAtParams: {
-                        bounds: new GeoBox(
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.590844, 13.522331)
-                        )
-                    }
-                },
-                {
-                    testName: "berlin bounds + zoomLevel",
-                    lookAtParams: {
-                        bounds: new GeoBox(
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.590844, 13.522331)
-                        ),
-                        zoomLevel: 10
-                    }
-                },
-                {
-                    testName: "berlin bounds + distance",
-                    lookAtParams: {
-                        bounds: new GeoBox(
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.590844, 13.522331)
-                        ),
-                        distance: 38200,
-                        expectAllInView: false
-                    }
-                },
-                {
-                    testName: "berlin bounds + distance + angles",
-                    lookAtParams: {
-                        bounds: new GeoBox(
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.590844, 13.522331)
-                        ),
-                        tilt: 45,
-                        heading: 45
-                    }
-                },
-                {
-                    testName: "berlin polygon bounds only",
-                    lookAtParams: {
-                        bounds: new GeoPolygon([
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.438917, 13.522331),
-                            new GeoCoordinates(52.590844, 13.522331),
-                            new GeoCoordinates(52.590844, 13.275001)
-                        ])
-                    }
-                },
-                {
-                    testName: "berlin polygon bounds + zoomLevel",
-                    lookAtParams: {
-                        bounds: new GeoPolygon([
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.438917, 13.522331),
-                            new GeoCoordinates(52.590844, 13.522331),
-                            new GeoCoordinates(52.590844, 13.275001)
-                        ]),
-                        zoomLevel: 10
-                    }
-                },
-                {
-                    testName: "berlin polygon bounds + distance",
-                    lookAtParams: {
-                        bounds: new GeoPolygon([
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.438917, 13.522331),
-                            new GeoCoordinates(52.590844, 13.522331),
-                            new GeoCoordinates(52.590844, 13.275001)
-                        ]),
-
-                        distance: 38200,
-                        expectAllInView: false
-                    }
-                },
-                {
-                    testName: "berlin polygonbounds + distance + angles",
-                    lookAtParams: {
-                        bounds: new GeoPolygon([
-                            new GeoCoordinates(52.438917, 13.275001),
-                            new GeoCoordinates(52.438917, 13.522331),
-                            new GeoCoordinates(52.590844, 13.522331),
-                            new GeoCoordinates(52.590844, 13.275001)
-                        ]),
-                        tilt: 45,
-                        heading: 45
-                    }
+    describe("lookAt", function () {
+        const tests: Array<{
+            testName: string;
+            lookAtParams: Partial<LookAtParams>;
+            expectAllInView?: boolean;
+        }> = [
+            {
+                testName: "berlin/18 topView",
+                lookAtParams: {
+                    target: new GeoCoordinates(52.5145, 13.3501),
+                    zoomLevel: 18
                 }
-            ]) {
-                it(`obeys constructor params - ${testName}`, function () {
-                    mapView = new MapView({
-                        ...mapViewOptions,
-                        projection,
-                        ...lookAtParams
+            },
+            {
+                testName: "berlin/18 tilted/rotated",
+                lookAtParams: {
+                    target: new GeoCoordinates(52.5145, 13.3501),
+                    zoomLevel: 18,
+                    tilt: 10,
+                    heading: 20
+                }
+            },
+            {
+                testName: "france/6 topView",
+                lookAtParams: {
+                    target: new GeoCoordinates(47.232873, 1.2194824999999998),
+                    zoomLevel: 6.7
+                }
+            },
+            {
+                testName: "france/6 tilted/rotated",
+                lookAtParams: {
+                    target: new GeoCoordinates(47.232873, 1.2194824999999998),
+                    zoomLevel: 6.7,
+                    tilt: 25,
+                    heading: 15
+                }
+            },
+            {
+                testName: "usa/5 topView",
+                lookAtParams: {
+                    target: new GeoCoordinates(40.60472, -103.0152),
+                    zoomLevel: 5
+                }
+            },
+            {
+                testName: "usa/5 tilted/rotated",
+                lookAtParams: {
+                    target: new GeoCoordinates(40.60472, -103.0152),
+                    zoomLevel: 5,
+                    tilt: 30,
+                    heading: -160
+                }
+            },
+            {
+                testName: "berlin bounds only",
+                lookAtParams: {
+                    bounds: new GeoBox(
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.590844, 13.522331)
+                    )
+                }
+            },
+            {
+                testName: "berlin bounds + zoomLevel",
+                lookAtParams: {
+                    bounds: new GeoBox(
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.590844, 13.522331)
+                    ),
+                    zoomLevel: 10
+                }
+            },
+            {
+                testName: "berlin bounds + distance",
+                lookAtParams: {
+                    bounds: new GeoBox(
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.590844, 13.522331)
+                    ),
+                    distance: 38200
+                },
+                expectAllInView: false
+            },
+            {
+                testName: "berlin bounds + angles",
+                lookAtParams: {
+                    bounds: new GeoBox(
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.590844, 13.522331)
+                    ),
+                    tilt: 45,
+                    heading: 45
+                }
+            },
+            {
+                testName: "berlin polygon bounds only",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.438917, 13.522331),
+                        new GeoCoordinates(52.590844, 13.522331),
+                        new GeoCoordinates(52.590844, 13.275001)
+                    ])
+                }
+            },
+            {
+                testName: "large polygon bounds only",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(40.0, 13.0),
+                        new GeoCoordinates(40.0, 20.0),
+                        new GeoCoordinates(52.0, 20.0),
+                        new GeoCoordinates(52.0, 13.0)
+                    ])
+                }
+            },
+            {
+                testName: "large polygon bounds + angles",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(40.0, 13.0),
+                        new GeoCoordinates(40.0, 20.0),
+                        new GeoCoordinates(52.0, 20.0),
+                        new GeoCoordinates(52.0, 13.0)
+                    ]),
+                    tilt: 80,
+                    heading: 30
+                }
+            },
+            {
+                testName: "large polygon with spike bounds only",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(52, 13.0),
+                        new GeoCoordinates(40, 15.0),
+                        new GeoCoordinates(52, 20.0),
+                        new GeoCoordinates(54, 20.0),
+                        new GeoCoordinates(54, 13.0)
+                    ])
+                }
+            },
+            {
+                testName: "large polygon with spike bounds + angles",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(52, 13.0),
+                        new GeoCoordinates(52, 20.0),
+                        new GeoCoordinates(53, 25.0),
+                        new GeoCoordinates(54, 20.0),
+                        new GeoCoordinates(54, 13.0)
+                    ]),
+                    tilt: 70,
+                    heading: 15
+                }
+            },
+            {
+                testName: "berlin polygon bounds + zoomLevel",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.438917, 13.522331),
+                        new GeoCoordinates(52.590844, 13.522331),
+                        new GeoCoordinates(52.590844, 13.275001)
+                    ]),
+                    zoomLevel: 10
+                }
+            },
+            {
+                testName: "berlin polygon bounds + distance",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.438917, 13.522331),
+                        new GeoCoordinates(52.590844, 13.522331),
+                        new GeoCoordinates(52.590844, 13.275001)
+                    ]),
+
+                    distance: 38200
+                },
+                expectAllInView: false
+            },
+            {
+                testName: "berlin polygonbounds + angles",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.438917, 13.522331),
+                        new GeoCoordinates(52.590844, 13.522331),
+                        new GeoCoordinates(52.590844, 13.275001)
+                    ]),
+                    tilt: 45,
+                    heading: 45
+                }
+            }
+        ];
+
+        function getCenterAndGeoPoints(
+            bounds: GeoBox | GeoPolygon | GeoBoxExtentLike | GeoCoordLike[]
+        ): [GeoCoordinates, GeoCoordinatesLike[]] {
+            let center: GeoCoordinates | undefined;
+            let geoPoints: GeoCoordinatesLike[] = [];
+
+            if (bounds instanceof GeoBox) {
+                center = bounds.center;
+                geoPoints.push(bounds.northEast);
+                geoPoints.push(bounds.southWest);
+                geoPoints.push(new GeoCoordinates(bounds.south, bounds.east));
+                geoPoints.push(new GeoCoordinates(bounds.north, bounds.west));
+            } else if (bounds instanceof GeoPolygon) {
+                center = bounds.getCentroid();
+                geoPoints = bounds.coordinates as GeoCoordinatesLike[];
+            }
+            return [center, geoPoints];
+        }
+
+        for (const [projection, eps] of [
+            [sphereProjection, 1e-10], // lookAt for sphere looses more precision, use larger eps.
+            [mercatorProjection, 1e-13]
+        ] as Array<[Projection, number]>) {
+            describe(`${getProjectionName(projection)} projection`, function () {
+                for (const { testName, lookAtParams, expectAllInView } of tests) {
+                    const target = lookAtParams.target as GeoCoordinates | undefined;
+
+                    it(`obeys constructor params - ${testName}`, function () {
+                        mapView = new MapView({ ...mapViewOptions, projection, ...lookAtParams });
+                        if (lookAtParams.zoomLevel !== undefined) {
+                            expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, eps);
+                        }
+                        if (target !== undefined) {
+                            expect(mapView.target.lat).to.be.closeTo(target.lat, eps);
+                            expect(mapView.target.lng).to.be.closeTo(target.lng, eps);
+                        }
+                        if (lookAtParams.tilt !== undefined) {
+                            expect(mapView.tilt).to.be.closeTo(lookAtParams.tilt, eps);
+                        }
+                        if (lookAtParams.heading !== undefined) {
+                            expect(mapView.heading).to.be.closeTo(lookAtParams.heading, eps);
+                        }
                     });
+                    it(`obeys #lookAt params - ${testName}`, function () {
+                        mapView = new MapView({ ...mapViewOptions, projection });
 
-                    if (lookAtParams.zoomLevel !== undefined) {
-                        expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, epsilon);
-                    }
-                    if (lookAtParams.target !== undefined) {
-                        expect(mapView.target.latitude).to.be.closeTo(
-                            lookAtParams.target.latitude,
-                            epsilon
-                        );
-                        expect(mapView.target.longitude).to.be.closeTo(
-                            lookAtParams.target.longitude,
-                            epsilon
-                        );
-                    }
-                    if (lookAtParams.tilt !== undefined) {
-                        expect(mapView.tilt).to.be.closeTo(lookAtParams.tilt, epsilon);
-                    }
-                    if (lookAtParams.heading !== undefined) {
-                        expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
-                    }
-                });
-                it(`obeys #lookAt params - ${testName}`, function () {
-                    mapView = new MapView({
-                        ...mapViewOptions,
-                        projection
-                    });
+                        mapView.lookAt(lookAtParams);
 
-                    mapView.lookAt(lookAtParams);
-
-                    if (lookAtParams.zoomLevel !== undefined) {
-                        expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, epsilon);
-                    }
-                    if (lookAtParams.target !== undefined) {
-                        expect(mapView.target.latitude).to.be.closeTo(
-                            lookAtParams.target.latitude,
-                            epsilon
-                        );
-                        expect(mapView.target.longitude).to.be.closeTo(
-                            lookAtParams.target.longitude,
-                            epsilon
-                        );
-                    }
-                    if (lookAtParams.tilt !== undefined) {
-                        expect(mapView.tilt).to.be.closeTo(lookAtParams.tilt, epsilon);
-                    }
-                    if (lookAtParams.heading !== undefined) {
-                        expect(mapView.heading).to.be.closeTo(lookAtParams.heading, epsilon);
-                    }
-                    if (lookAtParams.bounds !== undefined) {
-                        let center: GeoCoordinatesLike | undefined;
-                        let geoPoints: GeoCoordinatesLike[] = [];
-                        if (lookAtParams.bounds instanceof GeoBox) {
-                            center = lookAtParams.bounds.center;
-                            geoPoints.push(lookAtParams.bounds.northEast);
-                            geoPoints.push(lookAtParams.bounds.southWest);
-                            geoPoints.push(
-                                new GeoCoordinates(
-                                    lookAtParams.bounds.south,
-                                    lookAtParams.bounds.east
-                                )
-                            );
-                            geoPoints.push(
-                                new GeoCoordinates(
-                                    lookAtParams.bounds.north,
-                                    lookAtParams.bounds.west
-                                )
-                            );
-                        } else if (lookAtParams.bounds instanceof GeoPolygon) {
-                            center = lookAtParams.bounds.getCentroid();
-                            geoPoints = lookAtParams.bounds.coordinates as GeoCoordinatesLike[];
+                        if (lookAtParams.zoomLevel !== undefined) {
+                            expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, eps);
                         }
-                        expect(center).not.to.be.undefined;
-                        if (center !== undefined) {
-                            expect(mapView.target.latitude).to.be.closeTo(center.latitude, epsilon);
-                            expect(mapView.target.longitude).to.be.closeTo(
-                                center.longitude,
-                                epsilon
-                            );
-                        }
-                        if (
-                            lookAtParams.expectAllInView === undefined ||
-                            lookAtParams.expectAllInView === true
-                        ) {
-                            //render once to update near and far plane
-                            mapView.renderSync();
-
-                            geoPoints.forEach(point => {
-                                //const worldPoint: Vector3 = new Vector3(0, 0);
-                                const worldPoint = mapView?.projection.projectPoint(point);
-                                expect(worldPoint).not.to.be.undefined;
-                                if (worldPoint !== undefined && mapView?.camera !== undefined) {
-                                    expect(
-                                        MapViewUtils.closeToFrustum(
-                                            worldPoint as THREE.Vector3,
-                                            mapView?.camera,
-                                            0.00001
-                                        )
-                                    ).to.be.true;
-                                }
-                            });
-                        }
-
-                        if (lookAtParams.zoomLevel) {
-                            expect(mapView.zoomLevel).to.be.closeTo(
-                                lookAtParams.zoomLevel,
-                                epsilon
-                            );
-                        }
-
-                        if (lookAtParams.distance) {
+                        if (lookAtParams.distance !== undefined) {
                             expect(mapView.targetDistance).to.be.closeTo(
                                 lookAtParams.distance,
                                 1e-8
                             );
                         }
-                    }
-                });
-            }
-        });
-    }
+                        if (lookAtParams.target !== undefined) {
+                            expect(mapView.target.lat).to.be.closeTo(target.lat, eps);
+                            expect(mapView.target.lng).to.be.closeTo(target.lng, eps);
+                        }
+                        if (lookAtParams.tilt !== undefined) {
+                            expect(mapView.tilt).to.be.closeTo(lookAtParams.tilt, eps);
+                        }
+                        if (lookAtParams.heading !== undefined) {
+                            expect(mapView.heading).to.be.closeTo(lookAtParams.heading, eps);
+                        }
+                        if (lookAtParams.bounds === undefined) {
+                            return;
+                        }
+                        const [center, geoPoints] = getCenterAndGeoPoints(lookAtParams.bounds);
+                        expect(center).not.to.be.undefined;
+                        expect(mapView.target.lat).to.be.closeTo(center.lat, eps);
+                        expect(mapView.target.lng).to.be.closeTo(center.lng, eps);
+
+                        if (expectAllInView === false) {
+                            return;
+                        }
+
+                        //render once to update near and far plane
+                        mapView.renderSync();
+
+                        geoPoints.forEach(point => {
+                            const worldPoint = mapView?.projection.projectPoint(point);
+                            expect(worldPoint).not.to.be.undefined;
+                            expect(
+                                MapViewUtils.closeToFrustum(
+                                    worldPoint as THREE.Vector3,
+                                    mapView!.camera,
+                                    0.00001
+                                )
+                            ).to.be.true;
+                        });
+                    });
+                }
+            });
+        }
+    });
     it("Correctly sets target and zoom from options in constructor", function () {
         mapView = new MapView({
             ...mapViewOptions,

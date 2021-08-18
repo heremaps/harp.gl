@@ -944,78 +944,61 @@ export namespace MapViewUtils {
         worldTarget: THREE.Vector3,
         camera: THREE.PerspectiveCamera
     ): number {
-        const cameraRotationMatrix = new THREE.Matrix4();
-        cameraRotationMatrix.extractRotation(camera.matrixWorld);
-        const screenUpVector = new THREE.Vector3(0, 1, 0).applyMatrix4(cameraRotationMatrix);
-        const screenSideVector = new THREE.Vector3(1, 0, 0).applyMatrix4(cameraRotationMatrix);
-        const screenVertMidPlane = new THREE.Plane().setFromCoplanarPoints(
-            camera.position,
-            worldTarget,
-            worldTarget.clone().add(screenUpVector)
-        );
-        const screenHorzMidPlane = new THREE.Plane().setFromCoplanarPoints(
-            camera.position,
-            worldTarget,
-            worldTarget.clone().add(screenSideVector)
-        );
+        //                camY
+        //       targetDist^
+        //      |<-------->|     Ps
+        //     constD pEyeZ|    /|  ^
+        //      |<-->|<--->|   / |  |
+        //      |    |     |  /  |  | ndcY*h/2
+        //      |    |     | /   |  |
+        //  <---T----P'----C0----O  v
+        // camZ      |_|  /|     |
+        //           |   / |<--->|
+        //      PcamY|  /     f
+        //           | / (focal length)
+        //           |/
+        //           P
+        //                            camY
+        //     constD      newPEyeZ    ^          Ps
+        //      |<-->|<--------------->|       _-`|  ^
+        //      |    |                 |    _-`   |  | h/2
+        //      |    |                 | _-`      |  |
+        //  <---T----P'----C0----------C1---------O  v
+        // camZ      |_|            _-`|          |              C0  - Initial camera position
+        //           |           _-`   |<-------->|              C1  - New camera position
+        //      PcamY|        _-`           f                    T   - Camera target
+        //           |     _-`        (focal length)             P   - Bounds point (world space)
+        //           |  _-`                                      Ps  - P projected on screen.
+        //           P-`                                         O   - Principal point.
+        //
+        // Diagram showing how to calculate the camera distance on the camera YZ plane so that a
+        // point P is projected on the screen edge (similar for XZ plane). P is between target and
+        // initial camera position, but calculations are equivalent for points beyond the target
+        // (pEyeZ negative) or behind the camera (constD negative).
+        // Right triangles PP'C0 and PsOC0 are equivalent, as well as PP'C1 and Ps0C1, that means:
+        // |ndcY|*h/(2*f) = PcamY / |pEyeZ| (1) (ndcY,pEyeZ may be negative so take abs vals).
+        // h/(2*f) = PcamY / newPEyeZ       (2)
+        // Dividing (1) by (2) and solving for newPEyeZ we get: newPEyeZ = |ndcY| * |pEyeZ|
+        // The target distance to project P at the top/bottom border of the viewport is then:
+        // constD + newPEyeZ = targetDist - pEyeZ + |ndcY|*|pEyeZ|
+        // The target distance to project P at the left/right border of the viewport is similarly:
+        // targetDist - pEyeZ + |ndcX|*|pEyeZ|
+        // Take the largest of both distances to ensure the point is inside the viewport, i.e., take
+        // the largest ndc coordinate value:
+        // newDistance = targetDist - pEyeZ + max(|ndcX|, |ndcY|)*|pEyeZ|
 
-        const cameraPos = cache.vector3[0];
-        cameraPos.copy(camera.position);
-
-        const halfVertFov = THREE.MathUtils.degToRad(camera.fov / 2);
-        // TODO: Support off-center projections.
-        const halfHorzFov = calculateHorizontalFovByVerticalFov(halfVertFov * 2, camera.aspect) / 2;
-
-        // tan(fov/2)
-        const halfVertFovTan = 1 / Math.tan(halfVertFov);
-        const halfHorzFovTan = 1 / Math.tan(halfHorzFov);
-
-        const cameraToTarget = cache.vector3[1];
-        cameraToTarget.copy(cameraPos).sub(worldTarget).negate();
-
-        const cameraToTargetNormalized = new THREE.Vector3().copy(cameraToTarget).normalize();
-
-        const offsetVector = new THREE.Vector3();
-
-        const cameraToPointOnRefPlane = new THREE.Vector3();
-        const pointOnRefPlane = new THREE.Vector3();
-
-        function checkAngle(
-            point: THREE.Vector3,
-            referencePlane: THREE.Plane,
-            maxAngle: number,
-            fovFactor: number
-        ) {
-            referencePlane.projectPoint(point, pointOnRefPlane);
-            cameraToPointOnRefPlane.copy(cameraPos).sub(pointOnRefPlane).negate();
-
-            const viewAngle = cameraToTarget.angleTo(cameraToPointOnRefPlane);
-
-            if (viewAngle <= maxAngle) {
-                return;
-            }
-
-            const cameraToPointLen = cameraToPointOnRefPlane.length();
-            const cameraToTargetLen = cameraToTarget.length();
-
-            const newCameraDistance =
-                cameraToPointLen * (Math.sin(viewAngle) * fovFactor - Math.cos(viewAngle)) +
-                cameraToTargetLen;
-
-            offsetVector
-                .copy(cameraToTargetNormalized)
-                .multiplyScalar(cameraToTargetLen - newCameraDistance);
-
-            cameraPos.add(offsetVector);
-            cameraToTarget.sub(offsetVector);
-        }
+        const targetDist = cache.vector3[0].copy(worldTarget).sub(camera.position).length();
+        let newDistance = targetDist;
 
         for (const point of points) {
-            checkAngle(point, screenVertMidPlane, halfVertFov, halfVertFovTan);
-            checkAngle(point, screenHorzMidPlane, halfHorzFov, halfHorzFovTan);
+            const pEyeZ = -cache.vector3[0].copy(point).applyMatrix4(camera.matrixWorldInverse).z;
+            const pointNDC = cache.vector3[0].applyMatrix4(camera.projectionMatrix);
+            const constDist = targetDist - pEyeZ;
+            const newPEyeZ =
+                Math.abs(pEyeZ) * Math.max(Math.abs(pointNDC.x), Math.abs(pointNDC.y)) + constDist;
+            newDistance = Math.max(newDistance, newPEyeZ);
         }
-
-        return cameraToTarget.length();
+        return newDistance;
     }
 
     /**
