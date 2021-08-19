@@ -261,8 +261,7 @@ export class PoiBatchRegistry {
         const { imageItem, imageTexture } = poiInfo;
 
         if (!imageItem) {
-            // No image -> invisible -> ignore
-            poiInfo.isValid = false;
+            // No image found, therefore just return undefined. It will probably come in soon?
             return undefined;
         }
 
@@ -373,8 +372,10 @@ export class PoiBatchRegistry {
     }
 }
 
-// keep track of the missing textures, but only warn once
-const missingTextureName: Map<string, boolean> = new Map();
+// keep track of the missing textures, we throw an error if the number of attempts goes over some
+// threshold.
+const missingTextureName: Map<string, number> = new Map();
+const SEARCH_CACHE_ATTEMPTS = 5;
 
 function findImageItem(
     poiInfo: PoiInfo,
@@ -382,28 +383,26 @@ function findImageItem(
     imageTexture?: ImageTexture
 ): ImageItem | undefined {
     assert(poiInfo.imageTextureName !== undefined);
-    const imageTextureName = poiInfo.imageTextureName!;
+    const imageTextureName = imageTexture ? imageTexture.image : poiInfo.imageTextureName!;
 
-    let imageItem: ImageItem | undefined;
     for (const imageCache of imageCaches) {
-        imageItem = imageTexture
-            ? imageCache.findImageByName(imageTexture.image)
-            : imageCache.findImageByName(imageTextureName);
+        const imageItem = imageCache.findImageByName(imageTextureName);
         if (imageItem) {
-            break;
+            missingTextureName.delete(imageTextureName);
+            return imageItem;
         }
     }
 
-    if (!imageItem) {
-        logger.error(`init: No imageItem found with name
-            '${imageTexture?.image ?? imageTextureName}'`);
+    // There is a texture messing in the cache, we attempt again, and then error out.
+    const missingTextureCount = missingTextureName.get(imageTextureName);
+    missingTextureName.set(imageTextureName, missingTextureCount ? missingTextureCount + 1 : 0);
+    if (missingTextureName.get(imageTextureName)! >= SEARCH_CACHE_ATTEMPTS) {
+        logger.error(`PoiRenderer::findImageItem: No imageItem found with name:
+            '${imageTexture?.image ?? imageTextureName}'
+            after ${SEARCH_CACHE_ATTEMPTS} attempts.`);
         poiInfo.isValid = false;
-        if (missingTextureName.get(imageTextureName) === undefined) {
-            missingTextureName.set(imageTextureName, true);
-            logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
-        }
     }
-    return imageItem;
+    return undefined;
 }
 
 /**
