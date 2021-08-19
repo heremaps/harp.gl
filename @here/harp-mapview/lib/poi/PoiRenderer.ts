@@ -393,7 +393,7 @@ function findImageItem(
         }
     }
 
-    // There is a texture messing in the cache, we attempt again, and then error out.
+    // There is a texture missing in the cache, we attempt again, and then error out.
     const missingTextureCount = missingTextureName.get(imageTextureName);
     missingTextureName.set(imageTextureName, missingTextureCount ? missingTextureCount + 1 : 0);
     if (missingTextureName.get(imageTextureName)! >= SEARCH_CACHE_ATTEMPTS) {
