@@ -19,7 +19,7 @@ function isCenteredProjection(principalPoint: Vector2Like): boolean {
 /**
  * Computes the fov on the positive side of NDC x or y dimension (i.e. either right or top fov).
  * @param focalLength - Focal length in pixels. It must be larger than 0.
- * @param ppOffset - Principal point offset either in y or x dimension.
+ * @param ppOffset - Principal point NDC offset either in y or x dimension.
  * @param viewportSide - Viewport height or width in pixels, must be same dimension as ppOffset.
  * @returns side fov in radians.
  */
@@ -32,7 +32,7 @@ function computePosSideFov(focalLength: number, ppOffset: number, viewportSide: 
 /**
  * Computes the vertical or horizontal fov.
  * @param focalLength - Focal length in pixels. It must be larger than 0.
- * @param ppOffset - Principal point offset in y (vertical fov) or x dimension (horizontal fov).
+ * @param ppOffset - Principal point NDC offset in y (vertical fov) or x dimension (horizontal fov).
  * @param viewportSide - Viewport height or width in pixels, must be same dimension as ppOffset.
  * @returns vertical or horizontal fov in radians.
  */
@@ -53,7 +53,7 @@ function computeFov(focalLength: number, ppOffset: number, viewportSide: number)
 interface Fovs {
     top: number;
     right: number;
-    horizontal: number;
+    horizontal: number; // left = horizontal - right.
 }
 
 function getFovs(camera: THREE.PerspectiveCamera): Fovs | undefined {
