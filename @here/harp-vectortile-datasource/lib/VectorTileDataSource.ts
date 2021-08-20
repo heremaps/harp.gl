@@ -39,7 +39,10 @@ export interface VectorTileFactory {
     createTile(dataSource: VectorTileDataSource, tileKey: TileKey): Tile;
 }
 
-export interface VectorTileDataSourceParameters extends DataSourceOptions {
+export interface VectorTileDataSourceParameters
+    extends DataSourceOptions,
+        // These parameters have to be handled specially, see: completeDataSourceParameters
+        Omit<TileDataSourceOptions, "dataProvider" | "tilingScheme"> {
     /**
      * If set to `true`, features that have no technique in the theme will be printed to the console
      * (can be excessive!).
@@ -54,19 +57,9 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
     createTileInfo?: boolean;
 
     /**
-     * Specify the decoder that should be used. If not supplied, the default will be used.
-     */
-    decoder?: ITileDecoder;
-
-    /**
      * Optionally specify the DataProvider that should be used.
      */
     dataProvider?: DataProvider;
-
-    /**
-     * Specify the URL to the decoder bundle. If not supplied, the default will be used.
-     */
-    concurrentDecoderScriptUrl?: string;
 
     /**
      * Gather feature IDs from `OmvData`. Defaults to `false`.
@@ -131,17 +124,6 @@ export interface VectorTileDataSourceParameters extends DataSourceOptions {
      * @see featureModifiers
      */
     politicalView?: string;
-
-    /**
-     * Optional, default copyright information of tiles provided by this data source.
-     * Implementation should provide this information from the source data if possible.
-     */
-    copyrightInfo?: CopyrightInfo[];
-
-    /**
-     * Optional copyright info provider for tiles provided by this data source.
-     */
-    copyrightProvider?: CopyrightProvider;
 
     /**
      * Indicates whether overlay on elevation is enabled. Defaults to `false`.
@@ -284,7 +266,8 @@ export class VectorTileDataSource extends TileDataSource {
     constructor(private readonly m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory ?? new TileFactory(Tile), {
             styleSetName: m_params.styleSetName ?? "omv",
-            concurrentDecoderServiceName: VECTOR_TILE_DECODER_SERVICE_TYPE,
+            concurrentDecoderServiceName:
+                m_params.concurrentDecoderServiceName ?? VECTOR_TILE_DECODER_SERVICE_TYPE,
             minDataLevel: m_params.minDataLevel ?? 1,
             maxDataLevel: m_params.maxDataLevel ?? 17,
             storageLevelOffset: m_params.storageLevelOffset ?? -1,

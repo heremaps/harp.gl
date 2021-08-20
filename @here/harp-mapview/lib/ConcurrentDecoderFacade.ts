@@ -65,9 +65,8 @@ export class ConcurrentDecoderFacade {
 
         let workerSet = this.workerSets[scriptUrl];
         if (workerSet === undefined) {
-            const workerConnectionTimeoutInMs = workerConnectionTimeout
-                ? workerConnectionTimeout * 1000
-                : undefined;
+            const workerConnectionTimeoutInMs =
+                workerConnectionTimeout !== undefined ? workerConnectionTimeout * 1000 : undefined;
             workerSet = new ConcurrentWorkerSet({
                 scriptUrl,
                 workerCount: workerCount ?? this.defaultWorkerCount,
