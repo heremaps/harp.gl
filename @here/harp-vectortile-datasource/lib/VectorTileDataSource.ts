@@ -3,14 +3,9 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    DecoderOptions,
-    ITileDecoder,
-    OptionsMap,
-    WorkerServiceProtocol
-} from "@here/harp-datasource-protocol";
+import { DecoderOptions, OptionsMap, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { EarthConstants, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
-import { CopyrightInfo, CopyrightProvider, DataSourceOptions, Tile } from "@here/harp-mapview";
+import { DataSourceOptions, Tile } from "@here/harp-mapview";
 import {
     DataProvider,
     TileDataSource,
