@@ -64,6 +64,12 @@ export interface TileDataSourceOptions extends DataSourceOptions {
     concurrentDecoderWorkerCount?: number;
 
     /**
+     * Timeout for connecting to the web worker in seconds. Default to 10s, search for:
+     * DEFAULT_WORKER_INITIALIZATION_TIMEOUT
+     */
+    workerConnectionTimeout?: number;
+
+    /**
      * Optional, default copyright information of tiles provided by this data source.
      * Implementation should provide this information from the source data if possible.
      */
@@ -140,7 +146,8 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
             this.m_decoder = ConcurrentDecoderFacade.getTileDecoder(
                 m_options.concurrentDecoderServiceName,
                 m_options.concurrentDecoderScriptUrl,
-                m_options.concurrentDecoderWorkerCount
+                m_options.concurrentDecoderWorkerCount,
+                m_options.workerConnectionTimeout
             );
         } else {
             throw new Error(

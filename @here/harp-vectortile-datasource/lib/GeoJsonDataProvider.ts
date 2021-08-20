@@ -33,6 +33,12 @@ export interface GeoJsonDataProviderOptions {
      * from `ConcurrentTilerFacade`.
      */
     tiler?: ITiler;
+
+    /**
+     * Timeout for connecting to the web worker in seconds. Default to 10s, search for:
+     * DEFAULT_WORKER_INITIALIZATION_TIMEOUT
+     */
+    workerConnectionTimeout?: number;
 }
 
 let missingTilerServiceInfoEmitted: boolean = false;
@@ -66,7 +72,8 @@ export class GeoJsonDataProvider extends DataProvider {
             options?.tiler ??
             ConcurrentTilerFacade.getTiler(
                 GEOJSON_TILER_SERVICE_TYPE,
-                options && options.workerTilerUrl
+                options && options.workerTilerUrl,
+                options && options.workerConnectionTimeout
             );
     }
 
