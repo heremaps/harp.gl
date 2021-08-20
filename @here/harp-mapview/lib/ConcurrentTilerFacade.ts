@@ -33,9 +33,15 @@ export class ConcurrentTilerFacade {
      * @param tilerServiceType - The name of the tiler service type.
      * @param scriptUrl - The optional URL with the workers' script.
      * @param workerCount - The number of web workers to use.
+     * @param workerConnectionTimeout - Timeout in seconds to connect to the web worker.
      */
-    static getTiler(tilerServiceType: string, scriptUrl?: string, workerCount?: number): ITiler {
-        const workerSet = this.getWorkerSet(scriptUrl, workerCount);
+    static getTiler(
+        tilerServiceType: string,
+        scriptUrl?: string,
+        workerCount?: number,
+        workerConnectionTimeout?: number
+    ): ITiler {
+        const workerSet = this.getWorkerSet(scriptUrl, workerCount, workerConnectionTimeout);
 
         return new WorkerBasedTiler(workerSet, tilerServiceType);
     }
@@ -46,17 +52,25 @@ export class ConcurrentTilerFacade {
      * @param scriptUrl - The optional URL with the workers' script. If not specified,
      * the function uses [[defaultScriptUrl]] instead.
      * @param workerCount - The number of web workers to use.
+     * @param workerConnectionTimeout - Timeout in seconds to connect to the web worker.
      */
-    static getWorkerSet(scriptUrl?: string, workerCount?: number): ConcurrentWorkerSet {
+    static getWorkerSet(
+        scriptUrl?: string,
+        workerCount?: number,
+        workerConnectionTimeout?: number
+    ): ConcurrentWorkerSet {
         if (scriptUrl === undefined) {
             scriptUrl = this.defaultScriptUrl;
         }
 
         let workerSet = this.workerSets[scriptUrl];
         if (workerSet === undefined) {
+            const workerConnectionTimeoutInMs =
+                workerConnectionTimeout !== undefined ? workerConnectionTimeout * 1000 : undefined;
             workerSet = new ConcurrentWorkerSet({
                 scriptUrl,
-                workerCount: workerCount === undefined ? this.defaultWorkerCount : workerCount
+                workerCount: workerCount ?? this.defaultWorkerCount,
+                workerConnectionTimeout: workerConnectionTimeoutInMs
             });
             this.workerSets[scriptUrl] = workerSet;
         }
