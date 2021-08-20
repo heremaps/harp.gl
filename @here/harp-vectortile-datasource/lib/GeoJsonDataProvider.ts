@@ -72,8 +72,8 @@ export class GeoJsonDataProvider extends DataProvider {
             options?.tiler ??
             ConcurrentTilerFacade.getTiler(
                 GEOJSON_TILER_SERVICE_TYPE,
-                options && options.workerTilerUrl,
-                options && options.workerConnectionTimeout
+                options?.workerTilerUrl,
+                options?.workerConnectionTimeout
             );
     }
 

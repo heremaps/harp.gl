@@ -52,12 +52,12 @@ export class ConcurrentDecoderFacade {
      * @param scriptUrl - The optional URL with the workers' script. If not specified,
      * the function uses [[defaultScriptUrl]] instead.
      * @param workerCount - The number of web workers to use.
-     * @param workerConnectionTimeoutS - Timeout in seconds to connect to the web worker.
+     * @param workerConnectionTimeout - Timeout in seconds to connect to the web worker.
      */
     static getWorkerSet(
         scriptUrl?: string,
         workerCount?: number,
-        workerConnectionTimeoutS?: number
+        workerConnectionTimeout?: number
     ): ConcurrentWorkerSet {
         if (scriptUrl === undefined) {
             scriptUrl = this.defaultScriptUrl;
@@ -65,13 +65,13 @@ export class ConcurrentDecoderFacade {
 
         let workerSet = this.workerSets[scriptUrl];
         if (workerSet === undefined) {
-            const workerConnectionTimeout = workerConnectionTimeoutS
-                ? workerConnectionTimeoutS * 1000
+            const workerConnectionTimeoutInMs = workerConnectionTimeout
+                ? workerConnectionTimeout * 1000
                 : undefined;
             workerSet = new ConcurrentWorkerSet({
                 scriptUrl,
-                workerCount: workerCount === undefined ? this.defaultWorkerCount : workerCount,
-                workerConnectionTimeout
+                workerCount: workerCount ?? this.defaultWorkerCount,
+                workerConnectionTimeout: workerConnectionTimeoutInMs
             });
             this.workerSets[scriptUrl] = workerSet;
         }
