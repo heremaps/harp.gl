@@ -13,6 +13,7 @@ import {
     ProjectionType,
     sphereProjection,
     TileKey,
+    Vector2Like,
     Vector3Like
 } from "@here/harp-geoutils";
 import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
@@ -65,7 +66,7 @@ const cache = {
     box3: [new THREE.Box3()],
     obox3: [new OrientedBox3()],
     quaternions: [new THREE.Quaternion(), new THREE.Quaternion()],
-    vector2: [new THREE.Vector2()],
+    vector2: [new THREE.Vector2(), new THREE.Vector2()],
     vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
     transforms: [
@@ -198,16 +199,15 @@ export namespace MapViewUtils {
             .multiplyScalar(-newCameraDistance)
             .add(cameraTarget);
 
-        // In sphere, we may have to also orbit the camera around the position located at the
-        // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
-        // this tilt by changing the camera's height above.
+        // In sphere, we may have to also orbit the camera around the target, in order to limit the
+        // the tilt to `maxTiltAngle`, as we change this tilt by changing the camera's height above.
         if (projection.type === ProjectionType.Spherical) {
             // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
             // changes.
             const tilt = extractCameraTilt(camera, projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
-                orbitAroundScreenPoint(mapView, 0, 0, 0, deltaTilt, maxTiltAngle);
+                orbitAroundScreenPoint(mapView, { deltaTilt, maxTiltAngle });
             }
         }
 
@@ -229,14 +229,38 @@ export namespace MapViewUtils {
     }
 
     /**
+     * Parameters for {@link orbitAroundScreenPoint}.
+     */
+    export interface OrbitParams {
+        /**
+         * Delta azimuth in radians (default 0).
+         */
+        deltaAzimuth?: number;
+        /**
+         * Delta tilt in radians (default 0);
+         */
+        deltaTilt?: number;
+        /**
+         * Maximum tilt between the camera and its target in radians.
+         */
+        maxTiltAngle: number;
+        /**
+         * Orbiting center in NDC coordinates, defaults to camera's principal point.
+         * @see {@link CameraUtils.getPrincipalPoint}.
+         */
+        center?: Vector2Like;
+    }
+
+    /**
      * Orbits the camera around a given point on the screen.
      *
      * @param mapView - The {@link MapView} instance to manipulate.
      * @param offsetX - Orbit point in NDC space.
      * @param offsetY - Orbit point in NDC space.
      * @param deltaAzimuth - Delta azimuth in radians.
-     * @param deltaTil - Delta tilt in radians.
+     * @param deltaTilt - Delta tilt in radians.
      * @param maxTiltAngle - The maximum tilt between the camera and its target in radian.
+     * @deprecated Use overload with {@link OrbitParams} object parameter.
      */
     export function orbitAroundScreenPoint(
         mapView: MapView,
@@ -245,28 +269,60 @@ export namespace MapViewUtils {
         deltaAzimuth: number,
         deltaTilt: number,
         maxTiltAngle: number
-    ) {
-        const rotationTargetWorld = MapViewUtils.rayCastWorldCoordinates(mapView, offsetX, offsetY);
-        if (rotationTargetWorld === null) {
-            return;
-        }
+    ): void;
 
-        const mapTargetWorld =
-            offsetX === 0 && offsetY === 0
-                ? rotationTargetWorld
-                : MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+    /**
+     * Orbits the camera around a given point on the screen.
+     *
+     * @param mapView - The {@link MapView} instance to manipulate.
+     * @param orbitParams - {@link OrbitParams}.
+     */
+    export function orbitAroundScreenPoint(mapView: MapView, orbitParams: OrbitParams): void;
+
+    export function orbitAroundScreenPoint(
+        mapView: MapView,
+        offsetXOrOrbitParams: number | OrbitParams,
+        offsetY?: number,
+        deltaAzimuth?: number,
+        deltaTilt?: number,
+        maxTiltAngle?: number
+    ): void {
+        const ppalPoint = CameraUtils.getPrincipalPoint(mapView.camera, cache.vector2[0]);
+        const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(
+            mapView,
+            ppalPoint.x,
+            ppalPoint.y
+        );
         if (mapTargetWorld === null) {
             return;
         }
 
-        applyAzimuthAroundTarget(mapView, rotationTargetWorld, -deltaAzimuth);
+        let orbitCenter: Vector2Like | undefined;
+        if (typeof offsetXOrOrbitParams === "number") {
+            orbitCenter = cache.vector2[1].set(offsetXOrOrbitParams, offsetY!);
+        } else {
+            const params = offsetXOrOrbitParams;
+            orbitCenter = params.center ?? ppalPoint;
+            deltaAzimuth = params.deltaAzimuth ?? 0;
+            deltaTilt = params.deltaTilt ?? 0;
+            maxTiltAngle = params.maxTiltAngle;
+        }
+        const orbitAroundPpalPoint = orbitCenter.x === ppalPoint.x && orbitCenter.y === ppalPoint.y;
+        const rotationTargetWorld = orbitAroundPpalPoint
+            ? mapTargetWorld
+            : MapViewUtils.rayCastWorldCoordinates(mapView, orbitCenter.x, orbitCenter.y);
+        if (rotationTargetWorld === null) {
+            return;
+        }
+
+        applyAzimuthAroundTarget(mapView, rotationTargetWorld, -deltaAzimuth!);
 
         const tiltAxis = new THREE.Vector3(1, 0, 0).applyQuaternion(mapView.camera.quaternion);
         const clampedDeltaTilt = computeClampedDeltaTilt(
             mapView,
-            offsetY,
-            deltaTilt,
-            maxTiltAngle,
+            orbitCenter.y - ppalPoint.y,
+            deltaTilt!,
+            maxTiltAngle!,
             mapTargetWorld,
             rotationTargetWorld,
             tiltAxis
