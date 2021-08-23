@@ -626,7 +626,6 @@ export class MapControls extends EventDispatcher {
 
         MapViewUtils.orbitAroundScreenPoint(this.mapView, {
             deltaAzimuth,
-            deltaTilt: 0,
             maxTiltAngle: this.m_maxTiltAngle
         });
         this.updateMapView();
@@ -677,7 +676,6 @@ export class MapControls extends EventDispatcher {
         const deltaTilt = this.m_currentTilt - initialTilt;
 
         MapViewUtils.orbitAroundScreenPoint(this.mapView, {
-            deltaAzimuth: 0,
             deltaTilt,
             maxTiltAngle: this.m_maxTiltAngle
         });
@@ -1311,7 +1309,6 @@ export class MapControls extends EventDispatcher {
                 MapViewUtils.orbitAroundScreenPoint(this.mapView, {
                     center: this.m_tmpVector2.set(center.x, center.y),
                     deltaAzimuth,
-                    deltaTilt: 0,
                     maxTiltAngle: this.m_maxTiltAngle
                 });
             }

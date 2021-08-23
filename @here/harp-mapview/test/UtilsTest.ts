@@ -227,8 +227,8 @@ describe("MapViewUtils", function () {
                         : Number.EPSILON
                 );
             });
-            it("limits tilt when orbiting around screen point", function () {
-                for (const startTilt of [0]) {
+            for (const startTilt of [0, 20, 45]) {
+                it(`limits tilt when orbiting around screen point, starting at ${startTilt} deg`, function () {
                     setCamera(
                         mapView.camera,
                         mapView.projection,
@@ -276,8 +276,8 @@ describe("MapViewUtils", function () {
                         // Use a custom EPS, Number.Epsilon is too strict for such maths
                         expect(afterTilt).to.be.closeTo(maxTiltAngle, EPS);
                     }
-                }
-            });
+                });
+            }
             it("keeps rotation target when orbiting around screen point", function () {
                 const offsetX = 0.2;
                 const offsetY = 0.2;
