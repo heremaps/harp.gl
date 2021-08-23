@@ -103,7 +103,7 @@ export class OlpDataProvider extends DataProvider {
 
         try {
             const response = await this.m_versionLayerClient.getData(
-                new DataRequest().withQuadKey(tileKey),
+                new DataRequest().withPartitionId(tileKey.toHereTile()),
                 abortSignal
             );
             if (abortSignal && abortSignal.aborted) {
