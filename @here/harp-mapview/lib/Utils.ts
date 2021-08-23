@@ -907,7 +907,8 @@ export namespace MapViewUtils {
         cameraPos.copy(camera.position);
 
         const halfVertFov = THREE.MathUtils.degToRad(camera.fov / 2);
-        const halfHorzFov = CameraUtils.computeHorizontalFov(camera) / 2;
+        // TODO: Support off-center projections.
+        const halfHorzFov = calculateHorizontalFovByVerticalFov(halfVertFov * 2, camera.aspect) / 2;
 
         // tan(fov/2)
         const halfVertFovTan = 1 / Math.tan(halfVertFov);
@@ -1622,32 +1623,40 @@ export namespace MapViewUtils {
      * @deprecated
      */
     export function calculateVerticalFovByHorizontalFov(hFov: number, aspect: number): number {
-        tmpCamera.aspect = aspect;
-        CameraUtils.setHorizontalFov(tmpCamera, hFov);
-        return THREE.MathUtils.degToRad(tmpCamera.fov);
+        return 2 * Math.atan(Math.tan(hFov / 2) / aspect);
     }
 
     /**
-     * @deprecated Use {@link CameraUtils.computeHorizontalFov}.
+     * @deprecated Use {@link CameraUtils.getHorizontalFov}.
      */
     export function calculateHorizontalFovByVerticalFov(vFov: number, aspect: number): number {
         tmpCamera.fov = THREE.MathUtils.radToDeg(vFov);
         tmpCamera.aspect = aspect;
-        return CameraUtils.computeHorizontalFov(tmpCamera);
+        return CameraUtils.getHorizontalFov(tmpCamera);
     }
 
     /**
      * @deprecated Use {@link CameraUtils.computeFocalLength}.
      */
     export function calculateFocalLengthByVerticalFov(vFov: number, height: number): number {
-        return CameraUtils.computeFocalLength(vFov, height);
+        // computeVerticalFov takes into account the principal point position to support
+        // off-center projections. Keep previous behaviour by passing a camera with centered
+        // principal point.
+        CameraUtils.setPrincipalPoint(tmpCamera, new THREE.Vector2());
+        return CameraUtils.computeFocalLength(tmpCamera, vFov, height);
     }
 
     /**
      * @deprecated Use {@link CameraUtils.computeVerticalFov}.
      */
     export function calculateFovByFocalLength(focalLength: number, height: number): number {
-        return THREE.MathUtils.radToDeg(CameraUtils.computeVerticalFov(focalLength, height));
+        // computeVerticalFov takes into account the principal point position to support
+        // off-center projections. Keep previous behaviour by passing a camera with centered
+        // principal point.
+        CameraUtils.setPrincipalPoint(tmpCamera, new THREE.Vector2());
+        return THREE.MathUtils.radToDeg(
+            CameraUtils.computeVerticalFov(tmpCamera, focalLength, height)
+        );
     }
 
     /**

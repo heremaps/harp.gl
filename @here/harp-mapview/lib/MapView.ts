@@ -3868,10 +3868,10 @@ export class MapView extends EventDispatcher {
             fov = THREE.MathUtils.degToRad(fovCalculation.fov);
         } else {
             assert(this.m_focalLength !== 0);
-            fov = CameraUtils.computeVerticalFov(this.m_focalLength, height);
+            fov = CameraUtils.computeVerticalFov(this.m_camera, this.m_focalLength, height);
         }
 
-        CameraUtils.setVerticalFov(this.m_camera, fov);
+        CameraUtils.setVerticalFovAndFocalLength(this.m_camera, fov, this.m_focalLength, height);
     }
 
     /**
@@ -3885,6 +3885,7 @@ export class MapView extends EventDispatcher {
     private updateFocalLength(height: number) {
         assert(this.m_options.fovCalculation !== undefined);
         this.m_focalLength = CameraUtils.computeFocalLength(
+            this.m_camera,
             THREE.MathUtils.degToRad(this.m_options.fovCalculation!.fov),
             height
         );

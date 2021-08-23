@@ -64,12 +64,13 @@ describe("SphereHorizon", function () {
         return angle >= 0 ? angle / (2 * Math.PI) : 1 + angle / (2 * Math.PI);
     }
 
-    before(function () {
-        focalLength = CameraUtils.computeFocalLength(MathUtils.degToRad(vFov), canvasHeight);
-    });
-
     beforeEach(function () {
         camera = new PerspectiveCamera(vFov);
+        focalLength = CameraUtils.computeFocalLength(
+            camera,
+            MathUtils.degToRad(vFov),
+            canvasHeight
+        );
         setCamera(3);
     });
 
