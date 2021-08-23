@@ -25,12 +25,12 @@ describe("PoiBatchRegistry", () => {
         registry = new PoiBatchRegistry(renderer.capabilities);
     });
     describe("registerPoi", function () {
-        it("marks PoiInfo as invalid if it has no image item", () => {
+        it("return undefined if poiInfo has no image item", () => {
             const poiInfo = new PoiInfoBuilder().build(textElement);
             const buffer = registry.registerPoi(poiInfo, defaultPoiLayer);
 
             expect(buffer).to.be.undefined;
-            expect((poiInfo as any).isValid).to.be.false;
+            expect(poiInfo.isValid).true;
         });
 
         it("uses PoiInfo's imageTexture's image by default as batch key", () => {
