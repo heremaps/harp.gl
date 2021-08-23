@@ -30,6 +30,7 @@ describe("PoiBatchRegistry", () => {
             const buffer = registry.registerPoi(poiInfo, defaultPoiLayer);
 
             expect(buffer).to.be.undefined;
+            expect(poiInfo.isValid).true;
         });
 
         it("uses PoiInfo's imageTexture's image by default as batch key", () => {

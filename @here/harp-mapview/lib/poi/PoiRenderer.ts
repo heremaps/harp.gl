@@ -396,11 +396,10 @@ function findImageItem(
     // There is a texture missing in the cache, we attempt again, and then error out.
     const missingTextureCount = missingTextureName.get(imageTextureName);
     missingTextureName.set(imageTextureName, missingTextureCount ? missingTextureCount + 1 : 0);
-    if (missingTextureName.get(imageTextureName)! >= SEARCH_CACHE_ATTEMPTS) {
+    if (missingTextureName.get(imageTextureName)! === SEARCH_CACHE_ATTEMPTS) {
         logger.error(`PoiRenderer::findImageItem: No imageItem found with name:
             '${imageTexture?.image ?? imageTextureName}'
             after ${SEARCH_CACHE_ATTEMPTS} attempts.`);
-        poiInfo.isValid = false;
     }
     return undefined;
 }
