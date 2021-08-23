@@ -111,10 +111,7 @@ describe("PoiRenderer", function () {
             }
         } as THREE.WebGLRenderer;
         const mapViewStub = sinon.createStubInstance(MapView);
-        const poiManager = new PoiManager((mapViewStub as any) as MapView);
         const testImageName = "testImage";
-        const mapEnv = new Env();
-
         const createPointLabel = (name: string) => {
             return {
                 poiInfo: {
@@ -127,23 +124,29 @@ describe("PoiRenderer", function () {
             } as TextElement;
         };
 
-        let x = 1;
-        let y = 1;
-
         const addRandomImageToCache = (
             testCache: MapViewImageCache,
             name: string,
             load: boolean
         ) => {
-            // Note, the images must be unique, otherwise the test will fail, because the internal
-            // caching mechanism of the ImageCache will have already loaded the image.
-            return testCache.addImage(name, `https://picsum.photos/${x++}/${y++}`, load);
+            return testCache.addImage(
+                name,
+                `/@here/harp-mapview/test/resources/headshot.jpg`,
+                load
+            );
         };
+        let poiManager: PoiManager;
+        let mapEnv: Env;
+        let testCache: MapViewImageCache;
+        beforeEach(() => {
+            poiManager = new PoiManager((mapViewStub as any) as MapView);
+            mapEnv = new Env();
+            testCache = new MapViewImageCache();
+        });
 
         it("poi is valid when in cache and loading started", async function () {
             this.timeout(5000);
 
-            const testCache = new MapViewImageCache();
             const testImageItem = addRandomImageToCache(testCache, testImageName, true);
             const caches = [testCache];
             const poiRenderer = new PoiRenderer(webGLRenderer, poiManager, caches);
@@ -168,7 +171,6 @@ describe("PoiRenderer", function () {
         it("poi is invalid when not in cache, adding to cache means it will load", async function () {
             this.timeout(5000);
 
-            const testCache = new MapViewImageCache();
             // Empty cache for now
             const caches = [testCache];
             const poiRenderer = new PoiRenderer(webGLRenderer, poiManager, caches);
