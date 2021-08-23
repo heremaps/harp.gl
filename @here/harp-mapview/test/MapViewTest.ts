@@ -30,6 +30,7 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
+import { CameraUtils } from "../lib/CameraUtils";
 import { DataSource } from "../lib/DataSource";
 import { ElevationProvider } from "../lib/ElevationProvider";
 import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSource";
@@ -140,6 +141,7 @@ describe("MapView", function () {
         const tests: Array<{
             testName: string;
             lookAtParams: Partial<LookAtParams>;
+            ppalPoint?: { x: number; y: number };
             expectAllInView?: boolean;
         }> = [
             {
@@ -200,6 +202,16 @@ describe("MapView", function () {
                 }
             },
             {
+                testName: "berlin bounds only, off-center projection",
+                lookAtParams: {
+                    bounds: new GeoBox(
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.590844, 13.522331)
+                    )
+                },
+                ppalPoint: { x: 0.5, y: -0.3 }
+            },
+            {
                 testName: "berlin bounds + zoomLevel",
                 lookAtParams: {
                     bounds: new GeoBox(
@@ -230,6 +242,18 @@ describe("MapView", function () {
                     tilt: 45,
                     heading: 45
                 }
+            },
+            {
+                testName: "berlin bounds + angles, off-center projection",
+                lookAtParams: {
+                    bounds: new GeoBox(
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.590844, 13.522331)
+                    ),
+                    tilt: 45,
+                    heading: 45
+                },
+                ppalPoint: { x: 0.5, y: -0.3 }
             },
             {
                 testName: "berlin polygon bounds only",
@@ -265,6 +289,20 @@ describe("MapView", function () {
                     tilt: 80,
                     heading: 30
                 }
+            },
+            {
+                testName: "large polygon bounds + angles, off-center projection",
+                lookAtParams: {
+                    bounds: new GeoPolygon([
+                        new GeoCoordinates(40.0, 13.0),
+                        new GeoCoordinates(40.0, 20.0),
+                        new GeoCoordinates(52.0, 20.0),
+                        new GeoCoordinates(52.0, 13.0)
+                    ]),
+                    tilt: 80,
+                    heading: 30
+                },
+                ppalPoint: { x: -0.8, y: 0.1 }
             },
             {
                 testName: "large polygon with spike bounds only",
@@ -336,7 +374,7 @@ describe("MapView", function () {
         function getCenterAndGeoPoints(
             bounds: GeoBox | GeoPolygon | GeoBoxExtentLike | GeoCoordLike[]
         ): [GeoCoordinates, GeoCoordinatesLike[]] {
-            let center: GeoCoordinates | undefined;
+            let center: GeoCoordinates;
             let geoPoints: GeoCoordinatesLike[] = [];
 
             if (bounds instanceof GeoBox) {
@@ -345,9 +383,12 @@ describe("MapView", function () {
                 geoPoints.push(bounds.southWest);
                 geoPoints.push(new GeoCoordinates(bounds.south, bounds.east));
                 geoPoints.push(new GeoCoordinates(bounds.north, bounds.west));
-            } else if (bounds instanceof GeoPolygon) {
-                center = bounds.getCentroid();
-                geoPoints = bounds.coordinates as GeoCoordinatesLike[];
+            } else {
+                expect(bounds).instanceOf(GeoPolygon);
+                const polygon = bounds as GeoPolygon;
+                center = polygon.getCentroid()!;
+                expect(center).not.undefined;
+                geoPoints = polygon.coordinates as GeoCoordinatesLike[];
             }
             return [center, geoPoints];
         }
@@ -357,11 +398,15 @@ describe("MapView", function () {
             [mercatorProjection, 1e-13]
         ] as Array<[Projection, number]>) {
             describe(`${getProjectionName(projection)} projection`, function () {
-                for (const { testName, lookAtParams, expectAllInView } of tests) {
+                for (const { testName, lookAtParams, ppalPoint, expectAllInView } of tests) {
                     const target = lookAtParams.target as GeoCoordinates | undefined;
 
                     it(`obeys constructor params - ${testName}`, function () {
                         mapView = new MapView({ ...mapViewOptions, projection, ...lookAtParams });
+                        if (ppalPoint) {
+                            CameraUtils.setPrincipalPoint(mapView.camera, ppalPoint);
+                            mapView.camera.updateProjectionMatrix();
+                        }
                         if (lookAtParams.zoomLevel !== undefined) {
                             expect(mapView.zoomLevel).to.be.closeTo(lookAtParams.zoomLevel, eps);
                         }
@@ -378,7 +423,10 @@ describe("MapView", function () {
                     });
                     it(`obeys #lookAt params - ${testName}`, function () {
                         mapView = new MapView({ ...mapViewOptions, projection });
-
+                        if (ppalPoint) {
+                            CameraUtils.setPrincipalPoint(mapView.camera, ppalPoint);
+                            mapView.camera.updateProjectionMatrix();
+                        }
                         mapView.lookAt(lookAtParams);
 
                         if (lookAtParams.zoomLevel !== undefined) {
@@ -391,8 +439,8 @@ describe("MapView", function () {
                             );
                         }
                         if (lookAtParams.target !== undefined) {
-                            expect(mapView.target.lat).to.be.closeTo(target.lat, eps);
-                            expect(mapView.target.lng).to.be.closeTo(target.lng, eps);
+                            expect(mapView.target.lat).to.be.closeTo(target!.lat, eps);
+                            expect(mapView.target.lng).to.be.closeTo(target!.lng, eps);
                         }
                         if (lookAtParams.tilt !== undefined) {
                             expect(mapView.tilt).to.be.closeTo(lookAtParams.tilt, eps);
@@ -422,7 +470,7 @@ describe("MapView", function () {
                                 MapViewUtils.closeToFrustum(
                                     worldPoint as THREE.Vector3,
                                     mapView!.camera,
-                                    0.00001
+                                    0
                                 )
                             ).to.be.true;
                         });

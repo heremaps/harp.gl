@@ -949,7 +949,7 @@ export namespace MapViewUtils {
         //      |<-------->|     Ps
         //     constD pEyeZ|    /|  ^
         //      |<-->|<--->|   / |  |
-        //      |    |     |  /  |  | ndcY*h/2
+        //      |    |     |  /  |  | |ndcY-O.y|*h/2
         //      |    |     | /   |  |
         //  <---T----P'----C0----O  v
         // camZ      |_|  /|     |
@@ -961,7 +961,7 @@ export namespace MapViewUtils {
         //                            camY
         //     constD      newPEyeZ    ^          Ps
         //      |<-->|<--------------->|       _-`|  ^
-        //      |    |                 |    _-`   |  | h/2
+        //      |    |                 |    _-`   |  | |sign(ndcY)-O.y|h/2
         //      |    |                 | _-`      |  |
         //  <---T----P'----C0----------C1---------O  v
         // camZ      |_|            _-`|          |              C0  - Initial camera position
@@ -976,27 +976,43 @@ export namespace MapViewUtils {
         // initial camera position, but calculations are equivalent for points beyond the target
         // (pEyeZ negative) or behind the camera (constD negative).
         // Right triangles PP'C0 and PsOC0 are equivalent, as well as PP'C1 and Ps0C1, that means:
-        // |ndcY|*h/(2*f) = PcamY / |pEyeZ| (1) (ndcY,pEyeZ may be negative so take abs vals).
-        // h/(2*f) = PcamY / newPEyeZ       (2)
-        // Dividing (1) by (2) and solving for newPEyeZ we get: newPEyeZ = |ndcY| * |pEyeZ|
+        // |ndcY-O.y|*h/(2*f) = PcamY / |pEyeZ| (1) (ndcY-O.y,pEyeZ may be negative, take abs vals).
+        // |sign(ndcY)-O.y|h/(2*f) = PcamY / newPEyeZ (2)
+        // Dividing (1) by (2) and solving for newPEyeZ we get:
+        // newPEyeZ = | pEyeZ || ndcY - O.y | / |sign(ndcY)-O.y|
         // The target distance to project P at the top/bottom border of the viewport is then:
-        // constD + newPEyeZ = targetDist - pEyeZ + |ndcY|*|pEyeZ|
+        // constD + newPEyeZ = targetDist - pEyeZ + |pEyeZ||ndcY-O.y| / |sign(ndcY)-O.y|
         // The target distance to project P at the left/right border of the viewport is similarly:
-        // targetDist - pEyeZ + |ndcX|*|pEyeZ|
-        // Take the largest of both distances to ensure the point is inside the viewport, i.e., take
-        // the largest ndc coordinate value:
-        // newDistance = targetDist - pEyeZ + max(|ndcX|, |ndcY|)*|pEyeZ|
+        // targetDist - pEyeZ + |pEyeZ||ndcX-O.x| / |sign(ndcX)-O.x|
+        // Take the largest of both distances to ensure the point is inside the viewport:
+        // newDistance = targetDist - pEyeZ +
+        // max(| ndcX - O.x | /|sign(ndcX)-O.x|, |ndcY-O.y|/sign(ndcY) - O.y |) *| pEyeZ |
 
         const targetDist = cache.vector3[0].copy(worldTarget).sub(camera.position).length();
+        const ppalPoint = CameraUtils.getPrincipalPoint(camera);
         let newDistance = targetDist;
 
+        const getDistanceFactor = (pointNDC: number, ppNDC: number) => {
+            // Use as maximum NDC a value slightly smaller than 1 to ensure the point is visible
+            // with the final camera distance. Otherwise any precision loss might leave it just
+            // outside of the viewport.
+            const maxNDC = 0.99;
+            return Math.abs(pointNDC) > 1
+                ? Math.abs((pointNDC - ppNDC) / (maxNDC * Math.sign(pointNDC) - ppNDC))
+                : 1;
+        };
         for (const point of points) {
             const pEyeZ = -cache.vector3[0].copy(point).applyMatrix4(camera.matrixWorldInverse).z;
             const pointNDC = cache.vector3[0].applyMatrix4(camera.projectionMatrix);
-            const constDist = targetDist - pEyeZ;
-            const newPEyeZ =
-                Math.abs(pEyeZ) * Math.max(Math.abs(pointNDC.x), Math.abs(pointNDC.y)) + constDist;
-            newDistance = Math.max(newDistance, newPEyeZ);
+            const maxFactor = Math.max(
+                getDistanceFactor(pointNDC.x, ppalPoint.x),
+                getDistanceFactor(pointNDC.y, ppalPoint.y)
+            );
+            if (maxFactor > 1) {
+                const constDist = targetDist - pEyeZ;
+                const newPEyeZ = Math.abs(pEyeZ) * maxFactor + constDist;
+                newDistance = Math.max(newDistance, newPEyeZ);
+            }
         }
         return newDistance;
     }
