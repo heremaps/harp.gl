@@ -15,30 +15,19 @@ import {
 import { assert } from "@here/harp-utils";
 import { PerspectiveCamera, Vector2, Vector3 } from "three";
 
-import { CanvasSide, SphereHorizon } from "./SphereHorizon";
+import { CanvasSide, nextCanvasSide, previousCanvasSide, SphereHorizon } from "./SphereHorizon";
 import { MapViewUtils } from "./Utils";
 import { ViewBounds } from "./ViewBounds";
 
 // Rough, empirical rule to compute the number of divisions needed for a geopolygon edge to keep
 // the deviation from the view bound edge it must follow within acceptable values.
-export function computeEdgeDivisionsForSphere(
-    geoStart: GeoCoordinates,
-    geoEnd: GeoCoordinates
-): number {
+export function computeEdgeDivisions(geoStart: GeoCoordinates, geoEnd: GeoCoordinates): number {
     const maxLatitudeSpan = 20;
     const maxLongitudeSpan = 5;
 
     const latitudeSpan = Math.abs(geoEnd.latitude - geoStart.latitude);
     const longitudeSpan = geoStart.minLongitudeSpanTo(geoEnd);
     return Math.ceil(Math.max(latitudeSpan / maxLatitudeSpan, longitudeSpan / maxLongitudeSpan));
-}
-
-function nextCanvasSide(side: CanvasSide): CanvasSide {
-    return (side + 1) % 4;
-}
-
-function previousCanvasSide(side: CanvasSide): CanvasSide {
-    return (side + 3) % 4;
 }
 
 const ccwCanvasCornersNDC: Array<{ x: number; y: number }> = [
@@ -62,7 +51,7 @@ export class SphereViewBounds implements ViewBounds {
      * @override
      */
     generate(): GeoPolygon | undefined {
-        const coordinates = this.findBoundsIntersectionsOnSphere();
+        const coordinates = this.findBoundsIntersections();
 
         this.wrapAroundPoles(coordinates);
 
@@ -71,7 +60,7 @@ export class SphereViewBounds implements ViewBounds {
             : undefined;
     }
 
-    private addSideSegmentSubdivisionsOnSphere(
+    private addSideSegmentSubdivisions(
         coordinates: GeoCoordinates[],
         NDCStart: { x: number; y: number },
         NDCEnd: { x: number; y: number },
@@ -80,7 +69,7 @@ export class SphereViewBounds implements ViewBounds {
     ) {
         coordinates.push(geoStart);
 
-        const divisionCount = computeEdgeDivisionsForSphere(geoStart, geoEnd);
+        const divisionCount = computeEdgeDivisions(geoStart, geoEnd);
         if (divisionCount <= 1) {
             return;
         }
@@ -103,22 +92,20 @@ export class SphereViewBounds implements ViewBounds {
         }
     }
 
-    private addSideIntersectionsOnSphere(
+    private addSideIntersections(
         coordinates: GeoCoordinates[],
         side: CanvasSide,
         geoStartCorner?: GeoCoordinates,
         geoEndCorner?: GeoCoordinates,
         horizon?: SphereHorizon
     ) {
-        assert(this.projection.type === ProjectionType.Spherical);
-
         const startNDCCorner = ccwCanvasCornersNDC[side];
         const endNDCCorner = ccwCanvasCornersNDC[nextCanvasSide(side)];
 
         if (geoStartCorner && geoEndCorner) {
             // No horizon visible on this side of the canvas, generate polygon vertices from
             // intersections of the canvas side with the world.
-            this.addSideSegmentSubdivisionsOnSphere(
+            this.addSideSegmentSubdivisions(
                 coordinates,
                 startNDCCorner,
                 endNDCCorner,
@@ -146,7 +133,7 @@ export class SphereViewBounds implements ViewBounds {
                 horizonIntersections[horizonIntersections.length - 1]
             );
             const geoHorizonPoint = this.projection.unprojectPoint(worldHorizonPoint);
-            this.addSideSegmentSubdivisionsOnSphere(
+            this.addSideSegmentSubdivisions(
                 coordinates,
                 startNDCCorner,
                 worldHorizonPoint.project(this.camera),
@@ -180,7 +167,7 @@ export class SphereViewBounds implements ViewBounds {
             const geoHorizonStart = this.projection.unprojectPoint(worldHorizonStart);
             const geoHorizonEnd = this.projection.unprojectPoint(worldHorizonEnd);
 
-            this.addSideSegmentSubdivisionsOnSphere(
+            this.addSideSegmentSubdivisions(
                 coordinates,
                 worldHorizonStart.project(this.camera),
                 worldHorizonEnd.project(this.camera),
@@ -194,7 +181,7 @@ export class SphereViewBounds implements ViewBounds {
             // canvas side.
             const worldHorizonPoint = horizon.getPoint(horizonIntersections[0]);
             const geoHorizonPoint = this.projection.unprojectPoint(worldHorizonPoint);
-            this.addSideSegmentSubdivisionsOnSphere(
+            this.addSideSegmentSubdivisions(
                 coordinates,
                 worldHorizonPoint.project(this.camera),
                 endNDCCorner,
@@ -204,19 +191,21 @@ export class SphereViewBounds implements ViewBounds {
         }
     }
 
-    private findBoundsIntersectionsOnSphere(): GeoCoordinates[] {
-        assert(this.projection.type === ProjectionType.Spherical);
-
-        const cornerCoordinates: GeoCoordinates[] = [];
+    private findBoundsIntersections(): GeoCoordinates[] {
         const coordinates: GeoCoordinates[] = [];
-
-        this.addCanvasCornerIntersection(cornerCoordinates);
+        const [cornerCoordinates, numCorners] = this.addCanvasCornerIntersection();
 
         // Horizon points need to be added to complete the bounds if not all canvas corners
         // intersect with the world.
-        const horizon = cornerCoordinates.length < 4 ? new SphereHorizon(this.camera) : undefined;
+        const horizon =
+            numCorners < 4
+                ? new SphereHorizon(
+                      this.camera,
+                      cornerCoordinates.map(value => value !== undefined)
+                  )
+                : undefined;
 
-        if (cornerCoordinates.length === 0 && horizon!.isFullyVisible) {
+        if (numCorners === 0 && horizon!.isFullyVisible) {
             // Bounds are generated entirely from equidistant points obtained from the horizon
             // circle.
             horizon!.getDivisionPoints(point => {
@@ -225,11 +214,10 @@ export class SphereViewBounds implements ViewBounds {
             return coordinates;
         }
 
-        cornerCoordinates.length = 4;
         for (let side = CanvasSide.Bottom; side < 4; side++) {
             const startCorner = cornerCoordinates[side];
             const endCorner = cornerCoordinates[nextCanvasSide(side)];
-            this.addSideIntersectionsOnSphere(coordinates, side, startCorner, endCorner, horizon);
+            this.addSideIntersections(coordinates, side, startCorner, endCorner, horizon);
         }
         return coordinates;
     }
@@ -341,31 +329,24 @@ export class SphereViewBounds implements ViewBounds {
         );
     }
 
-    private addNDCRayIntersection(
-        ndcPoints: Array<[number, number]>,
-        geoPolygon: GeoCoordinates[]
-    ) {
-        ndcPoints.forEach(corner => {
+    // Returns a tuple with the array of canvas corner intersection geocoordinates in ccw order
+    // (undefined values for corners not intersecting the world) and the number of intersections.
+    private addCanvasCornerIntersection(): [Array<GeoCoordinates | undefined>, number] {
+        const geoCorners = new Array<GeoCoordinates | undefined>();
+        let numIntersections = 0;
+        ccwCanvasCornersNDC.forEach(corner => {
             const intersection = MapViewUtils.rayCastWorldCoordinates(
                 { camera: this.camera, projection: this.projection },
-                corner[0],
-                corner[1]
+                corner.x,
+                corner.y
             );
             if (intersection) {
-                geoPolygon.push(this.projection.unprojectPoint(intersection));
+                geoCorners.push(this.projection.unprojectPoint(intersection));
+                ++numIntersections;
+            } else {
+                geoCorners.push(undefined);
             }
         });
-    }
-
-    private addCanvasCornerIntersection(geoPolygon: GeoCoordinates[]) {
-        this.addNDCRayIntersection(
-            [
-                [-1, -1], //lower left
-                [1, -1], //lower right
-                [1, 1], //upper right
-                [-1, 1] //upper left
-            ],
-            geoPolygon
-        );
+        return [geoCorners, numIntersections];
     }
 }

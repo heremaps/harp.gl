@@ -9,40 +9,18 @@ import {
     MapViewMultiPointFeature,
     MapViewPolygonFeature
 } from "@here/harp-features-datasource";
-import {
-    GeoBox,
-    GeoCoordinates,
-    GeoPolygon,
-    mercatorProjection,
-    sphereProjection
-} from "@here/harp-geoutils";
+import { GeoBox, GeoCoordinates, GeoPolygon, mercatorProjection } from "@here/harp-geoutils";
 import { geoCoordLikeToGeoPointLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { BoundsGenerator, CopyrightElementHandler, MapView } from "@here/harp-mapview";
+import { BoundsGenerator, CameraUtils, CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
+import { GUI, GUIController } from "dat.gui";
 
 import { apikey } from "../config";
 
 export namespace BoundsExample {
-    const message = document.createElement("div");
-    message.innerHTML = `
-  <br />  Press "space" to generate and draw a bounds polygon of the current view
-  <br />  Press "h" to look at the last created Polygon's BoundingBox
-  <br />  Press "g" to look at the last created Polygon
-  <br />  Press "b" to show the boundingbox of the Polygon
-  <br />  Press "p" to toggle the projection
-  <br />  Press "w" to toggle tile wrapping in planar projection`;
-
-    message.style.position = "absolute";
-    message.style.cssFloat = "right";
-    message.style.top = "10px";
-    message.style.right = "10px";
-    message.style.textAlign = "left";
-    message.style.textShadow = "0px 0px 2px gray";
-    document.body.appendChild(message);
-
     // Create a new MapView for the HTMLCanvasElement of the given id.
-    function initializeMapView(id: string): MapView {
+    function initMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
         // Look at BERLIN
@@ -121,7 +99,7 @@ export namespace BoundsExample {
         const mapControls = new MapControls(map);
         mapControls.maxTiltAngle = 180;
 
-        const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input", projectionSwitch: true });
         canvas.parentElement!.appendChild(ui.domElement);
 
         map.resize(window.innerWidth, window.innerHeight);
@@ -131,70 +109,6 @@ export namespace BoundsExample {
         });
 
         addVectorTileDataSource(map);
-        const featuresDataSource = addFeaturesDataSource(map, []);
-        const boundsGenerator = new BoundsGenerator(map);
-
-        let bounds: GeoPolygon | undefined;
-        let showBoundingBox: boolean = false;
-
-        window.addEventListener("keyup", event => {
-            switch (event.key) {
-                case " ":
-                    // Generate the the bounds  of the current view and add them as a feature
-                    bounds = boundsGenerator.generate();
-
-                    if (bounds !== undefined) {
-                        updateBoundsFeatures(bounds, featuresDataSource);
-                        updateBoundingBoxFeatures(bounds, featuresDataSource, showBoundingBox);
-                    }
-                    break;
-                case "h":
-                    map.lookAt({ bounds: bounds?.getGeoBoundingBox() });
-                    break;
-                case "g":
-                    map.lookAt({ bounds });
-                    break;
-                case "p":
-                    map.projection =
-                        map.projection === mercatorProjection
-                            ? sphereProjection
-                            : mercatorProjection;
-                    break;
-                case "b":
-                    if (bounds) {
-                        showBoundingBox = showBoundingBox ? false : true;
-                        updateBoundingBoxFeatures(bounds, featuresDataSource, showBoundingBox);
-                    }
-                    break;
-                case "l":
-                    // eslint-disable-next-line no-console
-                    console.log(
-                        "target: ",
-                        map.target,
-                        " tilt: ",
-                        map.tilt,
-                        " heading: ",
-                        map.heading,
-                        " zoom: ",
-                        map.zoomLevel,
-                        " canvassize: ",
-                        map.canvas.height,
-                        map.canvas.width,
-                        "near: ",
-                        map.camera.near,
-                        "far: ",
-                        map.camera.far
-                    );
-                    break;
-                case "w":
-                    mapView.tileWrappingEnabled = !mapView.tileWrappingEnabled;
-                    mapView.update();
-                    break;
-                default:
-                    break;
-            }
-        });
-
         return map;
     }
 
@@ -310,5 +224,103 @@ export namespace BoundsExample {
         return featuresDataSource;
     }
 
-    export const mapView = initializeMapView("mapCanvas");
+    function addButton(gui: GUI, name: string, callback: () => void): GUIController {
+        return gui.add(
+            {
+                [name]: callback
+            },
+            name
+        );
+    }
+
+    function initGUI(
+        map: MapView,
+        boundsGenerator: BoundsGenerator,
+        viewBoundsDataSource: FeaturesDataSource
+    ) {
+        const gui = new GUI();
+        gui.width = 350;
+        let bounds: GeoPolygon | undefined;
+        const options = {
+            bbox: false,
+            wrap: false,
+            ppalPointX: 0,
+            ppalPointY: 0
+        };
+
+        addButton(gui, "Draw view bounds polygon", () => {
+            // Generate the the bounds  of the current view and add them as a feature
+            bounds = boundsGenerator.generate();
+
+            if (bounds) {
+                updateBoundsFeatures(bounds, viewBoundsDataSource);
+                updateBoundingBoxFeatures(bounds, viewBoundsDataSource, options.bbox);
+            }
+        });
+        addButton(gui, "Look at bounds bbox", () => {
+            map.lookAt({ bounds: bounds?.getGeoBoundingBox() });
+        });
+        addButton(gui, "Look at bounds polygon", () => {
+            map.lookAt({ bounds });
+        });
+        gui.add(options, "bbox")
+            .onChange((enabled: boolean) => {
+                if (bounds) {
+                    updateBoundingBoxFeatures(bounds, viewBoundsDataSource, enabled);
+                }
+            })
+            .name("Show polygon's bbox");
+        gui.add(options, "wrap")
+            .onChange((enabled: boolean) => {
+                map.tileWrappingEnabled = enabled;
+                map.update();
+            })
+            .name("Repeat world (planar)");
+        const ppFolder = gui.addFolder("Principal point (NDC)");
+        ppFolder
+            .add(options, "ppalPointX", -1, 1, 0.1)
+            .onChange((x: number) => {
+                CameraUtils.setPrincipalPoint(map.camera, {
+                    x,
+                    y: CameraUtils.getPrincipalPoint(map.camera).y
+                });
+                map.update();
+            })
+            .name("x");
+        ppFolder
+            .add(options, "ppalPointY", -1, 1, 0.1)
+            .onChange((y: number) => {
+                CameraUtils.setPrincipalPoint(map.camera, {
+                    x: CameraUtils.getPrincipalPoint(map.camera).x,
+                    y
+                });
+                map.update();
+            })
+            .name("y");
+        addButton(gui, "Log camera settings", () => {
+            // eslint-disable-next-line no-console
+            console.log(
+                "target: ",
+                map.target,
+                " tilt: ",
+                map.tilt,
+                " heading: ",
+                map.heading,
+                " zoom: ",
+                map.zoomLevel,
+                " canvassize: ",
+                map.canvas.height,
+                map.canvas.width,
+                "near: ",
+                map.camera.near,
+                "far: ",
+                map.camera.far
+            );
+        });
+    }
+
+    export const mapView = initMapView("mapCanvas");
+    const boundsGenerator = new BoundsGenerator(mapView);
+    const viewBoundsDataSource = addFeaturesDataSource(mapView, []);
+    initGUI(mapView, boundsGenerator, viewBoundsDataSource);
 }
