@@ -21,6 +21,14 @@ export enum CanvasSide {
     Left
 }
 
+export function nextCanvasSide(side: CanvasSide): CanvasSide {
+    return (side + 1) % 4;
+}
+
+export function previousCanvasSide(side: CanvasSide): CanvasSide {
+    return (side + 3) % 4;
+}
+
 /**
  * Class computing horizon tangent points and intersections with canvas for spherical projection.
  *
@@ -44,16 +52,19 @@ export class SphereHorizon {
     private readonly m_distanceToHorizonCenter: number;
     private readonly m_intersections: number[][] = [];
     private m_isFullyVisible: boolean = true;
-    private m_cameraPitch?: number;
-    private m_halfFovVertical?: number;
-    private m_halfFovHorizontal?: number;
+    private readonly m_cameraPitch: number;
 
     /**
      * Constructs the SphereHorizon for the given camera.
      *
      * @param m_camera - The camera used as a reference to compute the horizon.
+     * @param m_cornerIntersects - Array with a boolean for each canvas corner telling whether it
+     * intersects with the world. Corners are in ccw-order starting with bottom left.
      */
-    constructor(private readonly m_camera: THREE.PerspectiveCamera) {
+    constructor(
+        private readonly m_camera: THREE.PerspectiveCamera,
+        private readonly m_cornerIntersects: boolean[]
+    ) {
         //
         //          TL :,,,,,,,,,,,,,,,,,,,,,,,,,,,,! TR canvas corner (proj. on horizon plane)
         //             >                            +
@@ -112,8 +123,11 @@ export class SphereHorizon {
         this.m_distanceToHorizonCenter = tangentDistance * Math.cos(this.m_normalToTangentAngle);
         const horizonCenterLength = cameraHeight - this.m_distanceToHorizonCenter;
         this.m_radius = Math.sqrt(earthRadiusSq - horizonCenterLength * horizonCenterLength);
+        this.m_cameraPitch = MapViewUtils.extractAttitude(
+            { projection: sphereProjection },
+            this.m_camera
+        ).pitch;
         const horizonCenter = new THREE.Vector3().copy(zAxis).setLength(horizonCenterLength);
-
         this.m_matrix = new THREE.Matrix4()
             .makeBasis(xAxis, yAxis, zAxis)
             .setPosition(horizonCenter);
@@ -150,7 +164,7 @@ export class SphereHorizon {
     /**
      * Subdivides and arc of the horizon circle, providing the world coordinates of the divisions.
      *
-     * @param callback - Function called for every division point, getting the the point world
+     * @param callback - Function called for every division point, getting the point world
      * coordinates as parameter.
      * @param tStart - Angular parameter of the arc's start point [0,1].
      * @param tEnd - Angular parameter of the arc's end point [0,1].
@@ -191,18 +205,29 @@ export class SphereHorizon {
     }
 
     private isTangentVisible(side: CanvasSide): boolean {
-        if (side === CanvasSide.Top || side === CanvasSide.Bottom) {
-            const eyeToTangentAngle =
-                side === CanvasSide.Top
-                    ? this.m_normalToTangentAngle - this.cameraPitch
-                    : this.m_normalToTangentAngle + this.cameraPitch;
-            return this.halfFovVertical >= Math.abs(eyeToTangentAngle);
-        } else {
-            const eyeToTangentAngle = this.m_normalToTangentAngle;
-            return (
-                this.halfFovHorizontal >= Math.abs(eyeToTangentAngle) &&
-                this.cameraPitch <= this.halfFovVertical
-            );
+        switch (side) {
+            case CanvasSide.Top: {
+                const eyeToTangentAngle = this.m_normalToTangentAngle - this.m_cameraPitch;
+                return CameraUtils.getTopFov(this.m_camera) >= Math.abs(eyeToTangentAngle);
+            }
+            case CanvasSide.Bottom: {
+                const eyeToTangentAngle = this.m_normalToTangentAngle + this.m_cameraPitch;
+                return CameraUtils.getBottomFov(this.m_camera) >= Math.abs(eyeToTangentAngle);
+            }
+            case CanvasSide.Left: {
+                const eyeToTangentAngle = this.m_normalToTangentAngle;
+                return (
+                    CameraUtils.getLeftFov(this.m_camera) >= Math.abs(eyeToTangentAngle) &&
+                    this.m_cameraPitch <= CameraUtils.getBottomFov(this.m_camera)
+                );
+            }
+            case CanvasSide.Right: {
+                const eyeToTangentAngle = this.m_normalToTangentAngle;
+                return (
+                    CameraUtils.getRightFov(this.m_camera) >= Math.abs(eyeToTangentAngle) &&
+                    this.m_cameraPitch <= CameraUtils.getBottomFov(this.m_camera)
+                );
+            }
         }
     }
 
@@ -277,107 +302,133 @@ export class SphereHorizon {
         //                        \|/           |              |
         //                         E----> camX__v______________v
 
-        const radiusSq = this.m_radius * this.m_radius;
         const yBottom =
-            this.m_distanceToHorizonCenter * Math.tan(this.cameraPitch - this.halfFovVertical);
+            this.m_distanceToHorizonCenter *
+            Math.tan(this.m_cameraPitch - CameraUtils.getBottomFov(this.m_camera));
         let tTopRight: number | undefined;
         let tBottomRight: number | undefined;
 
+        // Collect all intersections in counter-clockwise order.
         for (let side = CanvasSide.Bottom; side < 4; side++) {
-            const sideIntersections: number[] = [];
             if (this.isTangentVisible(side)) {
-                sideIntersections.push(this.getTangentOnSide(side));
-            } else {
-                this.m_isFullyVisible = false;
-                switch (side) {
-                    case CanvasSide.Bottom: {
-                        const x = Math.sqrt(radiusSq - yBottom * yBottom);
-                        const t = Math.atan2(yBottom, x) / twoPi;
-                        sideIntersections.push(0.5 - t, t > 0 ? t : 1 + t);
-                        break;
-                    }
-                    case CanvasSide.Right: {
-                        // Define right canvas side line by finding the middle and bottom points of
-                        // its projection on the horizon plane.
-                        const eyeToHorizon =
-                            this.m_distanceToHorizonCenter / Math.cos(this.cameraPitch);
-                        const yRight = this.m_distanceToHorizonCenter * Math.tan(this.cameraPitch);
-                        const xRight = eyeToHorizon * Math.tan(this.halfFovHorizontal);
-                        const eyeToBottom =
-                            (this.m_distanceToHorizonCenter * Math.cos(this.halfFovVertical)) /
-                            Math.cos(this.cameraPitch - this.halfFovVertical);
-                        const xBottomRight = (xRight * eyeToBottom) / eyeToHorizon;
-                        const yBottomRight = yBottom;
-                        const intersections = Math2D.intersectLineAndCircle(
-                            xBottomRight,
-                            yBottomRight,
-                            xRight,
-                            yRight,
-                            this.m_radius
-                        );
+                this.m_intersections.push([this.getTangentOnSide(side)]);
+                continue;
+            }
 
-                        if (!intersections) {
-                            break;
-                        }
-                        const yTopRight = intersections.y1;
-                        // If there's a second intersection check if it's visible (its above the y
-                        // coordinate of the bottom canvas side).
-                        if (-yTopRight >= yBottom && intersections.x2 !== undefined) {
-                            tBottomRight = Math.atan2(intersections.y2!, intersections.x2) / twoPi;
-                            sideIntersections.push(1 + tBottomRight);
-                        }
-                        tTopRight = Math.atan2(intersections!.y1, intersections!.x1) / twoPi;
-                        sideIntersections.push(tTopRight);
-                        break;
+            const sideIntersections = new Array<number | undefined>();
+            this.m_isFullyVisible = false;
+            switch (side) {
+                case CanvasSide.Bottom: {
+                    sideIntersections.push(...this.computeTBIntersections(yBottom));
+                    break;
+                }
+                case CanvasSide.Right: {
+                    const rightFov = CameraUtils.getRightFov(this.m_camera);
+                    const intersections = this.computeLRIntersections(yBottom, rightFov);
+                    if (intersections) {
+                        [tTopRight, tBottomRight] = intersections;
+                        sideIntersections.push(
+                            tBottomRight !== undefined ? 1 + tBottomRight : undefined,
+                            tTopRight
+                        );
                     }
-                    case CanvasSide.Top: {
-                        const yTop =
-                            this.m_distanceToHorizonCenter *
-                            Math.tan(this.cameraPitch + this.halfFovVertical);
-                        const x = Math.sqrt(radiusSq - yTop * yTop);
-                        const t = Math.atan2(yTop, x) / twoPi;
-                        sideIntersections.push(t, 0.5 - t);
-                        break;
-                    }
-                    case CanvasSide.Left: {
+                    break;
+                }
+                case CanvasSide.Top: {
+                    const yTop =
+                        this.m_distanceToHorizonCenter *
+                        Math.tan(this.m_cameraPitch + CameraUtils.getTopFov(this.m_camera));
+                    sideIntersections.push(...this.computeTBIntersections(yTop).reverse());
+                    break;
+                }
+                case CanvasSide.Left: {
+                    const leftFov = CameraUtils.getLeftFov(this.m_camera);
+                    if (leftFov === CameraUtils.getRightFov(this.m_camera)) {
                         // Left side intersections are symmetrical to right ones.
-                        if (tTopRight !== undefined) {
-                            sideIntersections.push(0.5 - tTopRight);
+                        sideIntersections.push(
+                            tTopRight !== undefined ? 0.5 - tTopRight : undefined,
+                            tBottomRight !== undefined ? 0.5 - tBottomRight : undefined
+                        );
+                    } else {
+                        const isections = this.computeLRIntersections(yBottom, leftFov);
+                        if (isections) {
+                            sideIntersections.push(
+                                0.5 - isections[0], // top
+                                isections[1] !== undefined ? 0.5 - isections[1] : undefined // bottom
+                            );
                         }
-                        if (tBottomRight !== undefined) {
-                            sideIntersections.push(0.5 - tBottomRight);
-                        }
-                        break;
                     }
+                    break;
                 }
             }
 
-            this.m_intersections.push(sideIntersections);
+            // Filter out undefined values and horizon intersections that are not visible because
+            // the canvas corner intersects the world (this may happen with off-center projections).
+            const hasCorners = [
+                this.m_cornerIntersects[side],
+                this.m_cornerIntersects[nextCanvasSide(side)]
+            ];
+            this.m_intersections.push(
+                sideIntersections.filter(
+                    (val, i) => val !== undefined && !hasCorners[i]
+                ) as number[]
+            );
         }
     }
 
-    private get cameraPitch(): number {
-        if (this.m_cameraPitch === undefined) {
-            this.m_cameraPitch = MapViewUtils.extractAttitude(
-                { projection: sphereProjection },
-                this.m_camera
-            ).pitch;
-        }
-        return this.m_cameraPitch;
+    /**
+     * Computes horizon intersections with top or bottom canvas side.
+     *
+     * @returns positions of the intersections in the horizon circle, first left, then right
+     * Values are in range [0,1].
+     */
+    private computeTBIntersections(y: number): [number, number] {
+        const radiusSq = this.m_radius * this.m_radius;
+        const x = Math.sqrt(radiusSq - y * y);
+        const t = Math.atan2(y, x) / twoPi;
+        return [0.5 - t, t > 0 ? t : 1 + t];
     }
 
-    // TODO: Support off-center projections.
-    private get halfFovVertical(): number {
-        if (this.m_halfFovVertical === undefined) {
-            this.m_halfFovVertical = CameraUtils.getVerticalFov(this.m_camera) / 2;
-        }
-        return this.m_halfFovVertical;
-    }
+    /**
+     * Computes horizon intersections with left or right canvas side.
+     *
+     * @returns positions of the intersections in the horizon circle, first top, then bottom
+     * (or undefined if not visible). Values are in range [-0.5,0.5].
+     */
+    private computeLRIntersections(
+        yBottom: number,
+        sideFov: number
+    ): [number, number?] | undefined {
+        // Define vertical canvas side line by finding the middle and bottom points of
+        // its projection on the horizon plane.
+        const eyeToHorizon = this.m_distanceToHorizonCenter / Math.cos(this.m_cameraPitch);
+        const yMiddle = this.m_distanceToHorizonCenter * Math.tan(this.m_cameraPitch);
+        const xMiddle = eyeToHorizon * Math.tan(sideFov);
+        const bottomFov = CameraUtils.getBottomFov(this.m_camera);
+        const eyeToBottom =
+            (this.m_distanceToHorizonCenter * Math.cos(bottomFov)) /
+            Math.cos(this.m_cameraPitch - bottomFov);
+        const xBottom = (xMiddle * eyeToBottom) / eyeToHorizon;
+        const intersections = Math2D.intersectLineAndCircle(
+            xBottom,
+            yBottom,
+            xMiddle,
+            yMiddle,
+            this.m_radius
+        );
 
-    private get halfFovHorizontal(): number {
-        if (this.m_halfFovHorizontal === undefined) {
-            this.m_halfFovHorizontal = CameraUtils.getHorizontalFov(this.m_camera) / 2;
+        if (!intersections) {
+            return undefined;
         }
-        return this.m_halfFovHorizontal;
+        const yTopRight = intersections.y1;
+        const tTop = Math.atan2(yTopRight, intersections.x1) / twoPi;
+
+        // If there's a bottom intersection check if it's visible (its above the y
+        // coordinate of the bottom canvas side).
+        const hasBottomIntersection = -yTopRight >= yBottom && intersections.x2 !== undefined;
+        const tBottom = hasBottomIntersection
+            ? Math.atan2(intersections.y2!, intersections.x2!) / twoPi
+            : undefined;
+        return [tTop, tBottom];
     }
 }
