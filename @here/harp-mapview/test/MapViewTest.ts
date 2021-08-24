@@ -142,7 +142,8 @@ describe("MapView", function () {
             testName: string;
             lookAtParams: Partial<LookAtParams>;
             ppalPoint?: { x: number; y: number };
-            expectAllInView?: boolean;
+            allInView?: boolean;
+            ndcEps?: number; // error tolerance used for closeToFrustum check.
         }> = [
             {
                 testName: "berlin/18 topView",
@@ -212,6 +213,17 @@ describe("MapView", function () {
                 ppalPoint: { x: 0.5, y: -0.3 }
             },
             {
+                testName: "berlin bounds only, extreme off-center projection",
+                lookAtParams: {
+                    bounds: new GeoBox(
+                        new GeoCoordinates(52.438917, 13.275001),
+                        new GeoCoordinates(52.590844, 13.522331)
+                    )
+                },
+                ppalPoint: { x: 1, y: -1 },
+                ndcEps: 0.02 // Large precision loss caused by very small side fov angles.
+            },
+            {
                 testName: "berlin bounds + zoomLevel",
                 lookAtParams: {
                     bounds: new GeoBox(
@@ -230,7 +242,7 @@ describe("MapView", function () {
                     ),
                     distance: 38200
                 },
-                expectAllInView: false
+                allInView: false
             },
             {
                 testName: "berlin bounds + angles",
@@ -354,7 +366,7 @@ describe("MapView", function () {
 
                     distance: 38200
                 },
-                expectAllInView: false
+                allInView: false
             },
             {
                 testName: "berlin polygonbounds + angles",
@@ -398,9 +410,8 @@ describe("MapView", function () {
             [mercatorProjection, 1e-13]
         ] as Array<[Projection, number]>) {
             describe(`${getProjectionName(projection)} projection`, function () {
-                for (const { testName, lookAtParams, ppalPoint, expectAllInView } of tests) {
+                for (const { testName, lookAtParams, ppalPoint, allInView, ndcEps } of tests) {
                     const target = lookAtParams.target as GeoCoordinates | undefined;
-
                     it(`obeys constructor params - ${testName}`, function () {
                         mapView = new MapView({ ...mapViewOptions, projection, ...lookAtParams });
                         if (ppalPoint) {
@@ -456,7 +467,7 @@ describe("MapView", function () {
                         expect(mapView.target.lat).to.be.closeTo(center.lat, eps);
                         expect(mapView.target.lng).to.be.closeTo(center.lng, eps);
 
-                        if (expectAllInView === false) {
+                        if (allInView === false) {
                             return;
                         }
 
@@ -470,7 +481,7 @@ describe("MapView", function () {
                                 MapViewUtils.closeToFrustum(
                                     worldPoint as THREE.Vector3,
                                     mapView!.camera,
-                                    0
+                                    ndcEps ?? 0
                                 )
                             ).to.be.true;
                         });

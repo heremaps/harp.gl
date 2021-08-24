@@ -933,8 +933,7 @@ export namespace MapViewUtils {
      *
      * All dimensions belong to world space.
      *
-     * @param points - points which shall are to be covered by view
-     *
+     * @param points - points which must be in view.
      * @param worldTarget - readonly, world target of {@link MapView}
      * @param camera - readonly, camera with proper `position` and rotation set
      * @returns new distance to camera to be used with {@link (MapView.lookAt:WITH_PARAMS)}
@@ -944,6 +943,9 @@ export namespace MapViewUtils {
         worldTarget: THREE.Vector3,
         camera: THREE.PerspectiveCamera
     ): number {
+        // Diagram of the camera space YZ plane with the initial situation. Camera is at C0 and may
+        // need to be moved to make point P visible.
+        //
         //                camY
         //       targetDist^
         //      |<-------->|     Ps
@@ -952,12 +954,18 @@ export namespace MapViewUtils {
         //      |    |     |  /  |  | |ndcY-O.y|*h/2
         //      |    |     | /   |  |
         //  <---T----P'----C0----O  v
-        // camZ      |_|  /|     |
-        //           |   / |<--->|
-        //      PcamY|  /     f
-        //           | / (focal length)
-        //           |/
+        // camZ      |_|  /|     |                              C0  - Initial camera position
+        //           |   / |<--->|                              T   - Camera target
+        //      PcamY|  /     f                                 P   - Bounds point (world space)
+        //           | / (focal length)                         O   - Principal point.
+        //           |/                                         h   - viewport height.
         //           P
+        //
+        // Diagram of camera space YZ plane with the final camera position C1 that leaves P at the
+        // edge of the viewport. The new camera distance is the sum of a constant term (constD) and
+        // the new distance to P (newPEyeZ), which is the initial distance (pEyeZ) multiplied by a
+        // factor that needs to be found.
+        //
         //                            camY
         //     constD      newPEyeZ    ^          Ps
         //      |<-->|<--------------->|       _-`|  ^
@@ -970,11 +978,10 @@ export namespace MapViewUtils {
         //           |     _-`        (focal length)             P   - Bounds point (world space)
         //           |  _-`                                      Ps  - P projected on screen.
         //           P-`                                         O   - Principal point.
+        //                                                       h   - viewport height.
         //
-        // Diagram showing how to calculate the camera distance on the camera YZ plane so that a
-        // point P is projected on the screen edge (similar for XZ plane). P is between target and
-        // initial camera position, but calculations are equivalent for points beyond the target
-        // (pEyeZ negative) or behind the camera (constD negative).
+        // P is between target and initial camera position, but calculations are equivalent for
+        // points beyond the target (pEyeZ negative) or behind the camera (constD negative).
         // Right triangles PP'C0 and PsOC0 are equivalent, as well as PP'C1 and Ps0C1, that means:
         // |ndcY-O.y|*h/(2*f) = PcamY / |pEyeZ| (1) (ndcY-O.y,pEyeZ may be negative, take abs vals).
         // |sign(ndcY)-O.y|h/(2*f) = PcamY / newPEyeZ (2)
