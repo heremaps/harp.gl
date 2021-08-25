@@ -933,8 +933,7 @@ export namespace MapViewUtils {
      *
      * All dimensions belong to world space.
      *
-     * @param points - points which shall are to be covered by view
-     *
+     * @param points - points which must be in view.
      * @param worldTarget - readonly, world target of {@link MapView}
      * @param camera - readonly, camera with proper `position` and rotation set
      * @returns new distance to camera to be used with {@link (MapView.lookAt:WITH_PARAMS)}
@@ -944,78 +943,85 @@ export namespace MapViewUtils {
         worldTarget: THREE.Vector3,
         camera: THREE.PerspectiveCamera
     ): number {
-        const cameraRotationMatrix = new THREE.Matrix4();
-        cameraRotationMatrix.extractRotation(camera.matrixWorld);
-        const screenUpVector = new THREE.Vector3(0, 1, 0).applyMatrix4(cameraRotationMatrix);
-        const screenSideVector = new THREE.Vector3(1, 0, 0).applyMatrix4(cameraRotationMatrix);
-        const screenVertMidPlane = new THREE.Plane().setFromCoplanarPoints(
-            camera.position,
-            worldTarget,
-            worldTarget.clone().add(screenUpVector)
-        );
-        const screenHorzMidPlane = new THREE.Plane().setFromCoplanarPoints(
-            camera.position,
-            worldTarget,
-            worldTarget.clone().add(screenSideVector)
-        );
+        // Diagram of the camera space YZ plane with the initial situation. Camera is at C0 and may
+        // need to be moved to make point P visible.
+        //
+        //                camY
+        //       targetDist^
+        //      |<-------->|     Ps
+        //     constD pEyeZ|    /|  ^
+        //      |<-->|<--->|   / |  |
+        //      |    |     |  /  |  | |ndcY-O.y|*h/2
+        //      |    |     | /   |  |
+        //  <---T----P'----C0----O  v
+        // camZ      |_|  /|     |                              C0  - Initial camera position
+        //           |   / |<--->|                              T   - Camera target
+        //      PcamY|  /     f                                 P   - Bounds point (world space)
+        //           | / (focal length)                         O   - Principal point.
+        //           |/                                         h   - viewport height.
+        //           P
+        //
+        // Diagram of camera space YZ plane with the final camera position C1 that leaves P at the
+        // edge of the viewport. The new camera distance is the sum of a constant term (constD) and
+        // the new distance to P (newPEyeZ), which is the initial distance (pEyeZ) multiplied by a
+        // factor that needs to be found.
+        //
+        //                            camY
+        //     constD      newPEyeZ    ^          Ps
+        //      |<-->|<--------------->|       _-`|  ^
+        //      |    |                 |    _-`   |  | |sign(ndcY)-O.y|h/2
+        //      |    |                 | _-`      |  |
+        //  <---T----P'----C0----------C1---------O  v
+        // camZ      |_|            _-`|          |              C0  - Initial camera position
+        //           |           _-`   |<-------->|              C1  - New camera position
+        //      PcamY|        _-`           f                    T   - Camera target
+        //           |     _-`        (focal length)             P   - Bounds point (world space)
+        //           |  _-`                                      Ps  - P projected on screen.
+        //           P-`                                         O   - Principal point.
+        //                                                       h   - viewport height.
+        //
+        // P is between target and initial camera position, but calculations are equivalent for
+        // points beyond the target (pEyeZ negative) or behind the camera (constD negative).
+        // Right triangles PP'C0 and PsOC0 are equivalent, as well as PP'C1 and Ps0C1, that means:
+        // |ndcY-O.y|*h/(2*f) = PcamY / |pEyeZ| (1) (ndcY-O.y,pEyeZ may be negative, take abs vals).
+        // |sign(ndcY)-O.y|h/(2*f) = PcamY / newPEyeZ (2)
+        // Dividing (1) by (2) and solving for newPEyeZ we get:
+        // newPEyeZ = | pEyeZ || ndcY - O.y | / |sign(ndcY)-O.y|
+        // The target distance to project P at the top/bottom border of the viewport is then:
+        // constD + newPEyeZ = targetDist - pEyeZ + |pEyeZ||ndcY-O.y| / |sign(ndcY)-O.y|
+        // The target distance to project P at the left/right border of the viewport is similarly:
+        // targetDist - pEyeZ + |pEyeZ||ndcX-O.x| / |sign(ndcX)-O.x|
+        // Take the largest of both distances to ensure the point is inside the viewport:
+        // newDistance = targetDist - pEyeZ +
+        // max(| ndcX - O.x | /|sign(ndcX)-O.x|, |ndcY-O.y|/sign(ndcY) - O.y |) *| pEyeZ |
 
-        const cameraPos = cache.vector3[0];
-        cameraPos.copy(camera.position);
+        const targetDist = cache.vector3[0].copy(worldTarget).sub(camera.position).length();
+        const ppalPoint = CameraUtils.getPrincipalPoint(camera);
+        let newDistance = targetDist;
 
-        const halfVertFov = THREE.MathUtils.degToRad(camera.fov / 2);
-        // TODO: Support off-center projections.
-        const halfHorzFov = calculateHorizontalFovByVerticalFov(halfVertFov * 2, camera.aspect) / 2;
-
-        // tan(fov/2)
-        const halfVertFovTan = 1 / Math.tan(halfVertFov);
-        const halfHorzFovTan = 1 / Math.tan(halfHorzFov);
-
-        const cameraToTarget = cache.vector3[1];
-        cameraToTarget.copy(cameraPos).sub(worldTarget).negate();
-
-        const cameraToTargetNormalized = new THREE.Vector3().copy(cameraToTarget).normalize();
-
-        const offsetVector = new THREE.Vector3();
-
-        const cameraToPointOnRefPlane = new THREE.Vector3();
-        const pointOnRefPlane = new THREE.Vector3();
-
-        function checkAngle(
-            point: THREE.Vector3,
-            referencePlane: THREE.Plane,
-            maxAngle: number,
-            fovFactor: number
-        ) {
-            referencePlane.projectPoint(point, pointOnRefPlane);
-            cameraToPointOnRefPlane.copy(cameraPos).sub(pointOnRefPlane).negate();
-
-            const viewAngle = cameraToTarget.angleTo(cameraToPointOnRefPlane);
-
-            if (viewAngle <= maxAngle) {
-                return;
-            }
-
-            const cameraToPointLen = cameraToPointOnRefPlane.length();
-            const cameraToTargetLen = cameraToTarget.length();
-
-            const newCameraDistance =
-                cameraToPointLen * (Math.sin(viewAngle) * fovFactor - Math.cos(viewAngle)) +
-                cameraToTargetLen;
-
-            offsetVector
-                .copy(cameraToTargetNormalized)
-                .multiplyScalar(cameraToTargetLen - newCameraDistance);
-
-            cameraPos.add(offsetVector);
-            cameraToTarget.sub(offsetVector);
-        }
-
+        const getDistanceFactor = (pointNDC: number, ppNDC: number) => {
+            // Use as maximum NDC a value slightly smaller than 1 to ensure the point is visible
+            // with the final camera distance. Otherwise any precision loss might leave it just
+            // outside of the viewport.
+            const maxNDC = 0.99;
+            return Math.abs(pointNDC) > 1
+                ? Math.abs((pointNDC - ppNDC) / (maxNDC * Math.sign(pointNDC) - ppNDC))
+                : 1;
+        };
         for (const point of points) {
-            checkAngle(point, screenVertMidPlane, halfVertFov, halfVertFovTan);
-            checkAngle(point, screenHorzMidPlane, halfHorzFov, halfHorzFovTan);
+            const pEyeZ = -cache.vector3[0].copy(point).applyMatrix4(camera.matrixWorldInverse).z;
+            const pointNDC = cache.vector3[0].applyMatrix4(camera.projectionMatrix);
+            const maxFactor = Math.max(
+                getDistanceFactor(pointNDC.x, ppalPoint.x),
+                getDistanceFactor(pointNDC.y, ppalPoint.y)
+            );
+            if (maxFactor > 1) {
+                const constDist = targetDist - pEyeZ;
+                const newPEyeZ = Math.abs(pEyeZ) * maxFactor + constDist;
+                newDistance = Math.max(newDistance, newPEyeZ);
+            }
         }
-
-        return cameraToTarget.length();
+        return newDistance;
     }
 
     /**
