@@ -132,11 +132,7 @@ export namespace BoundsExample {
 
         addVectorTileDataSource(map);
         const featuresDataSource = addFeaturesDataSource(map, []);
-        const boundsGenerator = new BoundsGenerator(
-            map.camera,
-            map.projection,
-            map.tileWrappingEnabled
-        );
+        const boundsGenerator = new BoundsGenerator(map);
 
         let bounds: GeoPolygon | undefined;
         let showBoundingBox: boolean = false;
@@ -159,7 +155,7 @@ export namespace BoundsExample {
                     map.lookAt({ bounds });
                     break;
                 case "p":
-                    boundsGenerator.projection = map.projection =
+                    map.projection =
                         map.projection === mercatorProjection
                             ? sphereProjection
                             : mercatorProjection;
@@ -192,7 +188,6 @@ export namespace BoundsExample {
                     break;
                 case "w":
                     mapView.tileWrappingEnabled = !mapView.tileWrappingEnabled;
-                    boundsGenerator.tileWrappingEnabled = mapView.tileWrappingEnabled;
                     mapView.update();
                     break;
                 default:

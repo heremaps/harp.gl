@@ -81,11 +81,7 @@ describe("BoundsGenerator", function () {
         };
         mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: false });
         mapView.lookAt(lookAtParams);
-        boundsGenerator = new BoundsGenerator(
-            mapView.camera,
-            mapView.projection,
-            mapView.tileWrappingEnabled
-        );
+        boundsGenerator = new BoundsGenerator(mapView);
     });
 
     afterEach(async function () {
@@ -198,11 +194,7 @@ describe("BoundsGenerator", function () {
                 heading: 0
             });
             mapView.renderSync(); // render once to update camera parameter
-            boundsGenerator = new BoundsGenerator(
-                mapView.camera,
-                mapView.projection,
-                mapView.tileWrappingEnabled
-            );
+            boundsGenerator = new BoundsGenerator(mapView);
         });
 
         it("generates polygon of canvas corners for canvas filled with map", function () {
@@ -434,11 +426,7 @@ describe("BoundsGenerator", function () {
         beforeEach(function () {
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: false });
             mapView.lookAt(lookAtParams);
-            boundsGenerator = new BoundsGenerator(
-                mapView.camera,
-                mapView.projection,
-                mapView.tileWrappingEnabled
-            );
+            boundsGenerator = new BoundsGenerator(mapView);
         });
 
         it("generates polygon of canvas corners for canvas filled with map", function () {
@@ -455,11 +443,7 @@ describe("BoundsGenerator", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
-            boundsGenerator = new BoundsGenerator(
-                mapView.camera,
-                mapView.projection,
-                mapView.tileWrappingEnabled
-            );
+            boundsGenerator = new BoundsGenerator(mapView);
 
             mapView.lookAt({
                 zoomLevel: 10,
@@ -509,11 +493,7 @@ describe("BoundsGenerator", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
-            boundsGenerator = new BoundsGenerator(
-                mapView.camera,
-                mapView.projection,
-                mapView.tileWrappingEnabled
-            );
+            boundsGenerator = new BoundsGenerator(mapView);
 
             mapView.lookAt({
                 zoomLevel: 1,
@@ -555,11 +535,7 @@ describe("BoundsGenerator", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
-            boundsGenerator = new BoundsGenerator(
-                mapView.camera,
-                mapView.projection,
-                mapView.tileWrappingEnabled
-            );
+            boundsGenerator = new BoundsGenerator(mapView);
 
             mapView.lookAt({
                 zoomLevel: 1,
@@ -612,11 +588,7 @@ describe("BoundsGenerator", function () {
             //Setup mapView with tileWrapping Enabled
             mapView = new MapView({ ...mapViewOptions, tileWrappingEnabled: true });
             //create new instance of boundsGenerator with the new mapView instance parameters
-            boundsGenerator = new BoundsGenerator(
-                mapView.camera,
-                mapView.projection,
-                mapView.tileWrappingEnabled
-            );
+            boundsGenerator = new BoundsGenerator(mapView);
             mapView.lookAt({
                 tilt: 88,
                 heading: 90,
