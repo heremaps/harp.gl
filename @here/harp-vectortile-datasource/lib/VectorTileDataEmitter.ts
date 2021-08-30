@@ -377,8 +377,8 @@ export class VectorTileDataEmitter {
                     );
                 }
 
-                // For planar projections take the world z coordinate (potentially scaled), for spherical use the z coordinate 
-               // in the source projection (no scaling needed).
+                // For planar projections take the world z coordinate (potentially scaled),
+                // for spherical use the z coordinate in the source projection (no scaling needed):
                 const height = this.projection.type === ProjectionType.Planar ? tmpV3.z : pos.z;
                 if (height > this.m_maxGeometryHeight) {
                     this.m_maxGeometryHeight = height;
