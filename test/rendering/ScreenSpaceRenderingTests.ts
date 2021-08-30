@@ -10,7 +10,6 @@ import { EarthConstants, sphereProjection } from "@here/harp-geoutils";
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
 
-
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 describe("ScreenSpaceRendering Test", function () {
@@ -271,7 +270,10 @@ describe("ScreenSpaceRendering Test", function () {
                     {
                         type: "Feature",
                         properties: { text: "Marker" },
-                        geometry: { type: "Point", coordinates: [14.6, 53.3, 2 * EarthConstants.MAX_BUILDING_HEIGHT] }
+                        geometry: {
+                            type: "Point",
+                            coordinates: [14.6, 53.3, 2 * EarthConstants.MAX_BUILDING_HEIGHT]
+                        }
                     }
                 ]
             },
