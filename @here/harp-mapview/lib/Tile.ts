@@ -17,6 +17,7 @@ import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationRange } from "./ElevationRangeSource";
 import { LodMesh } from "./geometry/LodMesh";
+import { Object3DUtils } from "./geometry/Object3DUtils";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { ITileLoader, TileLoaderState } from "./ITileLoader";
 import { MapView } from "./MapView";
@@ -26,7 +27,6 @@ import { TextElement } from "./text/TextElement";
 import { TextElementGroup } from "./text/TextElementGroup";
 import { TextElementGroupPriorityList } from "./text/TextElementGroupPriorityList";
 import { TileTextStyleCache } from "./text/TileTextStyleCache";
-import { MapViewUtils } from "./Utils";
 
 const logger = LoggerManager.instance.create("Tile");
 
@@ -1167,7 +1167,7 @@ export class Tile implements CachedResource {
             if (object.visible) {
                 num3dObjects++;
             }
-            MapViewUtils.estimateObject3dSize(object, aggregatedObjSize, visitedObjects);
+            Object3DUtils.estimateSize(object, aggregatedObjSize, visitedObjects);
         }
 
         for (const group of this.textElementGroups.groups) {
