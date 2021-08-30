@@ -18,7 +18,7 @@ import {
 } from "@here/harp-geoutils";
 import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
-import { assert, LoggerManager } from "@here/harp-utils";
+import { assert, DOMUtils, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { CameraUtils } from "./CameraUtils";
@@ -1774,30 +1774,9 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Gets language list used by the browser
-     *
-     * @returns Array of iso language codes
+     * @deprecated Use {@link @here/harp-utils#DOMUtils.getBrowserLanguages}
      */
-    export function getBrowserLanguages(): string[] | undefined {
-        if (navigator.languages !== undefined && navigator.languages.length > 0) {
-            const languageList = [];
-            for (const lang of navigator.languages) {
-                languageList.push(getIsoLanguageCode(lang));
-            }
-            return languageList;
-        }
-        if (navigator.language !== undefined) {
-            return [getIsoLanguageCode(navigator.language)];
-        }
-        return undefined;
-    }
-
-    /**
-     * Gets ISO-639-1 language code from browser's code (ex. en for en-US)
-     */
-    function getIsoLanguageCode(language: string) {
-        return language.substring(0, 2);
-    }
+    export const getBrowserLanguages = DOMUtils.getBrowserLanguages;
 }
 
 export namespace TileOffsetUtils {
