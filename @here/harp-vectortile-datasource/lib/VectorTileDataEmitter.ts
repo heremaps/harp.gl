@@ -377,10 +377,13 @@ export class VectorTileDataEmitter {
                     );
                 }
 
-                if (tmpV3.z > this.m_maxGeometryHeight) {
-                    this.m_maxGeometryHeight = tmpV3.z
-                } else if (tmpV3.z < this.m_minGeometryHeight) {
-                    this.m_minGeometryHeight = tmpV3.z
+                // For planar projections take the world z coordinate (potentially scaled), for spherical use the z coordinate 
+               // in the source projection (no scaling needed).
+                const height = this.projection.type === ProjectionType.Planar ? tmpV3.z : pos.z;
+                if (height > this.m_maxGeometryHeight) {
+                    this.m_maxGeometryHeight = height;
+                } else if (height < this.m_minGeometryHeight) {
+                    this.m_minGeometryHeight = height;
                 }
 
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
