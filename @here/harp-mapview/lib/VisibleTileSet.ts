@@ -24,7 +24,6 @@ import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { TileTaskGroups } from "./MapView";
 import { Tile } from "./Tile";
-import { TileOffsetUtils } from "./Utils";
 
 /**
  * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
@@ -722,7 +721,7 @@ export class VisibleTileSet {
         }
 
         return dataSourceVisibleTileList.renderedTiles.get(
-            TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset)
+            TileKeyUtils.getKeyForTileKeyAndOffset(tileKey, offset)
         );
     }
 
@@ -755,7 +754,7 @@ export class VisibleTileSet {
         }
 
         let tile = dataSourceVisibleTileList.renderedTiles.get(
-            TileOffsetUtils.getKeyForTileKeyAndOffset(visibleTileKey, offset)
+            TileKeyUtils.getKeyForTileKeyAndOffset(visibleTileKey, offset)
         );
 
         if (tile !== undefined) {
@@ -772,7 +771,7 @@ export class VisibleTileSet {
             parentTileKey = parentTileKey.parent();
 
             tile = dataSourceVisibleTileList.renderedTiles.get(
-                TileOffsetUtils.getKeyForTileKeyAndOffset(parentTileKey, offset)
+                TileKeyUtils.getKeyForTileKeyAndOffset(parentTileKey, offset)
             );
             if (tile !== undefined) {
                 return tile;
@@ -790,7 +789,7 @@ export class VisibleTileSet {
             );
             if (childTileKey) {
                 tile = dataSourceVisibleTileList.renderedTiles.get(
-                    TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
+                    TileKeyUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
                 );
 
                 if (tile !== undefined) {
@@ -1154,14 +1153,12 @@ export class VisibleTileSet {
         renderedTiles: Map<number, Tile>,
         dataSource: DataSource
     ) {
-        const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(
-            tileKeyCode
-        );
+        const { offset, mortonCode } = TileKeyUtils.extractOffsetAndMortonKeyFromKey(tileKeyCode);
         const tileKey = TileKey.fromMortonCode(mortonCode);
 
         const tilingScheme = dataSource.getTilingScheme();
         for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
-            const childTileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset);
+            const childTileCode = TileKeyUtils.getKeyForTileKeyAndOffset(childTileKey, offset);
             const childTile = this.m_dataSourceCache.get(
                 childTileKey.mortonCode(),
                 offset,
@@ -1201,7 +1198,7 @@ export class VisibleTileSet {
         checkedTiles: Map<number, boolean>,
         dataSource: DataSource
     ): boolean {
-        const parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
+        const parentCode = TileKeyUtils.getParentKeyFromKey(tileKeyCode);
         // Check if another sibling has already added the parent.
         if (renderedTiles.get(parentCode) !== undefined) {
             return true;
@@ -1211,7 +1208,7 @@ export class VisibleTileSet {
             return exists;
         }
 
-        const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
+        const { offset, mortonCode } = TileKeyUtils.extractOffsetAndMortonKeyFromKey(parentCode);
         const parentTile = this.m_dataSourceCache.get(mortonCode, offset, dataSource);
         const parentTileKey = parentTile ? parentTile.tileKey : TileKey.fromMortonCode(mortonCode);
         const nextLevelDiff = Math.abs(dataZoomLevel - parentTileKey.level);

@@ -9,7 +9,7 @@ import {
     GeometryType,
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
-import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
+import { GeoBox, OrientedBox3, Projection, TileKey, TileKeyUtils } from "@here/harp-geoutils";
 import { assert, CachedResource, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -26,7 +26,7 @@ import { TextElement } from "./text/TextElement";
 import { TextElementGroup } from "./text/TextElementGroup";
 import { TextElementGroupPriorityList } from "./text/TextElementGroupPriorityList";
 import { TileTextStyleCache } from "./text/TileTextStyleCache";
-import { MapViewUtils, TileOffsetUtils } from "./Utils";
+import { MapViewUtils } from "./Utils";
 
 const logger = LoggerManager.instance.create("Tile");
 
@@ -324,7 +324,7 @@ export class Tile implements CachedResource {
         this.m_localTangentSpace = localTangentSpace ?? false;
         this.m_textStyleCache = new TileTextStyleCache(this);
         this.m_offset = offset;
-        this.m_uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(this.tileKey, this.offset);
+        this.m_uniqueKey = TileKeyUtils.getKeyForTileKeyAndOffset(this.tileKey, this.offset);
         if (dataSource.useGeometryLoader) {
             this.m_tileGeometryLoader = new TileGeometryLoader(this, this.mapView.taskQueue);
             this.attachGeometryLoadedCallback();
@@ -434,7 +434,7 @@ export class Tile implements CachedResource {
      */
     set offset(offset: number) {
         if (this.m_offset !== offset) {
-            this.m_uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(this.tileKey, offset);
+            this.m_uniqueKey = TileKeyUtils.getKeyForTileKeyAndOffset(this.tileKey, offset);
         }
         this.m_offset = offset;
     }

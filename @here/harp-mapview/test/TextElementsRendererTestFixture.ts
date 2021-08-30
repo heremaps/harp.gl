@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { MapEnv, Theme } from "@here/harp-datasource-protocol";
-import { identityProjection, TileKey } from "@here/harp-geoutils";
+import { identityProjection, TileKey, TileKeyUtils } from "@here/harp-geoutils";
 import { silenceLoggingAroundFunction } from "@here/harp-test-utils";
 import { FontCatalog, TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
@@ -22,7 +22,6 @@ import { TextElementsRendererOptions } from "../lib/text/TextElementsRendererOpt
 import { TextElementType } from "../lib/text/TextElementType";
 import { ViewState } from "../lib/text/ViewState";
 import { Tile } from "../lib/Tile";
-import { TileOffsetUtils } from "../lib/Utils";
 import { DataSourceTileList } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 import {
@@ -472,7 +471,7 @@ export class TestFixture {
         this.tileLists[0].renderedTiles.clear();
         for (const tile of tiles) {
             this.tileLists[0].renderedTiles.set(
-                TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, 0),
+                TileKeyUtils.getKeyForTileKeyAndOffset(tile.tileKey, 0),
                 tile
             );
         }

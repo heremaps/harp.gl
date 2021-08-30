@@ -11,6 +11,7 @@ import {
     Projection,
     sphereProjection,
     TileKey,
+    TileKeyUtils,
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
@@ -28,7 +29,6 @@ import { TileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { TileLoaderState } from "../lib/ITileLoader";
 import { MapView, TileTaskGroups } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
-import { TileOffsetUtils } from "../lib/Utils";
 import {
     DataSourceTileList,
     ResourceComputationType,
@@ -382,7 +382,7 @@ describe("VisibleTileSet", function () {
         // same as first found code few lines below
         const parentCode = TileKey.parentMortonCode(371506851);
         const parentTileKey = TileKey.fromMortonCode(parentCode);
-        const parentKey = TileOffsetUtils.getKeyForTileKeyAndOffset(parentTileKey, 0);
+        const parentKey = TileKeyUtils.getKeyForTileKeyAndOffset(parentTileKey, 0);
 
         // fake MapView to think that it has already loaded
         // parent of both found tiles
