@@ -96,6 +96,9 @@ function snapToCeilingZoomLevel(zoomLevel: number) {
     return ceiling - zoomLevel < eps ? ceiling : zoomLevel;
 }
 
+/**
+ * MapView utilities: View transformations, camera setup, view bounds computation...
+ */
 export namespace MapViewUtils {
     export const MAX_TILT_DEG = 89;
     export const MAX_TILT_RAD = MAX_TILT_DEG * THREE.MathUtils.DEG2RAD;
