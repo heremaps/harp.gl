@@ -294,12 +294,12 @@ export class VectorTileDataEmitter {
 
         // adjust the extents to ensure that points on the right and bottom edges
         // of the tile are discarded.
-        const xextent = tileKey.column + 1 < columnCount ? extents - 1 : extents;
-        const yextent = tileKey.row + 1 < rowCount ? extents - 1 : extents;
+        const xExtent = tileKey.column + 1 < columnCount ? extents - 1 : extents;
+        const yExtent = tileKey.row + 1 < rowCount ? extents - 1 : extents;
 
         // get the point positions (in tile space) that are inside the tile bounds.
         const tilePositions = geometry.filter(p => {
-            return p.x >= 0 && p.x <= xextent && p.y >= 0 && p.y <= yextent;
+            return p.x >= 0 && p.x <= xExtent && p.y >= 0 && p.y <= yExtent;
         });
 
         if (tilePositions.length === 0) {
@@ -376,6 +376,13 @@ export class VectorTileDataEmitter {
                         scaleHeights
                     );
                 }
+
+                if (tmpV3.z > this.m_maxGeometryHeight) {
+                    this.m_maxGeometryHeight = tmpV3.z
+                } else if (tmpV3.z < this.m_minGeometryHeight) {
+                    this.m_minGeometryHeight = tmpV3.z
+                }
+
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
                 objInfos.push(this.m_options.gatherFeatureAttributes ? env.entries : featureId);
                 offsetDirections.push((env.lookup("offset_direction") as number) ?? 0);
