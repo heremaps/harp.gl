@@ -18,19 +18,19 @@ describe("CameraUtils", function () {
         camera = new THREE.PerspectiveCamera();
     });
 
-    it("computeFocalLength clamps fov between min and max values", function () {
+    it("setFocalLength clamps fov between min and max values", function () {
         const height = 1080;
-        expect(CameraUtils.computeFocalLength(camera, 0.9 * MIN_FOV_RAD, height)).equals(
-            CameraUtils.computeFocalLength(camera, MIN_FOV_RAD, height)
+        expect(CameraUtils.setVerticalFov(camera, 0.9 * MIN_FOV_RAD, height)).equals(
+            CameraUtils.setVerticalFov(camera, MIN_FOV_RAD, height)
         );
-        expect(CameraUtils.computeFocalLength(camera, 1.1 * MAX_FOV_RAD, height)).equals(
-            CameraUtils.computeFocalLength(camera, MAX_FOV_RAD, height)
+        expect(CameraUtils.setVerticalFov(camera, 1.1 * MAX_FOV_RAD, height)).equals(
+            CameraUtils.setVerticalFov(camera, MAX_FOV_RAD, height)
         );
     });
 
-    describe("computeFocalLength and computeVerticalFov", function () {
-        const tests: Array<[number, number, number, number]> = [
-            // [fov (deg), height, ppal point y offset, expected focal length]
+    describe("setFocalLength and setVerticalFov", function () {
+        const tests: Array<[number, number, number, number, number?]> = [
+            // [fov (deg), height, ppal point y offset, expected focal length, aspect ratio (opt)]
             [15, 100, 0, 379.78771],
             [45, 100, 0, 120.71068],
             [60, 100, 0, 86.60254],
@@ -54,36 +54,43 @@ describe("CameraUtils", function () {
             [90, 100, -0.5, 43.30127],
             [90.0000001, 100, -0.5, 43.30127],
             [90.1, 100, -0.1, 49.66218],
-            [115, 100, -1, 1.1e-4],
-            [135, 100, -1, 5e-5]
+
+            // Corner cases with extreme ppal point offset and obtuse angles. To achieve obtuse fovs
+            // the camera code clamps the offset between [-1+eps,1-eps], the computed focal length
+            // will be very small. To avoid horizontal fov clamping interfering with the result,
+            // set aspect ratio to very small values.
+            [115, 100, -1, 1.1e-4, 1e-6],
+            [135, 100, -1, 5e-5, 1e-7]
         ];
 
         for (const test of tests) {
-            const [fovDeg, height, ppOffsetY, focalLength] = test;
+            const [fovDeg, height, ppOffsetY, focalLength, aspect] = test;
 
             it(`focal length ${focalLength}, fov ${fovDeg}, height ${height}, ppOffsetY ${ppOffsetY}`, function () {
+                if (aspect !== undefined) {
+                    camera.aspect = aspect;
+                }
                 const fov = THREE.MathUtils.degToRad(fovDeg);
                 CameraUtils.setPrincipalPoint(camera, { x: 0, y: ppOffsetY });
 
-                const actualFocalLength = CameraUtils.computeFocalLength(camera, fov, height);
-                expect(actualFocalLength).closeTo(focalLength, 1e-5);
+                CameraUtils.setVerticalFov(camera, fov, height);
+                expect(CameraUtils.getFocalLength(camera)).closeTo(focalLength, 1e-5);
 
-                const actualVFov = CameraUtils.computeVerticalFov(camera, focalLength, height);
-                expect(actualVFov).closeTo(fov, 1e-2);
+                CameraUtils.setFocalLength(camera, focalLength, height);
+                expect(CameraUtils.getVerticalFov(camera)).closeTo(fov, 1e-2);
             });
         }
     });
 
-    describe("setVerticalFovAndFocalLength", function () {
+    describe("setVerticalFov", function () {
         it("sets correct settings for centered projections", function () {
             camera.aspect = 1.1;
             const height = 100;
             const expectedVFov = Math.PI / 4;
-            const focalLength = CameraUtils.computeFocalLength(camera, expectedVFov, height);
-            CameraUtils.setVerticalFovAndFocalLength(camera, expectedVFov, focalLength, height);
+            CameraUtils.setVerticalFov(camera, expectedVFov, height);
 
             const eps = 1e-6;
-            expect(CameraUtils.getFocalLength(camera)).equals(focalLength);
+            expect(CameraUtils.getFocalLength(camera)).gt(0);
             expect(CameraUtils.getVerticalFov(camera)).closeTo(expectedVFov, eps);
             expect(CameraUtils.getHorizontalFov(camera)).closeTo(0.85506, eps);
             expect(CameraUtils.getTopFov(camera))
@@ -98,23 +105,22 @@ describe("CameraUtils", function () {
             camera.aspect = 1.1;
             const height = 100;
             const expectedVFov = Math.PI / 4;
-            const focalLength = CameraUtils.computeFocalLength(camera, expectedVFov, height);
             const ppalPoint = { x: 0.5, y: -0.1 };
             CameraUtils.setPrincipalPoint(camera, ppalPoint);
-            CameraUtils.setVerticalFovAndFocalLength(camera, expectedVFov, focalLength, height);
+            CameraUtils.setVerticalFov(camera, expectedVFov, height);
 
             const eps = 1e-6;
             const top = CameraUtils.getTopFov(camera);
             const bottom = CameraUtils.getBottomFov(camera);
             const right = CameraUtils.getRightFov(camera);
             const left = CameraUtils.getLeftFov(camera);
-            expect(CameraUtils.getFocalLength(camera)).equals(focalLength);
+            expect(CameraUtils.getFocalLength(camera)).gt(0);
             expect(CameraUtils.getVerticalFov(camera)).closeTo(expectedVFov, eps);
-            expect(CameraUtils.getHorizontalFov(camera)).closeTo(0.823528, eps);
-            expect(top).closeTo(0.42753, eps);
-            expect(bottom).closeTo(0.357868, eps);
-            expect(right).closeTo(0.223995, eps);
-            expect(left).closeTo(0.599534, eps);
+            expect(CameraUtils.getHorizontalFov(camera)).closeTo(0.824529, eps);
+            expect(top).closeTo(0.428084, eps);
+            expect(bottom).closeTo(0.357314, eps);
+            expect(right).closeTo(0.224313, eps);
+            expect(left).closeTo(0.600217, eps);
             expect(top + bottom).closeTo(CameraUtils.getVerticalFov(camera), eps);
             expect(left + right).closeTo(CameraUtils.getHorizontalFov(camera), eps);
         });
@@ -122,42 +128,22 @@ describe("CameraUtils", function () {
         it("clamps vertical fov between min and max values", function () {
             const height = 100;
             const tooSmallFov = 0.9 * MIN_FOV_RAD;
-            CameraUtils.setVerticalFovAndFocalLength(
-                camera,
-                tooSmallFov,
-                CameraUtils.computeFocalLength(camera, tooSmallFov, height),
-                height
-            );
+            CameraUtils.setVerticalFov(camera, tooSmallFov, height);
             expect(CameraUtils.getVerticalFov(camera)).equals(MIN_FOV_RAD);
 
             const tooLargeFov = 1.1 * MAX_FOV_RAD;
-            CameraUtils.setVerticalFovAndFocalLength(
-                camera,
-                tooLargeFov,
-                CameraUtils.computeFocalLength(camera, tooLargeFov, height),
-                height
-            );
+            CameraUtils.setVerticalFov(camera, tooLargeFov, height);
             expect(CameraUtils.getVerticalFov(camera)).equals(MAX_FOV_RAD);
         });
 
         it("clamps horizontal fov between min and max values", function () {
             const height = 100;
             camera.aspect = 0.9;
-            CameraUtils.setVerticalFovAndFocalLength(
-                camera,
-                MIN_FOV_RAD,
-                CameraUtils.computeFocalLength(camera, MIN_FOV_RAD, height),
-                height
-            );
+            CameraUtils.setVerticalFov(camera, MIN_FOV_RAD, height);
             expect(CameraUtils.getHorizontalFov(camera)).equals(MIN_FOV_RAD);
 
             camera.aspect = 1.1;
-            CameraUtils.setVerticalFovAndFocalLength(
-                camera,
-                MAX_FOV_RAD,
-                CameraUtils.computeFocalLength(camera, MAX_FOV_RAD, height),
-                height
-            );
+            CameraUtils.setVerticalFov(camera, MAX_FOV_RAD, height);
             expect(CameraUtils.getHorizontalFov(camera)).equals(MAX_FOV_RAD);
         });
     });
