@@ -1698,27 +1698,27 @@ export namespace MapViewUtils {
     }
 
     /**
-     * @deprecated Use {@link CameraUtils.computeFocalLength}.
+     * @deprecated Use {@link CameraUtils.setVerticalFov}.
      */
     export function calculateFocalLengthByVerticalFov(vFov: number, height: number): number {
-        // computeVerticalFov takes into account the principal point position to support
+        // setVerticalFov takes into account the principal point position to support
         // off-center projections. Keep previous behaviour by passing a camera with centered
         // principal point.
         CameraUtils.setPrincipalPoint(tmpCamera, new THREE.Vector2());
-        return CameraUtils.computeFocalLength(tmpCamera, vFov, height);
+        CameraUtils.setVerticalFov(tmpCamera, vFov, height);
+        return CameraUtils.getFocalLength(tmpCamera)!;
     }
 
     /**
-     * @deprecated Use {@link CameraUtils.computeVerticalFov}.
+     * @deprecated Use {@link CameraUtils.setFocalLength}.
      */
     export function calculateFovByFocalLength(focalLength: number, height: number): number {
-        // computeVerticalFov takes into account the principal point position to support
+        // setFocalLength takes into account the principal point position to support
         // off-center projections. Keep previous behaviour by passing a camera with centered
         // principal point.
         CameraUtils.setPrincipalPoint(tmpCamera, new THREE.Vector2());
-        return THREE.MathUtils.radToDeg(
-            CameraUtils.computeVerticalFov(tmpCamera, focalLength, height)
-        );
+        CameraUtils.setFocalLength(tmpCamera, focalLength, height);
+        return tmpCamera.fov;
     }
 
     /**

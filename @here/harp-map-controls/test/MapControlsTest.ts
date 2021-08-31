@@ -477,6 +477,9 @@ describe("MapControls", function () {
             sandbox.stub(mapView, "worldTarget").get(() => {
                 return worldTarget;
             });
+            sandbox.stub(mapView, "focalLength").get(() => {
+                return 100;
+            });
             // needed to get the initial zoom level from MapView.
             mapControls["assignZoomAfterTouchZoomRender"]();
             expect(mapControls.zoomLevelTargeted).to.equal(initialZoomLevel);

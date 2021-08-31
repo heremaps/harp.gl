@@ -61,21 +61,33 @@ function getFovs(camera: THREE.PerspectiveCamera): Fovs | undefined {
 }
 
 /**
- * Saves the camera focal length. For off-center projections, saves side fovs as well.
+ * Saves camera vertical fov and focal length. For off-center projections, saves side fovs as well.
  */
 function setCameraParams(
     camera: THREE.PerspectiveCamera,
     ppalPoint: Vector2Like,
     focalLength: number,
-    height: number,
-    hFov: number
+    viewportHeight: number,
+    verticalFov: number
 ): void {
+    const viewportWidth = viewportHeight * camera.aspect;
+    let hFov = computeFov(focalLength, ppalPoint.x, viewportWidth);
+
+    if (hFov < MIN_FOV_RAD || hFov > MAX_FOV_RAD) {
+        // Invalid horizontal fov, clamp and compute again focal length and vertical fov.
+        hFov = THREE.MathUtils.clamp(hFov, MIN_FOV_RAD, MAX_FOV_RAD);
+        const focalLength = computeFocalLengthFromFov(hFov, viewportWidth, ppalPoint.x);
+        verticalFov = computeFov(focalLength, ppalPoint.y, viewportHeight);
+    }
+
+    camera.fov = THREE.MathUtils.radToDeg(verticalFov);
+
     if (isCenteredProjection(ppalPoint)) {
         delete camera.userData.fovs;
     } else {
-        const width = height * camera.aspect;
+        const width = viewportHeight * camera.aspect;
         camera.userData.fovs = {
-            top: computePosSideFov(focalLength, ppalPoint.y, height),
+            top: computePosSideFov(focalLength, ppalPoint.y, viewportHeight),
             right: computePosSideFov(focalLength, ppalPoint.x, width),
             horizontal: hFov
         } as Fovs;
@@ -147,13 +159,13 @@ function computeFocalLengthFromFov(fov: number, viewportSide: number, ppOffset: 
     // (3)   tan(fov) = tan(pfov+nfov) = (tan(pfov) + tan(nfov)) / (1 - (tan(pfov) * tan(nfov)))
 
     // Substitute (1) and (2) in (3) and solve for f to get a quadratic equation:
-    // 4*(tanf)^2 - 4*s*f - tan(1-ppOff^2)*s^2 = 0 , solving for f:
-    // f = (s/2) * (1 +/- sqrt(1 + tan(1-ppOff^2)^2)) / tan(fov)
+    // 4*(tan(fov))^2 - 4*s*f - tan(fov)(1-ppOff^2)*s^2 = 0 , solving for f:
+    // f = (s/2) * (1 +/- sqrt(1 + tan(fov)(1-ppOff^2)^2)) / tan(fov)
 
     // ppOff (principal point offset) is in [-1,1], so there's two real solutions (radicant is >=1)
     // and we choose the positive solution on each case:
-    // a) tan(fov) > 0, fov in (0,pi/2) -> f = (s/2) * (1 + sqrt(1 + tan(1-ppOff^2)^2)) / tan(fov)
-    // b) tan(fov) < 0, fov in (pi/2,pi) -> f = (s/2) * (1 - sqrt(1 + tan(1-ppOff^2)^2)) / tan(fov)
+    // a) tan(fov) > 0, fov in (0,pi/2) -> f = (s/2) * (1 + sqrt(1 + tan(fov)^2(1-ppOff^2))) / tan(fov)
+    // b) tan(fov) < 0, fov in (pi/2,pi) -> f = (s/2) * (1 - sqrt(1 + tan(fov)^2(1-ppOff^2))) / tan(fov)
 
     const tanFov = Math.tan(fov);
     const sign = Math.sign(tanFov);
@@ -169,86 +181,80 @@ export namespace CameraUtils {
      * @beta
      *
      * @param camera - The camera.
-     * @returns The focal length in pixels.
+     * @returns The focal length in pixels or `undefined` if not set.
      */
-    export function getFocalLength(camera: THREE.PerspectiveCamera): number {
-        return camera.userData.focalLength;
+    export function getFocalLength(camera: THREE.PerspectiveCamera): number | undefined {
+        return camera.userData?.focalLength;
     }
 
     /**
-     * Computes a camera's focal length from vertical fov and viewport height.
+     * Sets a camera's focal length.
+     * @remarks The camera's vertical fov will be updated to achieve the given viewport height.
+     * @beta
+     *
+     * @param camera
+     * @param focalLength - Focal length in pixels. It must be larger than 0.
+     * @param viewportHeight - Viewport height in pixels, used to compute vertical fov.
+     * @returns The new camera's focal length in pixels.
+     */
+    export function setFocalLength(
+        camera: THREE.PerspectiveCamera,
+        focalLength: number,
+        viewportHeight: number
+    ): number {
+        const ppalPoint = getPrincipalPoint(camera);
+        const vFov = computeFov(focalLength, ppalPoint.y, viewportHeight);
+        if (vFov < MIN_FOV_RAD || vFov > MAX_FOV_RAD) {
+            // Invalid vertical fov, clamp and compute again focal length.
+            setVerticalFov(camera, vFov, viewportHeight);
+        } else {
+            setCameraParams(camera, ppalPoint, focalLength, viewportHeight, vFov);
+        }
+
+        // focal length might change in setCameraParams due to horizontal fov restrictions.
+        return getFocalLength(camera)!;
+    }
+
+    /**
+     * Returns the camera's vertical field of view.
+     * @param camera - The camera.
+     * @returns The vertical fov in radians.
+     */
+    export function getVerticalFov(camera: THREE.PerspectiveCamera): number {
+        return THREE.MathUtils.degToRad(camera.fov);
+    }
+
+    /**
+     * Sets a camera's vertical fov.
+     * @remarks The camera's focal length will be updated to achieve the given viewport height.
      * @beta
      *
      * @param camera
      * @param verticalFov - Vertical field of view in radians. It'll be clamped to
      *                      [{@link MIN_FOV_RAD}, {@link MAX_FOV_RAD}].
-     * @param height - Viewport height in pixels.
-     * @returns focal length in pixels.
+     * @param viewportHeight - Viewport height in pixels, used to compute focal length.
+     * @returns The new camera's vertical fov in radians.
      */
-    export function computeFocalLength(
+    export function setVerticalFov(
         camera: THREE.PerspectiveCamera,
         verticalFov: number,
-        height: number
+        viewportHeight: number
     ): number {
         verticalFov = THREE.MathUtils.clamp(verticalFov, MIN_FOV_RAD, MAX_FOV_RAD);
-        return computeFocalLengthFromFov(verticalFov, height, getPrincipalPoint(camera).y);
-    }
-
-    /**
-     * Computes a camera's vertical field of view for given focal length and viewport height.
-     * @beta
-     *
-     * @param camera
-     * @param focalLength - Focal length in pixels (see {@link computeFocalLength}). It must be
-     *                      larger than 0.
-     * @param height - Viewport height in pixels.
-     * @returns Vertical field of view in radians.
-     */
-    export function computeVerticalFov(
-        camera: THREE.PerspectiveCamera,
-        focalLength: number,
-        height: number
-    ): number {
-        return computeFov(focalLength, getPrincipalPoint(camera).y, height);
-    }
-
-    /**
-     * Sets a camera's vertical field of view.
-     * @internal
-     *
-     * @param camera
-     * @param fov - The vertical field of view in radians. It'll be clamped to
-     *              [{@link MIN_FOV_RAD}, {@link MAX_FOV_RAD}].
-     * @param focalLength - Focal length in pixels. It must be grater than 0.
-     * @param height - Viewport height in pixels.
-     */
-    export function setVerticalFovAndFocalLength(
-        camera: THREE.PerspectiveCamera,
-        fov: number,
-        focalLength: number,
-        height: number
-    ): void {
-        camera.fov = THREE.MathUtils.radToDeg(THREE.MathUtils.clamp(fov, MIN_FOV_RAD, MAX_FOV_RAD));
-        const width = height * camera.aspect;
         const ppalPoint = getPrincipalPoint(camera);
+        const focalLength = computeFocalLengthFromFov(verticalFov, viewportHeight, ppalPoint.y);
 
-        let hFov = computeFov(focalLength, ppalPoint.x, width);
+        setCameraParams(camera, ppalPoint, focalLength, viewportHeight, verticalFov);
 
-        if (hFov > MAX_FOV_RAD || hFov < MIN_FOV_RAD) {
-            hFov = THREE.MathUtils.clamp(hFov, MIN_FOV_RAD, MAX_FOV_RAD);
-            focalLength = computeFocalLengthFromFov(hFov, width, ppalPoint.x);
-            camera.fov = THREE.MathUtils.radToDeg(
-                computeVerticalFov(camera, focalLength, width / camera.aspect)
-            );
-        }
-        setCameraParams(camera, ppalPoint, focalLength, height, hFov);
+        // vertical fov might change in setCameraParams due to horizontal fov restrictions.
+        return getVerticalFov(camera);
     }
 
     /**
      * Calculates object's screen size based on the focal length and it's camera distance.
      * @beta
      *
-     * @param focalLength - Focal length in pixels (see {@link computeFocalLength})
+     * @param focalLength - Focal length in pixels (see {@link setVerticalFov})
      * @param distance - Object distance in world space.
      * @param worldSize - Object size in world space.
      * @return object size in screen space.
@@ -265,7 +271,7 @@ export namespace CameraUtils {
      * Calculates object's world size based on the focal length and it's camera distance.
      * @beta
      *
-     * @param focalLength - Focal length in pixels (see {@link computeFocalLength})
+     * @param focalLength - Focal length in pixels (see {@link setVerticalFov})
      * @param distance - Object distance in world space.
      * @param screenSize - Object size in screen space.
      * @return object size in world space.
@@ -334,15 +340,6 @@ export namespace CameraUtils {
             width,
             height
         );
-    }
-
-    /**
-     * Returns the camera's vertical field of view.
-     * @param camera - The camera.
-     * @returns The vertical fov in radians.
-     */
-    export function getVerticalFov(camera: THREE.PerspectiveCamera): number {
-        return THREE.MathUtils.degToRad(camera.fov);
     }
 
     /**

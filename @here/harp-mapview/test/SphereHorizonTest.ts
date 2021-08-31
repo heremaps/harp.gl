@@ -34,8 +34,8 @@ describe("SphereHorizon", function () {
         CameraUtils.setPrincipalPoint(camera, ppalPoint);
 
         const vFovRad = MathUtils.degToRad(camera.fov);
-        const focalLength = CameraUtils.computeFocalLength(camera, vFovRad, canvasHeight);
-        CameraUtils.setVerticalFovAndFocalLength(camera, vFovRad, focalLength, canvasHeight);
+        CameraUtils.setVerticalFov(camera, vFovRad, canvasHeight);
+        const focalLength = CameraUtils.getFocalLength(camera)!;
 
         MapViewUtils.getCameraRotationAtTarget(
             projection,

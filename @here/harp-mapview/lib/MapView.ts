@@ -786,7 +786,6 @@ export class MapView extends EventDispatcher {
     private m_yaw = 0;
     private m_pitch = 0;
     private m_roll = 0;
-    private m_focalLength = 0;
     private m_targetDistance = 0;
     private m_targetGeoPos = GeoCoordinates.fromObject(MapViewDefaults.target!);
     // Focus point world coords may be calculated after setting projection, use dummy value here.
@@ -1029,6 +1028,7 @@ export class MapView extends EventDispatcher {
             DEFAULT_CAM_FAR_PLANE
         );
         this.m_camera.up.set(0, 0, 1);
+        this.setFovOnCamera(this.m_options.fovCalculation, height);
         this.projection.projectPoint(this.m_targetGeoPos, this.m_targetWorldPos);
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
@@ -1712,9 +1712,11 @@ export class MapView extends EventDispatcher {
 
     /**
      * The distance (in pixels) between the screen and the camera.
+     * @deprecated Use {@link CameraUtils.getFocalLength}
      */
     get focalLength(): number {
-        return this.m_focalLength;
+        const focalLength = CameraUtils.getFocalLength(this.m_camera) ?? 0;
+        return focalLength;
     }
 
     /**
@@ -2041,7 +2043,6 @@ export class MapView extends EventDispatcher {
      */
     setFovCalculation(fovCalculation: FovCalculation) {
         this.m_options.fovCalculation = fovCalculation;
-        this.updateFocalLength(this.m_renderer.getSize(cache.vector2[0]).height);
         this.updateCameras();
     }
 
@@ -2427,10 +2428,12 @@ export class MapView extends EventDispatcher {
             // lookAtDistance = abs(cameraPos.z) / cos(cameraPitch);
             // Here we may use precalculated target distance (once pre frame):
             const lookAtDistance = this.m_targetDistance;
+            const focalLength = CameraUtils.getFocalLength(this.m_camera);
+            assert(focalLength !== undefined);
 
             // Find world space object size that corresponds to one pixel on screen.
             this.m_pixelToWorld = CameraUtils.convertScreenToWorldSize(
-                this.m_focalLength,
+                focalLength!,
                 lookAtDistance,
                 1
             );
@@ -3626,10 +3629,6 @@ export class MapView extends EventDispatcher {
     private setupCamera() {
         assert(this.m_visibleTiles !== undefined);
 
-        const { width, height } = this.getCanvasClientSize();
-
-        this.updateFocalLength(height);
-
         this.m_options.target = GeoCoordinates.fromObject(
             getOptionValue(this.m_options.target, MapViewDefaults.target)
         );
@@ -3647,6 +3646,7 @@ export class MapView extends EventDispatcher {
         this.lookAtImpl(this.m_options);
 
         // ### move & customize
+        const { width, height } = this.getCanvasClientSize();
         this.resize(width, height);
     }
 
@@ -3862,33 +3862,19 @@ export class MapView extends EventDispatcher {
      * @param height - Viewport height.
      */
     private setFovOnCamera(fovCalculation: FovCalculation, height: number) {
-        let fov = 0;
+        const fovRad = THREE.MathUtils.degToRad(fovCalculation.fov);
+
         if (fovCalculation.type === "fixed") {
-            this.updateFocalLength(height);
-            fov = THREE.MathUtils.degToRad(fovCalculation.fov);
-        } else {
-            assert(this.m_focalLength !== 0);
-            fov = CameraUtils.computeVerticalFov(this.m_camera, this.m_focalLength, height);
+            CameraUtils.setVerticalFov(this.m_camera, fovRad, height);
+            return;
         }
 
-        CameraUtils.setVerticalFovAndFocalLength(this.m_camera, fov, this.m_focalLength, height);
-    }
-
-    /**
-     * Sets the focal length based on the supplied fov and the height of the canvas. This must be
-     * called at least once. This is necessary to be recalled when the [[FovCalculation]]'s type is
-     * fixed. In such cases, when the height changes, the focal length must be readjusted whereas
-     * the FOV stays the same. The opposite is true for the dynamic case, where the focal length is
-     * fixed but the FOV changes.
-     * @param height - Height of the canvas in css / client pixels.
-     */
-    private updateFocalLength(height: number) {
-        assert(this.m_options.fovCalculation !== undefined);
-        this.m_focalLength = CameraUtils.computeFocalLength(
-            this.m_camera,
-            THREE.MathUtils.degToRad(this.m_options.fovCalculation!.fov),
-            height
-        );
+        let focalLength = CameraUtils.getFocalLength(this.m_camera);
+        if (focalLength === undefined) {
+            CameraUtils.setVerticalFov(this.m_camera, fovRad, height);
+            focalLength = CameraUtils.getFocalLength(this.m_camera);
+        }
+        CameraUtils.setFocalLength(this.m_camera, focalLength!, height);
     }
 
     /**

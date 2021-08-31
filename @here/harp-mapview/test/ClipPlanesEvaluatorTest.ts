@@ -36,8 +36,8 @@ function setupPerspectiveCamera(
     if (principalPointNDC) {
         CameraUtils.setPrincipalPoint(camera, principalPointNDC);
     }
-    const focalLength = CameraUtils.computeFocalLength(camera, vFovRad, canvasHeight);
-    CameraUtils.setVerticalFovAndFocalLength(camera, vFovRad, focalLength, canvasHeight);
+    CameraUtils.setVerticalFov(camera, vFovRad, canvasHeight);
+    const focalLength = CameraUtils.getFocalLength(camera)!;
 
     MapViewUtils.getCameraRotationAtTarget(projection, geoTarget, heading, tilt, camera.quaternion);
     if (!distance) {
