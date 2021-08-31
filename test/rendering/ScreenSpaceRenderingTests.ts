@@ -262,7 +262,7 @@ describe("ScreenSpaceRendering Test", function () {
 
         await geoJsonTest.run({
             mochaTest: this,
-            testImageName: "geojson-elevated-point-2000m",
+            testImageName: "geojson-elevated-point-above-max-building-height",
             theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
             geoJson: {
                 type: "FeatureCollection",
@@ -277,7 +277,7 @@ describe("ScreenSpaceRendering Test", function () {
                     }
                 ]
             },
-            lookAt: { zoomLevel: 10 },
+            lookAt: { zoomLevel: 15 },
             tileGeoJson: false
         });
     });
