@@ -277,7 +277,7 @@ describe("ScreenSpaceRendering Test", function () {
                     }
                 ]
             },
-            lookAt: { zoomLevel: 15 },
+            lookAt: { zoomLevel: 14 },
             tileGeoJson: false
         });
     });
