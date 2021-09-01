@@ -5,7 +5,7 @@
  */
 
 import { FeatureCollection, Style } from "@here/harp-datasource-protocol";
-import { sphereProjection } from "@here/harp-geoutils";
+import { EarthConstants, sphereProjection } from "@here/harp-geoutils";
 
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
@@ -256,6 +256,32 @@ describe("ScreenSpaceRendering Test", function () {
             tileGeoJson: false
         });
     });
+
+    it("renders a point which is elevated above MAX_BUILDING_HEIGHT", async function () {
+        this.timeout(5000);
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-elevated-point-above-max-building-height",
+            theme: new ThemeBuilder().withMarkerStyle().withFontCatalog().build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { text: "Marker" },
+                        geometry: {
+                            type: "Point",
+                            coordinates: [14.6, 53.3, 2 * EarthConstants.MAX_BUILDING_HEIGHT]
+                        }
+                    }
+                ]
+            },
+            lookAt: { zoomLevel: 14 },
+            tileGeoJson: false
+        });
+    });
+
     it("renders point markers using dataSourceOrder", async function () {
         this.timeout(5000);
 
