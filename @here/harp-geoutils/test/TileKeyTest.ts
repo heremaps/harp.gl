@@ -128,19 +128,3 @@ describe("Equirectangular", function () {
         assert.strictEqual(tileKey.level, 13);
     });
 });
-
-describe("TileKeyUtils", function () {
-    it("geoRectangleToTileKeys", function () {
-        const geoBox = new GeoBox(
-            new GeoCoordinates(52.5163, 13.3777), // Brandenburg gate
-            new GeoCoordinates(52.5309, 13.385) // HERE office
-        );
-        const expectedResult = [371506848, 371506849, 371506850, 371506851];
-
-        const result = TileKeyUtils.geoRectangleToTileKeys(webMercatorTilingScheme, geoBox, 14);
-        assert.sameMembers(
-            result.map(tk => tk.mortonCode()),
-            expectedResult
-        );
-    });
-});
