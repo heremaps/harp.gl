@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export * from "./lib/DOMUtils";
 export * from "./lib/GroupedPriorityList";
 export * from "./lib/Logger";
 export * from "./lib/Math2D";

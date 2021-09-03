@@ -8,6 +8,7 @@ import {
     Projection,
     ProjectionType,
     TileKey,
+    TileKeyUtils,
     TilingScheme
 } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
@@ -17,7 +18,7 @@ import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { MapView } from "./MapView";
-import { MapViewUtils, TileOffsetUtils } from "./Utils";
+import { MapViewUtils } from "./Utils";
 
 const tmpVectors3 = [new THREE.Vector3(), new THREE.Vector3()];
 const tmpVector4 = new THREE.Vector4();
@@ -197,7 +198,7 @@ export class FrustumIntersection {
                 for (const zoomLevel of uniqueZoomLevels) {
                     const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
                     tileKeyEntries.set(
-                        TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset),
+                        TileKeyUtils.getKeyForTileKeyAndOffset(tileKey, offset),
                         tileKeyEntry
                     );
                 }
@@ -227,7 +228,7 @@ export class FrustumIntersection {
                 continue;
             }
 
-            const tileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
+            const tileKeyAndOffset = TileKeyUtils.getKeyForTileKeyAndOffset(tileKey, offset);
 
             // delete parent tile key from applicable zoom levels
             for (const zoomLevel of uniqueZoomLevels) {
@@ -257,7 +258,7 @@ export class FrustumIntersection {
                             continue;
                         }
 
-                        const subTileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                        const subTileKeyAndOffset = TileKeyUtils.getKeyForTileKeyAndOffset(
                             subTileKey,
                             offset
                         );

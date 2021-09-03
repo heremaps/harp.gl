@@ -12,30 +12,21 @@ import {
     Projection,
     ProjectionType,
     sphereProjection,
-    TileKey,
+    TileKeyUtils,
     Vector2Like,
     Vector3Like
 } from "@here/harp-geoutils";
 import { GeoCoordLike } from "@here/harp-geoutils/lib/coordinates/GeoCoordLike";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
-import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
-import { assert, LoggerManager } from "@here/harp-utils";
+import { assert, DOMUtils, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { CameraUtils } from "./CameraUtils";
 import { ElevationProvider } from "./ElevationProvider";
-import { LodMesh } from "./geometry/LodMesh";
+import { Object3DUtils } from "./geometry/Object3DUtils";
 import { MapView } from "./MapView";
-import { getFeatureDataSize, TileFeatureData } from "./Tile";
 
 const logger = LoggerManager.instance.create("MapViewUtils");
-
-// Estimation of the size of an Object3D with all the simple properties, like matrices and flags.
-// There may be cases where it is possible to construct Object3Ds with considerable less memory
-// consumption, but this value is used to simplify the estimation.
-const MINIMUM_OBJECT3D_SIZE_ESTIMATION = 1000;
-
-const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
 
 /**
  * Zoom level to request terrain tiles for getting the height of the camera above terrain.
@@ -105,6 +96,9 @@ function snapToCeilingZoomLevel(zoomLevel: number) {
     return ceiling - zoomLevel < eps ? ceiling : zoomLevel;
 }
 
+/**
+ * MapView utilities: View transformations, camera setup, view bounds computation...
+ */
 export namespace MapViewUtils {
     export const MAX_TILT_DEG = 89;
     export const MAX_TILT_RAD = MAX_TILT_DEG * THREE.MathUtils.DEG2RAD;
@@ -131,12 +125,9 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Describes estimated usage of memory on heap and GPU.
+     * @deprecated
      */
-    export interface MemoryUsage {
-        heapSize: number;
-        gpuSize: number;
-    }
+    export interface MemoryUsage extends Object3DUtils.MemoryUsage {}
 
     /**
      * Zooms and moves the map in such a way that the given target position remains at the same
@@ -1732,41 +1723,9 @@ export namespace MapViewUtils {
     export const calculateWorldSizeByFocalLength = CameraUtils.convertScreenToWorldSize;
 
     /**
-     * Computes estimate for size of a THREE.Object3D object and its children. Shared materials
-     * and/or attributes will be counted multiple times.
-     *
-     * @param object - The mesh object to evaluate
-     * @param size - The {@link MemoryUsage} to update.
-     * @param visitedObjects - Optional map to store large objects that could be shared.
-     *
-     * @returns Estimate of object size in bytes for heap and GPU.
+     * @deprecated
      */
-    export function estimateObject3dSize(
-        object: THREE.Object3D,
-        parentSize?: MemoryUsage,
-        visitedObjects?: Map<string, boolean>
-    ): MemoryUsage {
-        const size =
-            parentSize !== undefined
-                ? parentSize
-                : {
-                      heapSize: 0,
-                      gpuSize: 0
-                  };
-
-        if (visitedObjects === undefined) {
-            visitedObjects = new Map();
-        }
-
-        estimateMeshSize(object, size, visitedObjects);
-
-        if (object.children.length > 0) {
-            for (const child of object.children) {
-                estimateObject3dSize(child, size, visitedObjects);
-            }
-        }
-        return size;
-    }
+    export const estimateObject3dSize = Object3DUtils.estimateSize;
 
     /**
      * Check if tiles or other content is currently being loaded.
@@ -1817,410 +1776,25 @@ export namespace MapViewUtils {
         return false;
     }
 
-    function estimateTextureSize(
-        texture: THREE.Texture | null,
-        objectSize: MemoryUsage,
-        visitedObjects: Map<string, boolean>
-    ): void {
-        if (
-            texture === null ||
-            texture === undefined ||
-            texture.image === undefined ||
-            texture.image === null
-        ) {
-            return;
-        }
-
-        if (texture.uuid !== undefined && visitedObjects.get(texture.uuid) === true) {
-            return;
-        }
-        visitedObjects.set(texture.uuid, true);
-
-        // May be HTMLImage or ImageData
-        const image = texture.image;
-        // Assuming RGBA
-        const imageBytes = 4 * image.width * image.height;
-        objectSize.heapSize += imageBytes;
-        objectSize.gpuSize += imageBytes;
-    }
-
-    function estimateMaterialSize(
-        material: THREE.Material,
-        objectSize: MemoryUsage,
-        visitedObjects: Map<string, boolean>
-    ): void {
-        if (material.uuid !== undefined && visitedObjects.get(material.uuid) === true) {
-            return;
-        }
-        visitedObjects.set(material.uuid, true);
-
-        if (
-            material instanceof THREE.RawShaderMaterial ||
-            material instanceof THREE.ShaderMaterial
-        ) {
-            const rawMaterial = material;
-            for (const name in rawMaterial.uniforms) {
-                if (rawMaterial.uniforms[name] !== undefined) {
-                    const uniform = rawMaterial.uniforms[name];
-                    if (uniform instanceof THREE.Texture) {
-                        estimateTextureSize(uniform, objectSize, visitedObjects);
-                    }
-                }
-            }
-        } else if (
-            material instanceof THREE.MeshBasicMaterial ||
-            material instanceof MapMeshBasicMaterial
-        ) {
-            const meshMaterial = material;
-            estimateTextureSize(meshMaterial.map, objectSize, visitedObjects);
-            estimateTextureSize(meshMaterial.aoMap, objectSize, visitedObjects);
-            estimateTextureSize(meshMaterial.specularMap, objectSize, visitedObjects);
-            estimateTextureSize(meshMaterial.alphaMap, objectSize, visitedObjects);
-            estimateTextureSize(meshMaterial.envMap, objectSize, visitedObjects);
-        } else if (material instanceof MapMeshStandardMaterial) {
-            const standardMaterial = material;
-
-            estimateTextureSize(standardMaterial.map, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.lightMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.aoMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.emissiveMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.bumpMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.normalMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.displacementMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.roughnessMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.metalnessMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.alphaMap, objectSize, visitedObjects);
-            estimateTextureSize(standardMaterial.envMap, objectSize, visitedObjects);
-        } else if (
-            material instanceof THREE.LineBasicMaterial ||
-            material instanceof THREE.LineDashedMaterial ||
-            material instanceof THREE.PointsMaterial
-        ) {
-            // Nothing to be done here
-        } else {
-            logger.warn("estimateMeshSize: unidentified material: ", material);
-        }
-    }
-
-    function estimateAttributeSize(
-        attribute: any,
-        attrName: string,
-        objectSize: MemoryUsage,
-        visitedObjects: Map<string, boolean>
-    ): void {
-        // Attributes (apparently) do not have their uuid set up.
-        if (attribute.uuid === undefined) {
-            attribute.uuid = THREE.MathUtils.generateUUID();
-        }
-
-        if (visitedObjects.get(attribute.uuid) === true) {
-            return;
-        }
-        visitedObjects.set(attribute.uuid, true);
-
-        let attrBytes = 0;
-        let bytesPerElement = 4;
-        if (attribute.array.BYTES_PER_ELEMENT !== undefined) {
-            bytesPerElement = attribute.array.BYTES_PER_ELEMENT;
-        }
-        if (
-            attribute instanceof THREE.InterleavedBufferAttribute ||
-            attribute instanceof THREE.BufferAttribute
-        ) {
-            attrBytes = bytesPerElement * attribute.count * attribute.itemSize;
-        } else {
-            logger.warn("estimateMeshSize: unidentified attribute: ", attrName);
-        }
-
-        objectSize.heapSize += attrBytes + MINIMUM_ATTRIBUTE_SIZE_ESTIMATION;
-        objectSize.gpuSize += attrBytes;
-    }
-
-    function estimateGeometrySize(
-        geometry: THREE.BufferGeometry,
-        objectSize: MemoryUsage,
-        visitedObjects: Map<string, boolean>
-    ): void {
-        const isNewObject =
-            geometry.uuid === undefined || visitedObjects.get(geometry.uuid) !== true;
-
-        if (!isNewObject) {
-            return;
-        }
-        visitedObjects.set(geometry.uuid, true);
-
-        if (geometry === undefined) {
-            // Nothing more to calculate.
-            return;
-        }
-
-        const attributes = geometry.attributes;
-        if (attributes === undefined) {
-            logger.warn("estimateGeometrySize: unidentified geometry: ", geometry);
-            return;
-        }
-
-        for (const property in attributes) {
-            if (attributes[property] !== undefined) {
-                estimateAttributeSize(attributes[property], property, objectSize, visitedObjects);
-            }
-        }
-        if (geometry.index !== null) {
-            estimateAttributeSize(geometry.index, "index", objectSize, visitedObjects);
-        }
-    }
-
-    function estimateMeshSize(
-        object: THREE.Object3D,
-        objectSize: MemoryUsage,
-        visitedObjects: Map<string, boolean>
-    ): void {
-        if (!object.isObject3D || object instanceof THREE.Scene) {
-            return;
-        }
-
-        if (object.uuid !== undefined && visitedObjects.get(object.uuid) === true) {
-            return;
-        }
-        visitedObjects.set(object.uuid, true);
-
-        if ((object as any).isMesh || (object as any).isLine || (object as any).isPoints) {
-            // Estimated minimum impact on heap.
-            let heapSize = MINIMUM_OBJECT3D_SIZE_ESTIMATION;
-            const gpuSize = 0;
-
-            // Cast to LodMesh class which contains the minimal required properties sub-set.
-            const mesh = object as LodMesh;
-
-            // Calculate material(s) impact.
-            if (mesh.material !== undefined) {
-                if (Array.isArray(mesh.material)) {
-                    const materials = mesh.material as THREE.Material[];
-                    for (const material of materials) {
-                        estimateMaterialSize(material, objectSize, visitedObjects);
-                    }
-                } else {
-                    const material = mesh.material as THREE.Material;
-                    estimateMaterialSize(material, objectSize, visitedObjects);
-                }
-            }
-
-            // Calculate cost of geometry.
-            if (mesh.geometries !== undefined) {
-                for (const geometry of mesh.geometries) {
-                    estimateGeometrySize(geometry, objectSize, visitedObjects);
-                }
-            } else if (mesh.geometry !== undefined) {
-                estimateGeometrySize(mesh.geometry, objectSize, visitedObjects);
-            }
-
-            // Add info that is required for picking (parts of) objects and match them to
-            // the featureID in the map data.
-            const featureData: TileFeatureData | undefined =
-                object.userData !== undefined
-                    ? (object.userData.feature as TileFeatureData)
-                    : undefined;
-
-            if (featureData !== undefined) {
-                heapSize += getFeatureDataSize(featureData);
-            }
-
-            objectSize.heapSize += heapSize;
-            objectSize.gpuSize += gpuSize;
-        } else {
-            logger.warn("estimateMeshSize: unidentified object", object);
-        }
-    }
-
     /**
-     * Gets language list used by the browser
-     *
-     * @returns Array of iso language codes
+     * @deprecated Use {@link @here/harp-utils#DOMUtils.getBrowserLanguages}
      */
-    export function getBrowserLanguages(): string[] | undefined {
-        if (navigator.languages !== undefined && navigator.languages.length > 0) {
-            const languageList = [];
-            for (const lang of navigator.languages) {
-                languageList.push(getIsoLanguageCode(lang));
-            }
-            return languageList;
-        }
-        if (navigator.language !== undefined) {
-            return [getIsoLanguageCode(navigator.language)];
-        }
-        return undefined;
-    }
-
-    /**
-     * Gets ISO-639-1 language code from browser's code (ex. en for en-US)
-     */
-    function getIsoLanguageCode(language: string) {
-        return language.substring(0, 2);
-    }
+    export const getBrowserLanguages = DOMUtils.getBrowserLanguages;
 }
-
-/** @hidden */
-const powerOfTwo = [
-    0x1,
-    0x2,
-    0x4,
-    0x8,
-    0x10,
-    0x20,
-    0x40,
-    0x80,
-    0x100,
-    0x200,
-    0x400,
-    0x800,
-    0x1000,
-    0x2000,
-    0x4000,
-    0x8000,
-    0x10000,
-    0x20000,
-    0x40000,
-    0x80000,
-    0x100000,
-    0x200000,
-    0x400000,
-    0x800000,
-    0x1000000,
-    0x2000000,
-    0x4000000,
-    0x8000000,
-    0x10000000,
-    0x20000000,
-    0x40000000,
-    0x80000000,
-    0x100000000,
-    0x200000000,
-    0x400000000,
-    0x800000000,
-    0x1000000000,
-    0x2000000000,
-    0x4000000000,
-    0x8000000000,
-    0x10000000000,
-    0x20000000000,
-    0x40000000000,
-    0x80000000000,
-    0x100000000000,
-    0x200000000000,
-    0x400000000000,
-    0x800000000000,
-    0x1000000000000,
-    0x2000000000000,
-    0x4000000000000,
-    0x8000000000000,
-    0x10000000000000
-];
 
 export namespace TileOffsetUtils {
     /**
-     * Creates a unique key based on the supplied parameters. Note, the uniqueness is bounded by the
-     * bitshift. The [[TileKey.mortonCode()]] supports currently up to 26 levels (this is because
-     * 26*2 equals 52, and 2^52 is the highest bit that can be set in an integer in Javascript), the
-     * bitshift reduces this accordingly, so given the default bitshift of four, we support up to 24
-     * levels. Given the current support up to level 19 this should be fine.
-     *
-     * @param tileKey - The unique {@link @here/harp-geoutils#TileKey}
-     *                  from which to compute the unique key.
-     * @param offset - How much the given {@link @here/harp-geoutils#TileKey} is offset
-     * @param bitshift - How much space we have to store the offset. The default of 4 means we have
-     *      enough space to store 16 unique tiles in a single view.
+     * @deprecated Use {@link @here/harp-geoutils#TileKeyUtils.getKeyForTileKeyAndOffset}.
      */
-    export function getKeyForTileKeyAndOffset(
-        tileKey: TileKey,
-        offset: number,
-        bitshift: number = 4
-    ) {
-        const shiftedOffset = getShiftedOffset(offset, bitshift);
-        return tileKey.mortonCode() + shiftedOffset;
-    }
+    export const getKeyForTileKeyAndOffset = TileKeyUtils.getKeyForTileKeyAndOffset;
 
     /**
-     * Extracts the offset and morton key from the given key (must be created by:
-     * [[getKeyForTileKeyAndOffset]])
-     *
-     * Note, we can't use bitshift operators in Javascript because they work on 32-bit integers, and
-     * would truncate the numbers, hence using powers of two.
-     *
-     * @param key - Key to extract offset and morton key.
-     * @param bitshift - How many bits to shift by, must be the same as was used when creating the
-     * key.
+     * @deprecated Use {@link @here/harp-geoutils#TileKeyUtils.getKeyForTileKeyAndOffset}.
      */
-    export function extractOffsetAndMortonKeyFromKey(key: number, bitshift: number = 4) {
-        let offset = 0;
-        let mortonCode = key;
-        let i = 0;
-        // Compute the offset
-        for (; i < bitshift; i++) {
-            // Note, we use 52, because 2^53-1 is the biggest value, the highest value
-            // that can be set is the bit in the 52th position.
-            const num = powerOfTwo[52 - i];
-            if (mortonCode >= num) {
-                mortonCode -= num;
-                offset += powerOfTwo[bitshift - 1 - i];
-            }
-        }
-        // We subtract half of the total amount, this undoes what is computed in getShiftedOffset
-        offset -= powerOfTwo[bitshift - 1];
-        return { offset, mortonCode };
-    }
+    export const extractOffsetAndMortonKeyFromKey = TileKeyUtils.extractOffsetAndMortonKeyFromKey;
 
     /**
-     * Returns the key of the parent. Key must have been computed using the function
-     * [[getKeyForTileKeyAndOffset]].
-     *
-     * @param calculatedKey - Key to decompose
-     * @param bitshift - Bit shift used to create the key
+     * @deprecated Use {@link @here/harp-geoutils#TileKeyUtils.getParentKeyFromKey}.
      */
-    export function getParentKeyFromKey(calculatedKey: number, bitshift: number = 4) {
-        const { offset, mortonCode } = extractOffsetAndMortonKeyFromKey(calculatedKey, bitshift);
-        const parentTileKey = TileKey.fromMortonCode(TileKey.parentMortonCode(mortonCode));
-        return getKeyForTileKeyAndOffset(parentTileKey, offset, bitshift);
-    }
-
-    /**
-     * Packs the supplied offset into the high bits, where the highbits are between 2^52 and
-     * 2^(52-bitshift).
-     *
-     * Offsets are wrapped around, to fit in the offsetBits. In practice, this doesn't really
-     * matter, this is primarily used to find a unique id, if there is an offset 10, which is
-     * wrapped to 2, it doesn't matter, because the offset of 10 is still stored in the tile.
-     * What can be a problem though is that the cache gets filled up and isn't emptied.
-     *
-     * Note, because bit shifting in JavaScript works on 32 bit integers, we use powers of 2 to set
-     * the high bits instead.
-     *
-     * @param offset - Offset to pack into the high bits.
-     * @param offsetBits - How many bits to use to pack the offset.
-     */
-    function getShiftedOffset(offset: number, offsetBits: number = 4) {
-        let result = 0;
-        const totalOffsetsToStore = powerOfTwo[offsetBits];
-        //Offsets are stored by adding half 2 ^ (bitshift - 1), i.e.half of the max amount stored,
-        //and then wrapped based on this value.For example, given a bitshift of 3, and an offset -
-        //3, it would have 4 added(half of 2 ^ 3), and be stored as 1, 3 would have 4 added and be
-        //stored as 7, 4 would be added with 4 and be stored as 0 (it wraps around).
-        offset += totalOffsetsToStore / 2;
-        while (offset < 0) {
-            offset += totalOffsetsToStore;
-        }
-        while (offset >= totalOffsetsToStore) {
-            offset -= totalOffsetsToStore;
-        }
-        // Offset is now a number between >= 0 and < totalOffsetsToStore
-        for (let i = 0; i < offsetBits && offset > 0; i++) {
-            // 53 is used because 2^53-1 is the biggest number that Javascript can represent as an
-            // integer safely.
-            if (offset & 0x1) {
-                result += powerOfTwo[53 - offsetBits + i];
-            }
-            offset >>>= 1;
-        }
-        assert(offset === 0);
-        return result;
-    }
+    export const getParentKeyFromKey = TileKeyUtils.getParentKeyFromKey;
 }
