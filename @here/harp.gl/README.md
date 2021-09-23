@@ -52,8 +52,8 @@ with `theme` loaded from `unpkg.com` CDN.
     Runtime.
 -   `harp.gl` uses Web Workers from `harp-decoders.js` to offload CPU intensive work from main thread
     (in particular for
-    [OmvDataSource](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/_here_harp_omv_datasource.omvdatasource.html) and
-    [GeoJsonDataProvider](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/_here_harp_geojson_datasource.geojsondataprovider.html).
+    [OmvDataSource](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/harp_omv_datasource.omvdatasource.html) and
+    [GeoJsonDataProvider](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/harp_geojson_datasource.geojsondataprovider.html).
     Web Workers.
 -   For convienience `harp.gl` detects URL from which is loaded and by default detects location of
     `harp-decoders.js` which is distributed together. That may cause problems with `same-origin`
