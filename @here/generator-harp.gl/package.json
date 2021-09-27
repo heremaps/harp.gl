@@ -1,6 +1,6 @@
 {
     "name": "@here/generator-harp.gl",
-    "version": "0.26.0",
+    "version": "0.27.0",
     "description": "Yeoman generator for harp.gl projects",
     "files": [
         "generators"
