@@ -117,7 +117,12 @@ export namespace LinesPointsFeaturesExample {
             for (const featureName of Object.keys(features[type])) {
                 const name = !featureName.includes("unknown") ? featureName : undefined;
                 // snippet:harp_demo_features_linespoints_1.ts
-                const feature = new MapViewLineFeature(features[type][featureName], { name, type });
+                const speed = 30;
+                const feature = new MapViewLineFeature(features[type][featureName], {
+                    name,
+                    type,
+                    speed
+                });
                 // end:harp_demo_features_linespoints_1.ts
                 featuresList.push(feature);
             }
@@ -133,36 +138,12 @@ export namespace LinesPointsFeaturesExample {
         return [
             {
                 when: "$geometryType == 'line' && type == 'ridges'",
-                technique: "dashed-line",
-                renderOrder: 10003,
-                attr: {
-                    color: "#fc3",
-                    lineWidth: 15,
-                    metricUnit: "Pixel",
-                    gapSize: 15,
-                    dashSize: 1
-                }
-            },
-            {
-                when: "$geometryType == 'line' && type == 'ridges'",
                 technique: "solid-line",
                 renderOrder: 10003,
                 attr: {
                     color: "#fc3",
-                    lineWidth: 1,
+                    lineWidth: 2,
                     metricUnit: "Pixel"
-                }
-            },
-            {
-                when: "$geometryType == 'line' && type == 'trenches'",
-                technique: "dashed-line",
-                renderOrder: 10002,
-                attr: {
-                    color: "#09f",
-                    lineWidth: 10,
-                    metricUnit: "Pixel",
-                    gapSize: 10,
-                    dashSize: 1
                 }
             },
             {
@@ -171,35 +152,17 @@ export namespace LinesPointsFeaturesExample {
                 renderOrder: 10002,
                 attr: {
                     color: "#09f",
-                    lineWidth: 1,
+                    lineWidth: 2,
                     metricUnit: "Pixel"
                 }
             },
             {
-                when: "$geometryType == 'point'",
-                technique: "circles",
-                renderOrder: 10001,
-                attr: {
-                    color: "#ca6",
-                    size: 6
-                }
-            },
-            {
-                when: "$geometryType == 'point'",
-                technique: "circles",
-                renderOrder: 10000,
-                attr: {
-                    color: "#a83",
-                    size: 8
-                }
-            },
-            {
-                when: "$geometryType == 'line'",
-                technique: "text",
-                attr: {
-                    color: "#333",
-                    size: 15
-                }
+                when: ["==", ["geometry-type"], "LineString"],
+                technique: "line-marker",
+                color: "#000",
+                text: "30", // Replace with something like: ["to-string", ["get", "speed"]],
+                size: 10,
+                iconIsOptional: true
             }
         ];
     }
