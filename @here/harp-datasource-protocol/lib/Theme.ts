@@ -369,6 +369,9 @@ export interface StyleAttributes<Technique, Params> {
      */
     debug?: boolean;
 
+    /**
+     * @deprecated Technique parameters are now properties at the Style interface level.
+     */
     attr?: Partial<Params>;
 }
 

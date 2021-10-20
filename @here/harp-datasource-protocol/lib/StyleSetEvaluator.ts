@@ -18,6 +18,7 @@ import {
     isJsonExpr,
     JsonExpr,
     LiteralExpr,
+    LookupExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -226,6 +227,10 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
         }
 
         return call;
+    }
+
+    visitLookupExpr(lookup: LookupExpr, enclosingExpr: Expr | undefined): Expr | undefined {
+        return this.visitCallExpr(lookup, enclosingExpr);
     }
 
     visitStepExpr(expr: StepExpr, enclosingExpr: Expr | undefined): Expr | undefined {
@@ -443,9 +448,9 @@ export class StyleSetEvaluator {
     /**
      * Get the expression evaluation cache, for further feature processing.
      *
-     * This object is valid until next `getMatchingTechniques` call.
+     * This cache is cleared at the next `getMatchingTechniques` call.
      */
-    get expressionEvaluatorCache() {
+    get expressionEvaluatorCache(): Map<Expr, Value> {
         return this.m_cachedResults;
     }
 

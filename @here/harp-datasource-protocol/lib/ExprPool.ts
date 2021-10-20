@@ -13,6 +13,7 @@ import {
     ExprVisitor,
     HasAttributeExpr,
     InterpolateExpr,
+    LookupExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -200,7 +201,11 @@ export class ExprPool implements ExprVisitor<Expr, void> {
         return r;
     }
 
-    visitCallExpr(expr: CallExpr, context: void): Expr {
+    private visitCallExprImpl(
+        expr: CallExpr,
+        context: void,
+        constructor: (op: string, args: Expr[]) => CallExpr
+    ): Expr {
         // rewrite the actual arguments
         const expressions = expr.args.map(childExpr => childExpr.accept(this, context));
         // ensure we have a valid set of interned expressions for the calls
@@ -226,10 +231,22 @@ export class ExprPool implements ExprVisitor<Expr, void> {
                 return call;
             }
         }
-        const e = new CallExpr(expr.op, expressions);
+        const e = constructor(expr.op, expressions);
         e.descriptor = expr.descriptor;
         calls.push(e);
         return e;
+    }
+
+    visitCallExpr(expr: CallExpr, context: void): Expr {
+        return this.visitCallExprImpl(expr, context, (op: string, args: Expr[]) => {
+            return new CallExpr(op, args);
+        });
+    }
+
+    visitLookupExpr(expr: LookupExpr, context: void): Expr {
+        return this.visitCallExprImpl(expr, context, (op: string, args: Expr[]) => {
+            return new LookupExpr(args, expr.tableDefName, expr.defCache);
+        });
     }
 
     visitStepExpr(expr: StepExpr, context: void): Expr {

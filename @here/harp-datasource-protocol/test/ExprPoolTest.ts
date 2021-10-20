@@ -8,7 +8,7 @@
 
 import { assert } from "chai";
 
-import { Expr } from "../lib/Expr";
+import { Expr, JsonArray } from "../lib/Expr";
 import { ExprPool } from "../lib/ExprPool";
 
 describe("ExprPool", function () {
@@ -32,7 +32,31 @@ describe("ExprPool", function () {
             0,
             ["ppi-scale", ["step", ["zoom"], 2, 10, 0], ["+", ["*", ["-", ["ppi"], 72], 0.004], 1]]
         ],
-        ["match", ["get", "kind"], "locality", ["get", "attribute"], null]
+        ["match", ["get", "kind"], "locality", ["get", "attribute"], null],
+        [
+            "lookup",
+            [
+                "literal",
+                [
+                    {
+                        keys: {
+                            key1: "somevalue1"
+                        },
+                        attributes: {
+                            attribute1: 20
+                        }
+                    },
+                    {
+                        keys: {},
+                        attributes: {
+                            attribute1: 30
+                        }
+                    }
+                ]
+            ],
+            "key1",
+            "somevalue1"
+        ] as JsonArray
     ];
 
     expressions.forEach(expr => {
