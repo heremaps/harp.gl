@@ -54,7 +54,11 @@ export namespace DynamicMarkersExample {
                     // Specify the styling for the markers.
                     geojson: [
                         {
-                            when: ["==", ["geometry-type"], "Point"],
+                            when: [
+                                "in",
+                                "coloniascdmx",
+                                ["get", "tags", ["get", "@ns:com:here:xyz"]]
+                            ],
                             technique: "labeled-icon",
                             imageTexture: ["get", "icon"],
                             text: ["get", "text"],
@@ -66,6 +70,21 @@ export namespace DynamicMarkersExample {
                             renderOrder: ["get", "renderOrder"],
                             iconFadeTime: 0,
                             textFadeTime: 0
+                        },
+                        {
+                            when: ["in", "other", ["get", "tags", ["get", "@ns:com:here:xyz"]]],
+                            technique: "labeled-icon",
+                            imageTexture: ["get", "icon"],
+                            text: ["get", "text"],
+                            size: 30,
+                            priority: 1000,
+                            color: "black",
+                            iconMayOverlap: true,
+                            textMayOverlap: true,
+                            renderOrder: ["get", "renderOrder"],
+                            iconFadeTime: 0,
+                            textFadeTime: 0,
+                            iconScale: 2
                         }
                     ]
                 }
@@ -139,7 +158,13 @@ export namespace DynamicMarkersExample {
                     text: markerId.toString(),
                     id: markerId,
                     icon: icons[markerId % icons.length].name,
-                    renderOrder: markerId
+                    renderOrder: markerId,
+                    "@ns:com:here:xyz": {
+                        tags: [markerId % 2 === 0 ? "coloniascdmx" : "other"],
+                        space: "NUcQuJnH",
+                        createdAt: 1635075994241,
+                        updatedAt: 1635075994241
+                    }
                 })
             );
             markerId++;
