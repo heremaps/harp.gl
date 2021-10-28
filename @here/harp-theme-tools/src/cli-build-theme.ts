@@ -7,6 +7,7 @@
 
 /* eslint-disable no-console */
 
+import { FlatTheme } from "@here/harp-datasource-protocol";
 import { ThemeLoader } from "@here/harp-mapview";
 import * as program from "commander";
 import * as fs from "fs";
@@ -40,25 +41,64 @@ if (typeof cliOptions.in !== "string" || cliOptions.in.length === 0) {
 
 process.chdir(cliOptions.chdir);
 
-const inputFiles = glob.sync(cliOptions.in);
+const inFileNames = glob.sync(cliOptions.in);
 
-if (inputFiles.length === 0) {
+if (inFileNames.length === 0) {
     console.error("No input files found");
     program.outputHelp();
     process.exit(1);
 }
 
-inputFiles.forEach(file => {
-    ThemeLoader.load(file, {
+inFileNames.forEach(inFileName => {
+    ThemeLoader.load(inFileName, {
         resolveResourceUris: false,
         resolveIncludeUris: true
     }).then(theme => {
         theme.url = undefined;
-        const filename = `${cliOptions.out}/${path.basename(file)}`;
-        console.log(`Writing ${filename}`);
         const json = cliOptions.minify
             ? JSON.stringify(theme)
             : JSON.stringify(theme, undefined, 4);
-        fs.writeFileSync(filename, json);
+
+        const unifiedDefinitionsFileName =
+            path.dirname(inFileName) +
+            path.sep +
+            "unified-definitions" +
+            path.sep +
+            path.basename(inFileName);
+
+        // If unified definitions file exists then we split a theme to unified with native and
+        // non-unified with native parts. We need such split to explain users which parts of
+        // the theme will stay backward compatible and which ones will not:
+        if (fs.existsSync(unifiedDefinitionsFileName)) {
+            // Private (non-unified) part:
+            const outFileBaseNamePrivate = `${path.basename(inFileName, "json")}private.json`;
+            const outFileNamePrivate = cliOptions.out + path.sep + outFileBaseNamePrivate;
+            console.log(`Writing ${outFileNamePrivate}`);
+            fs.writeFileSync(outFileNamePrivate, json);
+
+            // Public (unified) part:
+            const themePublic: FlatTheme = {
+                extends: [outFileBaseNamePrivate],
+                definitions: {}
+            };
+            const unifiedDefinitions: string[] = JSON.parse(
+                fs.readFileSync(unifiedDefinitionsFileName, "utf8")
+            );
+            unifiedDefinitions.forEach(def => {
+                if (theme.definitions && themePublic.definitions) {
+                    themePublic.definitions[def] = theme.definitions[def];
+                }
+            });
+            const jsonPublic = cliOptions.minify
+                ? JSON.stringify(themePublic)
+                : JSON.stringify(themePublic, undefined, 4);
+            const outFileNamePublic = `${cliOptions.out}/${path.basename(inFileName)}`;
+            console.log(`Writing ${outFileNamePublic}`);
+            fs.writeFileSync(outFileNamePublic, jsonPublic);
+        } else {
+            const outFileName = `${cliOptions.out}/${path.basename(inFileName)}`;
+            console.log(`Writing ${outFileName}`);
+            fs.writeFileSync(outFileName, json);
+        }
     });
 });
