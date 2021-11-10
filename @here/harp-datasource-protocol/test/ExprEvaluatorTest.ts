@@ -2208,7 +2208,7 @@ describe("ExprEvaluator", function () {
             });
         }
 
-        it("lookup table references are cached as maps and reused", function () {
+        it("lookup table reference is cached as map and reused across expressions", function () {
             const expr = ["lookup", ["ref", "tableDef"]] as JsonArray;
             const defCache = new Map();
 
@@ -2228,6 +2228,24 @@ describe("ExprEvaluator", function () {
             );
 
             expect(tableMapSpy.calledWith("bar=false&foo=1")).to.be.true;
+        });
+
+        it("lookup table literal is reused across evaluations of same expression", function () {
+            const exprArray = ["lookup", lookupTable, "key1", ["get", "env1"]] as JsonArray;
+            const defCache = new Map();
+
+            const expr = Expr.fromJSON(exprArray, definitions, defCache);
+            expr.evaluate(new MapEnv(env), ExprScope.Value);
+
+            const tableMap = defCache.values().next().value;
+            expect(tableMap).to.be.instanceOf(ObjectLiteralExpr);
+            expect(tableMap.value).to.be.instanceOf(Map);
+            const tableMapSpy = sinon.spy(tableMap.value, "get");
+
+            expr.evaluate(new MapEnv({ env1: "othervalue" }), ExprScope.Value);
+
+            expect(tableMapSpy.called).to.be.true;
+            expect(tableMapSpy.calledWith('key1="othervalue"')).to.be.true;
         });
 
         describe("errors", function () {

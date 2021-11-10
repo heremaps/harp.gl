@@ -20,42 +20,12 @@ interface LookupEntry {
 type LookupArray = LookupEntry[];
 type LookupMap = Map<string, KeyValObj>;
 
-/**
- * Check if the type of the given value corresponds to a {@link LookupEntry}, throwing an error
- * if not.
- * @param entry The value to check.
- */
-function checkLookupEntry(entry: any) {
-    if (typeof entry !== "object") {
-        throw new Error(`Invalid lookup table entry type (${typeof entry})`);
-    }
-    if (!entry.keys) {
-        throw new Error(`Lookup table entry has no 'keys' property.`);
-    }
-    if (!entry.attributes) {
-        throw new Error(`Lookup table entry has no 'attributes' property.`);
-    }
-}
-
 function joinKeyValues(keys: string[]): string {
     return keys.join("&");
 }
 
 function stringifyKeyValue(key: string, value: Value): string {
     return key + "=" + JSON.stringify(value);
-}
-
-/**
- * Creates a unique string key for a lookup entry concatenating all its key fields.
- * @param entry The lookup entry.
- * @returns The entry key.
- */
-function makeEntryKey(entry: LookupEntry): string {
-    return joinKeyValues(
-        Object.getOwnPropertyNames(entry.keys)
-            .sort()
-            .map(key => stringifyKeyValue(key, entry.keys[key]))
-    );
 }
 
 /**
@@ -126,8 +96,21 @@ function getKeyCombinations(lookupExpr: LookupExpr, context: ExprEvaluatorContex
 function createLookupMap(lookupArray: LookupArray): LookupMap {
     const map = new Map();
     for (const entry of lookupArray) {
-        checkLookupEntry(entry);
-        map.set(makeEntryKey(entry), entry.attributes);
+        if (typeof entry !== "object") {
+            throw new Error(`Invalid lookup table entry type (${typeof entry})`);
+        }
+        if (!entry.keys) {
+            throw new Error(`Lookup table entry has no 'keys' property.`);
+        }
+        if (!entry.attributes) {
+            throw new Error(`Lookup table entry has no 'attributes' property.`);
+        }
+        const key = joinKeyValues(
+            Object.getOwnPropertyNames(entry.keys)
+                .sort()
+                .map(key => stringifyKeyValue(key, entry.keys[key]))
+        );
+        map.set(key, entry.attributes);
     }
     return map;
 }
@@ -146,30 +129,6 @@ function searchLookupMap(keys: string[], map: LookupMap): KeyValObj | null {
         }
     }
     return null;
-}
-
-/**
- * Searches matches of the given keys in an array.
- * @param keys Keys to search in the array.
- * @param array The lookup array.
- * @returns The first match (in the order in which keys are given) or null if no match found.
- */
-function searchLookupArray(keys: string[], array: LookupArray): KeyValObj | null {
-    let bestMatchIndex = keys.length;
-    let bestMatchAttributes = null;
-    for (const entry of array) {
-        checkLookupEntry(entry);
-        const entryKey = makeEntryKey(entry);
-
-        for (let i = 0; i < Math.min(keys.length, bestMatchIndex); i += 1) {
-            if (entryKey === keys[i] && i < bestMatchIndex) {
-                bestMatchIndex = i;
-                bestMatchAttributes = entry.attributes;
-                break;
-            }
-        }
-    }
-    return bestMatchAttributes;
 }
 
 const operators = {
@@ -202,18 +161,16 @@ const operators = {
             let table = context.evaluate(lookup.args[0]) as LookupArray | LookupMap;
             assert(Array.isArray(table) || table instanceof Map, "wrong lookup table type");
 
-            if (Array.isArray(table) && lookup.defCache && lookup.tableDefName) {
-                // If lookup uses a table reference, the table is cached as a map to speedup lookup,
-                // since the same table might be used by multiple lookup expressions.
+            if (Array.isArray(table)) {
+                // Transform the lookup table into a map to speedup lookup, since the same table
+                // might be used by multiple lookup expressions.
                 table = createLookupMap(table);
                 const lookupMapExpr = new ObjectLiteralExpr(table);
                 lookup.args[0] = lookupMapExpr;
-                lookup.defCache.set(lookup.tableDefName, lookupMapExpr);
+                lookup.lookupMapCallback?.(lookupMapExpr);
             }
 
-            return table instanceof Map
-                ? searchLookupMap(keyCombinations, table)
-                : searchLookupArray(keyCombinations, table);
+            return searchLookupMap(keyCombinations, table);
         }
     }
 };

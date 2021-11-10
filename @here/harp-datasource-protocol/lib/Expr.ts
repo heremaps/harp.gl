@@ -622,7 +622,7 @@ export class LookupExpr extends CallExpr {
         }
 
         const lookupTableExpr = parseNode(lookupTableNode, referenceResolverState);
-        if (!(lookupTableExpr instanceof ObjectLiteralExpr)) {
+        if (!Array.isArray(lookupTableNode) || !(lookupTableExpr instanceof ObjectLiteralExpr)) {
             throw new Error(
                 `Invalid lookup table expression for operator 'lookup'. It must be a literal or a ref to one.`
             );
@@ -633,30 +633,36 @@ export class LookupExpr extends CallExpr {
                 `Invalid lookup table type (${typeof lookupTable}) for operator 'lookup'`
             );
         }
-        const lookupTableName =
-            referenceResolverState && Array.isArray(lookupTableNode) && lookupTableNode[0] === "ref"
-                ? (lookupTableNode[1] as string)
+
+        // Lookup table is transformed into a map to speed-up lookups. The map is stored in the
+        // definitions cache if given, using as key the reference name or a uuid if the table
+        // is a literal.
+        const lookupMapCallback =
+            Array.isArray(lookupTable) && referenceResolverState
+                ? (lookupMap: Expr) => {
+                      const entryName =
+                          lookupTableNode[0] === "ref"
+                              ? (lookupTableNode[1] as string)
+                              : THREE.MathUtils.generateUUID();
+                      referenceResolverState.cache.set(entryName, lookupMap);
+                  }
                 : undefined;
 
+        // Skip the operator name and the lookup table and parse the rest of the arguments. Then add
+        // the lookup table expr as first argument.
         const args = node.slice(2).map(childExpr => parseNode(childExpr, referenceResolverState));
         args.unshift(lookupTableExpr);
 
-        return new LookupExpr(args, lookupTableName, referenceResolverState?.cache);
+        return new LookupExpr(args, lookupMapCallback);
     }
 
     /**
      * Constructs a LookupExpr instance.
      * @param args Arguments of the lookup expression. At least an argument for the lookup table.
-     * @param tableDefName If given, lookup table is assumed to be a definition with that name.
-     * @param defCache Optional definitions cache.
-     * @note If both `tableDefName` and `defCache` are given, lookup table will be converted to a
-     * map for fast search, and the map will be stored in the cache under the given definition name.
+     * @param lookupMapCallback If given, it'll be called passing the lookup table as a literal map
+     * expression.
      */
-    constructor(
-        readonly args: Expr[],
-        readonly tableDefName?: string,
-        readonly defCache?: Map<string, Expr>
-    ) {
+    constructor(readonly args: Expr[], readonly lookupMapCallback?: (lookupMap: Expr) => void) {
         super("lookup", args);
     }
 

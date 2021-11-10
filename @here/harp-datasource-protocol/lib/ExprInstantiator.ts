@@ -100,7 +100,7 @@ export class ExprInstantiator implements ExprVisitor<Expr, InstantiationContext>
 
     visitLookupExpr(expr: LookupExpr, context: InstantiationContext): Expr {
         return this.visitCallExprImpl(expr, context, (op: string, args: Expr[]) => {
-            return new LookupExpr(args, expr.tableDefName, expr.defCache);
+            return new LookupExpr(args, expr.lookupMapCallback);
         });
     }
 
