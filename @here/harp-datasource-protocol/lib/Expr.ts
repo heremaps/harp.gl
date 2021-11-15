@@ -634,17 +634,12 @@ export class LookupExpr extends CallExpr {
             );
         }
 
-        // Lookup table is transformed into a map to speed-up lookups. The map is stored in the
-        // definitions cache if given, using as key the reference name or a uuid if the table
-        // is a literal.
+        // Lookup table is transformed into a map to speed-up lookups. For references to lookup
+        // table definitions, the map is stored in the definitions cache if given.
         const lookupMapCallback =
-            Array.isArray(lookupTable) && referenceResolverState
+            Array.isArray(lookupTable) && referenceResolverState && lookupTableNode[0] === "ref"
                 ? (lookupMap: Expr) => {
-                      const entryName =
-                          lookupTableNode[0] === "ref"
-                              ? (lookupTableNode[1] as string)
-                              : THREE.MathUtils.generateUUID();
-                      referenceResolverState.cache.set(entryName, lookupMap);
+                      referenceResolverState.cache.set(lookupTableNode[1] as string, lookupMap);
                   }
                 : undefined;
 

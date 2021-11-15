@@ -17,6 +17,7 @@ import {
     JsonArray,
     JsonExpr,
     JsonValue,
+    LookupExpr,
     MapEnv,
     ObjectLiteralExpr,
     Value,
@@ -2237,10 +2238,11 @@ describe("ExprEvaluator", function () {
             const expr = Expr.fromJSON(exprArray, definitions, defCache);
             expr.evaluate(new MapEnv(env), ExprScope.Value);
 
-            const tableMap = defCache.values().next().value;
-            expect(tableMap).to.be.instanceOf(ObjectLiteralExpr);
-            expect(tableMap.value).to.be.instanceOf(Map);
-            const tableMapSpy = sinon.spy(tableMap.value, "get");
+            const tableMapExpr = (expr as LookupExpr).args[0] as ObjectLiteralExpr;
+            expect(tableMapExpr).to.be.instanceOf(ObjectLiteralExpr);
+            expect(tableMapExpr.value).to.be.instanceOf(Map);
+            const tableMap = tableMapExpr.value as Map<string, any>;
+            const tableMapSpy = sinon.spy(tableMap, "get");
 
             expr.evaluate(new MapEnv({ env1: "othervalue" }), ExprScope.Value);
 

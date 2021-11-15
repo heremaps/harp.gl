@@ -166,6 +166,8 @@ const operators = {
                 // might be used by multiple lookup expressions.
                 table = createLookupMap(table);
                 const lookupMapExpr = new ObjectLiteralExpr(table);
+                // Replace the lookup table argument with the map. Next calls to the same expression
+                // (e.g. re-evaluations due to data dependencies) will use the map.
                 lookup.args[0] = lookupMapExpr;
                 lookup.lookupMapCallback?.(lookupMapExpr);
             }
