@@ -628,36 +628,25 @@ export class LookupExpr extends CallExpr {
             );
         }
         const lookupTable = lookupTableExpr.value;
-        if (!Array.isArray(lookupTable) && !(lookupTable instanceof Map)) {
+        if (!Array.isArray(lookupTable)) {
             throw new Error(
                 `Invalid lookup table type (${typeof lookupTable}) for operator 'lookup'`
             );
         }
-
-        // Lookup table is transformed into a map to speed-up lookups. For references to lookup
-        // table definitions, the map is stored in the definitions cache if given.
-        const lookupMapCallback =
-            Array.isArray(lookupTable) && referenceResolverState && lookupTableNode[0] === "ref"
-                ? (lookupMap: Expr) => {
-                      referenceResolverState.cache.set(lookupTableNode[1] as string, lookupMap);
-                  }
-                : undefined;
 
         // Skip the operator name and the lookup table and parse the rest of the arguments. Then add
         // the lookup table expr as first argument.
         const args = node.slice(2).map(childExpr => parseNode(childExpr, referenceResolverState));
         args.unshift(lookupTableExpr);
 
-        return new LookupExpr(args, lookupMapCallback);
+        return new LookupExpr(args);
     }
 
     /**
      * Constructs a LookupExpr instance.
      * @param args Arguments of the lookup expression. At least an argument for the lookup table.
-     * @param lookupMapCallback If given, it'll be called passing the lookup table as a literal map
-     * expression.
      */
-    constructor(readonly args: Expr[], readonly lookupMapCallback?: (lookupMap: Expr) => void) {
+    constructor(readonly args: Expr[]) {
         super("lookup", args);
     }
 

@@ -169,7 +169,6 @@ const operators = {
                 // Replace the lookup table argument with the map. Next calls to the same expression
                 // (e.g. re-evaluations due to data dependencies) will use the map.
                 lookup.args[0] = lookupMapExpr;
-                lookup.lookupMapCallback?.(lookupMapExpr);
             }
 
             return searchLookupMap(keyCombinations, table);

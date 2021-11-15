@@ -245,7 +245,7 @@ export class ExprPool implements ExprVisitor<Expr, void> {
 
     visitLookupExpr(expr: LookupExpr, context: void): Expr {
         return this.visitCallExprImpl(expr, context, (op: string, args: Expr[]) => {
-            return new LookupExpr(args, expr.lookupMapCallback);
+            return new LookupExpr(args);
         });
     }
 

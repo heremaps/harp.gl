@@ -2206,49 +2206,27 @@ describe("ExprEvaluator", function () {
                         expect(result).deep.equals(testCase.attributes);
                     });
                 }
+
+                it("table is cached as map and reused across expression reevaluations", function () {
+                    const exprArray = ["lookup", lookupTable, "key1", ["get", "env1"]] as JsonArray;
+                    const defCache = new Map();
+
+                    const expr = Expr.fromJSON(exprArray, definitions, defCache);
+                    expr.evaluate(new MapEnv(env), ExprScope.Value);
+
+                    const tableMapExpr = (expr as LookupExpr).args[0] as ObjectLiteralExpr;
+                    expect(tableMapExpr).to.be.instanceOf(ObjectLiteralExpr);
+                    expect(tableMapExpr.value).to.be.instanceOf(Map);
+                    const tableMap = tableMapExpr.value as Map<string, any>;
+                    const tableMapSpy = sinon.spy(tableMap, "get");
+
+                    expr.evaluate(new MapEnv({ env1: "othervalue" }), ExprScope.Value);
+
+                    expect(tableMapSpy.called).to.be.true;
+                    expect(tableMapSpy.calledWith('key1="othervalue"')).to.be.true;
+                });
             });
         }
-
-        it("lookup table reference is cached as map and reused across expressions", function () {
-            const expr = ["lookup", ["ref", "tableDef"]] as JsonArray;
-            const defCache = new Map();
-
-            evaluate(expr, env, ExprScope.Value, definitions, defCache);
-
-            const tableMap = defCache.get("tableDef");
-            expect(tableMap).to.be.instanceOf(ObjectLiteralExpr);
-            expect(tableMap.value).to.be.instanceOf(Map);
-            const tableMapSpy = sinon.spy(tableMap.value, "get");
-
-            evaluate(
-                expr.concat(["foo", 1, "bar", false]),
-                env,
-                ExprScope.Value,
-                definitions,
-                defCache
-            );
-
-            expect(tableMapSpy.calledWith("bar=false&foo=1")).to.be.true;
-        });
-
-        it("lookup table literal is reused across evaluations of same expression", function () {
-            const exprArray = ["lookup", lookupTable, "key1", ["get", "env1"]] as JsonArray;
-            const defCache = new Map();
-
-            const expr = Expr.fromJSON(exprArray, definitions, defCache);
-            expr.evaluate(new MapEnv(env), ExprScope.Value);
-
-            const tableMapExpr = (expr as LookupExpr).args[0] as ObjectLiteralExpr;
-            expect(tableMapExpr).to.be.instanceOf(ObjectLiteralExpr);
-            expect(tableMapExpr.value).to.be.instanceOf(Map);
-            const tableMap = tableMapExpr.value as Map<string, any>;
-            const tableMapSpy = sinon.spy(tableMap, "get");
-
-            expr.evaluate(new MapEnv({ env1: "othervalue" }), ExprScope.Value);
-
-            expect(tableMapSpy.called).to.be.true;
-            expect(tableMapSpy.calledWith('key1="othervalue"')).to.be.true;
-        });
 
         describe("errors", function () {
             it("throws if no lookup table passed", function () {
