@@ -17,6 +17,7 @@ import {
     HasAttributeExpr,
     InterpolateExpr,
     LiteralExpr,
+    LookupExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -402,6 +403,11 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
         }
 
         throw new Error(`undefined operator '${expr.op}'`);
+    }
+
+    visitLookupExpr(expr: LookupExpr, context: ExprEvaluatorContext): Value {
+        // Same behaviour as call expressions.
+        return this.visitCallExpr(expr, context);
     }
 
     visitStepExpr(expr: StepExpr, context: ExprEvaluatorContext): Value {

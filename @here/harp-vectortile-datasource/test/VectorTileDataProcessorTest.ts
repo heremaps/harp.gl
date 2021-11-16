@@ -5,6 +5,7 @@
  */
 import { GeometryKind, IndexedTechnique } from "@here/harp-datasource-protocol";
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as sinon from "sinon";
@@ -123,10 +124,10 @@ describe("VectorTileDataProcessor", function () {
         const dummyExtents = 4096;
         const featureId = 42;
         const layerName = "fakelayer";
+        let emitterSpy: sinon.SinonSpy;
 
         describe(`${processorMethod}`, function () {
-            it("sets reserved feature properties", function () {
-                const styleEvalSpy = sinon.spy(styleSetEvaluator, "getMatchingTechniques");
+            beforeEach(function () {
                 sinon
                     .stub(dataAdapter, "process")
                     .callsFake((data, decodeInfo, geometryProcessor: IGeometryProcessor) => {
@@ -138,6 +139,38 @@ describe("VectorTileDataProcessor", function () {
                             featureId
                         );
                     });
+                emitterSpy = sinon.spy(VectorTileDataEmitter.prototype, processorMethod as any);
+            });
+
+            it("passes style evaluator cache to emitter", function () {
+                const matchingTechniques: IndexedTechnique[] = [
+                    {
+                        name: "line",
+                        color: "red",
+                        lineWidth: 1,
+                        _index: 0,
+                        _styleSetIndex: 0,
+                        kind: GeometryKind.Road
+                    }
+                ];
+                sinon
+                    .stub(styleSetEvaluator, "getMatchingTechniques")
+                    .callsFake(() => matchingTechniques);
+                sinon.stub(styleSetEvaluator, "techniques").get(() => matchingTechniques);
+                sinon.stub(styleSetEvaluator, "decodedTechniques").get(() => matchingTechniques);
+                sinon.stub(featureFilter, "wantsKind").callsFake((kind: string | string[]) => {
+                    return kind === GeometryKind.Road;
+                });
+                processor.getDecodedTile({});
+                expect(emitterSpy.calledOnce);
+                const context = emitterSpy.firstCall.args[3] as AttrEvaluationContext;
+                expect(context.cachedExprResults).equals(
+                    styleSetEvaluator.expressionEvaluatorCache
+                );
+            });
+
+            it("sets reserved feature properties", function () {
+                const styleEvalSpy = sinon.spy(styleSetEvaluator, "getMatchingTechniques");
                 processor.getDecodedTile({});
 
                 expect(styleEvalSpy.calledOnce).is.true;
@@ -175,25 +208,9 @@ describe("VectorTileDataProcessor", function () {
                     .callsFake(() => matchingTechniques);
                 sinon.stub(styleSetEvaluator, "techniques").get(() => matchingTechniques);
                 sinon.stub(styleSetEvaluator, "decodedTechniques").get(() => matchingTechniques);
-                sinon
-                    .stub(dataAdapter, "process")
-                    .callsFake((data, decodeInfo, geometryProcessor: IGeometryProcessor) => {
-                        geometryProcessor[processorMethod](
-                            layerName,
-                            dummyExtents,
-                            geometryGenerator(),
-                            {},
-                            featureId
-                        );
-                    });
-
                 sinon.stub(featureFilter, "wantsKind").callsFake((kind: string | string[]) => {
                     return kind === GeometryKind.Road;
                 });
-                const emitterSpy = sinon.spy(
-                    VectorTileDataEmitter.prototype,
-                    processorMethod as any
-                );
 
                 processor.getDecodedTile({});
 

@@ -6,7 +6,8 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assert } from "chai";
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
 import * as THREE from "three";
 
 import {
@@ -16,11 +17,14 @@ import {
     JsonArray,
     JsonExpr,
     JsonValue,
+    LookupExpr,
     MapEnv,
+    ObjectLiteralExpr,
     Value,
     ValueMap
 } from "../lib/Expr";
 import { getPropertyValue } from "../lib/PropertyValue";
+import { Definitions } from "../lib/Theme";
 
 const EPSILON = 1e-8;
 
@@ -40,7 +44,9 @@ describe("ExprEvaluator", function () {
     function evaluate(
         expr: JsonValue,
         envOrValues?: Env | ValueMap,
-        scope: ExprScope = ExprScope.Value
+        scope: ExprScope = ExprScope.Value,
+        definitions?: Definitions,
+        definitionsCache?: Map<string, Expr>
     ) {
         let env: Env;
         if (envOrValues === undefined) {
@@ -50,7 +56,7 @@ describe("ExprEvaluator", function () {
         } else {
             env = new MapEnv(envOrValues);
         }
-        return Expr.fromJSON(expr).evaluate(env, scope);
+        return Expr.fromJSON(expr, definitions, definitionsCache).evaluate(env, scope);
     }
 
     function dependencies(json: JsonValue) {
@@ -2070,6 +2076,195 @@ describe("ExprEvaluator", function () {
             assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 2, 3]), [30]);
             assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 3, 4]), []);
             assert.deepStrictEqual(evaluate(["slice", ["literal", [10, 20, 30]], 4, 5]), []);
+        });
+    });
+
+    describe("Operator 'lookup'", function () {
+        const lookupTable: JsonArray = [
+            "literal",
+            [
+                {
+                    keys: {
+                        key1: "somevalue1"
+                    },
+                    attributes: {
+                        attribute1: 20
+                    }
+                },
+                {
+                    keys: {
+                        key1: "somevalue1",
+                        key2: "somevalue2"
+                    },
+                    attributes: {
+                        attribute1: 10
+                    }
+                },
+                {
+                    keys: {
+                        key4: 42,
+                        key3: true,
+                        key2: "somevalue2",
+                        key1: "somevalue1"
+                    },
+                    attributes: {
+                        attribute1: 50,
+                        attribute2: "attrvalue2",
+                        attribute3: { prop: "foo" }
+                    }
+                },
+                {
+                    keys: {},
+                    attributes: {
+                        attribute1: 30
+                    }
+                }
+            ]
+        ];
+
+        const env = {
+            env1: "somevalue1"
+        };
+        const definitions: Definitions = {
+            def1: { value: 42 },
+            tableDef: { value: lookupTable }
+        };
+        interface LookupTestParameter {
+            name: string;
+            keys: JsonValue[];
+            attributes: { [key: string]: Value };
+        }
+        const lookUpTestCases: LookupTestParameter[] = [
+            {
+                name: "exact match",
+                keys: ["key2", "somevalue2", "key1", "somevalue1"],
+                attributes: { attribute1: 10 }
+            },
+            {
+                name: "partial match",
+                keys: ["key1", "somevalue1", "key2", "differentvalue"],
+                attributes: { attribute1: 20 }
+            },
+            {
+                name: "partial match if missing key for exact match",
+                keys: ["key1", "somevalue1", "key3", true, "key4", 42],
+                attributes: { attribute1: 20 }
+            },
+            {
+                name: "many keys, different types, unordered",
+                keys: ["key3", true, "key1", "somevalue1", "key4", 42, "key2", "somevalue2"],
+                attributes: {
+                    attribute1: 50,
+                    attribute2: "attrvalue2",
+                    attribute3: { prop: "foo" }
+                }
+            },
+            {
+                name: "null keys are ignored",
+                keys: ["key1", "somevalue1", "key2", null, "key3", null, "key4", null],
+                attributes: { attribute1: 20 }
+            },
+            {
+                name: "expression keys are evaluated",
+                keys: [
+                    "key1",
+                    ["get", "env1"],
+                    "key2",
+                    "somevalue2",
+                    "key3",
+                    true,
+                    "key4",
+                    ["ref", "def1"]
+                ],
+                attributes: {
+                    attribute1: 50,
+                    attribute2: "attrvalue2",
+                    attribute3: { prop: "foo" }
+                }
+            },
+            {
+                name: "no match returns default entry",
+                keys: ["key1", "differentvalue1", "key2", "differentvalue2"],
+                attributes: { attribute1: 30 }
+            },
+            {
+                name: "no keys returns default entry",
+                keys: [],
+                attributes: { attribute1: 30 }
+            }
+        ];
+
+        for (const [tableExpr, tableDesc] of [
+            [["lookup", lookupTable], "lookup table literal"],
+            [["lookup", ["ref", "tableDef"]], "lookup table reference"]
+        ]) {
+            describe(`${tableDesc}`, function () {
+                for (const testCase of lookUpTestCases) {
+                    it(testCase.name, function () {
+                        const expr = (tableExpr as JsonArray).concat(testCase.keys);
+                        const result = evaluate(expr, env, ExprScope.Value, definitions);
+                        expect(result).deep.equals(testCase.attributes);
+                    });
+                }
+
+                it("table is cached as map and reused across expression reevaluations", function () {
+                    const exprArray = ["lookup", lookupTable, "key1", ["get", "env1"]] as JsonArray;
+                    const defCache = new Map();
+
+                    const expr = Expr.fromJSON(exprArray, definitions, defCache);
+                    expr.evaluate(new MapEnv(env), ExprScope.Value);
+
+                    const tableMapExpr = (expr as LookupExpr).args[0] as ObjectLiteralExpr;
+                    expect(tableMapExpr).to.be.instanceOf(ObjectLiteralExpr);
+                    expect(tableMapExpr.value).to.be.instanceOf(Map);
+                    const tableMap = tableMapExpr.value as Map<string, any>;
+                    const tableMapSpy = sinon.spy(tableMap, "get");
+
+                    expr.evaluate(new MapEnv({ env1: "othervalue" }), ExprScope.Value);
+
+                    expect(tableMapSpy.called).to.be.true;
+                    expect(tableMapSpy.calledWith('key1="othervalue"')).to.be.true;
+                });
+            });
+        }
+
+        describe("errors", function () {
+            it("throws if no lookup table passed", function () {
+                expect(() => {
+                    evaluate(["lookup"]);
+                }).throws();
+            });
+            it("throws if wrong lookup table type", function () {
+                expect(() => {
+                    evaluate(["lookup", ["literal", {}]]);
+                }).throws();
+                expect(() => {
+                    evaluate(["lookup", ["literal", 1]]);
+                }).throws();
+                expect(() => {
+                    evaluate(["lookup", ["literal", "foo"]]);
+                }).throws();
+                expect(() => {
+                    evaluate(["lookup", ["literal", true]]);
+                }).throws();
+            });
+            it("throws if wrong lookup table entries", function () {
+                expect(() => {
+                    evaluate(["lookup", ["literal", [1]]]);
+                }).throws();
+                expect(() => {
+                    evaluate(["lookup", ["literal", [[]]]]);
+                }).throws();
+                expect(() => {
+                    evaluate(["lookup", ["literal", [{}]]]);
+                }).throws();
+                expect(() => {
+                    evaluate(["lookup", ["literal", [{ keys: {} }]]]);
+                }).throws();
+                expect(() => {
+                    evaluate(["lookup", ["literal", [{ attributes: {} }]]]);
+                }).throws();
+            });
         });
     });
 });

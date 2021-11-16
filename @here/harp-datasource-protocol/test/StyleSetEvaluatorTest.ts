@@ -6,16 +6,34 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assert } from "chai";
+import { assert, expect } from "chai";
+import * as sinon from "sinon";
 import * as THREE from "three";
 
-import { Env, Expr, MapEnv, ValueMap } from "../lib/Expr";
+import {
+    Env,
+    Expr,
+    JsonArray,
+    LookupExpr,
+    MapEnv,
+    ObjectLiteralExpr,
+    Value,
+    ValueMap
+} from "../lib/Expr";
+import { ExprEvaluatorContext } from "../lib/ExprEvaluator";
 import {
     InterpolatedPropertyDefinition,
     interpolatedPropertyDefinitionToJsonExpr
 } from "../lib/InterpolatedPropertyDefs";
+import { MiscOperators } from "../lib/operators/MiscOperators";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
-import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
+import { AttrEvaluationContext, evaluateTechniqueAttr } from "../lib/TechniqueAttr";
+import {
+    FillTechnique,
+    isSolidLineTechnique,
+    PoiTechnique,
+    SolidLineTechnique
+} from "../lib/Techniques";
 import { Definitions, Style, StyleSet } from "../lib/Theme";
 
 describe("StyleSetEvaluator", function () {
@@ -863,5 +881,137 @@ describe("StyleSetEvaluator", function () {
 
             assert.strictEqual(techniques.length, 0);
         });
+    });
+    it("lookup expressions and lookup table are cached", function () {
+        const lookupTable: JsonArray = [
+            "literal",
+            [
+                {
+                    keys: {
+                        ICON_ID: "100-1000-0000"
+                    },
+                    attributes: {
+                        GENERIC_ICONOGRAPHY_NAME: "restaurant",
+                        ICON_PRIORITY: 477
+                    }
+                },
+                {
+                    keys: {
+                        ICON_ID: "800-8200-0000",
+                        ISO_COUNTRY_CODE: "JPN"
+                    },
+                    attributes: {
+                        GENERIC_ICONOGRAPHY_NAME: "facilities-education-school-jpn",
+                        ICON_PRIORITY: 204
+                    }
+                },
+                {
+                    keys: {
+                        ICON_ID: "800-8200-0000"
+                    },
+                    attributes: {
+                        GENERIC_ICONOGRAPHY_NAME: "education",
+                        ICON_PRIORITY: 663
+                    }
+                }
+            ]
+        ];
+        const definitions: Definitions = {
+            poi_table_here: { value: lookupTable },
+            masterlist_Pds: {
+                value: ["get", "pds_category"]
+            },
+            masterlist_kindDetail: {
+                value: ["get", "kind_detail"]
+            },
+            masterlist_IsoCountryCode: {
+                value: ["get", "country_code"]
+            },
+            masterlist_chain_id: {
+                value: ["get", "chain_id"]
+            }
+        };
+        const styleSet: StyleSet = [
+            {
+                technique: "labeled-icon",
+                poiName: [
+                    "get",
+                    "GENERIC_ICONOGRAPHY_NAME",
+                    [
+                        "lookup",
+                        ["ref", "poi_table_here"],
+                        "ICON_ID",
+                        ["ref", "masterlist_Pds"],
+                        "ISO_COUNTRY_CODE",
+                        ["ref", "masterlist_IsoCountryCode"]
+                    ]
+                ] as any,
+                priority: [
+                    "get",
+                    "ICON_PRIORITY",
+                    [
+                        "lookup",
+                        ["ref", "poi_table_here"],
+                        "ICON_ID",
+                        ["ref", "masterlist_Pds"],
+                        "ISO_COUNTRY_CODE",
+                        ["ref", "masterlist_IsoCountryCode"]
+                    ]
+                ]
+            }
+        ];
+        let cachedTable: Map<string, Value>;
+        const lookupSpy = sinon
+            .stub(MiscOperators.lookup, "call")
+            .callsFake((context: ExprEvaluatorContext, call: LookupExpr) => {
+                const tableExpr = call.args[0];
+                expect(tableExpr).to.be.instanceOf(ObjectLiteralExpr);
+                const table = (tableExpr as ObjectLiteralExpr).value;
+                if (lookupSpy.callCount === 1) {
+                    expect(table).to.be.instanceOf(Array);
+                } else {
+                    expect(table).to.be.instanceOf(Map);
+                    // Check that lookup table is cached and reused.
+                    if (cachedTable) {
+                        expect(table).equals(cachedTable);
+                    } else {
+                        cachedTable = table as Map<string, Value>;
+                    }
+                }
+
+                return lookupSpy.wrappedMethod(context, call);
+            });
+        const styleSetEvaluator = new StyleSetEvaluator({ styleSet, definitions });
+        const entries = lookupTable[1] as JsonArray;
+
+        for (let i = 0; i < entries.length; i++) {
+            // Check that multiple occurrences of the same enviroment reuse cached expressions.
+            for (let rep = 0; rep < 2; rep++) {
+                const entry = entries[i] as {
+                    keys: { [key: string]: Value };
+                    attributes: { [key: string]: Value };
+                };
+                const env = new MapEnv({
+                    pds_category: entry.keys.ICON_ID,
+                    country_code: entry.keys.ISO_COUNTRY_CODE
+                });
+                const techniques = styleSetEvaluator.getMatchingTechniques(env);
+                expect(techniques.length).equals(1);
+                const technique = techniques[0] as PoiTechnique;
+
+                const context: AttrEvaluationContext = {
+                    env,
+                    cachedExprResults: styleSetEvaluator.expressionEvaluatorCache
+                };
+                // poiName attribute has FeatureGeometry scope, so it's not resolved on
+                // getMatchingTechniques.
+                const poiName = evaluateTechniqueAttr(context, technique.poiName);
+                expect(technique.priority).equals(entry.attributes.ICON_PRIORITY);
+                expect(poiName).equals(entry.attributes.GENERIC_ICONOGRAPHY_NAME);
+            }
+        }
+        // Check that each lookup expression is evaluated only once.
+        expect(lookupSpy.callCount).equals(entries.length);
+        lookupSpy.restore();
     });
 });

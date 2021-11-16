@@ -553,6 +553,109 @@ Returns a string representing the type of `value`.
 ["typeof", value]
 ```
 
+## lookup
+
+Returns the entry's attributes in the `lookupTable` that matches the whole
+or a subset of the given key values. The match with the highest specificity
+(i.e. the match with highest number of matching key values) is returned.
+If there is more than a match with the same highest specificity (i.e. the same
+number of key-values) then there is no guarantee which of these matches will be returned.
+If `lookupTable` has a default entry, meaning entry with zero
+keys, then if no match is found the default entry's attributes are returned.
+If no match is found and no default entry is defined in `lookupTable`, then null is returned.
+
+Requirements:
+- keys have to be strings
+- lookupTable should be a literal expression or a ref expression pointing to a literal.
+  Additionally: the structure of a literal is an array of objects.
+  Each object has to contain "keys" member and "attributes" member.
+  The value of keys is an object with key=value pairs. The value of attributes is an arbitrary
+  JSON value and is returned from the lookup function when all keys match as described above.
+
+```javascript
+["lookup",
+  lookuptable,
+  key1, value1,
+  ...
+  keyN, valueN
+]
+```
+
+Example:
+
+```javascript
+{
+    "definitions": {
+        "poi_table_here": { // this is the lookup table
+            "value": [
+                "literal",
+                [
+                    {
+                        "keys": {
+                            "pdsId": "100-1000-0000",
+                            "isoCountryCode": "JPN"
+                        },
+                        "attributes": {
+                            "iconNextToEachOther": "no",
+                            "iconName": "eatdrink_main", // different name for Japan
+                            "priority": 264,
+                        }
+                    },
+                    {
+                        "keys": {
+                            "pdsId": "100-1000-0000"
+                        },
+                        "attributes": {
+                            "iconNextToEachOther": "no",
+                            "iconName": "eatdrink_restaurant",
+                            "priority": 264,
+                        }
+                    },
+                    ...
+                    {  // default entry
+                        "keys": {},
+                        "attributes": {
+                            "iconNextToEachOther": "no",
+                            "iconName": "default",
+                            "priority": 0,
+                        }
+                    }
+                ]
+            ]
+        }
+    }
+}
+
+[
+    "lookup",
+    ["ref", "poi_table_here"], // lookupTable
+    "pdsId", "100-1000-0000",
+    "isoCountryCode", "JPN"
+] // returns the first entry's attributes
+
+[
+    "get",
+    "iconName",
+    [
+        "lookup", // expression name
+        ["ref","poi_table_here"], // lookupTable
+        "pdsId", "100-1000-0000",
+        "isoCountryCode", "JPN"
+    ]
+] //  returns "eatdrink_main"
+
+[
+    "get",
+    "iconName",
+    [
+        "lookup", // expression name
+        ["ref","poi_table_here"], // lookupTable
+        "isoCountryCode", "NoCountryName" // this key value will not match anything
+    ]
+] //  returns "default"
+
+```
+
 ## Math operators
 
 ```javascript

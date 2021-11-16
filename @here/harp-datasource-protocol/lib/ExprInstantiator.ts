@@ -15,6 +15,7 @@ import {
     HasAttributeExpr,
     InterpolateExpr,
     LiteralExpr,
+    LookupExpr,
     MatchExpr,
     MatchLabel,
     NullLiteralExpr,
@@ -79,12 +80,28 @@ export class ExprInstantiator implements ExprVisitor<Expr, InstantiationContext>
         return LiteralExpr.fromValue(value);
     }
 
-    visitCallExpr(expr: CallExpr, context: InstantiationContext): Expr {
+    private visitCallExprImpl(
+        expr: CallExpr,
+        context: InstantiationContext,
+        constructor: (op: string, args: Expr[]) => CallExpr
+    ): Expr {
         const args = expr.args.map(arg => arg.accept(this, context));
         if (args.some((a, i) => a !== expr.args[i])) {
-            return new CallExpr(expr.op, args);
+            return constructor(expr.op, args);
         }
         return expr;
+    }
+
+    visitCallExpr(expr: CallExpr, context: InstantiationContext): Expr {
+        return this.visitCallExprImpl(expr, context, (op: string, args: Expr[]) => {
+            return new CallExpr(op, args);
+        });
+    }
+
+    visitLookupExpr(expr: LookupExpr, context: InstantiationContext): Expr {
+        return this.visitCallExprImpl(expr, context, (op: string, args: Expr[]) => {
+            return new LookupExpr(args);
+        });
     }
 
     visitMatchExpr(match: MatchExpr, context: InstantiationContext): Expr {

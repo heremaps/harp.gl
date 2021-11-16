@@ -27,6 +27,7 @@ const exprInstantiator = new ExprInstantiator();
 
 /**
  * A visitor for {@link Expr} nodes.
+ * @internal
  */
 export interface ExprVisitor<Result, Context> {
     visitNullLiteralExpr(expr: NullLiteralExpr, context: Context): Result;
@@ -37,6 +38,7 @@ export interface ExprVisitor<Result, Context> {
     visitVarExpr(expr: VarExpr, context: Context): Result;
     visitHasAttributeExpr(expr: HasAttributeExpr, context: Context): Result;
     visitCallExpr(expr: CallExpr, context: Context): Result;
+    visitLookupExpr(expr: LookupExpr, context: Context): Result;
     visitMatchExpr(expr: MatchExpr, context: Context): Result;
     visitCaseExpr(expr: CaseExpr, context: Context): Result;
     visitStepExpr(expr: StepExpr, context: Context): Result;
@@ -45,6 +47,7 @@ export interface ExprVisitor<Result, Context> {
 
 /**
  * The dependencies of an {@link Expr}.
+ * @internal
  */
 export class ExprDependencies {
     /**
@@ -135,6 +138,11 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
         }
     }
 
+    visitLookupExpr(expr: LookupExpr, context: ExprDependencies): void {
+        // Same behaviour as call expressions.
+        return this.visitCallExpr(expr, context);
+    }
+
     visitMatchExpr(expr: MatchExpr, context: ExprDependencies): void {
         expr.value.accept(this, context);
         expr.branches.forEach(([_, branch]) => branch.accept(this, context));
@@ -198,6 +206,7 @@ interface ReferenceResolverState {
 
 /**
  * The evaluation scope of an {@link Expr}.
+ * @internal
  */
 export enum ExprScope {
     /**
@@ -384,6 +393,7 @@ export type BinaryOp = RelationalOp | EqualityOp;
 
 /**
  * A node representing a `get` expression.
+ * @internal
  */
 export class VarExpr extends Expr {
     constructor(readonly name: string) {
@@ -403,6 +413,7 @@ export class VarExpr extends Expr {
 
 /**
  * A node representing a `literal` expression.
+ * @internal
  */
 export abstract class LiteralExpr extends Expr {
     /**
@@ -435,6 +446,7 @@ export abstract class LiteralExpr extends Expr {
 
 /**
  * Null literal expression.
+ * @internal
  */
 export class NullLiteralExpr extends LiteralExpr {
     static instance = new NullLiteralExpr();
@@ -458,6 +470,7 @@ export class NullLiteralExpr extends LiteralExpr {
 
 /**
  * Boolean literal expression.
+ * @internal
  */
 export class BooleanLiteralExpr extends LiteralExpr {
     constructor(readonly value: boolean) {
@@ -472,6 +485,7 @@ export class BooleanLiteralExpr extends LiteralExpr {
 
 /**
  * Number literal expression.
+ * @internal
  */
 export class NumberLiteralExpr extends LiteralExpr {
     constructor(readonly value: number) {
@@ -486,6 +500,7 @@ export class NumberLiteralExpr extends LiteralExpr {
 
 /**
  * String literal expression.
+ * @internal
  */
 export class StringLiteralExpr extends LiteralExpr {
     private m_promotedValue?: RGBA | Pixels | null;
@@ -512,6 +527,7 @@ export class StringLiteralExpr extends LiteralExpr {
 
 /**
  * Object literal expression.
+ * @internal
  */
 export class ObjectLiteralExpr extends LiteralExpr {
     constructor(readonly value: object) {
@@ -530,6 +546,7 @@ export class ObjectLiteralExpr extends LiteralExpr {
 
 /**
  * A node reperesenting a `has` expression.
+ * @internal
  */
 export class HasAttributeExpr extends Expr {
     constructor(readonly name: string) {
@@ -549,6 +566,7 @@ export class HasAttributeExpr extends Expr {
 
 /**
  * A node representing a `call` expression.
+ * @internal
  */
 export class CallExpr extends Expr {
     descriptor?: OperatorDescriptor;
@@ -584,12 +602,69 @@ export class CallExpr extends Expr {
 }
 
 /**
+ * A `lookup` expression is a call expression using the `lookup` operator. Then only difference is
+ * that the lookup table definition (first argument) is cached as a map for fast search
+ * (see {@link ExprEvaluator.visitLookupExpr}).
+ * @internal
+ */
+
+export class LookupExpr extends CallExpr {
+    /**
+     * Creates a lookup expression from a {@link JsonArray}.
+     * @param node The {@link JsonArray} to parse.
+     * @param referenceResolverState Used to resolve references to definitions.
+     * @returns A LookupExpr instance.
+     */
+    static parseArray(node: JsonArray, referenceResolverState?: ReferenceResolverState): Expr {
+        const lookupTableNode = node[1];
+        if (lookupTableNode === undefined) {
+            throw new Error("missing lookup table in 'lookup' expression");
+        }
+
+        const lookupTableExpr = parseNode(lookupTableNode, referenceResolverState);
+        if (!Array.isArray(lookupTableNode) || !(lookupTableExpr instanceof ObjectLiteralExpr)) {
+            throw new Error(
+                `Invalid lookup table expression for operator 'lookup'. It must be a literal or a ref to one.`
+            );
+        }
+        const lookupTable = lookupTableExpr.value;
+        if (!Array.isArray(lookupTable)) {
+            throw new Error(
+                `Invalid lookup table type (${typeof lookupTable}) for operator 'lookup'`
+            );
+        }
+
+        // Skip the operator name and the lookup table and parse the rest of the arguments. Then add
+        // the lookup table expr as first argument.
+        const args = node.slice(2).map(childExpr => parseNode(childExpr, referenceResolverState));
+        args.unshift(lookupTableExpr);
+
+        return new LookupExpr(args);
+    }
+
+    /**
+     * Constructs a LookupExpr instance.
+     * @param args Arguments of the lookup expression. At least an argument for the lookup table.
+     */
+    constructor(readonly args: Expr[]) {
+        super("lookup", args);
+    }
+
+    /** @override */
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitLookupExpr(this, context);
+    }
+}
+
+/**
  * The labels of a {@link MatchExpr} expression.
+ * @internal
  */
 export type MatchLabel = number | string | number[] | string[];
 
 /**
  * A node representing a `match` expression.
+ * @internal
  */
 export class MatchExpr extends Expr {
     /**
@@ -641,6 +716,7 @@ export class MatchExpr extends Expr {
 
 /**
  * A node representing a `case` expression.
+ * @internal
  */
 export class CaseExpr extends Expr {
     constructor(readonly branches: Array<[Expr, Expr]>, readonly fallback: Expr) {
@@ -663,6 +739,7 @@ export class CaseExpr extends Expr {
 
 /**
  * A node representing a `step` expression.
+ * @internal
  */
 export class StepExpr extends Expr {
     constructor(
@@ -695,6 +772,7 @@ export type InterpolateMode = ["discrete"] | ["linear"] | ["cubic"] | ["exponent
 
 /**
  * A node representing an `interpolate` expression.
+ * @internal
  */
 export class InterpolateExpr extends Expr {
     constructor(
@@ -763,6 +841,11 @@ class ExprSerializer implements ExprVisitor<JsonValue, void> {
 
     visitCallExpr(expr: CallExpr, context: void): JsonValue {
         return [expr.op, ...expr.args.map(childExpr => this.serialize(childExpr))];
+    }
+
+    visitLookupExpr(expr: LookupExpr, context: void): JsonValue {
+        // Same serialization as call expressions.
+        return this.visitCallExpr(expr, context);
     }
 
     visitMatchExpr(expr: MatchExpr, context: void): JsonValue {
@@ -857,12 +940,15 @@ function parseCall(node: JsonArray, referenceResolverState?: ReferenceResolverSt
         case "step":
             return parseStepExpr(node, referenceResolverState);
 
+        case "lookup":
+            return LookupExpr.parseArray(node, referenceResolverState);
+
         default:
             return makeCallExpr(op, node, referenceResolverState);
     } // switch
 }
 
-function parseGetExpr(node: JsonArray, referenceResolverState: ReferenceResolverState | undefined) {
+function parseGetExpr(node: JsonArray, referenceResolverState?: ReferenceResolverState) {
     if (node[2] !== undefined) {
         return makeCallExpr("get", node, referenceResolverState);
     }
@@ -873,7 +959,7 @@ function parseGetExpr(node: JsonArray, referenceResolverState: ReferenceResolver
     return new VarExpr(name);
 }
 
-function parseHasExpr(node: JsonArray, referenceResolverState: ReferenceResolverState | undefined) {
+function parseHasExpr(node: JsonArray, referenceResolverState?: ReferenceResolverState) {
     if (node[2] !== undefined) {
         return makeCallExpr("has", node, referenceResolverState);
     }
@@ -892,10 +978,7 @@ function parseLiteralExpr(node: JsonArray) {
     return new ObjectLiteralExpr(obj);
 }
 
-function parseMatchExpr(
-    node: JsonArray,
-    referenceResolverState: ReferenceResolverState | undefined
-) {
+function parseMatchExpr(node: JsonArray, referenceResolverState?: ReferenceResolverState) {
     if (node.length < 4) {
         throw new Error("not enough arguments");
     }
@@ -916,10 +999,7 @@ function parseMatchExpr(
     return new MatchExpr(value, conditions, fallback);
 }
 
-function parseCaseExpr(
-    node: JsonArray,
-    referenceResolverState: ReferenceResolverState | undefined
-) {
+function parseCaseExpr(node: JsonArray, referenceResolverState?: ReferenceResolverState) {
     if (node.length < 3) {
         throw new Error("not enough arguments");
     }
@@ -951,10 +1031,7 @@ function isInterpolationMode(object: any): object is InterpolateMode {
     }
 }
 
-function parseInterpolateExpr(
-    node: JsonArray,
-    referenceResolverState: ReferenceResolverState | undefined
-) {
+function parseInterpolateExpr(node: JsonArray, referenceResolverState?: ReferenceResolverState) {
     const mode: InterpolateMode = node[1] as any;
     if (!isInterpolationMode(mode)) {
         throw new Error("expected an interpolation type");
@@ -979,10 +1056,7 @@ function parseInterpolateExpr(
     return new InterpolateExpr(mode, input, stops);
 }
 
-function parseStepExpr(
-    node: JsonArray,
-    referenceResolverState: ReferenceResolverState | undefined
-) {
+function parseStepExpr(node: JsonArray, referenceResolverState?: ReferenceResolverState) {
     if (node.length < 2) {
         throw new Error("expected the input of the 'step' operator");
     }

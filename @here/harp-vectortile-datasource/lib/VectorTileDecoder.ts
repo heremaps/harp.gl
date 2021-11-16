@@ -177,7 +177,8 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         }
         const context: AttrEvaluationContext = {
             env,
-            cachedExprResults: new Map()
+            // Reuse expressions cached on previous call to getMatchingTechniques.
+            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
         };
 
         if (this.m_decodedTileEmitter) {
