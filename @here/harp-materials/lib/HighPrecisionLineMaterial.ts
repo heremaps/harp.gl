@@ -39,7 +39,7 @@ const fragmentSource: string = `
 precision highp float;
 precision highp int;
 
-uniform vec3 diffuse;
+uniform vec3 diffuseColor;
 uniform float opacity;
 
 #ifdef USE_COLOR
@@ -48,9 +48,9 @@ varying vec3 color;
 
 void main() {
     #ifdef USE_COLOR
-    gl_FragColor = vec4( diffuse * vColor, opacity );
+    gl_FragColor = vec4( diffuseColor * vColor, opacity );
     #else
-    gl_FragColor = vec4( diffuse, opacity );
+    gl_FragColor = vec4( diffuseColor, opacity );
     #endif
 }`;
 
@@ -92,7 +92,9 @@ export class HighPrecisionLineMaterial extends RawShaderMaterial {
                   vertexShader: vertexSource,
                   fragmentShader: fragmentSource,
                   uniforms: {
-                      diffuse: new THREE.Uniform(
+                      // HARP-17373: Original uniform name 'diffuse' due to shader compilation
+                      // errors with Metal in Safari 15 on MacOS Monterrey and iPadOS 15.
+                      diffuseColor: new THREE.Uniform(
                           new THREE.Color(HighPrecisionLineMaterial.DEFAULT_COLOR)
                       ),
                       opacity: new THREE.Uniform(HighPrecisionLineMaterial.DEFAULT_OPACITY),
@@ -126,11 +128,11 @@ export class HighPrecisionLineMaterial extends RawShaderMaterial {
      * Line color.
      */
     get color(): THREE.Color {
-        return this.uniforms.diffuse.value as THREE.Color;
+        return this.uniforms.diffuseColor.value as THREE.Color;
     }
 
     set color(value: THREE.Color) {
-        this.uniforms.diffuse.value.copy(value);
+        this.uniforms.diffuseColor.value.copy(value);
     }
 
     private updateTransparencyFeature() {

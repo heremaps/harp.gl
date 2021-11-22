@@ -77,7 +77,7 @@ const vertexSource: string = `
 
 attribute vec3 extrusionCoord;
 attribute vec3 position;
-attribute vec4 bitangent;
+attribute vec4 biTangent;
 attribute vec3 tangent;
 attribute vec2 uv;
 attribute vec3 normal;
@@ -120,12 +120,12 @@ void main() {
     float linePos = mix(segment.x, segment.y, segmentPos);
     vec2 extrusionDir = sign(extrusionCoord.xy);
     // Precompute to avoid computing multiple times
-    float tanHalfAngle = tan(bitangent.w / 2.0);
+    float tanHalfAngle = tan(biTangent.w / 2.0);
     float extrusionFactor = extrusionDir.y * tanHalfAngle;
 
     // Calculate the extruded vertex position (and scale the extrusion direction).
     vec3 pos = extrudeLine(
-        position, linePos, extrusionWidth + outlineWidth, bitangent, tangent, tanHalfAngle,
+        position, linePos, extrusionWidth + outlineWidth, biTangent, tangent, tanHalfAngle,
         extrusionDir);
 
     // Store the normalized extrusion coordinates in vCoords (with their ranges in vRange).
@@ -155,7 +155,7 @@ void main() {
     // Note, we need to take the angle into consideration, so we use trigonometry to calculate how
     // much we need to extend the offset. Note, orthough this looks complicated we are doing this
     // in the vertex shader, so it should not cause a performance issue.
-    pos += bitangent.xyz * offset * sqrt(1.0 + pow(abs(tanHalfAngle), 2.0));
+    pos += biTangent.xyz * offset * sqrt(1.0 + pow(abs(tanHalfAngle), 2.0));
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
@@ -181,7 +181,7 @@ const fragmentSource: string = `
 precision highp float;
 precision highp int;
 
-uniform vec3 diffuse;
+uniform vec3 diffuseColor;
 uniform vec3 outlineColor;
 uniform float opacity;
 uniform float extrusionWidth;
@@ -220,7 +220,7 @@ varying vec3 vColor;
 
 void main() {
     float alpha = opacity;
-    vec3 outputDiffuse = diffuse;
+    vec3 outputDiffuse = diffuseColor;
 
     #ifdef USE_TILE_CLIP
     tileClip(vPosition.xy, tileSize);
@@ -264,7 +264,7 @@ void main() {
     float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, distToDashEdge);
 
     #ifdef USE_DASH_COLOR
-    outputDiffuse = mix(diffuse, dashColor, dashBlendFactor);
+    outputDiffuse = mix(diffuseColor, dashColor, dashBlendFactor);
     #endif
     #endif
 
@@ -280,7 +280,7 @@ void main() {
     float colorBlendFactor = smoothstep(-1.0, 1.0, dashBlendFactor - outlineBlendFactor);
     outputDiffuse = mix(
       mix(
-        mix(outlineColor, diffuse, colorBlendFactor),
+        mix(outlineColor, diffuseColor, colorBlendFactor),
         outputDiffuse,
         dashBlendFactor
       ),
@@ -312,6 +312,8 @@ void main() {
     #ifdef USE_FADING
     #include <fading_fragment>
     #endif
+
+
 }`;
 
 /**
@@ -467,7 +469,9 @@ export class SolidLineMaterial
                 fragmentShader: fragmentSource,
                 uniforms: THREE.UniformsUtils.merge([
                     {
-                        diffuse: new THREE.Uniform(
+                        // HARP-17373: Original uniform name 'diffuse' due to shader compilation
+                        // errors with Metal in Safari 15 on MacOS Monterrey and iPadOS 15.
+                        diffuseColor: new THREE.Uniform(
                             new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)
                         ),
                         dashColor: new THREE.Uniform(
@@ -631,11 +635,11 @@ export class SolidLineMaterial
      * Line color.
      */
     get color(): THREE.Color {
-        return this.uniforms.diffuse.value as THREE.Color;
+        return this.uniforms.diffuseColor.value as THREE.Color;
     }
 
     set color(value: THREE.Color) {
-        this.uniforms.diffuse.value.copy(value);
+        this.uniforms.diffuseColor.value.copy(value);
     }
 
     /**
