@@ -1410,13 +1410,11 @@ export class MapView extends EventDispatcher {
      * Changes the `Theme`used by this `MapView`to style map elements.
      */
     async setTheme(theme: Theme | FlatTheme | string): Promise<Theme> {
-        console.log("MapView::setTheme: start setting Theme");
         const newTheme = await this.m_themeManager.setTheme(theme);
 
         this.THEME_LOADED_EVENT.time = Date.now();
         this.dispatchEvent(this.THEME_LOADED_EVENT);
         this.update();
-        console.log("MapView::setTheme theme set");
         return newTheme;
     }
 
@@ -3607,7 +3605,6 @@ export class MapView extends EventDispatcher {
             }
 
             this.FRAME_COMPLETE_EVENT.time = frameStartTime;
-            console.log("MapView::render dispatch FRAME_COMPLETE_EVENT");
             this.dispatchEvent(this.FRAME_COMPLETE_EVENT);
         }
     }
