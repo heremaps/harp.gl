@@ -849,7 +849,6 @@ export class MapView extends EventDispatcher {
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
-    private m_initialTextPlacementDone = false;
 
     private readonly handleRequestAnimationFrame: (frameStartTime: number) => void;
 
@@ -1411,11 +1410,13 @@ export class MapView extends EventDispatcher {
      * Changes the `Theme`used by this `MapView`to style map elements.
      */
     async setTheme(theme: Theme | FlatTheme | string): Promise<Theme> {
+        console.log("MapView::setTheme: start setting Theme");
         const newTheme = await this.m_themeManager.setTheme(theme);
 
         this.THEME_LOADED_EVENT.time = Date.now();
         this.dispatchEvent(this.THEME_LOADED_EVENT);
         this.update();
+        console.log("MapView::setTheme theme set");
         return newTheme;
     }
 
@@ -3453,22 +3454,6 @@ export class MapView extends EventDispatcher {
             });
         });
 
-        // Check if this is the time to place the labels for the first time. Pretty much everything
-        // should have been loaded, and no animation should be running.
-        if (
-            !this.m_initialTextPlacementDone &&
-            !this.m_firstFrameComplete &&
-            !this.isDynamicFrame &&
-            !this.m_themeManager.isUpdating() &&
-            this.m_poiTableManager.finishedLoading &&
-            this.m_visibleTiles.allVisibleTilesLoaded &&
-            this.m_connectedDataSources.size + this.m_failedDataSources.size ===
-                this.m_tileDataSources.length &&
-            !this.m_textElementsRenderer.loading
-        ) {
-            this.m_initialTextPlacementDone = true;
-        }
-
         this.m_mapAnchors.update(
             this.projection,
             this.camera.position,
@@ -3611,7 +3596,7 @@ export class MapView extends EventDispatcher {
         if (
             !this.textElementsRenderer.loading &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
-            this.m_initialTextPlacementDone &&
+            !this.m_themeManager.isUpdating() &&
             !this.m_animatedExtrusionHandler.isAnimating
         ) {
             if (this.m_firstFrameComplete === false) {
@@ -3622,6 +3607,7 @@ export class MapView extends EventDispatcher {
             }
 
             this.FRAME_COMPLETE_EVENT.time = frameStartTime;
+            console.log("MapView::render dispatch FRAME_COMPLETE_EVENT");
             this.dispatchEvent(this.FRAME_COMPLETE_EVENT);
         }
     }
