@@ -530,6 +530,7 @@ export class TextElementsRenderer {
         this.m_textStyleCache.updateTextStyles(textStyles, defaultTextStyle);
         await this.waitLoaded();
         this.m_textStyleCache.updateTextCanvases(this.m_textCanvases);
+        this.invalidateCache();
     }
 
     /**
@@ -1026,7 +1027,7 @@ export class TextElementsRenderer {
             if (textElement.text === "") {
                 textElement.loadingState = LoadingState.Loaded;
             } else {
-                const newLoadPromise = textCanvas.fontCatalog
+                const neLoadPromise = textCanvas.fontCatalog
                     .loadCharset(textElement.text, textElement.renderStyle)
                     .then(() => {
                         --this.m_loadPromisesCount;
