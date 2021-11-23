@@ -41,6 +41,15 @@ const options = function (isCoverage, isMapSdk, prefixDirectory) {
     };
 
     return {
+        browsers: [
+            'ChromeDebug'
+        ],
+        customLaunchers: {
+            ChromeDebug: {
+                base: 'Chrome',
+                flags: ['--no-sandbox', '--remote-debugging-port=9333']
+            }
+        },
         frameworks: ["mocha", "karma-typescript"],
 
         // web server port
