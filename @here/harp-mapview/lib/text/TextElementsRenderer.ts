@@ -530,6 +530,7 @@ export class TextElementsRenderer {
         this.m_textStyleCache.updateTextStyles(textStyles, defaultTextStyle);
         await this.waitLoaded();
         this.m_textStyleCache.updateTextCanvases(this.m_textCanvases);
+        this.invalidateCache();
     }
 
     /**
