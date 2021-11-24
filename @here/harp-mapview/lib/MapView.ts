@@ -2129,7 +2129,9 @@ export class MapView extends EventDispatcher {
         } catch (error) {
             // error is a string if a promise was rejected.
             logger.error(
-                `Failed to connect to datasource ${dataSource.name}: ${error.message ?? error}`
+                `Failed to connect to datasource ${dataSource.name}: ${
+                    (error as Error).message ?? error
+                }`
             );
 
             this.m_failedDataSources.add(dataSource.name);
@@ -3594,6 +3596,7 @@ export class MapView extends EventDispatcher {
         if (
             !this.textElementsRenderer.loading &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
+            !this.isDynamicFrame &&
             !this.m_themeManager.isUpdating() &&
             !this.m_animatedExtrusionHandler.isAnimating
         ) {
