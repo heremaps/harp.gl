@@ -99,13 +99,6 @@ yarn start-tests
 
 Open `http://localhost:8080/` in your favorite browser to run the tests.
 
-### Run unit tests in Node.js environment
-
-Run:
-
-```sh
-yarn test
-```
 
 ### Run unit & integration tests in Browser environment
 
@@ -158,6 +151,37 @@ performance createLineGeometry segments=2
   min=0.0014ms (-2.44% vs 0.0014ms) sum=999.16ms (0% vs 999.12ms) repeats=499568.00 (-6.47% vs 534131.00) throughput=499988.43/s (-6.47% vs 534600.13/s)
   avg=0.002ms (6.92% vs 0.0019ms) med=0.0015ms (0.2% vs 0.0015ms) med95=0.0031ms (17.6% vs 0.0026ms)
   gcTime=39.6195ms (-3.39% vs 41.011ms) sumNoGc=959.54ms (0.15% vs 958.11ms) throughputNoGc=520633.00/s (-6.61% vs 557461.83/s)
+```
+
+### Debug Tests with VSCode
+
+Run
+```sh
+   yarn test-debug
+```
+Add  and start this configuration to your launch.json :
+
+```json
+ {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Karma Tests",
+            "sourceMaps": true,
+            "webRoot": "${workspaceRoot}/test",
+            "address": "localhost",
+            "port": 9333,
+            "pathMapping": {
+                "/": "${workspaceRoot}",
+                "/base/": "${workspaceRoot}/"
+            },
+            "sourceMapPathOverrides": {
+                "webpack:///./*": "${webRoot}/*",
+                "webpack:///src/*": "${webRoot}/*",
+                "webpack:///*": "*",
+                "webpack:///./~/*": "${webRoot}/node_modules/*",
+                "meteor://app/*": "${webRoot}/*"
+            }
+        }
 ```
 
 ### Generate documentation

@@ -63,6 +63,7 @@
         "pre-test": "yarn run code-pre-tests --forbid-only && yarn run prettier && yarn eslint",
         "code-pre-tests": "ts-mocha --no-timeouts ./test/*.ts",
         "test": "yarn karma-headless",
+        "test-debug": "karma start --browser ChromeDebug --no-single-run --auto-watch",
         "performance-test-node": "ts-mocha ./test/performance/**/*.ts",
         "cleanup": "./scripts/cleanup.sh",
         "test-cov": "yarn karma-headless --coverage",
