@@ -40,7 +40,7 @@ class BufferGeometryBuilder {
     }
 
     withBitangent(values: number[]): BufferGeometryBuilder {
-        return this.withAttribute("bitangent", values, 3);
+        return this.withAttribute("biTangent", values, 3);
     }
 
     withUv(values: number[]): BufferGeometryBuilder {
@@ -148,7 +148,7 @@ class SolidLineGeometryBuilder extends BufferGeometryBuilder {
 
         const oldPositions = this.m_attributes.position.array as Float32Array;
         const oldIndices = this.indices!.array as Uint32Array;
-        const oldBitangents = this.m_attributes.bitangent.array as Float32Array;
+        const oldBitangents = this.m_attributes.biTangent.array as Float32Array;
         const indices = SolidLineGeometryBuilder.triangulateLine(polyline, oldPositions.length / 3);
 
         this.withPosition(Array.from(oldPositions).concat(positions));

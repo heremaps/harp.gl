@@ -85,8 +85,8 @@ describe("CirclePointsMaterial", function () {
             material.color = new THREE.Color(0xfefefe);
 
             expect(material.color.getHex()).to.equal(0xfefefe);
-            expect(material.uniforms.diffuse.value.getHex()).to.equal(0xfefefe);
-            expect(material.uniforms.diffuse.value).to.equal(material.color);
+            expect(material.uniforms.diffuseColor.value.getHex()).to.equal(0xfefefe);
+            expect(material.uniforms.diffuseColor.value).to.equal(material.color);
         });
 
         it("updates color with set", function () {
@@ -96,8 +96,8 @@ describe("CirclePointsMaterial", function () {
             material.color.set(0xfefefe);
 
             expect(material.color.getHex()).to.equal(0xfefefe);
-            expect(material.uniforms.diffuse.value.getHex()).to.equal(0xfefefe);
-            expect(material.uniforms.diffuse.value).to.equal(material.color);
+            expect(material.uniforms.diffuseColor.value.getHex()).to.equal(0xfefefe);
+            expect(material.uniforms.diffuseColor.value).to.equal(material.color);
         });
     });
 });

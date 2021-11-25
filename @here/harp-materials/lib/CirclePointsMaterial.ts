@@ -33,7 +33,7 @@ const fragmentShader: string = `
 precision highp float;
 precision highp int;
 
-uniform vec3 diffuse;
+uniform vec3 diffuseColor;
 uniform float opacity;
 
 void main() {
@@ -46,7 +46,7 @@ void main() {
     float threshold = 1.0 - smoothstep(radius - falloff, radius, len);
     alpha *= threshold;
 
-    gl_FragColor = vec4(diffuse, alpha);
+    gl_FragColor = vec4(diffuseColor, alpha);
 }`;
 
 /**
@@ -96,7 +96,9 @@ export class CirclePointsMaterial extends RawShaderMaterial {
             shaderParams.uniforms = THREE.UniformsUtils.merge([
                 {
                     size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
-                    diffuse: new THREE.Uniform(defaultColor),
+                    // HARP-17373: Original uniform name 'diffuse' due to shader compilation
+                    // errors with Metal in Safari 15 on MacOS Monterrey and iPadOS 15.
+                    diffuseColor: new THREE.Uniform(defaultColor),
                     opacity: new THREE.Uniform(defaultOpacity)
                 },
                 THREE.UniformsLib.fog
@@ -142,10 +144,10 @@ export class CirclePointsMaterial extends RawShaderMaterial {
     }
 
     get color(): THREE.Color {
-        return this.uniforms.diffuse.value as THREE.Color;
+        return this.uniforms.diffuseColor.value as THREE.Color;
     }
 
     set color(value: THREE.Color) {
-        this.uniforms.diffuse.value.copy(value);
+        this.uniforms.diffuseColor.value.copy(value);
     }
 }

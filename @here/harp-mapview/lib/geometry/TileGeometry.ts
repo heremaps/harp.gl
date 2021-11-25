@@ -226,7 +226,7 @@ export abstract class BufferedGeometryAccessorBase implements IGeometryAccessor 
                 const rawShaderMaterial = material as THREE.RawShaderMaterial;
 
                 if (rawShaderMaterial.name === "SolidLineMaterial") {
-                    return rawShaderMaterial.uniforms.diffuse.value as THREE.Color;
+                    return rawShaderMaterial.uniforms.diffuseColor.value as THREE.Color;
                 }
 
                 logger.warn(

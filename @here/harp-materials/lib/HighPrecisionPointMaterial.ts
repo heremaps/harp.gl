@@ -90,7 +90,11 @@ export class HighPrecisionPointMaterial extends THREE.PointsMaterial {
         this.fog = false;
 
         this.uniforms = {
-            diffuse: new THREE.Uniform(new THREE.Color(HighPrecisionPointMaterial.DEFAULT_COLOR)),
+            // HARP-17373: Original uniform name 'diffuse' due to shader compilation
+            // errors with Metal in Safari 15 on MacOS Monterrey and iPadOS 15.
+            diffuseColor: new THREE.Uniform(
+                new THREE.Color(HighPrecisionPointMaterial.DEFAULT_COLOR)
+            ),
             opacity: new THREE.Uniform(HighPrecisionPointMaterial.DEFAULT_OPACITY),
             size: new THREE.Uniform(HighPrecisionPointMaterial.DEFAULT_SIZE),
             scale: new THREE.Uniform(HighPrecisionPointMaterial.DEFAULT_SCALE),

@@ -44,7 +44,9 @@ const LINE_VERTEX_ATTRIBUTES: VertexDescriptor = {
         { name: "extrusionCoord", itemSize: 3, offset: 0 },
         { name: "position", itemSize: 3, offset: 3 },
         { name: "tangent", itemSize: 3, offset: 6 },
-        { name: "bitangent", itemSize: 4, offset: 9 }
+        // HARP-17373: Original uniform name 'bitangent' due to shader compilation errors with Metal
+        // in Safari 15 on MacOS Monterrey and iPadOS 15.
+        { name: "biTangent", itemSize: 4, offset: 9 }
     ],
     stride: 13
 };
@@ -74,7 +76,9 @@ const HP_LINE_VERTEX_ATTRIBUTES: VertexDescriptor = {
         { name: "position", itemSize: 3, offset: 2 },
         { name: "positionLow", itemSize: 3, offset: 5 },
         { name: "tangent", itemSize: 3, offset: 8 },
-        { name: "bitangent", itemSize: 4, offset: 11 }
+        // HARP-17373: Original uniform name 'bitangent' due to shader compilation errors with Metal
+        // in Safari 15 on MacOS Monterrey and iPadOS 15.
+        { name: "biTangent", itemSize: 4, offset: 11 }
     ],
     stride: 15
 };

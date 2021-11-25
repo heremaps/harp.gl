@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 HERE Europe B.V.
+ * Copyright (C) 2020-2021 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -279,7 +279,7 @@ function intersectFeature(
     const geometry = mesh.geometry as THREE.BufferGeometry;
     const attributes = geometry.attributes;
     const position = attributes.position as THREE.BufferAttribute;
-    const bitangent = attributes.bitangent;
+    const bitangent = attributes.biTangent;
     const indices = geometry.index!.array;
 
     tmpSphere.copy(bSphere);
