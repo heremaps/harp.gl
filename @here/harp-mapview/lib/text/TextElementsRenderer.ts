@@ -109,7 +109,7 @@ const OVERLOAD_LABEL_LIMIT = 20000;
  * If "overloaded" is `true`:
  *
  * Default number of labels/POIs updated in a frame. They are rendered only if they fit. If the
- * camera is not moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
+ * camera is not moving, it is ignored. See [[TextElementsRenderer.isUpdatePending]].
  */
 const OVERLOAD_UPDATED_LABEL_LIMIT = 100;
 
@@ -117,7 +117,7 @@ const OVERLOAD_UPDATED_LABEL_LIMIT = 100;
  * If "overloaded" is `true`:
  *
  * Maximum time in milliseconds available for placement. If value is <= 0, or if the camera is not
- * moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
+ * moving, it is ignored. See [[TextElementsRenderer.isUpdatePending]].
  */
 const OVERLOAD_UPDATE_TIME_LIMIT = 5;
 
@@ -125,7 +125,7 @@ const OVERLOAD_UPDATE_TIME_LIMIT = 5;
  * If "overloaded" is `true`:
  *
  * Maximum time in milliseconds available for rendering. If value is <= 0, or if the camera is not
- * moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
+ * moving, it is ignored. See [[TextElementsRenderer.isUpdatePending]].
  */
 const OVERLOAD_PLACE_TIME_LIMIT = 10;
 
@@ -306,8 +306,6 @@ function shouldRenderPoiText(labelState: TextElementState, viewState: ViewState)
     );
 }
 
-export type ViewUpdateCallback = () => void;
-
 function isPlacementTimeExceeded(startTime: number | undefined): boolean {
     // startTime is set in overload mode.
     if (startTime === undefined || OVERLOAD_PLACE_TIME_LIMIT <= 0) {
@@ -351,7 +349,6 @@ export class TextElementsRenderer {
     private readonly m_cameraLookAt = new THREE.Vector3();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
-    private m_forceNewLabelsPass: boolean = false;
     private m_addNewLabels: boolean = true;
 
     private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
@@ -364,13 +361,18 @@ export class TextElementsRenderer {
         | ScreenCollisionsDebug = new ScreenCollisions();
 
     private readonly m_textCanvasFactory: TextCanvasFactory;
+
+    /**
+     * indicates if the TextElementsRenderer is still updating, includes fading, elevations etc
+     */
+    private m_isUpdatePending: boolean = false;
+
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
      * a preprocessing step, which is not done every frame, and also renders the placed
      * {@link TextElement}s every frame.
      *
      * @param m_viewState - State of the view for which this renderer will draw text.
-     * @param m_viewUpdateCallback - To be called whenever the view needs to be updated.
      * @param m_screenProjector - Projects 3D coordinates into screen space.
      * @param m_poiManager - To prepare pois for rendering.
      * @param m_renderer - The renderer to be used.
@@ -383,7 +385,6 @@ export class TextElementsRenderer {
      */
     constructor(
         private readonly m_viewState: ViewState,
-        private readonly m_viewUpdateCallback: ViewUpdateCallback,
         private readonly m_screenProjector: ScreenProjector,
         private readonly m_poiManager: PoiManager,
         private m_renderer: THREE.WebGLRenderer,
@@ -608,6 +609,7 @@ export class TextElementsRenderer {
         ) {
             return;
         }
+        this.m_isUpdatePending = false;
 
         const updateTextElements =
             this.m_cacheInvalidated ||
@@ -727,6 +729,14 @@ export class TextElementsRenderer {
      */
     get loading(): boolean {
         return this.m_loadPromisesCount > 0;
+    }
+
+    /**
+     * `true` if TextElements are not placed finally but are still updating, including fading or
+     * waiting for elevation.
+     */
+    get isUpdatePending(): boolean {
+        return this.m_isUpdatePending;
     }
 
     /**
@@ -909,8 +919,8 @@ export class TextElementsRenderer {
 
             if (elevationProvider !== undefined && !textElement.elevated) {
                 if (!elevationMap) {
-                    this.m_viewUpdateCallback(); // Update view until elevation is loaded.
-                    this.m_forceNewLabelsPass = true;
+                    this.m_isUpdatePending = true;
+                    this.invalidateCache();
                     continue;
                 }
                 overlayTextElement(textElement, elevationProvider, elevationMap, projection);
@@ -1027,16 +1037,11 @@ export class TextElementsRenderer {
             if (textElement.text === "") {
                 textElement.loadingState = LoadingState.Loaded;
             } else {
-                const neLoadPromise = textCanvas.fontCatalog
+                const newLoadPromise = textCanvas.fontCatalog
                     .loadCharset(textElement.text, textElement.renderStyle)
                     .then(() => {
                         --this.m_loadPromisesCount;
                         textElement.loadingState = LoadingState.Loaded;
-                        // Ensure that text elements still loading glyphs get a chance to
-                        // be rendered if there's no text element updates in the next frames.
-                        this.m_forceNewLabelsPass =
-                            this.m_forceNewLabelsPass || forceNewPassOnLoaded;
-                        this.m_viewUpdateCallback();
                     });
                 if (this.m_loadPromisesCount === 0) {
                     this.m_loadPromise = undefined;
@@ -1119,7 +1124,6 @@ export class TextElementsRenderer {
             )
                 .then(() => {
                     --this.m_loadPromisesCount;
-                    this.m_viewUpdateCallback();
                 })
                 .catch(error => {
                     logger.info("rendering without font catalog, only icons possible", error);
@@ -1454,10 +1458,6 @@ export class TextElementsRenderer {
             return;
         }
 
-        const placeNew = this.m_forceNewLabelsPass || placeNewTextElements;
-        if (this.m_forceNewLabelsPass) {
-            this.m_forceNewLabelsPass = false;
-        }
         const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels;
 
         // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
@@ -1473,7 +1473,7 @@ export class TextElementsRenderer {
             }
 
             const newPriority = textElementGroupState.priority;
-            if (placeNew && currentPriority !== newPriority) {
+            if (placeNewTextElements && currentPriority !== newPriority) {
                 // Place all new labels of the previous priority before placing the persistent
                 // labels of this priority.
                 this.placeNewTextElements(currentPriorityBegin, i, renderParams);
@@ -1499,7 +1499,7 @@ export class TextElementsRenderer {
             }
         }
 
-        if (placeNew) {
+        if (placeNewTextElements) {
             // Place new text elements of the last priority.
             this.placeNewTextElements(currentPriorityBegin, groupStates.length, renderParams);
         }
@@ -1510,7 +1510,7 @@ export class TextElementsRenderer {
         }
 
         if (renderParams.fadeAnimationRunning) {
-            this.m_viewUpdateCallback();
+            this.m_isUpdatePending = true;
         }
     }
 
@@ -1740,11 +1740,6 @@ export class TextElementsRenderer {
             if (iconInvisible) {
                 iconRenderState.reset();
             }
-        } else if (renderIcon && poiInfo!.isValid !== false) {
-            // Ensure that text elements still loading icons get a chance to be rendered if
-            // there are no text element updates in the next frames.
-            this.m_forceNewLabelsPass = true;
-            this.m_viewUpdateCallback();
         }
 
         const distanceFadeFactor = this.getDistanceFadingFactor(
