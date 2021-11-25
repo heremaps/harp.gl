@@ -350,6 +350,7 @@ export class TextElementsRenderer {
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_addNewLabels: boolean = true;
+    private m_forceNewLabelsPass: boolean = false;
 
     private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
     private readonly m_camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
@@ -920,7 +921,7 @@ export class TextElementsRenderer {
             if (elevationProvider !== undefined && !textElement.elevated) {
                 if (!elevationMap) {
                     this.m_isUpdatePending = true;
-                    this.invalidateCache();
+                    this.m_forceNewLabelsPass = true;
                     continue;
                 }
                 overlayTextElement(textElement, elevationProvider, elevationMap, projection);
@@ -1042,6 +1043,9 @@ export class TextElementsRenderer {
                     .then(() => {
                         --this.m_loadPromisesCount;
                         textElement.loadingState = LoadingState.Loaded;
+                        this.m_isUpdatePending = true;
+                        this.m_forceNewLabelsPass =
+                            this.m_forceNewLabelsPass || forceNewPassOnLoaded;
                     });
                 if (this.m_loadPromisesCount === 0) {
                     this.m_loadPromise = undefined;
@@ -1124,6 +1128,7 @@ export class TextElementsRenderer {
             )
                 .then(() => {
                     --this.m_loadPromisesCount;
+                    this.m_isUpdatePending = true;
                 })
                 .catch(error => {
                     logger.info("rendering without font catalog, only icons possible", error);
@@ -1458,6 +1463,11 @@ export class TextElementsRenderer {
             return;
         }
 
+        const placeNew = this.m_forceNewLabelsPass || placeNewTextElements;
+        if (this.m_forceNewLabelsPass) {
+            this.m_forceNewLabelsPass = false;
+        }
+
         const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels;
 
         // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
@@ -1473,7 +1483,7 @@ export class TextElementsRenderer {
             }
 
             const newPriority = textElementGroupState.priority;
-            if (placeNewTextElements && currentPriority !== newPriority) {
+            if (placeNew && currentPriority !== newPriority) {
                 // Place all new labels of the previous priority before placing the persistent
                 // labels of this priority.
                 this.placeNewTextElements(currentPriorityBegin, i, renderParams);
@@ -1499,7 +1509,7 @@ export class TextElementsRenderer {
             }
         }
 
-        if (placeNewTextElements) {
+        if (placeNew) {
             // Place new text elements of the last priority.
             this.placeNewTextElements(currentPriorityBegin, groupStates.length, renderParams);
         }
@@ -1739,6 +1749,9 @@ export class TextElementsRenderer {
             iconRejected = result === PlacementResult.Rejected;
             if (iconInvisible) {
                 iconRenderState.reset();
+            } else if (renderIcon && poiInfo!.isValid !== false) {
+                this.m_forceNewLabelsPass = true;
+                this.m_isUpdatePending = true;
             }
         }
 
