@@ -3305,7 +3305,7 @@ export class MapView extends EventDispatcher {
         }
 
         // Continue rendering if update is pending or animation is running
-        if (this.isUpdatePending || this.animating) {
+        if (this.isUpdatePending) {
             this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
         } else {
             // Stop rendering if no update is pending

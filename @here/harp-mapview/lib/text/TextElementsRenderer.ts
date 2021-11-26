@@ -603,6 +603,8 @@ export class TextElementsRenderer {
         const textElementsAvailable =
             this.hasOverlayText() || tileTextElementsChanged || hasTextElements(dataSourceTileList);
 
+        this.m_isUpdatePending = false;
+
         if (
             !textElementsAvailable &&
             !this.m_cacheInvalidated &&
@@ -610,7 +612,6 @@ export class TextElementsRenderer {
         ) {
             return;
         }
-        this.m_isUpdatePending = false;
 
         const updateTextElements =
             this.m_cacheInvalidated ||
@@ -1128,7 +1129,6 @@ export class TextElementsRenderer {
             )
                 .then(() => {
                     --this.m_loadPromisesCount;
-                    this.m_isUpdatePending = true;
                 })
                 .catch(error => {
                     logger.info("rendering without font catalog, only icons possible", error);
@@ -1749,9 +1749,6 @@ export class TextElementsRenderer {
             iconRejected = result === PlacementResult.Rejected;
             if (iconInvisible) {
                 iconRenderState.reset();
-            } else if (renderIcon && poiInfo!.isValid !== false) {
-                this.m_forceNewLabelsPass = true;
-                this.m_isUpdatePending = true;
             }
         }
 
