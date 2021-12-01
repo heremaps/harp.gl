@@ -55,7 +55,7 @@ export class MapViewState implements ViewState {
     }
 
     get isDynamic(): boolean {
-        return this.m_mapView.isUpdatePending;
+        return this.m_mapView.isDynamicFrame;
     }
 
     get hiddenGeometryKinds(): GeometryKindSet | undefined {

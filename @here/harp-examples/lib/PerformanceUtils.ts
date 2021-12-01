@@ -665,7 +665,7 @@ export namespace PerformanceUtils {
         return await new Promise<void>((resolve, reject) => {
             const renderCallback = () => {
                 if (
-                    mapViewApp.mapView.isUpdatePending ||
+                    mapViewApp.mapView.isDynamicFrame ||
                     MapViewUtils.mapViewIsLoading(mapViewApp.mapView)
                 ) {
                     mapViewApp.mapView.update();

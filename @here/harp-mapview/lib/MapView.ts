@@ -2403,8 +2403,11 @@ export class MapView extends EventDispatcher {
 
     /**
      * Returns `true` if the current frame will immediately be followed by another frame.
-     */
-    get isUpdatePending(): boolean {
+     * @deprecated This should only be used for the internal handling of the render loop,
+     * if you use your own RenderLoop use {@link MapView::renderSync} in combination with
+     * {@link MapViewEventNames.FrameComplete}
+     **/
+    get isDynamicFrame(): boolean {
         return (
             !this.m_visibleTiles.allVisibleTilesLoaded ||
             this.m_themeManager.isUpdating() ||
@@ -3305,7 +3308,7 @@ export class MapView extends EventDispatcher {
         }
 
         // Continue rendering if update is pending or animation is running
-        if (this.isUpdatePending) {
+        if (this.isDynamicFrame) {
             this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
         } else {
             // Stop rendering if no update is pending
@@ -3514,7 +3517,7 @@ export class MapView extends EventDispatcher {
             this.m_renderer,
             this.m_scene,
             camera,
-            !this.isUpdatePending
+            !this.isDynamicFrame
         );
 
         if (gatherStatistics) {
@@ -3597,7 +3600,7 @@ export class MapView extends EventDispatcher {
         // running. The initial placement of text in this render call may have changed the loading
         // state of the TextElementsRenderer, so this has to be checked again.
         // HARP-10919: Fading is currently ignored by the frame complete event.
-        if (!this.isUpdatePending) {
+        if (!this.isDynamicFrame) {
             if (this.m_firstFrameComplete === false) {
                 this.m_firstFrameComplete = true;
                 if (gatherStatistics) {
