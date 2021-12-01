@@ -79,7 +79,7 @@ import { ScreenProjector } from "./ScreenProjector";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { MapViewState } from "./text/MapViewState";
 import { TextElement } from "./text/TextElement";
-import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
+import { TextElementsRenderer } from "./text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
 import { Tile } from "./Tile";
 import { TileObjectRenderer } from "./TileObjectsRenderer";
@@ -849,7 +849,6 @@ export class MapView extends EventDispatcher {
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
-    private m_initialTextPlacementDone = false;
 
     private readonly handleRequestAnimationFrame: (frameStartTime: number) => void;
 
@@ -2130,7 +2129,9 @@ export class MapView extends EventDispatcher {
         } catch (error) {
             // error is a string if a promise was rejected.
             logger.error(
-                `Failed to connect to datasource ${dataSource.name}: ${error.message ?? error}`
+                `Failed to connect to datasource ${dataSource.name}: ${
+                    (error as Error).message ?? error
+                }`
             );
 
             this.m_failedDataSources.add(dataSource.name);
@@ -2402,13 +2403,20 @@ export class MapView extends EventDispatcher {
 
     /**
      * Returns `true` if the current frame will immediately be followed by another frame.
-     */
+     * @deprecated This should only be used for the internal handling of the render loop,
+     * if you use your own RenderLoop use {@link MapView::renderSync} in combination with
+     * {@link MapViewEventNames.FrameComplete}
+     **/
     get isDynamicFrame(): boolean {
         return (
+            !this.m_visibleTiles.allVisibleTilesLoaded ||
+            this.m_themeManager.isUpdating() ||
             this.cameraIsMoving ||
             this.animating ||
             this.m_updatePending ||
-            this.m_animatedExtrusionHandler.isAnimating
+            this.m_animatedExtrusionHandler.isAnimating ||
+            this.m_textElementsRenderer.isUpdatePending ||
+            this.m_textElementsRenderer.loading
         );
     }
 
@@ -3300,7 +3308,7 @@ export class MapView extends EventDispatcher {
         }
 
         // Continue rendering if update is pending or animation is running
-        if (this.m_updatePending || this.animating) {
+        if (this.isDynamicFrame) {
             this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
         } else {
             // Stop rendering if no update is pending
@@ -3453,22 +3461,6 @@ export class MapView extends EventDispatcher {
             });
         });
 
-        // Check if this is the time to place the labels for the first time. Pretty much everything
-        // should have been loaded, and no animation should be running.
-        if (
-            !this.m_initialTextPlacementDone &&
-            !this.m_firstFrameComplete &&
-            !this.isDynamicFrame &&
-            !this.m_themeManager.isUpdating() &&
-            this.m_poiTableManager.finishedLoading &&
-            this.m_visibleTiles.allVisibleTilesLoaded &&
-            this.m_connectedDataSources.size + this.m_failedDataSources.size ===
-                this.m_tileDataSources.length &&
-            !this.m_textElementsRenderer.loading
-        ) {
-            this.m_initialTextPlacementDone = true;
-        }
-
         this.m_mapAnchors.update(
             this.projection,
             this.camera.position,
@@ -3608,12 +3600,7 @@ export class MapView extends EventDispatcher {
         // running. The initial placement of text in this render call may have changed the loading
         // state of the TextElementsRenderer, so this has to be checked again.
         // HARP-10919: Fading is currently ignored by the frame complete event.
-        if (
-            !this.textElementsRenderer.loading &&
-            this.m_visibleTiles.allVisibleTilesLoaded &&
-            this.m_initialTextPlacementDone &&
-            !this.m_animatedExtrusionHandler.isAnimating
-        ) {
+        if (!this.isDynamicFrame) {
             if (this.m_firstFrameComplete === false) {
                 this.m_firstFrameComplete = true;
                 if (gatherStatistics) {
@@ -3797,13 +3784,8 @@ export class MapView extends EventDispatcher {
     }
 
     private createTextRenderer(): TextElementsRenderer {
-        const updateCallback: ViewUpdateCallback = () => {
-            this.update();
-        };
-
         return new TextElementsRenderer(
             new MapViewState(this, this.checkIfTilesChanged.bind(this)),
-            updateCallback,
             this.m_screenProjector,
             this.m_poiManager,
             this.m_renderer,

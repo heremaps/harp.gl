@@ -160,13 +160,11 @@ export class TestFixture {
             DEF_TEXT_WIDTH,
             DEF_TEXT_HEIGHT
         );
-        const dummyUpdateCall = () => {};
         this.m_loadCatalogStub = this.sandbox.stub(FontCatalogLoader, "loadFontCatalog").resolves();
 
         this.m_textCanvasFactoryStub = stubTextCanvasFactory(this.sandbox, this.m_textCanvasStub);
         this.m_textRenderer = new TextElementsRenderer(
             this.m_viewState,
-            dummyUpdateCall,
             this.m_screenProjector,
             stubPoiManager(this.sandbox),
             sinon.createStubInstance(THREE.WebGLRenderer),
@@ -178,7 +176,7 @@ export class TestFixture {
         );
         this.m_textRenderer.updateTextStyles(this.m_theme.textStyles);
         this.m_loadCatalogStub.yieldOn("onSuccess", "default", this.m_fontCatalog);
-        return this.m_textRenderer.waitLoaded();
+        return await this.m_textRenderer.waitLoaded();
     }
 
     /**
