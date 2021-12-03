@@ -43,15 +43,7 @@ export interface Theme {
      * overwrite these defined in base theme.
      */
 
-    extends?: string | Theme | Array<string | Theme>;
-
-    //
-    // TODO: We support also [[FlatTheme]], but it's not exposed here since ts-json-schema-generator
-    // fails with too complex typing.
-    // See: https://github.com/vega/ts-json-schema-generator/issues/192
-    // Typing should look like this:
-    // extends?: string | Theme | FlatTheme| Array<string | Theme | FlatTheme>;
-    //
+    extends?: string | Theme | FlatTheme | Array<string | Theme | FlatTheme>;
 
     /**
      * Actual URL the theme has been loaded from.
@@ -134,7 +126,7 @@ export interface Theme {
      * are used together with [[Theme.priorities]] to sort
      * the objects created using this {@link Theme}, for example:
      *
-     * @example
+     *
      * ```json
      * {
      *      "priorities": [
@@ -161,7 +153,6 @@ export interface Theme {
      * technique (e.g. `"text"`) must match on the strings
      * defined by this [[Theme.labelPriorities]], for example:
      *
-     * @example
      * ```json
      * {
      *      "labelPriorities": [
