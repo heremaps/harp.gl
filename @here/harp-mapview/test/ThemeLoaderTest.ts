@@ -116,9 +116,9 @@ describe("ThemeLoader", function () {
         it("resolves ref expression in technique attr values", async function () {
             const theme: Theme = {
                 definitions: {
-                    roadColor: { value: "#f00" },
-                    roadWidth: { type: "number", value: 123 },
-                    roadOutlineWidth: { value: 33 }
+                    roadColor: "#f00",
+                    roadWidth: 123,
+                    roadOutlineWidth: 33
                 },
                 styles: {
                     tilezen: [
@@ -156,8 +156,8 @@ describe("ThemeLoader", function () {
         it("resolves ref expressions in Style", async function () {
             const theme: Theme = {
                 definitions: {
-                    roadColor: { type: "color", value: "#f00" },
-                    roadCondition: { type: "selector", value: "kind == 'road'" }
+                    roadColor: "#f00",
+                    roadCondition: "kind == 'road'"
                 },
                 styles: {
                     tilezen: [
@@ -185,15 +185,15 @@ describe("ThemeLoader", function () {
             assert.equal(roadStyle.technique, "solid-line");
             const roadStyleCasted = (roadStyle as any) as SolidLineStyle;
             assert.equal(roadStyleCasted.description, "roads");
-            assert.deepEqual(roadStyleCasted.when!, theme.definitions!.roadCondition.value);
+            assert.deepEqual(roadStyleCasted.when!, theme.definitions!.roadCondition);
             assert.equal(roadStyleCasted.attr!.lineColor, "#f00");
         });
 
         it("resolves refs embedded in expressions", async function () {
             const theme: Theme = {
                 definitions: {
-                    roadColor: { type: "color", value: "#f00" },
-                    roadCondition: { type: "selector", value: ["==", ["get", "kind"], "road"] }
+                    roadColor: "#f00",
+                    roadCondition: ["==", ["get", "kind"], "road"]
                 },
                 styles: {
                     tilezen: [
@@ -234,14 +234,11 @@ describe("ThemeLoader", function () {
     describe("#resolveBaseTheme", function () {
         const baseThemeRoads: Theme = {
             definitions: {
-                roadColor: { type: "color", value: "#f00" },
+                roadColor: "#f00",
                 primaryRoadFillLineWidth: {
-                    type: "number",
-                    value: {
-                        interpolation: "Linear",
-                        zoomLevels: [8, 9, 10, 11, 12, 13, 14, 16, 18],
-                        values: [650, 400, 220, 120, 65, 35, 27, 9, 7]
-                    }
+                    interpolation: "Linear",
+                    zoomLevels: [8, 9, 10, 11, 12, 13, 14, 16, 18],
+                    values: [650, 400, 220, 120, 65, 35, 27, 9, 7]
                 }
             },
             styles: {
@@ -259,14 +256,14 @@ describe("ThemeLoader", function () {
 
         const baseThemeWater: Theme = {
             definitions: {
-                waterColor: { type: "color", value: "#44f" }
+                waterColor: "#44f"
             }
         };
         it("supports single inheritance", async function () {
             const inheritedTheme: Theme = {
                 extends: baseThemeRoads,
                 definitions: {
-                    roadColor: { type: "color", value: "#fff" }
+                    roadColor: "#fff"
                 }
             };
 
@@ -275,7 +272,7 @@ describe("ThemeLoader", function () {
 
             assert.exists(result.definitions);
             assert.exists(result.definitions!.roadColor);
-            assert.deepEqual(result.definitions!.roadColor, { type: "color", value: "#fff" });
+            assert.deepEqual(result.definitions!.roadColor, "#fff");
         });
         it("supports multiple inheritance", async function () {
             const inheritedTheme: Theme = {
@@ -284,12 +281,12 @@ describe("ThemeLoader", function () {
                     baseThemeWater,
                     {
                         definitions: {
-                            waterColor: { type: "color", value: "#0f0" }
+                            waterColor: "#0f0"
                         }
                     }
                 ],
                 definitions: {
-                    roadColor: { type: "color", value: "#fff" }
+                    roadColor: "#fff"
                 }
             };
 
@@ -298,8 +295,8 @@ describe("ThemeLoader", function () {
 
             assert.exists(result.definitions);
             assert.exists(result.definitions!.roadColor);
-            assert.deepEqual(result.definitions!.roadColor, { type: "color", value: "#fff" });
-            assert.deepEqual(result.definitions!.waterColor, { type: "color", value: "#0f0" });
+            assert.equal(result.definitions!.roadColor, "#fff");
+            assert.equal(result.definitions!.waterColor, "#0f0");
         });
         it("supports multiple inheritance with textures", async function () {
             const inheritedTheme: Theme = {
@@ -438,7 +435,7 @@ describe("ThemeLoader", function () {
                 {
                     extends: baseThemeUrl,
                     definitions: {
-                        roadColor: { type: "color", value: "#fff" }
+                        roadColor: "#fff"
                     }
                 },
                 { resolveDefinitions: true }

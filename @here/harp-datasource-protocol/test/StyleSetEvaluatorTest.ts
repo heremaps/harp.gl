@@ -362,12 +362,9 @@ describe("StyleSetEvaluator", function () {
             values: ["#faa", "#afa"]
         };
         const sampleDefinitions: Definitions = {
-            expr: { type: "selector", value: ["==", ["get", "kind"], "park"] },
-            number: { type: "number", value: 123 },
-            interpolator: {
-                type: "color",
-                value: interpolator
-            }
+            expr: ["==", ["get", "kind"], "park"],
+            number: 123,
+            interpolator: interpolator
         };
         it("resolves references in style declaration attributes", function () {
             const sse = new StyleSetEvaluator({
@@ -400,7 +397,7 @@ describe("StyleSetEvaluator", function () {
             const bigObject = {};
             const definitions: Definitions = {
                 ...sampleDefinitions,
-                bigObject: { value: ["literal", bigObject] }
+                bigObject: ["literal", bigObject]
             };
             const sse = new StyleSetEvaluator({ styleSet: [styleReferencingObject], definitions });
 
@@ -917,19 +914,11 @@ describe("StyleSetEvaluator", function () {
             ]
         ];
         const definitions: Definitions = {
-            poi_table_here: { value: lookupTable },
-            masterlist_Pds: {
-                value: ["get", "pds_category"]
-            },
-            masterlist_kindDetail: {
-                value: ["get", "kind_detail"]
-            },
-            masterlist_IsoCountryCode: {
-                value: ["get", "country_code"]
-            },
-            masterlist_chain_id: {
-                value: ["get", "chain_id"]
-            }
+            poi_table_here: lookupTable,
+            masterlist_Pds: ["get", "pds_category"],
+            masterlist_kindDetail: ["get", "kind_detail"],
+            masterlist_IsoCountryCode: ["get", "country_code"],
+            masterlist_chain_id: ["get", "chain_id"]
         };
         const styleSet: StyleSet = [
             {

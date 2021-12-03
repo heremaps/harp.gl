@@ -3,13 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import "@here/harp-fetch";
 
 import { isJsonExpr } from "@here/harp-datasource-protocol";
 import {
     Definitions,
     FlatTheme,
+    getDefinitionValue,
     ImageTexture,
     isJsonExprReference,
     Style,
@@ -396,7 +396,7 @@ export class ThemeLoader {
                 if (isJsonExpr(def)) {
                     return def;
                 }
-                return def.value;
+                return getDefinitionValue(def);
             } else if (Array.isArray(node)) {
                 const result = [...node];
                 for (let i = 1; i < result.length; ++i) {

@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as THREE from "three";
 
 import { Env, Value } from "./Env";
@@ -17,7 +16,7 @@ import {
 } from "./InterpolatedPropertyDefs";
 import { Pixels } from "./Pixels";
 import { RGBA } from "./RGBA";
-import { Definitions } from "./Theme";
+import { Definition, Definitions, getDefinitionValue } from "./Theme";
 
 export * from "./Env";
 
@@ -1108,14 +1107,15 @@ function resolveReference(node: JsonArray, referenceResolverState?: ReferenceRes
     }
     let definitionEntry = referenceResolverState.definitions[name] as any;
     let result: Expr;
-    if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
+    const definitionValue: Definition = getDefinitionValue(definitionEntry);
+    if (isInterpolatedPropertyDefinition(definitionValue)) {
         // found a reference to an interpolation using
         // the deprecated object-like syntax.
-        return Expr.fromJSON(interpolatedPropertyDefinitionToJsonExpr(definitionEntry.value));
-    } else if (isJsonExpr(definitionEntry.value)) {
-        definitionEntry = definitionEntry.value;
+        return Expr.fromJSON(interpolatedPropertyDefinitionToJsonExpr(definitionEntry));
+    } else if (isJsonExpr(definitionValue)) {
+        definitionEntry = definitionValue;
     } else {
-        return Expr.fromJSON(definitionEntry.value);
+        return Expr.fromJSON(definitionValue);
     }
 
     if (isJsonExpr(definitionEntry)) {

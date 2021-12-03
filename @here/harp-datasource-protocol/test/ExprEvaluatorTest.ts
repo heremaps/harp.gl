@@ -2126,9 +2126,12 @@ describe("ExprEvaluator", function () {
             env1: "somevalue1"
         };
         const definitions: Definitions = {
-            def1: { value: 42 },
-            tableDef: { value: lookupTable }
+            def1: 42,
+            tableDef: lookupTable,
+            verboseDef1: { value: 42 },
+            verboseTableDef: { value: lookupTable }
         };
+
         interface LookupTestParameter {
             name: string;
             keys: JsonValue[];
