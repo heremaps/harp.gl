@@ -56,11 +56,11 @@ describe("Expr", function () {
     describe("#fromJson", function () {
         describe("ref operator support", function () {
             const baseDefinitions: Definitions = {
-                color: { value: "#ff0" },
-                string: { value: "abc" },
-                number: { type: "number", value: 123 },
-                number2: { value: 234 },
-                boolean: { value: true }
+                color: "#ff0",
+                string: "abc",
+                number: 123,
+                number2: 234,
+                boolean: true
             };
             it("supports literal references", function () {
                 assert.equal(evaluate(Expr.fromJSON(["ref", "color"], baseDefinitions)), "#ff0");
@@ -76,9 +76,9 @@ describe("Expr", function () {
             });
             it("supports basic expression references", function () {
                 const definitions: Definitions = {
-                    literalExpr: { value: ["+", 2, 3] },
-                    boxedTypedExpr: { type: "selector", value: ["+", 3, 4] },
-                    boxedUntypedExpr: { value: ["+", 4, 5] }
+                    literalExpr: ["+", 2, 3],
+                    boxedTypedExpr: ["+", 3, 4],
+                    boxedUntypedExpr: ["+", 4, 5]
                 };
                 assert.equal(evaluate(Expr.fromJSON(["ref", "literalExpr"], definitions)), 5);
                 assert.equal(evaluate(Expr.fromJSON(["ref", "boxedTypedExpr"], definitions)), 7);
@@ -87,25 +87,17 @@ describe("Expr", function () {
             it("supports embedded basic embedded references", function () {
                 const definitions: Definitions = {
                     ...baseDefinitions,
-                    refConstantExpr: { type: "selector", value: ["+", 2, ["ref", "number"]] }
+                    refConstantExpr: ["+", 2, ["ref", "number"]]
                 };
                 assert.equal(evaluate(Expr.fromJSON(["ref", "refConstantExpr"], definitions)), 125);
             });
             it("supports complex embedded references", function () {
                 const definitions: Definitions = {
-                    number: { value: 1 },
-                    refConstantExpr: { value: ["+", 1, ["ref", "number"]] },
-                    refExpr1: {
-                        value: ["+", ["ref", "number"], ["ref", "number"], ["ref", "refExpr2"]]
-                    },
-                    refExpr2: {
-                        value: ["*", ["ref", "refConstantExpr"], ["ref", "refConstantExpr"]]
-                    },
-                    refTopExpr: {
-                        // 6 - 4 -> 2, old syntax
-                        type: "selector",
-                        value: ["-", ["ref", "refExpr1"], ["ref", "refExpr2"]]
-                    }
+                    number: 1,
+                    refConstantExpr: ["+", 1, ["ref", "number"]],
+                    refExpr1: ["+", ["ref", "number"], ["ref", "number"], ["ref", "refExpr2"]],
+                    refExpr2: ["*", ["ref", "refConstantExpr"], ["ref", "refConstantExpr"]],
+                    refTopExpr: ["-", ["ref", "refExpr1"], ["ref", "refExpr2"]]
                 };
                 assert.equal(evaluate(Expr.fromJSON(["ref", "refExpr1"], definitions)), 6);
                 assert.equal(evaluate(Expr.fromJSON(["ref", "refExpr2"], definitions)), 4);
@@ -113,20 +105,11 @@ describe("Expr", function () {
             });
             it("rejects circular references", function () {
                 const definitions: Definitions = {
-                    refSelfReference: {
-                        // 2
-                        type: "selector",
-                        value: ["+", 33, ["ref", "refSelfReference"]]
-                    },
-                    refExprFoo: {
-                        // 1
-                        type: "selector",
-                        value: ["*", 44, ["ref", "refTopBar"]]
-                    },
-                    refTopBar: {
-                        type: "selector",
-                        value: ["-", 55, ["ref", "refExprFoo"]]
-                    }
+                    refSelfReference: ["+", 33, ["ref", "refSelfReference"]],
+                    // 2
+                    refExprFoo: ["*", 44, ["ref", "refTopBar"]],
+                    // 1
+                    refTopBar: ["-", 55, ["ref", "refExprFoo"]]
                 };
                 assert.throws(() => {
                     Expr.fromJSON(["ref", "refSelfReference"], definitions);
@@ -137,14 +120,8 @@ describe("Expr", function () {
             });
             it("reuses Expr instances created from same definition", function () {
                 const definitions: Definitions = {
-                    foo: {
-                        type: "selector",
-                        value: ["+", 4, 4]
-                    },
-                    topExpr: {
-                        type: "selector",
-                        value: ["+", ["ref", "foo"], ["ref", "foo"]]
-                    }
+                    foo: ["+", 4, 4],
+                    topExpr: ["+", ["ref", "foo"], ["ref", "foo"]]
                 };
                 const expr = Expr.fromJSON(["ref", "topExpr"], definitions);
                 assert.instanceOf(expr, CallExpr);
@@ -156,10 +133,7 @@ describe("Expr", function () {
             });
             it("uses definitionExprCache across calls", function () {
                 const definitions: Definitions = {
-                    foo: {
-                        type: "selector",
-                        value: ["+", 4, 4]
-                    }
+                    foo: ["+", 4, 4]
                 };
                 const exprCache = new Map<string, Expr>();
                 const expr1 = Expr.fromJSON(["ref", "foo"], definitions, exprCache);

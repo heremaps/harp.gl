@@ -1,14 +1,11 @@
 {
     "$schema": "../../../harp-datasource-protocol/theme.schema.json",
     "definitions": {
-        "roadColor": { "type": "color", "value": "#f00" },
+        "roadColor": "#f00",
         "primaryRoadFillLineWidth": {
-            "type": "number",
-            "value": {
-                "interpolation": "Linear",
-                "zoomLevels": [8, 9, 10, 11, 12, 13, 14, 16, 18],
-                "values": [650, 400, 220, 120, 65, 35, 27, 9, 7]
-            }
+            "interpolation": "Linear",
+            "zoomLevels": [8, 9, 10, 11, 12, 13, 14, 16, 18],
+            "values": [650, 400, 220, 120, 65, 35, 27, 9, 7]
         }
     },
     "fontCatalogs": [

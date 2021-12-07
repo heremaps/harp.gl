@@ -212,7 +212,13 @@ export type FlatTheme = Omit<Theme, "styles"> & {
 /**
  * Value definition commons.
  */
-export interface Definition {
+export type Definition = JsonValue | InterpolatedPropertyDefinition<JsonValue>;
+
+/**
+ * This is the old, more verbose, format of the definitions, to be deprecated
+ * @deprecated
+ */
+export interface VerboseDefinition {
     /**
      * The type of the definition.
      */
@@ -221,7 +227,7 @@ export interface Definition {
     /**
      * The value of the definition.
      */
-    value: JsonValue | InterpolatedPropertyDefinition<JsonValue>;
+    value: Definition;
 
     /**
      * The description of the definition.
@@ -230,10 +236,36 @@ export interface Definition {
 }
 
 /**
+ * This is to distinguish between definition types at runtime, to be deprecated with
+ * {@link VerboseDefinition}
+ * @deprecated
+ *
+ * @param definition
+ * @returns `true` if the Definition is of the deprecated {@link VerboseDefinition} type
+ */
+export function isVerboseDefinition(definition: VerboseDefinition | Definition) {
+    return (definition as VerboseDefinition)?.value !== undefined;
+}
+
+/**
+ * This is a utility function to retrive a definitions value until {@link VerboseDefinition} is fully
+ * deprecated
+ * @deprecated
+ *
+ * @param definition
+ * @returns value of the given definition.
+ */
+export function getDefinitionValue(definition: VerboseDefinition | Definition): Definition {
+    return isVerboseDefinition(definition)
+        ? (definition as VerboseDefinition).value
+        : (definition as Definition);
+}
+
+/*
  * An set of {@link Definition}s.
  */
 export interface Definitions {
-    [name: string]: Definition;
+    [name: string]: Definition | VerboseDefinition;
 }
 
 export type JsonExprReference = ["ref", string];
@@ -411,7 +443,7 @@ export interface Styles {
  * ```json
  * {
  *   "definitions": {
- *     "roadColor": { "type": "color", "value": "#f00" }
+ *     "roadColor": "#f00"
  *   },
  *   "styles": { "tilezen": [
  *      {
