@@ -236,7 +236,7 @@ export interface VerboseDefinition {
 }
 
 /**
- * This is to distinguish between definition types at runtime, to be depreacted with
+ * This is to distinguish between definition types at runtime, to be deprecated with
  * {@link VerboseDefinition}
  * @deprecated
  *
@@ -244,7 +244,7 @@ export interface VerboseDefinition {
  * @returns `true` if the Definition is of the deprecated {@link VerboseDefinition} type
  */
 export function isVerboseDefinition(definition: VerboseDefinition | Definition) {
-    return (definition as VerboseDefinition).value !== undefined;
+    return (definition as VerboseDefinition)?.value !== undefined;
 }
 
 /**
@@ -253,7 +253,7 @@ export function isVerboseDefinition(definition: VerboseDefinition | Definition) 
  * @deprecated
  *
  * @param definition
- * @returns `true` if the Definition is of the depreated {@link VerboseDefinition} type
+ * @returns value of the given definition.
  */
 export function getDefinitionValue(definition: VerboseDefinition | Definition): Definition {
     return isVerboseDefinition(definition)
