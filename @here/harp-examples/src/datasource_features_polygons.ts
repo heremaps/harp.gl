@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Style, StyleSet } from "@here/harp-datasource-protocol";
+import { Style, Styles } from "@here/harp-datasource-protocol";
 import {
     FeaturesDataSource,
     MapViewFeature,
@@ -235,8 +235,8 @@ export namespace PolygonsFeaturesExample {
         thresholds: number[];
         color: string;
         property: string;
-    }): { styleSet: StyleSet; colorRamp: string[] } {
-        const styles: StyleSet = [];
+    }): { styleSet: Styles; colorRamp: string[] } {
+        const styles: Styles = [];
         const colorStrings: string[] = [];
         const length = options.thresholds.length;
         for (let i = 0; i < length; i++) {

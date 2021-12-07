@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Style, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { Style, Styles, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
@@ -107,8 +107,8 @@ export namespace GeoJsonHeatmapExample {
         thresholds: number[];
         color: string;
         property: string;
-    }): StyleSet {
-        const styleSet: StyleSet = [];
+    }): Styles {
+        const styleSet: Styles = [];
         const length = options.thresholds.length;
         for (let i = 0; i < length; i++) {
             const color = new THREE.Color(options.color);
@@ -145,7 +145,7 @@ export namespace GeoJsonHeatmapExample {
     }
 
     // snippet:geojson_heatmap2.ts
-    const densityStyleSet: StyleSet = generateHeatStyleSet({
+    const densityStyleSet: Styles = generateHeatStyleSet({
         property: "density",
         thresholds: [50, 100, 150, 200, 250, 300, 350, 400, 450],
         color: "#ff6600"

@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { Styles, Theme } from "@here/harp-datasource-protocol";
 import {
     FeaturesDataSource,
     MapViewFeature,
@@ -129,7 +129,7 @@ export namespace LinesPointsFeaturesExample {
         return featuresList;
     }
 
-    function getStyleSet(): StyleSet {
+    function getStyleSet(): Styles {
         return [
             {
                 when: "$geometryType == 'line' && type == 'ridges'",

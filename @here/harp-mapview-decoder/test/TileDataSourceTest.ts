@@ -10,7 +10,7 @@ import {
     DecoderOptions,
     Geometry,
     ITileDecoder,
-    StyleSet,
+    Styles,
     TileInfo
 } from "@here/harp-datasource-protocol";
 import {
@@ -333,7 +333,7 @@ describe("TileDataSource", function () {
 
             testedDataSource.attach(createMockMapView());
 
-            const styles: StyleSet = [
+            const styles: Styles = [
                 {
                     styleSet: "tilezen",
                     technique: "none"

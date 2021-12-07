@@ -3,15 +3,12 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
 import {
     FeatureCollection,
-    FlatTheme,
     LineCaps,
     SolidLineTechniqueParams,
-    Style
+    Style,
+    Theme
 } from "@here/harp-datasource-protocol";
 import { GeoPointLike } from "@here/harp-geoutils";
 import { LookAtParams } from "@here/harp-mapview";
@@ -22,6 +19,8 @@ import * as THREE from "three";
 import { GeoJsonStore } from "./utils/GeoJsonStore";
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
+
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 const strokePolygonLayer = (params: Partial<SolidLineTechniqueParams> = {}): Style => {
     return {
@@ -168,7 +167,7 @@ describe("GeoJson features", function () {
             THREE.ShapeUtils.isClockWise(ring.map(p => new THREE.Vector2().fromArray(p)));
 
         // the theme used by this test suite.
-        const theme: FlatTheme = {
+        const theme: Theme = {
             lights,
             styles: [
                 {

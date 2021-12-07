@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Theme, ValueMap } from "@here/harp-datasource-protocol";
+import { Styles, Theme, ValueMap } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { apikey } from "@here/harp-examples/config";
 import {
@@ -53,11 +53,6 @@ export interface OMVDecoderPerformanceTestOptions {
     theme: Theme | string;
 
     /**
-     * Styleset name, defaults to `tilezen`.
-     */
-    styleSetName?: string;
-
-    /**
      * Morton codes of tiles.
      */
     tiles: number[];
@@ -79,7 +74,6 @@ export function createOMVDecoderPerformanceTest(
     options: OMVDecoderPerformanceTestOptions
 ) {
     const repeats = options.repeats ?? 10;
-    const styleSetName = options.styleSetName ?? "tilezen";
     describe(`OMVDecoderPerformanceTest - ${name}`, function () {
         this.timeout(0);
         let omvTiles: Array<[TileKey, ArrayBuffer]>;
@@ -101,8 +95,7 @@ export function createOMVDecoderPerformanceTest(
             );
 
             theme = await ThemeLoader.load(options.theme);
-            assert.isObject(theme.styles);
-            assert.isArray(theme.styles![styleSetName]);
+            assert.isArray(theme.styles);
         });
 
         it(`measure feature matching time`, async () => {
@@ -110,7 +103,7 @@ export function createOMVDecoderPerformanceTest(
             this.timeout(0);
 
             const styleSetEvaluator = new StyleSetEvaluator({
-                styleSet: theme.styles![styleSetName],
+                styleSet: theme.styles as Styles,
                 definitions: theme.definitions
             });
 
@@ -161,7 +154,7 @@ export function createOMVDecoderPerformanceTest(
             const projection = webMercatorProjection;
 
             const styleSetEvaluator = new StyleSetEvaluator({
-                styleSet: theme.styles![styleSetName],
+                styleSet: theme.styles as Styles,
                 definitions: theme.definitions
             });
 
@@ -186,7 +179,7 @@ export function createOMVDecoderPerformanceTest(
             const projection = sphereProjection;
 
             const styleSetEvaluator = new StyleSetEvaluator({
-                styleSet: theme.styles![styleSetName],
+                styleSet: theme.styles as Styles,
                 definitions: theme.definitions
             });
 

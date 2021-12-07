@@ -10,7 +10,7 @@ import {
     Geometry,
     GeometryType,
     isStandardTechnique,
-    StyleSet,
+    Styles,
     TextureCoordinateType
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
@@ -48,7 +48,7 @@ describe("OmvDecodedTileEmitter", function () {
             mercatorProjection,
             TileKey.fromRowColumnLevel(0, 0, 1)
         ),
-        styleSet: StyleSet = [
+        styleSet: Styles = [
             {
                 when: "layer == 'mock-layer'",
                 technique: "standard",

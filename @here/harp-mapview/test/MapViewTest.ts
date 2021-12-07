@@ -1729,7 +1729,7 @@ describe("MapView", function () {
                 lights: undefined,
                 poiTables: undefined,
                 sky: undefined,
-                styles: {},
+                styles: [],
                 textStyles: undefined
             });
         });
@@ -1759,7 +1759,7 @@ describe("MapView", function () {
 
             const theme = await mapView.getTheme();
             expect(theme.styles).to.not.be.empty;
-            expect(theme.styles?.tilezen).to.not.be.undefined;
+            expect(theme.styles).to.not.be.undefined;
         });
 
         it("allows to reset theme", async function () {
