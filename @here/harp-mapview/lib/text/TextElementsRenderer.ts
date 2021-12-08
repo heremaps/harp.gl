@@ -1750,6 +1750,9 @@ export class TextElementsRenderer {
             if (iconInvisible) {
                 iconRenderState.reset();
             }
+        } else if (renderIcon && poiInfo?.isValid !== false) {
+            this.m_forceNewLabelsPass = true;
+            this.m_isUpdatePending = true;
         }
 
         const distanceFadeFactor = this.getDistanceFadingFactor(
