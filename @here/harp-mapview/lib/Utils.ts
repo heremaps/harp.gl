@@ -240,6 +240,10 @@ export namespace MapViewUtils {
          * @see {@link CameraUtils.getPrincipalPoint}.
          */
         center?: Vector2Like;
+        /**
+         * Point around which to orbit in world space. Overrides the center
+         */
+        mapOrbitWorld?: THREE.Vector3;
     }
 
     /**
@@ -278,17 +282,9 @@ export namespace MapViewUtils {
         deltaTilt?: number,
         maxTiltAngle?: number
     ): void {
-        const ppalPoint = CameraUtils.getPrincipalPoint(mapView.camera, cache.vector2[0]);
-        const mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(
-            mapView,
-            ppalPoint.x,
-            ppalPoint.y
-        );
-        if (mapTargetWorld === null) {
-            return;
-        }
-
         let orbitCenter: Vector2Like | undefined;
+        const ppalPoint = CameraUtils.getPrincipalPoint(mapView.camera, cache.vector2[0]);
+        let mapTargetWorld: THREE.Vector3 | undefined | null;
         if (typeof offsetXOrOrbitParams === "number") {
             orbitCenter = cache.vector2[1].set(offsetXOrOrbitParams, offsetY!);
         } else {
@@ -297,7 +293,20 @@ export namespace MapViewUtils {
             deltaAzimuth = params.deltaAzimuth ?? 0;
             deltaTilt = params.deltaTilt ?? 0;
             maxTiltAngle = params.maxTiltAngle;
+            mapTargetWorld = params.mapOrbitWorld;
         }
+
+        if (!mapTargetWorld) {
+            mapTargetWorld = MapViewUtils.rayCastWorldCoordinates(
+                mapView,
+                ppalPoint.x,
+                ppalPoint.y
+            );
+        }
+        if (!mapTargetWorld) {
+            return;
+        }
+
         const orbitAroundPpalPoint = orbitCenter.x === ppalPoint.x && orbitCenter.y === ppalPoint.y;
         const rotationTargetWorld = orbitAroundPpalPoint
             ? mapTargetWorld

@@ -326,6 +326,8 @@ export class MapControls extends EventDispatcher {
     private m_lastAzimuth: number = 0;
     private m_startAzimuth: number = 0;
 
+    private m_orbitWorldRotationPoint: THREE.Vector3 | undefined;
+
     /**
      * Determines the maximum angle the camera can tilt to. It is defined in radians.
      */
@@ -925,6 +927,9 @@ export class MapControls extends EventDispatcher {
             return;
         }
 
+        const mousePos = this.getPointerPosition(event);
+
+        this.m_orbitWorldRotationPoint = undefined;
         // Support mac users who press ctrl key when wanting to right click
         if (event.button === 0 && !event.ctrlKey && this.panEnabled) {
             this.m_state = State.PAN;
@@ -932,13 +937,16 @@ export class MapControls extends EventDispatcher {
             this.m_state = State.ROTATE;
         } else if ((event.button === 2 || event.ctrlKey) && this.tiltEnabled) {
             this.m_state = State.ORBIT;
+            this.m_orbitWorldRotationPoint = this.mapView.elevationProvider?.rayCast(
+                mousePos.x,
+                mousePos.y
+            );
         } else {
             return;
         }
 
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
 
-        const mousePos = this.getPointerPosition(event);
         this.m_lastMousePosition.copy(mousePos);
         if (event.altKey === true) {
             const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
@@ -1002,7 +1010,8 @@ export class MapControls extends EventDispatcher {
                 ),
                 deltaAzimuth: this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
                 deltaTilt: -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y,
-                maxTiltAngle: this.m_maxTiltAngle
+                maxTiltAngle: this.m_maxTiltAngle,
+                mapOrbitWorld: this.m_orbitWorldRotationPoint
             });
         }
 
