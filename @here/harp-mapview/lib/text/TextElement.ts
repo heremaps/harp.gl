@@ -135,9 +135,9 @@ export interface PoiInfo {
 
     /**
      * @hidden
-     * Direct access to {@link ImageItem} once it is resolved.
+     * Direct access to {@link ImageItem} once it is resolved or `null` if not resolvable.
      */
-    imageItem?: ImageItem;
+    imageItem?: ImageItem | null;
 
     /**
      * @hidden

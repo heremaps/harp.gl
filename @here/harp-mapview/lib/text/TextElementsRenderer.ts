@@ -1750,7 +1750,7 @@ export class TextElementsRenderer {
             if (iconInvisible) {
                 iconRenderState.reset();
             }
-        } else if (renderIcon && poiInfo?.isValid !== false) {
+        } else if (renderIcon && poiInfo?.imageItem !== null) {
             this.m_forceNewLabelsPass = true;
             this.m_isUpdatePending = true;
         }
