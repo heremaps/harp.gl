@@ -661,6 +661,7 @@ export class PoiRenderer {
         const imageTexture = this.m_poiManager.getImageTexture(imageTextureName);
         const imageItem = findImageItem(poiInfo, this.m_imageCaches, imageTexture);
         if (!imageItem) {
+            poiInfo.imageItem = null;
             return;
         }
 

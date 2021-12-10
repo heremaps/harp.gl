@@ -373,4 +373,31 @@ describe("ScreenSpaceRendering Test", function () {
             projection: sphereProjection
         });
     });
+
+    it("renders icon after image is loaded", async function () {
+        this.timeout(5000);
+
+        await geoJsonTest.run({
+            mochaTest: this,
+            testImageName: "geojson-icon-after-image-loaded",
+            theme: new ThemeBuilder().withFontCatalog().withMarkerStyle().build(),
+            geoJson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: {
+                            text: "Marker0",
+                            color: "red",
+                            imageTexture: "icon-to-load",
+                            renderOrder: 0
+                        },
+                        geometry: { type: "Point", coordinates: [14.6, 53.3] }
+                    }
+                ]
+            },
+            lookAt: { tilt: 0, zoomLevel: 10 },
+            tileGeoJson: false
+        });
+    });
 });

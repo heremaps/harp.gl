@@ -5,6 +5,7 @@
  */
 
 import { FlatTheme, ImageTexture, Light, Style } from "@here/harp-datasource-protocol";
+import { getAppBaseUrl, resolveReferenceUri } from "@here/harp-utils";
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
@@ -69,6 +70,10 @@ export class ThemeBuilder {
     };
 
     static readonly images = {
+        "icon-to-load": {
+            preload: false,
+            url: resolveReferenceUri(getAppBaseUrl(), "../dist/resources/icon-128x128.png")
+        },
         "red-icon": {
             // tslint:disable-next-line:max-line-length
             url:
