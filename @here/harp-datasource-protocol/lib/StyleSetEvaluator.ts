@@ -563,15 +563,17 @@ export class StyleSetEvaluator {
                 });
 
                 if (isJsonExpr(style.minZoomLevel)) {
-                    style._minZoomLevelExpr = Expr.fromJSON(style.minZoomLevel).intern(
-                        this.m_exprPool
-                    );
+                    style._minZoomLevelExpr = Expr.fromJSON(
+                        style.minZoomLevel,
+                        this.m_definitions
+                    ).intern(this.m_exprPool);
                 }
 
                 if (isJsonExpr(style.maxZoomLevel)) {
-                    style._maxZoomLevelExpr = Expr.fromJSON(style.maxZoomLevel).intern(
-                        this.m_exprPool
-                    );
+                    style._maxZoomLevelExpr = Expr.fromJSON(
+                        style.maxZoomLevel,
+                        this.m_definitions
+                    ).intern(this.m_exprPool);
                 }
             } catch (err) {
                 logger.log(
