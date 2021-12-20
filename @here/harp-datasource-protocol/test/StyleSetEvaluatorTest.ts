@@ -879,7 +879,8 @@ describe("StyleSetEvaluator", function () {
             assert.strictEqual(techniques.length, 0);
         });
     });
-    it("lookup expressions and lookup table are cached", function () {
+    //not supported at the moment, see HARP-17877
+    it.skip("lookup expressions and lookup table are cached", function () {
         const lookupTable: JsonArray = [
             "literal",
             [
@@ -989,8 +990,8 @@ describe("StyleSetEvaluator", function () {
                 const technique = techniques[0] as PoiTechnique;
 
                 const context: AttrEvaluationContext = {
-                    env,
-                    cachedExprResults: styleSetEvaluator.expressionEvaluatorCache
+                    env
+                    // cachedExprResults: styleSetEvaluator.expressionEvaluatorCache
                 };
                 // poiName attribute has FeatureGeometry scope, so it's not resolved on
                 // getMatchingTechniques.
