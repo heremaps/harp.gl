@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 HERE Europe B.V.
+ * Copyright (C) 2019-2022 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -177,8 +177,7 @@ export class VectorTileDataProcessor implements IGeometryProcessor {
         }
         const context: AttrEvaluationContext = {
             env,
-            // Reuse expressions cached on previous call to getMatchingTechniques.
-            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
+            cachedExprResults: new Map()
         };
 
         if (this.m_decodedTileEmitter) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 HERE Europe B.V.
+ * Copyright (C) 2019-2022 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -443,15 +443,6 @@ export class StyleSetEvaluator {
             this.getOptimizedStyleSet(this.m_tmpOptimizedSubSetKey.set(layer, geometryType))
                 .length > 0
         );
-    }
-
-    /**
-     * Get the expression evaluation cache, for further feature processing.
-     *
-     * This cache is cleared at the next `getMatchingTechniques` call.
-     */
-    get expressionEvaluatorCache(): Map<Expr, Value> {
-        return this.m_cachedResults;
     }
 
     /**

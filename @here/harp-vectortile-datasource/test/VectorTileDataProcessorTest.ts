@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2021 HERE Europe B.V.
+ * Copyright (C) 2021-2022 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 import { GeometryKind, IndexedTechnique } from "@here/harp-datasource-protocol";
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as sinon from "sinon";
@@ -140,33 +139,6 @@ describe("VectorTileDataProcessor", function () {
                         );
                     });
                 emitterSpy = sinon.spy(VectorTileDataEmitter.prototype, processorMethod as any);
-            });
-
-            it("passes style evaluator cache to emitter", function () {
-                const matchingTechniques: IndexedTechnique[] = [
-                    {
-                        name: "line",
-                        color: "red",
-                        lineWidth: 1,
-                        _index: 0,
-                        _styleSetIndex: 0,
-                        kind: GeometryKind.Road
-                    }
-                ];
-                sinon
-                    .stub(styleSetEvaluator, "getMatchingTechniques")
-                    .callsFake(() => matchingTechniques);
-                sinon.stub(styleSetEvaluator, "techniques").get(() => matchingTechniques);
-                sinon.stub(styleSetEvaluator, "decodedTechniques").get(() => matchingTechniques);
-                sinon.stub(featureFilter, "wantsKind").callsFake((kind: string | string[]) => {
-                    return kind === GeometryKind.Road;
-                });
-                processor.getDecodedTile({});
-                expect(emitterSpy.calledOnce);
-                const context = emitterSpy.firstCall.args[3] as AttrEvaluationContext;
-                expect(context.cachedExprResults).equals(
-                    styleSetEvaluator.expressionEvaluatorCache
-                );
             });
 
             it("sets reserved feature properties", function () {
