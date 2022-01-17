@@ -1,19 +1,19 @@
 {
     "name": "@here/harp-performance-tests",
-    "version": "0.27.1",
+    "version": "0.28.0",
     "private": true,
     "author": {
         "name": "HERE Europe B.V.",
         "url": "https://here.com"
     },
     "devDependencies": {
-        "@here/harp-datasource-protocol": "^0.27.1",
-        "@here/harp-examples": "^0.27.1",
-        "@here/harp-geoutils": "^0.27.1",
-        "@here/harp-lines": "^0.27.1",
-        "@here/harp-mapview": "^0.27.1",
-        "@here/harp-test-utils": "^0.27.1",
-        "@here/harp-vectortile-datasource": "^0.27.1",
+        "@here/harp-datasource-protocol": "^0.28.0",
+        "@here/harp-examples": "^0.28.0",
+        "@here/harp-geoutils": "^0.28.0",
+        "@here/harp-lines": "^0.28.0",
+        "@here/harp-mapview": "^0.28.0",
+        "@here/harp-test-utils": "^0.28.0",
+        "@here/harp-vectortile-datasource": "^0.28.0",
         "@types/chai": "^4.2.14",
         "@types/three": "^0.129.0",
         "chai": "^4.2.0",
