@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-lrucache",
-    "version": "0.27.1",
+    "version": "0.28.0",
     "description": "LRU cache",
     "main": "index.js",
     "typings": "index",
@@ -23,7 +23,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-utils": "^0.27.1"
+        "@here/harp-utils": "^0.28.0"
     },
     "devDependencies": {
         "@types/chai": "^4.2.14",
