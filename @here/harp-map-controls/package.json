@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-map-controls",
-    "version": "0.27.1",
+    "version": "0.28.0",
     "description": "Camera controller which implements a common default set of camera functionality in a map context.",
     "main": "index.js",
     "typings": "index",
@@ -23,9 +23,9 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-geoutils": "^0.27.1",
-        "@here/harp-mapview": "^0.27.1",
-        "@here/harp-utils": "^0.27.1",
+        "@here/harp-geoutils": "^0.28.0",
+        "@here/harp-mapview": "^0.28.0",
+        "@here/harp-utils": "^0.28.0",
         "@tweenjs/tween.js": "^18.6.4"
     },
     "devDependencies": {
