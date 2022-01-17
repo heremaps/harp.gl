@@ -1,0 +1,1813 @@
+0 silly argv {
+0 silly argv   _: [ 'version' ],
+0 silly argv   'sign-git-commit': true,
+0 silly argv   signGitCommit: true,
+0 silly argv   'git-remote': 'origin',
+0 silly argv   gitRemote: 'origin',
+0 silly argv   lernaVersion: '3.22.1',
+0 silly argv   '$0': '../node_modules/.bin/lerna',
+0 silly argv   bump: 'minor'
+0 silly argv }
+1 notice cli v3.22.1
+2 verbose rootPath /Users/ffritz/pro/harp.gl.sdk/coresdk
+3 info current version 0.27.1
+4 silly isAnythingCommitted
+5 verbose isAnythingCommitted 1
+6 silly currentBranch
+7 verbose currentBranch release
+8 silly remoteBranchExists
+9 silly isBehindUpstream
+10 silly isBehindUpstream release is behind origin/release by 0 commit(s) and ahead by 15
+11 silly hasTags
+12 verbose hasTags true
+13 silly git-describe.sync "@here/generator-harp.gl@0.10.0-1242-ga1b5b636" => {"lastTagName":"@here/generator-harp.gl@0.10.0","lastVersion":"0.10.0","refCount":"1242","sha":"a1b5b636","isDirty":false}
+14 info Looking for changed packages since @here/generator-harp.gl@0.10.0
+15 info ignoring diff in paths matching [ 'test/**', 'README.md' ]
+16 silly checking diff @here/create-harp.gl-app
+17 silly found diff in @here/create-harp.gl-app/.gitignore
+17 silly found diff in @here/create-harp.gl-app/.yarnrc
+17 silly found diff in @here/create-harp.gl-app/LICENSE
+17 silly found diff in @here/create-harp.gl-app/README.md
+17 silly found diff in @here/create-harp.gl-app/package.json
+17 silly found diff in @here/create-harp.gl-app/src/index.js
+18 verbose filtered diff [
+18 verbose filtered diff   '@here/create-harp.gl-app/.gitignore',
+18 verbose filtered diff   '@here/create-harp.gl-app/.yarnrc',
+18 verbose filtered diff   '@here/create-harp.gl-app/LICENSE',
+18 verbose filtered diff   '@here/create-harp.gl-app/package.json',
+18 verbose filtered diff   '@here/create-harp.gl-app/src/index.js'
+18 verbose filtered diff ]
+19 silly checking diff @here/generator-harp.gl
+20 silly found diff in @here/generator-harp.gl/README.md
+20 silly found diff in @here/generator-harp.gl/generators/app/index.js
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/decoder.ts
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/javascript/README.md
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/javascript/View.js
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/javascript/decoder.js
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/javascript/deps.js
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/javascript/index.js
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/javascript/resources/README.md
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/javascript/webpack.config.js
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/package.json
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/typescript/README.md
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/typescript/View.ts
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/typescript/decoder.ts
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/typescript/index.ts
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/typescript/resources/README.md
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/typescript/tsconfig.json
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/typescript/webpack.config.js
+20 silly found diff in @here/generator-harp.gl/generators/app/templates/webpack.config.js
+20 silly found diff in @here/generator-harp.gl/package.json
+20 silly found diff in @here/generator-harp.gl/test/test.js
+21 verbose filtered diff [
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/index.js',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/decoder.ts',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/javascript/View.js',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/javascript/decoder.js',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/javascript/deps.js',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/javascript/index.js',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/javascript/webpack.config.js',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/package.json',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/typescript/View.ts',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/typescript/decoder.ts',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/typescript/index.ts',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/typescript/tsconfig.json',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/typescript/webpack.config.js',
+21 verbose filtered diff   '@here/generator-harp.gl/generators/app/templates/webpack.config.js',
+21 verbose filtered diff   '@here/generator-harp.gl/package.json',
+21 verbose filtered diff   '@here/generator-harp.gl/test/test.js'
+21 verbose filtered diff ]
+22 silly checking diff @here/harp-atlas-tools
+23 silly found diff in @here/harp-atlas-tools/.npmignore
+23 silly found diff in @here/harp-atlas-tools/package.json
+23 silly found diff in @here/harp-atlas-tools/src/AtlasGenerator.ts
+23 silly found diff in @here/harp-atlas-tools/src/BlendOperations.ts
+23 silly found diff in @here/harp-atlas-tools/src/ColorOperations.ts
+23 silly found diff in @here/harp-atlas-tools/src/ColorUtils.ts
+23 silly found diff in @here/harp-atlas-tools/src/FileSystem.ts
+23 silly found diff in @here/harp-atlas-tools/src/ImageBitmapCoders.ts
+23 silly found diff in @here/harp-atlas-tools/src/ImageFactory.ts
+23 silly found diff in @here/harp-atlas-tools/src/ImageProcessing.ts
+23 silly found diff in @here/harp-atlas-tools/src/ImageUtils.ts
+23 silly found diff in @here/harp-atlas-tools/src/ImageVectorCoders.ts
+23 silly found diff in @here/harp-atlas-tools/src/Logger.ts
+23 silly found diff in @here/harp-atlas-tools/src/MaskOperations.ts
+23 silly found diff in @here/harp-atlas-tools/src/cli-atlas-generator.ts
+23 silly found diff in @here/harp-atlas-tools/src/cli-sprites-generator.ts
+23 silly found diff in @here/harp-atlas-tools/src/index.ts
+23 silly found diff in @here/harp-atlas-tools/tsconfig.json
+24 verbose filtered diff [
+24 verbose filtered diff   '@here/harp-atlas-tools/.npmignore',
+24 verbose filtered diff   '@here/harp-atlas-tools/package.json',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/AtlasGenerator.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/BlendOperations.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/ColorOperations.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/ColorUtils.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/FileSystem.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/ImageBitmapCoders.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/ImageFactory.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/ImageProcessing.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/ImageUtils.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/ImageVectorCoders.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/Logger.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/MaskOperations.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/cli-atlas-generator.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/cli-sprites-generator.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/src/index.ts',
+24 verbose filtered diff   '@here/harp-atlas-tools/tsconfig.json'
+24 verbose filtered diff ]
+25 silly checking diff @here/harp-datasource-protocol
+26 silly found diff in @here/harp-datasource-protocol/.npmignore
+26 silly found diff in @here/harp-datasource-protocol/README.md
+26 silly found diff in @here/harp-datasource-protocol/StyleExpressions.md
+26 silly found diff in @here/harp-datasource-protocol/index-decoder.ts
+26 silly found diff in @here/harp-datasource-protocol/index.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ColorUtils.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/DecodedTile.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/Env.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ExponentialInterpolant.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/Expr.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ExprEvaluator.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ExprInstantiator.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ExprParser.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ExprPool.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/Extruder.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/GeoJsonDataType.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/IMeshBuffers.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ITileDecoder.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ITiler.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/InterpolatedProperty.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/InterpolatedPropertyDefs.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/Outliner.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/Pixels.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/PostEffects.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/PropertyValue.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/RGBA.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/StringEncodedNumeral.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/StyleSetEvaluator.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/TechniqueAttr.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/TechniqueDescriptors.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/TechniqueParams.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/Techniques.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/Theme.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ThemeVisitor.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ThreeBufferUtils.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/TileInfo.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/ViewRanges.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/WorkerDecoderProtocol.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/WorkerServiceProtocol.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/WorkerTilerProtocol.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/ArrayOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/CastOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/ColorOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/ComparisonOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/FeatureOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/FlowOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/MapOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/MathOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/MiscOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/ObjectOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/StringOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/TypeOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/lib/operators/VectorOperators.ts
+26 silly found diff in @here/harp-datasource-protocol/package.json
+26 silly found diff in @here/harp-datasource-protocol/test/ColorUtilsTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/ExprEvaluatorTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/ExprPoolTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/ExprTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/InterpolationTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/OutlinesTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/StringDecodersTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/StyleSetEvaluatorTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/ThemeTypingsTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/ThreeBufferUtilsTest.ts
+26 silly found diff in @here/harp-datasource-protocol/test/TileInfoTest.ts
+26 silly found diff in @here/harp-datasource-protocol/tsconfig.json
+27 verbose filtered diff [
+27 verbose filtered diff   '@here/harp-datasource-protocol/.npmignore',
+27 verbose filtered diff   '@here/harp-datasource-protocol/StyleExpressions.md',
+27 verbose filtered diff   '@here/harp-datasource-protocol/index-decoder.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/index.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ColorUtils.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/DecodedTile.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/Env.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ExponentialInterpolant.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/Expr.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ExprEvaluator.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ExprInstantiator.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ExprParser.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ExprPool.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/Extruder.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/GeoJsonDataType.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/IMeshBuffers.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ITileDecoder.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ITiler.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/InterpolatedProperty.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/InterpolatedPropertyDefs.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/Outliner.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/Pixels.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/PostEffects.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/PropertyValue.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/RGBA.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/StringEncodedNumeral.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/StyleSetEvaluator.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/TechniqueAttr.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/TechniqueDescriptors.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/TechniqueParams.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/Techniques.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/Theme.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ThemeVisitor.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ThreeBufferUtils.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/TileInfo.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/ViewRanges.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/WorkerDecoderProtocol.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/WorkerServiceProtocol.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/WorkerTilerProtocol.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/ArrayOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/CastOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/ColorOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/ComparisonOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/FeatureOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/FlowOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/MapOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/MathOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/MiscOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/ObjectOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/StringOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/TypeOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/lib/operators/VectorOperators.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/package.json',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/ColorUtilsTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/ExprEvaluatorTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/ExprPoolTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/ExprTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/InterpolationTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/OutlinesTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/StringDecodersTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/StyleSetEvaluatorTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/ThemeTypingsTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/ThreeBufferUtilsTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/test/TileInfoTest.ts',
+27 verbose filtered diff   '@here/harp-datasource-protocol/tsconfig.json'
+27 verbose filtered diff ]
+28 silly checking diff @here/harp-debug-datasource
+29 silly found diff in @here/harp-debug-datasource/.npmignore
+29 silly found diff in @here/harp-debug-datasource/index.ts
+29 silly found diff in @here/harp-debug-datasource/lib/DebugTileDataSource.ts
+29 silly found diff in @here/harp-debug-datasource/package.json
+29 silly found diff in @here/harp-debug-datasource/test/Test.ts
+29 silly found diff in @here/harp-debug-datasource/tsconfig.json
+30 verbose filtered diff [
+30 verbose filtered diff   '@here/harp-debug-datasource/.npmignore',
+30 verbose filtered diff   '@here/harp-debug-datasource/index.ts',
+30 verbose filtered diff   '@here/harp-debug-datasource/lib/DebugTileDataSource.ts',
+30 verbose filtered diff   '@here/harp-debug-datasource/package.json',
+30 verbose filtered diff   '@here/harp-debug-datasource/test/Test.ts',
+30 verbose filtered diff   '@here/harp-debug-datasource/tsconfig.json'
+30 verbose filtered diff ]
+31 silly checking diff @here/harp-examples
+32 silly found diff in @here/harp-examples/.npmignore
+32 silly found diff in @here/harp-examples/README.md
+32 silly found diff in @here/harp-examples/codebrowser.ts
+32 silly found diff in @here/harp-examples/config.ts
+32 silly found diff in @here/harp-examples/decoder/custom_decoder.ts
+32 silly found diff in @here/harp-examples/decoder/custom_decoder_defs.ts
+32 silly found diff in @here/harp-examples/decoder/decoder.ts
+32 silly found diff in @here/harp-examples/example-browser.ts
+32 silly found diff in @here/harp-examples/index.html
+32 silly found diff in @here/harp-examples/lib/PerformanceConfig.ts
+32 silly found diff in @here/harp-examples/lib/PerformanceUtils.ts
+32 silly found diff in @here/harp-examples/package.json
+32 silly found diff in @here/harp-examples/resources/countries.ts
+32 silly found diff in @here/harp-examples/resources/geology.ts
+32 silly found diff in @here/harp-examples/resources/polygon.json
+32 silly found diff in @here/harp-examples/scripts/postinstall.js
+32 silly found diff in @here/harp-examples/scripts/publish-html.js
+32 silly found diff in @here/harp-examples/src/bounds-generation.ts
+32 silly found diff in @here/harp-examples/src/camera-animations_key-track.ts
+32 silly found diff in @here/harp-examples/src/camera-animations_quaternion-slerp.ts
+32 silly found diff in @here/harp-examples/src/datasource_custom-texture-tile.ts
+32 silly found diff in @here/harp-examples/src/datasource_custom.ts
+32 silly found diff in @here/harp-examples/src/datasource_features_lines-and-points.ts
+32 silly found diff in @here/harp-examples/src/datasource_features_polygons.ts
+32 silly found diff in @here/harp-examples/src/datasource_geojson_choropleth.ts
+32 silly found diff in @here/harp-examples/src/datasource_geojson_custom-shader.ts
+32 silly found diff in @here/harp-examples/src/datasource_geojson_elevated-markers.ts
+32 silly found diff in @here/harp-examples/src/datasource_geojson_points.ts
+32 silly found diff in @here/harp-examples/src/datasource_geojson_styling_game.ts
+32 silly found diff in @here/harp-examples/src/datasource_geojson_visibility.ts
+32 silly found diff in @here/harp-examples/src/datasource_here-webtile.ts
+32 silly found diff in @here/harp-examples/src/datasource_here_vector_tile.ts
+32 silly found diff in @here/harp-examples/src/datasource_satellite-tile.ts
+32 silly found diff in @here/harp-examples/src/datasource_satellite-tile_globe.ts
+32 silly found diff in @here/harp-examples/src/datasource_webtile_globe.ts
+32 silly found diff in @here/harp-examples/src/datasource_xyzmvt.ts
+32 silly found diff in @here/harp-examples/src/elevation-provider.ts
+32 silly found diff in @here/harp-examples/src/geojson-viewer.ts
+32 silly found diff in @here/harp-examples/src/getting-started_free-camera.ts
+32 silly found diff in @here/harp-examples/src/getting-started_globe-projection.ts
+32 silly found diff in @here/harp-examples/src/getting-started_hello-world_js-bundle.html
+32 silly found diff in @here/harp-examples/src/getting-started_hello-world_npm.ts
+32 silly found diff in @here/harp-examples/src/getting-started_look-at.ts
+32 silly found diff in @here/harp-examples/src/getting-started_open-sourced-themes.ts
+32 silly found diff in @here/harp-examples/src/getting-started_orbiting-view.ts
+32 silly found diff in @here/harp-examples/src/markers_dynamic.ts
+32 silly found diff in @here/harp-examples/src/markers_screen-anchor.ts
+32 silly found diff in @here/harp-examples/src/object-picking.ts
+32 silly found diff in @here/harp-examples/src/performance_benchmark.ts
+32 silly found diff in @here/harp-examples/src/real-time-shadows.ts
+32 silly found diff in @here/harp-examples/src/rendering_globe-atmosphere.ts
+32 silly found diff in @here/harp-examples/src/rendering_post-effects_all.ts
+32 silly found diff in @here/harp-examples/src/rendering_post-effects_themes.ts
+32 silly found diff in @here/harp-examples/src/rendering_synchronous.ts
+32 silly found diff in @here/harp-examples/src/styling_data-driven.ts
+32 silly found diff in @here/harp-examples/src/styling_extend-a-theme.ts
+32 silly found diff in @here/harp-examples/src/styling_interpolation.ts
+32 silly found diff in @here/harp-examples/src/styling_square-technique.ts
+32 silly found diff in @here/harp-examples/src/styling_textured-areas.ts
+32 silly found diff in @here/harp-examples/src/synchronized-views.ts
+32 silly found diff in @here/harp-examples/src/textcanvas.ts
+32 silly found diff in @here/harp-examples/src/threejs_add-object.ts
+32 silly found diff in @here/harp-examples/src/threejs_animation.ts
+32 silly found diff in @here/harp-examples/src/threejs_raycast.ts
+32 silly found diff in @here/harp-examples/src/tile_dependencies.ts
+32 silly found diff in @here/harp-examples/src/triple-view.ts
+32 silly found diff in @here/harp-examples/template/example.html
+32 silly found diff in @here/harp-examples/tsconfig.json
+32 silly found diff in @here/harp-examples/webpack.config.js
+33 verbose filtered diff [
+33 verbose filtered diff   '@here/harp-examples/.npmignore',
+33 verbose filtered diff   '@here/harp-examples/codebrowser.ts',
+33 verbose filtered diff   '@here/harp-examples/config.ts',
+33 verbose filtered diff   '@here/harp-examples/decoder/custom_decoder.ts',
+33 verbose filtered diff   '@here/harp-examples/decoder/custom_decoder_defs.ts',
+33 verbose filtered diff   '@here/harp-examples/decoder/decoder.ts',
+33 verbose filtered diff   '@here/harp-examples/example-browser.ts',
+33 verbose filtered diff   '@here/harp-examples/index.html',
+33 verbose filtered diff   '@here/harp-examples/lib/PerformanceConfig.ts',
+33 verbose filtered diff   '@here/harp-examples/lib/PerformanceUtils.ts',
+33 verbose filtered diff   '@here/harp-examples/package.json',
+33 verbose filtered diff   '@here/harp-examples/resources/countries.ts',
+33 verbose filtered diff   '@here/harp-examples/resources/geology.ts',
+33 verbose filtered diff   '@here/harp-examples/resources/polygon.json',
+33 verbose filtered diff   '@here/harp-examples/scripts/postinstall.js',
+33 verbose filtered diff   '@here/harp-examples/scripts/publish-html.js',
+33 verbose filtered diff   '@here/harp-examples/src/bounds-generation.ts',
+33 verbose filtered diff   '@here/harp-examples/src/camera-animations_key-track.ts',
+33 verbose filtered diff   '@here/harp-examples/src/camera-animations_quaternion-slerp.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_custom-texture-tile.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_custom.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_features_lines-and-points.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_features_polygons.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_geojson_choropleth.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_geojson_custom-shader.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_geojson_elevated-markers.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_geojson_points.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_geojson_styling_game.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_geojson_visibility.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_here-webtile.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_here_vector_tile.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_satellite-tile.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_satellite-tile_globe.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_webtile_globe.ts',
+33 verbose filtered diff   '@here/harp-examples/src/datasource_xyzmvt.ts',
+33 verbose filtered diff   '@here/harp-examples/src/elevation-provider.ts',
+33 verbose filtered diff   '@here/harp-examples/src/geojson-viewer.ts',
+33 verbose filtered diff   '@here/harp-examples/src/getting-started_free-camera.ts',
+33 verbose filtered diff   '@here/harp-examples/src/getting-started_globe-projection.ts',
+33 verbose filtered diff   '@here/harp-examples/src/getting-started_hello-world_js-bundle.html',
+33 verbose filtered diff   '@here/harp-examples/src/getting-started_hello-world_npm.ts',
+33 verbose filtered diff   '@here/harp-examples/src/getting-started_look-at.ts',
+33 verbose filtered diff   '@here/harp-examples/src/getting-started_open-sourced-themes.ts',
+33 verbose filtered diff   '@here/harp-examples/src/getting-started_orbiting-view.ts',
+33 verbose filtered diff   '@here/harp-examples/src/markers_dynamic.ts',
+33 verbose filtered diff   '@here/harp-examples/src/markers_screen-anchor.ts',
+33 verbose filtered diff   '@here/harp-examples/src/object-picking.ts',
+33 verbose filtered diff   '@here/harp-examples/src/performance_benchmark.ts',
+33 verbose filtered diff   '@here/harp-examples/src/real-time-shadows.ts',
+33 verbose filtered diff   '@here/harp-examples/src/rendering_globe-atmosphere.ts',
+33 verbose filtered diff   '@here/harp-examples/src/rendering_post-effects_all.ts',
+33 verbose filtered diff   '@here/harp-examples/src/rendering_post-effects_themes.ts',
+33 verbose filtered diff   '@here/harp-examples/src/rendering_synchronous.ts',
+33 verbose filtered diff   '@here/harp-examples/src/styling_data-driven.ts',
+33 verbose filtered diff   '@here/harp-examples/src/styling_extend-a-theme.ts',
+33 verbose filtered diff   '@here/harp-examples/src/styling_interpolation.ts',
+33 verbose filtered diff   '@here/harp-examples/src/styling_square-technique.ts',
+33 verbose filtered diff   '@here/harp-examples/src/styling_textured-areas.ts',
+33 verbose filtered diff   '@here/harp-examples/src/synchronized-views.ts',
+33 verbose filtered diff   '@here/harp-examples/src/textcanvas.ts',
+33 verbose filtered diff   '@here/harp-examples/src/threejs_add-object.ts',
+33 verbose filtered diff   '@here/harp-examples/src/threejs_animation.ts',
+33 verbose filtered diff   '@here/harp-examples/src/threejs_raycast.ts',
+33 verbose filtered diff   '@here/harp-examples/src/tile_dependencies.ts',
+33 verbose filtered diff   '@here/harp-examples/src/triple-view.ts',
+33 verbose filtered diff   '@here/harp-examples/template/example.html',
+33 verbose filtered diff   '@here/harp-examples/tsconfig.json',
+33 verbose filtered diff   '@here/harp-examples/webpack.config.js'
+33 verbose filtered diff ]
+34 silly checking diff @here/harp-features-datasource
+35 silly found diff in @here/harp-features-datasource/.npmignore
+35 silly found diff in @here/harp-features-datasource/index.ts
+35 silly found diff in @here/harp-features-datasource/lib/Features.ts
+35 silly found diff in @here/harp-features-datasource/lib/FeaturesDataSource.ts
+35 silly found diff in @here/harp-features-datasource/package.json
+35 silly found diff in @here/harp-features-datasource/tsconfig.json
+36 verbose filtered diff [
+36 verbose filtered diff   '@here/harp-features-datasource/.npmignore',
+36 verbose filtered diff   '@here/harp-features-datasource/index.ts',
+36 verbose filtered diff   '@here/harp-features-datasource/lib/Features.ts',
+36 verbose filtered diff   '@here/harp-features-datasource/lib/FeaturesDataSource.ts',
+36 verbose filtered diff   '@here/harp-features-datasource/package.json',
+36 verbose filtered diff   '@here/harp-features-datasource/tsconfig.json'
+36 verbose filtered diff ]
+37 silly checking diff @here/harp-fetch
+38 silly found diff in @here/harp-fetch/.npmignore
+38 silly found diff in @here/harp-fetch/index.ts
+38 silly found diff in @here/harp-fetch/index.web.ts
+38 silly found diff in @here/harp-fetch/package.json
+38 silly found diff in @here/harp-fetch/test/FetchTest.ts
+38 silly found diff in @here/harp-fetch/tsconfig.json
+39 verbose filtered diff [
+39 verbose filtered diff   '@here/harp-fetch/.npmignore',
+39 verbose filtered diff   '@here/harp-fetch/index.ts',
+39 verbose filtered diff   '@here/harp-fetch/index.web.ts',
+39 verbose filtered diff   '@here/harp-fetch/package.json',
+39 verbose filtered diff   '@here/harp-fetch/test/FetchTest.ts',
+39 verbose filtered diff   '@here/harp-fetch/tsconfig.json'
+39 verbose filtered diff ]
+40 silly checking diff @here/harp-geojson-datasource
+41 silly found diff in @here/harp-geojson-datasource/.npmignore
+41 silly found diff in @here/harp-geojson-datasource/index-worker.ts
+41 silly found diff in @here/harp-geojson-datasource/index.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/GeoJsonDataProvider.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/GeoJsonDataSource.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/GeoJsonDecoder.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/GeoJsonGeometryCreator.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/GeoJsonParser.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/GeoJsonTile.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/GeoJsonTileDecoderService.ts
+41 silly found diff in @here/harp-geojson-datasource/lib/utils/Flattener.ts
+41 silly found diff in @here/harp-geojson-datasource/package.json
+41 silly found diff in @here/harp-geojson-datasource/test/GeoJsonTest.ts
+41 silly found diff in @here/harp-geojson-datasource/tsconfig.json
+42 verbose filtered diff [
+42 verbose filtered diff   '@here/harp-geojson-datasource/.npmignore',
+42 verbose filtered diff   '@here/harp-geojson-datasource/index-worker.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/index.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/GeoJsonDataProvider.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/GeoJsonDataSource.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/GeoJsonDecoder.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/GeoJsonGeometryCreator.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/GeoJsonParser.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/GeoJsonTile.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/GeoJsonTileDecoderService.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/lib/utils/Flattener.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/package.json',
+42 verbose filtered diff   '@here/harp-geojson-datasource/test/GeoJsonTest.ts',
+42 verbose filtered diff   '@here/harp-geojson-datasource/tsconfig.json'
+42 verbose filtered diff ]
+43 silly checking diff @here/harp-geometry
+44 silly found diff in @here/harp-geometry/.npmignore
+44 silly found diff in @here/harp-geometry/index.ts
+44 silly found diff in @here/harp-geometry/lib/ClipLineString.ts
+44 silly found diff in @here/harp-geometry/lib/ClipPolygon.ts
+44 silly found diff in @here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier.ts
+44 silly found diff in @here/harp-geometry/lib/OrientedBox3.ts
+44 silly found diff in @here/harp-geometry/lib/SphericalGeometrySubdivisionModifier.ts
+44 silly found diff in @here/harp-geometry/lib/SubdivisionModifier.ts
+44 silly found diff in @here/harp-geometry/lib/WrapLineString.ts
+44 silly found diff in @here/harp-geometry/lib/WrapPolygon.ts
+44 silly found diff in @here/harp-geometry/package.json
+44 silly found diff in @here/harp-geometry/test/ClipPolygonTest.ts
+44 silly found diff in @here/harp-geometry/test/EdgeLengthGeometrySubdivisionModifierTest.ts
+44 silly found diff in @here/harp-geometry/test/OrientedBox3Test.ts
+44 silly found diff in @here/harp-geometry/test/SphericalGeometrySubdivisionModifierTest.ts
+44 silly found diff in @here/harp-geometry/tsconfig.json
+45 verbose filtered diff [
+45 verbose filtered diff   '@here/harp-geometry/.npmignore',
+45 verbose filtered diff   '@here/harp-geometry/index.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/ClipLineString.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/ClipPolygon.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/OrientedBox3.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/SubdivisionModifier.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/WrapLineString.ts',
+45 verbose filtered diff   '@here/harp-geometry/lib/WrapPolygon.ts',
+45 verbose filtered diff   '@here/harp-geometry/package.json',
+45 verbose filtered diff   '@here/harp-geometry/test/ClipPolygonTest.ts',
+45 verbose filtered diff   '@here/harp-geometry/test/EdgeLengthGeometrySubdivisionModifierTest.ts',
+45 verbose filtered diff   '@here/harp-geometry/test/OrientedBox3Test.ts',
+45 verbose filtered diff   '@here/harp-geometry/test/SphericalGeometrySubdivisionModifierTest.ts',
+45 verbose filtered diff   '@here/harp-geometry/tsconfig.json'
+45 verbose filtered diff ]
+46 silly checking diff @here/harp-geoutils
+47 silly found diff in @here/harp-geoutils/.npmignore
+47 silly found diff in @here/harp-geoutils/index.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoBox.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoBoxExtentLike.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoCoordLike.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoCoordinates.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoCoordinatesLike.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoPointLike.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoPolygon.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/GeoPolygonLike.ts
+47 silly found diff in @here/harp-geoutils/lib/coordinates/LatLngLike.ts
+47 silly found diff in @here/harp-geoutils/lib/math/Box3Like.ts
+47 silly found diff in @here/harp-geoutils/lib/math/MathUtils.ts
+47 silly found diff in @here/harp-geoutils/lib/math/OrientedBox3.ts
+47 silly found diff in @here/harp-geoutils/lib/math/OrientedBox3Like.ts
+47 silly found diff in @here/harp-geoutils/lib/math/TransformLike.ts
+47 silly found diff in @here/harp-geoutils/lib/math/Vector2Like.ts
+47 silly found diff in @here/harp-geoutils/lib/math/Vector3Like.ts
+47 silly found diff in @here/harp-geoutils/lib/projection/EarthConstants.ts
+47 silly found diff in @here/harp-geoutils/lib/projection/EquirectangularProjection.ts
+47 silly found diff in @here/harp-geoutils/lib/projection/IdentityProjection.ts
+47 silly found diff in @here/harp-geoutils/lib/projection/MercatorProjection.ts
+47 silly found diff in @here/harp-geoutils/lib/projection/Projection.ts
+47 silly found diff in @here/harp-geoutils/lib/projection/SphereProjection.ts
+47 silly found diff in @here/harp-geoutils/lib/projection/TransverseMercatorProjection.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/FlatTileBoundingBoxGenerator.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/HalfQuadTreeSubdivisionScheme.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/HereTilingScheme.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/MercatorTilingScheme.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/PolarTilingScheme.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/QuadTree.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/QuadTreeSubdivisionScheme.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/SubTiles.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/SubdivisionScheme.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/TileKey.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/TileKeyUtils.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/TileTreeTraverse.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/TilingScheme.ts
+47 silly found diff in @here/harp-geoutils/lib/tiling/WebMercatorTilingScheme.ts
+47 silly found diff in @here/harp-geoutils/package.json
+47 silly found diff in @here/harp-geoutils/test/GeoBoxTest.ts
+47 silly found diff in @here/harp-geoutils/test/GeoCoordinatesTest.ts
+47 silly found diff in @here/harp-geoutils/test/GeoPolygonTest.ts
+47 silly found diff in @here/harp-geoutils/test/MathUtilsTest.ts
+47 silly found diff in @here/harp-geoutils/test/OrientedBox3Test.ts
+47 silly found diff in @here/harp-geoutils/test/ProjectionTest.ts
+47 silly found diff in @here/harp-geoutils/test/SphereProjectionTest.ts
+47 silly found diff in @here/harp-geoutils/test/SubTilesTest.ts
+47 silly found diff in @here/harp-geoutils/test/TileKeyTest.ts
+47 silly found diff in @here/harp-geoutils/test/TileKeyUtilsTest.ts
+47 silly found diff in @here/harp-geoutils/test/TileTreeTraverseTest.ts
+47 silly found diff in @here/harp-geoutils/test/TransverseMercatorProjectionTest.ts
+47 silly found diff in @here/harp-geoutils/tsconfig.json
+48 verbose filtered diff [
+48 verbose filtered diff   '@here/harp-geoutils/.npmignore',
+48 verbose filtered diff   '@here/harp-geoutils/index.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoBox.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoBoxExtentLike.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoCoordLike.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoCoordinates.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoCoordinatesLike.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoPointLike.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoPolygon.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/GeoPolygonLike.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/coordinates/LatLngLike.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/math/Box3Like.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/math/MathUtils.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/math/OrientedBox3.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/math/OrientedBox3Like.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/math/TransformLike.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/math/Vector2Like.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/math/Vector3Like.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/projection/EarthConstants.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/projection/EquirectangularProjection.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/projection/IdentityProjection.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/projection/MercatorProjection.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/projection/Projection.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/projection/SphereProjection.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/projection/TransverseMercatorProjection.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/FlatTileBoundingBoxGenerator.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/HalfQuadTreeSubdivisionScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/HereTilingScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/MercatorTilingScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/PolarTilingScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/QuadTree.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/QuadTreeSubdivisionScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/SubTiles.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/SubdivisionScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/TileKey.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/TileKeyUtils.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/TileTreeTraverse.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/TilingScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/lib/tiling/WebMercatorTilingScheme.ts',
+48 verbose filtered diff   '@here/harp-geoutils/package.json',
+48 verbose filtered diff   '@here/harp-geoutils/test/GeoBoxTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/GeoCoordinatesTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/GeoPolygonTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/MathUtilsTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/OrientedBox3Test.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/ProjectionTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/SphereProjectionTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/SubTilesTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/TileKeyTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/TileKeyUtilsTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/TileTreeTraverseTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/test/TransverseMercatorProjectionTest.ts',
+48 verbose filtered diff   '@here/harp-geoutils/tsconfig.json'
+48 verbose filtered diff ]
+49 silly checking diff @here/harp-lines
+50 silly found diff in @here/harp-lines/.npmignore
+50 silly found diff in @here/harp-lines/index.ts
+50 silly found diff in @here/harp-lines/lib/HighPrecisionLines.ts
+50 silly found diff in @here/harp-lines/lib/HighPrecisionPoints.ts
+50 silly found diff in @here/harp-lines/lib/HighPrecisionUtils.ts
+50 silly found diff in @here/harp-lines/lib/Lines.ts
+50 silly found diff in @here/harp-lines/lib/TriangulateLines.ts
+50 silly found diff in @here/harp-lines/package.json
+50 silly found diff in @here/harp-lines/test/Test.ts
+50 silly found diff in @here/harp-lines/test/rendering/RenderLines.ts
+50 silly found diff in @here/harp-lines/tsconfig.json
+51 verbose filtered diff [
+51 verbose filtered diff   '@here/harp-lines/.npmignore',
+51 verbose filtered diff   '@here/harp-lines/index.ts',
+51 verbose filtered diff   '@here/harp-lines/lib/HighPrecisionLines.ts',
+51 verbose filtered diff   '@here/harp-lines/lib/HighPrecisionPoints.ts',
+51 verbose filtered diff   '@here/harp-lines/lib/HighPrecisionUtils.ts',
+51 verbose filtered diff   '@here/harp-lines/lib/Lines.ts',
+51 verbose filtered diff   '@here/harp-lines/lib/TriangulateLines.ts',
+51 verbose filtered diff   '@here/harp-lines/package.json',
+51 verbose filtered diff   '@here/harp-lines/test/Test.ts',
+51 verbose filtered diff   '@here/harp-lines/test/rendering/RenderLines.ts',
+51 verbose filtered diff   '@here/harp-lines/tsconfig.json'
+51 verbose filtered diff ]
+52 silly checking diff @here/harp-lrucache
+53 silly found diff in @here/harp-lrucache/.npmignore
+53 silly found diff in @here/harp-lrucache/index.ts
+53 silly found diff in @here/harp-lrucache/lib/LRUCache.ts
+53 silly found diff in @here/harp-lrucache/package.json
+53 silly found diff in @here/harp-lrucache/test/LRUCacheTest.ts
+53 silly found diff in @here/harp-lrucache/tsconfig.json
+54 verbose filtered diff [
+54 verbose filtered diff   '@here/harp-lrucache/.npmignore',
+54 verbose filtered diff   '@here/harp-lrucache/index.ts',
+54 verbose filtered diff   '@here/harp-lrucache/lib/LRUCache.ts',
+54 verbose filtered diff   '@here/harp-lrucache/package.json',
+54 verbose filtered diff   '@here/harp-lrucache/test/LRUCacheTest.ts',
+54 verbose filtered diff   '@here/harp-lrucache/tsconfig.json'
+54 verbose filtered diff ]
+55 silly checking diff @here/harp-map-controls
+56 silly found diff in @here/harp-map-controls/.npmignore
+56 silly found diff in @here/harp-map-controls/index.ts
+56 silly found diff in @here/harp-map-controls/lib/CameraAnimationBuilder.ts
+56 silly found diff in @here/harp-map-controls/lib/CameraKeyTrackAnimation.ts
+56 silly found diff in @here/harp-map-controls/lib/LongPressHandler.ts
+56 silly found diff in @here/harp-map-controls/lib/MapAnimations.ts
+56 silly found diff in @here/harp-map-controls/lib/MapControls.ts
+56 silly found diff in @here/harp-map-controls/lib/MapControlsUI.ts
+56 silly found diff in @here/harp-map-controls/lib/Utils.ts
+56 silly found diff in @here/harp-map-controls/package.json
+56 silly found diff in @here/harp-map-controls/test/CameraAnimationBuilderTest.ts
+56 silly found diff in @here/harp-map-controls/test/LongPressHandlerTest.ts
+56 silly found diff in @here/harp-map-controls/test/MapControlsTest.ts
+56 silly found diff in @here/harp-map-controls/test/UtilsTest.ts
+56 silly found diff in @here/harp-map-controls/tsconfig.json
+57 verbose filtered diff [
+57 verbose filtered diff   '@here/harp-map-controls/.npmignore',
+57 verbose filtered diff   '@here/harp-map-controls/index.ts',
+57 verbose filtered diff   '@here/harp-map-controls/lib/CameraAnimationBuilder.ts',
+57 verbose filtered diff   '@here/harp-map-controls/lib/CameraKeyTrackAnimation.ts',
+57 verbose filtered diff   '@here/harp-map-controls/lib/LongPressHandler.ts',
+57 verbose filtered diff   '@here/harp-map-controls/lib/MapAnimations.ts',
+57 verbose filtered diff   '@here/harp-map-controls/lib/MapControls.ts',
+57 verbose filtered diff   '@here/harp-map-controls/lib/MapControlsUI.ts',
+57 verbose filtered diff   '@here/harp-map-controls/lib/Utils.ts',
+57 verbose filtered diff   '@here/harp-map-controls/package.json',
+57 verbose filtered diff   '@here/harp-map-controls/test/CameraAnimationBuilderTest.ts',
+57 verbose filtered diff   '@here/harp-map-controls/test/LongPressHandlerTest.ts',
+57 verbose filtered diff   '@here/harp-map-controls/test/MapControlsTest.ts',
+57 verbose filtered diff   '@here/harp-map-controls/test/UtilsTest.ts',
+57 verbose filtered diff   '@here/harp-map-controls/tsconfig.json'
+57 verbose filtered diff ]
+58 silly checking diff @here/harp-map-theme
+59 silly found diff in @here/harp-map-theme/.npmignore
+59 silly found diff in @here/harp-map-theme/index.ts
+59 silly found diff in @here/harp-map-theme/package.json
+59 silly found diff in @here/harp-map-theme/resources/Sky_nx.png
+59 silly found diff in @here/harp-map-theme/resources/Sky_ny.png
+59 silly found diff in @here/harp-map-theme/resources/Sky_nz.png
+59 silly found diff in @here/harp-map-theme/resources/Sky_px.png
+59 silly found diff in @here/harp-map-theme/resources/Sky_py.png
+59 silly found diff in @here/harp-map-theme/resources/Sky_pz.png
+59 silly found diff in @here/harp-map-theme/resources/berlin_derived.json
+59 silly found diff in @here/harp-map-theme/resources/berlin_tilezen_base.json
+59 silly found diff in @here/harp-map-theme/resources/berlin_tilezen_base_globe.json
+59 silly found diff in @here/harp-map-theme/resources/berlin_tilezen_day_reduced.json
+59 silly found diff in @here/harp-map-theme/resources/berlin_tilezen_effects_outlines.json
+59 silly found diff in @here/harp-map-theme/resources/berlin_tilezen_effects_streets.json
+59 silly found diff in @here/harp-map-theme/resources/berlin_tilezen_night_reduced.json
+59 silly found diff in @here/harp-map-theme/resources/berlin_tilezen_roadshields.json
+59 silly found diff in @here/harp-map-theme/resources/poi_table_maki.json
+59 silly found diff in @here/harp-map-theme/scripts/prepack.ts
+59 silly found diff in @here/harp-map-theme/scripts/prepareIcons.ts
+59 silly found diff in @here/harp-map-theme/test/DefaultThemeTest.ts
+59 silly found diff in @here/harp-map-theme/tsconfig.json
+60 verbose filtered diff [
+60 verbose filtered diff   '@here/harp-map-theme/.npmignore',
+60 verbose filtered diff   '@here/harp-map-theme/index.ts',
+60 verbose filtered diff   '@here/harp-map-theme/package.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/Sky_nx.png',
+60 verbose filtered diff   '@here/harp-map-theme/resources/Sky_ny.png',
+60 verbose filtered diff   '@here/harp-map-theme/resources/Sky_nz.png',
+60 verbose filtered diff   '@here/harp-map-theme/resources/Sky_px.png',
+60 verbose filtered diff   '@here/harp-map-theme/resources/Sky_py.png',
+60 verbose filtered diff   '@here/harp-map-theme/resources/Sky_pz.png',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_derived.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_tilezen_base.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_tilezen_base_globe.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_tilezen_day_reduced.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_tilezen_effects_outlines.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_tilezen_effects_streets.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_tilezen_night_reduced.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/berlin_tilezen_roadshields.json',
+60 verbose filtered diff   '@here/harp-map-theme/resources/poi_table_maki.json',
+60 verbose filtered diff   '@here/harp-map-theme/scripts/prepack.ts',
+60 verbose filtered diff   '@here/harp-map-theme/scripts/prepareIcons.ts',
+60 verbose filtered diff   '@here/harp-map-theme/test/DefaultThemeTest.ts',
+60 verbose filtered diff   '@here/harp-map-theme/tsconfig.json'
+60 verbose filtered diff ]
+61 silly checking diff @here/harp-mapview-decoder
+62 silly found diff in @here/harp-mapview-decoder/.npmignore
+62 silly found diff in @here/harp-mapview-decoder/index-worker.ts
+62 silly found diff in @here/harp-mapview-decoder/index.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/DataProvider.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/GeoJsonTiler.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/TestDataProviders.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/ThemedTileDecoder.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/TileDataSource.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/TileDecoderService.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/TileLoader.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/TilerService.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/WorkerService.ts
+62 silly found diff in @here/harp-mapview-decoder/lib/WorkerServiceManager.ts
+62 silly found diff in @here/harp-mapview-decoder/package.json
+62 silly found diff in @here/harp-mapview-decoder/test/DataProviderTest.ts
+62 silly found diff in @here/harp-mapview-decoder/test/GeoJsonTilerTest.ts
+62 silly found diff in @here/harp-mapview-decoder/test/MapViewDecoderTest.ts
+62 silly found diff in @here/harp-mapview-decoder/test/TileDataSourceTest.ts
+62 silly found diff in @here/harp-mapview-decoder/test/TileGeometryLoaderTest.ts
+62 silly found diff in @here/harp-mapview-decoder/test/TileLoaderTest.ts
+62 silly found diff in @here/harp-mapview-decoder/tsconfig.json
+63 verbose filtered diff [
+63 verbose filtered diff   '@here/harp-mapview-decoder/.npmignore',
+63 verbose filtered diff   '@here/harp-mapview-decoder/index-worker.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/index.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/DataProvider.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/GeoJsonTiler.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/TestDataProviders.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/ThemedTileDecoder.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/TileDataSource.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/TileDecoderService.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/TileLoader.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/TilerService.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/WorkerService.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/lib/WorkerServiceManager.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/package.json',
+63 verbose filtered diff   '@here/harp-mapview-decoder/test/DataProviderTest.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/test/GeoJsonTilerTest.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/test/MapViewDecoderTest.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/test/TileDataSourceTest.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/test/TileGeometryLoaderTest.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/test/TileLoaderTest.ts',
+63 verbose filtered diff   '@here/harp-mapview-decoder/tsconfig.json'
+63 verbose filtered diff ]
+64 silly checking diff @here/harp-mapview
+65 silly found diff in @here/harp-mapview/.npmignore
+65 silly found diff in @here/harp-mapview/README.md
+65 silly found diff in @here/harp-mapview/index.ts
+65 silly found diff in @here/harp-mapview/lib/AnimatedExtrusionHandler.ts
+65 silly found diff in @here/harp-mapview/lib/BackgroundDataSource.ts
+65 silly found diff in @here/harp-mapview/lib/BaseTileLoader.ts
+65 silly found diff in @here/harp-mapview/lib/BoundsGenerator.ts
+65 silly found diff in @here/harp-mapview/lib/CameraMovementDetector.ts
+65 silly found diff in @here/harp-mapview/lib/CameraUtils.ts
+65 silly found diff in @here/harp-mapview/lib/ClipPlanesEvaluator.ts
+65 silly found diff in @here/harp-mapview/lib/ColorCache.ts
+65 silly found diff in @here/harp-mapview/lib/ConcurrentDecoderFacade.ts
+65 silly found diff in @here/harp-mapview/lib/ConcurrentTilerFacade.ts
+65 silly found diff in @here/harp-mapview/lib/ConcurrentWorkerSet.ts
+65 silly found diff in @here/harp-mapview/lib/DataSource.ts
+65 silly found diff in @here/harp-mapview/lib/DebugContext.ts
+65 silly found diff in @here/harp-mapview/lib/DecodedTileHelpers.ts
+65 silly found diff in @here/harp-mapview/lib/DepthPrePass.ts
+65 silly found diff in @here/harp-mapview/lib/DisplacementMap.ts
+65 silly found diff in @here/harp-mapview/lib/ElevationProvider.ts
+65 silly found diff in @here/harp-mapview/lib/ElevationRangeSource.ts
+65 silly found diff in @here/harp-mapview/lib/EventDispatcher.ts
+65 silly found diff in @here/harp-mapview/lib/FixedClipPlanesEvaluator.ts
+65 silly found diff in @here/harp-mapview/lib/FovCalculation.ts
+65 silly found diff in @here/harp-mapview/lib/FrustumIntersection.ts
+65 silly found diff in @here/harp-mapview/lib/ITileLoader.ts
+65 silly found diff in @here/harp-mapview/lib/IntersectParams.ts
+65 silly found diff in @here/harp-mapview/lib/MapAnchors.ts
+65 silly found diff in @here/harp-mapview/lib/MapMaterialAdapter.ts
+65 silly found diff in @here/harp-mapview/lib/MapObjectAdapter.ts
+65 silly found diff in @here/harp-mapview/lib/MapTileCuller.ts
+65 silly found diff in @here/harp-mapview/lib/MapView.ts
+65 silly found diff in @here/harp-mapview/lib/MapViewAtmosphere.ts
+65 silly found diff in @here/harp-mapview/lib/MapViewEnvironment.ts
+65 silly found diff in @here/harp-mapview/lib/MapViewFog.ts
+65 silly found diff in @here/harp-mapview/lib/MapViewPoints.ts
+65 silly found diff in @here/harp-mapview/lib/MapViewTaskScheduler.ts
+65 silly found diff in @here/harp-mapview/lib/MapViewThemeManager.ts
+65 silly found diff in @here/harp-mapview/lib/PathBlockingElement.ts
+65 silly found diff in @here/harp-mapview/lib/PickHandler.ts
+65 silly found diff in @here/harp-mapview/lib/PickListener.ts
+65 silly found diff in @here/harp-mapview/lib/PickingRaycaster.ts
+65 silly found diff in @here/harp-mapview/lib/PlaneViewBounds.ts
+65 silly found diff in @here/harp-mapview/lib/PolarTileDataSource.ts
+65 silly found diff in @here/harp-mapview/lib/RoadPicker.ts
+65 silly found diff in @here/harp-mapview/lib/ScreenCollisions.ts
+65 silly found diff in @here/harp-mapview/lib/ScreenProjector.ts
+65 silly found diff in @here/harp-mapview/lib/SkyBackground.ts
+65 silly found diff in @here/harp-mapview/lib/SkyCubemapTexture.ts
+65 silly found diff in @here/harp-mapview/lib/SkyGradientTexture.ts
+65 silly found diff in @here/harp-mapview/lib/SphereHorizon.ts
+65 silly found diff in @here/harp-mapview/lib/SphereViewBounds.ts
+65 silly found diff in @here/harp-mapview/lib/Statistics.ts
+65 silly found diff in @here/harp-mapview/lib/TextureLoader.ts
+65 silly found diff in @here/harp-mapview/lib/ThemeHelpers.ts
+65 silly found diff in @here/harp-mapview/lib/ThemeLoader.ts
+65 silly found diff in @here/harp-mapview/lib/Tile.ts
+65 silly found diff in @here/harp-mapview/lib/TileObjectsRenderer.ts
+65 silly found diff in @here/harp-mapview/lib/Utils.ts
+65 silly found diff in @here/harp-mapview/lib/ViewBounds.ts
+65 silly found diff in @here/harp-mapview/lib/VisibleTileSet.ts
+65 silly found diff in @here/harp-mapview/lib/WorkerBasedDecoder.ts
+65 silly found diff in @here/harp-mapview/lib/WorkerBasedTiler.ts
+65 silly found diff in @here/harp-mapview/lib/composing/IPassManager.ts
+65 silly found diff in @here/harp-mapview/lib/composing/LowResRenderPass.ts
+65 silly found diff in @here/harp-mapview/lib/composing/MSAARenderPass.ts
+65 silly found diff in @here/harp-mapview/lib/composing/MapRenderingManager.ts
+65 silly found diff in @here/harp-mapview/lib/composing/Outline.ts
+65 silly found diff in @here/harp-mapview/lib/composing/Pass.ts
+65 silly found diff in @here/harp-mapview/lib/composing/UnrealBloomPass.ts
+65 silly found diff in @here/harp-mapview/lib/composing/index.ts
+65 silly found diff in @here/harp-mapview/lib/copyrights/CopyrightCoverageProvider.ts
+65 silly found diff in @here/harp-mapview/lib/copyrights/CopyrightElementHandler.ts
+65 silly found diff in @here/harp-mapview/lib/copyrights/CopyrightInfo.ts
+65 silly found diff in @here/harp-mapview/lib/copyrights/CopyrightProvider.ts
+65 silly found diff in @here/harp-mapview/lib/copyrights/UrlCopyrightProvider.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/AddGroundPlane.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/DisplacedBufferAttribute.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/DisplacedBufferGeometry.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/DisplacedMesh.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/LodMesh.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/Object3DUtils.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/PhasedTileGeometryLoader.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/PhasedTileGeometryManager.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/ProjectTilePlaneCorners.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/RegisterTileObject.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/SolidLineMesh.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/TileDataAccessor.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/TileGeometry.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/TileGeometryCreator.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/TileGeometryLoader.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/TileGeometryManager.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/VertexCache.ts
+65 silly found diff in @here/harp-mapview/lib/geometry/overlayOnElevation.ts
+65 silly found diff in @here/harp-mapview/lib/image/Image.ts
+65 silly found diff in @here/harp-mapview/lib/image/ImageCache.ts
+65 silly found diff in @here/harp-mapview/lib/image/MapViewImageCache.ts
+65 silly found diff in @here/harp-mapview/lib/image/MipMapGenerator.ts
+65 silly found diff in @here/harp-mapview/lib/poi/BoxBuffer.ts
+65 silly found diff in @here/harp-mapview/lib/poi/PixelPicker.ts
+65 silly found diff in @here/harp-mapview/lib/poi/Poi.ts
+65 silly found diff in @here/harp-mapview/lib/poi/PoiBuilder.ts
+65 silly found diff in @here/harp-mapview/lib/poi/PoiManager.ts
+65 silly found diff in @here/harp-mapview/lib/poi/PoiRenderer.ts
+65 silly found diff in @here/harp-mapview/lib/poi/PoiTableManager.ts
+65 silly found diff in @here/harp-mapview/lib/text/FontCatalogLoader.ts
+65 silly found diff in @here/harp-mapview/lib/text/LayoutState.ts
+65 silly found diff in @here/harp-mapview/lib/text/MapViewState.ts
+65 silly found diff in @here/harp-mapview/lib/text/Placement.ts
+65 silly found diff in @here/harp-mapview/lib/text/PlacementStats.ts
+65 silly found diff in @here/harp-mapview/lib/text/RenderState.ts
+65 silly found diff in @here/harp-mapview/lib/text/SimplePath.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextCanvasFactory.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElement.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementBuilder.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementGroup.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementGroupPriorityList.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementGroupState.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementState.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementStateCache.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementType.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementsRenderer.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextElementsRendererOptions.ts
+65 silly found diff in @here/harp-mapview/lib/text/TextStyleCache.ts
+65 silly found diff in @here/harp-mapview/lib/text/TileTextStyleCache.ts
+65 silly found diff in @here/harp-mapview/lib/text/UpdateStats.ts
+65 silly found diff in @here/harp-mapview/lib/text/ViewState.ts
+65 silly found diff in @here/harp-mapview/lib/workers/WorkerBootstrapDefs.ts
+65 silly found diff in @here/harp-mapview/lib/workers/WorkerLoader.ts
+65 silly found diff in @here/harp-mapview/package.json
+65 silly found diff in @here/harp-mapview/test/AddGroundPlaneTest.ts
+65 silly found diff in @here/harp-mapview/test/AnimatedExtrusionHandlerTest.ts
+65 silly found diff in @here/harp-mapview/test/BackgroundDataSourceTest.ts
+65 silly found diff in @here/harp-mapview/test/BoundsGeneratorTest.ts
+65 silly found diff in @here/harp-mapview/test/CameraUtilsTest.ts
+65 silly found diff in @here/harp-mapview/test/ClipPlanesEvaluatorTest.ts
+65 silly found diff in @here/harp-mapview/test/ColorCacheTest.ts
+65 silly found diff in @here/harp-mapview/test/ConcurrentWorkerSetTest.ts
+65 silly found diff in @here/harp-mapview/test/CopyrightProvidersTest.ts
+65 silly found diff in @here/harp-mapview/test/DataSourceTest.ts
+65 silly found diff in @here/harp-mapview/test/DebugContextTest.ts
+65 silly found diff in @here/harp-mapview/test/DecodedTileHelpersTest.ts
+65 silly found diff in @here/harp-mapview/test/DisplacedBufferAttributeTest.ts
+65 silly found diff in @here/harp-mapview/test/DisplacedBufferGeometryTest.ts
+65 silly found diff in @here/harp-mapview/test/EventDispatcherTest.ts
+65 silly found diff in @here/harp-mapview/test/FakeOmvDataSource.ts
+65 silly found diff in @here/harp-mapview/test/FakeWebWorker.ts
+65 silly found diff in @here/harp-mapview/test/FixedClipPlanesEvaluatorTest.ts
+65 silly found diff in @here/harp-mapview/test/ImageCacheTest.ts
+65 silly found diff in @here/harp-mapview/test/LodMeshTest.ts
+65 silly found diff in @here/harp-mapview/test/MapMaterialAdapterTest.ts
+65 silly found diff in @here/harp-mapview/test/MapViewFogTest.ts
+65 silly found diff in @here/harp-mapview/test/MapViewTest.ts
+65 silly found diff in @here/harp-mapview/test/MipMapGeneratorTest.ts
+65 silly found diff in @here/harp-mapview/test/Object3DUtilsTest.ts
+65 silly found diff in @here/harp-mapview/test/OutlineTest.ts
+65 silly found diff in @here/harp-mapview/test/PickHandlerTest.ts
+65 silly found diff in @here/harp-mapview/test/PickListenerTest.ts
+65 silly found diff in @here/harp-mapview/test/PickingRaycasterTest.ts
+65 silly found diff in @here/harp-mapview/test/PlacementTest.ts
+65 silly found diff in @here/harp-mapview/test/PoiBatchRegistryTest.ts
+65 silly found diff in @here/harp-mapview/test/PoiBuilderTest.ts
+65 silly found diff in @here/harp-mapview/test/PoiInfoBuilder.ts
+65 silly found diff in @here/harp-mapview/test/PoiRendererTest.ts
+65 silly found diff in @here/harp-mapview/test/PolarTileDataSourceTest.ts
+65 silly found diff in @here/harp-mapview/test/ProjectTilePlaneCornersTest.ts
+65 silly found diff in @here/harp-mapview/test/RenderStateTest.ts
+65 silly found diff in @here/harp-mapview/test/ScreenCollisionsTest.ts
+65 silly found diff in @here/harp-mapview/test/ScreenProjectorTest.ts
+65 silly found diff in @here/harp-mapview/test/SolidLineMeshTest.ts
+65 silly found diff in @here/harp-mapview/test/SphereHorizonTest.ts
+65 silly found diff in @here/harp-mapview/test/StatisticsTest.ts
+65 silly found diff in @here/harp-mapview/test/TextElementBuilder.ts
+65 silly found diff in @here/harp-mapview/test/TextElementBuilderTest.ts
+65 silly found diff in @here/harp-mapview/test/TextElementStateCacheTest.ts
+65 silly found diff in @here/harp-mapview/test/TextElementStateTest.ts
+65 silly found diff in @here/harp-mapview/test/TextElementsRendererTest.ts
+65 silly found diff in @here/harp-mapview/test/TextElementsRendererTestFixture.ts
+65 silly found diff in @here/harp-mapview/test/TextElementsRendererTestUtils.ts
+65 silly found diff in @here/harp-mapview/test/TextureLoaderTest.ts
+65 silly found diff in @here/harp-mapview/test/ThemeLoaderTest.ts
+65 silly found diff in @here/harp-mapview/test/TileCreationTest.ts
+65 silly found diff in @here/harp-mapview/test/TileGeometryCreatorTest.ts
+65 silly found diff in @here/harp-mapview/test/TileTest.ts
+65 silly found diff in @here/harp-mapview/test/UtilsTest.ts
+65 silly found diff in @here/harp-mapview/test/VertexCacheTest.ts
+65 silly found diff in @here/harp-mapview/test/VisibleTileSetTest.ts
+65 silly found diff in @here/harp-mapview/test/WorkerBasedDecoderTest.ts
+65 silly found diff in @here/harp-mapview/test/WorkerLoaderTest.ts
+65 silly found diff in @here/harp-mapview/test/resources/baseTheme.json
+65 silly found diff in @here/harp-mapview/test/resources/headshot.jpg
+65 silly found diff in @here/harp-mapview/test/resources/headshot.png
+65 silly found diff in @here/harp-mapview/test/resources/testCopyright.json
+65 silly found diff in @here/harp-mapview/test/resources/testWorker.js
+65 silly found diff in @here/harp-mapview/test/stubElevationProvider.ts
+65 silly found diff in @here/harp-mapview/test/stubFontCatalog.ts
+65 silly found diff in @here/harp-mapview/test/stubPoiManager.ts
+65 silly found diff in @here/harp-mapview/test/stubPoiRenderer.ts
+65 silly found diff in @here/harp-mapview/test/stubTextCanvas.ts
+65 silly found diff in @here/harp-mapview/tsconfig.json
+66 verbose filtered diff [
+66 verbose filtered diff   '@here/harp-mapview/.npmignore',
+66 verbose filtered diff   '@here/harp-mapview/index.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/AnimatedExtrusionHandler.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/BackgroundDataSource.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/BaseTileLoader.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/BoundsGenerator.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/CameraMovementDetector.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/CameraUtils.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ClipPlanesEvaluator.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ColorCache.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ConcurrentDecoderFacade.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ConcurrentTilerFacade.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ConcurrentWorkerSet.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/DataSource.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/DebugContext.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/DecodedTileHelpers.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/DepthPrePass.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/DisplacementMap.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ElevationProvider.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ElevationRangeSource.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/EventDispatcher.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/FixedClipPlanesEvaluator.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/FovCalculation.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/FrustumIntersection.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ITileLoader.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/IntersectParams.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapAnchors.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapMaterialAdapter.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapObjectAdapter.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapTileCuller.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapView.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapViewAtmosphere.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapViewEnvironment.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapViewFog.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapViewPoints.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapViewTaskScheduler.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/MapViewThemeManager.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/PathBlockingElement.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/PickHandler.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/PickListener.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/PickingRaycaster.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/PlaneViewBounds.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/PolarTileDataSource.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/RoadPicker.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ScreenCollisions.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ScreenProjector.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/SkyBackground.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/SkyCubemapTexture.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/SkyGradientTexture.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/SphereHorizon.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/SphereViewBounds.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/Statistics.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/TextureLoader.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ThemeHelpers.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ThemeLoader.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/Tile.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/TileObjectsRenderer.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/Utils.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/ViewBounds.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/VisibleTileSet.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/WorkerBasedDecoder.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/WorkerBasedTiler.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/IPassManager.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/LowResRenderPass.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/MSAARenderPass.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/MapRenderingManager.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/Outline.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/Pass.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/UnrealBloomPass.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/composing/index.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/copyrights/CopyrightCoverageProvider.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/copyrights/CopyrightElementHandler.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/copyrights/CopyrightInfo.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/copyrights/CopyrightProvider.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/copyrights/UrlCopyrightProvider.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/AddGroundPlane.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/DisplacedBufferAttribute.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/DisplacedBufferGeometry.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/DisplacedMesh.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/LodMesh.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/Object3DUtils.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/PhasedTileGeometryLoader.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/PhasedTileGeometryManager.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/ProjectTilePlaneCorners.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/RegisterTileObject.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/SolidLineMesh.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/TileDataAccessor.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/TileGeometry.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/TileGeometryCreator.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/TileGeometryLoader.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/TileGeometryManager.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/VertexCache.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/geometry/overlayOnElevation.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/image/Image.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/image/ImageCache.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/image/MapViewImageCache.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/image/MipMapGenerator.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/poi/BoxBuffer.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/poi/PixelPicker.ts',
+66 verbose filtered diff   '@here/harp-mapview/lib/poi/Poi.ts',
+66 verbose filtered diff   ... 99 more items
+66 verbose filtered diff ]
+67 silly checking diff @here/harp-materials
+68 silly found diff in @here/harp-materials/.npmignore
+68 silly found diff in @here/harp-materials/index.ts
+68 silly found diff in @here/harp-materials/lib/CirclePointsMaterial.ts
+68 silly found diff in @here/harp-materials/lib/CopyMaterial.ts
+68 silly found diff in @here/harp-materials/lib/DashedLineMaterial.ts
+68 silly found diff in @here/harp-materials/lib/DisplacementFeature.ts
+68 silly found diff in @here/harp-materials/lib/EdgeMaterial.ts
+68 silly found diff in @here/harp-materials/lib/GroundAtmosphereMaterial.ts
+68 silly found diff in @here/harp-materials/lib/HighPrecisionLineMaterial.ts
+68 silly found diff in @here/harp-materials/lib/HighPrecisionPointMaterial.ts
+68 silly found diff in @here/harp-materials/lib/IconMaterial.ts
+68 silly found diff in @here/harp-materials/lib/LuminosityHighPassShader.ts
+68 silly found diff in @here/harp-materials/lib/MSAAMaterial.ts
+68 silly found diff in @here/harp-materials/lib/MapMeshMaterials.ts
+68 silly found diff in @here/harp-materials/lib/MapMeshMaterialsDefs.ts
+68 silly found diff in @here/harp-materials/lib/RawShaderMaterial.ts
+68 silly found diff in @here/harp-materials/lib/SepiaShader.ts
+68 silly found diff in @here/harp-materials/lib/ShaderChunks/AtmosphereChunks.ts
+68 silly found diff in @here/harp-materials/lib/ShaderChunks/ExtrusionChunks.ts
+68 silly found diff in @here/harp-materials/lib/ShaderChunks/FadingChunks.ts
+68 silly found diff in @here/harp-materials/lib/ShaderChunks/LinesChunks.ts
+68 silly found diff in @here/harp-materials/lib/ShaderChunks/ShadowChunks.ts
+68 silly found diff in @here/harp-materials/lib/SkyAtmosphereMaterial.ts
+68 silly found diff in @here/harp-materials/lib/SolidLineMaterial.ts
+68 silly found diff in @here/harp-materials/lib/Utils.ts
+68 silly found diff in @here/harp-materials/lib/VignetteShader.ts
+68 silly found diff in @here/harp-materials/package.json
+68 silly found diff in @here/harp-materials/test/CirclePointsMaterialTest.ts
+68 silly found diff in @here/harp-materials/tsconfig.json
+69 verbose filtered diff [
+69 verbose filtered diff   '@here/harp-materials/.npmignore',
+69 verbose filtered diff   '@here/harp-materials/index.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/CirclePointsMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/CopyMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/DashedLineMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/DisplacementFeature.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/EdgeMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/GroundAtmosphereMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/HighPrecisionLineMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/HighPrecisionPointMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/IconMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/LuminosityHighPassShader.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/MSAAMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/MapMeshMaterials.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/MapMeshMaterialsDefs.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/RawShaderMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/SepiaShader.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/ShaderChunks/AtmosphereChunks.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/ShaderChunks/ExtrusionChunks.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/ShaderChunks/FadingChunks.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/ShaderChunks/LinesChunks.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/ShaderChunks/ShadowChunks.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/SkyAtmosphereMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/SolidLineMaterial.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/Utils.ts',
+69 verbose filtered diff   '@here/harp-materials/lib/VignetteShader.ts',
+69 verbose filtered diff   '@here/harp-materials/package.json',
+69 verbose filtered diff   '@here/harp-materials/test/CirclePointsMaterialTest.ts',
+69 verbose filtered diff   '@here/harp-materials/tsconfig.json'
+69 verbose filtered diff ]
+70 silly checking diff @here/harp-olp-utils
+71 silly found diff in @here/harp-olp-utils/.gitignore
+71 silly found diff in @here/harp-olp-utils/.npmignore
+71 silly found diff in @here/harp-olp-utils/.yarnrc
+71 silly found diff in @here/harp-olp-utils/LICENSE
+71 silly found diff in @here/harp-olp-utils/README.md
+71 silly found diff in @here/harp-olp-utils/index.ts
+71 silly found diff in @here/harp-olp-utils/lib/OlpCopyrightProvider.ts
+71 silly found diff in @here/harp-olp-utils/lib/OlpDataProvider.ts
+71 silly found diff in @here/harp-olp-utils/package.json
+71 silly found diff in @here/harp-olp-utils/test/OlpDataProviderTest.ts
+71 silly found diff in @here/harp-olp-utils/tsconfig.json
+72 verbose filtered diff [
+72 verbose filtered diff   '@here/harp-olp-utils/.gitignore',
+72 verbose filtered diff   '@here/harp-olp-utils/.npmignore',
+72 verbose filtered diff   '@here/harp-olp-utils/.yarnrc',
+72 verbose filtered diff   '@here/harp-olp-utils/LICENSE',
+72 verbose filtered diff   '@here/harp-olp-utils/index.ts',
+72 verbose filtered diff   '@here/harp-olp-utils/lib/OlpCopyrightProvider.ts',
+72 verbose filtered diff   '@here/harp-olp-utils/lib/OlpDataProvider.ts',
+72 verbose filtered diff   '@here/harp-olp-utils/package.json',
+72 verbose filtered diff   '@here/harp-olp-utils/test/OlpDataProviderTest.ts',
+72 verbose filtered diff   '@here/harp-olp-utils/tsconfig.json'
+72 verbose filtered diff ]
+73 silly checking diff @here/harp-omv-datasource
+74 silly found diff in @here/harp-omv-datasource/.npmignore
+74 silly found diff in @here/harp-omv-datasource/README.md
+74 silly found diff in @here/harp-omv-datasource/index-worker.ts
+74 silly found diff in @here/harp-omv-datasource/index.ts
+74 silly found diff in @here/harp-omv-datasource/lib/IGeometryProcessor.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvData.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvDataFilter.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvDataSource.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvDebugLabelsTile.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvDecodedTileEmitter.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvDecoder.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvDecoderDefs.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvRestClient.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvTile.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvTileInfoEmitter.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvTiler.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvTomTomFeatureModifier.ts
+74 silly found diff in @here/harp-omv-datasource/lib/OmvUtils.ts
+74 silly found diff in @here/harp-omv-datasource/lib/VTJsonDataAdapter.ts
+74 silly found diff in @here/harp-omv-datasource/lib/proto/vector_tile.d.ts
+74 silly found diff in @here/harp-omv-datasource/lib/proto/vector_tile.js
+74 silly found diff in @here/harp-omv-datasource/lib/proto/vector_tile.proto
+74 silly found diff in @here/harp-omv-datasource/package.json
+74 silly found diff in @here/harp-omv-datasource/test/OmvDataSourceTest.ts
+74 silly found diff in @here/harp-omv-datasource/test/OmvDecodedTileEmitterTest.ts
+74 silly found diff in @here/harp-omv-datasource/test/OmvRestClientTest.ts
+74 silly found diff in @here/harp-omv-datasource/test/OmvTest.ts
+74 silly found diff in @here/harp-omv-datasource/test/OmvTomTomFeatureModifierTest.ts
+74 silly found diff in @here/harp-omv-datasource/tsconfig.json
+75 verbose filtered diff [
+75 verbose filtered diff   '@here/harp-omv-datasource/.npmignore',
+75 verbose filtered diff   '@here/harp-omv-datasource/index-worker.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/index.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/IGeometryProcessor.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvData.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvDataFilter.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvDataSource.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvDebugLabelsTile.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvDecodedTileEmitter.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvDecoder.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvDecoderDefs.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvRestClient.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvTile.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvTileInfoEmitter.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvTiler.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvTomTomFeatureModifier.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/OmvUtils.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/VTJsonDataAdapter.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/proto/vector_tile.d.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/proto/vector_tile.js',
+75 verbose filtered diff   '@here/harp-omv-datasource/lib/proto/vector_tile.proto',
+75 verbose filtered diff   '@here/harp-omv-datasource/package.json',
+75 verbose filtered diff   '@here/harp-omv-datasource/test/OmvDataSourceTest.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/test/OmvDecodedTileEmitterTest.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/test/OmvRestClientTest.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/test/OmvTest.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/test/OmvTomTomFeatureModifierTest.ts',
+75 verbose filtered diff   '@here/harp-omv-datasource/tsconfig.json'
+75 verbose filtered diff ]
+76 silly checking diff @here/harp-test-utils
+77 silly found diff in @here/harp-test-utils/.npmignore
+77 silly found diff in @here/harp-test-utils/index.node.ts
+77 silly found diff in @here/harp-test-utils/index.web.ts
+77 silly found diff in @here/harp-test-utils/lib/ProfileHelper.ts
+77 silly found diff in @here/harp-test-utils/lib/TestDataUtils.node.ts
+77 silly found diff in @here/harp-test-utils/lib/TestDataUtils.web.ts
+77 silly found diff in @here/harp-test-utils/lib/TestUtils.ts
+77 silly found diff in @here/harp-test-utils/lib/WebGLStub.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/DomImageUtils.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/DomReporter.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/HtmlReport.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/Interface.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/Magnifier.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/ReferenceImageLocator.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/RenderingTestHelper.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/RenderingTestResultCommon.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/RenderingTestResultReporter.ts
+77 silly found diff in @here/harp-test-utils/lib/rendering/RenderingTestResultServer.ts
+77 silly found diff in @here/harp-test-utils/package.json
+77 silly found diff in @here/harp-test-utils/test/TestDataUtilsTest.ts
+77 silly found diff in @here/harp-test-utils/test/TestUtilsTest.ts
+77 silly found diff in @here/harp-test-utils/tsconfig.json
+78 verbose filtered diff [
+78 verbose filtered diff   '@here/harp-test-utils/.npmignore',
+78 verbose filtered diff   '@here/harp-test-utils/index.node.ts',
+78 verbose filtered diff   '@here/harp-test-utils/index.web.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/ProfileHelper.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/TestDataUtils.node.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/TestDataUtils.web.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/TestUtils.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/WebGLStub.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/DomImageUtils.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/DomReporter.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/HtmlReport.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/Interface.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/Magnifier.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/ReferenceImageLocator.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/RenderingTestHelper.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/RenderingTestResultCommon.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/RenderingTestResultReporter.ts',
+78 verbose filtered diff   '@here/harp-test-utils/lib/rendering/RenderingTestResultServer.ts',
+78 verbose filtered diff   '@here/harp-test-utils/package.json',
+78 verbose filtered diff   '@here/harp-test-utils/test/TestDataUtilsTest.ts',
+78 verbose filtered diff   '@here/harp-test-utils/test/TestUtilsTest.ts',
+78 verbose filtered diff   '@here/harp-test-utils/tsconfig.json'
+78 verbose filtered diff ]
+79 silly checking diff @here/harp-text-canvas
+80 silly found diff in @here/harp-text-canvas/.npmignore
+80 silly found diff in @here/harp-text-canvas/index.ts
+80 silly found diff in @here/harp-text-canvas/lib/TextCanvas.ts
+80 silly found diff in @here/harp-text-canvas/lib/rendering/FontCatalog.ts
+80 silly found diff in @here/harp-text-canvas/lib/rendering/GlyphData.ts
+80 silly found diff in @here/harp-text-canvas/lib/rendering/GlyphTextureCache.ts
+80 silly found diff in @here/harp-text-canvas/lib/rendering/TextBufferObject.ts
+80 silly found diff in @here/harp-text-canvas/lib/rendering/TextGeometry.ts
+80 silly found diff in @here/harp-text-canvas/lib/rendering/TextMaterials.ts
+80 silly found diff in @here/harp-text-canvas/lib/rendering/TextStyle.ts
+80 silly found diff in @here/harp-text-canvas/lib/typesetting/LineTypesetter.ts
+80 silly found diff in @here/harp-text-canvas/lib/typesetting/PathTypesetter.ts
+80 silly found diff in @here/harp-text-canvas/lib/typesetting/Typesetter.ts
+80 silly found diff in @here/harp-text-canvas/lib/utils/ContextualArabicConverter.ts
+80 silly found diff in @here/harp-text-canvas/lib/utils/MaterialUtils.ts
+80 silly found diff in @here/harp-text-canvas/lib/utils/TypesettingUtils.ts
+80 silly found diff in @here/harp-text-canvas/lib/utils/UnicodeUtils.ts
+80 silly found diff in @here/harp-text-canvas/package.json
+80 silly found diff in @here/harp-text-canvas/test/FontCatalogTest.ts
+80 silly found diff in @here/harp-text-canvas/test/TextCanvasTest.ts
+80 silly found diff in @here/harp-text-canvas/test/TextGeometryTest.ts
+80 silly found diff in @here/harp-text-canvas/test/TextStyleTest.ts
+80 silly found diff in @here/harp-text-canvas/test/rendering/TextCanvasRenderingTest.ts
+80 silly found diff in @here/harp-text-canvas/tsconfig.json
+81 verbose filtered diff [
+81 verbose filtered diff   '@here/harp-text-canvas/.npmignore',
+81 verbose filtered diff   '@here/harp-text-canvas/index.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/TextCanvas.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/rendering/FontCatalog.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/rendering/GlyphData.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/rendering/GlyphTextureCache.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/rendering/TextBufferObject.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/rendering/TextGeometry.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/rendering/TextMaterials.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/rendering/TextStyle.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/typesetting/LineTypesetter.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/typesetting/PathTypesetter.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/typesetting/Typesetter.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/utils/ContextualArabicConverter.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/utils/MaterialUtils.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/utils/TypesettingUtils.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/lib/utils/UnicodeUtils.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/package.json',
+81 verbose filtered diff   '@here/harp-text-canvas/test/FontCatalogTest.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/test/TextCanvasTest.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/test/TextGeometryTest.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/test/TextStyleTest.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/test/rendering/TextCanvasRenderingTest.ts',
+81 verbose filtered diff   '@here/harp-text-canvas/tsconfig.json'
+81 verbose filtered diff ]
+82 silly checking diff @here/harp-theme-tools
+83 silly found diff in @here/harp-theme-tools/.gitignore
+83 silly found diff in @here/harp-theme-tools/.npmignore
+83 silly found diff in @here/harp-theme-tools/LICENSE
+83 silly found diff in @here/harp-theme-tools/README.md
+83 silly found diff in @here/harp-theme-tools/package.json
+83 silly found diff in @here/harp-theme-tools/src/cli-build-theme.ts
+83 silly found diff in @here/harp-theme-tools/tsconfig.json
+84 verbose filtered diff [
+84 verbose filtered diff   '@here/harp-theme-tools/.gitignore',
+84 verbose filtered diff   '@here/harp-theme-tools/.npmignore',
+84 verbose filtered diff   '@here/harp-theme-tools/LICENSE',
+84 verbose filtered diff   '@here/harp-theme-tools/package.json',
+84 verbose filtered diff   '@here/harp-theme-tools/src/cli-build-theme.ts',
+84 verbose filtered diff   '@here/harp-theme-tools/tsconfig.json'
+84 verbose filtered diff ]
+85 silly checking diff @here/harp-transfer-manager
+86 silly found diff in @here/harp-transfer-manager/.npmignore
+86 silly found diff in @here/harp-transfer-manager/index.ts
+86 silly found diff in @here/harp-transfer-manager/package.json
+86 silly found diff in @here/harp-transfer-manager/src/DeferredPromise.ts
+86 silly found diff in @here/harp-transfer-manager/src/TransferManager.ts
+86 silly found diff in @here/harp-transfer-manager/test/DeferredPromiseTest.ts
+86 silly found diff in @here/harp-transfer-manager/test/TransferManagerTest.ts
+86 silly found diff in @here/harp-transfer-manager/tsconfig.json
+87 verbose filtered diff [
+87 verbose filtered diff   '@here/harp-transfer-manager/.npmignore',
+87 verbose filtered diff   '@here/harp-transfer-manager/index.ts',
+87 verbose filtered diff   '@here/harp-transfer-manager/package.json',
+87 verbose filtered diff   '@here/harp-transfer-manager/src/DeferredPromise.ts',
+87 verbose filtered diff   '@here/harp-transfer-manager/src/TransferManager.ts',
+87 verbose filtered diff   '@here/harp-transfer-manager/test/DeferredPromiseTest.ts',
+87 verbose filtered diff   '@here/harp-transfer-manager/test/TransferManagerTest.ts',
+87 verbose filtered diff   '@here/harp-transfer-manager/tsconfig.json'
+87 verbose filtered diff ]
+88 silly checking diff @here/harp-utils
+89 silly found diff in @here/harp-utils/.npmignore
+89 silly found diff in @here/harp-utils/index-common.ts
+89 silly found diff in @here/harp-utils/index.node.ts
+89 silly found diff in @here/harp-utils/index.ts
+89 silly found diff in @here/harp-utils/lib/AuthenticationUtils.ts
+89 silly found diff in @here/harp-utils/lib/CachedResource.ts
+89 silly found diff in @here/harp-utils/lib/ContextLogger.ts
+89 silly found diff in @here/harp-utils/lib/DOMUtils.ts
+89 silly found diff in @here/harp-utils/lib/Functions.ts
+89 silly found diff in @here/harp-utils/lib/GlslUtils.ts
+89 silly found diff in @here/harp-utils/lib/GroupedPriorityList.ts
+89 silly found diff in @here/harp-utils/lib/Logger/ConsoleChannel.ts
+89 silly found diff in @here/harp-utils/lib/Logger/IChannel.ts
+89 silly found diff in @here/harp-utils/lib/Logger/ILogger.ts
+89 silly found diff in @here/harp-utils/lib/Logger/ILoggerManager.ts
+89 silly found diff in @here/harp-utils/lib/Logger/Logger.ts
+89 silly found diff in @here/harp-utils/lib/Logger/LoggerManager.ts
+89 silly found diff in @here/harp-utils/lib/Logger/LoggerManagerImpl.ts
+89 silly found diff in @here/harp-utils/lib/Logger/MultiChannel.ts
+89 silly found diff in @here/harp-utils/lib/Logger/WorkerChannel.ts
+89 silly found diff in @here/harp-utils/lib/Logger/index.ts
+89 silly found diff in @here/harp-utils/lib/Math2D.ts
+89 silly found diff in @here/harp-utils/lib/MathUtils.ts
+89 silly found diff in @here/harp-utils/lib/Mixins.ts
+89 silly found diff in @here/harp-utils/lib/ObjectUtils.ts
+89 silly found diff in @here/harp-utils/lib/OptionsUtils.ts
+89 silly found diff in @here/harp-utils/lib/PerformanceTimer.ts
+89 silly found diff in @here/harp-utils/lib/SampleBilinear.ts
+89 silly found diff in @here/harp-utils/lib/TaskQueue.ts
+89 silly found diff in @here/harp-utils/lib/UriResolver.ts
+89 silly found diff in @here/harp-utils/lib/UrlPlatformUtils.ts
+89 silly found diff in @here/harp-utils/lib/UrlResolver.ts
+89 silly found diff in @here/harp-utils/lib/UrlUtils.ts
+89 silly found diff in @here/harp-utils/lib/assert.ts
+89 silly found diff in @here/harp-utils/package.json
+89 silly found diff in @here/harp-utils/test/GroupedPriorityListTest.ts
+89 silly found diff in @here/harp-utils/test/LoggerManagerTest.ts
+89 silly found diff in @here/harp-utils/test/LoggerTest.ts
+89 silly found diff in @here/harp-utils/test/Math2DTest.ts
+89 silly found diff in @here/harp-utils/test/MathUtilsTest.ts
+89 silly found diff in @here/harp-utils/test/ObjectUtilsTest.ts
+89 silly found diff in @here/harp-utils/test/OptionsUtilsTest.ts
+89 silly found diff in @here/harp-utils/test/PerformanceTimerTest.ts
+89 silly found diff in @here/harp-utils/test/SampleBilinearTest.ts
+89 silly found diff in @here/harp-utils/test/TaskQueueTest.ts
+89 silly found diff in @here/harp-utils/test/UriResolverTest.ts
+89 silly found diff in @here/harp-utils/test/UrlResolverTest.ts
+89 silly found diff in @here/harp-utils/test/UrlUtilsTest.ts
+89 silly found diff in @here/harp-utils/test/WorkerChannelTest.ts
+89 silly found diff in @here/harp-utils/tsconfig.json
+90 verbose filtered diff [
+90 verbose filtered diff   '@here/harp-utils/.npmignore',
+90 verbose filtered diff   '@here/harp-utils/index-common.ts',
+90 verbose filtered diff   '@here/harp-utils/index.node.ts',
+90 verbose filtered diff   '@here/harp-utils/index.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/AuthenticationUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/CachedResource.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/ContextLogger.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/DOMUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Functions.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/GlslUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/GroupedPriorityList.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/ConsoleChannel.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/IChannel.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/ILogger.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/ILoggerManager.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/Logger.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/LoggerManager.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/LoggerManagerImpl.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/MultiChannel.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/WorkerChannel.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Logger/index.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Math2D.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/MathUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/Mixins.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/ObjectUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/OptionsUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/PerformanceTimer.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/SampleBilinear.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/TaskQueue.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/UriResolver.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/UrlPlatformUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/UrlResolver.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/UrlUtils.ts',
+90 verbose filtered diff   '@here/harp-utils/lib/assert.ts',
+90 verbose filtered diff   '@here/harp-utils/package.json',
+90 verbose filtered diff   '@here/harp-utils/test/GroupedPriorityListTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/LoggerManagerTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/LoggerTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/Math2DTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/MathUtilsTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/ObjectUtilsTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/OptionsUtilsTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/PerformanceTimerTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/SampleBilinearTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/TaskQueueTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/UriResolverTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/UrlResolverTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/UrlUtilsTest.ts',
+90 verbose filtered diff   '@here/harp-utils/test/WorkerChannelTest.ts',
+90 verbose filtered diff   '@here/harp-utils/tsconfig.json'
+90 verbose filtered diff ]
+91 silly checking diff @here/harp-vectortile-datasource
+92 silly found diff in @here/harp-vectortile-datasource/.gitignore
+92 silly found diff in @here/harp-vectortile-datasource/.npmignore
+92 silly found diff in @here/harp-vectortile-datasource/.yarnrc
+92 silly found diff in @here/harp-vectortile-datasource/LICENSE
+92 silly found diff in @here/harp-vectortile-datasource/README.md
+92 silly found diff in @here/harp-vectortile-datasource/index-worker.ts
+92 silly found diff in @here/harp-vectortile-datasource/index.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/DataAdapter.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/DecodeInfo.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/GeoJsonDataProvider.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/GeoJsonTilerService.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/IGeometryProcessor.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/OmvDataFilter.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/OmvDebugLabelsTile.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/OmvDecoderDefs.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/OmvPoliticalViewFeatureModifier.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/OmvRestClient.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/OmvUtils.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/Ring.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/StyleSetDataFilter.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/VectorTileDataEmitter.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/VectorTileDataSource.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/VectorTileDecoder.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/adapters/geojson-vt/GeoJsonVtDataAdapter.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/adapters/geojson/GeoJsonDataAdapter.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/adapters/omv/OmvData.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/adapters/omv/OmvDataAdapter.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.d.ts
+92 silly found diff in @here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.js
+92 silly found diff in @here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.proto
+92 silly found diff in @here/harp-vectortile-datasource/package.json
+92 silly found diff in @here/harp-vectortile-datasource/test/GeoJsonDataAdapterTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/GeoJsonVtDataAdapterTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/MapViewPickingTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/MockGeometryProcessor.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/OmvDataAdapterTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/OmvDataSourceTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/OmvDecodedTileEmitterTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/OmvRestClientTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/OmvTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/RingTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/VectorTileDataProcessorTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/VectorTileDecoderTest.ts
+92 silly found diff in @here/harp-vectortile-datasource/test/resources/geoJsonData.ts
+92 silly found diff in @here/harp-vectortile-datasource/tsconfig.json
+93 verbose filtered diff [
+93 verbose filtered diff   '@here/harp-vectortile-datasource/.gitignore',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/.npmignore',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/.yarnrc',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/LICENSE',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/index-worker.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/index.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/DataAdapter.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/DecodeInfo.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/GeoJsonDataProvider.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/GeoJsonTilerService.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/IGeometryProcessor.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/OmvDataFilter.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/OmvDebugLabelsTile.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/OmvDecoderDefs.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/OmvPoliticalViewFeatureModifier.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/OmvRestClient.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/OmvUtils.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/Ring.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/StyleSetDataFilter.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/VectorTileDataEmitter.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/VectorTileDataSource.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/VectorTileDecoder.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/adapters/geojson-vt/GeoJsonVtDataAdapter.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/adapters/geojson/GeoJsonDataAdapter.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/adapters/omv/OmvData.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/adapters/omv/OmvDataAdapter.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.d.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.js',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/lib/adapters/omv/proto/vector_tile.proto',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/package.json',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/GeoJsonDataAdapterTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/GeoJsonVtDataAdapterTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/MapViewPickingTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/MockGeometryProcessor.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/OmvDataAdapterTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/OmvDataSourceTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/OmvDecodedTileEmitterTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/OmvRestClientTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/OmvTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/RingTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/VectorTileDataProcessorTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/VectorTileDecoderTest.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/test/resources/geoJsonData.ts',
+93 verbose filtered diff   '@here/harp-vectortile-datasource/tsconfig.json'
+93 verbose filtered diff ]
+94 silly checking diff @here/harp-webpack-utils
+95 silly found diff in @here/harp-webpack-utils/.gitignore
+95 silly found diff in @here/harp-webpack-utils/.npmignore
+95 silly found diff in @here/harp-webpack-utils/.yarnrc
+95 silly found diff in @here/harp-webpack-utils/LICENSE
+95 silly found diff in @here/harp-webpack-utils/README.md
+95 silly found diff in @here/harp-webpack-utils/package.json
+95 silly found diff in @here/harp-webpack-utils/scripts/HarpWebpackConfig.ts
+95 silly found diff in @here/harp-webpack-utils/tsconfig.json
+96 verbose filtered diff [
+96 verbose filtered diff   '@here/harp-webpack-utils/.gitignore',
+96 verbose filtered diff   '@here/harp-webpack-utils/.npmignore',
+96 verbose filtered diff   '@here/harp-webpack-utils/.yarnrc',
+96 verbose filtered diff   '@here/harp-webpack-utils/LICENSE',
+96 verbose filtered diff   '@here/harp-webpack-utils/package.json',
+96 verbose filtered diff   '@here/harp-webpack-utils/scripts/HarpWebpackConfig.ts',
+96 verbose filtered diff   '@here/harp-webpack-utils/tsconfig.json'
+96 verbose filtered diff ]
+97 silly checking diff @here/harp-webtile-datasource
+98 silly found diff in @here/harp-webtile-datasource/.npmignore
+98 silly found diff in @here/harp-webtile-datasource/index.ts
+98 silly found diff in @here/harp-webtile-datasource/lib/HereWebTileDataSource.ts
+98 silly found diff in @here/harp-webtile-datasource/lib/WebTileDataSource.ts
+98 silly found diff in @here/harp-webtile-datasource/lib/WebTileLoader.ts
+98 silly found diff in @here/harp-webtile-datasource/package.json
+98 silly found diff in @here/harp-webtile-datasource/test/HereWebTileDataSourceTest.ts
+98 silly found diff in @here/harp-webtile-datasource/test/WebTileLoaderTest.ts
+98 silly found diff in @here/harp-webtile-datasource/test/WebTileTest.ts
+98 silly found diff in @here/harp-webtile-datasource/tsconfig.json
+99 verbose filtered diff [
+99 verbose filtered diff   '@here/harp-webtile-datasource/.npmignore',
+99 verbose filtered diff   '@here/harp-webtile-datasource/index.ts',
+99 verbose filtered diff   '@here/harp-webtile-datasource/lib/HereWebTileDataSource.ts',
+99 verbose filtered diff   '@here/harp-webtile-datasource/lib/WebTileDataSource.ts',
+99 verbose filtered diff   '@here/harp-webtile-datasource/lib/WebTileLoader.ts',
+99 verbose filtered diff   '@here/harp-webtile-datasource/package.json',
+99 verbose filtered diff   '@here/harp-webtile-datasource/test/HereWebTileDataSourceTest.ts',
+99 verbose filtered diff   '@here/harp-webtile-datasource/test/WebTileLoaderTest.ts',
+99 verbose filtered diff   '@here/harp-webtile-datasource/test/WebTileTest.ts',
+99 verbose filtered diff   '@here/harp-webtile-datasource/tsconfig.json'
+99 verbose filtered diff ]
+100 silly checking diff @here/harp.gl
+101 silly found diff in @here/harp.gl/.npmignore
+101 silly found diff in @here/harp.gl/README.md
+101 silly found diff in @here/harp.gl/api-extractor.json
+101 silly found diff in @here/harp.gl/lib/BundleMain.ts
+101 silly found diff in @here/harp.gl/lib/DecoderBootstrap.ts
+101 silly found diff in @here/harp.gl/lib/DecoderBundleMain.ts
+101 silly found diff in @here/harp.gl/lib/index.ts
+101 silly found diff in @here/harp.gl/package.json
+101 silly found diff in @here/harp.gl/tsconfig.json
+101 silly found diff in @here/harp.gl/webpack.config.js
+102 verbose filtered diff [
+102 verbose filtered diff   '@here/harp.gl/.npmignore',
+102 verbose filtered diff   '@here/harp.gl/api-extractor.json',
+102 verbose filtered diff   '@here/harp.gl/lib/BundleMain.ts',
+102 verbose filtered diff   '@here/harp.gl/lib/DecoderBootstrap.ts',
+102 verbose filtered diff   '@here/harp.gl/lib/DecoderBundleMain.ts',
+102 verbose filtered diff   '@here/harp.gl/lib/index.ts',
+102 verbose filtered diff   '@here/harp.gl/package.json',
+102 verbose filtered diff   '@here/harp.gl/tsconfig.json',
+102 verbose filtered diff   '@here/harp.gl/webpack.config.js'
+102 verbose filtered diff ]
+103 silly checking diff test/performance
+104 silly found diff in test/performance/LinesPerformanceTest.ts
+104 silly found diff in test/performance/OmvDecoderPerformanceTest.ts
+104 silly found diff in test/performance/package.json
+105 verbose no diff found in @here/harp-performance-tests (after filtering)
+106 silly checking diff test/rendering
+107 silly found diff in test/rendering/ClipPlanesRenderingTest.ts
+107 silly found diff in test/rendering/GeoJsonDataRendering.ts
+107 silly found diff in test/rendering/GeoJsonFeaturesRendering.ts
+107 silly found diff in test/rendering/ScreenSpaceRenderingTests.ts
+107 silly found diff in test/rendering/StylingTest.ts
+107 silly found diff in test/rendering/WebTileDataRendering.ts
+107 silly found diff in test/rendering/package.json
+107 silly found diff in test/rendering/utils/GeoJsonStore.ts
+107 silly found diff in test/rendering/utils/GeoJsonTest.ts
+107 silly found diff in test/rendering/utils/ThemeBuilder.ts
+108 verbose no diff found in @here/harp-rendering-test (after filtering)
+109 silly checking diff www
+110 silly found diff in www/.gitignore
+110 silly found diff in www/README.md
+110 silly found diff in www/_config.yml
+110 silly found diff in www/css/index.css
+110 silly found diff in www/docs/index.html
+110 silly found diff in www/examples/index.html
+110 silly found diff in www/index.html
+110 silly found diff in www/package.json
+110 silly found diff in www/resources/background.jpg
+110 silly found diff in www/resources/favicon.ico
+110 silly found diff in www/resources/theme.json
+110 silly found diff in www/src/decoder.ts
+110 silly found diff in www/src/index.ts
+110 silly found diff in www/tsconfig.json
+110 silly found diff in www/webpack.config.js
+111 verbose filtered diff [
+111 verbose filtered diff   'www/.gitignore',
+111 verbose filtered diff   'www/_config.yml',
+111 verbose filtered diff   'www/css/index.css',
+111 verbose filtered diff   'www/docs/index.html',
+111 verbose filtered diff   'www/examples/index.html',
+111 verbose filtered diff   'www/index.html',
+111 verbose filtered diff   'www/package.json',
+111 verbose filtered diff   'www/resources/background.jpg',
+111 verbose filtered diff   'www/resources/favicon.ico',
+111 verbose filtered diff   'www/resources/theme.json',
+111 verbose filtered diff   'www/src/decoder.ts',
+111 verbose filtered diff   'www/src/index.ts',
+111 verbose filtered diff   'www/tsconfig.json',
+111 verbose filtered diff   'www/webpack.config.js'
+111 verbose filtered diff ]
+112 verbose updated @here/create-harp.gl-app
+113 verbose updated @here/generator-harp.gl
+114 verbose updated @here/harp-atlas-tools
+115 verbose updated @here/harp-datasource-protocol
+116 verbose updated @here/harp-debug-datasource
+117 verbose updated @here/harp-examples
+118 verbose updated @here/harp-features-datasource
+119 verbose updated @here/harp-fetch
+120 verbose updated @here/harp-geojson-datasource
+121 verbose updated @here/harp-geometry
+122 verbose updated @here/harp-geoutils
+123 verbose updated @here/harp-lines
+124 verbose updated @here/harp-lrucache
+125 verbose updated @here/harp-map-controls
+126 verbose updated @here/harp-map-theme
+127 verbose updated @here/harp-mapview-decoder
+128 verbose updated @here/harp-mapview
+129 verbose updated @here/harp-materials
+130 verbose updated @here/harp-olp-utils
+131 verbose updated @here/harp-omv-datasource
+132 verbose updated @here/harp-test-utils
+133 verbose updated @here/harp-text-canvas
+134 verbose updated @here/harp-theme-tools
+135 verbose updated @here/harp-transfer-manager
+136 verbose updated @here/harp-utils
+137 verbose updated @here/harp-vectortile-datasource
+138 verbose updated @here/harp-webpack-utils
+139 verbose updated @here/harp-webtile-datasource
+140 verbose updated @here/harp.gl
+141 verbose updated @here/harp-performance-tests
+142 verbose updated @here/harp-rendering-test
+143 verbose updated @here/harp-website
+144 verbose git-describe undefined => "@here/generator-harp.gl@0.10.0-1242-ga1b5b636"
+145 silly git-describe parsed => {"lastTagName":"@here/generator-harp.gl@0.10.0","lastVersion":"0.10.0","refCount":"1242","sha":"a1b5b636","isDirty":false}
+146 info execute Skipping releases
+147 silly lifecycle No script for "preversion" in "harp.gl", continuing
+148 silly lifecycle No script for "preversion" in "@here/create-harp.gl-app", continuing
+149 silly lifecycle No script for "preversion" in "@here/generator-harp.gl", continuing
+150 silly lifecycle No script for "preversion" in "@here/harp-atlas-tools", continuing
+151 silly lifecycle No script for "preversion" in "@here/harp-fetch", continuing
+152 silly lifecycle No script for "preversion" in "@here/harp-geoutils", continuing
+153 silly lifecycle No script for "preversion" in "@here/harp-utils", continuing
+154 silly lifecycle No script for "preversion" in "@here/harp-webpack-utils", continuing
+155 silly lifecycle No script for "version" in "@here/create-harp.gl-app", continuing
+156 silly lifecycle No script for "version" in "@here/harp-webpack-utils", continuing
+157 silly lifecycle No script for "version" in "@here/harp-geoutils", continuing
+158 silly lifecycle No script for "version" in "@here/harp-fetch", continuing
+159 silly lifecycle No script for "preversion" in "@here/harp-transfer-manager", continuing
+160 silly lifecycle No script for "version" in "@here/harp-utils", continuing
+161 silly lifecycle No script for "preversion" in "@here/harp-geometry", continuing
+162 silly lifecycle No script for "preversion" in "@here/harp-lrucache", continuing
+163 silly lifecycle No script for "preversion" in "@here/harp-test-utils", continuing
+164 silly lifecycle No script for "version" in "@here/generator-harp.gl", continuing
+165 silly lifecycle No script for "version" in "@here/harp-atlas-tools", continuing
+166 silly lifecycle No script for "version" in "@here/harp-test-utils", continuing
+167 silly lifecycle No script for "version" in "@here/harp-transfer-manager", continuing
+168 silly lifecycle No script for "version" in "@here/harp-lrucache", continuing
+169 silly lifecycle No script for "preversion" in "@here/harp-text-canvas", continuing
+170 silly lifecycle No script for "version" in "@here/harp-geometry", continuing
+171 silly lifecycle No script for "preversion" in "@here/harp-datasource-protocol", continuing
+172 silly lifecycle No script for "version" in "@here/harp-text-canvas", continuing
+173 silly lifecycle No script for "version" in "@here/harp-datasource-protocol", continuing
+174 silly lifecycle No script for "preversion" in "@here/harp-map-theme", continuing
+175 silly lifecycle No script for "preversion" in "@here/harp-materials", continuing
+176 silly lifecycle No script for "version" in "@here/harp-materials", continuing
+177 silly lifecycle No script for "preversion" in "@here/harp-lines", continuing
+178 silly lifecycle No script for "version" in "@here/harp-map-theme", continuing
+179 silly lifecycle No script for "version" in "@here/harp-lines", continuing
+180 silly lifecycle No script for "preversion" in "@here/harp-mapview", continuing
+181 silly lifecycle No script for "version" in "@here/harp-mapview", continuing
+182 silly lifecycle No script for "preversion" in "@here/harp-debug-datasource", continuing
+183 silly lifecycle No script for "preversion" in "@here/harp-map-controls", continuing
+184 silly lifecycle No script for "preversion" in "@here/harp-mapview-decoder", continuing
+185 silly lifecycle No script for "preversion" in "@here/harp-theme-tools", continuing
+186 silly lifecycle No script for "preversion" in "@here/harp-webtile-datasource", continuing
+187 silly lifecycle No script for "version" in "@here/harp-debug-datasource", continuing
+188 silly lifecycle No script for "version" in "@here/harp-theme-tools", continuing
+189 silly lifecycle No script for "version" in "@here/harp-map-controls", continuing
+190 silly lifecycle No script for "version" in "@here/harp-mapview-decoder", continuing
+191 silly lifecycle No script for "preversion" in "@here/harp-olp-utils", continuing
+192 silly lifecycle No script for "preversion" in "@here/harp-vectortile-datasource", continuing
+193 silly lifecycle No script for "version" in "@here/harp-webtile-datasource", continuing
+194 silly lifecycle No script for "version" in "@here/harp-olp-utils", continuing
+195 silly lifecycle No script for "version" in "@here/harp-vectortile-datasource", continuing
+196 silly lifecycle No script for "preversion" in "@here/harp-features-datasource", continuing
+197 silly lifecycle No script for "preversion" in "@here/harp-geojson-datasource", continuing
+198 silly lifecycle No script for "preversion" in "@here/harp-omv-datasource", continuing
+199 silly lifecycle No script for "preversion" in "@here/harp-website", continuing
+200 silly lifecycle No script for "version" in "@here/harp-website", continuing
+201 silly lifecycle No script for "version" in "@here/harp-features-datasource", continuing
+202 silly lifecycle No script for "preversion" in "@here/harp-examples", continuing
+203 silly lifecycle No script for "version" in "@here/harp-omv-datasource", continuing
+204 silly lifecycle No script for "version" in "@here/harp-geojson-datasource", continuing
+205 silly lifecycle No script for "preversion" in "@here/harp.gl", continuing
+206 silly lifecycle No script for "preversion" in "@here/harp-rendering-test", continuing
+207 silly lifecycle No script for "version" in "@here/harp-examples", continuing
+208 silly lifecycle No script for "preversion" in "@here/harp-performance-tests", continuing
+209 silly lifecycle No script for "version" in "@here/harp-rendering-test", continuing
+210 silly lifecycle No script for "version" in "@here/harp.gl", continuing
+211 silly lifecycle No script for "version" in "@here/harp-performance-tests", continuing
+212 silly lifecycle No script for "version" in "harp.gl", continuing
+213 silly gitAdd [
+213 silly gitAdd   '@here/create-harp.gl-app/package.json',
+213 silly gitAdd   '@here/harp-webpack-utils/package.json',
+213 silly gitAdd   '@here/harp-geoutils/package.json',
+213 silly gitAdd   '@here/harp-fetch/package.json',
+213 silly gitAdd   '@here/harp-utils/package.json',
+213 silly gitAdd   '@here/generator-harp.gl/package.json',
+213 silly gitAdd   '@here/harp-atlas-tools/package.json',
+213 silly gitAdd   '@here/harp-test-utils/package.json',
+213 silly gitAdd   '@here/harp-transfer-manager/package.json',
+213 silly gitAdd   '@here/harp-lrucache/package.json',
+213 silly gitAdd   '@here/harp-geometry/package.json',
+213 silly gitAdd   '@here/harp-text-canvas/package.json',
+213 silly gitAdd   '@here/harp-datasource-protocol/package.json',
+213 silly gitAdd   '@here/harp-materials/package.json',
+213 silly gitAdd   '@here/harp-map-theme/package.json',
+213 silly gitAdd   '@here/harp-lines/package.json',
+213 silly gitAdd   '@here/harp-mapview/package.json',
+213 silly gitAdd   '@here/harp-debug-datasource/package.json',
+213 silly gitAdd   '@here/harp-theme-tools/package.json',
+213 silly gitAdd   '@here/harp-map-controls/package.json',
+213 silly gitAdd   '@here/harp-mapview-decoder/package.json',
+213 silly gitAdd   '@here/harp-webtile-datasource/package.json',
+213 silly gitAdd   '@here/harp-olp-utils/package.json',
+213 silly gitAdd   '@here/harp-vectortile-datasource/package.json',
+213 silly gitAdd   'www/package.json',
+213 silly gitAdd   '@here/harp-features-datasource/package.json',
+213 silly gitAdd   '@here/harp-omv-datasource/package.json',
+213 silly gitAdd   '@here/harp-geojson-datasource/package.json',
+213 silly gitAdd   '@here/harp-examples/package.json',
+213 silly gitAdd   'test/rendering/package.json',
+213 silly gitAdd   '@here/harp.gl/package.json',
+213 silly gitAdd   'test/performance/package.json',
+213 silly gitAdd   'lerna.json'
+213 silly gitAdd ]
+214 silly gitCommit v0.28.0
+215 verbose git [ 'commit', '--gpg-sign', '-m', 'v0.28.0' ]
+216 error Error: Command failed: git commit --gpg-sign -m v0.28.0
+216 error error: gpg failed to sign the data
+216 error fatal: failed to write commit object
+216 error
+216 error     at makeError (/Users/ffritz/pro/harp.gl.sdk/node_modules/execa/index.js:174:9)
+216 error     at /Users/ffritz/pro/harp.gl.sdk/node_modules/execa/index.js:278:16
+216 error     at processTicksAndRejections (internal/process/task_queues.js:93:5)
