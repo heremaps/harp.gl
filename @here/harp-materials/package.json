@@ -31,11 +31,11 @@
         "cross-env": "^7.0.2",
         "mocha": "^8.2.1",
         "source-map-support": "^0.5.19",
-        "three": "^0.129.0",
+        "three": "^0.137.0",
         "typescript": "^4.1.2"
     },
     "peerDependencies": {
-        "three": "^0.129.0"
+        "three": "^0.137.0"
     },
     "publishConfig": {
         "access": "public"
