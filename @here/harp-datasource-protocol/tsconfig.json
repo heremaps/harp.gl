@@ -4,7 +4,8 @@
         "sourceMap": true,
         "composite": true,
         "incremental": true,
-        "declarationMap": true
+        "declarationMap": true,
+        "downlevelIteration": true
     },
     "exclude": ["dist/**", "test/**", "node_modules"],
     "references": [
