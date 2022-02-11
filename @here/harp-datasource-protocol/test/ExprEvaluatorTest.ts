@@ -2270,4 +2270,30 @@ describe("ExprEvaluator", function () {
             });
         });
     });
+
+    describe("Operator 'pixel-world-scale'", function () {
+        it("argument is a literal", function () {
+            const $pixelToMeters = 12.3;
+            const numPixels = 45.6;
+            const result = evaluate(
+                ["pixel-world-scale", numPixels],
+                { $pixelToMeters },
+                ExprScope.Dynamic
+            );
+            expect(result).equals(numPixels * $pixelToMeters);
+        });
+        it("argument is a definition", function () {
+            const $pixelToMeters = 6.78;
+            const definitions: Definitions = {
+                numPixels: 9.12
+            };
+            const result = evaluate(
+                ["pixel-world-scale", ["ref", "numPixels"]],
+                { $pixelToMeters },
+                ExprScope.Dynamic,
+                definitions
+            );
+            expect(result).equals((definitions as any).numPixels * $pixelToMeters);
+        });
+    });
 });

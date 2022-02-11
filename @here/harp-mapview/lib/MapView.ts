@@ -2425,26 +2425,20 @@ export class MapView extends EventDispatcher {
      * the camera projection).
      */
     get pixelToWorld(): number {
+        // Current implementation is only valid for perspective camera. To compute this factor
+        // independently from the projection, use projection matrix to convert position
+        // [1, 0, -targetDist, 1] from camera space to screen space and take the x coordinates to
+        // compute the scale factor.
+        assert(this.m_camera instanceof THREE.PerspectiveCamera);
+
         if (this.m_pixelToWorld === undefined) {
-            // At this point fov calculation should be always defined.
             assert(this.m_options.fovCalculation !== undefined);
-            // NOTE: Look at distance is the distance to camera focus (and pivot) point.
-            // In screen space this point is located in the center of canvas.
-            // Given that zoom level is not modified (clamped by camera pitch), the following
-            // formulas are all equivalent:
-            // lookAtDistance = (EQUATORIAL_CIRCUMFERENCE * focalLength) / (256 * zoomLevel^2);
-            // lookAtDistance = abs(cameraPos.z) / cos(cameraPitch);
-            // Here we may use precalculated target distance (once pre frame):
-            const lookAtDistance = this.m_targetDistance;
             const focalLength = CameraUtils.getFocalLength(this.m_camera);
             assert(focalLength !== undefined);
+            const d = this.m_targetDistance;
 
             // Find world space object size that corresponds to one pixel on screen.
-            this.m_pixelToWorld = CameraUtils.convertScreenToWorldSize(
-                focalLength!,
-                lookAtDistance,
-                1
-            );
+            this.m_pixelToWorld = CameraUtils.convertScreenToWorldSize(focalLength!, d, 1);
         }
         return this.m_pixelToWorld;
     }

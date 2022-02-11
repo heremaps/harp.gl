@@ -129,6 +129,9 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
             case "world-discrete-ppi-scale":
                 context.properties.add("$zoom");
                 break;
+            case "pixel-world-scale":
+                context.properties.add("$pixelToMeters");
+                break;
             case "geometry-type":
                 context.properties.add("$geometryType");
                 break;

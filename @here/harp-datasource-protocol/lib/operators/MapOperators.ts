@@ -41,6 +41,16 @@ const operators = {
             return v;
         }
     },
+    "pixel-world-scale": {
+        isDynamicOperator: (): boolean => {
+            return true;
+        },
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const pixels = context.evaluate(call.args[0]) as number;
+            const pixelToMeters = (context.env.lookup("$pixelToMeters") as number) || 1;
+            return pixels * pixelToMeters;
+        }
+    },
     ppi: {
         call: (context: ExprEvaluatorContext) => {
             const ppi = context.env.lookup("$ppi");

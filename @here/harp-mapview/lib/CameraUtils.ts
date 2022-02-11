@@ -253,6 +253,7 @@ export namespace CameraUtils {
     /**
      * Calculates object's screen size based on the focal length and it's camera distance.
      * @beta
+     * @note Valid only for perspective camera.
      *
      * @param focalLength - Focal length in pixels (see {@link setVerticalFov})
      * @param distance - Object distance in world space.
@@ -270,6 +271,7 @@ export namespace CameraUtils {
     /**
      * Calculates object's world size based on the focal length and it's camera distance.
      * @beta
+     * @note Valid only for perspective camera.
      *
      * @param focalLength - Focal length in pixels (see {@link setVerticalFov})
      * @param distance - Object distance in world space.

@@ -552,6 +552,13 @@ Returns a string representing the type of `value`.
 ```javascript
 ["typeof", value]
 ```
+## pixel-world-scale
+
+Converts the number of pixels given by `value` to world meters at the camera `lookAt`.
+
+```javascript
+["pixel-world-scale", value]
+```
 
 ## lookup
 

@@ -33,6 +33,8 @@ import { VectorTileDecoder } from "@here/harp-vectortile-datasource/index-worker
 import { assert } from "chai";
 import * as THREE from "three";
 
+import { ThemeBuilder } from "./utils/ThemeBuilder";
+
 interface RenderingTestOptions extends TestOptions {
     /**
      * Width of canvas in pixels.
@@ -520,6 +522,50 @@ describe("MapView Styling Test", function () {
 
         describe("solid-line technique", function () {
             describe("basic", function () {
+                mapViewFeaturesRenderingTest(`solid-line-styling-basic-20px-pixel-world-scale`, {
+                    // Draw a solid green line, made 20px wide using pixel-world-scale operator, and
+                    // a red square icon of same size on top. The line width must match the square
+                    // side.
+                    geoJson: {
+                        type: "FeatureCollection",
+                        features: [
+                            straightLine,
+                            {
+                                type: "Feature",
+                                geometry: {
+                                    type: "Point",
+                                    coordinates: [0, 0.001]
+                                }
+                            }
+                        ]
+                    },
+                    theme: {
+                        images: ThemeBuilder.images,
+                        imageTextures: ThemeBuilder.imageTextures,
+                        styles: {
+                            geojson: [
+                                {
+                                    when: "$geometryType == 'point'",
+                                    technique: "labeled-icon",
+                                    attr: {
+                                        imageTexture: "red-square",
+                                        screenHeight: 20,
+                                        screenWidth: 20,
+                                        text: ""
+                                    }
+                                },
+                                {
+                                    when: "$geometryType == 'line'",
+                                    technique: "solid-line",
+                                    attr: {
+                                        lineWidth: ["pixel-world-scale", 20],
+                                        color: "green"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                });
                 makeLineTestCase({
                     "basic-100m": { lineWidth: 100, color: "#0b97c4" },
                     "basic-dash-100m": {
