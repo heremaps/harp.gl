@@ -11,7 +11,7 @@
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
         "build": "tsc --build $EXTRA_TSC_ARGS",
         "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS",
-        "generate-json-schema": "typeconv -f ts -t jsc ./lib/Theme.ts && cp ./lib/Theme.json theme.schema.json && rm ./lib/Theme.json "
+        "generate-json-schema": "typescript-json-schema lib/Theme.ts Theme  --ignoreErrors --required --out theme.schema.json"
     },
     "repository": {
         "type": "git",
@@ -34,13 +34,14 @@
         "@types/chai": "^4.2.14",
         "@types/mocha": "^8.2.0",
         "@types/three": "^0.129.0",
+        "@types/offscreencanvas": "^2019.6.4",
         "chai": "^4.0.2",
         "cross-env": "^7.0.2",
         "mocha": "^8.2.1",
         "source-map-support": "^0.5.19",
         "three": "^0.129.0",
-        "typeconv": "^1.7.0",
-        "typescript": "^4.1.2"
+        "typescript": "^4.1.2",
+        "typescript-json-schema": "^0.53.0"
     },
     "peerDependencies": {
         "three": "^0.129.0"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 HERE Europe B.V.
+ * Copyright (C) 2019-2022 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -176,7 +176,7 @@ export type JsonValue = null | boolean | number | string | JsonObject | JsonArra
 /**
  * A type representing JSON arrays.
  */
-export interface JsonArray extends Array<JsonValue> {}
+export type JsonArray = JsonValue[];
 
 /**
  * A type representing JSON objects.
