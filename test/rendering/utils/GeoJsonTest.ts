@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { FlatTheme, GeoJson, Theme } from "@here/harp-datasource-protocol";
+import { GeoJson, Theme } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { Projection } from "@here/harp-geoutils";
 import { LookAtParams, MapView, MapViewEventNames } from "@here/harp-mapview";
@@ -23,7 +23,7 @@ export interface GeoJsonDataSourceTestOptions {
 export interface GeoJsonTestOptions extends GeoJsonDataSourceTestOptions {
     mochaTest: Mocha.Context;
     testImageName: string;
-    theme: Theme | FlatTheme;
+    theme: Theme;
     geoJson?: string | GeoJson;
     lookAt?: Partial<LookAtParams>;
     tileGeoJson?: boolean;

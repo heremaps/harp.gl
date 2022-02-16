@@ -5,7 +5,7 @@
  */
 
 import { isJsonExpr } from "./Expr";
-import { Style, Theme } from "./Theme";
+import { getStyles, Style, Theme } from "./Theme";
 
 /**
  * The ThemeVisitor visits every style in the theme in a depth-first fashion.
@@ -30,13 +30,9 @@ export class ThemeVisitor {
             return false;
         };
         if (this.theme.styles !== undefined) {
-            for (const styleSetName in this.theme.styles) {
-                if (this.theme.styles[styleSetName] !== undefined) {
-                    for (const style of this.theme.styles[styleSetName]) {
-                        if (visit(style)) {
-                            return true;
-                        }
-                    }
+            for (const style of getStyles(this.theme.styles)) {
+                if (visit(style)) {
+                    return true;
                 }
             }
         }

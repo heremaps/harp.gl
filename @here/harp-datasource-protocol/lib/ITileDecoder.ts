@@ -6,7 +6,7 @@
 import { Projection, TileKey } from "@here/harp-geoutils";
 
 import { DecodedTile } from "./DecodedTile";
-import { Definitions, StylePriority, StyleSet } from "./Theme";
+import { Definitions, StylePriority, Styles } from "./Theme";
 import { TileInfo } from "./TileInfo";
 import { OptionsMap, RequestController } from "./WorkerDecoderProtocol";
 
@@ -14,7 +14,7 @@ export interface DecoderOptions {
     /**
      * The StyleSet to be applied during decoding.
      */
-    styleSet?: StyleSet;
+    styleSet?: Styles;
 
     /**
      * The Definitions to be applied during decoding.

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { Styles, Theme } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
@@ -51,7 +51,7 @@ export namespace GeoJsonExample {
         });
     }
 
-    function getStyleSet(): StyleSet {
+    function getStyleSet(): Styles {
         return [
             {
                 when: "$geometryType == 'polygon'",

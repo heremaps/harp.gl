@@ -10,7 +10,7 @@ import {
     GeometryType,
     IndexedTechnique,
     MapEnv,
-    StyleSet
+    Styles
 } from "@here/harp-datasource-protocol";
 import { StyleSetEvaluator, ThreeBufferUtils } from "@here/harp-datasource-protocol/index-decoder";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
@@ -399,7 +399,7 @@ describe("TileGeometryCreator", () => {
     it("attachments", async () => {
         // create a simple style set defining rules and techniques
         // to style polygons.
-        const rules: StyleSet = [
+        const rules: Styles = [
             {
                 when: ["get", "red-polygon"],
                 technique: "fill",

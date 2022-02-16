@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { FeatureCollection, StyleSet } from "@here/harp-datasource-protocol";
+import { FeatureCollection, Styles } from "@here/harp-datasource-protocol";
 import { mercatorProjection, Projection, sphereProjection } from "@here/harp-geoutils";
 import { CameraUtils } from "@here/harp-mapview";
 import * as THREE from "three";
@@ -11,7 +11,7 @@ import * as THREE from "three";
 import { GeoJsonTest } from "./utils/GeoJsonTest";
 import { ThemeBuilder } from "./utils/ThemeBuilder";
 
-const style: StyleSet = [
+const style: Styles = [
     {
         when: "$geometryType == 'polygon'",
         technique: "fill",

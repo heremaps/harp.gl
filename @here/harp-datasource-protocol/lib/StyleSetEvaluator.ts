@@ -36,7 +36,7 @@ import {
 import { DecoderOptions } from "./ITileDecoder";
 import { AttrScope, getTechniqueAttributeDescriptor } from "./TechniqueDescriptors";
 import { IndexedTechnique, setTechniqueRenderOrderOrPriority, Technique } from "./Techniques";
-import { Definitions, Style, StyleSet } from "./Theme";
+import { Definitions, Style, Styles } from "./Theme";
 
 const logger = LoggerManager.instance.create("StyleSetEvaluator");
 
@@ -341,7 +341,7 @@ class OptimizedSubSetKey {
  *
  * Basically identical as the DecoderOptions but requires styleSet to be set.
  */
-export type StyleSetOptions = Omit<DecoderOptions, "languages"> & { styleSet: StyleSet };
+export type StyleSetOptions = Omit<DecoderOptions, "languages"> & { styleSet: Styles };
 
 /**
  * Combine data from datasource and apply the rules from a specified theme to show it on the map.

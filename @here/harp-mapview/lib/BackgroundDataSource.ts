@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FlatTheme, Theme } from "@here/harp-datasource-protocol";
+import { Theme } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
 
 import { DataSource } from "./DataSource";
@@ -53,7 +53,7 @@ export class BackgroundDataSource extends DataSource {
     }
 
     /** @override */
-    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
+    async setTheme(theme: Theme, languages?: string[]): Promise<void> {
         this.mapView.clearTileCache(this.name);
     }
 

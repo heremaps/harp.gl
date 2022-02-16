@@ -34,10 +34,10 @@ import {
     PoiTechnique,
     SolidLineTechnique
 } from "../lib/Techniques";
-import { Definitions, Style, StyleSet } from "../lib/Theme";
+import { Definitions, Style, Styles } from "../lib/Theme";
 
 describe("StyleSetEvaluator", function () {
-    const basicStyleSetAutoOrder: StyleSet = [
+    const basicStyleSetAutoOrder: Styles = [
         {
             description: "first",
             technique: "fill",
@@ -206,7 +206,7 @@ describe("StyleSetEvaluator", function () {
     });
 
     describe("dynamic technique atribute support", function () {
-        const testStyle: StyleSet = [
+        const testStyle: Styles = [
             {
                 technique: "solid-line",
                 when: "kind == 'park'",
@@ -285,7 +285,7 @@ describe("StyleSetEvaluator", function () {
         });
 
         it("technique cache key changes for different array buffers", function () {
-            const texturedStyle: StyleSet = [
+            const texturedStyle: Styles = [
                 {
                     technique: "fill",
                     when: "kind == 'park'",
@@ -328,7 +328,7 @@ describe("StyleSetEvaluator", function () {
         });
 
         it("returns same technique when same array buffer is used twice", function () {
-            const texturedStyle: StyleSet = [
+            const texturedStyle: Styles = [
                 {
                     technique: "fill",
                     when: "kind == 'park'",
@@ -512,7 +512,7 @@ describe("StyleSetEvaluator", function () {
     });
 
     it("Filter techniques by layer", function () {
-        const styleSet: StyleSet = [
+        const styleSet: Styles = [
             {
                 when: [
                     "all",
@@ -581,7 +581,7 @@ describe("StyleSetEvaluator", function () {
     });
 
     it("Filter techniques by layer and geometryType", function () {
-        const styleSet: StyleSet = [
+        const styleSet: Styles = [
             {
                 when: [
                     "all",
@@ -921,7 +921,7 @@ describe("StyleSetEvaluator", function () {
             masterlist_IsoCountryCode: ["get", "country_code"],
             masterlist_chain_id: ["get", "chain_id"]
         };
-        const styleSet: StyleSet = [
+        const styleSet: Styles = [
             {
                 technique: "labeled-icon",
                 poiName: [

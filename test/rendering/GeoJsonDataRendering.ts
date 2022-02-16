@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Feature, FeatureCollection, FlatTheme, StyleSet } from "@here/harp-datasource-protocol";
+import { Feature, FeatureCollection, Styles, Theme } from "@here/harp-datasource-protocol";
 import { clipLineString } from "@here/harp-geometry/lib/ClipLineString";
 import { wrapLineString } from "@here/harp-geometry/lib/WrapLineString";
 import { wrapPolygon } from "@here/harp-geometry/lib/WrapPolygon";
@@ -37,7 +37,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     afterEach(() => geoJsonTest.dispose());
     it("renders flat polygon using fill technique", async function () {
         this.timeout(5000);
-        const greenStyle: StyleSet = [
+        const greenStyle: Styles = [
             {
                 when: "$geometryType == 'polygon'",
                 technique: "fill",
@@ -57,7 +57,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     });
     it("renders flat polygon using extruded-polygon technique", async function () {
         this.timeout(5000);
-        const greenStyle: StyleSet = [
+        const greenStyle: Styles = [
             {
                 when: "$geometryType == 'polygon'",
                 technique: "extruded-polygon",
@@ -91,7 +91,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
     it("renders japanese flag with enabled as dynamic expression", async function () {
         this.timeout(50000);
-        const greenStyle: StyleSet = [
+        const greenStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Point"],
                 technique: "circles",
@@ -115,7 +115,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     it("renders extruded polygons with height", async function () {
         this.timeout(5000);
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Polygon"],
                 technique: "extruded-polygon",
@@ -145,7 +145,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     it("renders extruded polygons with height and color", async function () {
         this.timeout(5000);
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Polygon"],
                 technique: "extruded-polygon",
@@ -176,7 +176,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     it("renders extruded polygons with height and color - no batching", async function () {
         this.timeout(5000);
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Polygon"],
                 technique: "extruded-polygon",
@@ -206,7 +206,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     it("renders extruded polygons with height, without outline", async function () {
         this.timeout(5000);
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Polygon"],
                 technique: "extruded-polygon",
@@ -238,7 +238,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         async function () {
             this.timeout(5000);
 
-            const ourStyle: StyleSet = [
+            const ourStyle: Styles = [
                 {
                     when: ["==", ["geometry-type"], "Polygon"],
                     technique: "extruded-polygon",
@@ -276,7 +276,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         async function () {
             this.timeout(5000);
 
-            const ourStyle: StyleSet = [
+            const ourStyle: Styles = [
                 {
                     when: ["==", ["geometry-type"], "Polygon"],
                     technique: "extruded-polygon",
@@ -312,7 +312,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     it("renders multi line strings", async function () {
         this.timeout(5000);
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "LineString"],
                 technique: "solid-line",
@@ -360,7 +360,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             ]
         };
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Polygon"],
                 technique: "fill",
@@ -409,7 +409,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             ]
         };
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Polygon"],
                 technique: "fill",
@@ -486,7 +486,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             ]
         };
 
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["==", ["geometry-type"], "Polygon"],
                 technique: "fill",
@@ -510,7 +510,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     });
 
     describe("wrap polygon crossing antimeridian", async function () {
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["all", ["==", ["geometry-type"], "Polygon"], ["!has", "fragment"]],
                 technique: "solid-line",
@@ -665,7 +665,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     });
 
     describe("wrap linestring crossing antimeridian", async function () {
-        const ourStyle: StyleSet = [
+        const ourStyle: Styles = [
             {
                 when: ["all", ["==", ["geometry-type"], "Polygon"], ["!has", "fragment"]],
                 technique: "solid-line",
@@ -923,7 +923,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 ]
             };
 
-            const ourStyle: StyleSet = [
+            const ourStyle: Styles = [
                 {
                     when: ["==", ["geometry-type"], "Polygon"],
                     technique: "fill",
@@ -1016,7 +1016,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
     describe("Polygons", async function () {
         it("Triangle with a hole rendered at zoom level 2", async function () {
-            const theme: FlatTheme = {
+            const theme: Theme = {
                 lights,
                 styles: [
                     {

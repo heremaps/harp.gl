@@ -7,7 +7,7 @@
 
 /* eslint-disable no-console */
 
-import { FlatTheme } from "@here/harp-datasource-protocol";
+import { Theme } from "@here/harp-datasource-protocol";
 import { ThemeLoader } from "@here/harp-mapview";
 import * as program from "commander";
 import * as fs from "fs";
@@ -77,7 +77,7 @@ inFileNames.forEach(inFileName => {
             fs.writeFileSync(outFileNamePrivate, json);
 
             // Public (unified) part:
-            const themePublic: FlatTheme = {
+            const themePublic: Theme = {
                 extends: [outFileBaseNamePrivate],
                 definitions: {}
             };

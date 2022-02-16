@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    FlatTheme,
+    getStyles,
     ITileDecoder,
     OptionsMap,
-    StyleSet,
     Theme,
     TileInfo
 } from "@here/harp-datasource-protocol";
@@ -216,19 +215,17 @@ export class TileDataSource<TileType extends Tile = Tile> extends DataSource {
      * if matching styleset (see `styleSetName` property) is found in `theme`.
      * @override
      */
-    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
+    async setTheme(theme: Theme, languages?: string[]): Promise<void> {
         // Seems superfluent, but the call to  ThemeLoader.load will resolve extends etc.
         theme = await ThemeLoader.load(theme);
+        const styleSet = getStyles(theme.styles).filter(style => {
+            return !style.styleSet || style.styleSet === this.styleSetName;
+        });
 
-        let styleSet: StyleSet | undefined;
-        if (this.styleSetName !== undefined && theme.styles !== undefined) {
-            styleSet = theme.styles[this.styleSetName];
-        }
         if (languages !== undefined) {
             this.languages = languages;
         }
-
-        if (styleSet !== undefined) {
+        if (styleSet.length > 0) {
             this.m_decoder.configure({
                 styleSet,
                 definitions: theme.definitions,

@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { FlatTheme, Theme, ValueMap } from "@here/harp-datasource-protocol";
+import { Theme, ValueMap } from "@here/harp-datasource-protocol";
 import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert, LoggerManager } from "@here/harp-utils";
@@ -479,7 +479,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * @param theme - The Theme to be applied
      */
-    async setTheme(theme: Theme | FlatTheme): Promise<void>;
+    async setTheme(theme: Theme): Promise<void>;
 
     /**
      * Apply the {@link @here/harp-datasource-protocol#Theme} to this data source.
@@ -490,9 +490,9 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @param theme - The Theme to be applied
      * @param languages - optional: The languages in priority order to be applied
      *
-     * @deprecated use setTheme( Theme | FlatTheme) and setLanguages(string[]) instead
+     * @deprecated use setTheme( Theme ) and setLanguages(string[]) instead
      */
-    async setTheme(theme: Theme | FlatTheme, languages?: string[]): Promise<void> {
+    async setTheme(theme: Theme, languages?: string[]): Promise<void> {
         // to be overwritten by subclasses
     }
 

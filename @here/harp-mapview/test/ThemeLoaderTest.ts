@@ -6,7 +6,7 @@
 
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { FlatTheme, SolidLineStyle, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { getStyles, SolidLineStyle, Styles, Theme } from "@here/harp-datasource-protocol";
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import {
     cloneDeep,
@@ -120,26 +120,24 @@ describe("ThemeLoader", function () {
                     roadWidth: 123,
                     roadOutlineWidth: 33
                 },
-                styles: {
-                    tilezen: [
-                        {
-                            description: "roads",
-                            when: "kind == 'road",
-                            technique: "solid-line",
-                            attr: {
-                                lineColor: ["ref", "roadColor"],
-                                lineWidth: ["ref", "roadWidth"],
-                                outlineWidth: ["ref", "roadOutlineWidth"]
-                            }
+                styles: [
+                    {
+                        description: "roads",
+                        when: "kind == 'road",
+                        technique: "solid-line",
+                        attr: {
+                            lineColor: ["ref", "roadColor"],
+                            lineWidth: ["ref", "roadWidth"],
+                            outlineWidth: ["ref", "roadOutlineWidth"]
                         }
-                    ]
-                }
+                    }
+                ]
             };
             const contextLogger = new ContextLogger(console, "theme");
 
             // Hack to access private members with type safety
-            const r = ThemeLoader["resolveStyleSet"](
-                theme.styles!.tilezen,
+            const r = ThemeLoader["resolveStyles"](
+                getStyles(theme.styles),
                 theme.definitions,
                 contextLogger
             );
@@ -159,23 +157,21 @@ describe("ThemeLoader", function () {
                     roadColor: "#f00",
                     roadCondition: "kind == 'road'"
                 },
-                styles: {
-                    tilezen: [
-                        {
-                            description: "roads",
-                            when: ["ref", "roadCondition"],
-                            technique: "solid-line",
-                            attr: {
-                                lineColor: ["ref", "roadColor"]
-                            }
+                styles: [
+                    {
+                        description: "roads",
+                        when: ["ref", "roadCondition"],
+                        technique: "solid-line",
+                        attr: {
+                            lineColor: ["ref", "roadColor"]
                         }
-                    ]
-                }
+                    }
+                ]
             };
             const contextLogger = new ContextLogger(console, "test theme: ");
             // Hack to access private members with type safety
-            const r = ThemeLoader["resolveStyleSet"](
-                theme.styles!.tilezen,
+            const r = ThemeLoader["resolveStyles"](
+                getStyles(theme.styles),
                 theme.definitions,
                 contextLogger
             );
@@ -195,24 +191,23 @@ describe("ThemeLoader", function () {
                     roadColor: "#f00",
                     roadCondition: ["==", ["get", "kind"], "road"]
                 },
-                styles: {
-                    tilezen: [
-                        {
-                            description: "custom-roads",
-                            when: ["all", ["ref", "roadCondition"], ["has", "color"]],
-                            technique: "solid-line",
-                            final: true,
-                            attr: {
-                                lineColor: ["ref", "roadColor"]
-                            }
+
+                styles: [
+                    {
+                        description: "custom-roads",
+                        when: ["all", ["ref", "roadCondition"], ["has", "color"]],
+                        technique: "solid-line",
+                        final: true,
+                        attr: {
+                            lineColor: ["ref", "roadColor"]
                         }
-                    ]
-                }
+                    }
+                ]
             };
             const contextLogger = new ContextLogger(console, "test theme: ");
             // Hack to access private members with type safety
-            const r = ThemeLoader["resolveStyleSet"](
-                theme.styles!.tilezen,
+            const r = ThemeLoader["resolveStyles"](
+                getStyles(theme.styles),
                 theme.definitions,
                 contextLogger
             );
@@ -371,11 +366,12 @@ describe("ThemeLoader", function () {
             "test/resources/baseTheme.json"
         );
 
-        const expectedBaseStyleSet: StyleSet = [
+        const expectedBaseStyleSet: Styles = [
             {
                 description: "roads",
                 when: "kind == 'road",
                 technique: "solid-line",
+                styleSet: "tilezen",
                 attr: {
                     lineWidth: {
                         interpolation: "Linear",
@@ -387,11 +383,12 @@ describe("ThemeLoader", function () {
             }
         ];
 
-        const expectedOverridenStyleSet: StyleSet = [
+        const expectedOverridenStyleSet: Styles = [
             {
                 description: "roads",
                 when: "kind == 'road",
                 technique: "solid-line",
+                styleSet: "tilezen",
                 attr: {
                     lineWidth: {
                         interpolation: "Linear",
@@ -405,8 +402,8 @@ describe("ThemeLoader", function () {
         it("loads theme from actual URL and resolves definitions", async function () {
             const result = await ThemeLoader.load(baseThemeUrl, { resolveDefinitions: true });
             assert.exists(result);
-            assert.exists(result.styles!.tilezen);
-            assert.deepEqual(result.styles!.tilezen, expectedBaseStyleSet);
+            assert.exists(result.styles);
+            assert.deepEqual(result.styles, expectedBaseStyleSet);
         });
 
         it("supports definitions override with actual files", async function () {
@@ -416,8 +413,9 @@ describe("ThemeLoader", function () {
             );
             const result = await ThemeLoader.load(inheritedThemeUrl, { resolveDefinitions: true });
             assert.exists(result);
-            assert.exists(result.styles!.tilezen);
-            assert.deepEqual(result.styles!.tilezen, expectedOverridenStyleSet);
+            assert.exists(result.styles);
+            assert.equal(result.styles?.length, 1);
+            assert.deepEqual(result.styles, expectedOverridenStyleSet);
         });
 
         it("empty inherited theme just loads base", async function () {
@@ -426,8 +424,8 @@ describe("ThemeLoader", function () {
                 { resolveDefinitions: true }
             );
             assert.exists(result);
-            assert.exists(result.styles!.tilezen);
-            assert.deepEqual(result.styles!.tilezen, expectedBaseStyleSet);
+            assert.exists(result.styles);
+            assert.deepEqual(result.styles, expectedBaseStyleSet);
         });
 
         it("supports local definitions override", async function () {
@@ -441,14 +439,54 @@ describe("ThemeLoader", function () {
                 { resolveDefinitions: true }
             );
             assert.exists(result);
-            assert.exists(result.styles!.tilezen);
-            assert.deepEqual(result.styles!.tilezen, expectedOverridenStyleSet);
+            assert.exists(result.styles);
+            assert.deepEqual(result.styles!, expectedOverridenStyleSet);
         });
     });
 
-    describe("flat themes", function () {
-        it("load flat theme", async () => {
-            const flatTheme: FlatTheme = {
+    describe("old styles themes", function () {
+        it("load old styles theme", async () => {
+            const stylesDictionaryTheme: Theme = {
+                styles: {
+                    tilezen: [
+                        {
+                            when: ["boolean", true],
+                            technique: "none"
+                        },
+                        {
+                            styleSet: "tilezen",
+                            when: ["boolean", false],
+                            technique: "solid-line",
+                            attr: {
+                                lineWidth: 2
+                            }
+                        }
+                    ],
+                    terrain: [
+                        {
+                            styleSet: "terrain",
+                            when: ["boolean", false],
+                            technique: "none"
+                        }
+                    ]
+                }
+            };
+
+            const theme = await ThemeLoader.load(stylesDictionaryTheme);
+
+            assert.isDefined(theme.styles);
+            assert.isArray(theme.styles);
+            theme.styles = getStyles(theme.styles);
+            assert.strictEqual(theme.styles!.length, 3);
+            assert.strictEqual(theme.styles[0].styleSet, "tilezen");
+            assert.strictEqual(theme.styles[1].styleSet, "tilezen");
+            assert.strictEqual(theme.styles[2].styleSet, "terrain");
+        });
+    });
+
+    describe("merge style sets", function () {
+        it("merge themes", async () => {
+            const baseTheme: Theme = {
                 styles: [
                     {
                         styleSet: "tilezen",
@@ -459,51 +497,8 @@ describe("ThemeLoader", function () {
                         styleSet: "terrain",
                         when: ["boolean", false],
                         technique: "none"
-                    },
-                    {
-                        styleSet: "tilezen",
-                        when: ["boolean", false],
-                        technique: "solid-line",
-                        attr: {
-                            lineWidth: 2
-                        }
                     }
                 ]
-            };
-
-            const theme = await ThemeLoader.load(flatTheme);
-
-            assert.isDefined(theme.styles);
-            assert.isArray(theme.styles!.tilezen);
-            const tilezen = theme.styles!.tilezen;
-            assert.strictEqual(tilezen.length, 2);
-            assert.strictEqual(tilezen[0].technique, "none");
-            assert.strictEqual(tilezen[1].technique, "solid-line");
-
-            assert.isArray(theme.styles!.terrain);
-            const terrain = theme.styles!.terrain;
-            assert.strictEqual(terrain.length, 1);
-            assert.strictEqual(terrain[0].technique, "none");
-        });
-    });
-
-    describe("merge style sets", function () {
-        it("merge themes", async () => {
-            const baseTheme: Theme = {
-                styles: {
-                    tilezen: [
-                        {
-                            when: ["boolean", true],
-                            technique: "none"
-                        }
-                    ],
-                    terrain: [
-                        {
-                            when: ["boolean", false],
-                            technique: "none"
-                        }
-                    ]
-                }
             };
 
             const source: Theme = {
@@ -524,20 +519,16 @@ describe("ThemeLoader", function () {
             const theme = await ThemeLoader.load(source);
 
             assert.isDefined(theme.styles);
-            assert.isArray(theme.styles!.tilezen);
-            const tilezen = theme.styles!.tilezen;
-            assert.strictEqual(tilezen.length, 2);
-            assert.strictEqual(tilezen[0].technique, "none");
-            assert.strictEqual(tilezen[1].technique, "solid-line");
-
-            assert.isArray(theme.styles!.terrain);
-            const terrain = theme.styles!.terrain;
-            assert.strictEqual(terrain.length, 1);
-            assert.strictEqual(terrain[0].technique, "none");
+            assert.isArray(theme.styles);
+            theme.styles = getStyles(theme.styles);
+            assert.strictEqual(theme.styles.length, 3);
+            assert.strictEqual(theme.styles[0].styleSet, "tilezen");
+            assert.strictEqual(theme.styles[1].styleSet, "terrain");
+            assert.strictEqual(theme.styles[2].styleSet, "tilezen");
         });
 
         it("merge flat themes", async () => {
-            const baseTheme: FlatTheme = {
+            const baseTheme: Theme = {
                 styles: [
                     {
                         styleSet: "tilezen",
@@ -552,7 +543,7 @@ describe("ThemeLoader", function () {
                 ]
             };
 
-            const source: FlatTheme = {
+            const source: Theme = {
                 extends: [(baseTheme as unknown) as Theme],
                 styles: [
                     {
@@ -569,20 +560,16 @@ describe("ThemeLoader", function () {
             const theme = await ThemeLoader.load(source);
 
             assert.isDefined(theme.styles);
-            assert.isArray(theme.styles!.tilezen);
-            const tilezen = theme.styles!.tilezen;
-            assert.strictEqual(tilezen.length, 2);
-            assert.strictEqual(tilezen[0].technique, "none");
-            assert.strictEqual(tilezen[1].technique, "solid-line");
-
-            assert.isArray(theme.styles!.terrain);
-            const terrain = theme.styles!.terrain;
-            assert.strictEqual(terrain.length, 1);
-            assert.strictEqual(terrain[0].technique, "none");
+            assert.isArray(theme.styles);
+            theme.styles = getStyles(theme.styles);
+            assert.strictEqual(theme.styles.length, 3);
+            assert.strictEqual(theme.styles[0].styleSet, "tilezen");
+            assert.strictEqual(theme.styles[1].styleSet, "terrain");
+            assert.strictEqual(theme.styles[2].styleSet, "tilezen");
         });
 
         it("extends existing style", async () => {
-            const baseTheme: FlatTheme = {
+            const baseTheme: Theme = {
                 styles: [
                     {
                         styleSet: "tilezen",
@@ -602,7 +589,7 @@ describe("ThemeLoader", function () {
                 ]
             };
 
-            const source: FlatTheme = {
+            const source: Theme = {
                 extends: [(baseTheme as unknown) as Theme],
                 styles: [
                     {
@@ -621,13 +608,13 @@ describe("ThemeLoader", function () {
             const theme = await ThemeLoader.load(source);
 
             assert.isDefined(theme.styles);
-            assert.isArray(theme.styles!.tilezen);
+            assert.isArray(theme.styles!);
+            theme.styles = getStyles(theme.styles);
 
-            const tilezen = theme.styles!.tilezen;
-            assert.strictEqual(tilezen.length, 1);
-            assert.strictEqual(tilezen[0].technique, "extruded-polygon");
+            const tilezenStyle = theme.styles[0];
+            assert.strictEqual(tilezenStyle.technique, "extruded-polygon");
 
-            assert.deepEqual(tilezen[0], {
+            assert.deepEqual(tilezenStyle, {
                 styleSet: "tilezen",
                 id: "buildings",
                 extends: undefined,
@@ -639,14 +626,12 @@ describe("ThemeLoader", function () {
                 lineColor: "#00f"
             });
 
-            assert.isArray(theme.styles!.terrain);
-            const terrain = theme.styles!.terrain;
-            assert.strictEqual(terrain.length, 1);
-            assert.strictEqual(terrain[0].technique, "none");
+            const terrainStyle = theme.styles[1];
+            assert.strictEqual(terrainStyle.technique, "none");
         });
 
-        it("overrides property of an existing sytle", async () => {
-            const baseTheme: FlatTheme = {
+        it("overrides property of an existing style", async () => {
+            const baseTheme: Theme = {
                 styles: [
                     {
                         styleSet: "tilezen",
@@ -665,7 +650,7 @@ describe("ThemeLoader", function () {
                 ]
             };
 
-            const source: FlatTheme = {
+            const source: Theme = {
                 extends: [(baseTheme as unknown) as Theme],
                 styles: [
                     {
@@ -682,14 +667,13 @@ describe("ThemeLoader", function () {
             };
 
             const theme = await ThemeLoader.load(source);
-
             assert.isDefined(theme.styles);
-            assert.isArray(theme.styles!.tilezen);
+            assert.isArray(theme.styles!);
+            theme.styles = getStyles(theme.styles);
 
-            const tilezen = theme.styles!.tilezen;
-            assert.strictEqual(tilezen.length, 1);
+            const tilezenStyle = theme.styles[0];
 
-            assert.deepEqual(tilezen[0], {
+            assert.deepEqual(tilezenStyle, {
                 styleSet: "tilezen",
                 id: "buildings",
 
@@ -698,15 +682,13 @@ describe("ThemeLoader", function () {
                 technique: "fill"
             });
 
-            assert.isArray(theme.styles!.terrain);
-            const terrain = theme.styles!.terrain;
-            assert.strictEqual(terrain.length, 1);
-            assert.strictEqual(terrain[0].technique, "none");
+            const terrainStyle = theme.styles[1];
+            assert.strictEqual(terrainStyle.technique, "none");
         });
 
         it("verify the scope of ids", async () => {
             // the two style sets have a rule with the same id.
-            const baseTheme: FlatTheme = {
+            const baseTheme: Theme = {
                 styles: [
                     {
                         styleSet: "tilezen",
@@ -731,7 +713,7 @@ describe("ThemeLoader", function () {
             // referenced id of the styleset `tilezen`, and leaves
             // the styleset `terrain` unmodified.
 
-            const source: FlatTheme = {
+            const source: Theme = {
                 extends: [(baseTheme as unknown) as Theme],
                 styles: [
                     {
@@ -750,12 +732,13 @@ describe("ThemeLoader", function () {
             const theme = await ThemeLoader.load(source);
 
             assert.isDefined(theme.styles);
-            assert.isArray(theme.styles!.tilezen);
+            assert.isArray(theme.styles!);
 
-            const tilezen = theme.styles!.tilezen;
-            assert.strictEqual(tilezen.length, 1);
+            theme.styles = getStyles(theme.styles);
+            const tilezenStyle = theme.styles[0];
+            assert.strictEqual(tilezenStyle.technique, "extruded-polygon");
 
-            assert.deepEqual(tilezen[0], {
+            assert.deepEqual(tilezenStyle, {
                 styleSet: "tilezen",
                 id: "rule-id",
                 extends: undefined,
@@ -767,10 +750,8 @@ describe("ThemeLoader", function () {
                 lineColor: "#00f"
             });
 
-            const terrain = theme.styles!.terrain;
-            assert.strictEqual(terrain.length, 1);
-
-            assert.deepEqual(terrain[0], {
+            const terrainStyle = theme.styles[1];
+            assert.deepEqual(terrainStyle, {
                 styleSet: "terrain",
                 id: "rule-id",
 

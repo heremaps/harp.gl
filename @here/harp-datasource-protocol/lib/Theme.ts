@@ -43,7 +43,7 @@ export interface Theme {
      * overwrite these defined in base theme.
      */
 
-    extends?: string | Theme | FlatTheme | Array<string | Theme | FlatTheme>;
+    extends?: string | Theme | Array<string | Theme>;
 
     /**
      * Actual URL the theme has been loaded from.
@@ -90,7 +90,7 @@ export interface Theme {
     /**
      * Map styles available for datasources used to render the map.
      */
-    styles?: Styles;
+    styles?: StylesDictionary | Styles;
 
     /**
      * Define the style to render different types of text used on the map.
@@ -188,19 +188,6 @@ export interface StylePriority {
 }
 
 /**
- * A type representing HARP themes with all the styleset declarations
- * grouped in one `Array`.
- *
- * @internal This type will merge with {@link Theme}.
- */
-export type FlatTheme = Omit<Theme, "styles"> & {
-    /**
-     * The style rules used to render the map.
-     */
-    styles?: StyleSet;
-};
-
-/**
  * Value definition commons.
  */
 export type Definition = JsonValue | InterpolatedPropertyDefinition<JsonValue>;
@@ -284,7 +271,7 @@ export function isJsonExprReference(value: any): value is JsonExprReference {
  * `setStyleSet`. This is also handle internally when a whole theme is passed to a
  * {@link @here/harp-mapview#MapView} via {@link @here/harp-mapview#MapViewtheme}.
  */
-export type StyleSet = Style[];
+export type Styles = Style[];
 
 /**
  * The object that defines what way an item of a {@link @here/harp-mapview#DataSource}
@@ -418,10 +405,62 @@ export type Style =
     | NoneStyle;
 
 /**
- * A dictionary of {@link StyleSet}s.
+ * A dictionary of {@link Styles}s.
+ * @deprecated
+ *
+ * Use {@link Styles} instead, which is just a flat list of {@link Style}
  */
-export interface Styles {
-    [styleSetName: string]: StyleSet;
+export interface StylesDictionary {
+    [styleSetName: string]: Styles;
+}
+
+/**
+ * Utility function to convert old style format to new one, to be deprecated with
+ * {@link StylesDictionary}
+ *
+ * @param stylesDict
+ * @returns
+ *
+ */
+function convertDictionaryToStyles(stylesDict: StylesDictionary): Styles {
+    const styles: Styles = [];
+    for (const styleSetName in stylesDict) {
+        stylesDict[styleSetName].forEach(style => {
+            if (style.styleSet === undefined) {
+                style.styleSet = styleSetName;
+            }
+            styles.push(style);
+        });
+    }
+    return styles;
+}
+
+/**
+ * Utility function to distinguish Styles until {@link StylesDictionary} is deprecated
+ *
+ * @deprecated
+ * @param styles
+ * @returns
+ */
+export function isStylesDictionary(styles: StylesDictionary | Styles | undefined): boolean {
+    return styles !== undefined && !Array.isArray(styles);
+}
+
+/**
+ * Utility function to retrieve Styles until {@link StylesDictionary} is deprecated
+ *
+ * @deprecated
+ * @param styles
+ * @returns
+ */
+export function getStyles(styles: StylesDictionary | Styles | undefined): Styles {
+    if (styles === undefined) {
+        return [] as Styles;
+    } else if (isStylesDictionary(styles)) {
+        return convertDictionaryToStyles(styles as StylesDictionary);
+    } else {
+        return styles as Styles;
+    }
 }
 
 /**
