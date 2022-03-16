@@ -14,4 +14,11 @@ export interface IntersectParams {
      * by reversed render order (topmost/highest render order first).
      */
     maxResultCount?: number;
+
+    /**
+     * Indicates if multiple results for the same feature are allowed.
+     * A feature may represented multiple times, like a tunnel which is represented by an outline and a centerline.
+     * For certain use cases it's necessary to obtain all representations, like for a the style editor.
+     */
+    allowDuplicates?: boolean;
 }

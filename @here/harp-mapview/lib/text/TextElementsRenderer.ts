@@ -692,7 +692,7 @@ export class TextElementsRenderer {
      * once in the list `pickResults`.
      *
      * @param screenPosition - Screen coordinate of picking position.
-     * @param pickResults - Array filled with pick results.
+     * @param pickListener - The listener to collect the results
      */
     pickTextElements(screenPosition: THREE.Vector2, pickListener: PickListener) {
         const pickHandler = (pickData: any | undefined, pickObjectType: PickObjectType) => {

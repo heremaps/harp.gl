@@ -183,6 +183,39 @@ describe("PickListener", function () {
             expect(listener.results).to.have.lengthOf(1);
             expect(listener.results[0]).equals(closerResult);
         });
+
+        it("returns multiple results for the same feature if allowDuplicates is true", function () {
+            const listener = new PickListener({allowDuplicates: true});
+            const userData = {};
+            const intersection = createIntersection("ds1");
+            const furtherResult = {
+                type: PickObjectType.Point,
+                point,
+                distance: 2,
+                featureId: 1,
+                userData,
+                intersection,
+                dataSourceName,
+                dataSourceOrder
+            };
+            listener.addResult(furtherResult);
+
+            const closerResult: PickResult = {
+                type: PickObjectType.Point,
+                point,
+                distance: 1,
+                featureId: 1,
+                intersection,
+                dataSourceName,
+                dataSourceOrder
+            };
+            listener.addResult(closerResult);
+            listener.finish();
+
+            expect(listener.results).to.have.lengthOf(2);
+            expect(listener.results[0]).equals(closerResult);
+            expect(listener.results[1]).equals(furtherResult);
+        });
     });
 
     describe("finish", function () {

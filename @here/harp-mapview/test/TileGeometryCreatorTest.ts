@@ -363,7 +363,7 @@ describe("TileGeometryCreator", () => {
             expect(adapter!.isPickable()).to.equal(true);
         });
 
-        it("only outline geometry from solid line with outline is registered as pickable", () => {
+        it("solid line and outline is registered as pickable", () => {
             const decodedTile: DecodedTile = {
                 geometries: [
                     {
@@ -388,7 +388,7 @@ describe("TileGeometryCreator", () => {
             assert.equal(newTile.objects.length, 2);
             const adapter0 = MapObjectAdapter.get(newTile.objects[0]);
             expect(adapter0).not.equals(undefined);
-            expect(adapter0!.isPickable()).to.equal(false);
+            expect(adapter0!.isPickable()).to.equal(true);
 
             const adapter1 = MapObjectAdapter.get(newTile.objects[1]);
             expect(adapter1).not.equals(undefined);

@@ -66,32 +66,42 @@ export class PickListener {
      * @param result - The result to be added.
      */
     addResult(result: PickResult): void {
-        // Add the result only if it's a different feature from the ones already collected.
-        const foundFeatureIdx = this.m_results.findIndex(otherResult => {
-            const sameType = otherResult.type === result.type;
-            const dataSource = result.intersection?.object.userData?.dataSource;
-            const sameDataSource =
-                dataSource && otherResult.intersection?.object.userData?.dataSource === dataSource;
-            const sameId =
-                result.featureId !== undefined && otherResult.featureId === result.featureId;
-            const noId = result.featureId === undefined && otherResult.featureId === undefined;
-            const sameUserData = result.userData && otherResult.userData === result.userData;
-            return sameType && sameDataSource && (sameId || (noId && sameUserData));
+        // If duplicates are not allowed we search for an already collected result for the same feature:
+        const foundFeatureIdx = this.m_parameters?.allowDuplicates ? -1 : this.m_results.findIndex(otherResult => {
+            let wasFound = false;
+            if (otherResult.type === result.type) {
+                const dataSource = result.intersection?.object.userData?.dataSource;
+                if (dataSource && otherResult.intersection?.object.userData?.dataSource === dataSource) {
+                    if (result.featureId === undefined) {
+                        if (otherResult.featureId === undefined) {
+                            if (result.userData && otherResult.userData === result.userData) {
+                                wasFound = true;
+                            }
+                        }
+                    } else {
+                        if (otherResult.featureId === result.featureId) {
+                            wasFound = true;
+                        }
+                    }
+                }
+            }
+            return wasFound;
         });
 
         if (foundFeatureIdx < 0) {
+            // If duplicates are allowed or no result was found for the same feature then we add the the result:
             this.m_sorted = false;
             this.m_finished = false;
             this.m_results.push(result);
-            return;
-        }
-
-        // Replace the result for the same feature if it's sorted after the new result.
-        const oldResult = this.m_results[foundFeatureIdx];
-        if (defaultSort(result, oldResult) < 0) {
-            this.m_results[foundFeatureIdx] = result;
-            this.m_sorted = false;
-            this.m_finished = false;
+        } else {
+            // If duplicates are not allowed but a result was found for the same feature and if it's sorted after the
+            // new result then we replace it with the new result:
+            const oldResult = this.m_results[foundFeatureIdx];
+            if (defaultSort(result, oldResult) < 0) {
+                this.m_results[foundFeatureIdx] = result;
+                this.m_sorted = false;
+                this.m_finished = false;
+            }
         }
     }
 
