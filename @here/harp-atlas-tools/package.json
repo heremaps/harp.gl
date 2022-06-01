@@ -44,7 +44,7 @@
         "mkpath": "^1.0.0",
         "path": "^0.12.7",
         "promise-limit": "^2.6.0",
-        "sharp": "^0.26.0",
+        "sharp": "^0.30.5",
         "spritesmith": "^3.3.0"
     },
     "devDependencies": {
