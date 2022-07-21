@@ -1,15 +1,10 @@
 # HERE is stopping its engagement on Harp.gl starting 03/01/2022 in favour of a fully productised and production-grade integration of the harp.gl rendering engine into HERE Maps API for JavaScript (https://developer.here.com/develop/javascript-api) All 3D features and many more will be offered via HERE Maps API for JavaScript moving forward.
 
-
-
-
 # harp.gl
 
 [![CI](https://github.com/heremaps/harp.gl/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/heremaps/harp.gl/actions/workflows/ci.yaml?query=branch%3Amaster++) [![codecov](https://codecov.io/gh/heremaps/harp.gl/branch/master/graph/badge.svg)](https://codecov.io/gh/heremaps/harp.gl) [![twitter](https://img.shields.io/badge/tweet-harp.gl-blue)](https://twitter.com/intent/tweet?text=harp.gl)
 
 `harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine written in [TypeScript](https://github.com/microsoft/TypeScript).
-
-### [harp.gl site](https://www.harp.gl/)
 
 ### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/) Registration available [here](http://t.her.is/slack).
 
